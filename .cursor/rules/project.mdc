@@ -1,0 +1,41 @@
+---
+description: "Desktop app project rules - Tauri + Rust + React/TypeScript"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Desktop App Project Rules
+
+## Stack
+
+Tauri + Rust (backend) + React + TypeScript (frontend)
+
+## Architecture
+
+- **Rust backend**: Use safe Rust only. Never use `unsafe` blocks without explicit justification and a safety comment explaining why it is sound.
+- **TypeScript frontend**: Use React with TypeScript strict mode for the UI layer.
+- **IPC**: All communication between frontend and backend goes through Tauri commands (`#[tauri::command]`). Never make direct system calls from the frontend.
+- Tauri configuration lives in `src-tauri/`. Frontend code lives in `src/`.
+
+## Code Quality
+
+- Run `cargo clippy` after Rust changes to catch common mistakes and enforce idiomatic Rust.
+- Run `npm run typecheck` after TypeScript changes to verify type safety.
+- Run `cargo test` and `npm test` to verify tests pass.
+
+## Language & Commits
+
+- Respond in Korean. Write all code, comments, and commit messages in English.
+- Use scoped Conventional Commits: `feat(backend):`, `fix(ui):`, `chore(tauri):`, etc.
+- Scope options: `backend` (Rust), `ui` (React/TS), `tauri` (Tauri config/plugins).
+
+## Rust Guidelines
+
+- Prefer `Result` and `Option` over panicking. Use `?` for error propagation.
+- Use `thiserror` for library errors, `anyhow` for application errors.
+- Keep Tauri command handlers thin: delegate business logic to separate modules.
+
+## TypeScript Guidelines
+
+- Prefer named exports. No `any` types unless unavoidable with a justifying comment.
+- Use typed wrappers around `invoke()` for Tauri command calls.

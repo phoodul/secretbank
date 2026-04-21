@@ -1,0 +1,44 @@
+---
+description: "Security rules for AI code generation"
+globs: ["**/*.{ts,tsx,js,jsx,rs}"]
+alwaysApply: true
+---
+
+# Security Rules
+
+## Secrets Management
+
+- Never hardcode secrets, API keys, passwords, or tokens in source code.
+- Use environment variables or platform-native secure storage for sensitive configuration.
+- Never commit `.env` files or credential files to version control.
+
+## Input Validation
+
+- Validate all user input at IPC boundaries (Tauri command handlers).
+- Sanitize inputs in both the Rust backend and the TypeScript frontend.
+- Use Rust's type system and serde deserialization for input validation on the backend.
+
+## Tauri Security
+
+- Follow the principle of least privilege for Tauri permissions. Only allow necessary APIs in `tauri.conf.json`.
+- Never expose filesystem, shell, or network APIs to the frontend without explicit scoping.
+- Use Tauri's allowlist to restrict which commands the frontend can invoke.
+
+## OWASP Top 10 Awareness
+
+- **Injection**: Use parameterized queries for any database access. Never concatenate user input into SQL or shell commands.
+- **Broken Access Control**: Validate permissions in Rust command handlers, not in the frontend.
+- **Sensitive Data Exposure**: Encrypt sensitive data at rest. Use platform keychain where available.
+- **Security Misconfiguration**: Disable dev tools and debug logging in release builds.
+
+## Rust-Specific Security
+
+- Never use `unsafe` without a documented safety justification.
+- Avoid `unwrap()` on user-provided data. Use proper error handling.
+- Sanitize all paths to prevent directory traversal attacks.
+
+## Logging
+
+- Never log sensitive data (passwords, tokens, API keys, personal information).
+- Use structured logging with appropriate log levels.
+- Disable verbose logging in release builds.

@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "mcp-memory-service"],
+      "env": {}
+    },
+    "gemini-research": {
+      "command": "node",
+      "args": ["$HOME/mcp-servers/gemini-research/index.js"],
+      "env": {
+        "GEMINI_API_KEY": "$GEMINI_API_KEY"
+      }
+    },
+    "openai-research": {
+      "command": "node",
+      "args": ["$HOME/mcp-servers/openai-research/index.js"],
+      "env": {
+        "OPENAI_API_KEY": "$OPENAI_API_KEY"
+      }
+    }
+  }
+}
