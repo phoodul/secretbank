@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useHotkeys } from "react-hotkeys-hook";
 
 import { useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import { usePlatform } from "@/lib/platform";
+import { CommandPalette } from "@/features/command-palette/CommandPalette";
 import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 
@@ -12,6 +15,13 @@ export function AppShell() {
   const platform = usePlatform();
   const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
+  const [cmdkOpen, setCmdkOpen] = useState(false);
+
+  const isDesktop = platform === "desktop";
+
+  // "mod+k" automatically maps to Cmd+K on Mac and Ctrl+K on Win/Linux.
+  // enabled: false on mobile — hook is always called to satisfy Rules of Hooks.
+  useHotkeys("mod+k", () => setCmdkOpen((o) => !o), { enabled: isDesktop, preventDefault: true });
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -37,7 +47,6 @@ export function AppShell() {
           {!isMobile && <div />}
 
           <div className="flex items-center gap-2">
-            {/* Cmd+K placeholder — implemented in M3 */}
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {theme === "dark" ? "Light" : "Dark"}
             </Button>
@@ -52,6 +61,9 @@ export function AppShell() {
 
       {/* Bottom nav — mobile only */}
       {isMobile && <BottomNav />}
+
+      {/* Command Palette — desktop only */}
+      {isDesktop && <CommandPalette open={cmdkOpen} onOpenChange={setCmdkOpen} />}
     </div>
   );
 }

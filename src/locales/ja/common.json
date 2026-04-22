@@ -130,6 +130,19 @@
     "vaultCreated": "ボールトが作成されました",
     "alreadyInitialized": "ボールトはすでに存在します。ロックを解除してください。",
     "internalError": "予期しないエラーが発生しました。再度お試しください。",
-    "loading": "ボールトの状態を確認中…"
+    "loading": "ボールトの状態を確認中…",
+    "lockedToast": "ボールトをロックしました"
+  },
+  "commandPalette": {
+    "searchPlaceholder": "コマンドまたは検索ワードを入力…",
+    "noResults": "結果が見つかりません",
+    "recent": "最近",
+    "navigation": "ナビゲーション",
+    "actions": "アクション",
+    "createCredential": "認証情報を作成",
+    "lockVault": "ボールトをロック",
+    "themeLight": "ライトテーマに切り替え",
+    "themeDark": "ダークテーマに切り替え",
+    "themeSystem": "システムテーマを使用"
   }
 }

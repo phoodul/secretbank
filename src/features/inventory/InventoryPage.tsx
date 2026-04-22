@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,20 @@ import type { CredentialFilter, CredentialStatus, Env } from "./types";
 export function InventoryPage() {
   const { t } = useTranslation("common");
   const { items, loading, error, filter, setFilter, search, setSearch, refresh } = useInventory();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Command Palette "Create credential" — navigate("/?action=create")로 트리거.
+  // 초기 렌더에서 쿼리를 읽어 dialogOpen 초기값으로 사용하고, 즉시 query를 제거한다.
+  const hasCreateAction = searchParams.get("action") === "create";
+  const [dialogOpen, setDialogOpen] = useState(() => {
+    if (hasCreateAction) {
+      // setSearchParams는 렌더 외부에서 직접 호출할 수 없으므로
+      // setTimeout 0으로 micro-task에서 제거한다 (setState가 아닌 router 상태 변경)
+      setTimeout(() => setSearchParams({}, { replace: true }), 0);
+      return true;
+    }
+    return false;
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const handleEnvChange = (value: string) => {

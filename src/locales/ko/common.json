@@ -130,6 +130,19 @@
     "vaultCreated": "볼트가 생성되었습니다",
     "alreadyInitialized": "이미 볼트가 존재합니다. 잠금을 해제하세요.",
     "internalError": "예기치 않은 오류가 발생했습니다. 다시 시도하세요.",
-    "loading": "볼트 상태 확인 중…"
+    "loading": "볼트 상태 확인 중…",
+    "lockedToast": "볼트 잠금됨"
+  },
+  "commandPalette": {
+    "searchPlaceholder": "명령어 또는 검색어 입력…",
+    "noResults": "결과 없음",
+    "recent": "최근",
+    "navigation": "탐색",
+    "actions": "작업",
+    "createCredential": "자격증명 생성",
+    "lockVault": "볼트 잠금",
+    "themeLight": "라이트 테마로 전환",
+    "themeDark": "다크 테마로 전환",
+    "themeSystem": "시스템 테마 사용"
   }
 }

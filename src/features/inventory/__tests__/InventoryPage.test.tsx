@@ -7,6 +7,15 @@ import "@/lib/i18n";
 import { InventoryPage } from "../InventoryPage";
 import { MOCK_CREDENTIALS, MOCK_CREDENTIAL_FULL } from "./fixtures";
 
+// MemoryRouter with initialEntries helper
+function renderPageWithRoute(initialEntry = "/") {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <InventoryPage />
+    </MemoryRouter>,
+  );
+}
+
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
 }));
@@ -214,6 +223,16 @@ describe("InventoryPage", () => {
       expect(addBtn).toBeInTheDocument();
       expect(addBtn).not.toBeDisabled();
     });
+  });
+
+  it("[T029 통합] /?action=create 로 렌더 시 CreateCredentialDialog가 자동으로 열린다", async () => {
+    renderPageWithRoute("/?action=create");
+
+    // CreateCredentialDialog의 타이틀이 보여야 함
+    await waitFor(() => {
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Add credential")).toBeInTheDocument();
   });
 
   it("[T027 통합] 카드 클릭 시 CredentialDetail Drawer가 열리고 credential_get이 호출된다", async () => {

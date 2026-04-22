@@ -130,6 +130,19 @@
     "vaultCreated": "Vault created",
     "alreadyInitialized": "A vault already exists. Please unlock it instead.",
     "internalError": "An unexpected error occurred. Please try again.",
-    "loading": "Checking vault status…"
+    "loading": "Checking vault status…",
+    "lockedToast": "Vault locked"
+  },
+  "commandPalette": {
+    "searchPlaceholder": "Type a command or search…",
+    "noResults": "No results found",
+    "recent": "Recent",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "createCredential": "Create credential",
+    "lockVault": "Lock vault",
+    "themeLight": "Switch to light theme",
+    "themeDark": "Switch to dark theme",
+    "themeSystem": "Use system theme"
   }
 }

@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import "@/lib/i18n";
@@ -465,7 +466,11 @@ describe("InventoryPage - add 버튼 통합", () => {
 
   it("'+ Add credential' 버튼 클릭 시 Dialog가 열린다", async () => {
     const user = userEvent.setup();
-    render(<InventoryPage />);
+    render(
+      <MemoryRouter>
+        <InventoryPage />
+      </MemoryRouter>,
+    );
 
     // 목록 로드 대기
     await waitFor(() => {

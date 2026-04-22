@@ -17,6 +17,7 @@ export interface UseVaultStatusResult {
 /**
  * vault_status Tauri 커맨드를 호출하여 볼트 상태를 관리하는 훅.
  * 마운트 시 한 번 호출하고, refresh()를 통해 재조회를 트리거한다.
+ * "vault-lock" CustomEvent를 수신하면 자동으로 refresh()를 호출한다.
  */
 export function useVaultStatus(): UseVaultStatusResult {
   const [status, setStatus] = useState<VaultStatusOrLoading>("loading");
@@ -38,6 +39,13 @@ export function useVaultStatus(): UseVaultStatusResult {
         setStatus({ state: "locked" });
       });
   }, []);
+
+  // Command Palette의 "Lock vault" 액션이 dispatch하는 커스텀 이벤트 수신
+  useEffect(() => {
+    const handler = () => refresh();
+    window.addEventListener("vault-lock", handler);
+    return () => window.removeEventListener("vault-lock", handler);
+  }, [refresh]);
 
   return { status, refresh };
 }
