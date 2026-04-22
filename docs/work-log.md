@@ -197,6 +197,30 @@
 - Lock vault 경로: (1) Cmd+K → Lock action, (2) idle timeout — 두 경로 모두 `invoke("vault_lock")` + `vault-lock` CustomEvent 패턴으로 통일.
 - 3순위(드롭&스캔 T032~T035) 진입. 3순위는 Rust 엔트로피 기반 secret detection + 파일시스템 스캔이 포함되어 M2 내 가장 복잡한 블록.
 
+### T032 — 드롭 존 + /onboarding/scan placeholder (implementator, 커밋 `6f121ee`, Night mode 연속)
+
+- **신규 파일**: `src/features/onboarding/DropZone.tsx`, `src/pages/OnboardingScanPage.tsx` (placeholder), `src/features/onboarding/__tests__/{DropZone,OnboardingScanPage}.test.tsx` (Vitest 8 + 2)
+- **수정 파일**: `src/App.tsx` (DropZone 마운트 + `/onboarding/scan` Route 추가), `src/locales/{en,ko,ja}/common.json` (onboarding 네임스페이스 6키)
+- **Tauri v2 API 확인**: DoD 의 `tauri://file-drop` 은 v1 이벤트명. v2 에서는 `@tauri-apps/api/webview` 의 `getCurrentWebview().onDragDropEvent(handler)` 로 구독. payload `{ type: "enter"|"over"|"drop"|"leave", paths?, position? }`. dynamic import + unlisten 반환 함수로 cleanup.
+- **이벤트 흐름**: `enter` → 오버레이 fade-in / `leave`/`drop` → fade-out / `drop` + paths.length>0 → `paths[0]` 만 사용해 `navigate("/onboarding/scan?path=...")`. 복수 경로는 T035 에서.
+- **웹 표준 DnD preventDefault**: 별도 useEffect 로 `dragenter/dragover/drop` 기본 브라우저 동작(파일 열기 등) 차단. platform 가드 동일 적용.
+- **플랫폼 가드**: `usePlatform()` 훅. `"desktop"` 아니면 DropZone 이 `null` 반환. 브라우저/모바일에서 getCurrentWebview 호출 안 함.
+- **오버레이 UI**: `fixed inset-0 z-50 backdrop-blur-sm bg-background/80 pointer-events-none` + dashed border card + `FolderDown` 아이콘. animate-in fade-in (globals.css prefers-reduced-motion 처리).
+- **OnboardingScanPage placeholder**: `useSearchParams` 로 `path` 쿼리 읽어 제목/설명 표시. path 없으면 빈 안내. T033–T035 에서 실제 스캔 UI 채움.
+- **테스트**: Vitest +10 (DropZone 8: platform 가드/onDragDropEvent 구독/enter-leave-drop 분기/paths[] 빈 배열 guard/unmount cleanup/dragover preventDefault 검증 + OnboardingScanPage 2: path 쿼리 렌더/path 누락 분기). 전체 107 통과.
+- **검증**: `tsc/lint/format:check/vitest/cargo build` 5개 exit 0.
+
+**구현 중 발견한 이슈**:
+
+- **jsdom `DragEvent` 미구현**: 테스트에서 `new DragEvent(...)` 호출 시 `ReferenceError`. 해결: `new Event("dragover", { cancelable: true })` + `preventDefault` spy 로 우회. 실제 Tauri/브라우저 환경에서는 DragEvent 정상.
+- **기존 테스트 회귀 없음**: 다른 테스트 파일들이 `<App />` 을 직접 렌더 안 하므로 `<DropZone />` 이 마운트되지 않아 `getCurrentWebview` 호출도 없음. 전역 mock 불필요.
+
+**T033/T034/T035 에 영향 줄 사실**:
+
+- **paths[0] 단일 경로 설계**: URL query `?path=<...>` 로 OnboardingScanPage 가 받음. T033 Rust 스캐너도 `scan_path(path: &Path) -> Vec<DetectedKey>` 단일 진입점 설계면 IPC 자연스럽게 연결. 복수 경로는 T035 UI 에서 여러 번 invoke.
+- **`/onboarding/scan` 라우트는 현재 AppShell 밖 독립 렌더**: AppShell 사이드바 없는 풀스크린 형태. T035 스캔 UI 구현 시 AppShell 안으로 이동할지 재검토 (현재 T032 결정은 "결과 검토 플로우 에 집중하기 위해 독립"). 풀스크린 유지 쪽이 드롭→확인 흐름 집중도 높음.
+- **플랫폼 가드 패턴**: `usePlatform() !== "desktop" → return null`. T035 스캔 결과 UI 에서도 데스크톱 가드 유지.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)
