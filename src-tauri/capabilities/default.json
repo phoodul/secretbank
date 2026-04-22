@@ -5,6 +5,13 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    "sql:default",
+    "clipboard-manager:default",
+    "shell:default",
+    "os:default",
+    "notification:default",
+    "deep-link:default",
+    "http:default"
   ]
 }

@@ -26,3 +26,22 @@ tauri = { workspace = true }
 tauri-plugin-opener = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+# Tauri plugins (common)
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+# tauri-plugin-stronghold = "2"  # TODO(T003): AppLocker 환경에서 libsodium 빌드 차단 문제 - 우선 비활성화
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-os = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-deep-link = "2"
+tauri-plugin-http = "2"
+
+# updater: desktop-only (Windows, macOS, Linux).
+# cfg(not(any(target_os = "android", target_os = "ios"))) = desktop
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
+
+# biometric: mobile-only (Android, iOS)
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+tauri-plugin-biometric = "2"
