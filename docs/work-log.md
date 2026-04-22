@@ -1,26 +1,44 @@
 # Work Log
 
-## 2026-04-22 (세션 종료 시점 요약)
+## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)
 
-**커밋 누적**: 17개 (`855c33c` → `9d6841c`)
+**커밋 누적**: 21개 (`855c33c` → `71d37bc`)
 
 **M0 Foundation**: 완료 (T001~T012, 12 태스크)
 
-**M1 Local Vault Core**: 10/12 완료
+**M1 Local Vault Core**: ✅ **12/12 완료**
 
 - T013 SQLite 스키마 · T014/T015 VaultStorage trait/Mock · T016 AgeVaultStorage(age 0.11 + 옵션 α)
 - T017 KDF(Argon2id+HKDF) · T018 OS Keyring · T019 SQLite 레포지터리 · T020 도메인 모델
 - T021 Vault 커맨드 · T022 Credential 커맨드
-- **남은**: T023(클립보드), T024(Lock Screen UI)
+- **T024** Lock Screen + Create Vault Dialog (zxcvbn 강도 미터, 커밋 `7946476`)
+- **T023** 클립보드 자동 만료 30초 (취소 토큰 + countdown 이벤트, 커밋 `71d37bc`)
 
-**블로커**: Windows Smart App Control On 상태로 `pnpm tauri dev` 풀 빌드 차단.
+### T024 — Lock Screen UI (implementator 에이전트)
 
-- 진단: `Get-MpComputerStatus` → `SmartAppControlState: On`
-- 결정: 개발자 PC 만 SAC Off (재부팅 필요, 되돌릴 수 없음)
-- 배포 앱: Gate 2 Q6=A 의 SignPath OSS Authenticode 서명 계획 그대로 유지 — 최종 사용자 영향 없음
-- 상세: `docs/project-decisions.md` "개발 환경 정책" 섹션 A/A-2/A-3
+- **생성 파일**: `src/features/vault/use-vault-status.ts` (invoke + loading/refresh 훅), `LockScreen.tsx` (3회 연속 실패 시 10초 쿨다운, `useRef` 카운터), `CreateVaultDialog.tsx` (zxcvbn 5구간 강도 미터, 최소 12자 + 일치 검증), `__tests__/*.test.tsx` (Vitest 13개), `src/components/ui/card.tsx` (shadcn/ui 패턴 직접 구현), `vitest.config.ts`, `src/test-setup.ts`
+- **수정 파일**: `src/App.tsx` (vault_status 분기: loading → uninitialized → locked → unlocked), `src/locales/{en,ko,ja}/common.json` (vault 네임스페이스 22개 키)
+- **의존성 추가**: `zxcvbn`, `@types/zxcvbn`, `vitest`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `jsdom`
+- **검증**: typecheck/lint/format:check/vitest(13/13)/cargo build 전부 exit 0
 
-**세션 종료 사유**: 사용자가 SAC Off 적용 후 재부팅. 다음 세션에서 `/resume-project` 로 이어감.
+### T023 — 클립보드 자동 만료 (implementator 에이전트)
+
+- **생성 파일**: `src-tauri/crates/api-vault-app/src/commands/clipboard.rs` (`credential_copy_to_clipboard` 커맨드 + `run_clipboard_timer` 순수 함수 + 4개 단위 테스트)
+- **리팩터**: `credentials.rs` 에서 `reveal_secret` 헬퍼를 추출해 `credential_reveal` / `credential_copy_to_clipboard` 두 커맨드가 공유 (코드 중복 제거)
+- **AppContext 확장**: `clipboard_controller: Arc<Mutex<Option<JoinHandle>>>` 필드 추가. 중복 호출 시 이전 `JoinHandle::abort()` 로 이전 타이머 취소 → 새 복사가 clear 주기 단독 소유
+- **이벤트**: 매 1초 `clipboard:countdown { remaining: u32 }` emit, 만료 시 `remaining: 0` 최종 이벤트 + `write_text("")` 로 클립보드 비움
+- **테스트 전략**: `tokio::time::pause` + `Arc<AtomicU32>` 카운터로 tick/clear 호출 횟수 확정 검증. `tokio::select!` 로 부분 틱 경쟁 해결.
+- **플러그인 게이팅**: `#[cfg(feature = "tauri-plugins")]` 아래에서만 mod 선언 + invoke_handler 등록 (테스트 빌드 링크 오류 회피)
+- **dev-dependencies**: `tokio features = ["test-util"]` 추가
+
+### 부수 수정
+
+- **빌드 복구** (`42b7769`): `tauri-plugins` feature 리스트에 `dep:tauri-plugin-updater`, `dep:tauri-plugin-biometric` 추가. 재부팅 후 풀 빌드에서 E0433 (cannot find module `tauri_plugin_updater`) 발생 → feature flag 누락이 원인. platform gating 은 target-specific `[dependencies]` + `#[cfg(target_os)]` 이중 보장됨.
+- **docs 포맷 정리** (`781d547`): prettier markdown 규칙에 따라 코드 펜스 앞뒤 빈 줄 삽입. 내용 변경 없음.
+
+### SAC 블로커 해소
+
+- 사용자가 SAC Off 적용 후 재부팅 → `pnpm tauri dev` 풀 빌드 정상. `docs/project-decisions.md` "개발 환경 정책" A-2 적용 완료.
 
 ---
 

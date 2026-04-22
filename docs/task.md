@@ -29,8 +29,8 @@
 | ID  | 이름                            | 태스크 범위 | Must 개수 | Status (2026-04-22)        |
 | :-- | :------------------------------ | :---------- | :-------- | :------------------------- |
 | M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료              |
-| M1  | Local Vault Core                | T013~T024   | 12        | 🔄 10/12 (T023, T024 남음) |
-| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | ⏳ 대기                    |
+| M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료              |
+| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | 🔄 대기                    |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ⏳ 대기                    |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기                    |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기                    |
@@ -73,8 +73,10 @@
 | T020    | 도메인 모델 (api-vault-core)                                | 2026-04-22 | `57959f7` |
 | T021    | Tauri 커맨드 vault_init/unlock/lock/status                  | 2026-04-22 | `9d6841c` |
 | T022    | Tauri 커맨드 credential\_\* (CRUD + reveal)                 | 2026-04-22 | `9d6841c` |
+| T024    | Lock Screen + Create Vault Dialog (zxcvbn 강도 미터)        | 2026-04-22 | `7946476` |
+| T023    | 클립보드 자동 만료 30초 (취소 토큰 + countdown 이벤트)      | 2026-04-22 | `71d37bc` |
 
-**완료 합계**: 22/118 (M0 완료 + M1 10/12)
+**완료 합계**: 24/118 (M0 완료 + M1 완료)
 
 ---
 

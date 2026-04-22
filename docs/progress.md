@@ -2,14 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-22 (세션 종료, 재부팅 대기)
-- **Phase:** Phase 3 — Implementation, M1 Local Vault Core 10/12 완료
-- **Commits:** 17개 누적 (최신 `9d6841c` feat(app): vault/credential Tauri 커맨드 T021+T022)
-- **Tests:** Rust 39개 + Vitest 테스트 통과 (cargo test -p api-vault-storage --all-features 32/32, api-vault-core 3/3, api-vault-crypto 5/5 + ignored 3/3)
-- **Blocker:** Windows Smart App Control (On) 이 proc-macro/build script 실행 차단 중. 사용자 재부팅 후 SAC Off 적용 대기.
-- **재개 방법:** 다음 세션 시작 시 `/resume-project` 스킬 실행.
+- **Time:** 2026-04-22 (M1 마무리 직후)
+- **Phase:** Phase 3 — Implementation, **M1 Local Vault Core 12/12 완료**
+- **Commits:** 21개 누적 (최신 `71d37bc` feat(app): 클립보드 자동 만료 30초 T023)
+- **Tests:** Rust 43개 + Vitest 13개 통과 (storage 32 + core 3 + crypto 5 + app clipboard 4 + ignored 3; 프론트 LockScreen 6 + CreateVaultDialog 7)
+- **Blocker:** 없음. SAC Off 적용 완료, 풀 빌드 정상.
 
-## M1 진행 상세 (10/12)
+## M1 완료 (12/12)
 
 ### 완료 ✅
 
@@ -23,43 +22,30 @@
 - T020 도메인 모델 31 struct + 12 enum + 9 ULID id (커밋 `57959f7`)
 - T021 Vault Tauri 커맨드 (init/unlock/lock/status, 커밋 `9d6841c`)
 - T022 Credential Tauri 커맨드 (CRUD + reveal, 커밋 `9d6841c`)
+- T024 Lock Screen + Create Vault Dialog (zxcvbn 강도 미터, 커밋 `7946476`)
+- T023 클립보드 자동 만료 30초 (취소 토큰 + countdown 이벤트, 커밋 `71d37bc`)
 
-### 남은 2개 태스크 (다음 세션에서)
+### 부수 수정
 
-- [ ] **T023** 클립보드 자동 만료 30초 (Rust, SAC Off 필요)
-- [ ] **T024** Lock Screen UI (프론트, SAC 와 무관)
+- `fix(tauri): tauri-plugins feature 에 updater/biometric dep 추가` (커밋 `42b7769`) — 재부팅 후 풀 빌드에서 드러난 E0433 해결
+- `chore(docs): prettier 포맷 일괄 적용` (커밋 `781d547`) — 코드 펜스 주변 공백 정리
 
-## 재부팅 후 Next Actions (순서)
+## 다음 세션 Next Actions
 
-1. **SAC Off 확인:**
+1. **M1 통합 검증 (수동)** — `pnpm tauri dev` 로 실제 앱을 띄우고 CreateVault → Unlock → credential create → reveal → copy_to_clipboard (30초 자동 만료 확인) → lock 흐름 검증. 사용자 직접 테스트 권장.
 
-   ```powershell
-   Get-MpComputerStatus | Select SmartAppControlState
-   ```
-
-   `Off` 출력되면 성공.
-
-2. **풀 빌드 검증:**
-
-   ```
-   pnpm tauri dev
-   ```
-
-   "No package info" 없이 창이 뜨는지 확인.
-
-3. **정상 동작이면 M1 마무리:**
-   - T024 Lock Screen UI 먼저 (프론트, 의존 없음)
-   - T023 클립보드 자동 만료 (Rust)
-   - M1 통합 검증 (vault init → credential create → reveal → lock)
-
-4. **M1 종료 후 M2 Inventory UI + 드롭&스캔 (T025~T040) 진입.**
+2. **M2 Inventory UI + 드롭&스캔 진입 (T025~T040):**
+   - T025 Inventory 페이지 목록 뷰
+   - T026 Credential 등록 다이얼로그 (수동)
+   - T027~T033 드롭&스캔 (파일시스템 스캐너, 엔트로피/정규식 기반 secret detection, UsageGraph 추출)
+   - T034~T040 Inventory 편집/삭제/일괄 처리
 
 ## SAC/AppLocker/Defender 정책 기록
 
 `docs/project-decisions.md` 의 "개발 환경 정책" 섹션 A/A-2/A-3 참조:
 
 - A: Defender 실시간 보호 `target/` 예외 (적용됨)
-- A-2: 개발자 PC SAC Off (재부팅 대기)
+- A-2: 개발자 PC SAC Off (**적용됨**)
 - A-3: 배포 시 SignPath OSS Authenticode 서명 (M13 예정)
 
 ## Completed
@@ -124,7 +110,7 @@
 
 ## In Progress
 
-- [ ] M1 — 핵심 데이터 모델 + 볼트 CRUD
+- [ ] M2 — Inventory UI + 드롭&스캔 (T025~T040)
 
 ## Pending Decisions
 
@@ -144,4 +130,4 @@
 
 ## Next Action
 
-- M1 진입: SQLite 스키마 설계 (T013), 볼트 CRUD Rust 커맨드 (T014~T017), 암호화 레이어 (T018~T020)
+- **M1 수동 통합 검증** → **M2 진입**: T025 Inventory 페이지 목록 뷰 (CredentialCard 그리드 + 검색/Issuer/Env/Status 필터 + 빈 상태)
