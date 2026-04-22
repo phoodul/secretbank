@@ -20,6 +20,12 @@ serde_json = { workspace = true }
 secrecy   = { workspace = true }
 zeroize   = { workspace = true }
 async-trait = { workspace = true }
+age = "0.11"
+rmp-serde = "1"
+tempfile = "3"
+api-vault-crypto = { version = "0.1.0", path = "../api-vault-crypto" }
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+bech32 = "0.9"
 
 [dev-dependencies]
 tokio = { workspace = true }
