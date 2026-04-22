@@ -2,11 +2,34 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-22 (M1 수동 통합 검증 통과 후)
-- **Phase:** Phase 3 — Implementation, **M1 Local Vault Core 12/12 + 수동 검증 완료**
-- **Commits:** 25개 누적 (최신 `987b857` chore(dev): M1 수동 검증용 DevTools IPC 보조 설정)
-- **Tests:** Rust 43개 + Vitest 13개 통과. 수동 E2E 전 흐름 통과.
+- **Time:** 2026-04-23 (T025 완료 — M2 진입)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 1/14**
+- **Commits:** 26개 누적 (최신 `ab69319` feat(inventory): Inventory 목록 뷰 + 필터 바 (T025))
+- **Tests:** Rust 43개 + Vitest 33개 통과 (Vitest +20: CredentialCard 10 + InventoryPage 10).
 - **Blocker:** 없음.
+
+## M2 진행 상황 (1/14)
+
+### 완료 ✅
+
+- T025 Inventory 페이지 목록 뷰 + 필터 바 (커밋 `ab69319`)
+
+### 진행 순서 결정 (2026-04-23)
+
+사용자 방침: **CRUD UI 핵심(T025→T026→T027)을 먼저, 드롭&스캔 블록(T032~T035)은 M2 후반으로.**
+
+- 1순위: T025 ✅ → T026 Credential 등록 다이얼로그 → T027 상세 Drawer
+- 2순위: T028 Issuer 프리셋 (T026 combobox 채움) → T029 Cmd+K → T030 Theme/Settings → T031 Auto-lock
+- 3순위(드롭&스캔): T032 드롭존 → T033 .env 파서 + 엔트로피 → T034 env_scan_folder 커맨드 → T035 결과 검토 UI
+- 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
+
+### T025 구현 교훈 (M2 후속에 영향)
+
+- **React 19 대응 eslint-plugin-react-hooks `set-state-in-effect` 규칙 활성화됨**. `useEffect` 안에서 동기 `setState` 호출 시 warn. 해결책: 단일 상태 객체를 union (`{phase:"loading"} | {phase:"ok", data} | {phase:"error", message}`) 로 묶어 관리. `use-inventory.ts` 패턴 참고.
+- **Radix Select jsdom 호환성**: `hasPointerCapture`/`setPointerCapture`/`releasePointerCapture`/`scrollIntoView` 폴리필을 `src/test-setup.ts` 에 추가해야 Vitest 에서 Select 가 열림. T026 Dialog/DropdownMenu 테스트에서도 이미 적용돼 있어 재사용 가능.
+- **Radix Select 접근성**: SelectTrigger 에 `aria-label` 명시해야 `getByRole("combobox", {name})` 로 찾힘. 선택된 값 텍스트만으로는 accessible name 이 되지 않음.
+- **Issuer 이름 표시는 임시로 `issuer_id.slice(0,8)` 축약형**. T028 프리셋 라이브러리가 준비되면 전면 교체 — `CredentialCard` 의 `IssuerBadge` 부분에 TODO 있음.
+- **`CredentialSummary` 에 `last_rotated_at` 없음** (서버 응답 누락). 카드에 라벨만 두고 값 `"—"` 로 표시. 추후 서버 DTO 확장 시 채움.
 
 ## M1 완료 (12/12)
 
@@ -127,7 +150,8 @@
 
 ## In Progress
 
-- [ ] M2 — Inventory UI + 드롭&스캔 (T025~T040)
+- [x] T025 Inventory 페이지 목록 뷰 + 필터 바 — 커밋 `ab69319`
+- [ ] T026 Credential 등록 다이얼로그 (수동) — 다음 태스크
 
 ## Pending Decisions
 
@@ -147,4 +171,4 @@
 
 ## Next Action
 
-- **M1 수동 통합 검증** → **M2 진입**: T025 Inventory 페이지 목록 뷰 (CredentialCard 그리드 + 검색/Issuer/Env/Status 필터 + 빈 상태)
+- **T026 Credential 등록 다이얼로그** — shadcn/ui Dialog + react-hook-form + zod. Issuer combobox 는 T028 프리셋 도입 전까지 임시 `Input` 으로 ULID 문자열 수동 입력 또는 `Custom` 단일 옵션만 노출. 제출 시 `credential_create` invoke → 성공 toast + `refresh()` 호출로 InventoryPage 에 즉시 반영.

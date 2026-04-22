@@ -26,22 +26,22 @@
 
 ## 마일스톤 목록
 
-| ID  | 이름                            | 태스크 범위 | Must 개수 | Status (2026-04-22)        |
-| :-- | :------------------------------ | :---------- | :-------- | :------------------------- |
-| M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료              |
-| M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료              |
-| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | 🔄 대기                    |
-| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ⏳ 대기                    |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기                    |
-| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기                    |
-| M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기                    |
-| M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기                    |
-| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기                    |
-| M9  | Sync Infrastructure             | T087~T096   | 10        | ⏳ 대기                    |
-| M10 | Payments                        | T097~T103   | 7         | ⏳ 대기                    |
-| M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기                    |
-| M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기                    |
-| M13 | i18n + Updater + Release        | T114~T118   | 5         | ⏳ 대기                    |
+| ID  | 이름                            | 태스크 범위 | Must 개수 | Status (2026-04-23) |
+| :-- | :------------------------------ | :---------- | :-------- | :------------------ |
+| M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료       |
+| M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
+| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | 🔄 1/14 완료        |
+| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ⏳ 대기             |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기             |
+| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
+| M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
+| M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
+| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기             |
+| M9  | Sync Infrastructure             | T087~T096   | 10        | ⏳ 대기             |
+| M10 | Payments                        | T097~T103   | 7         | ⏳ 대기             |
+| M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기             |
+| M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기             |
+| M13 | i18n + Updater + Release        | T114~T118   | 5         | ⏳ 대기             |
 
 ---
 
@@ -75,8 +75,9 @@
 | T022    | Tauri 커맨드 credential\_\* (CRUD + reveal)                 | 2026-04-22 | `9d6841c` |
 | T024    | Lock Screen + Create Vault Dialog (zxcvbn 강도 미터)        | 2026-04-22 | `7946476` |
 | T023    | 클립보드 자동 만료 30초 (취소 토큰 + countdown 이벤트)      | 2026-04-22 | `71d37bc` |
+| T025    | Inventory 페이지 목록 뷰 + 필터 바                          | 2026-04-23 | `ab69319` |
 
-**완료 합계**: 24/118 (M0 완료 + M1 완료)
+**완료 합계**: 25/118 (M0 완료 + M1 완료 + M2 1/14)
 
 ---
 

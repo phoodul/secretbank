@@ -1,5 +1,34 @@
 # Work Log
 
+## 2026-04-23 (M2 진입, T025)
+
+**세션 재개**: `/resume-project` → `last_session.json` 이 0바이트라 `docs/progress.md` 로 컨텍스트 복원. M1 12/12 완료 + 수동 통합 검증 통과 상태에서 M2 진입.
+
+**진행 순서 결정**: 사용자 방침 — CRUD UI 핵심(T025→T026→T027)을 먼저, 드롭&스캔 블록(T032~T035)은 M2 후반으로 미룸. `docs/progress.md` "M2 진행 상황" 에 진행 순서 3단계 기록.
+
+### T025 — Inventory 페이지 목록 뷰 (implementator 에이전트, 커밋 `ab69319`)
+
+- **생성 파일**: `src/features/inventory/{types,use-inventory,CredentialCard,CredentialList,InventoryPage}.tsx` (+ `__tests__/{fixtures,CredentialCard.test,InventoryPage.test}.tsx`), `src/components/ui/select.tsx` (shadcn/ui CLI)
+- **수정 파일**: `src/pages/InventoryPage.tsx` (feature 래퍼 1줄로 축소), `src/locales/{en,ko,ja}/common.json` (inventory 네임스페이스 25키), `src/test-setup.ts` (Radix polyfill)
+- **기능**: 카드 그리드 + 검색 input + Issuer/Env/Status select 필터 + 빈 상태 + hover progressive disclosure
+- **서버/클라 필터 분리**: 서버 `CredentialFilter` (issuer/env/status/expiring_within_days) 는 `credential_list` 에 전달, 이름 검색은 클라이언트 `useMemo` 로 처리
+- **테스트**: Vitest +20 (CredentialCard 10 + InventoryPage 10), 전체 33개 통과. 기존 LockScreen/CreateVaultDialog 회귀 없음.
+- **검증**: `pnpm exec tsc --noEmit` / `pnpm lint` / `pnpm format:check` / `pnpm exec vitest run` / `cargo build --workspace` 전부 exit 0
+
+**발견한 설계 교훈**:
+
+- **React 19 eslint-plugin-react-hooks `set-state-in-effect` 규칙**: `useEffect` 내부 동기 `setState` 호출 시 경고. `use-inventory.ts` 는 `FetchState` union (`{phase:"loading"} | {phase:"ok"} | {phase:"error"}`) 로 단일 객체 관리하여 회피. 기존 `use-vault-status.ts` 의 `"loading"` 리터럴 방식과 방향은 같으나 에러 상태까지 포괄하는 형태로 확장.
+- **Radix Select jsdom 호환성**: `HTMLElement.prototype.{hasPointerCapture,setPointerCapture,releasePointerCapture,scrollIntoView}` 폴리필을 `src/test-setup.ts` 에 추가해야 테스트에서 Select 가 열림. T026 이후 다른 Radix 컴포넌트 테스트에서도 재사용.
+- **Radix Select 접근성**: SelectTrigger 는 내부 표시 텍스트만으로는 accessible name 이 계산되지 않음. `aria-label` 명시 필수.
+- **Issuer 표시 임시 축약**: T028 프리셋 라이브러리 전까지 `CredentialCard` 의 `IssuerBadge` 는 `issuer_id.slice(0,8)` 표시. TODO 주석 남김.
+- **`CredentialSummary.last_rotated_at` 누락**: task.md DoD 의 "마지막 교체일" 요구는 서버 DTO 확장 후에 채움. 카드에 라벨만 준비 (`"—"` placeholder).
+
+### 부수 처리
+
+- `docs/task.md` 의 prettier 자동 리포맷(마크다운 테이블 컬럼 정렬)은 feature 커밋에서 분리 — T025 완료 기록과 함께 별도 docs 커밋에 포함.
+
+---
+
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)
 
 **커밋 누적**: 21개 (`855c33c` → `71d37bc`)
