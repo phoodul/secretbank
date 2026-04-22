@@ -73,16 +73,17 @@
 - **Files Touched**: `src-tauri/Cargo.toml`, `crates/*/Cargo.toml`
 - **Tests**: `cargo build --workspace`
 
-### T003. Tauri v2 플러그인 활성화 (sql, stronghold, clipboard-manager, shell, os, updater, notification, biometric, deep-link, http)
+### T003. Tauri v2 플러그인 활성화 (sql, clipboard-manager, shell, os, updater, notification, biometric, deep-link, http)
 
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T001
 - **Goal**: 향후 태스크가 쓸 Tauri 공식 플러그인을 설치하고 capability 초기화.
+- **Historical Note (2026-04-22 갱신):** 최초 계획에는 `tauri-plugin-stronghold` 가 포함되어 있었으나, 2026-04-22 결정에 따라 볼트 암호화 엔진을 `age` crate 로 교체하면서 Stronghold 플러그인은 완전히 제외되었다 (`docs/project-decisions.md` "볼트 암호화 엔진 교체" 섹션 참조). 본 태스크 자체는 이미 완료됐으므로 되돌리지 않고 역사 기록만 남긴다.
 - **DoD**:
-  - `tauri-plugin-sql`, `tauri-plugin-stronghold`, `tauri-plugin-clipboard-manager`, `tauri-plugin-shell`, `tauri-plugin-os`, `tauri-plugin-updater`, `tauri-plugin-notification`, `tauri-plugin-biometric`, `tauri-plugin-deep-link`, `tauri-plugin-http` 가 `api-vault-app/Cargo.toml` 에 있고 `lib.rs` 의 `Builder::default().plugin(...)` 체인에 등록됨
+  - `tauri-plugin-sql`, `tauri-plugin-clipboard-manager`, `tauri-plugin-shell`, `tauri-plugin-os`, `tauri-plugin-updater`, `tauri-plugin-notification`, `tauri-plugin-biometric`, `tauri-plugin-deep-link`, `tauri-plugin-http` 가 `api-vault-app/Cargo.toml` 에 있고 `lib.rs` 의 `Builder::default().plugin(...)` 체인에 등록됨
   - 대응하는 JS 패키지 `@tauri-apps/plugin-*` 설치
-  - `capabilities/default.json` 에 사용할 permission 추가 (`sql:default`, `stronghold:default`, `clipboard-manager:allow-write`, `os:allow-platform`, `updater:default`, `http:default` 등)
+  - `capabilities/default.json` 에 사용할 permission 추가 (`sql:default`, `clipboard-manager:allow-write`, `os:allow-platform`, `updater:default`, `http:default` 등). Stronghold 관련 permission(`stronghold:default`) 은 포함하지 않는다.
 - **Files Touched**: `src-tauri/crates/api-vault-app/Cargo.toml`, `src-tauri/crates/api-vault-app/src/lib.rs`, `src-tauri/capabilities/default.json`, `package.json`
 - **Tests**: `cargo tauri dev` 앱 실행, 콘솔 에러 없음 (manual)
 
@@ -231,7 +232,7 @@
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T001
-- **Goal**: Stronghold 교체 가능하도록 볼트 I/O 추상화. (Gate 1 Q6=B 결정)
+- **Goal**: 볼트 구현체 교체 가능하도록 볼트 I/O 추상화. (Gate 1 Q6=B 결정. 2026-04-22 결정에 따라 기본 구현체는 `AgeVaultStorage` 로 확정.)
 - **DoD**:
   - `crates/api-vault-storage/src/vault/mod.rs` 에 `trait VaultStorage` 선언:
     - `async fn unlock(&mut self, password: SecretString) -> Result<(), VaultError>`
@@ -250,7 +251,7 @@
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T014
-- **Goal**: `VaultStorage` 단위 테스트가 Stronghold 없이 가능하도록 인메모리 구현.
+- **Goal**: `VaultStorage` 단위 테스트가 실제 암호화 볼트 파일 없이 가능하도록 인메모리 구현.
 - **DoD**:
   - `crates/api-vault-storage/src/vault/mock.rs` 에 `MockVaultStorage`
   - 내부 `HashMap<String, Vec<u8>>` + `unlocked: bool` + `correct_password: String`
@@ -259,19 +260,21 @@
 - **Files Touched**: `crates/api-vault-storage/src/vault/mock.rs`, `crates/api-vault-storage/Cargo.toml`
 - **Tests**: Rust — `tests/vault_mock_contract.rs` 에서 7개 trait 메서드 CRUD 시나리오 전부 검증
 
-### T016. `StrongholdStorage` 구현
+### T016. `AgeVaultStorage` 구현
 
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T014, T003
-- **Goal**: 실제 Stronghold v2 위에 `VaultStorage` trait 구현.
+- **Goal**: `age` crate(RustCrypto) 기반으로 단일 암호화 파일 위에 `VaultStorage` trait 구현. (2026-04-22 결정: Stronghold → age 교체. `docs/project-decisions.md` 참조)
 - **DoD**:
-  - `crates/api-vault-storage/src/vault/stronghold.rs` 에 `StrongholdStorage`
-  - `unlock` → Argon2id(password) → Stronghold `load_client("api-vault-v1")`
-  - `put_secret/get_secret/delete_secret` → Stronghold record API 매핑
-  - 파일 경로: `<app_data_dir>/vault.stronghold`
-- **Files Touched**: `crates/api-vault-storage/src/vault/stronghold.rs`, `crates/api-vault-storage/Cargo.toml`
-- **Tests**: Rust — `tests/stronghold_integration.rs` (tempdir 사용, 실제 Stronghold 파일 생성/잠금/해제/라운드트립)
+  - `crates/api-vault-storage/src/age_vault/mod.rs` 에 `AgeVaultStorage`
+  - `unlock` → Argon2id(password, salt_enc) → HKDF(info="age-vault") → age X25519 identity 도출 → `age::Decryptor` 로 볼트 파일 복호화 → 레코드 맵 로드 (scrypt recipient vs X25519 recipient 최종 모드는 구현 착수 시 확정)
+  - `put_secret/get_secret/delete_secret/list_secrets` → 메모리 레코드 맵에 적용 후 flush 시점에 age 로 재암호화하여 atomic rename 으로 저장
+  - 파일 경로: `<app_data_dir>/vault.age` (Tauri path API 로 획득, 하드코딩 금지)
+  - 저장 전 `vault.age.bak-<timestamp>` 로 자동 백업 (롤백 계획)
+  - 모든 민감 버퍼는 `secrecy::SecretBox` + `zeroize` on drop
+- **Files Touched**: `crates/api-vault-storage/src/age_vault/mod.rs`, `crates/api-vault-storage/Cargo.toml` (추가 의존성: `age`, `secrecy`, `zeroize`)
+- **Tests**: Rust — `tests/age_vault_integration.rs` (tempdir 사용, 실제 `vault.age` 파일 생성/잠금/해제/라운드트립 + 잘못된 패스프레이즈 시 `VaultError::WrongPassword`)
 
 ### T017. 키 파생 유틸 (Argon2id + HKDF)
 
@@ -341,7 +344,7 @@
 - **Goal**: 프론트엔드가 볼트 상태를 제어하는 최초 4개 IPC.
 - **DoD**:
   - `crates/api-vault-app/src/commands/vault.rs`
-  - `vault_init(password)` → 최초 실행 시 마스터 패스프레이즈 설정 + Stronghold 파일 생성 + OS Keyring 에 session key 저장
+  - `vault_init(password)` → 최초 실행 시 마스터 패스프레이즈 설정 + `vault.age` 파일 생성 + OS Keyring 에 session key 저장
   - `vault_unlock(password)` → 기존 볼트 열기
   - `vault_status()` → `Locked | Unlocked | Uninitialized`
   - 에러는 `VaultCommandError` 로 flat enum (`#[serde(tag = "code")]`) — 프론트에서 case 분기
@@ -356,11 +359,11 @@
 - **Goal**: 크리덴셜 CRUD IPC.
 - **DoD**:
   - `crates/api-vault-app/src/commands/credentials.rs`
-  - `credential_create(input)` → SQLite row + Stronghold put_secret (암호화 값은 `input.value`, path: `credentials/<ulid>`)
+  - `credential_create(input)` → SQLite row + `VaultStorage::put_secret` (값은 `input.value`, path: `credentials/<ulid>`, age 볼트 파일에 flush)
   - `credential_list(filter)` → `Vec<CredentialSummary>` (값 복호화 X)
   - `credential_get(id)` → `CredentialFull` (메타데이터만)
-  - `credential_reveal(id)` → `String` (Stronghold get + 복호화)
-  - 에러 시 Stronghold 는 트랜잭션 롤백 (SQLite insert 후 Stronghold 실패 → SQLite 삭제)
+  - `credential_reveal(id)` → `String` (`VaultStorage::get_secret` 로 age 볼트에서 복호화)
+  - 에러 시 볼트 쓰기는 pseudo-트랜잭션 롤백 (SQLite insert 후 볼트 put 실패 → SQLite 삭제)
 - **Files Touched**: `crates/api-vault-app/src/commands/credentials.rs`
 - **Tests**: Rust — create/get/reveal 라운드트립 (MockVaultStorage 로 주입); `create` 실패 시 SQLite 롤백 검증
 
@@ -878,7 +881,7 @@
 - **Goal**: 사용자가 NVD API 키 등록 시 레이트 리밋 확대.
 - **DoD**:
   - Settings > Integrations > NVD API Key 필드
-  - 키는 Stronghold `settings/nvd_api_key` 경로에 저장 (일반 SQLite 가 아니라)
+  - 키는 age 볼트 파일 내 `settings/nvd_api_key` 레코드 경로에 저장 (일반 SQLite 가 아니라)
   - 저장 시 feed scheduler 재로드
 - **Files Touched**: `src/features/settings/IntegrationsSection.tsx`, `crates/api-vault-app/src/commands/settings.rs`
 - **Tests**: Vitest — 저장 invoke
@@ -1039,7 +1042,7 @@
 - **Files Touched**: `crates/api-vault-audit/src/chain.rs`, `Cargo.toml`
 - **Tests**: Rust — append 10 entries, 정상 verify; 중간 payload 변조 시 first_invalid_seq 감지
 
-### T070. Device key 생성 + Stronghold 저장
+### T070. Device key 생성 + 볼트 저장
 
 - **Milestone**: M6
 - **Priority**: Must
@@ -1048,7 +1051,7 @@
 - **DoD**:
   - `crates/api-vault-app/src/services/device_identity.rs`
   - `fn ensure_device_keys(vault: &mut dyn VaultStorage, sqlite: &DeviceRepo) -> Result<DeviceIdentity>`
-  - 없으면 생성, Stronghold `device/signing_key` + SQLite `device` 테이블 insert(public key)
+  - 없으면 생성, age 볼트 파일의 `device/signing_key` 경로 + SQLite `device` 테이블 insert(public key)
   - 있으면 로드
 - **Files Touched**: `crates/api-vault-app/src/services/device_identity.rs`, `crates/api-vault-app/src/lib.rs` (setup)
 - **Tests**: Rust — 두 번 호출 시 같은 키 반환
@@ -1119,7 +1122,7 @@
   - `crates/api-vault-app/src/commands/kill_switch.rs`
   - `kill_switch_request_confirm(cred_id) -> ConfirmationToken` (random 16 bytes hex, KV 인메모리 5분 TTL)
   - `kill_switch_revoke(cred_id, token) -> Result<()>` — 토큰 검증 후 credential status 업데이트 + audit log append
-  - 값 자체를 Stronghold 에서 삭제할지는 사용자 선택 (기본: 유지, "Also delete value" 체크박스)
+  - 값 자체를 age 볼트에서 삭제할지는 사용자 선택 (기본: 유지, "Also delete value" 체크박스)
 - **Files Touched**: `crates/api-vault-app/src/commands/kill_switch.rs`
 - **Tests**: Rust — 토큰 없이 호출 시 reject, 정상 플로우 시 status 변경
 
@@ -1234,7 +1237,7 @@
   - `crates/api-vault-app/src/commands/auth.rs`
   - Passkey: Tauri WebView 에서 `navigator.credentials.create/get` 을 사용 → 프론트가 payload 생성 후 백엔드에 전달 → 백엔드가 릴레이 호출
   - OAuth: `tauri_plugin_shell::open(auth_url)` → OS 브라우저 → deep link `apivault://auth/callback` → 수신 → 릴레이에 code 교환
-  - JWT 는 Stronghold `auth/session_token` 경로에 저장
+  - JWT 는 age 볼트 파일의 `auth/session_token` 레코드 경로에 저장
 - **Files Touched**: `crates/api-vault-app/src/commands/auth.rs`, `src-tauri/tauri.conf.json` (deep link scheme)
 - **Tests**: Rust — mock 릴레이 응답 테스트; manual E2E
 
@@ -1273,7 +1276,7 @@
 - **DoD**:
   - 릴레이 refresh 엔드포인트 `POST /auth/refresh`
   - 클라이언트 reqwest middleware 로 401 시 자동 refresh 후 재시도
-  - refresh token 은 Stronghold `auth/refresh_token`
+  - refresh token 은 age 볼트 파일의 `auth/refresh_token` 레코드 경로
 - **Files Touched**: `api-vault-relay/src/routes/auth.ts`, `crates/api-vault-app/src/services/session.rs`
 - **Tests**: Rust — mock 401 → refresh → 200 재시도
 
@@ -1317,7 +1320,7 @@
   - `src/features/sync/mapping.ts` — 각 엔티티별 bidirectional mapper
   - `Y.Map` observe → Tauri invoke upsert (origin tag 로 루프 방지)
   - Tauri emit `db:changed` → Y.Map update (origin tag)
-  - `stronghold_ref` 같은 디바이스 로컬 필드는 CRDT 밖
+  - `vault_ref` 같은 디바이스 로컬 필드는 CRDT 밖
 - **Files Touched**: `src/features/sync/mapping.ts`, `crates/api-vault-app/src/commands/sync.rs` (`sync_apply_update`, emit `db:changed`)
 - **Tests**: Vitest — Y.Map 변경 → invoke 호출 추적
 
@@ -1344,7 +1347,7 @@
 - **DoD**:
   - 릴레이 `encrypted_secret_values` 테이블 추가
   - `POST /sync/values` / `GET /sync/values?since=...`
-  - 클라이언트: credential 값 변경 시 `value_root_key` 로 AEAD → 업로드; 새 credential 수신 시 다운로드 → Stronghold 저장
+  - 클라이언트: credential 값 변경 시 `value_root_key` 로 AEAD → 업로드; 새 credential 수신 시 다운로드 → age 볼트 파일에 저장
 - **Files Touched**: `api-vault-relay/src/routes/sync.ts`, `api-vault-relay/src/db/schema.ts` (encrypted_secret_values), `crates/api-vault-app/src/services/value_sync.rs`, `src/features/sync/value-sync.ts`
 - **Tests**: Rust + Miniflare — 라운드트립
 
@@ -1530,18 +1533,18 @@
 - **Files Touched**: `src-tauri/gen/*`, `src-tauri/tauri.conf.json`, `docs/runbooks/mobile-setup.md`
 - **Tests**: manual — 에뮬레이터 실행
 
-### T105. Stronghold 모바일 동작 검증 (PoC)
+### T105. age 볼트 파일 모바일 동작 검증 (PoC)
 
 - **Milestone**: M11
 - **Priority**: Must
 - **Depends on**: T016, T104
-- **Goal**: iOS/Android 에서 Stronghold 파일 생성/해제/CRUD 정상 동작 확인.
+- **Goal**: iOS/Android 에서 `AgeVaultStorage` 기반 볼트 파일 생성/해제/CRUD 정상 동작 확인. (과거 Stronghold PoC 였으나 2026-04-22 교체 결정에 따라 age 기반으로 재정의. age 는 pure Rust 이므로 네이티브 C 의존성 이슈는 사전 해소됨.)
 - **DoD**:
-  - `crates/api-vault-storage/tests/mobile_stronghold_poc.rs` (feature-gated)
+  - `crates/api-vault-storage/tests/mobile_age_vault_poc.rs` (feature-gated)
   - 실제 기기 1회 수동 테스트: vault_init → put_secret → lock → unlock → get_secret 라운드트립
-  - 파일 경로: iOS `$DOCUMENTS/vault.stronghold`, Android `$FILES/vault.stronghold`
-  - 만약 실패 시 → fallback `age` 암호화 파일 구현 태스크 추가 (Open Issue)
-- **Files Touched**: `crates/api-vault-storage/src/vault/stronghold.rs` (mobile 경로), `docs/runbooks/mobile-stronghold-verification.md`
+  - 파일 경로: iOS `$DOCUMENTS/vault.age`, Android `$FILES/vault.age` (Tauri path API 사용, 하드코딩 금지)
+  - iOS 샌드박스/Android scoped storage 권한 경계 확인
+- **Files Touched**: `crates/api-vault-storage/src/age_vault/mod.rs` (mobile 경로 분기), `docs/runbooks/mobile-age-vault-verification.md`
 - **Tests**: manual on device
 
 ### T106. Biometric 잠금 해제 (iOS Face/Touch ID, Android BiometricPrompt)
@@ -1553,7 +1556,7 @@
 - **DoD**:
   - `@tauri-apps/plugin-biometric` 통합
   - 볼트 unlock 시 "Unlock with Face ID / Fingerprint" 제안
-  - 인증 성공 시 OS Keychain 에 저장된 derived key 로 Stronghold unlock
+  - 인증 성공 시 OS Keychain 에 저장된 derived key 로 age 볼트 파일 unlock
   - iOS: `biometryCurrentSet` 플래그로 바이오메트릭 변경 시 무효화
   - Android: `setUserAuthenticationRequired(true)` + `KeyPermanentlyInvalidatedException` 처리 → 재등록 UX
 - **Files Touched**: `crates/api-vault-app/src/commands/biometric.rs`, `src/features/vault/BiometricUnlock.tsx`

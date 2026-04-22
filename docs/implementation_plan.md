@@ -14,7 +14,7 @@
 
 | 키                                               | 용도                             | 등록 위치                  | 최초 필요 마일스톤 |
 | :----------------------------------------------- | :------------------------------- | :------------------------- | :----------------- |
-| `NVD_API_KEY`                                    | NVD CVE API 2.0 레이트 리밋 확대 | Stronghold (settings 경로) | M4                 |
+| `NVD_API_KEY`                                    | NVD CVE API 2.0 레이트 리밋 확대 | age 볼트 파일 `settings/nvd_api_key` | M4                 |
 | `GITHUB_APP_ID`                                  | GitHub App 식별자                | Cloudflare Workers secret  | M5                 |
 | `GITHUB_APP_PRIVATE_KEY`                         | GitHub App JWT 서명              | Cloudflare Workers secret  | M5                 |
 | `PADDLE_WEBHOOK_SECRET`                          | Paddle HMAC 검증                 | Cloudflare Workers secret  | M10                |
@@ -27,7 +27,7 @@
 | `APPLE_API_PRIVATE_KEY`                          |                                  |                            |                    |
 | `PLAY_SERVICE_ACCOUNT_JSON`                      | Fastlane Play 업로드             | GitHub Actions secret      | M13                |
 | `SIGNPATH_API_TOKEN` / `AZURE_TRUSTED_SIGNING_*` | Windows Authenticode             | GitHub Actions secret      | M13                |
-| `HIBP_API_KEY`                                   | HIBP v3                          | Stronghold (settings)      | M4 Should          |
+| `HIBP_API_KEY`                                   | HIBP v3                          | age 볼트 파일 `settings/hibp_api_key` | M4 Should          |
 
 ### 계정 / 서비스 등록 순서
 
@@ -145,7 +145,7 @@ async fn migrations_apply_cleanly(pool: SqlitePool) {
 
 ### 개요
 
-Zero-Knowledge 로컬 볼트의 근본 레이어를 완성한다. **Stronghold + OS Keyring + SQLite + VaultStorage trait + Argon2id/HKDF 키 파생 + 기본 Tauri 커맨드 + LockScreen UI**. 이후 모든 MVP 기능은 이 레이어 위에서 동작한다.
+Zero-Knowledge 로컬 볼트의 근본 레이어를 완성한다. **`age` crate 기반 AgeVaultStorage + OS Keyring + SQLite + VaultStorage trait + Argon2id/HKDF 키 파생 + 기본 Tauri 커맨드 + LockScreen UI**. 이후 모든 MVP 기능은 이 레이어 위에서 동작한다. (2026-04-22 결정에 따라 Stronghold 에서 `age` crate 로 교체됨 — `docs/project-decisions.md` 의 "볼트 암호화 엔진 교체" 섹션 참조.)
 
 ### 태스크 그룹
 
@@ -155,47 +155,57 @@ T013 ~ T024 (12개 Must)
 
 | 항목                           | 선택                    | 버전   | 근거                                                          |
 | :----------------------------- | :---------------------- | :----- | :------------------------------------------------------------ |
-| 볼트                           | Tauri Stronghold plugin | v2     | research_raw.md §1 — v2 기간 사용, 추상화로 격리              |
+| 볼트 암호화 엔진               | `age` crate (RustCrypto) | 0.10+  | 2026-04-22 결정: Stronghold(libsodium-sys-stable AppLocker 이슈 + v3 deprecated 예정)에서 교체. age 는 표준 포맷(X25519 + ChaCha20-Poly1305), pure Rust, 모바일 호환 |
 | OS Keyring                     | `keyring` crate         | 3      | research_raw.md §7 — hwchen/keyring-rs, 데스크톱 3플랫폼      |
-| KDF                            | `argon2` crate          | 0.5    | OWASP 권장, Stronghold 내부 Argon2id 와 별개로 앱 레벨 파생용 |
-| HKDF                           | `hkdf` crate + `sha2`   | latest | 표준                                                          |
+| KDF                            | `argon2` crate          | 0.5    | OWASP 권장, age 에 전달할 symmetric key 파생용                |
+| HKDF                           | `hkdf` crate + `sha2`   | latest | 표준 — Argon2id 출력을 용도별 서브키(age-vault / crdt-root / value-root)로 분기 |
 | Digital Signature (device key) | `ed25519-dalek`         | 2      | research_raw.md §6, 가장 많은 사례                            |
-| X25519 (페어링, M9 선행)       | `x25519-dalek`          | 2      |                                                               |
-| AEAD (값 채널)                 | `chacha20poly1305`      | 0.10   | IETF 준수, Stronghold 내부와 동일 계열                        |
+| X25519 (페어링, M9 선행)       | `x25519-dalek`          | 2      | age recipient 에도 동일 타입 재사용 가능                      |
+| AEAD (값 채널)                 | `chacha20poly1305`      | 0.10   | IETF 준수, age 내부와 동일 계열                              |
 
-### Stronghold 초기화 패턴
+### age 볼트 초기화 패턴
 
 ```rust
-// crates/api-vault-storage/src/vault/stronghold.rs (요지)
-pub struct StrongholdStorage {
-    handle: Option<Stronghold>,
-    path: PathBuf,
-    client_path: ClientPath,
+// crates/api-vault-storage/src/age_vault/mod.rs (요지)
+pub struct AgeVaultStorage {
+    records: Option<RecordMap>,       // unlock 후 메모리에 상주 (secrecy::SecretBox)
+    path: PathBuf,                    // <app_data_dir>/vault.age
+    identity: Option<age::x25519::Identity>, // HKDF(info="age-vault") 로 파생
 }
 
-impl StrongholdStorage {
-    pub async fn new(path: PathBuf) -> Self { ... }
+impl AgeVaultStorage {
+    pub fn new(path: PathBuf) -> Self { ... }
 }
 
 #[async_trait::async_trait]
-impl VaultStorage for StrongholdStorage {
+impl VaultStorage for AgeVaultStorage {
     async fn unlock(&mut self, password: SecretString) -> Result<(), VaultError> {
-        // password → Argon2id → 32B key (stronghold KDF 콜백에서 수행)
-        let stronghold = Stronghold::load(&self.path, derive_sh_key(&password))?;
-        let client = stronghold.load_client(self.client_path.clone())?;
-        self.handle = Some(stronghold);
+        // password + salt_enc → Argon2id → 32B enc_key
+        // enc_key + HKDF(info="age-vault") → 32B seed → age::x25519::Identity
+        let identity = derive_age_identity(&password, &self.salt_enc)?;
+        let bytes = tokio::fs::read(&self.path).await?;
+        let decryptor = age::Decryptor::new(&bytes[..])?;
+        let mut reader = decryptor.decrypt(iter::once(&identity as &dyn age::Identity))?;
+        let mut buf = Vec::new();
+        reader.read_to_end(&mut buf)?;
+        self.records = Some(RecordMap::from_bytes(&buf)?);
+        self.identity = Some(identity);
         Ok(())
     }
     async fn put_secret(&mut self, path: &str, value: SecretBytes) -> Result<(), VaultError> {
-        let client = self.handle_mut()?.get_client(self.client_path.clone())?;
-        client.store().insert(path.as_bytes().to_vec(), value.expose_secret().to_vec(), None)?;
-        Ok(())
+        let map = self.records.as_mut().ok_or(VaultError::Locked)?;
+        map.insert(path.into(), value);
+        self.flush().await // age 재암호화 + atomic rename + .bak 백업
     }
     // ...
 }
 ```
 
-**주의:** Stronghold 내부 KDF 콜백은 반드시 32바이트 반환. 직접 Argon2 호출 — Stronghold 자체 KDF 옵션은 사용하지 않는다 (우리 `kdf.rs` 와 일관성 유지).
+**주의:**
+
+- X25519 recipient vs `age::scrypt::Recipient` 최종 선택은 T016 착수 시 확정 (`docs/project-decisions.md` M1 T016 착수 전 확인 항목 참조).
+- Argon2id 는 앱 레벨 `kdf.rs` 에서 직접 호출. age 의 scrypt recipient 를 쓸 경우에도 salt 분리 원칙은 유지.
+- 모든 민감 버퍼(`password`, `enc_key`, `identity seed`, `RecordMap`)는 `secrecy::SecretBox` 로 래핑하여 drop 시 zeroize.
 
 ### TDD 전략
 
@@ -214,7 +224,7 @@ async fn contract_roundtrip<V: VaultStorage>(mut v: V, pw: &str) {
 #[tokio::test]
 async fn mock_passes_contract() { contract_roundtrip(MockVaultStorage::new("pw"), "pw").await; }
 #[tokio::test]
-async fn stronghold_passes_contract() { /* tempdir */ }
+async fn age_vault_passes_contract() { /* tempdir 에 vault.age 생성 */ }
 ```
 
 **T017 (KDF):**
@@ -228,7 +238,7 @@ async fn stronghold_passes_contract() { /* tempdir */ }
 
 ### 테스트 데이터 전략
 
-- Rust: `tempfile::TempDir` 로 테스트마다 새로운 Stronghold 파일. SQLite 는 `sqlite::memory:`.
+- Rust: `tempfile::TempDir` 로 테스트마다 새로운 `vault.age` 파일. SQLite 는 `sqlite::memory:`.
 - 프론트: `invoke` mock 은 `@tauri-apps/api/mocks` (가능) 또는 vitest `vi.mock('@tauri-apps/api/core')`.
 - 공통 fixtures: `tests/fixtures/sample_project/` 에 10개 고엔트로피 키가 든 `.env` 파일 (M2 T033 에서도 재사용).
 
@@ -236,18 +246,18 @@ async fn stronghold_passes_contract() { /* tempdir */ }
 
 | 리스크                                                    | 대응                                                                                                                           |
 | :-------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
-| Stronghold v2 API 가 비동기 handle 관리 복잡              | `tokio::sync::Mutex` 로 `Stronghold` 인스턴스 보호, async trait 시 `Send + Sync` 주의                                          |
+| 볼트 파일 전체 재암호화 I/O 비용 (put 마다 flush)         | `tokio::sync::Mutex` 로 `AgeVaultStorage` 보호, batch flush / dirty flag 로 과도한 재암호화 방지. 크래시 대비 atomic rename + `.bak` 유지 |
 | OS Keyring 이 Linux headless CI 에서 실패                 | CI 에서 `keyring` 관련 integration test 는 `#[cfg(not(target_os = "linux"))]`, unit test 만 남김. 앱에서는 폴백 세션 모드 안내 |
 | Argon2id 64MiB 메모리 비용이 iOS/저사양 Android 에서 부담 | 모바일 전용 프리셋 `m=32MiB, t=4, p=1` 로 완화 (M11에서 검증)                                                                  |
-| Stronghold v3 deprecation 시점 미확정 (🟡)                | `VaultStorage` trait 로 이미 격리. v3 알림 시 `AgeFileStorage` 대체 구현 추가하면 끝                                           |
-| Stronghold 모바일 지원 불완전 가능성                      | M11 T105 에서 PoC 검증, 실패 시 `age` + SQLCipher 폴백 (Open Issue)                                                            |
+| age recipient/포맷 선택 고정 부담                         | `VaultStorage` trait 로 격리되어 있으므로 X25519 ↔ scrypt 전환 시 파일 마이그레이션 유틸만 추가하면 됨. T016 착수 시 최종 결정 |
+| age 모바일 동작 검증                                      | `age` 는 pure Rust 이므로 Stronghold 의 libsodium-sys 같은 네이티브 빌드 이슈 없음. M11 T105 에서 기기 라운드트립 최종 확인    |
 
 ### 검증 체크리스트
 
 - [ ] 최초 실행 시 CreateVault 다이얼로그 → 패스프레이즈 2회 입력 → 성공 → Inventory (빈 상태)
 - [ ] 앱 재시작 → LockScreen → 패스프레이즈 입력 → 해제
 - [ ] 잘못된 패스프레이즈 3회 → 10초 쿨다운
-- [ ] `~/.api-vault/vault.stronghold` 파일 존재, 파일 자체는 읽을 수 없음 (binary)
+- [ ] `~/.api-vault/vault.age` 파일 존재, 파일 자체는 읽을 수 없음 (age 암호문 바이너리)
 - [ ] OS Keyring (Windows Credential Manager / macOS Keychain / Linux Secret Service) 에 `com.phoodul.apivault:master` 항목 존재
 
 ---
@@ -750,7 +760,7 @@ fn chain_integrity_after_tamper() {
 | 리스크                                          | 대응                                                                           |
 | :---------------------------------------------- | :----------------------------------------------------------------------------- |
 | O(n) 검증 비용이 수만 entry 에서 지연           | UI 에서 progress bar + 백그라운드 async 검증; Phase 2 Merkle 전환              |
-| device key 유실 시 체인 검증 불가               | Stronghold 마스터와 함께 복구되므로 사용자 패스프레이즈 분실 외 시나리오 없음  |
+| device key 유실 시 체인 검증 불가               | age 볼트 마스터 패스프레이즈와 함께 복구되므로 사용자 패스프레이즈 분실 외 시나리오 없음 |
 | 멀티 디바이스 체인 병합 복잡성                  | 디바이스별 서브체인으로 처리, 표시 시 시간순 merge. 크로스 체인 링크는 Phase 2 |
 | 감사 로그가 SQLite 파일 직접 편집으로 변조 가능 | 체인 검증이 항상 변조 감지. UI 에서 명시적 경고                                |
 
@@ -943,7 +953,7 @@ fn auth_hash_and_enc_key_differ_with_different_salts() {
 | Passkey 가 Tauri WebView 에서 동작 안 함 | iOS/Android 에서는 네이티브 `LAContext` / `BiometricPrompt` 사용 — T083 에서 플랫폼 분기. 데스크톱 Tauri WebView 는 WebAuthn 지원 확인 후 결정 (WebView2 / WebKit 지원) |
 | OAuth redirect URI 등록                  | deep link `apivault://auth/callback` 은 GitHub/Google OAuth 에 등록 (HTTPS 아닌 커스텀 스킴). 대안: 웹 redirect → QR 재인증                                             |
 | Workers CORS 문제                        | Tauri WebView origin 은 `tauri://localhost` 또는 `https://tauri.localhost`, 둘 다 CORS 허용                                                                             |
-| 세션 JWT 탈취                            | 짧은 수명(1h) + refresh token (Stronghold 저장) + device binding (JWT 에 device_id 포함)                                                                                |
+| 세션 JWT 탈취                            | 짧은 수명(1h) + refresh token (age 볼트 파일 `auth/refresh_token` 레코드에 저장) + device binding (JWT 에 device_id 포함)                                               |
 | salt 유실 시 enc_key 재파생 불가         | `/me` 응답에 항상 salt 포함, 서버가 잃어버려도 D1 백업에서 복구                                                                                                         |
 
 ### 검증 체크리스트
@@ -1026,7 +1036,7 @@ export function registerCredentialsMapping(doc: Y.Doc) {
     if (suppressEcho) return;
     const entry = credentialsMap.get(ev.id) ?? new Y.Map();
     for (const [k, v] of Object.entries(ev)) {
-      if (k === "stronghold_ref") continue; // device-local only
+      if (k === "vault_ref") continue; // device-local only
       entry.set(k, v);
     }
     credentialsMap.set(ev.id, entry);
@@ -1206,7 +1216,7 @@ it("replays are idempotent (same event_id)", async () => {
 
 ### 개요
 
-**Tauri iOS/Android 빌드 + Stronghold 모바일 검증 + Biometric + 하단 네비 + 푸시 알림 (옵션)**.
+**Tauri iOS/Android 빌드 + age 볼트 파일 모바일 검증 + Biometric + 하단 네비 + 푸시 알림 (옵션)**. (이전 계획의 "Stronghold 모바일 검증"은 2026-04-22 교체 결정에 따라 age 기반 검증으로 대체됨.)
 
 ### 태스크 그룹
 
@@ -1235,15 +1245,15 @@ pnpm tauri android init
 # local.properties sdk.dir, NDK 버전 확인
 ```
 
-### Stronghold 모바일 PoC 절차 (T105)
+### age 볼트 모바일 PoC 절차 (T105)
 
 1. iPhone 실기기 연결 → `pnpm tauri ios dev --host <mac-lan-ip>`
 2. 앱 실행 → CreateVault → put/get/lock/unlock 5회 시나리오
-3. `/var/mobile/Containers/.../Documents/vault.stronghold` 파일 존재 + 크기 > 0 확인
+3. `/var/mobile/Containers/.../Documents/vault.age` 파일 존재 + 크기 > 0 확인 (age 암호문은 `age-encryption.org/v1` 헤더로 시작)
 4. 앱 재시작 → 기존 볼트 재오픈
-5. Android 동일 절차 (`/data/data/com.phoodul.apivault/files/vault.stronghold`)
+5. Android 동일 절차 (`/data/data/com.phoodul.apivault/files/vault.age`)
 
-**실패 시 대안:** `age` crate + SQLCipher 기반 `AgeStorage` 구현 (새 태스크 T105.1, Open Issue).
+**실패 시 대안:** `age` 자체는 pure Rust 이므로 근본 호환성 이슈 가능성은 낮으나, 만약 파일 I/O 권한 경계(iOS 샌드박스 / Android scoped storage) 에 막히면 Tauri path API + `DocumentFile` 플러그인 조합으로 경로 전략만 조정 (구현 변경 없음).
 
 ### TDD 전략
 
@@ -1270,7 +1280,7 @@ it("renders BottomNav only on mobile platform", () => {
 
 | 리스크                                           | 대응                                                                              |
 | :----------------------------------------------- | :-------------------------------------------------------------------------------- |
-| Stronghold 모바일 동작 실패                      | PoC 우선 → 실패 시 AGE 기반 fallback (1주 내 대체 구현)                           |
+| age 볼트 모바일 동작 실패                        | age 자체는 pure Rust 라 근본 호환성 문제 가능성 낮음. 파일 경로/권한 이슈 시 Tauri path API 로 경로 전략 조정 |
 | iOS 앱스토어 심사 거부                           | 미리 Guideline 2.1 (앱 완성도), 4.0 (디자인), 5.1.1 (데이터 수집) 체크리스트 리뷰 |
 | Android 파일 시스템 제한으로 드롭&스캔 동작 불가 | Mobile 에서는 기능 숨김 + "Use desktop app to scan" 안내                          |
 | Xcode 빌드 시간 길음 (5~10분)                    | `CARGO_TARGET_DIR` 공유, `[profile.dev] incremental = true`, clean 최소화         |
@@ -1518,7 +1528,7 @@ end
 | D1 스키마                   | Drizzle migration 은 idempotent, rollback 스크립트 `0001_init.down.sql` 함께 관리. 단, 데이터 손실 위험 — 운영 전 수동 백업 `wrangler d1 export` |
 | 릴레이 코드                 | Cloudflare Workers 는 즉시 rollback 가능 (`wrangler rollback`)                                                                                   |
 | 앱 설정 / 마이그레이션 실패 | 로컬 SQLite 는 앱 시작 시 `migrations/` 순차 실행 — 실패 시 앱이 safe mode 로 진입 ("마이그레이션 실패, 지원 문의")                              |
-| Stronghold 파일 손상        | `~/.api-vault/vault.stronghold.bak-<timestamp>` 항상 유지 (마이그레이션 전 자동 백업)                                                            |
+| age 볼트 파일 손상          | `~/.api-vault/vault.age.bak-<timestamp>` 항상 유지 (저장/마이그레이션 전 자동 백업, AgeVaultStorage 의 atomic rename 직전 단계)                  |
 | CRDT 상태 불일치            | 최악의 경우 로컬 `api-vault-root` IndexedDB 지우고 서버 스냅샷 다시 다운로드                                                                     |
 | 잘못된 릴리스 배포          | GitHub Release "draft" 플래그로 먼저 공개 전 검증, 문제 시 delete release                                                                        |
 
@@ -1545,7 +1555,7 @@ end
 5. **변호사 리뷰 예산** — Privacy/ToS 검토 $500~1500
 6. **GitHub Organization 이름** — `apivault` 또는 다른 이름
 7. **모노레포 vs 분리 레포** — `api-vault-relay` 를 같은 repo 서브디렉터리로 둘지, 별도 private repo 로 둘지 (planner 는 별도 private repo 를 권고 — EE 라이선스 분리 명확)
-8. **Stronghold 모바일 실패 시 우회 태스크** — 이미 M11 T105 에서 PoC 후 결정. 실패 시 M11 확장 필요
+8. **age 볼트 모바일 동작 검증** — 2026-04-22 Stronghold → age 교체로 근본 호환성 리스크는 해소됐으나, 파일 I/O 경계 검증을 위해 M11 T105 에서 실기기 PoC 유지
 
 ---
 
