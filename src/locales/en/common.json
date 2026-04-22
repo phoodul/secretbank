@@ -24,5 +24,33 @@
     "themeDark": "Dark",
     "themeSystem": "System",
     "language": "Language"
+  },
+  "vault": {
+    "unlockTitle": "Unlock Vault",
+    "unlockSubtitle": "Enter your master passphrase",
+    "unlockButton": "Unlock",
+    "passphraseLabel": "Passphrase",
+    "passphrasePlaceholder": "Enter passphrase",
+    "createVaultLink": "First time? Create a new vault",
+    "wrongPassword": "Incorrect passphrase. Please try again.",
+    "tooManyAttempts": "Too many attempts. Retry in {{count}}s…",
+    "createVaultTitle": "Create new vault",
+    "createVaultDescription": "Choose a strong master passphrase to protect your vault.",
+    "newPassphraseLabel": "Passphrase",
+    "newPassphrasePlaceholder": "Choose a strong passphrase (min. 12 characters)",
+    "confirmPassphraseLabel": "Confirm passphrase",
+    "confirmPassphrasePlaceholder": "Re-enter your passphrase",
+    "createButton": "Create Vault",
+    "passphraseMinLength": "Passphrase must be at least 12 characters",
+    "passphraseMismatch": "Passphrases do not match",
+    "strengthVeryWeak": "Very weak",
+    "strengthWeak": "Weak",
+    "strengthFair": "Fair",
+    "strengthStrong": "Strong",
+    "strengthVeryStrong": "Very strong",
+    "vaultCreated": "Vault created",
+    "alreadyInitialized": "A vault already exists. Please unlock it instead.",
+    "internalError": "An unexpected error occurred. Please try again.",
+    "loading": "Checking vault status…"
   }
 }

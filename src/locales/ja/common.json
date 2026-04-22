@@ -24,5 +24,33 @@
     "themeDark": "Dark",
     "themeSystem": "System",
     "language": "Language"
+  },
+  "vault": {
+    "unlockTitle": "ボールトのロック解除",
+    "unlockSubtitle": "マスターパスフレーズを入力してください",
+    "unlockButton": "ロック解除",
+    "passphraseLabel": "パスフレーズ",
+    "passphrasePlaceholder": "パスフレーズを入力",
+    "createVaultLink": "初めての方はこちら：新しいボールトを作成",
+    "wrongPassword": "パスフレーズが正しくありません。再度お試しください。",
+    "tooManyAttempts": "試行回数が多すぎます。{{count}}秒後に再試行してください…",
+    "createVaultTitle": "新しいボールトを作成",
+    "createVaultDescription": "ボールトを保護する強力なマスターパスフレーズを選択してください。",
+    "newPassphraseLabel": "パスフレーズ",
+    "newPassphrasePlaceholder": "強力なパスフレーズを選択（最低12文字）",
+    "confirmPassphraseLabel": "パスフレーズの確認",
+    "confirmPassphrasePlaceholder": "パスフレーズを再入力",
+    "createButton": "ボールトを作成",
+    "passphraseMinLength": "パスフレーズは最低12文字以上である必要があります",
+    "passphraseMismatch": "パスフレーズが一致しません",
+    "strengthVeryWeak": "非常に弱い",
+    "strengthWeak": "弱い",
+    "strengthFair": "普通",
+    "strengthStrong": "強い",
+    "strengthVeryStrong": "非常に強い",
+    "vaultCreated": "ボールトが作成されました",
+    "alreadyInitialized": "ボールトはすでに存在します。ロックを解除してください。",
+    "internalError": "予期しないエラーが発生しました。再度お試しください。",
+    "loading": "ボールトの状態を確認中…"
   }
 }

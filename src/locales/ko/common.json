@@ -24,5 +24,33 @@
     "themeDark": "다크",
     "themeSystem": "시스템",
     "language": "언어"
+  },
+  "vault": {
+    "unlockTitle": "볼트 잠금 해제",
+    "unlockSubtitle": "마스터 패스프레이즈를 입력하세요",
+    "unlockButton": "잠금 해제",
+    "passphraseLabel": "패스프레이즈",
+    "passphrasePlaceholder": "패스프레이즈 입력",
+    "createVaultLink": "처음 사용하시나요? 새 볼트 만들기",
+    "wrongPassword": "패스프레이즈가 올바르지 않습니다. 다시 시도하세요.",
+    "tooManyAttempts": "시도 횟수 초과. {{count}}초 후 재시도하세요…",
+    "createVaultTitle": "새 볼트 만들기",
+    "createVaultDescription": "볼트를 보호할 강력한 마스터 패스프레이즈를 선택하세요.",
+    "newPassphraseLabel": "패스프레이즈",
+    "newPassphrasePlaceholder": "강력한 패스프레이즈 선택 (최소 12자)",
+    "confirmPassphraseLabel": "패스프레이즈 확인",
+    "confirmPassphrasePlaceholder": "패스프레이즈 재입력",
+    "createButton": "볼트 만들기",
+    "passphraseMinLength": "패스프레이즈는 최소 12자 이상이어야 합니다",
+    "passphraseMismatch": "패스프레이즈가 일치하지 않습니다",
+    "strengthVeryWeak": "매우 취약",
+    "strengthWeak": "취약",
+    "strengthFair": "보통",
+    "strengthStrong": "강력",
+    "strengthVeryStrong": "매우 강력",
+    "vaultCreated": "볼트가 생성되었습니다",
+    "alreadyInitialized": "이미 볼트가 존재합니다. 잠금을 해제하세요.",
+    "internalError": "예기치 않은 오류가 발생했습니다. 다시 시도하세요.",
+    "loading": "볼트 상태 확인 중…"
   }
 }
