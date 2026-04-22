@@ -224,3 +224,31 @@
 - `cargo test --workspace` — exit 0
 - `cargo clippy --workspace -- -D warnings` — exit 0
 - `pnpm exec tsc --noEmit` — exit 0
+
+### T008+T009 — Tailwind 시맨틱 토큰 + shadcn/ui primitive 12종 (implementator 에이전트)
+
+**T008 — vault 시맨틱 토큰 추가:**
+
+- `src/styles/globals.css` `:root`에 4쌍(danger/warning/success/info + 각 foreground) 추가
+- `.dark` 블록에 다크 모드 버전 동일하게 추가
+- `@theme inline`에 `--color-vault-*` 매핑 8개 추가
+- `src/components/ui/badge.tsx` 신규 작성 (cva, variant: default/secondary/destructive/outline/danger/warning/success/info)
+
+**T009 — shadcn/ui CLI 12종 설치:**
+
+- 설치 명령: `pnpm dlx shadcn@latest add dialog input label form tabs tooltip sonner dropdown-menu command scroll-area separator skeleton --yes --overwrite`
+- 생성된 파일 12개: dialog.tsx, input.tsx, label.tsx, form.tsx, tabs.tsx, tooltip.tsx, sonner.tsx, dropdown-menu.tsx, command.tsx, scroll-area.tsx, separator.tsx, skeleton.tsx
+- CLI가 button.tsx도 최신 버전으로 업데이트 (radix-ui 통합 패키지 사용, Slot.Root 방식)
+- 신규 패키지: `radix-ui@^1.4.3`, `sonner@^2.0.7`, `cmdk@^1.1.1`, `react-hook-form@^7.73.1`, `@hookform/resolvers@^5.2.2`, `zod@^4.3.6`, `next-themes@^0.4.6`
+
+**추가 조치:**
+
+- `sonner.tsx`의 `useTheme` import를 `next-themes` → `@/components/theme/theme-provider`로 교체
+- `src/main.tsx`에 `<Toaster />` (sonner) 마운트 (ThemeProvider 내부)
+
+**검증 결과:**
+
+- `pnpm typecheck` — exit 0 (에러 없음)
+- `pnpm lint` — exit 0 (경고 5개, 에러 없음; react-refresh/only-export-components, shadcn/ui 패턴상 무시 가능)
+- `pnpm format` → `pnpm format:check` — exit 0
+- `cargo build --workspace` — exit 0 (Rust 영향 없음)

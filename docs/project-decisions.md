@@ -450,3 +450,26 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - 앱 업데이트 = tauri-plugin-updater + minisign 서명 강제
 - 키 메모리 노출 = `secrecy` crate로 Zeroize, 클립보드 자동 만료 30초
 - Rust `unsafe` 정당화 없이 금지
+
+---
+
+## [2026-04-22] T008 — Tailwind v4 시맨틱 토큰 (vault 상태 색상)
+
+- **결정:** API Vault 고유의 의미적 상태 토큰 4종을 `src/styles/globals.css`에 추가한다.
+  - `--vault-danger` / `--vault-warning` / `--vault-success` / `--vault-info` (각각 foreground 포함)
+  - 라이트: destructive 기반 빨강, 앰버, 그린, 블루/사이안 oklch 값
+  - 다크: 채도 낮추고 밝기 높인 버전
+  - `@theme inline`에 `--color-vault-*` 매핑 → Tailwind 유틸리티 클래스 `bg-vault-danger` 등 사용 가능
+- **이유:** Badge, Toast, Graph 노드, Incident 알림에서 일관된 상태 색상 표현. shadcn `destructive`만으로는 4가지 상태를 구분할 수 없음.
+- **영향:** `badge.tsx`의 danger/warning/success/info variant에서 이 토큰 사용. 이후 모든 상태 표시 컴포넌트는 이 토큰을 참조.
+
+---
+
+## [2026-04-22] T009 — shadcn/ui primitive 12종 + 통합 radix-ui 패키지
+
+- **결정:** shadcn/ui CLI 최신 버전은 개별 `@radix-ui/react-*` 패키지 대신 통합 `radix-ui` 패키지를 사용한다. 이를 수용한다.
+  - 설치된 컴포넌트: dialog, input, label, form, tabs, tooltip, sonner, dropdown-menu, command, scroll-area, separator, skeleton
+  - 신규 의존성: `radix-ui@^1.4.3`, `sonner@^2.0.7`, `cmdk@^1.1.1`, `react-hook-form@^7.73.1`, `@hookform/resolvers@^5.2.2`, `zod@^4.3.6`
+- **이유:** shadcn/ui New York 스타일 + slate baseColor. 이후 M1+ 태스크에서 즉시 사용 가능.
+- **조정:** `sonner.tsx`의 `next-themes` 의존성을 자체 `@/components/theme/theme-provider` 로 교체. `main.tsx`에서 `<Toaster />` 마운트 (ThemeProvider 내부).
+- **영향:** `next-themes` 패키지는 설치되어 있으나 실제로 사용하지 않음 (shadcn CLI가 자동 설치). 추후 `pnpm remove next-themes`로 제거 고려 (타입체크/린트에는 영향 없음).

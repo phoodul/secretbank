@@ -37,6 +37,15 @@
   --radius: 0.625rem;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* API Vault semantic status tokens — light mode */
+  --vault-danger: oklch(0.577 0.245 27.325);
+  --vault-danger-foreground: oklch(0.984 0.003 247.858);
+  --vault-warning: oklch(0.768 0.179 67.367);
+  --vault-warning-foreground: oklch(0.129 0.042 264.695);
+  --vault-success: oklch(0.697 0.177 143.495);
+  --vault-success-foreground: oklch(0.129 0.042 264.695);
+  --vault-info: oklch(0.685 0.169 237.323);
+  --vault-info-foreground: oklch(0.984 0.003 247.858);
 }
 
 .dark {
@@ -59,6 +68,15 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
+  /* API Vault semantic status tokens — dark mode */
+  --vault-danger: oklch(0.704 0.191 22.216);
+  --vault-danger-foreground: oklch(0.984 0.003 247.858);
+  --vault-warning: oklch(0.828 0.155 85.87);
+  --vault-warning-foreground: oklch(0.129 0.042 264.695);
+  --vault-success: oklch(0.782 0.143 154.449);
+  --vault-success-foreground: oklch(0.129 0.042 264.695);
+  --vault-info: oklch(0.768 0.148 238.832);
+  --vault-info-foreground: oklch(0.984 0.003 247.858);
 }
 
 @theme inline {
@@ -81,6 +99,14 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-vault-danger: var(--vault-danger);
+  --color-vault-danger-foreground: var(--vault-danger-foreground);
+  --color-vault-warning: var(--vault-warning);
+  --color-vault-warning-foreground: var(--vault-warning-foreground);
+  --color-vault-success: var(--vault-success);
+  --color-vault-success-foreground: var(--vault-success-foreground);
+  --color-vault-info: var(--vault-info);
+  --color-vault-info-foreground: var(--vault-info-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

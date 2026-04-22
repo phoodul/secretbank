@@ -2,9 +2,9 @@
 
 ## Last Checkpoint
 
-- Time: 2026-04-22 (M0 T004~T007 완료)
-- Phase: Phase 3 — Implementation (M0 완료)
-- Step: T004(LICENSE) + T005(CLA) + T006(lint/CI) + T007(README) 완료. M0 전체 완료. 다음: M1 진입 (T008~T020, 핵심 데이터 모델 + 볼트 CRUD)
+- Time: 2026-04-22 (M1 T008~T009 완료)
+- Phase: Phase 3 — Implementation (M1 진행 중)
+- Step: T008(vault 시맨틱 토큰 + badge.tsx) + T009(shadcn/ui primitive 12종 + Toaster) 완료. 다음: T010 이후 (SQLite 스키마, 볼트 CRUD, 암호화 등)
 
 ## Completed
 
@@ -56,7 +56,9 @@
 
 ## In Progress
 
-- [ ] M1 — 핵심 데이터 모델 + 볼트 CRUD (T008~T020)
+- [ ] M1 — 핵심 데이터 모델 + 볼트 CRUD (T010~T020)
+- [x] **T008 완료** — globals.css vault 시맨틱 토큰 4종 + badge.tsx (cva, 8 variants)
+- [x] **T009 완료** — shadcn/ui primitive 12종 설치 (dialog/input/label/form/tabs/tooltip/sonner/dropdown-menu/command/scroll-area/separator/skeleton) + Toaster 마운트
 
 ## Pending Decisions
 
