@@ -11,6 +11,9 @@ use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
 use context::AppContext;
 use tauri::Manager;
 
+#[cfg(feature = "tauri-plugins")]
+use commands::clipboard::credential_copy_to_clipboard;
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -45,19 +48,42 @@ pub fn run() {
             .plugin(tauri_plugin_http::init());
     }
 
-    builder = builder.invoke_handler(tauri::generate_handler![
-        greet,
-        vault_init,
-        vault_unlock,
-        vault_lock,
-        vault_status,
-        credential_create,
-        credential_list,
-        credential_get,
-        credential_update,
-        credential_delete,
-        credential_reveal,
-    ]);
+    // tauri-plugins feature 에 따라 등록하는 커맨드가 달라진다.
+    // generate_handler! 내부에서는 cfg 속성을 사용할 수 없으므로 두 블록으로 분리한다.
+    #[cfg(feature = "tauri-plugins")]
+    {
+        builder = builder.invoke_handler(tauri::generate_handler![
+            greet,
+            vault_init,
+            vault_unlock,
+            vault_lock,
+            vault_status,
+            credential_create,
+            credential_list,
+            credential_get,
+            credential_update,
+            credential_delete,
+            credential_reveal,
+            credential_copy_to_clipboard,
+        ]);
+    }
+
+    #[cfg(not(feature = "tauri-plugins"))]
+    {
+        builder = builder.invoke_handler(tauri::generate_handler![
+            greet,
+            vault_init,
+            vault_unlock,
+            vault_lock,
+            vault_status,
+            credential_create,
+            credential_list,
+            credential_get,
+            credential_update,
+            credential_delete,
+            credential_reveal,
+        ]);
+    }
 
     #[cfg(all(
         feature = "tauri-plugins",

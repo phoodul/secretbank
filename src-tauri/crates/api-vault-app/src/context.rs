@@ -4,7 +4,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use secrecy::SecretString;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
+use tokio::task::JoinHandle;
 
 use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::{init_pool, SqlitePool};
@@ -26,6 +27,12 @@ pub struct AppContext {
 
     /// Current user identifier (single-user for now).
     pub user_id: String,
+
+    /// 클립보드 자동 만료 타이머 핸들.
+    ///
+    /// 새 복사 요청이 오면 이전 핸들을 `.abort()` 하여 타이머를 취소한다.
+    /// `None` = 타이머 없음 (앱 초기 상태 또는 만료 완료 후).
+    pub clipboard_controller: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
 
 impl AppContext {
@@ -51,6 +58,8 @@ impl AppContext {
             pool: Arc::new(pool),
             data_dir,
             user_id: "default".to_owned(),
+            // 초기 상태: 타이머 없음
+            clipboard_controller: Arc::new(Mutex::new(None)),
         })
     }
 

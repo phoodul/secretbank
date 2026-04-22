@@ -248,18 +248,21 @@ pub async fn credential_delete(
     Ok(())
 }
 
-#[tauri::command]
-pub async fn credential_reveal(
+/// `credential_reveal` 의 핵심 로직을 분리한 순수 헬퍼.
+///
+/// `credential_reveal` 커맨드와 `credential_copy_to_clipboard` 커맨드가
+/// 동일한 로직을 공유하기 위해 추출됐다. Tauri `State` 없이 호출 가능하다.
+pub async fn reveal_secret(
     id: CredentialId,
-    state: State<'_, AppContext>,
+    ctx: &AppContext,
 ) -> Result<String, CredentialCommandError> {
-    let vault = state.vault.read().await;
+    let vault = ctx.vault.read().await;
 
     if !vault.is_unlocked().await {
         return Err(CredentialCommandError::NotUnlocked);
     }
 
-    let cred_repo = CredentialRepo::new(&state.pool);
+    let cred_repo = CredentialRepo::new(&ctx.pool);
     let credential = cred_repo
         .get_by_id(id)
         .await?
@@ -269,14 +272,19 @@ pub async fn credential_reveal(
     let value = String::from_utf8(secret_bytes.expose_secret().clone())
         .map_err(|_| CredentialCommandError::InvalidUtf8)?;
 
-    let audit = make_audit_entry(
-        AuditAction::CredentialReveal,
-        id.to_string(),
-        &state.user_id,
-    );
-    let _ = AuditRepo::new(&state.pool).insert(&audit).await;
+    let audit = make_audit_entry(AuditAction::CredentialReveal, id.to_string(), &ctx.user_id);
+    let _ = AuditRepo::new(&ctx.pool).insert(&audit).await;
 
     Ok(value)
+}
+
+#[tauri::command]
+pub async fn credential_reveal(
+    id: CredentialId,
+    state: State<'_, AppContext>,
+) -> Result<String, CredentialCommandError> {
+    // 공통 헬퍼에 위임한다.
+    reveal_secret(id, &state).await
 }
 
 // Tests for credential CRUD logic have been moved to
