@@ -1,5 +1,6 @@
 pub mod credentials;
 pub mod issuer;
+pub mod scanner;
 pub mod settings;
 pub mod vault;
 

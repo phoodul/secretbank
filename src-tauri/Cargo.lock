@@ -154,6 +154,7 @@ name = "api-vault-app"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "api-vault-connectors",
  "api-vault-core",
  "api-vault-crypto",
  "api-vault-storage",
