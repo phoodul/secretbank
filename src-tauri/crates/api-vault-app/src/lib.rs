@@ -9,6 +9,7 @@ use commands::credentials::{
     credential_update,
 };
 use commands::issuer::{issuer_get, issuer_list};
+use commands::settings::{settings_get, settings_set};
 use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
 use context::AppContext;
 use tauri::Manager;
@@ -73,6 +74,8 @@ pub fn run(context: tauri::Context) {
             credential_copy_to_clipboard,
             issuer_list,
             issuer_get,
+            settings_get,
+            settings_set,
         ]);
     }
 
@@ -92,6 +95,8 @@ pub fn run(context: tauri::Context) {
             credential_reveal,
             issuer_list,
             issuer_get,
+            settings_get,
+            settings_set,
         ]);
     }
 

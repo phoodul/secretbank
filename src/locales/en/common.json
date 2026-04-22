@@ -19,11 +19,28 @@
     "search": "Search"
   },
   "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "security": "Security",
+    "about": "About",
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
-    "language": "Language"
+    "themeDescription": "Choose your preferred appearance.",
+    "language": "Language",
+    "languageDescription": "Choose the language used across the app.",
+    "autoLock": "Auto-lock",
+    "autoLockDescription": "Lock the vault automatically after a period of inactivity.",
+    "autoLockNever": "Never",
+    "autoLockMinutes": "{{count}} minutes",
+    "appName": "App name",
+    "version": "Version",
+    "license": "License",
+    "sourceCode": "Source code",
+    "openAgpl": "View AGPL-3.0 license",
+    "openRepo": "Open GitHub repository",
+    "saveFailed": "Failed to save setting"
   },
   "inventory": {
     "title": "Inventory",

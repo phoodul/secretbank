@@ -19,11 +19,28 @@
     "search": "Search"
   },
   "settings": {
-    "theme": "Theme",
-    "themeLight": "Light",
-    "themeDark": "Dark",
-    "themeSystem": "System",
-    "language": "Language"
+    "title": "設定",
+    "appearance": "外観",
+    "security": "セキュリティ",
+    "about": "情報",
+    "theme": "テーマ",
+    "themeLight": "ライト",
+    "themeDark": "ダーク",
+    "themeSystem": "システム",
+    "themeDescription": "好みの外観を選択してください。",
+    "language": "言語",
+    "languageDescription": "アプリ全体で使用する言語を選択してください。",
+    "autoLock": "自動ロック",
+    "autoLockDescription": "一定時間操作がない場合にボールトを自動的にロックします。",
+    "autoLockNever": "なし",
+    "autoLockMinutes": "{{count}}分",
+    "appName": "アプリ名",
+    "version": "バージョン",
+    "license": "ライセンス",
+    "sourceCode": "ソースコード",
+    "openAgpl": "AGPL-3.0ライセンスを表示",
+    "openRepo": "GitHubリポジトリを開く",
+    "saveFailed": "設定の保存に失敗しました"
   },
   "inventory": {
     "title": "インベントリ",
