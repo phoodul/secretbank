@@ -5,16 +5,45 @@
 
 ---
 
-## [2026-04-22] 개발 환경 정책 (Windows AppLocker/Defender + 문제 해결 프로토콜)
+## [2026-04-22] 개발 환경 정책 (Windows SAC/Defender + 문제 해결 프로토콜 + 배포 서명 전략)
 
-### A. Windows Defender 실시간 보호 제외 경로
-- **결정:** 로컬 개발자(Windows)는 `C:\Users\JSS\Projects\api-vault\src-tauri\target` 을 Windows Defender 실시간 보호의 제외 경로로 추가한다. Cargo 가 컴파일하는 테스트 바이너리(`target\debug\deps\*.exe`)를 Defender 가 새로 생성될 때마다 차단하는 이슈 해결용.
+### A. Windows Defender 실시간 보호 제외 경로 (이미 적용됨)
+- **결정:** 로컬 개발자(Windows)는 `C:\Users\JSS\Projects\api-vault\src-tauri\target` 을 Windows Defender 실시간 보호의 제외 경로로 추가한다.
 - **수동 실행 (관리자 권한 PowerShell):**
   ```powershell
   Add-MpPreference -ExclusionPath 'C:\Users\JSS\Projects\api-vault\src-tauri\target'
   ```
 - **원복:** `Remove-MpPreference -ExclusionPath 'C:\Users\JSS\Projects\api-vault\src-tauri\target'`
-- **주의:** 타사 PC 에서 개발 시 동일 경로 반영 필요. 팀 확장 시 dev-setup.md 에 명시.
+- **상태:** 2026-04-22 사용자 적용 완료.
+
+### A-2. Windows Smart App Control (SAC) Off — 개발자 PC 한정
+- **문제:** T021+T022 진행 중 `pnpm tauri dev` 풀 빌드가 `markup5ever` 등 proc-macro 와 build script `.exe` 실행 시 `os error 4551 (ERROR_FILE_HASH_NOT_ALLOWED)` 로 차단. 진단 결과 `SmartAppControlState: On` 확인. SAC 가 서명 없는 실행 파일을 일괄 차단하여 Cargo 컴파일이 불가.
+- **결정:** 개발자(나)의 Windows 11 기기에서 SAC 를 Off 로 전환한다.
+  - 경로: Windows Security → App & browser control → Smart app control settings → **Off**.
+  - **한 번 Off 로 전환하면 Windows 재설치 전까지 복구 불가** (Microsoft 공식 정책).
+  - 재부팅 후 적용.
+- **이 결정의 범위:**
+  - ✅ **개발자 PC 만 해당.** 최종 사용자 배포 앱에는 영향 없음.
+  - 개발자 PC 는 이미 SmartScreen, Defender 실시간 보호, UAC, Windows Firewall 이 활성 상태로 유지. SAC 이외 방어 계층은 그대로 유지.
+- **대안 기록 (기각 사유):**
+  - WSL2 이전 → Tauri 는 Windows 네이티브 타깃이므로 실제 앱 창은 여전히 Windows 에서 띄워야 함.
+  - 레지스트리 편집 → Microsoft 비공식, Windows Update 로 재활성 위험.
+  - CI 전용 빌드 → 피드백 루프가 수 분 단위 → M1~M13 전체 개발 효율 심각 저하.
+
+### A-3. 최종 사용자 배포 시 SAC 대응 = 코드 서명 + reputation (Gate 2 Q6=A 와 일관)
+- **결정:** 개발자 PC 의 SAC Off 결정은 사용자 배포에 영향을 주지 않는다. 사용자가 받는 최종 앱은 **Authenticode 서명**으로 SAC 및 SmartScreen 을 통과시킨다.
+- **단계별 계획:**
+  1. **M13 Release 직전:** [SignPath OSS Foundation](https://signpath.org/) 에 AGPL-3.0 공개 레포 증빙으로 신청 (무료). 승인 1~2주.
+  2. **GitHub Actions 에 SignPath 연동:** `actions/signpath-action` 또는 공식 API 로 Tauri 빌드 산출물(`api-vault-setup.exe`, `.msi`) 자동 Authenticode 서명.
+  3. **첫 배포 이후 reputation 축적 기간:** 다운로드 수 수십~수백 건 쌓일 때까지 SmartScreen "알 수 없는 게시자" 경고가 일부 사용자에게 뜰 수 있음. README 와 다운로드 페이지에 "More info → Run anyway" 가이드 명시.
+  4. **SAC On 사용자 대응:** 소수지만 SmartScreen 경고만으로 부족할 수 있음. 대응 옵션:
+     - Microsoft Store 동시 배포 (Store 앱은 SAC 자동 허용) — 심사 1~2주.
+     - EV 인증서로 업그레이드 ($300~600/년) — 즉시 reputation, Gate 2 Q6 에 명시된 장기 대안.
+- **배포 전 README/docs 에 명시할 안내:**
+  - Windows SmartScreen 경고 우회 방법 (스크린샷 포함).
+  - Smart App Control 사용자를 위한 "Store 배포 링크" 또는 "allow list 요청 방법".
+  - 코드 서명 검증 방법 (`Get-AuthenticodeSignature .\api-vault-setup.exe`).
+- **레퍼런스:** Bitwarden / 1Password / Obsidian 등 독립 데스크톱 앱의 초기 배포 경험 — 모두 비슷한 과정을 거침.
 
 ### B. 테스트 실행 패턴: `-p <crate>` 우선
 - **결정:** `cargo test --workspace` 대신 **각 크레이트별로 `cargo test -p api-vault-<crate>`** 를 우선 사용한다. 전체 워크스페이스 테스트는 CI(Ubuntu) 에서 최종 검증.
