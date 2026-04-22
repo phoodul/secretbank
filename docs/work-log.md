@@ -247,6 +247,33 @@
 - `value_hint` 는 마지막 4자만 저장 — 테이블 렌더 시 `****XXXX` 마스킹 자연스러움.
 - 파일 크기/결과 수 상한 현재 없음 → T035 에서 페이지네이션 또는 virtualization 고려.
 
+### T034 — env_scan_folder 커맨드 (implementator, 커밋 `eeab911`, Night mode 연속)
+
+- **신규 파일**: `src-tauri/crates/api-vault-app/src/commands/scanner.rs` — `env_scan_folder(app: AppHandle, path: String) -> Result<Vec<DetectedKey>, EnvScanError>`
+- **수정 파일**: `commands/mod.rs` (pub mod scanner), `lib.rs` (두 invoke_handler 블록에 등록), `api-vault-app/Cargo.toml` (`api-vault-connectors = { path = "../api-vault-connectors" }` dep 추가)
+- **동작**: `tauri::async_runtime::spawn_blocking(move || api_vault_connectors::scan_path(&p))` 로 sync 스캔을 worker thread 로. `app.emit("scan:progress", ScanProgress::Started {path})` → scan → `app.emit(..., Done {count})`
+- **에러**: `EnvScanError::InvalidPath` (경로 존재 X) / `UnsupportedPath` (파일/디렉토리 아님) / `Internal { message }`. serde tag="code".
+- **`tauri::Emitter` trait import 필수**: `use tauri::Emitter;` 없으면 `app.emit()` 컴파일 안 됨. `AppHandle` 에 구현된 trait 이지만 자동 import 아님.
+- **Rust 테스트 +3** (`#[cfg(test)]`): invalid path → InvalidPath / tempdir `.env` → 결과 1+ / 단일 `.env` 파일 경로 → 결과 1+. AppHandle 우회를 위해 `do_env_scan(path: String)` 퓨어 함수로 로직 분리하고 테스트는 이 함수 호출.
+- **검증**: 8개 명령 exit 0. 전체 Rust 86개, Vitest 107개 통과.
+
+**설계 결정 (Pending Decisions 에 기록)**:
+
+- **per-file progress streaming 은 follow-up**: `scan_path` 가 현재 전체 결과를 한번에 반환하는 sync 함수라 중간 per-file emit 을 하려면 iterator 기반 재설계 필요. T034 는 Started/Done 2회 최소 구현. 10k+ 파일 scenario 에서 UX 저하 가능하지만 T035 UI 에서 spinner 로 보완. 제대로 된 streaming 은 M2 후 또는 M3 별도 태스크.
+- **capability `fs:scope` 변경 안 함**: DoD 는 Tauri v1 패턴. v2 에서 `std::fs` 직접 호출은 권한 시스템 밖. `src-tauri/capabilities/default.json` 건드리지 않음.
+
+**T035 에 영향 줄 사실**:
+
+- Tauri invoke 시그니처: `invoke("env_scan_folder", { path: string })` → `DetectedKey[]` 반환, 실패 시 `{ code: "invalid_path" | "unsupported_path" | "internal", message? }`.
+- 이벤트 구독: `listen<{phase:"started"; path:string} | {phase:"done"; count:number}>("scan:progress", ...)` discriminated union. loading overlay 해제 타이밍에 사용.
+- T035 DoD "Import" 플로우는 project_create / usage_create 커맨드가 필요한데 아직 없음 — T035 내부에서 이 커맨드를 선구현할지 별도 태스크 분리할지 구현 시점에 결정.
+
+### 3순위 3/4 진척 — T035 다음 세션 진입점
+
+- T032 DropZone ✅ + T033 env_scanner ✅ + T034 env_scan_folder ✅. 세 층이 연결된 상태. 드롭 → 라우트 이동 → invoke → DetectedKey 리스트 반환까지 end-to-end 파이프라인 작동 가능.
+- T035 는 결과 테이블 UI + `credential_create` 일괄 + project/usage 자동 생성. 규모 가장 큰 M2 태스크.
+- 메인 대화 세션 누적이 길어 Night mode 규칙(200K 상한 근접 시 상태 보고) 적용 — T035 는 다음 세션 진입점으로 미루고 상태 보고.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)

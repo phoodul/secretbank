@@ -2,12 +2,12 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T033 완료, T034 다음)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 9/14**
-- **Commits:** 43개 누적 (최신 `8e7c7a2` feat(connectors): env_scanner (T033))
-- **Tests:** Rust 83개 (+35 env_scanner) + Vitest 107개 통과.
+- **Time:** 2026-04-23 (T034 완료, M2 10/14, 세션 용량 점검 시점)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 10/14**
+- **Commits:** 45개 누적 (최신 `eeab911` feat(scanner): env_scan_folder 커맨드 (T034))
+- **Tests:** Rust 86개 (+3 env_scan_folder) + Vitest 107개 통과.
 - **Blocker:** 없음.
-- **Mode:** Night mode — T034 env_scan_folder Tauri 커맨드 이어서.
+- **Mode:** Night mode — 세션 누적 토큰 점검 후 T035 여부 결정.
 
 ## M2 진행 상황 (1/14)
 
@@ -22,6 +22,7 @@
 - T031 Auto-lock idle 타이머 (use-idle-lock + AutoLockGuard, 커밋 `34e8a90`)
 - T032 드롭 존 + /onboarding/scan placeholder (Tauri v2 onDragDropEvent, 커밋 `6f121ee`)
 - T033 env_scanner (엔트로피 3.5 + issuer regex 10 + .env/generic 파서, 커밋 `8e7c7a2`)
+- T034 env_scan_folder Tauri 커맨드 (spawn_blocking + scan:progress 이벤트, 커밋 `eeab911`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
@@ -29,7 +30,7 @@
 
 - 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → **T027 ✅** (1순위 블록 완주)
 - 2순위: **T029 ✅** → **T030 ✅** → **T031 ✅** (2순위 블록 완주)
-- 3순위(드롭&스캔): **T032 ✅** → **T033 ✅** → T034 env_scan_folder 커맨드 (진행 중) → T035 결과 검토 UI
+- 3순위(드롭&스캔): **T032 ✅** → **T033 ✅** → **T034 ✅** → T035 결과 검토 UI (진행 중)
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
 
 ### T025 구현 교훈 (M2 후속에 영향)
@@ -168,13 +169,15 @@
 - [x] T031 Auto-lock idle 타이머 — 커밋 `34e8a90`
 - [x] T032 드롭 존 + 라우트 placeholder — 커밋 `6f121ee`
 - [x] T033 env_scanner (엔트로피 + issuer regex + .env/generic 파서) — 커밋 `8e7c7a2`
-- [ ] T034 env_scan_folder Tauri 커맨드 — 다음 태스크
+- [x] T034 env_scan_folder Tauri 커맨드 — 커밋 `eeab911`
+- [ ] T035 결과 검토 UI (DetectedKeysReview) — 다음 세션 진입점
 
 ## Pending Decisions
 
 - Gate 3 (배포 진행 승인)
 - Gate 4 (git push 승인)
 - **Custom issuer 생성 UX 연기 (T026 범위 외)** — T026 Issuer combobox 는 프리셋 10종만 선택 가능. DoD 의 "+ Custom" 옵션은 구현하지 않고 **별도 issuer 관리 UI 또는 T037 Project 관리 맥락**에서 처리 예정. 근거: 바이브 코더 페르소나는 주류 SaaS 가 대부분이라 프리셋으로 90%+ 커버, Custom UX 는 Issuer 메타(docs/issue/status URL) 입력 부담이 커 별도 전용 플로우가 낫다. M2 후반 또는 M5 GitHub Connector 작업 중 재검토.
+- **T034 per-file progress streaming / 10k 파일 상한 follow-up** — 현재 `env_scan_folder` 는 `scan:progress` 이벤트를 Started/Done 2회만 emit. 진행률 표시는 T035 UI 에서 spinner 로 처리 가능하나, 초대형 프로젝트(>10k 파일) 에서 UX 저하 가능. `scan_path` 를 iterator 기반으로 재구조화해 per-file 카운터 emit 하도록 확장은 별도 태스크. M2 후 또는 M3 에 배치.
 
 ## Key Shifts from Initial Plan
 
@@ -189,5 +192,7 @@
 
 ## Next Action
 
-- **T034 `env_scan_folder` Tauri 커맨드** — 신규 `commands/env_scan.rs`. `env_scan_folder(path: String) -> Vec<DetectedKey>` 커맨드. `tauri::async_runtime::spawn_blocking` 으로 `api_vault_connectors::scan_path(&Path)` 호출. 불린 `SELECTED_FILES_MAX = 10_000` 상한 (연관 설정은 T035 에서). invoke_handler 양쪽 블록에 등록. 에러 타입 `EnvScanError::Internal`.
-- 이후 **T035** OnboardingScanPage 확장 — 스캔 결과 테이블 + 체크박스 선택 + `credential_create` 일괄 호출 UI.
+- **T035 드롭&스캔 결과 검토 UI** — `src/features/onboarding/DetectedKeysReview.tsx` 테이블 (체크박스 / Issuer 아이콘 / env_var_name / 파일경로 / 마지막 4자 / confidence 배지). OnboardingScanPage 가 `invoke("env_scan_folder", { path })` 호출 → 결과 렌더. 선택 체크박스 + "Import N keys" 버튼 → `credential_create` 일괄 호출. 폴더명으로 Project 자동 생성(`project_create` — 선행 커맨드 필요) + `usage_create` 로 `(project_id, credential_id, file_path, env_var_name)` 링크.
+- **선행 필요 (T035 내부에서 해결)**: `project_create` / `usage_create` Tauri 커맨드 — api-vault-core / storage 에 repos 는 존재, 커맨드 래퍼 없음. T035 범위에 선언해 함께 구현하거나 이를 별도 태스크(T037/T038 일부)로 미루고 T035 는 credential 만 등록. **결정 보류** — 구현 시 판단.
+- **이벤트 구독**: `listen<ScanProgress>("scan:progress", ...)` discriminated union `{ phase: "started"|"done" }`. 로딩 표시 + 완료 시 invoke resolve 대기.
+- **중복 감지**: DoD "Already tracked" — credential.hash_hint 매칭으로 1차 필터. 이미 있는 엔트리는 체크박스 비활성 + "Already tracked" 배지.
