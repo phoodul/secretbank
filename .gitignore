@@ -49,3 +49,7 @@ work-log/
 
 # antigravity (personal)
 .antigravity/
+
+# tauri generated schemas
+src-tauri/gen/
+.claude/state/

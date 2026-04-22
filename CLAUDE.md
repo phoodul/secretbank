@@ -63,3 +63,43 @@ project-decisions.md가 아직 없으면 생성하라. 형식:
 - Never use `unsafe` Rust without justification
 - Minimize IPC calls — batch data when possible
 - Test on all target platforms before release
+
+# UI/UX Architecture
+
+## Design System — Option A "Security Minimal"
+- Component library: **shadcn/ui** (copy-paste, New York style) on top of **Radix UI** primitives
+- Styling: **Tailwind CSS v4** (`@tailwindcss/vite` plugin, CSS-first `@theme` config)
+- Design tokens: `src/styles/globals.css` (oklch-based, light/dark CSS vars, shadcn neutral ramp)
+- Theme provider: `src/components/theme/theme-provider.tsx` (light/dark/system + `useTheme` hook)
+- Icons: **Lucide** (`lucide-react`) — single stroke, MIT
+- Motion: **Motion** (`motion`) — respects `prefers-reduced-motion`
+- Fonts: **Inter Variable** (sans) + **JetBrains Mono Variable** (mono) via `@fontsource-variable/*`
+- Utility: `cn()` in `src/lib/utils.ts` (clsx + tailwind-merge)
+- shadcn CLI config: `components.json` — alias `@/components`, `@/lib`, `@/hooks`, `@/components/ui`
+
+## UI Rules
+- Use design tokens for all visual values — no hardcoded hex colors, no hardcoded sizes. Read from `--color-*`, `--radius-*`, `--font-*`.
+- Add new primitives with `pnpm dlx shadcn@latest add <component>` — do not hand-roll versions of components shadcn already covers.
+- All interactive elements must be reachable by keyboard and have accessible names. Radix primitives handle most ARIA automatically — do not override roles.
+- Respect `prefers-reduced-motion` and `prefers-color-scheme`. The global CSS already short-circuits animations when reduce-motion is on.
+- Graph views (React Flow) will use Option C "Power Condensed" density on top of Option A primitives — this is intentional.
+- Cmd+K palette is planned via `cmdk` integrated with shadcn/ui Dialog — install on demand.
+
+## Path Aliases
+- `@/*` → `src/*` (configured in both `tsconfig.json` and `vite.config.ts`).
+
+## Directory Layout (frontend)
+```
+src/
+├── assets/           # static assets bundled by Vite
+├── components/
+│   ├── ui/           # shadcn/ui primitives (Button, etc.)
+│   └── theme/        # ThemeProvider + useTheme
+├── hooks/            # custom React hooks
+├── lib/              # utilities (cn, etc.)
+├── styles/
+│   └── globals.css   # Tailwind v4 entry + design tokens
+├── App.tsx
+├── main.tsx
+└── vite-env.d.ts
+```

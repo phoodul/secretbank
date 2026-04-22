@@ -1,49 +1,29 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { ShieldCheck } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/theme/theme-provider";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const { theme, setTheme } = useTheme();
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
+      <div className="flex items-center gap-3">
+        <ShieldCheck className="size-8 text-primary" aria-hidden />
+        <h1 className="text-2xl font-semibold tracking-tight">API Vault</h1>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+      <p className="max-w-md text-center text-sm text-muted-foreground">
+        Bitwarden for APIs, with Dependency Graph.
+      </p>
+
+      <Button variant="outline" size="sm" onClick={toggleTheme}>
+        Toggle theme ({theme})
+      </Button>
     </main>
   );
 }
