@@ -133,6 +133,8 @@ name = "api-vault"
 version = "0.1.0"
 dependencies = [
  "api-vault-app",
+ "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-biometric",

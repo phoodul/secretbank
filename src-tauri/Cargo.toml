@@ -66,6 +66,9 @@ tauri-build = { workspace = true }
 [dependencies]
 tauri = { workspace = true }
 tauri-plugin-opener = { workspace = true }
+# Required by `tauri::generate_context!` macro expansion
+serde = { workspace = true }
+serde_json = { workspace = true }
 api-vault-app = { path = "crates/api-vault-app" }
 
 # Plugin deps mirrored here so tauri_build::build() can validate capabilities

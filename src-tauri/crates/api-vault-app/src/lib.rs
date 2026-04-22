@@ -20,7 +20,7 @@ fn greet(name: &str) -> String {
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
+pub fn run(context: tauri::Context) {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -102,6 +102,6 @@ pub fn run() {
     }
 
     builder
-        .run(tauri::generate_context!("../../tauri.conf.json"))
+        .run(context)
         .expect("error while running tauri application");
 }
