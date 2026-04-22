@@ -146,6 +146,48 @@
 - `cargo clippy --workspace -- -D warnings` — exit 0 (경고 없음)
 - `pnpm exec tsc --noEmit` — exit 0 (프론트엔드 불변 확인)
 
+### T004~T007 — LICENSE·CLA·lint/CI·README (implementator 에이전트)
+
+**T004 — AGPL-3.0 라이선스:**
+
+- `curl -L -o LICENSE https://www.gnu.org/licenses/agpl-3.0.txt` (34,523 bytes)
+- `LICENSE_FAQ.md` 신규 작성 (5 Q&A: 라이선스 종류, AGPL vs EE 경계, 셀프호스팅, 상업용 문의, 기여 방법)
+
+**T005 — CLA 자동화:**
+
+- `.github/CLA.md` — 저작권 소유 확인, 저작권·특허 라이선스 부여, 라이선스 변경 허용, 한국어 TLDR 포함
+- `.github/workflows/cla.yml` — `contributor-assistant/github-action@v2`, signatures/version1/cla.json, allowlist: dependabot[bot]
+- `.github/pull_request_template.md` — Summary / Test plan (4 체크박스) / CLA 동의 문구
+
+**T006 — lint/CI:**
+
+- `src-tauri/rustfmt.toml` — edition=2021, max_width=100 (nightly-only imports_granularity/group_imports 제외)
+- ESLint@9 + typescript-eslint + eslint-plugin-react/hooks/refresh + prettier + globals 설치 (pnpm)
+- `eslint.config.js` — flat config, tseslint.config(), react.configs.flat, allowConstantExport: true
+- `.prettierrc` — semi, singleQuote: false, trailingComma: all, printWidth: 100
+- `.prettierignore` — dist, node_modules, src-tauri/target|gen, pnpm-lock.yaml, LICENSE, Cargo.lock
+- `package.json` — scripts 추가: lint, lint:fix, format, format:check, typecheck
+- `.github/workflows/ci.yml` — rust job (fmt/clippy/test) + frontend job (typecheck/lint/format:check)
+- 기존 소스 파일 전체 prettier 포맷 일괄 적용
+
+**T007 — README.md 재작성:**
+
+- Vite 기본 템플릿 완전 대체
+- 섹션: 제목+뱃지, About, Features(8개), Tech Stack, Platforms, Getting Started, Dev Commands, License, Contributing, 한국어 요약
+
+**최종 검증 결과:**
+
+- `cargo fmt --check` — exit 0
+- `cargo clippy -D warnings` — exit 0
+- `cargo test --workspace` — exit 0 (smoke 8개 통과)
+- `pnpm typecheck` — exit 0
+- `pnpm lint` — exit 0 (warn 2개: react-refresh/only-export-components, 허용 수준)
+- `pnpm format:check` — exit 0
+- LICENSE 크기 34,523 bytes (30KB 이상 기준 통과)
+- `.github/workflows/ci.yml`, `.github/workflows/cla.yml` 존재 확인
+
+**커밋:** `de3706d` chore: AGPL-3.0 라이선스·CLA·lint/CI·README 추가 (T004~T007)
+
 ### T003 — Tauri v2 플러그인 활성화 (implementator 에이전트)
 
 **추가된 Rust 의존성 (`api-vault-app/Cargo.toml`):**

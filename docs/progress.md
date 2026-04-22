@@ -2,9 +2,9 @@
 
 ## Last Checkpoint
 
-- Time: 2026-04-22 (Gate 2 통과)
-- Phase: Phase 3 — Implementation (진입 직전)
-- Step: Gate 2 승인 완료. Open Issues 7건 전부 확정 (모노레포→분리, Org=api-vault, Free=2대, 도메인/결제/서명/법률=JIT+권장안). project-decisions.md 갱신. 다음: 실행 모드 선택 → T001 implementator 호출.
+- Time: 2026-04-22 (M0 T004~T007 완료)
+- Phase: Phase 3 — Implementation (M0 완료)
+- Step: T004(LICENSE) + T005(CLA) + T006(lint/CI) + T007(README) 완료. M0 전체 완료. 다음: M1 진입 (T008~T020, 핵심 데이터 모델 + 볼트 CRUD)
 
 ## Completed
 
@@ -49,10 +49,14 @@
 - [x] **Phase 3 실행 모드 확정** — Auto edits (파일 편집·커밋 자동, git push·배포·외부 결제만 승인 필요)
 - [x] **T001 + T002 완료** — Cargo 워크스페이스 분리 스캐폴드 + workspace.dependencies 설정 (`cargo build --workspace`, `cargo test --workspace` 모두 통과)
 - [x] **T003 완료** — Tauri v2 플러그인 9종 활성화 (`cargo build --workspace` exit 0, `cargo test` exit 0, `cargo clippy -D warnings` exit 0, `tsc --noEmit` exit 0). Stronghold만 AppLocker 환경 제약으로 일시 비활성화(주석 처리), JS 패키지는 정상 설치.
+- [x] **T004 완료** — LICENSE (AGPL-3.0, 34,523 bytes, curl 다운로드) + LICENSE_FAQ.md (5-Q&A, EE 경계 설명)
+- [x] **T005 완료** — .github/CLA.md + .github/workflows/cla.yml (contributor-assistant@v2) + .github/pull_request_template.md
+- [x] **T006 완료** — src-tauri/rustfmt.toml, eslint.config.js (flat config), .prettierrc, .prettierignore, package.json scripts 5종 추가, .github/workflows/ci.yml (rust + frontend job)
+- [x] **T007 완료** — README.md 전면 재작성 (About/Features/Stack/Platforms/Getting Started/Dev Commands/License/Contributing/한국어 요약)
 
 ## In Progress
 
-- [ ] Phase 3 Implementation — M0 Foundation (T004 이후 진행 중)
+- [ ] M1 — 핵심 데이터 모델 + 볼트 CRUD (T008~T020)
 
 ## Pending Decisions
 
