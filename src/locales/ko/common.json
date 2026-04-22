@@ -150,6 +150,14 @@
     "loading": "볼트 상태 확인 중…",
     "lockedToast": "볼트 잠금됨"
   },
+  "onboarding": {
+    "dropToScan": "API 키 스캔을 위해 파일을 드롭하세요",
+    "dropHint": ".env 및 설정 파일을 스캔하려면 폴더를, 빠른 검사를 위해서는 단일 파일을 드롭하세요.",
+    "scanning": "{{path}} 스캔 중…",
+    "scanPlaceholderTitle": "스캔 준비 완료",
+    "scanPlaceholderDescription": "경로: {{path}}. 전체 스캔 UI는 T033–T035에서 구현됩니다.",
+    "scanMissingPath": "경로가 없습니다. 창에 폴더를 드롭하여 시작하세요."
+  },
   "commandPalette": {
     "searchPlaceholder": "명령어 또는 검색어 입력…",
     "noResults": "결과 없음",

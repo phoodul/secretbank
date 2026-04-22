@@ -150,6 +150,14 @@
     "loading": "ボールトの状態を確認中…",
     "lockedToast": "ボールトをロックしました"
   },
+  "onboarding": {
+    "dropToScan": "APIキーをスキャンするにはドロップしてください",
+    "dropHint": ".envや設定ファイルをスキャンするにはフォルダを、クイックチェックには単一ファイルをドロップしてください。",
+    "scanning": "{{path}} をスキャン中…",
+    "scanPlaceholderTitle": "スキャン準備完了",
+    "scanPlaceholderDescription": "パス: {{path}}。完全なスキャンUIはT033–T035で実装されます。",
+    "scanMissingPath": "パスが指定されていません。ウィンドウにフォルダをドロップして開始してください。"
+  },
   "commandPalette": {
     "searchPlaceholder": "コマンドまたは検索ワードを入力…",
     "noResults": "結果が見つかりません",

@@ -150,6 +150,14 @@
     "loading": "Checking vault status…",
     "lockedToast": "Vault locked"
   },
+  "onboarding": {
+    "dropToScan": "Drop to scan for API keys",
+    "dropHint": "Drop a folder to scan .env and config files, or a single file for quick check.",
+    "scanning": "Scanning {{path}}…",
+    "scanPlaceholderTitle": "Ready to scan",
+    "scanPlaceholderDescription": "Path: {{path}}. Full scan UI lands in T033–T035.",
+    "scanMissingPath": "No path supplied. Drop a folder onto the window to start."
+  },
   "commandPalette": {
     "searchPlaceholder": "Type a command or search…",
     "noResults": "No results found",

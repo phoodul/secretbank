@@ -6,8 +6,10 @@ import { AuditPage } from "@/pages/AuditPage";
 import { GraphPage } from "@/pages/GraphPage";
 import { IncidentsPage } from "@/pages/IncidentsPage";
 import { InventoryPage } from "@/pages/InventoryPage";
+import { OnboardingScanPage } from "@/pages/OnboardingScanPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { AutoLockGuard } from "@/features/vault/AutoLockGuard";
+import { DropZone } from "@/features/onboarding/DropZone";
 import { LockScreen } from "@/features/vault/LockScreen";
 import { useVaultStatus } from "@/features/vault/use-vault-status";
 
@@ -30,6 +32,7 @@ function VaultGate() {
     return (
       <BrowserRouter>
         <AutoLockGuard />
+        <DropZone />
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<InventoryPage />} />
@@ -38,6 +41,7 @@ function VaultGate() {
             <Route path="audit" element={<AuditPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
+          <Route path="onboarding/scan" element={<OnboardingScanPage />} />
         </Routes>
       </BrowserRouter>
     );
