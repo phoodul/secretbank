@@ -1,7 +1,7 @@
 /// Integration tests for the initial SQLite migration.
 /// Uses `#[sqlx::test]` which spins up a temporary in-memory database,
 /// applies all migrations automatically, and tears down after each test.
-
+///
 /// Verify that all 11 expected tables are created by the migration.
 #[sqlx::test(migrations = "./migrations")]
 async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {

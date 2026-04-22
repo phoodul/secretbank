@@ -2,11 +2,13 @@
 
 pub mod commands;
 pub mod context;
+pub mod setup;
 
 use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
     credential_update,
 };
+use commands::issuer::{issuer_get, issuer_list};
 use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
 use context::AppContext;
 use tauri::Manager;
@@ -31,6 +33,10 @@ pub fn run(context: tauri::Context) {
 
             let ctx = tauri::async_runtime::block_on(AppContext::new(data_dir))
                 .expect("failed to initialise AppContext");
+
+            let seed_count = tauri::async_runtime::block_on(setup::seed_issuer_presets(&ctx.pool))
+                .expect("failed to seed issuer presets");
+            tracing::info!("issuer preset seed: {} rows inserted", seed_count);
 
             app.manage(ctx);
             Ok(())
@@ -65,6 +71,8 @@ pub fn run(context: tauri::Context) {
             credential_delete,
             credential_reveal,
             credential_copy_to_clipboard,
+            issuer_list,
+            issuer_get,
         ]);
     }
 
@@ -82,6 +90,8 @@ pub fn run(context: tauri::Context) {
             credential_update,
             credential_delete,
             credential_reveal,
+            issuer_list,
+            issuer_get,
         ]);
     }
 

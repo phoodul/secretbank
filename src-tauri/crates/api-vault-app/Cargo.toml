@@ -36,6 +36,7 @@ secrecy = { workspace = true }
 time = { workspace = true }
 async-trait = { workspace = true }
 
+sqlx = { workspace = true }
 api-vault-core = { path = "../api-vault-core" }
 api-vault-storage = { path = "../api-vault-storage" }
 api-vault-crypto = { path = "../api-vault-crypto" }
@@ -61,3 +62,4 @@ tauri-plugin-biometric = { version = "2", optional = true }
 api-vault-storage = { path = "../api-vault-storage", features = ["mock"] }
 # test-util: tokio::time::pause / advance / start_paused 사용을 위해 필요
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "test-util"] }
+tempfile = "3"
