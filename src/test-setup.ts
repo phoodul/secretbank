@@ -16,3 +16,13 @@ if (!window.HTMLElement.prototype.releasePointerCapture) {
 if (!window.HTMLElement.prototype.scrollIntoView) {
   window.HTMLElement.prototype.scrollIntoView = () => undefined;
 }
+
+// ResizeObserver polyfill for jsdom
+// cmdk(Command) 및 Radix Popover가 ResizeObserver를 사용하는데 jsdom이 미구현
+if (typeof window.ResizeObserver === "undefined") {
+  window.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

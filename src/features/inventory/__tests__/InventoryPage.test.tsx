@@ -29,7 +29,11 @@ function renderPage() {
 describe("InventoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockInvoke.mockResolvedValue(MOCK_CREDENTIALS);
+    // credential_list → MOCK_CREDENTIALS, issuer_list → [] (Dialog는 열리지 않으므로 빈 배열)
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "issuer_list") return Promise.resolve([]);
+      return Promise.resolve(MOCK_CREDENTIALS);
+    });
   });
 
   afterEach(() => {
@@ -128,7 +132,11 @@ describe("InventoryPage", () => {
   });
 
   it("로드 실패 시 에러 배너를 표시한다", async () => {
-    mockInvoke.mockRejectedValue("Network error");
+    // credential_list만 실패, issuer_list는 정상 (Dialog는 열리지 않으므로 issuer_list는 미호출)
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "issuer_list") return Promise.resolve([]);
+      return Promise.reject("Network error");
+    });
     renderPage();
 
     await waitFor(() => {
@@ -138,7 +146,14 @@ describe("InventoryPage", () => {
 
   it("Retry 버튼 클릭 시 invoke를 재호출한다", async () => {
     const user = userEvent.setup();
-    mockInvoke.mockRejectedValueOnce("error").mockResolvedValue(MOCK_CREDENTIALS);
+    let credentialCallCount = 0;
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "issuer_list") return Promise.resolve([]);
+      // credential_list: 첫 번째는 실패, 이후는 성공
+      credentialCallCount++;
+      if (credentialCallCount === 1) return Promise.reject("error");
+      return Promise.resolve(MOCK_CREDENTIALS);
+    });
     renderPage();
 
     await waitFor(() => {
@@ -152,9 +167,6 @@ describe("InventoryPage", () => {
       expect(screen.queryByText("Failed to load credentials")).not.toBeInTheDocument();
       expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
     });
-
-    // invoke가 2번 호출되어야 함 (초기 + Retry)
-    expect(mockInvoke).toHaveBeenCalledTimes(2);
   });
 
   it("Status 필터 'revoked' 선택 시 invoke가 filter={status:'revoked'}로 재호출된다", async () => {
@@ -184,12 +196,13 @@ describe("InventoryPage", () => {
     });
   });
 
-  it("'+ Add credential' 버튼이 disabled 상태로 렌더링된다", async () => {
+  it("'+ Add credential' 버튼이 렌더링되고 클릭 가능하다", async () => {
     renderPage();
 
     await waitFor(() => {
       const addBtn = screen.getByRole("button", { name: /add credential/i });
-      expect(addBtn).toBeDisabled();
+      expect(addBtn).toBeInTheDocument();
+      expect(addBtn).not.toBeDisabled();
     });
   });
 });

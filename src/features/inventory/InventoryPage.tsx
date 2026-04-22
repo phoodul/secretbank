@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,11 +12,13 @@ import {
 } from "@/components/ui/select";
 import { CredentialList } from "./CredentialList";
 import { useInventory } from "./use-inventory";
+import { CreateCredentialDialog } from "./CreateCredentialDialog";
 import type { CredentialFilter, CredentialStatus, Env } from "./types";
 
 export function InventoryPage() {
   const { t } = useTranslation("common");
   const { items, loading, error, filter, setFilter, search, setSearch, refresh } = useInventory();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleEnvChange = (value: string) => {
     if (value === "__all__") {
@@ -39,7 +41,7 @@ export function InventoryPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold tracking-tight">{t("inventory.title")}</h1>
-        <Button variant="default" size="sm" disabled onClick={() => toast.info("Coming in T026")}>
+        <Button variant="default" size="sm" onClick={() => setDialogOpen(true)}>
           + {t("inventory.addCredential")}
         </Button>
       </div>
@@ -95,6 +97,9 @@ export function InventoryPage() {
 
       {/* 목록 */}
       <CredentialList items={items} loading={loading} />
+
+      {/* Credential 등록 다이얼로그 */}
+      <CreateCredentialDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={refresh} />
     </div>
   );
 }
