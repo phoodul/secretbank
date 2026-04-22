@@ -5,3 +5,9 @@ src-tauri/gen
 pnpm-lock.yaml
 LICENSE
 src-tauri/Cargo.lock
+
+# Orchestrator 가 매 태스크 직후 한 줄씩 갱신하는 진행 기록 문서.
+# 마크다운 테이블 컬럼 정렬이 편집마다 어긋나 CI format:check 를 불안정하게 만들어 제외.
+docs/task.md
+docs/progress.md
+docs/work-log.md
