@@ -118,6 +118,34 @@
 - `.prettierignore` 에 `docs/task.md`, `docs/progress.md`, `docs/work-log.md` 추가.
 - 이후 모든 진행 기록 Edit 은 prettier 재포맷 걱정 없이 자유롭게 수행 가능.
 
+### Night mode 해석 정정 (사용자 피드백)
+
+1순위 CRUD 블록 완주 후 "2순위 진입 방식" 을 3지선다로 물었다가 사용자가 "Night mode 라면 묻지 않고 1을 했어야지" 지적. Night mode 의 의미는 Gate 1-4 외 **모든 중간 확인을 스킵하고 연속 실행**. 태스크 블록 전환 같은 하위 구조는 승인 게이트가 아님. `memory/feedback_night_mode.md` + MEMORY.md 에 영구 기록.
+
+### T029 — Cmd+K Command Palette (implementator, 커밋 `67dd892`, Night mode 연속)
+
+- **생성 파일**: `src/features/command-palette/{CommandPalette.tsx,actions.ts,use-recent-commands.ts,__tests__/CommandPalette.test.tsx}`
+- **수정 파일**: `src/components/shell/AppShell.tsx` (CommandPalette 마운트 + useHotkeys enabled=desktop), `src/features/vault/use-vault-status.ts` (vault-lock CustomEvent 리스너 추가), `src/features/inventory/InventoryPage.tsx` (?action=create query 감지 → Dialog 자동 open), 기존 Inventory 테스트 2종 (MemoryRouter 래핑 + 통합 테스트 1), `src/locales/{en,ko,ja}/common.json` (commandPalette 네임스페이스 + vault.lockedToast), `package.json`/`pnpm-lock.yaml` (react-hotkeys-hook 추가)
+- **10 actions**: Navigation 5 (Inventory/Graph/Incidents/Audit/Settings) + Actions 5 (Create credential → `?action=create` URL query / Lock vault → invoke + CustomEvent / Switch to {light|dark|system} 3개 분리)
+- **Recent 그룹**: localStorage `apivault:command-palette:recent` 에 id 배열 상한 10. 상위 5개를 Recent 그룹으로 cmdk 안 상단 렌더. 원 그룹에도 중복 표시 유지(검색 일관성).
+- **모바일 숨김**: AppShell 데스크톱 분기에서만 `<CommandPalette />` 렌더 + useHotkeys `enabled: platform === "desktop"` (Hooks 규칙 준수 위해 훅은 항상 호출).
+- **Lock vault 플로우**: `invoke("vault_lock")` → `window.dispatchEvent(new CustomEvent("vault-lock"))` → `useVaultStatus` 내부 리스너가 refresh → `{state:"locked"}` 반환 시 VaultGate 가 LockScreen 렌더. 전역 Context 없이 이벤트로 해결(YAGNI).
+- **테스트**: Vitest +12 (CommandPalette 11 + InventoryPage 통합 1). 전체 70개 통과.
+- **검증**: `tsc/lint/format:check/vitest/cargo build` 5개 exit 0.
+
+**구현 중 발견한 이슈**:
+
+- **`react-hooks/set-state-in-effect` 규칙 (3번째 충돌)**: InventoryPage 에서 `?action=create` 감지 시 `setDialogOpen(true)` + `setSearchParams({})` 를 effect 안에서 같이 호출하면 규칙 위반. 해결: `useState` 초기화 함수에서 searchParams 를 읽고 `dialogOpen` 초기값을 `true` 로 세팅, `setSearchParams({})` 는 `setTimeout(fn, 0)` 으로 microtask 위임. setTimeout 경로는 router 상태 변경이라 규칙 밖. 동작은 정상이지만 약간 hacky — 향후 리팩터 여지.
+- **CommandDialog description 충돌**: cmdk 의 `CommandDialog` 에 `description` prop 이 있고 sr-only DOM 에 렌더됨. 내가 제안한 `description={t("commandPalette.navigation")}` 를 그대로 쓰면 "Navigation" 그룹 heading 과 텍스트 충돌로 테스트 `getByText("Navigation")` 실패. 해결: description 을 `searchPlaceholder` 텍스트로 바꾸고 title 을 고정 "Command Palette" 로.
+- **CreateCredentialDialog 테스트 회귀**: `InventoryPage` 가 `useSearchParams` 쓰면서 Router 컨텍스트 요구. 기존 테스트에서 Router 없이 렌더하던 부분을 `<MemoryRouter>` 로 래핑.
+
+**T030/T031 에 영향 줄 사실**:
+
+- `useTheme().setTheme` 사용 패턴 확립됨. SettingsPage 에서 동일하게 `next-themes` → `@/components/theme/theme-provider` 재export 사용.
+- Settings 의 theme 섹션 i18n 은 기존 `settings.themeLight/Dark/System` 사용 (T011 에서 이미 생성). commandPalette 네임스페이스 중복 아님.
+- `vault-lock` CustomEvent 패턴 재사용 준비 완료 — T031 Auto-lock idle timer 에서 `invoke("vault_lock")` + 동일 CustomEvent dispatch 로 LockScreen 전환.
+- `useHotkeys` 의 `enabled` 옵션 패턴 확립. T031 idle detection 훅도 `enabled: autoLockEnabled` 로 조건부 활성화 가능.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)

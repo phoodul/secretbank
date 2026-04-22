@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T027 완료 — 1순위 CRUD 블록 완주, 체크포인트)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 4/14**
-- **Commits:** 32개 누적 (최신 `4cbf8c0` feat(inventory): Credential 상세 Drawer (T027))
-- **Tests:** Rust 47개 + Vitest 58개 (+12 CredentialDetail) 통과.
+- **Time:** 2026-04-23 (T029 완료, 2순위 블록 진행 중)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 5/14**
+- **Commits:** 35개 누적 (최신 `67dd892` feat(command-palette): Cmd+K Command Palette (T029))
+- **Tests:** Rust 47개 + Vitest 70개 (+12 CommandPalette) 통과.
 - **Blocker:** 없음.
-- **Mode:** Night mode — 2순위 블록(T029/T030/T031) 진입 전 사용자 체크포인트.
-- **CI 복구:** `.prettierignore` 에 진행 기록 문서 3종 제외 추가 (`0b86538`).
+- **Mode:** Night mode — Gate 3/4 까지 연속 실행. T030 Theme/Settings → T031 Auto-lock 이어서.
+- **CI:** `.prettierignore` 에 진행 기록 3종 제외 (`0b86538`).
 
 ## M2 진행 상황 (1/14)
 
@@ -18,13 +18,14 @@
 - T028 Issuer 프리셋 10종 시드 + issuer_list/get 커맨드 (커밋 `539347f`)
 - T026 Credential 등록 다이얼로그 (커밋 `a7e1d58`)
 - T027 Credential 상세 Drawer (Sheet + 클립보드 30s + 삭제, 커밋 `4cbf8c0`)
+- T029 Cmd+K Command Palette (10 actions, localStorage recent, 커밋 `67dd892`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
 사용자 방침: **CRUD UI 핵심부터, 드롭&스캔 블록(T032~T035)은 M2 후반으로.** T026 이 Issuer combobox 에 프리셋을 쓰므로 T028 을 T026 앞으로 당김.
 
 - 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → **T027 ✅** (1순위 블록 완주)
-- 2순위: T029 Cmd+K → T030 Theme/Settings → T031 Auto-lock
+- 2순위: **T029 ✅** → T030 Theme/Settings → T031 Auto-lock (진행 중)
 - 3순위(드롭&스캔): T032 드롭존 → T033 .env 파서 + 엔트로피 → T034 env_scan_folder 커맨드 → T035 결과 검토 UI
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
 
@@ -159,7 +160,9 @@
 - [x] T028 Issuer 프리셋 10종 시드 + issuer_list/get — 커밋 `539347f`
 - [x] T026 Credential 등록 다이얼로그 — 커밋 `a7e1d58`
 - [x] T027 Credential 상세 Drawer (Sheet) — 커밋 `4cbf8c0`
-- [ ] 체크포인트: 2순위 블록(T029/T030/T031) 진입 여부 사용자 확인
+- [x] T029 Cmd+K Command Palette — 커밋 `67dd892`
+- [ ] T030 Theme Toggle + Settings 페이지 기본 — 다음 태스크
+- [ ] T031 Auto-lock 타이머 (idle detection) — T030 뒤
 
 ## Pending Decisions
 
@@ -180,5 +183,5 @@
 
 ## Next Action
 
-- **체크포인트 — 사용자 확인 대기.** 1순위 CRUD 블록(T025/T028/T026/T027) 완주, M2 4/14. 2순위 블록(T029 Cmd+K / T030 Theme+Settings / T031 Auto-lock) 진입 여부 확인 필요.
-- 승인 시 **T029 Cmd+K Command Palette** 부터 진행 — `cmdk`(이미 설치, `src/components/ui/command.tsx`) + Dialog. `useHotkeys` (미설치 → `pnpm add react-hotkeys-hook`). 그룹: Navigation(Inventory/Graph/Incidents/Audit/Settings), Actions(Create credential→T026 Dialog, Lock vault→`vault_lock`, Toggle theme). 최근 사용 순 정렬 (localStorage). 모바일 숨김 (Radix `md:` breakpoint).
+- **T030 Theme Toggle + Settings 페이지 기본** — `ThemeProvider` (이미 있음, `next-themes` 기반) + SettingsPage 에 테마/언어 탭. Theme 옵션: Light/Dark/System 라디오 또는 버튼 그룹. 언어 탭은 T011 에 기본 골격 존재 — 확장/정리. "Danger zone" 섹션: Delete vault (미구현 placeholder). Settings 페이지 전체 레이아웃은 좌측 탭 리스트 + 우측 패널 (shadcn Tabs 사용).
+- 이어서 **T031 Auto-lock 타이머** — idle detection (pointermove/keydown 이벤트 기반) + setTimeout. 기본 5분 미사용 시 자동 lock. Settings 에서 분 단위 설정 (Off / 1 / 5 / 15 / 30). `invoke("vault_lock")` + vault-lock CustomEvent (T029 패턴 재사용).
