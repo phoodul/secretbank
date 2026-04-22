@@ -1,5 +1,1 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn smoke() {}
-}
+pub mod sqlite;

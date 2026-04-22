@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+sqlx     = { workspace = true }
+tokio    = { workspace = true }
+thiserror = { workspace = true }
+time     = { workspace = true }
+ulid     = { workspace = true }
+tracing  = { workspace = true }
+serde    = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
