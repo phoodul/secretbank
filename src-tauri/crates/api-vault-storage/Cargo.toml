@@ -3,14 +3,21 @@ name = "api-vault-storage"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+mock = []
+
 [dependencies]
-sqlx     = { workspace = true }
-tokio    = { workspace = true }
+sqlx      = { workspace = true }
+tokio     = { workspace = true }
 thiserror = { workspace = true }
-time     = { workspace = true }
-ulid     = { workspace = true }
-tracing  = { workspace = true }
-serde    = { workspace = true }
+time      = { workspace = true }
+ulid      = { workspace = true }
+tracing   = { workspace = true }
+serde     = { workspace = true }
+secrecy   = { workspace = true }
+zeroize   = { workspace = true }
+async-trait = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

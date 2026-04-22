@@ -5,6 +5,37 @@
 
 ---
 
+## [2026-04-22] 개발 환경 정책 (Windows AppLocker/Defender + 문제 해결 프로토콜)
+
+### A. Windows Defender 실시간 보호 제외 경로
+- **결정:** 로컬 개발자(Windows)는 `C:\Users\JSS\Projects\api-vault\src-tauri\target` 을 Windows Defender 실시간 보호의 제외 경로로 추가한다. Cargo 가 컴파일하는 테스트 바이너리(`target\debug\deps\*.exe`)를 Defender 가 새로 생성될 때마다 차단하는 이슈 해결용.
+- **수동 실행 (관리자 권한 PowerShell):**
+  ```powershell
+  Add-MpPreference -ExclusionPath 'C:\Users\JSS\Projects\api-vault\src-tauri\target'
+  ```
+- **원복:** `Remove-MpPreference -ExclusionPath 'C:\Users\JSS\Projects\api-vault\src-tauri\target'`
+- **주의:** 타사 PC 에서 개발 시 동일 경로 반영 필요. 팀 확장 시 dev-setup.md 에 명시.
+
+### B. 테스트 실행 패턴: `-p <crate>` 우선
+- **결정:** `cargo test --workspace` 대신 **각 크레이트별로 `cargo test -p api-vault-<crate>`** 를 우선 사용한다. 전체 워크스페이스 테스트는 CI(Ubuntu) 에서 최종 검증.
+- **이유:** A 를 적용해도 일부 환경에서 첫 컴파일 직후 바이너리 실행이 지연될 수 있음. `-p` 로 크레이트를 좁히면 캐시 히트와 재현성이 좋다.
+- **영향:** implementator/tester 에이전트 호출 시 `cargo test -p <crate>` 패턴을 명시. 전체 워크스페이스 검증은 `cargo build --workspace` 와 `cargo clippy --workspace` 로 대체 (컴파일 + 정적 분석은 바이너리 실행이 없어 차단 미발생).
+
+### C. 에러 대응 프로토콜 — "1회 자체 시도 → 실패 시 반드시 검색"
+- **결정:** implementator / problem-solver / tester 가 에러를 만났을 때:
+  1. **1회 자체 수정 시도.** 에러 메시지를 읽고 명백한 원인을 고친다.
+  2. **실패 시 반드시 외부 검색** — WebSearch/WebFetch 로 (a) 에러 메시지 원문 인용, (b) 크레이트/라이브러리 공식 이슈 트래커, (c) Stack Overflow · GitHub Discussions · 공식 문서에서 해결책을 찾는다.
+  3. **2번째 시도 후에도 실패** 하면 informer 로 사용자에게 보고하고 인간 판단을 기다린다.
+- **이유:** 에이전트가 모르는 크레이트 버전 차이, 플랫폼 특이 버그, Tauri v2 변경사항 등은 추측보다 검색이 빠르고 정확. "No package info in the config file" 같은 케이스도 검색으로 T001 구조 이슈를 더 빨리 발견할 수 있었다.
+- **영향:**
+  - implementator 프롬프트 템플릿에 이 프로토콜을 기본 포함.
+  - problem-solver 가 호출될 때 WebSearch 필수 (이미 해당 에이전트 정의에 포함).
+  - 검색 질의는 구체적이어야 함: 에러 원문 + 크레이트 이름 + 버전 + 플랫폼.
+
+---
+
+---
+
 ## [2026-04-22] 프로젝트 정의 및 포지셔닝
 
 - **결정:** API Vault는 "API 키 저장소"가 아니라 **"API 키 의존성 그래프(Dependency Graph) 관리 플랫폼"** 으로 포지셔닝한다. 타깃 캐치프레이즈는 **"Bitwarden for APIs, with Dependency Graph"**.
