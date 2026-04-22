@@ -2,11 +2,11 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-22 (M1 마무리 직후)
-- **Phase:** Phase 3 — Implementation, **M1 Local Vault Core 12/12 완료**
-- **Commits:** 21개 누적 (최신 `71d37bc` feat(app): 클립보드 자동 만료 30초 T023)
-- **Tests:** Rust 43개 + Vitest 13개 통과 (storage 32 + core 3 + crypto 5 + app clipboard 4 + ignored 3; 프론트 LockScreen 6 + CreateVaultDialog 7)
-- **Blocker:** 없음. SAC Off 적용 완료, 풀 빌드 정상.
+- **Time:** 2026-04-22 (M1 수동 통합 검증 통과 후)
+- **Phase:** Phase 3 — Implementation, **M1 Local Vault Core 12/12 + 수동 검증 완료**
+- **Commits:** 25개 누적 (최신 `987b857` chore(dev): M1 수동 검증용 DevTools IPC 보조 설정)
+- **Tests:** Rust 43개 + Vitest 13개 통과. 수동 E2E 전 흐름 통과.
+- **Blocker:** 없음.
 
 ## M1 완료 (12/12)
 
@@ -29,6 +29,23 @@
 
 - `fix(tauri): tauri-plugins feature 에 updater/biometric dep 추가` (커밋 `42b7769`) — 재부팅 후 풀 빌드에서 드러난 E0433 해결
 - `chore(docs): prettier 포맷 일괄 적용` (커밋 `781d547`) — 코드 펜스 주변 공백 정리
+- `fix(tauri): generate_context! 를 root crate 로 이동` (커밋 `eaece03`) — **플러그인 ACL 구조 문제 해결** (workspace 에서 tauri-build 는 root 에서 실행되어 gen/schemas 를 root OUT_DIR 에 emit 하는데, generate_context! 를 subcrate 에서 호출하면 매니페스트를 찾지 못해 모든 플러그인 IPC 가 `Plugin not found` 로 차단됨. 커스텀 커맨드는 core:default 로 우회되어 이전까지 드러나지 않았음.)
+- `chore(dev): M1 수동 검증용 DevTools IPC 보조 설정` (커밋 `987b857`) — `withGlobalTauri`, `window.__dev = {invoke, listen, Database}`, `sql:allow-execute` 추가
+
+### M1 수동 통합 검증 결과 (2026-04-22)
+
+**시나리오 전 흐름 통과:**
+
+1. CreateVault: zxcvbn 강도 미터 표시 → 12자 이상 강한 비번 → `vault.age` + `vault.db` 파일 생성 확인
+2. Lock/Unlock: 3회 연속 오답 → 10초 쿨다운 카운트다운 표시, 쿨다운 해제 후 정상 언락
+3. Credential CRUD: `credential_create` → SQLite 메타 + age 볼트 값 분리 저장 → `credential_list` 메타만 반환 (`value` 필드 없음) → `credential_reveal` 원본 plaintext 반환
+4. Clipboard 30초 만료: `credential_copy_to_clipboard` → 시스템 클립보드에 즉시 복사 + `clipboard:countdown` 이벤트 30→0 로 1초마다 발생 → 30초 후 클립보드 비워짐 확인
+
+**검증 중 발견한 설계 교훈:**
+
+- `IssuerId` 는 `#[serde(transparent)]` 로 감싼 `ulid::Ulid` newtype 이라 Crockford Base32 (`I`, `L`, `O`, `U` 제외) 를 엄격 검증. SQLite TEXT 컬럼은 무검증이라 레이어 간 ULID validation 이 다름 → **프론트는 직접 ULID 문자열을 구성하지 말고 Tauri 커맨드가 서버에서 생성한 값을 전달받는 구조로 가야 함**.
+- Tauri v2 `sql:default` 는 read-only (`allow-close + allow-load + allow-select`). INSERT/UPDATE 는 `sql:allow-execute` 명시 opt-in 필요.
+- **M2 T026 `issuer_create` 커맨드 구현 시** 서버에서 `IssuerId::new()` 로 생성해 반환하는 패턴 유지 (이미 `IssuerInput` 에 id 필드 없음 — 올바른 설계).
 
 ## 다음 세션 Next Actions
 

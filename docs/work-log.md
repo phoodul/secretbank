@@ -40,6 +40,29 @@
 
 - 사용자가 SAC Off 적용 후 재부팅 → `pnpm tauri dev` 풀 빌드 정상. `docs/project-decisions.md` "개발 환경 정책" A-2 적용 완료.
 
+### M1 수동 통합 검증 + 플러그인 ACL 구조 버그 발견 (commits `eaece03`, `987b857`)
+
+**수동 검증 전 흐름**: CreateVault (zxcvbn 강도 미터) → Lock/Unlock (3회 실패 10초 쿨다운) → credential_create/list/reveal (age 볼트 라운드트립) → credential_copy_to_clipboard (30초 자동 만료 + countdown 이벤트) 전부 통과.
+
+**플러그인 ACL 구조 버그 (`eaece03`)**:
+
+- **증상**: `Database.load()` 호출 시 `sql.load not allowed. Plugin not found`. 이어 `clipboard-manager`, `event`, 기타 플러그인 IPC 도 전부 같은 패턴으로 차단됨을 확인.
+- **원인**: Tauri workspace 에서 `tauri_build::build()` 는 root crate (`src-tauri/build.rs`) 에서 실행되어 `gen/schemas/{capabilities,acl-manifests}.json` 을 root crate 의 OUT_DIR 에 emit 한다. 그러나 `tauri::generate_context!` 를 subcrate (`api-vault-app`) 에서 호출하면 매크로가 호출 crate 의 `CARGO_MANIFEST_DIR` 기준으로 gen/schemas 를 찾아 **플러그인 ACL 매니페스트를 못 읽는다**. 커스텀 `#[tauri::command]` 는 `core:default` 에서만 검증되어 이 불일치가 T023 수동 검증 전까지 드러나지 않았음.
+- **수정**: `src-tauri/src/main.rs` 에서 `generate_context!()` 호출 후 결과를 `api_vault_app::run(context: tauri::Context)` 로 전달. `serde`, `serde_json` 을 root Cargo.toml 에 추가 (매크로 expansion 이 참조).
+- **교훈**: Tauri workspace 분리 시 `generate_context!` 는 **반드시 root crate 에서만** 호출해야 한다. 이는 T001 구조 재조정 시점에 발견됐어야 하는 issue였는데 플러그인 IPC 를 수동 검증 단계까지 호출하지 않아 잠복해 있었음.
+
+**ULID 검증 레이어 불일치 (교훈만)**:
+
+- `IssuerId` 는 `#[serde(transparent)]` 로 감싼 `ulid::Ulid` newtype. `Ulid::from_string` 이 Crockford Base32 (`I`, `L`, `O`, `U` 제외) 를 엄격 검증하고 위반 시 `DecodeError::InvalidChar` ("invalid character") 반환. SQLite `TEXT PRIMARY KEY` 는 무검증이라 두 레이어의 validation 이 다름.
+- 수동 테스트 중 `01HZZZTESTISSUER0000000001` (I, U 포함) 를 프론트에서 넘겨 SQLite INSERT 는 성공했지만 `credential_create` 의 `IssuerId` deserialize 에서 실패. 원인 파악에 여러 사이클 소요.
+- M2 에서 `issuer_create` Tauri 커맨드를 구현하면 프론트가 직접 ULID 를 구성할 일이 없어지므로 근본 해결됨. 이미 `IssuerInput` 에 id 필드 없고 서버에서 `IssuerId::new()` 로 생성해 반환하는 구조라 M2 구현 시 그 패턴을 유지.
+
+**Dev 편의 설정 (`987b857`)**:
+
+- `src-tauri/tauri.conf.json` `app.withGlobalTauri: true` (기본 false)
+- `src/main.tsx` `import.meta.env.DEV` 가드로 `window.__dev = {invoke, listen, Database}` 노출 (production 빌드에서 Vite dead-code elimination)
+- `src-tauri/capabilities/default.json` `sql:allow-execute` 추가 (M2 `issuer_create` 커맨드 도입 후 재검토 예정)
+
 ---
 
 ## 2026-04-22 (상세)
