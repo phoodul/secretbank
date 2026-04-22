@@ -384,10 +384,45 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 
 ---
 
-## [2026-04-22] 보안 핵심 결정 (유지)
+## [2026-04-22] 볼트 암호화 엔진 교체: Stronghold → age — **[갱신: 이전 결정 대체]**
+
+- **결정:** 로컬 볼트 암호화 엔진을 **Tauri Stronghold**에서 **`age` crate(v1.2+)** 로 교체한다.
+  - `tauri-plugin-stronghold` 와 `@tauri-apps/plugin-stronghold` 는 완전히 제거.
+  - `age` (RustCrypto 생태계, MIT/Apache-2.0 듀얼 라이선스) 를 직접 Rust 의존성으로 추가.
+  - 파생 키로부터 age identity(X25519) 를 만들어 볼트 파일(`vault.age`)을 암호화/복호화한다.
+  - 세부 모드(X25519 recipient vs scrypt passphrase, streaming vs one-shot) 는 M1 T016 진입 시 확정.
+- **이유 (4가지):**
+  1. **Windows AppLocker/Defender 블로커** — `libsodium-sys-stable` build.rs 바이너리가 Windows 에서 실행 차단 (OS error 4551). 개발자 환경 예외 설정만으로는 **최종 사용자 환경에서도 같은 문제가 재발**할 위험이 있다.
+  2. **Stronghold v3 deprecated 예정** — `docs/research_raw.md` 주제 #1 의 🟡 평가. 어차피 교체할 운명이었으며, `VaultStorage` trait 추상화(Q6=B)는 이 교체를 대비한 것.
+  3. **모바일 성숙도 이슈 해소** — Stronghold 의 `iota-crypto` 체인은 모바일에서 🟡. `age` 는 pure Rust + 가벼운 의존성이라 iOS/Android 빌드에서 문제 없음.
+  4. **단순성** — age는 표준 포맷(X25519 + ChaCha20-Poly1305), 1Password/Fastmail/Mozilla SOPS 등 다수 프로덕션 검증.
+- **유지되는 것 (변경 없음):**
+  - **OS Keyring 으로 마스터 키 저장** — 그대로.
+  - **Argon2id KDF + HKDF 키 파생 체인** — 그대로. 차이는 최종 symmetric key 가 age identity 로 변환되는 점.
+  - **Zero-Knowledge 아키텍처** — 서버는 여전히 암호문만 본다.
+  - **CRDT 델타 암호화(Yjs + SecSync)** — 독립적 레이어, 영향 없음.
+  - **`VaultStorage` trait 추상화(Q6=B)** — 오히려 이 결정을 바로 활용. 구현체 이름만 `StrongholdStorage` → `AgeVaultStorage`.
+- **영향:**
+  - `src-tauri/crates/api-vault-app/Cargo.toml` 에서 `tauri-plugin-stronghold` dependency 제거 (주석 포함).
+  - `src-tauri/crates/api-vault-app/src/lib.rs` 에서 Stronghold 관련 TODO 주석 삭제.
+  - `package.json` 에서 `@tauri-apps/plugin-stronghold` 제거.
+  - M1 T016 의 태스크 제목을 `StrongholdStorage 구현` → `AgeVaultStorage 구현` 으로 변경 필요 (task.md, implementation_plan.md 정리 태스크를 M1 진입 전에 처리).
+  - `docs/architecture.md` 섹션 4(보안) 의 "Stronghold" 언급을 `age` 로 갱신 필요.
+- **대안 후보 검토:**
+  - `age` (선정) — 표준 포맷, 성숙, RustCrypto, 다수 프로덕션 검증.
+  - `orion` — 순수 Rust, 하지만 파일 포맷 표준 없음.
+  - `chacha20poly1305` + `argon2` 직접 조합 — 가장 유연하나 포맷 설계/검증 부담 큼.
+- **M1 T016 착수 전 확인 항목:**
+  - `age::Encryptor::with_recipients(vec![x25519_recipient])` vs `age::scrypt::Recipient` 최종 선택.
+  - 볼트 파일 경로: `${app_data_dir}/vault.age` (Tauri path API 로 획득).
+  - 키 회전 시 파일 재암호화 배치 절차.
+
+---
+
+## [2026-04-22] 보안 핵심 결정 — **[일부 갱신]**
 
 - 마스터 키 = OS keyring (+ Phase 2에서 Passkey/WebAuthn 선택적 2차 인증)
-- 볼트 암호화 = Tauri Stronghold (XChaCha20-Poly1305, Argon2id KDF)
+- 볼트 암호화 = ~~Tauri Stronghold~~ → **`age` crate** (XChaCha20-Poly1305 기반, X25519 또는 scrypt recipient + Argon2id 파생 키). 위 "Stronghold → age 교체" 섹션 참조.
 - **영지식 아키텍처 (Zero-Knowledge)** = 클라이언트에서 암호화/복호화, 서버는 암호문만 릴레이
 - **멀티 디바이스 페어링** = X25519 ECDH + QR/PIN 대역 외 검증 (Gemini 섹션 2.2)
 - **CRDT 동기화** = Delta-based 또는 Operation-based CRDT + E2EE (SecSync 모델 참조)
