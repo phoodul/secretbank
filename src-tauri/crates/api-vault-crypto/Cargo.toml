@@ -4,3 +4,19 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Error handling
+thiserror = { workspace = true }
+
+# Security / memory
+secrecy = { workspace = true }
+zeroize = { workspace = true }
+
+# KDF
+argon2 = { workspace = true }
+hkdf = { workspace = true }
+sha2 = { workspace = true }
+rand = { workspace = true }
+
+# OS Keyring
+keyring = { workspace = true }
+hex = { workspace = true }
