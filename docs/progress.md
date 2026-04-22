@@ -2,12 +2,12 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T030 완료, T031 다음)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 6/14**
-- **Commits:** 37개 누적 (최신 `96337a5` feat(settings): Settings 페이지 + settings_get/set (T030))
-- **Tests:** Rust 48개 (+1 settings roundtrip) + Vitest 88개 (+18 Settings) 통과.
+- **Time:** 2026-04-23 (T031 완료, 2순위 블록 완주)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 7/14**
+- **Commits:** 39개 누적 (최신 `34e8a90` feat(vault): Auto-lock idle 타이머 (T031))
+- **Tests:** Rust 48개 + Vitest 97개 (+9 useIdleLock) 통과.
 - **Blocker:** 없음.
-- **Mode:** Night mode — T031 Auto-lock 이어서.
+- **Mode:** Night mode — 3순위(드롭&스캔 T032~T035) 진입.
 
 ## M2 진행 상황 (1/14)
 
@@ -19,13 +19,14 @@
 - T027 Credential 상세 Drawer (Sheet + 클립보드 30s + 삭제, 커밋 `4cbf8c0`)
 - T029 Cmd+K Command Palette (10 actions, localStorage recent, 커밋 `67dd892`)
 - T030 Settings 페이지 + settings_get/set + auto_lock_minutes 저장 (커밋 `96337a5`)
+- T031 Auto-lock idle 타이머 (use-idle-lock + AutoLockGuard, 커밋 `34e8a90`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
 사용자 방침: **CRUD UI 핵심부터, 드롭&스캔 블록(T032~T035)은 M2 후반으로.** T026 이 Issuer combobox 에 프리셋을 쓰므로 T028 을 T026 앞으로 당김.
 
 - 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → **T027 ✅** (1순위 블록 완주)
-- 2순위: **T029 ✅** → **T030 ✅** → T031 Auto-lock (진행 중)
+- 2순위: **T029 ✅** → **T030 ✅** → **T031 ✅** (2순위 블록 완주)
 - 3순위(드롭&스캔): T032 드롭존 → T033 .env 파서 + 엔트로피 → T034 env_scan_folder 커맨드 → T035 결과 검토 UI
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
 
@@ -162,7 +163,8 @@
 - [x] T027 Credential 상세 Drawer (Sheet) — 커밋 `4cbf8c0`
 - [x] T029 Cmd+K Command Palette — 커밋 `67dd892`
 - [x] T030 Settings 페이지 + settings_get/set — 커밋 `96337a5`
-- [ ] T031 Auto-lock 타이머 (idle detection) — 다음 태스크
+- [x] T031 Auto-lock idle 타이머 — 커밋 `34e8a90`
+- [ ] T032 드롭 존 컴포넌트 (3순위 진입) — 다음 태스크
 
 ## Pending Decisions
 
@@ -183,4 +185,5 @@
 
 ## Next Action
 
-- **T031 Auto-lock 타이머 (idle detection)** — `src/hooks/use-idle-lock.ts` 훅 신설. `useAutoLockMinutes()` 로 설정 읽기 (0=Never). pointermove/keydown/touchstart 스로틀 리스너 + setTimeout. idle 도달 시 `invoke("vault_lock")` + `window.dispatchEvent(new CustomEvent("vault-lock"))` (T029 패턴 재사용). `enabled: minutes > 0` 조건부. App/AppShell 에서 마운트. Vitest fake timers 로 idle trigger + enable/disable 분기 검증.
+- **T032 드롭 존 컴포넌트 (파일/폴더 드래그 수신)** — `src/features/onboarding/DropZone.tsx` 전역 오버레이. Tauri v2 `tauri://drag-drop` 이벤트(`@tauri-apps/api/webviewWindow` 또는 `window.listen`) + 웹 표준 `dragenter/dragover/drop` 핸들러. 드롭된 경로 받아 T034 `env_scan_folder` 커맨드 호출 준비. BrowserRouter 내부 `<AutoLockGuard />` 옆에 마운트. 오버레이 활성화 시 어둡게 blur + 아이콘 + 안내 텍스트. T032 는 수신/표시만, 실제 스캔은 T033/T034.
+- 이후 **T033** `.env` 파서 + 엔트로피 기반 secret detection (Rust), **T034** `env_scan_folder(path)` Tauri 커맨드, **T035** 드롭&스캔 결과 검토 UI.

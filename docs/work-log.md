@@ -171,6 +171,32 @@
 - `vault-lock` CustomEvent 패턴은 T029 에서 확립돼 T031 도 동일. idle 도달 → `invoke("vault_lock")` + `dispatchEvent` → `useVaultStatus` refresh → LockScreen.
 - `useHotkeys` 의 `enabled` 옵션 패턴을 `use-idle-lock` 훅에도 적용 — `enabled: minutes > 0` 조건부 리스너.
 
+### T031 — Auto-lock idle 타이머 (implementator, 커밋 `34e8a90`, Night mode 연속)
+
+- **신규 파일**: `src/hooks/use-idle-lock.ts`, `src/features/vault/AutoLockGuard.tsx` (null-render 래퍼), `src/hooks/__tests__/use-idle-lock.test.tsx` (Vitest 9)
+- **수정 파일**: `src/App.tsx` — VaultGate unlocked 분기 `<BrowserRouter>` 내부에 `<AutoLockGuard />` 삽입
+- **훅 동작**: `useAutoLockMinutes()` 소비 → minutes=0 이면 early return (리스너/타이머 없음) / 양수면 mousemove/keydown/touchstart/wheel/scroll 이벤트에 `clearTimeout+setTimeout` 재설정 패턴. idle 도달 시 `invoke("vault_lock")` + `window.dispatchEvent(new CustomEvent("vault-lock"))`. toast 는 생략 (LockScreen 전환 자체가 피드백).
+- **deps `[enabled, minutes]`**: 설정 값 변경 시 effect 재실행 → 기존 리스너/타이머 cleanup + 새 값으로 재구독. 즉각 반영.
+- **테스트 9개**: Never 비활성 / 5분 후 invoke / 이벤트 3종(mousemove/keydown/touchstart) 리셋 / vault-lock CustomEvent dispatch 검증 / minutes 5→0 변경 시 해제 / unmount cleanup / invoke reject 시 console.error 유예 / 등
+- **검증**: `tsc/lint/format:check/vitest/cargo build` 5개 exit 0. 전체 Vitest 97개, Rust 48개 통과.
+
+**구현 중 발견한 이슈**:
+
+- **fake timers 와 async Promise 상호작용**: `flushPromises = () => new Promise(r => setTimeout(r, 0))` 은 `vi.useFakeTimers()` 환경에서 setTimeout(0) 도 fake timer 로 걸려 5초 타임아웃. 해결: `queueMicrotask(r)` 은 fake timers 밖의 마이크로태스크 큐라 즉시 실행. 이 패턴은 이후 invoke 포함 테스트 전반에 재사용 가능 — 향후 `test-setup.ts` 에 전역 helper 로 승격 검토.
+- **AutoLockMinutes 유니온 타입 `0 | 5 | 15 | 30`**: 테스트 헬퍼 `makeMinutes(value: number)` 에서 타입 충돌. `value: AutoLockMinutes` 로 좁혀 해결.
+- **deps 에서 `t` 제거**: toast 생략 결정에 따라 `useTranslation` 자체 불필요. deps 축소.
+
+**M2 후반(드롭&스캔) 에 영향 줄 사실**:
+
+- `<AutoLockGuard />` 가 BrowserRouter 내부 위치 — T032 DropZone 을 같은 위치에 나란히 두는 게 자연스러움. 전역 오버레이가 BrowserRouter 외부에 필요하면 위치 재검토.
+- `queueMicrotask` flushPromises 패턴이 확립됨 — T033~T035 에서 invoke 비동기 테스트에 그대로 적용.
+
+### 2순위 블록 완주 (T029/T030/T031)
+
+- Cmd+K 전역 단축키 + Settings 페이지(Auto-lock 저장) + idle 타이머까지 연결됨.
+- Lock vault 경로: (1) Cmd+K → Lock action, (2) idle timeout — 두 경로 모두 `invoke("vault_lock")` + `vault-lock` CustomEvent 패턴으로 통일.
+- 3순위(드롭&스캔 T032~T035) 진입. 3순위는 Rust 엔트로피 기반 secret detection + 파일시스템 스캔이 포함되어 M2 내 가장 복잡한 블록.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)
