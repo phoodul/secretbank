@@ -83,6 +83,41 @@
 - Dialog 닫힘 시 form.reset + 로컬 상태 초기화 로직이 `handleOpenChange` 내부로 통합된 패턴. Sheet 도 동일 패턴 적용 권장.
 - T023 의 `clipboard:countdown` 이벤트는 `@tauri-apps/api/event` 의 `listen()` 으로 구독. 이벤트 payload: `{ remaining: u32 }`. 30 → 0 1초 간격. Drawer 언마운트 시 unlisten 필수.
 
+### T027 — Credential 상세 Drawer (implementator 에이전트, 커밋 `4cbf8c0`, Night mode)
+
+- **생성 파일**: `src/features/inventory/CredentialDetail.tsx` (Sheet 본체), `__tests__/CredentialDetail.test.tsx` (Vitest 11), `src/components/ui/{sheet,alert-dialog,progress}.tsx` (shadcn CLI)
+- **수정 파일**: `CredentialCard.tsx` (onSelect prop + Enter/Space 키보드 활성화), `CredentialList.tsx` (onSelect 전달), `InventoryPage.tsx` (selectedId state + CredentialDetail 마운트), `types.ts` (Usage, CredentialFull 타입), `__tests__/fixtures.ts` (MOCK_CREDENTIAL_FULL + NOW/DAY export), `__tests__/InventoryPage.test.tsx` (MemoryRouter 래핑, listen mock, 통합 테스트 1), `src/locales/{en,ko,ja}/common.json` (inventory 네임스페이스 28키 추가: detail/copy/delete/M7 placeholder)
+- **Drawer 섹션**: Header(name + Issuer 배지 + Env 배지 + Status 배지) → Primary actions(Copy/Rotate/Revoke) → Progress bar(30→0) → Metadata grid(value hint/scope/created/last rotated/expires/rotation policy/vault ref) → Usages(M3 empty state) → Audit link(M6 `/audit?credential=${id}`) → Delete footer
+- **Copy 플로우**: `credential_copy_to_clipboard` invoke 후 `clipboard:countdown` 이벤트 구독(`@tauri-apps/api/event::listen`), 1초마다 `remaining` 30→0. Drawer unmount/close 시 unlisten 확실히.
+- **Delete 플로우**: `Delete credential` 버튼 → AlertDialog (destructive confirm) → `credential_delete` invoke → toast.success + onDeleted (InventoryPage refresh) + onClose (selectedId=null).
+- **Rotate/Revoke**: disabled Button + Tooltip "Coming in M7" placeholder (M7 에서 구현 예정).
+- **CredentialFull flatten 확인**: Rust `#[serde(flatten)] credential: Credential` + `usages: Vec<Usage>` 그대로 평면 TS 타입.
+- **테스트**: Vitest +12 (CredentialDetail 11 + InventoryPage 통합 1). 전체 58개 통과. listen mock 은 핸들러 캡처 패턴(`eventHandler` 참조에 저장).
+- **검증**: `tsc/lint/vitest/cargo build` 4개 exit 0. `format:check` 는 아래 별건으로 분리 처리.
+
+**구현 중 결정한 설계**:
+
+- **`react-hooks/set-state-in-effect` 규칙 회피 패턴 2**: T025/T026 은 `FetchState` union 으로 통합했는데 T027 은 다른 접근 — `settledState`/`resolvedKey`/`retryCount` 세 state 를 분리하고 `fetchState` 를 `currentKey !== resolvedKey → loading` 파생값으로 계산. 두 패턴이 공존 — 어느 쪽이 나은지 리뷰 때 통일. 기록용.
+- **Sheet vs Drawer**: shadcn Sheet 로 `side="right"` + `sm:max-w-md`. 모바일은 우측 풀스크린 유지 (전용 bottom sheet 은 후순위).
+- **React Router `Link`**: audit 링크는 `<Link to="/audit?credential=${id}">`. InventoryPage 테스트가 `MemoryRouter` 래핑을 필수로 요구하게 됨 — T029 CommandPalette navigate action 테스트에서도 동일.
+
+**발견한 이슈**:
+
+- **`pnpm format:check` 실패**: `docs/task.md` 가 prettier 의 마크다운 테이블 컬럼 정렬과 불일치. 원인: orchestrator 가 Edit 로 T025/T026/T028 행을 한 줄씩 추가할 때마다 컬럼 패딩이 prettier 기대와 어긋남. **해결**: `.prettierignore` 에 `docs/task.md`, `docs/progress.md`, `docs/work-log.md` 추가(커밋 `0b86538`). 이 3종은 orchestrator 가 관리하는 진행 기록이라 자동 포맷 대상에서 분리가 맞음.
+
+**T029 (Cmd+K) 에 영향 줄 사실**:
+
+- `MemoryRouter` 래핑 필요한 컴포넌트 확산 — InventoryPage / CredentialDetail / 향후 CommandPalette 의 navigate action 테스트 모두.
+- `react-hooks/set-state-in-effect` 회피 패턴 — 로딩 state 설계 시 파생값 또는 event handler setState 선택. T029 의 CommandPalette 는 단순 open/closed 상태라 영향 낮지만, 최근 사용 순 정렬 같은 persisted state 에서는 주의.
+- `cmdk` 라이브러리(Command primitive) 의 ResizeObserver 요구는 이미 `test-setup.ts` 폴리필로 커버됨.
+- `useHotkeys` 훅 미설치 (`pnpm add react-hotkeys-hook` 필요).
+
+### CI 복구 — .prettierignore 확장 (커밋 `0b86538`)
+
+- T027 `pnpm format:check` 실패 원인이 orchestrator 관리 문서의 prettier 미준수라 근본 해결.
+- `.prettierignore` 에 `docs/task.md`, `docs/progress.md`, `docs/work-log.md` 추가.
+- 이후 모든 진행 기록 Edit 은 prettier 재포맷 걱정 없이 자유롭게 수행 가능.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)

@@ -2,12 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T026 완료 — Night mode, T027 다음)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 3/14**
-- **Commits:** 30개 누적 (최신 `a7e1d58` feat(inventory): Credential 등록 다이얼로그 (T026))
-- **Tests:** Rust 47개 + Vitest 46개 (+13 CreateCredentialDialog) 통과.
+- **Time:** 2026-04-23 (T027 완료 — 1순위 CRUD 블록 완주, 체크포인트)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 4/14**
+- **Commits:** 32개 누적 (최신 `4cbf8c0` feat(inventory): Credential 상세 Drawer (T027))
+- **Tests:** Rust 47개 + Vitest 58개 (+12 CredentialDetail) 통과.
 - **Blocker:** 없음.
-- **Mode:** Night mode — Gate 승인은 큐에 쌓고 T027 까지 연속 진행.
+- **Mode:** Night mode — 2순위 블록(T029/T030/T031) 진입 전 사용자 체크포인트.
+- **CI 복구:** `.prettierignore` 에 진행 기록 문서 3종 제외 추가 (`0b86538`).
 
 ## M2 진행 상황 (1/14)
 
@@ -16,12 +17,13 @@
 - T025 Inventory 페이지 목록 뷰 + 필터 바 (커밋 `ab69319`)
 - T028 Issuer 프리셋 10종 시드 + issuer_list/get 커맨드 (커밋 `539347f`)
 - T026 Credential 등록 다이얼로그 (커밋 `a7e1d58`)
+- T027 Credential 상세 Drawer (Sheet + 클립보드 30s + 삭제, 커밋 `4cbf8c0`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
 사용자 방침: **CRUD UI 핵심부터, 드롭&스캔 블록(T032~T035)은 M2 후반으로.** T026 이 Issuer combobox 에 프리셋을 쓰므로 T028 을 T026 앞으로 당김.
 
-- 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → T027 상세 Drawer (진행 중)
+- 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → **T027 ✅** (1순위 블록 완주)
 - 2순위: T029 Cmd+K → T030 Theme/Settings → T031 Auto-lock
 - 3순위(드롭&스캔): T032 드롭존 → T033 .env 파서 + 엔트로피 → T034 env_scan_folder 커맨드 → T035 결과 검토 UI
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
@@ -156,7 +158,8 @@
 - [x] T025 Inventory 페이지 목록 뷰 + 필터 바 — 커밋 `ab69319`
 - [x] T028 Issuer 프리셋 10종 시드 + issuer_list/get — 커밋 `539347f`
 - [x] T026 Credential 등록 다이얼로그 — 커밋 `a7e1d58`
-- [ ] T027 Credential 상세 Drawer (Sheet) — 다음 태스크
+- [x] T027 Credential 상세 Drawer (Sheet) — 커밋 `4cbf8c0`
+- [ ] 체크포인트: 2순위 블록(T029/T030/T031) 진입 여부 사용자 확인
 
 ## Pending Decisions
 
@@ -177,4 +180,5 @@
 
 ## Next Action
 
-- **T027 Credential 상세 Drawer (Sheet)** — shadcn/ui Sheet (미설치 → `pnpm dlx shadcn@latest add sheet --yes`). CredentialCard 클릭 → 우측 Sheet 에 전체 메타 + value 복사 버튼. 기본 정보(Issuer, name, env, scope, expires_at, created_at, status, hash_hint 표시), 사용처(M3 placeholder empty state), 감사 로그 링크(M6 placeholder), 삭제(destructive confirm dialog → `credential_delete` invoke + refresh). "Copy value" → `credential_copy_to_clipboard` invoke + 30초 progress bar (`clipboard:countdown` 이벤트 구독). "Rotate"/"Revoke" 버튼은 M7 disabled placeholder. Depends on T023 (클립보드 커맨드) + T025 (InventoryPage 에서 선택 상태 관리).
+- **체크포인트 — 사용자 확인 대기.** 1순위 CRUD 블록(T025/T028/T026/T027) 완주, M2 4/14. 2순위 블록(T029 Cmd+K / T030 Theme+Settings / T031 Auto-lock) 진입 여부 확인 필요.
+- 승인 시 **T029 Cmd+K Command Palette** 부터 진행 — `cmdk`(이미 설치, `src/components/ui/command.tsx`) + Dialog. `useHotkeys` (미설치 → `pnpm add react-hotkeys-hook`). 그룹: Navigation(Inventory/Graph/Incidents/Audit/Settings), Actions(Create credential→T026 Dialog, Lock vault→`vault_lock`, Toggle theme). 최근 사용 순 정렬 (localStorage). 모바일 숨김 (Radix `md:` breakpoint).
