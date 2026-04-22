@@ -36,3 +36,38 @@ zeroize = { version = "1", features = ["derive"] }
 tauri = { version = "2", features = [] }
 tauri-build = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+
+[package]
+name = "api-vault"
+version = "0.1.0"
+edition = "2021"
+description = "API Vault — Bitwarden for APIs with dependency graph"
+authors = ["api-vault contributors"]
+license = "AGPL-3.0-or-later"
+
+[[bin]]
+name = "api-vault"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[dependencies]
+tauri = { workspace = true }
+tauri-plugin-opener = { workspace = true }
+api-vault-app = { path = "crates/api-vault-app" }
+
+# Plugin deps mirrored here so tauri_build::build() can validate capabilities
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-os = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-deep-link = "2"
+tauri-plugin-http = "2"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
+
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+tauri-plugin-biometric = "2"

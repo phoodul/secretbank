@@ -68,10 +68,28 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 name = "api-vault"
 version = "0.1.0"
 dependencies = [
+ "api-vault-app",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-biometric",
+ "tauri-plugin-clipboard-manager",
+ "tauri-plugin-deep-link",
+ "tauri-plugin-http",
+ "tauri-plugin-notification",
+ "tauri-plugin-opener",
+ "tauri-plugin-os",
+ "tauri-plugin-shell",
+ "tauri-plugin-sql",
+ "tauri-plugin-updater",
+]
+
+[[package]]
+name = "api-vault-app"
+version = "0.1.0"
+dependencies = [
  "serde",
  "serde_json",
  "tauri",
- "tauri-build",
  "tauri-plugin-biometric",
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-deep-link",

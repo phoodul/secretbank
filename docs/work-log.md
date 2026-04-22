@@ -2,6 +2,27 @@
 
 ## 2026-04-22
 
+### T001 구조 재조정 — pnpm tauri dev 복구 (긴급 수정)
+
+**원인:** T001에서 `src-tauri/Cargo.toml`을 virtual manifest(workspace-only)로 교체한 결과 `@tauri-apps/cli`가 `[package]` 섹션을 찾지 못해 `"No package info in the config file"` 오류 발생.
+
+**변경 파일:**
+- `src-tauri/Cargo.toml` — `[workspace]` + `[package]`(api-vault) + `[[bin]]`(src/main.rs) + `[build-dependencies]`(tauri-build) + `[dependencies]`(플러그인 9종 mirror) 추가
+- `src-tauri/src/main.rs` — 신규 생성. `api_vault_app::run()` 호출 shim
+- `src-tauri/build.rs` — 신규 생성. `tauri_build::build()` 표준 호출
+- `src-tauri/crates/api-vault-app/Cargo.toml` — `[[bin]]` + `build-dependencies` 제거, `[lib]` name="api_vault_app"
+- `src-tauri/crates/api-vault-app/build.rs` — `cargo::rustc-check-cfg` 선언만 (OUT_DIR 확보. `tauri_build::build()` 미호출 — Windows embed-resource `rustc-link-arg-bins` 이슈)
+- `src-tauri/crates/api-vault-app/src/main.rs` — 삭제
+- `src-tauri/tauri.conf.json` — `plugins.updater` 섹션 추가
+
+**검증 결과:**
+1. `cargo build --workspace` — exit 0
+2. `cargo test --workspace` — exit 0
+3. `cargo clippy --workspace -- -D warnings` — exit 0
+4. `cargo fmt --all --check` — exit 0
+5. `pnpm tauri dev` — "No package info" 에러 사라짐, Rust 컴파일 후 앱 창 정상 오픈
+6. `pnpm exec tsc --noEmit` — exit 0
+
 ### T010~T012 완료 — 라우팅 + i18n + 개발 가이드 (M0 완료)
 
 **T010: 라우팅 + 셸 레이아웃**

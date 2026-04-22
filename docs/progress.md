@@ -2,9 +2,9 @@
 
 ## Last Checkpoint
 
-- Time: 2026-04-22 (M0 T010~T012 완료)
-- Phase: Phase 3 — Implementation (M0 완료, M1 진입 준비)
-- Step: T010(라우팅 + AppShell 셸 레이아웃) + T011(i18n en/ko/ja) + T012(dev-setup.md) 완료. M0 전체 완료. 다음: M1 핵심 데이터 모델 (SQLite 스키마, 볼트 CRUD, 암호화 등)
+- Time: 2026-04-22 (M0 긴급 수정 완료)
+- Phase: Phase 3 — Implementation (M0 완료 + T001 구조 수정, M1 진입 준비)
+- Step: T001 재구성 완료 — `pnpm tauri dev`가 "No package info" 없이 Rust 컴파일 → 앱 창 오픈까지 정상 진행됨. 다음: M1 핵심 데이터 모델 (SQLite 스키마, 볼트 CRUD, 암호화 등)
 
 ## Completed
 
@@ -63,6 +63,8 @@
 - [x] **T012 완료** — docs/dev-setup.md (Prerequisites/First-time Setup/Daily Dev/Testing/Folder Layout/Troubleshooting/한국어 요약)
 
 **M0 전체 완료.**
+
+- [x] **T001 구조 재조정 (긴급 수정)** — `pnpm tauri dev` 복구. `src-tauri/Cargo.toml`에 `[package]`+`[[bin]]` 복원, `src-tauri/src/main.rs`(shim) + `src-tauri/build.rs`(tauri_build) 신규 생성, `api-vault-app`을 lib-only로 전환, `tauri.conf.json`에 `plugins.updater` 추가. 6개 검증 모두 통과.
 
 ## In Progress
 

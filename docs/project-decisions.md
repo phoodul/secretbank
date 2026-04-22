@@ -473,3 +473,21 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - **이유:** shadcn/ui New York 스타일 + slate baseColor. 이후 M1+ 태스크에서 즉시 사용 가능.
 - **조정:** `sonner.tsx`의 `next-themes` 의존성을 자체 `@/components/theme/theme-provider` 로 교체. `main.tsx`에서 `<Toaster />` 마운트 (ThemeProvider 내부).
 - **영향:** `next-themes` 패키지는 설치되어 있으나 실제로 사용하지 않음 (shadcn CLI가 자동 설치). 추후 `pnpm remove next-themes`로 제거 고려 (타입체크/린트에는 영향 없음).
+
+---
+
+## [2026-04-22] T001 Cargo 구조 재조정 — `pnpm tauri dev` 수정 [갱신: 이전 T001+T002 결정 부분 대체]
+
+- **결정:** Tauri v2 공식 권장 구조로 재조정. `src-tauri/Cargo.toml`이 `[workspace]` + `[package]` + `[[bin]]`을 동시에 담는 manifest가 된다.
+  - `src-tauri/Cargo.toml` — `[workspace]` + `[workspace.dependencies]` 유지. 하단에 `[package]` (name="api-vault"), `[[bin]]` (path="src/main.rs"), `[build-dependencies]` (tauri-build), `[dependencies]` (tauri, tauri-plugin-opener, api-vault-app, 플러그인 9종 mirror) 추가.
+  - `src-tauri/src/main.rs` — 한 줄 shim (`api_vault_app::run()`). Tauri CLI가 여기서 바이너리 타겟을 찾음.
+  - `src-tauri/build.rs` — 표준 `tauri_build::build()`. capability 검증은 여기서만 실행.
+  - `crates/api-vault-app/Cargo.toml` — `[[bin]]` 제거. `[lib]` name="api_vault_app". `tauri-build` build-dependency 제거. 플러그인 deps는 그대로 유지.
+  - `crates/api-vault-app/build.rs` — `cargo::rustc-check-cfg` 선언만 (OUT_DIR 확보 + mobile/desktop/dev cfg 인식). `tauri_build::build()` 미호출 (Windows에서 embed-resource가 `rustc-link-arg-bins` 발행하면 lib에서 오류).
+  - `crates/api-vault-app/src/main.rs` — 삭제.
+  - `src-tauri/Cargo.toml`의 루트 `[dependencies]`에 플러그인 9종을 mirror로 추가한 이유: `tauri_build::build()`가 capabilities 검증 시 직접 dependency만 조회함. lib의 전이 의존성으로는 permission 인식 불가.
+  - `tauri.conf.json`에 `plugins.updater` 섹션 추가 (pubkey=""로 초기화).
+- **이유:** T001에서 virtual manifest로 교체한 결과 Tauri JS CLI(`@tauri-apps/cli`)가 `[package]` 섹션을 못 찾아 `"No package info in the config file"` 오류로 `pnpm tauri dev` 실패.
+- **영향:**
+  - `api_vault_app::run()` 공개 API 유지. 9개 lib 크레이트 변경 없음.
+  - `crates/api-vault-app`은 이제 library crate. 향후 Tauri 명령 등록 및 플러그인 초기화의 거점 역할 유지.
