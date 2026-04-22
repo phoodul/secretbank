@@ -146,6 +146,31 @@
 - `vault-lock` CustomEvent 패턴 재사용 준비 완료 — T031 Auto-lock idle timer 에서 `invoke("vault_lock")` + 동일 CustomEvent dispatch 로 LockScreen 전환.
 - `useHotkeys` 의 `enabled` 옵션 패턴 확립. T031 idle detection 훅도 `enabled: autoLockEnabled` 로 조건부 활성화 가능.
 
+### T030 — Settings 페이지 + settings_get/set (implementator, 커밋 `96337a5`, Night mode 연속)
+
+- **신규 Rust**: `src-tauri/crates/api-vault-app/src/commands/settings.rs` (82줄) — `settings_get(key)` / `settings_set(key, value?)` Tauri 커맨드 + `SettingsCommandError::Internal` + `#[cfg(test)]` set_then_get_roundtrip 1개. `SettingsRepo` 얇은 래퍼.
+- **수정 Rust**: `commands/mod.rs` (pub mod settings), `lib.rs` (invoke_handler 두 블록에 등록)
+- **신규 프론트**: `src/features/settings/{SettingsPage.tsx, use-settings.ts}` + `__tests__/{SettingsPage,use-settings}` 2
+- **수정 프론트**: `src/pages/SettingsPage.tsx` 를 `export { SettingsPage } from "@/features/settings/SettingsPage"` 1줄 래퍼로 축소, `src/locales/{en,ko,ja}/common.json` settings 네임스페이스 +19키
+- **섹션 3개**: Appearance (Theme Tabs + Language Select) / Security (Auto-lock Select 4옵션 Never/5/15/30) / About (앱명/버전/AGPL 링크/GitHub 링크, `@tauri-apps/plugin-shell::openUrl` 있으면 사용 + 없으면 `window.open` 폴백)
+- **`useSetting<T>` 제네릭 훅**: `{ key, defaultValue, parse, serialize, onError? }` — 마운트 시 `settings_get` + 상태 로드, `setValue` 낙관적 업데이트 + 실패 시 롤백 + toast.error. `useAutoLockMinutes` 편의 헬퍼 (key=`apivault.settings.security.auto_lock_minutes`, default 5, parse Int).
+- **DB 이중 저장 회피**: 테마는 next-themes localStorage, 언어는 i18next LanguageDetector localStorage 유지. DB 저장은 auto-lock 분 하나만. 향후 멀티 디바이스 동기화 시 확장.
+- **테스트**: Rust +1 (48 total), Vitest +18 (use-settings 8 + SettingsPage 10). 전체 88개 통과.
+- **검증**: `cargo fmt/clippy/test/build`, `pnpm tsc/lint/format:check/vitest` 8개 exit 0.
+
+**구현 중 발견한 이슈**:
+
+- **`react-hooks/refs` 에러**: render body 에서 `stateRef.current = state` 직접 할당은 "Cannot access refs during render" 에러. 해결: `useEffect(() => { stateRef.current = state; })` — deps 없는 effect 로 옮겨 매 렌더 커밋 후 동기화. setValue 이벤트 핸들러 시점에는 항상 최신 state 읽힘.
+- **`react-hooks/set-state-in-effect` (4번째 충돌)**: key 변경 시 "loading" 으로 전환하려 effect 본문에 `setState({phase:"loading"})` 뒀다가 에러. 해결: 초기 state 를 `{phase:"loading"}` 으로 두고 effect 는 성공/실패 시에만 setState. key 변경 중 loading 표시가 필요하면 tick 카운터 패턴이지만 이번 훅엔 불필요.
+- **`@tauri-apps/plugin-shell` 동적 import**: `openUrl` 을 `import("@tauri-apps/plugin-shell")` 로 지연 로드 → 테스트/웹 환경에서는 `window.open` 폴백. `vi.mock` 은 동적 import 에도 자동 적용.
+- **i18next plural suffix 단순화**: `autoLockMinutes_one/_other` 대신 단일 키 `autoLockMinutes = "{{count}} minutes"` — 옵션 5/15/30 에는 1이 없고 한/일어는 단복수 구분 없음.
+
+**T031 Auto-lock 에 영향 줄 사실**:
+
+- `useAutoLockMinutes()` 훅과 `AUTO_LOCK_KEY` 상수 재사용. 0 → 비활성화, 양수 → 해당 분 후 idle lock.
+- `vault-lock` CustomEvent 패턴은 T029 에서 확립돼 T031 도 동일. idle 도달 → `invoke("vault_lock")` + `dispatchEvent` → `useVaultStatus` refresh → LockScreen.
+- `useHotkeys` 의 `enabled` 옵션 패턴을 `use-idle-lock` 훅에도 적용 — `enabled: minutes > 0` 조건부 리스너.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)

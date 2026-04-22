@@ -2,13 +2,12 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T029 완료, 2순위 블록 진행 중)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 5/14**
-- **Commits:** 35개 누적 (최신 `67dd892` feat(command-palette): Cmd+K Command Palette (T029))
-- **Tests:** Rust 47개 + Vitest 70개 (+12 CommandPalette) 통과.
+- **Time:** 2026-04-23 (T030 완료, T031 다음)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 6/14**
+- **Commits:** 37개 누적 (최신 `96337a5` feat(settings): Settings 페이지 + settings_get/set (T030))
+- **Tests:** Rust 48개 (+1 settings roundtrip) + Vitest 88개 (+18 Settings) 통과.
 - **Blocker:** 없음.
-- **Mode:** Night mode — Gate 3/4 까지 연속 실행. T030 Theme/Settings → T031 Auto-lock 이어서.
-- **CI:** `.prettierignore` 에 진행 기록 3종 제외 (`0b86538`).
+- **Mode:** Night mode — T031 Auto-lock 이어서.
 
 ## M2 진행 상황 (1/14)
 
@@ -19,13 +18,14 @@
 - T026 Credential 등록 다이얼로그 (커밋 `a7e1d58`)
 - T027 Credential 상세 Drawer (Sheet + 클립보드 30s + 삭제, 커밋 `4cbf8c0`)
 - T029 Cmd+K Command Palette (10 actions, localStorage recent, 커밋 `67dd892`)
+- T030 Settings 페이지 + settings_get/set + auto_lock_minutes 저장 (커밋 `96337a5`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
 사용자 방침: **CRUD UI 핵심부터, 드롭&스캔 블록(T032~T035)은 M2 후반으로.** T026 이 Issuer combobox 에 프리셋을 쓰므로 T028 을 T026 앞으로 당김.
 
 - 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → **T027 ✅** (1순위 블록 완주)
-- 2순위: **T029 ✅** → T030 Theme/Settings → T031 Auto-lock (진행 중)
+- 2순위: **T029 ✅** → **T030 ✅** → T031 Auto-lock (진행 중)
 - 3순위(드롭&스캔): T032 드롭존 → T033 .env 파서 + 엔트로피 → T034 env_scan_folder 커맨드 → T035 결과 검토 UI
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
 
@@ -161,8 +161,8 @@
 - [x] T026 Credential 등록 다이얼로그 — 커밋 `a7e1d58`
 - [x] T027 Credential 상세 Drawer (Sheet) — 커밋 `4cbf8c0`
 - [x] T029 Cmd+K Command Palette — 커밋 `67dd892`
-- [ ] T030 Theme Toggle + Settings 페이지 기본 — 다음 태스크
-- [ ] T031 Auto-lock 타이머 (idle detection) — T030 뒤
+- [x] T030 Settings 페이지 + settings_get/set — 커밋 `96337a5`
+- [ ] T031 Auto-lock 타이머 (idle detection) — 다음 태스크
 
 ## Pending Decisions
 
@@ -183,5 +183,4 @@
 
 ## Next Action
 
-- **T030 Theme Toggle + Settings 페이지 기본** — `ThemeProvider` (이미 있음, `next-themes` 기반) + SettingsPage 에 테마/언어 탭. Theme 옵션: Light/Dark/System 라디오 또는 버튼 그룹. 언어 탭은 T011 에 기본 골격 존재 — 확장/정리. "Danger zone" 섹션: Delete vault (미구현 placeholder). Settings 페이지 전체 레이아웃은 좌측 탭 리스트 + 우측 패널 (shadcn Tabs 사용).
-- 이어서 **T031 Auto-lock 타이머** — idle detection (pointermove/keydown 이벤트 기반) + setTimeout. 기본 5분 미사용 시 자동 lock. Settings 에서 분 단위 설정 (Off / 1 / 5 / 15 / 30). `invoke("vault_lock")` + vault-lock CustomEvent (T029 패턴 재사용).
+- **T031 Auto-lock 타이머 (idle detection)** — `src/hooks/use-idle-lock.ts` 훅 신설. `useAutoLockMinutes()` 로 설정 읽기 (0=Never). pointermove/keydown/touchstart 스로틀 리스너 + setTimeout. idle 도달 시 `invoke("vault_lock")` + `window.dispatchEvent(new CustomEvent("vault-lock"))` (T029 패턴 재사용). `enabled: minutes > 0` 조건부. App/AppShell 에서 마운트. Vitest fake timers 로 idle trigger + enable/disable 분기 검증.
