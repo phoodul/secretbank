@@ -221,6 +221,32 @@
 - **`/onboarding/scan` 라우트는 현재 AppShell 밖 독립 렌더**: AppShell 사이드바 없는 풀스크린 형태. T035 스캔 UI 구현 시 AppShell 안으로 이동할지 재검토 (현재 T032 결정은 "결과 검토 플로우 에 집중하기 위해 독립"). 풀스크린 유지 쪽이 드롭→확인 흐름 집중도 높음.
 - **플랫폼 가드 패턴**: `usePlatform() !== "desktop" → return null`. T035 스캔 결과 UI 에서도 데스크톱 가드 유지.
 
+### T033 — env_scanner (implementator, 커밋 `8e7c7a2`, Night mode 연속)
+
+- **신규 모듈**: `src-tauri/crates/api-vault-connectors/src/env_scanner/` (mod.rs 414 / entropy.rs 57 / parser.rs 162 / issuers.rs 113)
+- **신규 의존성**: `regex = "1"`, `ignore = "0.4"`, `once_cell = "1"` workspace.dependencies 추가. `api-vault-connectors` Cargo.toml 재작성.
+- **공개 API**: `scan_path(&Path) -> Vec<DetectedKey>`, `DetectedKey { file_path, line: u32, env_var_name: Option<String>, issuer_slug: Option<String>, value_hint: String, confidence: f64 }` (serde Serialize/Deserialize)
+- **탐색**: `ignore::WalkBuilder` — gitignore 존중 + `hidden(false)` 로 .env\* 포함 + 심링크 미추적 + 바이너리(첫 512바이트에 `\0`)/1MB+ 스킵
+- **파싱**: `.env` 정밀 파서 (`export KEY=value`, quoted, 주석), JSON/TS/JS 범용 문자열 파서 (리터럴 길이 16+)
+- **엔트로피**: Shannon (bytes 기준). 임계 3.5 bits/char + value.len() >= 20. 통과 시 confidence = `min(0.40 + (entropy - 3.5) * 0.30, 0.85)`. Issuer regex 매치 시 confidence = 0.95.
+- **10종 Issuer regex**: T028 ts `issuer-presets.ts` 의 `key_pattern_regex` 동기 복제. Anthropic 을 OpenAI 앞에 배치 — `sk-ant-api03-…` 가 OpenAI regex `^sk-(proj-)?[A-Za-z0-9_-]{20,}$` 에 잘못 매치되는 걸 순서로 방지 (테스트 `anthropic_key_matches_anthropic_not_openai`).
+- **Rust 테스트 +35**: entropy 5 / .env 파서 7 / generic 파서 4 / issuers 7 / scan_path 통합 12 (is_scannable 4, value_hint 2, .env 스캔, gitignore 존중, config.ts 경로, 바이너리 스킵, 엔트로피만 검출, 단일 파일 진입 등). 전체 Rust 테스트 83 통과.
+- **검증**: 8개 명령 (`cargo fmt/clippy/test/build`, `pnpm tsc/lint/format:check/vitest`) 전부 exit 0.
+
+**구현 중 발견한 이슈**:
+
+- **`ignore::WalkBuilder` gotcha**: `hidden(true)` 기본이라 `.env*` dot-file 전부 스킵됨. `hidden(false)` 명시 필수. T034 에서 WalkBuilder 재사용 시 유의.
+- **Anthropic vs OpenAI regex 충돌 검증**: 결정 6의 우선순위 배치가 적절. `sk-ant-api03-XXX...` 가 OpenAI `^sk-(proj-)?...` 에 완전히 매치되는 걸 벡터 순서(Anthropic 먼저)로 차단. 순수 regex 수준 재작성보다 순서 처리가 단순.
+- **secrets.env 테스트 명세 정합**: 오케스트레이터 명세의 gitignore 테스트 케이스 `secrets.env` 는 `is_scannable` 조건(`.env` / `.env.*`) 미만족이라 원래 스킵. 명세 충실히 따르되 gitignore 경로 격리 검증은 추후 `.env.secrets` 파일명으로 보강 여지 있음.
+
+**T034 / T035 에 영향 줄 사실**:
+
+- `scan_path` 는 sync → T034 Tauri 커맨드는 `tauri::async_runtime::spawn_blocking` 또는 `tokio::task::spawn_blocking` 으로 UI 스레드 블로킹 회피.
+- `DetectedKey` serde 완비 — IPC 직렬화 추가 작업 불필요.
+- `env_var_name: Option<String>` / JSON·TS 출처는 None → T035 UI 에서 "—" 표시.
+- `value_hint` 는 마지막 4자만 저장 — 테이블 렌더 시 `****XXXX` 마스킹 자연스러움.
+- 파일 크기/결과 수 상한 현재 없음 → T035 에서 페이지네이션 또는 virtualization 고려.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)

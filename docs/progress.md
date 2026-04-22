@@ -2,12 +2,12 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T032 완료, 3순위 드롭&스캔 진입)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 8/14**
-- **Commits:** 41개 누적 (최신 `6f121ee` feat(onboarding): 드롭 존 + /onboarding/scan placeholder (T032))
-- **Tests:** Rust 48개 + Vitest 107개 (+10 DropZone/OnboardingScanPage) 통과.
+- **Time:** 2026-04-23 (T033 완료, T034 다음)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 9/14**
+- **Commits:** 43개 누적 (최신 `8e7c7a2` feat(connectors): env_scanner (T033))
+- **Tests:** Rust 83개 (+35 env_scanner) + Vitest 107개 통과.
 - **Blocker:** 없음.
-- **Mode:** Night mode — T033 Rust 스캐너(`.env` 파서 + 엔트로피) 이어서.
+- **Mode:** Night mode — T034 env_scan_folder Tauri 커맨드 이어서.
 
 ## M2 진행 상황 (1/14)
 
@@ -21,6 +21,7 @@
 - T030 Settings 페이지 + settings_get/set + auto_lock_minutes 저장 (커밋 `96337a5`)
 - T031 Auto-lock idle 타이머 (use-idle-lock + AutoLockGuard, 커밋 `34e8a90`)
 - T032 드롭 존 + /onboarding/scan placeholder (Tauri v2 onDragDropEvent, 커밋 `6f121ee`)
+- T033 env_scanner (엔트로피 3.5 + issuer regex 10 + .env/generic 파서, 커밋 `8e7c7a2`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
@@ -28,7 +29,7 @@
 
 - 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → **T027 ✅** (1순위 블록 완주)
 - 2순위: **T029 ✅** → **T030 ✅** → **T031 ✅** (2순위 블록 완주)
-- 3순위(드롭&스캔): **T032 ✅** → T033 .env 파서 + 엔트로피 (진행 중) → T034 env_scan_folder 커맨드 → T035 결과 검토 UI
+- 3순위(드롭&스캔): **T032 ✅** → **T033 ✅** → T034 env_scan_folder 커맨드 (진행 중) → T035 결과 검토 UI
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
 
 ### T025 구현 교훈 (M2 후속에 영향)
@@ -166,7 +167,8 @@
 - [x] T030 Settings 페이지 + settings_get/set — 커밋 `96337a5`
 - [x] T031 Auto-lock idle 타이머 — 커밋 `34e8a90`
 - [x] T032 드롭 존 + 라우트 placeholder — 커밋 `6f121ee`
-- [ ] T033 `.env` 파서 + 엔트로피 기반 secret detection (Rust) — 다음 태스크
+- [x] T033 env_scanner (엔트로피 + issuer regex + .env/generic 파서) — 커밋 `8e7c7a2`
+- [ ] T034 env_scan_folder Tauri 커맨드 — 다음 태스크
 
 ## Pending Decisions
 
@@ -187,5 +189,5 @@
 
 ## Next Action
 
-- **T033 `.env` 파서 + 엔트로피 기반 secret detection (Rust)** — `api-vault-connectors` 크레이트에 `env_scanner` 모듈 신설. `walkdir` + `ignore` (gitignore 존중) 로 파일 재귀 탐색. `.env*`, `config/*.json`, `config.ts` 등 대상. `.env` 파서(`KEY=value`, 주석/quoted 지원), Shannon 엔트로피 > 3.5 bits/char 임계, `ISSUER_PRESETS` (T028 DB 시드 참조) regex 매칭. 반환 `DetectedKey { file_path, line, env_var_name, issuer_slug, value_hint(마지막 4자), confidence }`.
-- 이후 **T034** `env_scan_folder(path)` Tauri 커맨드, **T035** 결과 검토 UI (선택 → `credential_create` 일괄).
+- **T034 `env_scan_folder` Tauri 커맨드** — 신규 `commands/env_scan.rs`. `env_scan_folder(path: String) -> Vec<DetectedKey>` 커맨드. `tauri::async_runtime::spawn_blocking` 으로 `api_vault_connectors::scan_path(&Path)` 호출. 불린 `SELECTED_FILES_MAX = 10_000` 상한 (연관 설정은 T035 에서). invoke_handler 양쪽 블록에 등록. 에러 타입 `EnvScanError::Internal`.
+- 이후 **T035** OnboardingScanPage 확장 — 스캔 결과 테이블 + 체크박스 선택 + `credential_create` 일괄 호출 UI.

@@ -30,7 +30,7 @@
 | :-- | :------------------------------ | :---------- | :-------- | :------------------ |
 | M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료       |
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
-| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | 🔄 8/14 완료        |
+| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | 🔄 9/14 완료        |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ⏳ 대기             |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기             |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
@@ -83,8 +83,9 @@
 | T030    | Settings 페이지 + settings_get/set 커맨드 + auto-lock 저장      | 2026-04-23 | `96337a5` |
 | T031    | Auto-lock idle 타이머 (use-idle-lock + AutoLockGuard)        | 2026-04-23 | `34e8a90` |
 | T032    | 드롭 존 + /onboarding/scan placeholder (Tauri v2 onDragDropEvent) | 2026-04-23 | `6f121ee` |
+| T033    | env_scanner (엔트로피 3.5 + issuer regex 10 + .env/generic 파서)  | 2026-04-23 | `8e7c7a2` |
 
-**완료 합계**: 32/118 (M0 완료 + M1 완료 + M2 8/14)
+**완료 합계**: 33/118 (M0 완료 + M1 완료 + M2 9/14)
 
 ---
 
