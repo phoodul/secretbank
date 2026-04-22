@@ -1,0 +1,398 @@
+# Project Decisions
+
+본 문서는 API Vault 프로젝트의 확정된 핵심 결정 사항을 시간순으로 기록한다.
+**내용은 근거 없이 변경하지 않는다.** 방향 전환이 발생하면 "갱신" 섹션을 추가하고 기존 결정의 상태를 명시한다.
+
+---
+
+## [2026-04-22] 프로젝트 정의 및 포지셔닝
+
+- **결정:** API Vault는 "API 키 저장소"가 아니라 **"API 키 의존성 그래프(Dependency Graph) 관리 플랫폼"** 으로 포지셔닝한다. 타깃 캐치프레이즈는 **"Bitwarden for APIs, with Dependency Graph"**.
+- **이유:** 기존 시크릿 매니저(Vault, 1Password, Doppler 등)는 저장/회전은 잘하지만 "어떤 키가 어느 프로젝트/URL/배포환경에 쓰이고, 교체 시 무엇이 깨지는지"를 추적하지 못한다. 이 시장 공백을 노린다.
+- **영향:**
+  - 단순 CRUD UI가 아니라 **Graph 시각화** + **Blast Radius 계산 엔진** + **Incident Feed 자동 매칭** + **Kill Switch** 가 핵심 기능.
+  - 데이터 모델은 `Issuer → Credential → Usage → Project → Deployment → URL` 관계형 그래프로 설계.
+
+---
+
+## [2026-04-22] 타깃 사용자 페르소나 (Q1 확정)
+
+- **결정:** 두 개의 주요 페르소나를 타깃으로 한다.
+  1. **전문 개발자 (Power User)** — 여러 SaaS API 키를 관리해야 하는 프리랜서·인디해커·소규모 팀 개발자. 기존 시크릿 매니저의 한계를 인지하고 있음.
+  2. **바이브 코더 (Vibe Coder)** — Cursor/v0/Lovable/Bolt 등 AI 보조 도구로 빠르게 앱을 만드는 비전문 빌더. **"API 키 관리의 복잡한 설정을 앱이 대신해주기를 원하는"** 사용자. 시장이 폭발적으로 성장 중인 것으로 판단.
+- **구체적 요구사항 차이:**
+  - 전문 개발자 → Graph, Blast Radius, Kill Switch 등 고급 기능 수요.
+  - 바이브 코더 → **"복잡한 설정을 자동화해주는 가드레일"** 이 핵심. 발급처 보안 사고 자동 대응, 자동 rotation, `.env` 자동 반영 등이 더 중요.
+- **이유:** AI 보조 개발 시대에 "API 키를 실제로 다루는 인구"는 전문 개발자 범위를 크게 초과한다. 바이브 코더는 보안 지식이 부족할수록 이런 자동화 도구에 대한 의존도가 크고, Gemini Deep Research의 "RAILGUARD / Cognitive Security Model" 챕터(섹션 4.1)와 정확히 맞닿는다.
+- **영향:**
+  - UI/UX는 **"개발자 친화 + 비개발자도 이해할 수 있는 시각화"** 를 동시에 만족해야 한다.
+  - 온보딩은 **"복잡한 설정을 묻지 않고 자동 탐지/추론"** 을 지향한다 (예: 프로젝트 폴더 드롭 → `.env`/`git` 스캔으로 자동 인벤토리 구축).
+  - 5000만이라는 구체 수치는 **aspirational goal**로 유지하되, KPI는 "바이브 코더가 첫 5분 안에 첫 credential을 등록할 수 있는가"에 둔다.
+
+---
+
+## [2026-04-22] 타깃 플랫폼 (Q2 확정) — **[갱신 전 결정 대체]**
+
+- **결정:** **풀스택 멀티 디바이스**. Bitwarden / 1Password 모델에 가까움.
+  - 데스크톱: **Windows, macOS, Linux** (Tauri v2)
+  - 모바일: **iOS, Android** (Tauri v2 모바일 — Research Phase에서 성숙도 확인 필요)
+  - 웹: **웹 대시보드** (뷰어·원격 Kill Switch·팀 공유 중심)
+- **이전 결정 (데스크톱 전용)은 폐기.** 이유:
+  - 5000만 사용자 목표 달성에 모바일 포기는 불가능 (사용자 풀의 60%+ 손실).
+  - 바이브 코더 페르소나는 PC·모바일 간 컨텍스트 전환이 잦다.
+  - Gemini Deep Research 섹션 2.2(Local-First + CRDT E2EE)는 명시적으로 "랩탑 + 스마트폰" 멀티 디바이스를 가정.
+- **플랫폼 간 역할 분담 (잠정):**
+  - **데스크톱** = 풀 기능 (Graph 편집, 코드 스캔, CI 연동, rotation 실행)
+  - **모바일** = 빠른 조회, 알림 수신, 긴급 Kill Switch, Biometric 인증
+  - **웹** = 팀 공유 볼트(Phase 2), 읽기 전용 뷰어, 관리자 감사 로그 열람
+- **영향:**
+  - 기술 스택 재검토 필요 (웹 대시보드를 Tauri 웹뷰와 별도로 Next.js/SvelteKit로 갈지, 아니면 공통 React 앱의 웹 버전으로 갈지).
+  - Tauri v2 모바일 지원 성숙도(iOS/Android 알파·베타 여부)를 Research Phase에서 확정해야 한다.
+
+---
+
+## [2026-04-22] 기술 스택 — **[일부 갱신]**
+
+- **확정:**
+  - Shell: **Tauri v2** (Rust backend + Web frontend) — 데스크톱 확정, 모바일은 Research에서 확인
+  - Backend: **Rust** (tokio 비동기, reqwest, sqlx)
+  - Frontend: **React + TypeScript**
+  - Styling: **Tailwind CSS + shadcn/ui** (최종 디자인 시스템은 UX Research 후 확정)
+  - 메타데이터 저장: **SQLite** (로컬) + 동기화 서버(E2EE 릴레이)
+  - 시크릿 값 암호화 저장: **Tauri Stronghold** (XChaCha20-Poly1305 + Argon2id)
+  - 마스터 키 보관: **OS Keyring**
+- **Research Phase에서 확정할 항목 (변경):**
+  - Graph 시각화 라이브러리: React Flow vs Cytoscape.js vs Reaflow
+  - CRDT 라이브러리: **Yjs vs Automerge vs Loro** (멀티 디바이스 E2EE 동기화용)
+  - 동기화 서버 인프라: **Supabase vs Cloudflare Workers + D1 vs 자체 호스팅** (1인 운영 가능성 판단)
+  - 웹 대시보드 스택: React(공용) vs Next.js 분리
+  - Tauri v2 모바일 지원 성숙도
+- **보안 결정 유지:**
+  - 감사 로그 = ed25519 서명 체인, append-only
+  - 앱 업데이트 = tauri-plugin-updater + minisign 서명 강제
+  - 키 메모리 노출 = `secrecy` crate로 Zeroize, 클립보드 자동 만료 30초
+  - **영지식(Zero-Knowledge) 아키텍처** — 서버는 암호문과 논스만 릴레이, 복호화 키는 서버가 절대 보지 않음 (Gemini 섹션 2.1)
+
+---
+
+## [2026-04-22] 수익 모델 (Q3 확정)
+
+- **결정: Freemium**
+  - **무료 (Free tier)** — 1인 사용자 대상의 핵심 기능 전체
+    - 로컬 볼트, 수동 키 등록/조회
+    - 단일 기기 사용 (동기화 없음)
+    - 기본 Graph 보기
+    - CVE/NVD 공용 Incident feed
+    - GitHub 커넥터 1개
+  - **Pro ($2/월)** — 프로슈머·바이브 코더·1인 프리랜서 대상
+    - **멀티 디바이스 E2EE 동기화** (데스크톱 ↔ 모바일 ↔ 웹)
+    - **자동 rotation** (무중단 Zero-Downtime 파이프라인)
+    - **Incident Feed 프리미엄** (공급자 status RSS, Twitter/X 모니터링, AI 요약)
+    - **Blast Radius 시뮬레이션** (가상 폐기 시 영향 예측)
+    - **커넥터 팩** (AWS, OpenAI, Stripe, Vercel, Supabase, Google Cloud 등)
+    - **Kill Switch**
+    - **Audit Log Export**
+  - **Team (Phase 2)** — $10/seat/월
+    - 팀 공유 볼트, SSO, RBAC, SCIM
+- **이유:** 5000만 사용자 목표에 도달하려면 무료 진입 장벽 제거가 필수 (Bitwarden 모델). $2/월은 Bitwarden Premium($1)과 1Password Individual($3~5) 사이의 **프로슈머 가격대**.
+- **영향:**
+  - 무료 tier의 기능이 충분히 쓸만해야 한다 ("유인 광고형 무료"는 바이브 코더 페르소나에게 역효과).
+  - **"멀티 디바이스 동기화" 자체가 $2/월 구매 동기의 핵심**이 되도록 설계.
+  - 결제 인프라(Stripe, Apple IAP, Google Play Billing) 필요 → Research Phase에서 1인 운영 관점으로 비교.
+
+---
+
+## [2026-04-22] 오픈소스 전략 (Q4 확정)
+
+- **결정: Open Core**
+  - **오픈소스 (OSS)** — 로컬 코어 (볼트 저장소, 그래프 엔진, 수동 Rotation UI, 기본 Incident Feed)
+  - **클로즈드 소스 (Proprietary)** — 프리미엄 커넥터 팩, E2EE 동기화 서비스, 무중단 rotation 파이프라인, 프리미엄 Incident Feed
+- **이유:**
+  - Bitwarden/Infisical 모델 검증됨. OSS가 **신뢰 확보 + 개발자 커뮤니티 유입 + 보안 감사** 세 가지를 동시에 해결.
+  - 1인 개발자가 **프리미엄 기능만 클로즈드**로 유지하면 복제 난이도 확보 가능.
+- **영향:**
+  - 라이선스: OSS 부분은 **AGPL-3.0 (Bitwarden/Infisical 모델)** 또는 **MPL 2.0** 중 Research Phase에서 선택.
+  - 레포지터리 구조를 처음부터 "퍼블릭 코어 + 프라이빗 프리미엄" 분리 가능한 형태로 설계.
+  - 프리미엄 기능은 **별도 서버 서비스**로 구현하여 "OSS 빌드만으로는 동기화·자동 rotation 불가" 형태로 자연스런 구분.
+
+---
+
+## [2026-04-22] 팀 구성 및 개발 리소스 (Q5 확정)
+
+- **결정:** **1인 개발 프로젝트로 끝까지 간다.** 극적인 성공 시에만 개발자 추가 채용 고려.
+- **영향:**
+  - 모든 인프라는 **매니지드 서비스 최대 활용** — 서버 관리 부담 최소화.
+  - 프리미엄 기능의 백엔드는 **Cloudflare Workers + D1/KV 또는 Supabase** 같이 "scale-to-zero"가 되는 스택 우선 검토.
+  - **AI 보조 개발(Claude Code, Cursor 등) 적극 활용** — 이는 바이브 코더 페르소나에 대한 dogfooding도 됨.
+  - **관측성·온콜 부담이 큰 기능은 의도적으로 늦게 출시** (예: 팀 공유 볼트, SCIM).
+  - 모든 의사결정에서 **"1인이 운영 가능한가?"** 가 비용·기능 우선순위의 기본 필터.
+
+---
+
+## [2026-04-22] 개발 기간 정책 — **[갱신 전 결정 대체]**
+
+- **결정:** **고정된 MVP 기간 없음.** "3주 MVP" 제약은 폐기.
+- **이유:** 목표가 "3주 내 출시"가 아니라 **"실용적이고 가치 있는 앱을 월 $2에 전 세계 사용자에게 제공"**. 품질과 실제 유용성이 출시 시점보다 우선.
+- **영향:**
+  - MVP 범위는 "3주에 들어가는 것"이 아니라 **"Pro 구독을 $2에 결제할 가치가 있는 최소 기능"** 기준으로 재정의한다.
+  - 구체적 태스크 분할은 planner가 `docs/task.md` 에 작성 (Phase 2.6).
+
+---
+
+## [2026-04-22] Gate 1 확정 사항 (Integrator Report 승인 후 8개 오픈 질문 결정)
+
+### Q1 — Kill Switch 무료/Pro 경계 → **C (절충안)**
+- **결정:** Kill Switch 자체 (키 revoke, 2단계 확인 UI) 는 **무료** tier 포함. "revoke 이후 새 키 자동 배포"는 **Pro** 전용.
+- **이유:** 긴급 사고 대응은 신뢰 확보의 핵심이므로 무료로 제공. 사고 후 자동화 복구는 $2/월 가치를 정당화하는 고급 기능으로 분리.
+- **영향:** Kill Switch UI 와 revoke 엔드포인트는 MVP Must, 자동 배포 파이프라인은 Phase 2 Could.
+
+### Q2 — 모바일 MVP 포함 여부 → **A (데스크톱 + 모바일 동시 출시)** ⚠️ integrator 권장(B)과 반대
+- **결정:** 데스크톱과 모바일을 **동시에 MVP에 포함**한다.
+- **이유:** "3주는 중요하지 않다, 실용적이고 가치 있는 앱이 목적"이라는 사용자 방향. Pro 구독의 핵심 동기인 "멀티 디바이스 E2EE 동기화"를 반쪽으로 출시하지 않기 위함.
+- **영향:**
+  - MVP 범위가 **Must + Phase 2 Could** 의 상당 부분까지 확장됨. 특히 **Yjs + SecSync + Cloudflare Workers 동기화 인프라**가 MVP Must로 승격.
+  - Tauri v2 모바일 플러그인 안정성 리스크(🟡)를 감수. Stronghold 모바일 동작 여부를 개발 초반에 검증 필수.
+  - 개발 기간이 크게 증가. "고정 기간 없음" 정책으로 대응.
+
+### Q3 — 앱스토어 수수료 전략 → **A (RevenueCat + Apple IAP 15% / Google Play Billing)**
+- **결정:** iOS는 **Apple IAP Small Business Program (15%)**, Android는 **Google Play Billing**, 웹/데스크톱은 **Paddle MoR**. **RevenueCat** 으로 크로스 플랫폼 구독 상태 통합.
+- **이유:** 단순하고 사용자 편리. 외부 결제 링크 유도는 법률 리스크와 UX 복잡도 증가. Small Business 15% 수수료는 수용 가능한 손익.
+- **영향:**
+  - Paddle(Merchant of Record)로 VAT/세금 자동 처리.
+  - RevenueCat 월정액은 매출 $10K까지 무료, 이후 유료 전환.
+  - 크로스 플랫폼 구독 동기화를 위해 **유저 계정 인증(OAuth/Passkey)** 이 Phase 1 후반부에 필요.
+
+### Q4 — 라이선스 → **A (AGPL-3.0 + EE 독점 이중 라이선스)**
+- **결정:** OSS 코어 = **AGPL-3.0**, 프리미엄/클라우드 기능 = **독점 EE(Enterprise Edition) 라이선스** (Bitwarden 모델).
+- **이유:** SaaS 경쟁자의 무임 재판매를 강하게 차단. B2C 중심이므로 기업 기피 영향 미미. 커뮤니티 기여 수령은 CLA(Contributor License Agreement) 필수.
+- **영향:**
+  - GitHub 레포지터리에 `LICENSE` (AGPL-3.0) + `LICENSE_FAQ.md` (EE 경계 설명) 필수.
+  - 기여자 CLA 자동화 (CLA Assistant 봇 등) 가 Phase 1 후반 태스크로 편입.
+  - 향후 라이선스 변경(예: BUSL 전환) 가능성 대비 CLA 설정 필수.
+
+### Q5 — GitHub 커넥터 무료 범위 → **B (읽기 무료, 쓰기 Pro)**
+- **결정:** 무료 tier = Secret Scanning 조회 + `.env` 파일 스캔(읽기). Pro = Actions Secrets 자동 갱신 + PR 자동 생성(쓰기).
+- **이유:** 읽기는 진입 장벽 제거 (유입·신뢰), 쓰기는 $2/월 가치 정당화 기능 (자동화로 시간 절약).
+- **영향:**
+  - GitHub App 권한은 초기 설치 시 읽기·쓰기 모두 요청하되, 쓰기 동작은 Pro 라이선스 검증 후 실행.
+  - 무료 사용자도 "이 기능은 Pro에서 1-click 자동화됩니다" 업셀 UX 노출.
+
+### Q6 — Stronghold v3 대체 기술 사전 결정 → **B (지금은 trait 추상화만)**
+- **결정:** `VaultStorage` trait 를 지금 설계하고, Stronghold 구현체를 교체 가능한 구조로 만든다. v3 대체 기술은 v3 출시 시점에 결정.
+- **이유:** v3 출시 시점 불확실. 미래 결정을 지금 고정하면 오히려 잘못될 수 있음. 추상화 레이어만 있으면 마이그레이션 비용은 관리 가능.
+- **영향:**
+  - `src-tauri/src/vault/storage/` 디렉터리에 `trait VaultStorage` 정의. Stronghold 구현체는 `StrongholdStorage` 로 격리.
+  - 단위 테스트용 `MockVaultStorage` 도 함께 제공.
+
+### Q7 — 웹 대시보드 읽기 전용 뷰어 Phase 1 포함 → **A (포함)**
+- **결정:** Phase 1 후반부에 **웹 읽기 전용 뷰어** 를 포함. URL에서 그래프 조회, Incident 알림 조회, 계정 관리(구독 상태)가 가능.
+- **이유:** Q2=A(모바일 MVP 포함)와 짝을 이루어 "멀티 디바이스" 가치를 완성. 웹 뷰어는 공유 링크로 협업 트리거 기능도 됨(Phase 2 팀 기능의 기초).
+- **영향:**
+  - 웹 스택은 **Vite React 공용** (Tauri 번들과 소스 공유, 조건부 분기로 Tauri-only API 보호).
+  - 정적 랜딩 페이지는 **Astro** 별도로 구성 (SEO·마케팅 페이지).
+  - 도메인·호스팅 필요 (Cloudflare Pages 권장).
+
+### Q8 — RAILGUARD (.cursorrules 자동 생성) MVP 포함 → **A (포함)**
+- **결정:** 바이브 코더 페르소나 핵심 차별점으로 MVP Must 에 포함.
+- **이유:** 구현 복잡도 낮음 (텍스트 템플릿 + 파일 쓰기). Gemini Deep Research 섹션 4.1 의 "Cognitive Security Model" 해자(Moat) 포인트와 직결.
+- **영향:**
+  - `.cursorrules` / `.windsurfrules` / `CLAUDE.md` / `.github/copilot-instructions.md` 등 주요 AI 에디터용 룰 파일을 자동 생성·갱신하는 템플릿 엔진 필요.
+  - 프로젝트 폴더 드롭 시 자동 검출 → "이 프로젝트를 위한 AI 가드레일 룰을 생성할까요?" 제안 UX.
+
+---
+
+## [2026-04-22] MVP 범위 재정의 (Gate 1 이후)
+
+**Q2=A 결정으로 MVP 범위가 기존 "데스크톱 우선" 플랜에서 크게 확장됨.** planner가 task.md 를 작성할 때 기준이 될 새 범위:
+
+### MVP Must (Phase 1 출시 조건)
+로컬 볼트 + 수동 등록 + SQLite 그래프 모델 + React Flow 그래프 + ed25519 감사 로그 + NVD/GitHub Advisory Incident Feed + GitHub 커넥터(읽기) + Progressive Disclosure UX + 드롭&스캔 온보딩 + AGPL-3.0 + **Kill Switch (revoke) + RAILGUARD 룰 파일 생성 + 데스크톱(Win/Mac/Linux) + 모바일(iOS/Android) + 웹 읽기 뷰어 + Yjs+SecSync E2EE 동기화 + Cloudflare Workers 릴레이 서버 + Paddle+RevenueCat 결제 + 유저 인증(Passkey/OAuth)**
+
+### MVP Should (가능하면 출시 포함)
+Cmd+K Command Palette + 보안 점수 시각화 + HIBP v3 + 자동 업데이트 + i18n(영/한/일 우선)
+
+### Phase 2 (MVP 이후)
+자동 rotation 무중단 파이프라인 + 커넥터 팩(OpenAI/Stripe/AWS/Vercel/Supabase) + Blast Radius 시뮬레이션 + Incident Feed 프리미엄 + 감사 로그 Export + 팀 공유 볼트 + CISA KEV
+
+### Won't
+LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets + Vanta/Drata 연동
+
+---
+
+## [2026-04-22] 디자인 시스템 선택 (Gate 1.5)
+
+- **결정: Option A — "Security Minimal"**
+  - **컴포넌트 라이브러리:** shadcn/ui (copy-paste) + Radix UI primitives
+  - **스타일링:** Tailwind CSS v4 (`@theme` 기반 CSS-first 설정)
+  - **Base Color Ramp:** **slate** (2026-04-22 부트스트랩 시 `neutral`에서 변경 — 미세한 쿨 톤이 "보안 도구" 신뢰감에 더 부합)
+  - **타이포그래피:** 본문 **Inter Variable**, 코드·키 **JetBrains Mono Variable**
+  - **아이콘:** **Lucide** (shadcn/ui 기본값, 1450+ 아이콘, MIT)
+  - **모션:** **Motion** (구 Framer Motion 후속) — prefers-reduced-motion 자동 대응
+  - **보일러플레이트 참고:** `agmmnn/tauri-ui` (Tauri v2 + shadcn/ui 검증 완료)
+  - **그래프 테마:** React Flow 노드/엣지를 slate 토큰 + 상태 컬러(위험/주의/안전)로 스타일링하여 일관성 확보
+- **이유:**
+  1. **Tauri v2 검증 완료**: 공식 지원에 준하는 보일러플레이트 존재 → 1인 개발자가 설계 공수 없이 즉시 시작 가능
+  2. **접근성 자동 처리**: Radix primitives 기반이라 WCAG 2.2 AA 키보드 네비게이션 + ARIA 속성이 기본값으로 제공됨
+  3. **두 페르소나 균형**: "Security Minimal"의 깔끔·정밀 톤은 전문 개발자 취향과 일치하면서, Progressive Disclosure로 바이브 코더도 수용
+  4. **번들 크기·1인 유지보수 최적**: copy-paste 방식이므로 라이브러리 업그레이드 부담 없음
+- **하이브리드 보완 (채택):** Option C 의 일부 요소를 선택적으로 결합
+  - **Cmd+K Command Palette** (`cmdk` + shadcn/ui Dialog)
+  - **조밀한 Graph 파워 뷰** (전문 개발자용 밀도 토글)
+  - **Motion One 스타일의 최소 모션** (과도한 애니메이션 지양)
+- **영향:**
+  - `package.json` 에 추가될 의존성: `tailwindcss@4`, `@radix-ui/react-*` (필요한 primitive만 설치), `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`, `motion`, `cmdk`
+  - 디자인 토큰은 `src/styles/tokens.css` 에 **Radix Colors 기반**으로 정의 (라이트/다크 자동 전환)
+  - CLAUDE.md 프론트엔드 섹션에 Option A 구성 명시 (향후 세션에서 일관성 유지)
+  - UI 컴포넌트는 `src/components/ui/` 에 shadcn/ui CLI로 설치 (초기엔 Button, Input, Dialog, DropdownMenu, Tooltip, Toast, Tabs, Command 정도)
+  - **ui-prototype 스킬** 로 초기 파일 생성 예정 (Tailwind 설정, 토큰, 기본 컴포넌트 몇 개)
+
+---
+
+## [2026-04-22] Gate 2 확정 사항 (Planning 산출물 승인 + Open Issues 결정 7건)
+
+사용자가 `docs/architecture.md`, `docs/task.md`, `docs/implementation_plan.md` 3종을 승인하고 Open Issues 7건을 전부 확정함.
+
+### Q1 — 리포지터리 구조 → **A (분리 레포)**
+- **결정:** 코어는 퍼블릭 AGPL-3.0 레포, 릴레이 서버는 별도 프라이빗 EE 레포로 분리한다.
+  - `api-vault` (public, AGPL-3.0) — Tauri 앱, 코어 크레이트, React 프론트, 웹 읽기 뷰어
+  - `api-vault-relay` (private, EE proprietary) — Cloudflare Workers 동기화 릴레이, 결제 웹훅
+- **이유:** EE 라이선스 경계 명확화. 오픈소스 기여자가 릴레이 내부 로직·DB 스키마·인증 흐름에 접근하지 못하게 하여 무임 재판매 위험 차단.
+- **영향:**
+  - 현재 `C:\Users\JSS\Projects\api-vault\` = 퍼블릭 `api-vault` 레포로 유지.
+  - M9 시점에 별도로 `C:\Users\JSS\Projects\api-vault-relay\` 프라이빗 레포 생성 예정.
+  - 공통 프로토콜/타입은 퍼블릭 `api-vault` 에 정의하여 릴레이가 참조한다 (단방향 의존).
+
+### Q2 — GitHub Organization 이름 → **`api-vault`**
+- **결정:** GitHub Organization 이름은 `api-vault`. 최종 URL은 `github.com/api-vault/api-vault` 와 `github.com/api-vault/api-vault-relay`.
+- **이유:** 제품명과 직접 일치, 기억하기 쉬움, 검색 유리.
+- **영향:**
+  - GitHub Organization 생성(사용자 수동 작업, M0 직전 또는 병행). 결제 없음(무료 org).
+  - CLA Assistant 설정 시 org 이름 필요.
+  - 도메인(Q4)도 `apivault.app` 또는 `api-vault.dev` 로 통일 고려.
+
+### Q3 — Free tier 디바이스 수 → **A (2대)**
+- **결정:** 무료 tier 사용자는 최대 **2대 디바이스**까지 E2EE 동기화 가능. 3대부터 Pro 전환 필요.
+- **이유:** 바이브 코더 페르소나는 보통 PC + 스마트폰 두 디바이스에서 작업. 진입 장벽을 낮춰 "직접 써본 뒤 가치 체감" 경로를 열어둔다. 3대째부터 Pro 유도는 Bitwarden 패턴과 유사.
+- **영향:**
+  - 릴레이 서버의 `device_count` 엔포스먼트 로직에 `if tier == "free" && count >= 2: reject pair` 반영.
+  - UI: "현재 2/2 디바이스 사용 중 — 3번째 디바이스를 추가하려면 Pro로 업그레이드" 업셀 메시지.
+  - 기존 project-decisions.md의 "Freemium" 설명을 갱신 (단일 기기 사용 → 2대까지 무료 동기화).
+
+### Q4 — 도메인 → **해당 마일스톤(M12/M13) 직전 확보**
+- **결정:** 지금 당장은 확보하지 않음. M12(웹 읽기 뷰어)와 M13(Release) 직전에 가용성 확인 후 결정.
+- **후보 우선순위:** `apivault.app` > `api-vault.dev` > `keyvault.dev` > `apivault.io`
+- **영향:** 지금 단계의 코드에는 도메인 하드코딩 없이 `VITE_APP_DOMAIN` 환경변수로 주입.
+
+### Q5 — 계정 등록/결제 타이밍 → **마일스톤별 Just-in-Time**
+- **결정:**
+  - Apple Developer Program ($99/년) — **M11 시작 직전**에 등록
+  - Google Play Console ($25 일회성) — **M11 시작 직전**에 등록
+  - Paddle Merchant Account — **M10 시작 2주 전**에 신청 (소프트웨어 벤더 검증 기간 확보)
+  - RevenueCat — **M10 시점**에 무료 tier로 생성 ($2.5K ARR까지 무료)
+  - Cloudflare Workers Paid ($5/월) — **M9 시작 직전** 활성화 (그전엔 무료 tier로 개발)
+  - GitHub App registration — **M5 시점**에 생성 (공식 커넥터 인증용)
+- **이유:** 선결제 비용을 최소화하면서 각 마일스톤에 맞춰 필요할 때만 활성화. 1인 개발자의 현금 흐름 보호.
+
+### Q6 — Windows 서명 방식 → **A (SignPath OSS)**
+- **결정:** SignPath Foundation의 오픈소스 무료 코드 서명 프로그램을 이용한다.
+- **이유:** 비용 제로. 본 프로젝트는 AGPL-3.0 퍼블릭 코어이므로 자격 충족. 승인은 신청 후 1~2주.
+- **영향:**
+  - M13 Release 직전에 SignPath에 신청 (GitHub org `api-vault`, AGPL 라이선스, public repo 증빙).
+  - 승인 후 GitHub Actions에서 SignPath Secure Build 연동 설정.
+  - 만약 Pro 사용자 수가 수천 명 규모 이상으로 성장하여 SmartScreen reputation 이슈가 생기면 **EV 인증서 구매로 전환** 검토 (연 $300~600).
+
+### Q7 — 법률 리뷰 예산 → **A (iubenda/Termly로 시작) → 추후 B 전환**
+- **결정:** 초기 출시는 자동화된 Privacy Policy/Terms 생성기(iubenda 또는 Termly, 월 $15 수준) 로 시작한다. Pro 사용자가 수천 명 규모로 성장한 시점에 변호사 1회 리뷰($500~$1,500) 로 전환.
+- **이유:**
+  - 초기 비용 최소화 (1인 운영 원칙).
+  - iubenda/Termly는 GDPR/CCPA/CPRA 기본 조항을 자동 생성, 지역별 언어 지원.
+  - E2EE 특성상 "개인정보 수집 최소화" 구조이므로 위험 프로파일이 낮음.
+- **영향:**
+  - M13 Release 직전에 iubenda/Termly 계정 생성 + Privacy Policy/Terms 페이지 생성.
+  - Landing 사이트와 앱 내 링크에 삽입.
+  - Paddle/RevenueCat의 기본 소비자 보호 조항과 중복되지 않게 정리.
+
+### 추가 — Stronghold 모바일 실패 시 우회 태스크 (planner Open Issue #8)
+- **결정:** M11 T105(Stronghold 모바일 PoC)에서 실패하면 즉시 확장 태스크를 열고 대체 구현을 진행한다. 대체 후보: (a) iOS Keychain/Android Keystore 직접 사용 + `age`/`rage` crate로 파일 암호화, (b) `rust-crypto` 직접 구현.
+- **이유:** Stronghold v2 모바일 지원은 research_raw.md 에서 🟡 조건부 평가. 데스크톱보다 성숙도 낮음.
+- **영향:** M11 T105를 PoC 성격으로 가볍게 설계하고, 실패 시 M11 태스크 수가 6개 → 10~12개로 늘어날 수 있음을 미리 인지.
+
+---
+
+## [2026-04-22] T003 — Tauri v2 플러그인 활성화 (M0)
+
+- **결정:**
+  - `api-vault-app/Cargo.toml`에 Tauri 공식 플러그인 9종 추가 (stronghold 포함 시 10종이나 AppLocker 환경 제약으로 일시 비활성화, 아래 이슈 참조).
+    - 공통: `tauri-plugin-sql` (features=["sqlite"]), `tauri-plugin-clipboard-manager`, `tauri-plugin-shell`, `tauri-plugin-os`, `tauri-plugin-notification`, `tauri-plugin-deep-link`, `tauri-plugin-http`
+    - 데스크톱 전용 `cfg(not(android/ios))`: `tauri-plugin-updater`
+    - 모바일 전용 `cfg(android/ios)`: `tauri-plugin-biometric`
+  - `lib.rs` Builder 체인에 9개 플러그인 등록. `updater`/`biometric`은 표준 `target_os` cfg 분기 사용.
+  - `capabilities/default.json`에 9개 permission 추가. `capabilities/desktop.json`에 `updater:default` 분리.
+  - JS 패키지 10종 설치 (`@tauri-apps/plugin-{sql,stronghold,clipboard-manager,shell,os,updater,notification,biometric,deep-link,http}`).
+- **이유:** T013(SQLite), T016(Stronghold), T023(Clipboard) 등 후속 태스크들이 사용하는 플러그인 사전 등록.
+- **이슈 (AppLocker 환경 특이사항):**
+  - `tauri-plugin-stronghold`의 전이 의존성 `iota_stronghold` → `iota-crypto` → `libsodium-sys-stable` 빌드 스크립트가 Windows AppLocker에 의해 차단됨.
+  - Rust 의존성은 주석 처리, `lib.rs` 초기화 코드도 주석. JS 패키지는 정상 설치됨.
+  - **활성화 조건:** 관리자 권한으로 `Add-MpPreference -ExclusionPath <src-tauri/target>` 실행 후 주석 해제.
+  - 동일 이유로 `capabilities/default.json`에서 `stronghold:default`, `biometric:default`는 해당 플러그인 활성화 시 추가.
+  - `updater:default`는 `capabilities/desktop.json`으로 분리 (플랫폼별 capability 파일 패턴 도입).
+- **영향:**
+  - `cfg(desktop)` 대신 `cfg(not(any(target_os = "android", target_os = "ios")))` 표준 cfg 사용 (Tauri build-script cfg 플래그는 cargo dependency resolution에서 사용 불가).
+  - Stronghold 활성화 후 `lib.rs`에서 `Builder::with_argon2(salt_path).build()` 패턴 사용 예정 (T017에서 실제 KDF 로직 구현).
+
+---
+
+## [2026-04-22] T001+T002 — Cargo 워크스페이스 분리 + 핵심 의존성 (M0)
+
+- **결정:**
+  - `src-tauri/Cargo.toml`을 workspace root로 교체 (`[workspace] members = ["crates/*"]`, `resolver = "2"`).
+  - `src-tauri/crates/` 아래 9개 크레이트 생성: `api-vault-app` (bin+lib), `api-vault-{core,storage,crypto,audit,feeds,connectors,railguard,sync}` (lib stub).
+  - 기존 `src-tauri/src/` + `src-tauri/build.rs` 를 `api-vault-app` 크레이트 내부로 이동.
+  - `api-vault-app/src/lib.rs`에서 `tauri::generate_context!("../../tauri.conf.json")`으로 workspace root의 `tauri.conf.json` 경로 명시.
+  - `api-vault-app/build.rs`에서 `std::env::set_current_dir(workspace_root)`로 `tauri-build`가 `tauri.conf.json`을 찾도록 처리.
+  - `[workspace.dependencies]`에 공통 의존성 선언 (tokio, serde, serde_json, sqlx, thiserror, anyhow, tracing, tracing-subscriber, ulid, time, reqwest, secrecy, zeroize, tauri, tauri-build, tauri-plugin-opener).
+- **이유:** 이후 크레이트별 도메인 분리(crypto, storage, audit 등) + 버전 일원화를 위한 토대.
+- **영향:**
+  - 모든 Rust 기능 개발은 `src-tauri/crates/` 아래 적절한 크레이트에 배치.
+  - `api-vault-app`이 Tauri 진입점. 다른 크레이트는 `tauri` 의존 없이 순수 도메인 로직.
+  - `tauri.conf.json`, `capabilities/`, `gen/`은 계속 `src-tauri/` 최상단 유지.
+
+---
+
+## [2026-04-22] Phase 3 실행 모드 → **Auto edits**
+
+- **결정:** 사용자가 **Auto edits 모드**를 선택. implementator·commiter·tester 가 파일 편집·테스트 작성·커밋까지 자동 진행한다.
+- **자동 진행 범위 (승인 없이 가능):**
+  - 파일 생성/수정/삭제
+  - 패키지 설치 (pnpm/cargo)
+  - 단위 테스트·통합 테스트 실행
+  - `git commit` (단, `git push`는 제외)
+  - lint/format/typecheck
+  - 로컬 빌드
+- **여전히 명시적 사용자 승인이 필요한 위험 작업 (Auto edits 모드와 무관):**
+  - `git push` → Gate 4 전까지 절대 금지
+  - 앱 배포 / 릴리스 / 앱스토어 제출 → Gate 3
+  - `main` 브랜치 병합 (PR·force-push 포함)
+  - `.env` / credential 파일 열람·수정
+  - 외부 결제 API 호출 (Paddle/RevenueCat 실제 트랜잭션)
+  - 외부 SaaS에 대한 쓰기 작업 (GitHub rotate secret, Slack 전송 등)
+  - 보안 훅·CLA·라이선스 비활성화
+- **영향:**
+  - 각 태스크 단위로 commit이 생성됨 → 롤백 용이.
+  - 사용자는 중간중간 리뷰보다는 **마일스톤 경계** 또는 **위험 작업 지점**에서 집중 검토.
+  - 문제 발생 시 implementator 재시도 1회 → problem-solver 호출 (최대 3 라운드 × 5 방법) → 해결 실패 시 informer로 사용자 호출.
+
+---
+
+## [2026-04-22] 보안 핵심 결정 (유지)
+
+- 마스터 키 = OS keyring (+ Phase 2에서 Passkey/WebAuthn 선택적 2차 인증)
+- 볼트 암호화 = Tauri Stronghold (XChaCha20-Poly1305, Argon2id KDF)
+- **영지식 아키텍처 (Zero-Knowledge)** = 클라이언트에서 암호화/복호화, 서버는 암호문만 릴레이
+- **멀티 디바이스 페어링** = X25519 ECDH + QR/PIN 대역 외 검증 (Gemini 섹션 2.2)
+- **CRDT 동기화** = Delta-based 또는 Operation-based CRDT + E2EE (SecSync 모델 참조)
+- 감사 로그 = ed25519 서명 체인, append-only
+- 앱 업데이트 = tauri-plugin-updater + minisign 서명 강제
+- 키 메모리 노출 = `secrecy` crate로 Zeroize, 클립보드 자동 만료 30초
+- Rust `unsafe` 정당화 없이 금지
+

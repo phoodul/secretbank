@@ -41,11 +41,12 @@ Thumbs.db
 CLAUDE.local.md
 .claude/settings.local.json
 
-# AI-generated docs & logs
-docs/
+# Personal / private notes (not shared)
 user_docs/
 user_research/
 work-log/
+# docs/ 는 버전 관리 대상 — project-decisions, architecture, task, implementation_plan, progress, work-log 등
+# 필요 시 특정 파일만 제외하려면 아래에 개별 경로 추가
 
 # antigravity (personal)
 .antigravity/
