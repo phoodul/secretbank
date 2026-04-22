@@ -30,7 +30,7 @@
 | :-- | :------------------------------ | :---------- | :-------- | :------------------ |
 | M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료       |
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
-| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | 🔄 1/14 완료        |
+| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | 🔄 2/14 완료        |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ⏳ 대기             |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기             |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
@@ -76,8 +76,9 @@
 | T024    | Lock Screen + Create Vault Dialog (zxcvbn 강도 미터)        | 2026-04-22 | `7946476` |
 | T023    | 클립보드 자동 만료 30초 (취소 토큰 + countdown 이벤트)      | 2026-04-22 | `71d37bc` |
 | T025    | Inventory 페이지 목록 뷰 + 필터 바                          | 2026-04-23 | `ab69319` |
+| T028    | Issuer 프리셋 10종 시드 + issuer_list/get 커맨드            | 2026-04-23 | `539347f` |
 
-**완료 합계**: 25/118 (M0 완료 + M1 완료 + M2 1/14)
+**완료 합계**: 26/118 (M0 완료 + M1 완료 + M2 2/14)
 
 ---
 

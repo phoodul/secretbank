@@ -2,10 +2,10 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T025 완료 — M2 진입)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 1/14**
-- **Commits:** 26개 누적 (최신 `ab69319` feat(inventory): Inventory 목록 뷰 + 필터 바 (T025))
-- **Tests:** Rust 43개 + Vitest 33개 통과 (Vitest +20: CredentialCard 10 + InventoryPage 10).
+- **Time:** 2026-04-23 (T028 완료 — T026 다음 태스크)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 2/14**
+- **Commits:** 28개 누적 (최신 `539347f` feat(issuer): Issuer 프리셋 10종 시드 + issuer_list/get (T028))
+- **Tests:** Rust 47개 (+3 seed) + Vitest 33개 통과.
 - **Blocker:** 없음.
 
 ## M2 진행 상황 (1/14)
@@ -13,13 +13,14 @@
 ### 완료 ✅
 
 - T025 Inventory 페이지 목록 뷰 + 필터 바 (커밋 `ab69319`)
+- T028 Issuer 프리셋 10종 시드 + issuer_list/get 커맨드 (커밋 `539347f`)
 
-### 진행 순서 결정 (2026-04-23)
+### 진행 순서 결정 (2026-04-23, 수정)
 
-사용자 방침: **CRUD UI 핵심(T025→T026→T027)을 먼저, 드롭&스캔 블록(T032~T035)은 M2 후반으로.**
+사용자 방침: **CRUD UI 핵심부터, 드롭&스캔 블록(T032~T035)은 M2 후반으로.** T026 이 Issuer combobox 에 프리셋을 쓰므로 T028 을 T026 앞으로 당김.
 
-- 1순위: T025 ✅ → T026 Credential 등록 다이얼로그 → T027 상세 Drawer
-- 2순위: T028 Issuer 프리셋 (T026 combobox 채움) → T029 Cmd+K → T030 Theme/Settings → T031 Auto-lock
+- 1순위: T025 ✅ → **T028 ✅** → T026 Credential 등록 다이얼로그 → T027 상세 Drawer
+- 2순위: T029 Cmd+K → T030 Theme/Settings → T031 Auto-lock
 - 3순위(드롭&스캔): T032 드롭존 → T033 .env 파서 + 엔트로피 → T034 env_scan_folder 커맨드 → T035 결과 검토 UI
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
 
@@ -151,6 +152,7 @@
 ## In Progress
 
 - [x] T025 Inventory 페이지 목록 뷰 + 필터 바 — 커밋 `ab69319`
+- [x] T028 Issuer 프리셋 10종 시드 + issuer_list/get — 커밋 `539347f`
 - [ ] T026 Credential 등록 다이얼로그 (수동) — 다음 태스크
 
 ## Pending Decisions
@@ -171,4 +173,4 @@
 
 ## Next Action
 
-- **T026 Credential 등록 다이얼로그** — shadcn/ui Dialog + react-hook-form + zod. Issuer combobox 는 T028 프리셋 도입 전까지 임시 `Input` 으로 ULID 문자열 수동 입력 또는 `Custom` 단일 옵션만 노출. 제출 시 `credential_create` invoke → 성공 toast + `refresh()` 호출로 InventoryPage 에 즉시 반영.
+- **T026 Credential 등록 다이얼로그** — shadcn/ui Dialog + react-hook-form + zod. Issuer combobox 는 `issuer_list` 로 DB 조회해서 `ISSUER_PRESETS` (findPreset(slug)) 로 icon/brand_color lookup. 제출 시 `credential_create` invoke → 성공 toast + InventoryPage `refresh()` 트리거. 이름/값/Env/Scope/Expires at 필드. Value 는 password field (show/hide) + `autocomplete="new-password"`.

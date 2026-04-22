@@ -27,6 +27,31 @@
 
 - `docs/task.md` 의 prettier 자동 리포맷(마크다운 테이블 컬럼 정렬)은 feature 커밋에서 분리 — T025 완료 기록과 함께 별도 docs 커밋에 포함.
 
+### T028 — Issuer 프리셋 라이브러리 (implementator 에이전트, 커밋 `539347f`)
+
+- **생성 파일**: `src-tauri/crates/api-vault-app/src/setup.rs` (164줄, seed_issuer_presets + `#[cfg(test)]` 테스트 3개), `src-tauri/crates/api-vault-app/src/commands/issuer.rs` (51줄, issuer_list/get + IssuerCommandError), `src/features/inventory/issuer-presets.ts` (152줄, IssuerPreset 타입 + ISSUER_PRESETS 10개 + findPreset)
+- **수정 파일**: `src-tauri/crates/api-vault-app/Cargo.toml` (sqlx 정식 dep + tempfile dev-dep), `commands/mod.rs` (pub mod issuer), `lib.rs` (.setup() 에서 시드 호출 + invoke_handler 두 블록에 issuer_list/get 등록), `src-tauri/crates/api-vault-storage/tests/migration_test.rs` (부수: clippy empty_line_after_outer_attr)
+- **시드 10개**: openai, stripe, github, aws, vercel, supabase, google, anthropic, paddle, cloudflare. 각 slug + display_name + docs_url + issue_url + status_url + security_feed_url(일부) + icon_key.
+- **멱등성**: `INSERT OR IGNORE INTO issuer ... (slug UNIQUE)` 로 구현. 두 번째 실행 시 rows_affected == 0.
+- **테스트 3개**: `seed_inserts_10_presets` (count=10), `seed_is_idempotent` (두 번째 실행 0), `seed_slug_set_matches_expected` (slug HashSet 일치). tempfile::TempDir + `init_pool` 으로 격리 pool 생성.
+- **검증**: `cargo fmt/clippy/test/build`, `pnpm tsc/lint/format:check/vitest` 8개 전부 exit 0. Rust 테스트 총 47개 (+3), Vitest 33개 회귀 없음.
+
+**설계 결정 (의도적 단순화)**:
+
+- `api_vault_core::Issuer` / `IssuerInput` 에 `key_pattern_regex` 필드 **추가하지 않음**. 프론트 `issuer-presets.ts` 에만 `key_pattern_regex` 상수를 둠 — T033 드롭&스캔 구현 시점까지 소비자 없음. 도메인 확장 + 마이그레이션 비용을 미룸.
+- 시드는 Tauri 커맨드로 노출하지 않고 `.setup()` 클로저에서 `tauri::async_runtime::block_on(setup::seed_issuer_presets(&ctx.pool))` 로 자동 실행. 멱등이라 매 기동 안전.
+- `IssuerRepo::list()` 가 `ORDER BY display_name ASC` 로 이미 정렬하므로 T026 combobox 에서 별도 정렬 불필요.
+
+**발견한 이슈**:
+
+- `api_vault_storage::sqlite::dt_to_ms` 가 `pub(crate)` 가시성이라 외부 크레이트에서 직접 재사용 불가. setup.rs 에서는 `OffsetDateTime::now_utc().unix_timestamp() * 1000 + (now.nanosecond() as i64 / 1_000_000)` 로 인라인 계산. 향후 time 변환이 여러 곳에서 반복되면 `dt_to_ms` 를 `pub` 으로 올리는 걸 검토.
+- `api-vault-app` 에 `sqlx` 직접 의존이 없었음 — raw `sqlx::query` 를 쓰려면 정식 dep 추가 필요. Cargo.toml 에 `sqlx = { workspace = true }` 추가.
+
+**T026 에 영향 줄 사실**:
+
+- `issuer_list` 는 Vec\<Issuer\> (전체 필드) 반환. 프론트는 `issuer.slug` 로 `findPreset(slug)` lookup → `icon` / `brand_color` / `key_pattern_regex` 획득.
+- 앱 최초 기동 후에도 `issuer_list` 가 반드시 >= 10개 레코드를 반환한다고 가정할 수 있음 (시드 실패 시 app.manage 전에 panic).
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)
