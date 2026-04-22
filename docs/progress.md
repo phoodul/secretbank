@@ -2,9 +2,60 @@
 
 ## Last Checkpoint
 
-- Time: 2026-04-22 (M0 긴급 수정 완료)
-- Phase: Phase 3 — Implementation (M0 완료 + T001 구조 수정, M1 진입 준비)
-- Step: T001 재구성 완료 — `pnpm tauri dev`가 "No package info" 없이 Rust 컴파일 → 앱 창 오픈까지 정상 진행됨. 다음: M1 핵심 데이터 모델 (SQLite 스키마, 볼트 CRUD, 암호화 등)
+- **Time:** 2026-04-22 (세션 종료, 재부팅 대기)
+- **Phase:** Phase 3 — Implementation, M1 Local Vault Core 10/12 완료
+- **Commits:** 17개 누적 (최신 `9d6841c` feat(app): vault/credential Tauri 커맨드 T021+T022)
+- **Tests:** Rust 39개 + Vitest 테스트 통과 (cargo test -p api-vault-storage --all-features 32/32, api-vault-core 3/3, api-vault-crypto 5/5 + ignored 3/3)
+- **Blocker:** Windows Smart App Control (On) 이 proc-macro/build script 실행 차단 중. 사용자 재부팅 후 SAC Off 적용 대기.
+- **재개 방법:** 다음 세션 시작 시 `/resume-project` 스킬 실행.
+
+## M1 진행 상세 (10/12)
+
+### 완료 ✅
+
+- T013 SQLite 초기 스키마 + 마이그레이션 (커밋 `df43b55`)
+- T014 VaultStorage trait 정의 (커밋 `09b1079`)
+- T015 MockVaultStorage + contract tests (커밋 `09b1079`)
+- T016 AgeVaultStorage (age 0.11 + 옵션 α, 커밋 `c8b2c1e`)
+- T017 KDF (Argon2id + HKDF, 커밋 `2ac1674`)
+- T018 OS Keyring 래퍼 (커밋 `2ac1674`)
+- T019 SQLite 레포지터리 9개 (커밋 `57959f7`)
+- T020 도메인 모델 31 struct + 12 enum + 9 ULID id (커밋 `57959f7`)
+- T021 Vault Tauri 커맨드 (init/unlock/lock/status, 커밋 `9d6841c`)
+- T022 Credential Tauri 커맨드 (CRUD + reveal, 커밋 `9d6841c`)
+
+### 남은 2개 태스크 (다음 세션에서)
+
+- [ ] **T023** 클립보드 자동 만료 30초 (Rust, SAC Off 필요)
+- [ ] **T024** Lock Screen UI (프론트, SAC 와 무관)
+
+## 재부팅 후 Next Actions (순서)
+
+1. **SAC Off 확인:**
+   ```powershell
+   Get-MpComputerStatus | Select SmartAppControlState
+   ```
+   `Off` 출력되면 성공.
+
+2. **풀 빌드 검증:**
+   ```
+   pnpm tauri dev
+   ```
+   "No package info" 없이 창이 뜨는지 확인.
+
+3. **정상 동작이면 M1 마무리:**
+   - T024 Lock Screen UI 먼저 (프론트, 의존 없음)
+   - T023 클립보드 자동 만료 (Rust)
+   - M1 통합 검증 (vault init → credential create → reveal → lock)
+
+4. **M1 종료 후 M2 Inventory UI + 드롭&스캔 (T025~T040) 진입.**
+
+## SAC/AppLocker/Defender 정책 기록
+
+`docs/project-decisions.md` 의 "개발 환경 정책" 섹션 A/A-2/A-3 참조:
+- A: Defender 실시간 보호 `target/` 예외 (적용됨)
+- A-2: 개발자 PC SAC Off (재부팅 대기)
+- A-3: 배포 시 SignPath OSS Authenticode 서명 (M13 예정)
 
 ## Completed
 

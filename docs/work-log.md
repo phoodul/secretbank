@@ -1,6 +1,28 @@
 # Work Log
 
-## 2026-04-22
+## 2026-04-22 (세션 종료 시점 요약)
+
+**커밋 누적**: 17개 (`855c33c` → `9d6841c`)
+
+**M0 Foundation**: 완료 (T001~T012, 12 태스크)
+
+**M1 Local Vault Core**: 10/12 완료
+- T013 SQLite 스키마 · T014/T015 VaultStorage trait/Mock · T016 AgeVaultStorage(age 0.11 + 옵션 α)
+- T017 KDF(Argon2id+HKDF) · T018 OS Keyring · T019 SQLite 레포지터리 · T020 도메인 모델
+- T021 Vault 커맨드 · T022 Credential 커맨드
+- **남은**: T023(클립보드), T024(Lock Screen UI)
+
+**블로커**: Windows Smart App Control On 상태로 `pnpm tauri dev` 풀 빌드 차단.
+- 진단: `Get-MpComputerStatus` → `SmartAppControlState: On`
+- 결정: 개발자 PC 만 SAC Off (재부팅 필요, 되돌릴 수 없음)
+- 배포 앱: Gate 2 Q6=A 의 SignPath OSS Authenticode 서명 계획 그대로 유지 — 최종 사용자 영향 없음
+- 상세: `docs/project-decisions.md` "개발 환경 정책" 섹션 A/A-2/A-3
+
+**세션 종료 사유**: 사용자가 SAC Off 적용 후 재부팅. 다음 세션에서 `/resume-project` 로 이어감.
+
+---
+
+## 2026-04-22 (상세)
 
 ### T001 구조 재조정 — pnpm tauri dev 복구 (긴급 수정)
 
