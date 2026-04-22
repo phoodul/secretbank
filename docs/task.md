@@ -26,28 +26,29 @@
 
 ## 마일스톤 목록
 
-| ID | 이름 | 태스크 범위 | Must 개수 |
-|:--|:--|:--|:--|
-| M0 | Foundation | T001~T012 | 12 |
-| M1 | Local Vault Core | T013~T024 | 12 |
-| M2 | Inventory UI + 드롭&스캔 | T025~T040 | 14+2S |
-| M3 | Dependency Graph & Blast Radius | T041~T048 | 7+1S |
-| M4 | Incident Feed | T049~T058 | 8+2S |
-| M5 | GitHub Connector + RAILGUARD | T059~T068 | 10 |
-| M6 | Audit Log | T069~T074 | 6 |
-| M7 | Kill Switch | T075~T078 | 4 |
-| M8 | Auth (Passkey + OAuth) | T079~T086 | 8 |
-| M9 | Sync Infrastructure | T087~T096 | 10 |
-| M10 | Payments | T097~T103 | 7 |
-| M11 | Mobile Port | T104~T109 | 6 |
-| M12 | Web Read-Only Viewer | T110~T113 | 4 |
-| M13 | i18n + Updater + Release | T114~T118 | 5 |
+| ID  | 이름                            | 태스크 범위 | Must 개수 |
+| :-- | :------------------------------ | :---------- | :-------- |
+| M0  | Foundation                      | T001~T012   | 12        |
+| M1  | Local Vault Core                | T013~T024   | 12        |
+| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     |
+| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      |
+| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        |
+| M6  | Audit Log                       | T069~T074   | 6         |
+| M7  | Kill Switch                     | T075~T078   | 4         |
+| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         |
+| M9  | Sync Infrastructure             | T087~T096   | 10        |
+| M10 | Payments                        | T097~T103   | 7         |
+| M11 | Mobile Port                     | T104~T109   | 6         |
+| M12 | Web Read-Only Viewer            | T110~T113   | 4         |
+| M13 | i18n + Updater + Release        | T114~T118   | 5         |
 
 ---
 
 ## M0 — Foundation
 
 ### T001. Cargo 워크스페이스 분리 스캐폴드
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: -
@@ -61,6 +62,7 @@
 - **Tests**: `cargo build --workspace` 통과; `cargo test --workspace` (빈 테스트 OK)
 
 ### T002. Rust 핵심 의존성 추가 (sqlx, tokio, serde, thiserror)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T001
@@ -72,6 +74,7 @@
 - **Tests**: `cargo build --workspace`
 
 ### T003. Tauri v2 플러그인 활성화 (sql, stronghold, clipboard-manager, shell, os, updater, notification, biometric, deep-link, http)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T001
@@ -84,6 +87,7 @@
 - **Tests**: `cargo tauri dev` 앱 실행, 콘솔 에러 없음 (manual)
 
 ### T004. LICENSE (AGPL-3.0) + LICENSE_FAQ.md 추가
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: -
@@ -96,6 +100,7 @@
 - **Tests**: manual — 파일 열람
 
 ### T005. CLA 자동화 설정 (CLA Assistant)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T004
@@ -108,6 +113,7 @@
 - **Tests**: manual — CLA Assistant 봇 설치 (owner action, 사용자가 수동 승인)
 
 ### T006. 커밋 컨벤션 + lint 설정 (rustfmt, clippy, eslint, prettier)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T001
@@ -121,6 +127,7 @@
 - **Tests**: `cargo clippy --workspace -- -D warnings`, `pnpm lint`, `pnpm typecheck`
 
 ### T007. README.md 초안 작성 (프로젝트 개요, 빌드 방법)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T004
@@ -132,7 +139,8 @@
 - **Files Touched**: `README.md`
 - **Tests**: manual
 
-### T008. Tailwind v4 디자인 토큰 확장 (시맨틱 vault-* 토큰)
+### T008. Tailwind v4 디자인 토큰 확장 (시맨틱 vault-\* 토큰)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: -
@@ -145,6 +153,7 @@
 - **Tests**: Vitest — `Badge` 렌더 snapshot 4 variant
 
 ### T009. shadcn/ui 컴포넌트 대량 추가 (dialog, input, label, form, tabs, tooltip, toast, dropdown-menu, command, scroll-area, separator, skeleton)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T008
@@ -157,6 +166,7 @@
 - **Tests**: Vitest — 각 컴포넌트 기본 렌더 테스트 (3~4개 대표)
 
 ### T010. 라우팅 + 셸 레이아웃 (react-router-dom)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T009
@@ -171,6 +181,7 @@
 - **Tests**: Vitest — `AppShell` 렌더, 플랫폼별 분기 (platform mock)
 
 ### T011. i18n 초기 설정 (react-i18next, 영어 기본)
+
 - **Milestone**: M0
 - **Priority**: Must
 - **Depends on**: T010
@@ -185,6 +196,7 @@
 - **Tests**: Vitest — `t()` 호출 렌더 테스트
 
 ### T012. 개발 가이드 (`docs/dev-setup.md`)
+
 - **Milestone**: M0
 - **Priority**: Should
 - **Depends on**: T001~T006
@@ -201,6 +213,7 @@
 ## M1 — Local Vault Core
 
 ### T013. SQLite 스키마 초기 마이그레이션 (0001_init.sql)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T002, T003
@@ -214,6 +227,7 @@
 - **Tests**: Rust — `#[sqlx::test]` 로 마이그레이션 실행 후 `SELECT name FROM sqlite_master` 로 테이블 존재 확인
 
 ### T014. `VaultStorage` trait 정의
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T001
@@ -232,6 +246,7 @@
 - **Tests**: Rust — trait object `Box<dyn VaultStorage>` 컴파일 확인
 
 ### T015. `MockVaultStorage` 구현 (테스트용)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T014
@@ -245,6 +260,7 @@
 - **Tests**: Rust — `tests/vault_mock_contract.rs` 에서 7개 trait 메서드 CRUD 시나리오 전부 검증
 
 ### T016. `StrongholdStorage` 구현
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T014, T003
@@ -258,6 +274,7 @@
 - **Tests**: Rust — `tests/stronghold_integration.rs` (tempdir 사용, 실제 Stronghold 파일 생성/잠금/해제/라운드트립)
 
 ### T017. 키 파생 유틸 (Argon2id + HKDF)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T002
@@ -272,6 +289,7 @@
 - **Tests**: Rust — `salt_auth != salt_enc` 일 때 결과 다름, 같은 입력 결정론, KAT 벡터 3개
 
 ### T018. OS Keyring 래퍼 (`hwchen/keyring-rs`)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T002
@@ -287,6 +305,7 @@
 - **Tests**: Rust — `#[cfg(not(target_os = "linux"))]` integration test (Linux CI는 headless이므로 스킵)
 
 ### T019. SQLite 레포지터리 레이어 (`CredentialRepo`, `IssuerRepo`, …)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T013
@@ -300,6 +319,7 @@
 - **Tests**: Rust — 각 레포별 `tests/repo_{name}_test.rs` 에서 CRUD 라운드트립 (in-memory sqlite `sqlite::memory:`)
 
 ### T020. 도메인 모델 (`api-vault-core`)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: -
@@ -314,6 +334,7 @@
 - **Tests**: Rust — serde 직렬화 라운드트립 3개
 
 ### T021. Tauri 커맨드 `vault_init` / `vault_unlock` / `vault_lock` / `vault_status`
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T016, T017, T018, T019
@@ -328,6 +349,7 @@
 - **Tests**: Rust — `#[tokio::test]` 에서 init → lock → unlock 흐름; Vitest — `invoke('vault_status')` mock
 
 ### T022. Tauri 커맨드 `credential_*` (create/list/get/update/delete/reveal)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T019, T020, T021
@@ -343,6 +365,7 @@
 - **Tests**: Rust — create/get/reveal 라운드트립 (MockVaultStorage 로 주입); `create` 실패 시 SQLite 롤백 검증
 
 ### T023. 클립보드 자동 만료 유틸 (30초)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T003, T022
@@ -356,6 +379,7 @@
 - **Tests**: Rust — fake clock으로 30초 경과 후 clear 확인 (integration); manual — 실제 앱에서 복사 후 30초 대기
 
 ### T024. Lock Screen 컴포넌트 (마스터 패스프레이즈 입력)
+
 - **Milestone**: M1
 - **Priority**: Must
 - **Depends on**: T021, T009
@@ -374,6 +398,7 @@
 ## M2 — Inventory UI + 드롭&스캔
 
 ### T025. Inventory 페이지 목록 뷰
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T022, T024
@@ -388,6 +413,7 @@
 - **Tests**: Vitest — 10개 mock credential 렌더, 필터 동작
 
 ### T026. Credential 등록 다이얼로그 (수동)
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T025
@@ -402,6 +428,7 @@
 - **Tests**: Vitest — validation, 제출 invoke 호출 인자 확인
 
 ### T027. Credential 상세 Drawer / Detail view
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T025, T023
@@ -415,6 +442,7 @@
 - **Tests**: Vitest — open/close, copy 버튼 invoke 호출
 
 ### T028. Issuer 프리셋 라이브러리 (OpenAI, Stripe, GitHub, AWS, Vercel, Supabase, Google, Anthropic, Paddle, Cloudflare)
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T020
@@ -428,6 +456,7 @@
 - **Tests**: Rust — 시드 실행 후 issuer count == 10
 
 ### T029. Cmd+K Command Palette
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T010, T009
@@ -442,6 +471,7 @@
 - **Tests**: Vitest — 단축키 트리거, 필터링
 
 ### T030. Theme Toggle + Settings 페이지 기본
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T010
@@ -455,6 +485,7 @@
 - **Tests**: Vitest — 테마 전환이 `useTheme().setTheme` 호출, localStorage 저장
 
 ### T031. Auto-lock 타이머 (idle detection)
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T030, T021
@@ -468,6 +499,7 @@
 - **Tests**: Vitest — fake timers로 idle trigger 검증
 
 ### T032. 드롭 존 컴포넌트 (파일/폴더 드래그 수신)
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T010, T003
@@ -481,6 +513,7 @@
 - **Tests**: Vitest — drop 이벤트 dispatch, 라우터 navigate 확인
 
 ### T033. `.env` 파서 + 엔트로피 기반 키 감지 (Rust)
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T028
@@ -496,6 +529,7 @@
 - **Tests**: Rust — fixtures 폴더 (`tests/fixtures/sample_project/.env`) 에 10개 샘플 키 → scan 결과 10개, issuer 매칭 정확도
 
 ### T034. Tauri 커맨드 `env_scan_folder(path)`
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T033
@@ -509,6 +543,7 @@
 - **Tests**: Rust — 샘플 fixture scan; manual — 실제 프로젝트 폴더 drag
 
 ### T035. 드롭&스캔 결과 검토 UI
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T034, T026
@@ -523,6 +558,7 @@
 - **Tests**: Vitest — render 10 mock detected, 선택 + import → invoke 3회 호출 검증 (project_create, credential_create × n, usage_create × n)
 
 ### T036. Welcome / 온보딩 플로우
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T024, T035
@@ -538,6 +574,7 @@
 - **Tests**: Vitest — 단계 진행, skip 동작
 
 ### T037. Project 관리 페이지 (list / create / edit)
+
 - **Milestone**: M2
 - **Priority**: Should
 - **Depends on**: T019, T025
@@ -550,6 +587,7 @@
 - **Tests**: Vitest — CRUD 플로우
 
 ### T038. Deployment 관리 (프로젝트 내부)
+
 - **Milestone**: M2
 - **Priority**: Should
 - **Depends on**: T037
@@ -562,6 +600,7 @@
 - **Tests**: Vitest — CRUD
 
 ### T039. Usage (사용처) 링크 UI
+
 - **Milestone**: M2
 - **Priority**: Must
 - **Depends on**: T037, T027
@@ -575,6 +614,7 @@
 - **Tests**: Rust + Vitest CRUD
 
 ### T040. Inventory 보안 점수 시각화 (기본)
+
 - **Milestone**: M2
 - **Priority**: Should
 - **Depends on**: T025
@@ -591,6 +631,7 @@
 ## M3 — Dependency Graph & Blast Radius
 
 ### T041. `api-vault-core` 그래프 모델 (`petgraph`)
+
 - **Milestone**: M3
 - **Priority**: Must
 - **Depends on**: T020
@@ -605,6 +646,7 @@
 - **Tests**: Rust — fixtures (2 issuer, 3 credential, 2 project, 4 deployment, 5 usage) → 그래프 노드/엣지 수 검증
 
 ### T042. Blast Radius 계산
+
 - **Milestone**: M3
 - **Priority**: Must
 - **Depends on**: T041
@@ -617,6 +659,7 @@
 - **Tests**: Rust — 체인 Issuer → Cred → Usage → Project → Deployment 에서 blast_radius(cred) 가 project, deployment 포함 확인
 
 ### T043. Tauri 커맨드 `graph_fetch` / `blast_radius_for_credential`
+
 - **Milestone**: M3
 - **Priority**: Must
 - **Depends on**: T041, T042
@@ -630,6 +673,7 @@
 - **Tests**: Rust — payload 직렬화 검증
 
 ### T044. React Flow 셋업 + dagre 레이아웃
+
 - **Milestone**: M3
 - **Priority**: Must
 - **Depends on**: T043
@@ -644,6 +688,7 @@
 - **Tests**: Vitest — mock 10 nodes 렌더, dagre 위치 계산 결과 존재
 
 ### T045. 커스텀 노드 타입 (Issuer/Credential/Project/Deployment)
+
 - **Milestone**: M3
 - **Priority**: Must
 - **Depends on**: T044, T008
@@ -657,6 +702,7 @@
 - **Tests**: Vitest — 각 노드 렌더 snapshot
 
 ### T046. Blast Radius 하이라이트 (노드 클릭 시)
+
 - **Milestone**: M3
 - **Priority**: Must
 - **Depends on**: T045, T043
@@ -671,6 +717,7 @@
 - **Tests**: Vitest — 클릭 시 invoke 호출, 결과 반영
 
 ### T047. Graph 성능 최적화 (React.memo + viewport culling)
+
 - **Milestone**: M3
 - **Priority**: Must
 - **Depends on**: T045
@@ -684,6 +731,7 @@
 - **Tests**: manual — 500 노드 fixture seed 후 프레임 측정; Vitest — memoization 검증 (상태 변경 시 불필요 리렌더 없음)
 
 ### T048. 모바일 Graph 대체 뷰 (리스트 카드)
+
 - **Milestone**: M3
 - **Priority**: Should
 - **Depends on**: T044
@@ -699,6 +747,7 @@
 ## M4 — Incident Feed
 
 ### T049. NVD CVE API 2.0 클라이언트
+
 - **Milestone**: M4
 - **Priority**: Must
 - **Depends on**: T002
@@ -712,6 +761,7 @@
 - **Tests**: Rust — wiremock 서버로 200, 429, 503 응답 시나리오
 
 ### T050. GitHub Advisory DB 클라이언트
+
 - **Milestone**: M4
 - **Priority**: Must
 - **Depends on**: T002
@@ -724,6 +774,7 @@
 - **Tests**: Rust — wiremock
 
 ### T051. 주요 SaaS 상태 RSS 클라이언트
+
 - **Milestone**: M4
 - **Priority**: Must
 - **Depends on**: T002
@@ -737,6 +788,7 @@
 - **Tests**: Rust — 실제 RSS 샘플 fixture 10개 파싱
 
 ### T052. HIBP v3 클라이언트
+
 - **Milestone**: M4
 - **Priority**: Should
 - **Depends on**: T002
@@ -749,6 +801,7 @@
 - **Tests**: Rust — wiremock
 
 ### T053. Incident 매칭 엔진
+
 - **Milestone**: M4
 - **Priority**: Must
 - **Depends on**: T049, T050, T051
@@ -762,6 +815,7 @@
 - **Tests**: Rust — 10개 fixture incident x 5 credential 매트릭스
 
 ### T054. 스케줄러 (tokio interval, 폴링 주기 관리)
+
 - **Milestone**: M4
 - **Priority**: Must
 - **Depends on**: T049, T050, T051, T053
@@ -776,6 +830,7 @@
 - **Tests**: Rust — fake clock으로 interval trigger 검증
 
 ### T055. Tauri 커맨드 `incident_*`
+
 - **Milestone**: M4
 - **Priority**: Must
 - **Depends on**: T054
@@ -790,6 +845,7 @@
 - **Tests**: Rust — CRUD
 
 ### T056. Incidents 페이지 UI
+
 - **Milestone**: M4
 - **Priority**: Must
 - **Depends on**: T055, T009
@@ -803,6 +859,7 @@
 - **Tests**: Vitest — 10 mock incident 렌더 + 필터
 
 ### T057. Credential Detail 에 Incidents 섹션 통합
+
 - **Milestone**: M4
 - **Priority**: Must
 - **Depends on**: T027, T055
@@ -814,6 +871,7 @@
 - **Tests**: Vitest — 렌더
 
 ### T058. NVD API 키 설정 UI (Settings)
+
 - **Milestone**: M4
 - **Priority**: Should
 - **Depends on**: T030, T054
@@ -830,6 +888,7 @@
 ## M5 — GitHub Connector + RAILGUARD
 
 ### T059. Connector trait 정의
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T020
@@ -843,6 +902,7 @@
 - **Tests**: Rust — `MockConnector` compile
 
 ### T060. GitHub App 등록 + webhook 구조
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T003
@@ -856,6 +916,7 @@
 - **Tests**: manual runbook 검증
 
 ### T061. GitHub Installation Token 발급 (릴레이 경유)
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T060
@@ -868,6 +929,7 @@
 - **Tests**: Workers — Miniflare + mock GitHub JWT; Rust — mock 릴레이 응답
 
 ### T062. GitHub Secret Scanning 읽기
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T061
@@ -881,6 +943,7 @@
 - **Tests**: Rust — wiremock GitHub API
 
 ### T063. GitHub 커넥터 UI (연결 / 저장소 선택 / 스캔)
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T062, T030
@@ -893,6 +956,7 @@
 - **Tests**: Vitest — 연결/스캔 플로우 mock
 
 ### T064. Pro 엔타이틀먼트 게이트 (GitHub write)
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T062
@@ -906,6 +970,7 @@
 - **Tests**: Rust — Free/Pro 분기 검증; Vitest — 버튼 disabled 표시
 
 ### T065. RAILGUARD 템플릿 라이브러리
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T002
@@ -919,6 +984,7 @@
 - **Tests**: Rust — 4 rule × 2 fixture context = 8 snapshot tests
 
 ### T066. RAILGUARD 커맨드 `railguard_preview` / `railguard_apply`
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T065
@@ -931,6 +997,7 @@
 - **Tests**: Rust — tempdir 에서 create/update/skip 3 시나리오
 
 ### T067. RAILGUARD UI (preview → apply 2단계)
+
 - **Milestone**: M5
 - **Priority**: Must
 - **Depends on**: T066
@@ -943,6 +1010,7 @@
 - **Tests**: Vitest — preview + apply 플로우
 
 ### T068. `.env` 스캐너 이벤트 → RAILGUARD 자동 제안
+
 - **Milestone**: M5
 - **Priority**: Should
 - **Depends on**: T035, T067
@@ -957,6 +1025,7 @@
 ## M6 — Audit Log
 
 ### T069. `api-vault-audit` 크레이트 (hash chain + ed25519)
+
 - **Milestone**: M6
 - **Priority**: Must
 - **Depends on**: T017
@@ -971,6 +1040,7 @@
 - **Tests**: Rust — append 10 entries, 정상 verify; 중간 payload 변조 시 first_invalid_seq 감지
 
 ### T070. Device key 생성 + Stronghold 저장
+
 - **Milestone**: M6
 - **Priority**: Must
 - **Depends on**: T016, T069
@@ -984,6 +1054,7 @@
 - **Tests**: Rust — 두 번 호출 시 같은 키 반환
 
 ### T071. Audit write 훅 (모든 mutating 커맨드에 삽입)
+
 - **Milestone**: M6
 - **Priority**: Must
 - **Depends on**: T069, T070
@@ -996,6 +1067,7 @@
 - **Tests**: Rust — credential_create 후 audit_log row 존재 검증
 
 ### T072. Audit 커맨드 `audit_list` / `audit_verify_chain`
+
 - **Milestone**: M6
 - **Priority**: Must
 - **Depends on**: T069
@@ -1008,6 +1080,7 @@
 - **Tests**: Rust — 체인 검증
 
 ### T073. Audit UI (`/audit`)
+
 - **Milestone**: M6
 - **Priority**: Must
 - **Depends on**: T072, T009
@@ -1021,6 +1094,7 @@
 - **Tests**: Vitest — 렌더 + verify 버튼
 
 ### T074. Credential Detail 에 Audit 섹션
+
 - **Milestone**: M6
 - **Priority**: Must
 - **Depends on**: T027, T072
@@ -1036,6 +1110,7 @@
 ## M7 — Kill Switch
 
 ### T075. Revoke 커맨드 (로컬 표시만)
+
 - **Milestone**: M7
 - **Priority**: Must
 - **Depends on**: T022, T071
@@ -1049,6 +1124,7 @@
 - **Tests**: Rust — 토큰 없이 호출 시 reject, 정상 플로우 시 status 변경
 
 ### T076. Kill Switch 2단계 확인 UI
+
 - **Milestone**: M7
 - **Priority**: Must
 - **Depends on**: T075, T009
@@ -1064,6 +1140,7 @@
 - **Tests**: Vitest — 이름 미일치 시 버튼 disabled, 성공 플로우
 
 ### T077. Revoked 상태 시각화 (Inventory / Graph)
+
 - **Milestone**: M7
 - **Priority**: Must
 - **Depends on**: T075, T025, T045
@@ -1075,6 +1152,7 @@
 - **Tests**: Vitest — 상태별 렌더
 
 ### T078. Bulk Revoke (Issuer 단위)
+
 - **Milestone**: M7
 - **Priority**: Must
 - **Depends on**: T075
@@ -1091,6 +1169,7 @@
 ## M8 — Auth (Passkey + OAuth)
 
 ### T079. Cloudflare Workers 릴레이 프로젝트 스캐폴드
+
 - **Milestone**: M8
 - **Priority**: Must
 - **Depends on**: -
@@ -1104,6 +1183,7 @@
 - **Tests**: `curl localhost:8787/health` → 200
 
 ### T080. D1 마이그레이션 (릴레이 스키마)
+
 - **Milestone**: M8
 - **Priority**: Must
 - **Depends on**: T079
@@ -1116,6 +1196,7 @@
 - **Tests**: integration — `curl /health` 후 D1 console `SELECT name FROM sqlite_master`
 
 ### T081. WebAuthn (Passkey) 서버 구현
+
 - **Milestone**: M8
 - **Priority**: Must
 - **Depends on**: T080
@@ -1130,6 +1211,7 @@
 - **Tests**: Miniflare + `@simplewebauthn/browser` 로 E2E
 
 ### T082. OAuth (GitHub, Google) 서버 구현
+
 - **Milestone**: M8
 - **Priority**: Must
 - **Depends on**: T080
@@ -1143,6 +1225,7 @@
 - **Tests**: Miniflare + nock GitHub/Google
 
 ### T083. 클라이언트 `auth_*` 커맨드 (Passkey + OAuth)
+
 - **Milestone**: M8
 - **Priority**: Must
 - **Depends on**: T081, T082, T003
@@ -1156,6 +1239,7 @@
 - **Tests**: Rust — mock 릴레이 응답 테스트; manual E2E
 
 ### T084. SignIn 페이지 UI
+
 - **Milestone**: M8
 - **Priority**: Must
 - **Depends on**: T083
@@ -1168,6 +1252,7 @@
 - **Tests**: Vitest — 버튼 click invoke
 
 ### T085. Salt 저장 + 키 파생 통합 (Zero-Knowledge)
+
 - **Milestone**: M8
 - **Priority**: Must
 - **Depends on**: T017, T083
@@ -1180,6 +1265,7 @@
 - **Tests**: Rust — salt_auth != salt_enc 일 때 key 달라짐
 
 ### T086. Session 관리 + 토큰 갱신
+
 - **Milestone**: M8
 - **Priority**: Must
 - **Depends on**: T083
@@ -1196,6 +1282,7 @@
 ## M9 — Sync Infrastructure
 
 ### T087. Yjs + SecSync 프론트엔드 셋업
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T085
@@ -1208,6 +1295,7 @@
 - **Tests**: Vitest — Y.Doc 생성, set/get
 
 ### T088. SecSync 암호화 키 주입
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T085, T087
@@ -1220,6 +1308,7 @@
 - **Tests**: Rust — key 파생 결정론; Vitest — init mock
 
 ### T089. CRDT ↔ SQLite 양방향 매핑 (credential/issuer/project/...)
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T087
@@ -1233,6 +1322,7 @@
 - **Tests**: Vitest — Y.Map 변경 → invoke 호출 추적
 
 ### T090. 릴레이 `/sync` 엔드포인트 구현
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T080, T081
@@ -1246,6 +1336,7 @@
 - **Tests**: Miniflare — upload + download 라운드트립
 
 ### T091. 키 값 동기화 채널 (value sync)
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T088, T090
@@ -1258,6 +1349,7 @@
 - **Tests**: Rust + Miniflare — 라운드트립
 
 ### T092. Device pairing (X25519 QR + PIN)
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T070, T090
@@ -1271,6 +1363,7 @@
 - **Tests**: Rust — 두 `MockVaultStorage` 간 페어링 시뮬; Vitest — QR 렌더
 
 ### T093. Settings > Sync 섹션
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T084, T092
@@ -1284,6 +1377,7 @@
 - **Tests**: Vitest — 상태 분기 렌더
 
 ### T094. Pro 엔타이틀먼트 게이트 (Sync)
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T064
@@ -1296,6 +1390,7 @@
 - **Tests**: Miniflare — Free 2대 시 거부; Vitest — upsell UI
 
 ### T095. Conflict resolution 전략 (last-write-wins + 사용자 알림)
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T089
@@ -1308,6 +1403,7 @@
 - **Tests**: Vitest — 시나리오 3개 (동시 edit, revoke vs update, 값 업데이트 경합)
 
 ### T096. 오프라인 지원 확인 (IndexedDB persistence)
+
 - **Milestone**: M9
 - **Priority**: Must
 - **Depends on**: T087
@@ -1324,6 +1420,7 @@
 ## M10 — Payments
 
 ### T097. Paddle 계정 등록 + 가격 설정 (runbook)
+
 - **Milestone**: M10
 - **Priority**: Must
 - **Depends on**: -
@@ -1336,6 +1433,7 @@
 - **Tests**: manual — 샌드박스 checkout 성공
 
 ### T098. RevenueCat 프로젝트 + App Store / Play Store 제품 연결
+
 - **Milestone**: M10
 - **Priority**: Must
 - **Depends on**: T097
@@ -1350,6 +1448,7 @@
 - **Tests**: manual
 
 ### T099. Paddle webhook 수신 (릴레이)
+
 - **Milestone**: M10
 - **Priority**: Must
 - **Depends on**: T097, T080
@@ -1362,6 +1461,7 @@
 - **Tests**: Miniflare — Paddle 샘플 payload 3개
 
 ### T100. RevenueCat webhook 수신 (릴레이)
+
 - **Milestone**: M10
 - **Priority**: Must
 - **Depends on**: T098, T080
@@ -1373,6 +1473,7 @@
 - **Tests**: Miniflare — RC 샘플 payload 4개
 
 ### T101. 클라이언트 `billing_*` 커맨드
+
 - **Milestone**: M10
 - **Priority**: Must
 - **Depends on**: T099, T100
@@ -1385,6 +1486,7 @@
 - **Tests**: Rust — mock 릴레이 응답; Vitest — checkout click
 
 ### T102. Upgrade 다이얼로그 + 프리미엄 CTA
+
 - **Milestone**: M10
 - **Priority**: Must
 - **Depends on**: T101
@@ -1397,6 +1499,7 @@
 - **Tests**: Vitest — 버튼 flow
 
 ### T103. RevenueCat 모바일 SDK 통합 (Tauri 플러그인 또는 네이티브 브릿지)
+
 - **Milestone**: M10
 - **Priority**: Must
 - **Depends on**: T098, T101
@@ -1413,6 +1516,7 @@
 ## M11 — Mobile Port
 
 ### T104. Tauri 모바일 init (iOS / Android 프로젝트 생성)
+
 - **Milestone**: M11
 - **Priority**: Must
 - **Depends on**: T003
@@ -1427,6 +1531,7 @@
 - **Tests**: manual — 에뮬레이터 실행
 
 ### T105. Stronghold 모바일 동작 검증 (PoC)
+
 - **Milestone**: M11
 - **Priority**: Must
 - **Depends on**: T016, T104
@@ -1440,6 +1545,7 @@
 - **Tests**: manual on device
 
 ### T106. Biometric 잠금 해제 (iOS Face/Touch ID, Android BiometricPrompt)
+
 - **Milestone**: M11
 - **Priority**: Must
 - **Depends on**: T104
@@ -1454,6 +1560,7 @@
 - **Tests**: manual on device
 
 ### T107. 모바일 하단 네비게이션
+
 - **Milestone**: M11
 - **Priority**: Must
 - **Depends on**: T010
@@ -1467,6 +1574,7 @@
 - **Tests**: Vitest — 탭 전환
 
 ### T108. 모바일 한계 대응 (`.env` 스캔 제한 등)
+
 - **Milestone**: M11
 - **Priority**: Must
 - **Depends on**: T035, T104
@@ -1479,6 +1587,7 @@
 - **Tests**: Vitest — platform mock
 
 ### T109. 푸시 알림 (iOS APNs / Android FCM) — Incident 알림
+
 - **Milestone**: M11
 - **Priority**: Should
 - **Depends on**: T054, T104
@@ -1495,6 +1604,7 @@
 ## M12 — Web Read-Only Viewer
 
 ### T110. 웹 빌드 타겟 분리 (`VITE_BUILD_TARGET=web`)
+
 - **Milestone**: M12
 - **Priority**: Must
 - **Depends on**: T010
@@ -1508,6 +1618,7 @@
 - **Tests**: `pnpm build:web` 성공
 
 ### T111. 웹 전용 데이터 레이어 (릴레이 직접 호출)
+
 - **Milestone**: M12
 - **Priority**: Must
 - **Depends on**: T110, T090
@@ -1520,6 +1631,7 @@
 - **Tests**: Vitest — web 구현체는 mutating API 가 throw
 
 ### T112. Passkey 웹 로그인 (WebAuthn 브라우저)
+
 - **Milestone**: M12
 - **Priority**: Must
 - **Depends on**: T081, T110
@@ -1532,6 +1644,7 @@
 - **Tests**: Playwright — Chromium + virtual authenticator
 
 ### T113. Cloudflare Pages 배포
+
 - **Milestone**: M12
 - **Priority**: Must
 - **Depends on**: T110
@@ -1548,6 +1661,7 @@
 ## M13 — i18n + Updater + Release
 
 ### T114. i18n 번역 (ko, ja)
+
 - **Milestone**: M13
 - **Priority**: Should
 - **Depends on**: T011
@@ -1560,6 +1674,7 @@
 - **Tests**: Vitest — language switch render
 
 ### T115. tauri-plugin-updater + minisign 서명 인프라
+
 - **Milestone**: M13
 - **Priority**: Must
 - **Depends on**: T003
@@ -1573,6 +1688,7 @@
 - **Tests**: manual — 테스트 릴리스 업로드 후 업데이트 수신
 
 ### T116. GitHub Actions 릴리스 매트릭스 (win/mac/linux)
+
 - **Milestone**: M13
 - **Priority**: Must
 - **Depends on**: T115
@@ -1585,6 +1701,7 @@
 - **Tests**: dry-run tag `v0.1.0-rc.1` → release artifacts 생성 확인
 
 ### T117. iOS / Android 스토어 제출 (Fastlane)
+
 - **Milestone**: M13
 - **Priority**: Must
 - **Depends on**: T104, T116
@@ -1598,6 +1715,7 @@
 - **Tests**: manual — TestFlight/Internal track 빌드 수신
 
 ### T118. 런치 준비 (프라이버시 정책, 약관, 마케팅 사이트)
+
 - **Milestone**: M13
 - **Priority**: Must
 - **Depends on**: T113
@@ -1665,6 +1783,7 @@ M13 (Release) — depends on all prior milestones
 ```
 
 **병렬 실행 가능 구간:**
+
 - M2 & M4 (Inventory UI + Incident Feed) — T049~T054 는 T025~T028 과 독립
 - M6 & M7 (Audit + Kill Switch) — 같은 시점에 진행 가능
 - M8 스캐폴드 (T079~T082) 는 M1~M7 과 완전 병렬
@@ -1673,31 +1792,31 @@ M13 (Release) — depends on all prior milestones
 
 ## 태스크 통계
 
-| 우선순위 | 개수 | 비율 |
-|:--|:--|:--|
-| Must | 82 | 69.5% |
-| Should | 21 | 17.8% |
-| Could (Phase 2, 이 문서에 미포함) | 15 | 12.7% |
-| **Total** | **118** | **100%** |
+| 우선순위                          | 개수    | 비율     |
+| :-------------------------------- | :------ | :------- |
+| Must                              | 82      | 69.5%    |
+| Should                            | 21      | 17.8%    |
+| Could (Phase 2, 이 문서에 미포함) | 15      | 12.7%    |
+| **Total**                         | **118** | **100%** |
 
-| 마일스톤 | 태스크 수 |
-|:--|:--|
-| M0 | 12 |
-| M1 | 12 |
-| M2 | 16 |
-| M3 | 8 |
-| M4 | 10 |
-| M5 | 10 |
-| M6 | 6 |
-| M7 | 4 |
-| M8 | 8 |
-| M9 | 10 |
-| M10 | 7 |
-| M11 | 6 |
-| M12 | 4 |
-| M13 | 5 |
-| **Total** | **118** |
+| 마일스톤  | 태스크 수 |
+| :-------- | :-------- |
+| M0        | 12        |
+| M1        | 12        |
+| M2        | 16        |
+| M3        | 8         |
+| M4        | 10        |
+| M5        | 10        |
+| M6        | 6         |
+| M7        | 4         |
+| M8        | 8         |
+| M9        | 10        |
+| M10       | 7         |
+| M11       | 6         |
+| M12       | 4         |
+| M13       | 5         |
+| **Total** | **118**   |
 
 ---
 
-*문서 끝.*
+_문서 끝._

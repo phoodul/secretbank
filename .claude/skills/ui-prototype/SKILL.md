@@ -15,12 +15,15 @@ If either is missing, inform the user and stop.
 ## Execution Steps
 
 ### Step 1: Read Context
+
 - Read `docs/ux_research.md` for the approved design system
 - Read `docs/project-decisions.md` for stack and UI/UX decisions
 - Identify: framework, component library, motion library, theming approach
 
 ### Step 2: Install Dependencies
+
 Based on the approved option, run the appropriate install commands:
+
 - Identify exact packages from `docs/ux_research.md` "Packages" field
 - Run the package manager command (npm/pnpm/uv/flutter pub)
 - Verify installation success
@@ -30,6 +33,7 @@ Based on the approved option, run the appropriate install commands:
 Generate the project's design token file based on the chosen system:
 
 **For CSS/Tailwind projects** — create `styles/tokens.css`:
+
 - Color palette (semantic: primary, secondary, surface, error, etc.)
 - Typography scale (font sizes, weights, line heights)
 - Spacing scale (4px base or project-defined)
@@ -39,18 +43,21 @@ Generate the project's design token file based on the chosen system:
 - Motion duration/easing tokens
 
 **For Flutter projects** — create `lib/theme/tokens.dart`:
+
 - ColorScheme definition
 - TextTheme definition
 - Spacing constants
 - Border radius constants
 
 **For Tailwind v4 projects** — extend `app.css` with `@theme`:
+
 - Map design tokens to CSS custom properties
 - Define semantic color aliases
 
 ### Step 4: Generate Base Theme
 
 Create the theme configuration file:
+
 - Light/dark mode support
 - System preference detection
 - Theme switching mechanism skeleton
@@ -58,6 +65,7 @@ Create the theme configuration file:
 ### Step 5: Generate Component Scaffolding
 
 If a component library was chosen, set up the initial config:
+
 - shadcn/ui: run `npx shadcn@latest init` with project preferences
 - Material 3: configure `ThemeData` with custom tokens
 - Other: create component index file referencing the library
@@ -65,6 +73,7 @@ If a component library was chosen, set up the initial config:
 ### Step 6: Generate Accessibility Baseline
 
 Create `lib/a11y/` or equivalent:
+
 - Accessibility testing config (axe-core for web, accessibility inspector for Flutter)
 - Focus management utilities
 - Screen reader landmark structure
@@ -77,11 +86,13 @@ Append a `# UI/UX Architecture` section to the project's CLAUDE.md:
 # UI/UX Architecture
 
 ## Design System
+
 - Component Library: [chosen library]
 - Design Tokens: [token file path]
 - Theme: [theme file path]
 
 ## UI Rules
+
 - Use design tokens for all visual values — no hardcoded colors/sizes
 - Follow [chosen library] component API — do not create custom versions of existing components
 - All interactive elements must have accessible labels

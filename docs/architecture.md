@@ -11,6 +11,7 @@
 이 문서는 API Vault 시스템의 설계 지도다. 구현 순서는 `docs/task.md` 를, 태스크별 TDD 루프는 `docs/implementation_plan.md` 를 참조한다. 이 문서는 "왜 이 구조인가"와 "모듈 경계·데이터 모델·보안 경계"에만 집중한다.
 
 **확정된 전제 (뒤집지 않음):**
+
 - 플랫폼: Tauri v2 데스크톱(Win/Mac/Linux) + 모바일(iOS/Android) + Vite React 공용 웹 읽기 뷰어
 - 보안: Zero-Knowledge, 로컬 암호화(Stronghold v2), E2EE 멀티 디바이스 동기화(Yjs + SecSync)
 - 인프라: Cloudflare Workers + D1 + KV 맹목 릴레이 (1인 운영, scale-to-zero)
@@ -114,15 +115,15 @@
 
 ### 1.3 Trust Boundary
 
-| 경계 | 누가 볼 수 있는가 | 누가 볼 수 없는가 |
-|:--|:--|:--|
-| 사용자 기기 로컬 | 복호화된 API 키 값(앱 메모리, 클립보드 30초) | — |
-| Stronghold 파일 | 사용자 마스터 패스프레이즈 보유자 | 디스크 접근자(암호문만) |
-| OS Keyring | 현재 로그인 OS 사용자 | 다른 OS 사용자 |
-| Cloudflare Workers 릴레이 | 암호문 + 공개 메타데이터(user_id, device_id, timestamp) | **API 키 값, 키 이름, 프로젝트 정보, CRDT 내용 전부** |
-| Cloudflare D1 | 위와 동일 | 위와 동일 |
-| Paddle/RevenueCat | 이메일, 구독 상태, 결제 정보 | 볼트 내용 |
-| 외부 SaaS(NVD, GitHub) | 사용자가 요청한 쿼리 (토큰 서버 노출 금지: 로컬 클라이언트에서 직접 호출) | 볼트 내용 |
+| 경계                      | 누가 볼 수 있는가                                                         | 누가 볼 수 없는가                                     |
+| :------------------------ | :------------------------------------------------------------------------ | :---------------------------------------------------- |
+| 사용자 기기 로컬          | 복호화된 API 키 값(앱 메모리, 클립보드 30초)                              | —                                                     |
+| Stronghold 파일           | 사용자 마스터 패스프레이즈 보유자                                         | 디스크 접근자(암호문만)                               |
+| OS Keyring                | 현재 로그인 OS 사용자                                                     | 다른 OS 사용자                                        |
+| Cloudflare Workers 릴레이 | 암호문 + 공개 메타데이터(user_id, device_id, timestamp)                   | **API 키 값, 키 이름, 프로젝트 정보, CRDT 내용 전부** |
+| Cloudflare D1             | 위와 동일                                                                 | 위와 동일                                             |
+| Paddle/RevenueCat         | 이메일, 구독 상태, 결제 정보                                              | 볼트 내용                                             |
+| 외부 SaaS(NVD, GitHub)    | 사용자가 요청한 쿼리 (토큰 서버 노출 금지: 로컬 클라이언트에서 직접 호출) | 볼트 내용                                             |
 
 **핵심 불변:** 서버(Cloudflare Workers/D1/KV)는 어떤 경로로도 볼트 내용을 복호화할 수 없다. 키는 `Argon2id(password, salt)` 로 파생되며 릴레이 서버에는 서버 저장용 인증 해시와 E2EE 대칭키 파생용 해시가 **서로 다른 salt** 로 생성된다(Gemini 섹션 2.1).
 
@@ -270,16 +271,16 @@ erDiagram
 
 ### 2.2 인덱스
 
-| 테이블 | 인덱스 | 목적 |
-|:--|:--|:--|
-| credential | `idx_credential_issuer (issuer_id)` | "이 issuer의 모든 키" 쿼리 |
-| credential | `idx_credential_expires (expires_at)` | "만료 임박" 뷰 |
-| credential | `idx_credential_status (status)` | revoked 제외 필터 |
-| usage | `idx_usage_credential (credential_id)` | Blast Radius 시작점 |
-| usage | `idx_usage_project (project_id)` | 역방향 조회 |
-| incident | `idx_incident_issuer_detected (issuer_id, detected_at DESC)` | 피드 |
-| incident_match | `idx_match_credential (credential_id, dismissed_at)` | 크리덴셜 영향 |
-| audit_log | `idx_audit_seq (device_id, seq)` | 체인 검증 순회 |
+| 테이블         | 인덱스                                                       | 목적                       |
+| :------------- | :----------------------------------------------------------- | :------------------------- |
+| credential     | `idx_credential_issuer (issuer_id)`                          | "이 issuer의 모든 키" 쿼리 |
+| credential     | `idx_credential_expires (expires_at)`                        | "만료 임박" 뷰             |
+| credential     | `idx_credential_status (status)`                             | revoked 제외 필터          |
+| usage          | `idx_usage_credential (credential_id)`                       | Blast Radius 시작점        |
+| usage          | `idx_usage_project (project_id)`                             | 역방향 조회                |
+| incident       | `idx_incident_issuer_detected (issuer_id, detected_at DESC)` | 피드                       |
+| incident_match | `idx_match_credential (credential_id, dismissed_at)`         | 크리덴셜 영향              |
+| audit_log      | `idx_audit_seq (device_id, seq)`                             | 체인 검증 순회             |
 
 ### 2.3 Stronghold (로컬 암호화 볼트)
 
@@ -520,12 +521,14 @@ src/
 모든 커맨드는 `api-vault-app/src/commands/` 아래 모듈별 파일에 `#[tauri::command]` 로 선언한다. 타입은 `serde` 직렬화.
 
 **vault (M1~M2):**
+
 - `vault_unlock(password: String) -> Result<SessionToken, VaultError>`
 - `vault_lock() -> Result<(), VaultError>`
 - `vault_status() -> Result<VaultStatus, VaultError>` (locked/unlocked/uninitialized)
 - `vault_init(password: String) -> Result<(), VaultError>` (첫 실행)
 
 **credentials (M1~M2):**
+
 - `credential_create(input: CredentialInput) -> Result<Credential, Error>`
 - `credential_list(filter: CredentialFilter) -> Result<Vec<CredentialSummary>, Error>`
 - `credential_get(id: String) -> Result<CredentialFull, Error>`
@@ -535,33 +538,40 @@ src/
 - `credential_copy_to_clipboard(id: String) -> Result<(), Error>` (자동 30초 만료)
 
 **projects & usages (M2~M3):**
+
 - `project_create`, `project_list`, `project_update`, `project_delete`
 - `deployment_create`, `deployment_list`
 - `usage_create`, `usage_list_for_credential`, `usage_list_for_project`, `usage_delete`
 
 **graph & blast radius (M3):**
+
 - `graph_fetch(root?: NodeId) -> Result<GraphPayload, Error>`
 - `blast_radius_for_credential(id: String) -> Result<BlastRadius, Error>`
 
 **incidents (M4):**
+
 - `incident_feed_refresh() -> Result<FeedSummary, Error>` (폴링 트리거)
 - `incident_list(filter) -> Result<Vec<Incident>, Error>`
 - `incident_dismiss(id: String) -> Result<(), Error>`
 
 **connectors (M5):**
+
 - `github_connect(installation_id: u64) -> Result<(), Error>`
 - `github_scan_repo(repo: String) -> Result<Vec<ScanResult>, Error>`
 - `env_scan_folder(path: String) -> Result<Vec<DetectedKey>, Error>`
 
 **audit (M6):**
+
 - `audit_list(limit, offset) -> Result<Vec<AuditEntry>, Error>`
 - `audit_verify_chain() -> Result<ChainVerification, Error>`
 
 **kill switch (M7):**
+
 - `kill_switch_revoke(credential_id: String, confirmation_token: String) -> Result<(), Error>`
 - `kill_switch_request_confirm(credential_id: String) -> Result<ConfirmationToken, Error>` (2단계 첫 단계)
 
 **auth & sync (M8~M9):**
+
 - `auth_passkey_register_start() -> Result<PasskeyChallenge, Error>`
 - `auth_passkey_register_finish(credential: PasskeyCredential) -> Result<(), Error>`
 - `auth_oauth_start(provider: OAuthProvider) -> Result<AuthUrl, Error>`
@@ -571,14 +581,17 @@ src/
 - `sync_get_update_since(clock: u64) -> Result<String, Error>`
 
 **billing (M10):**
+
 - `billing_status() -> Result<Entitlement, Error>` (Pro/Free/grace)
 - `billing_open_checkout(plan: PlanKind) -> Result<(), Error>` (Paddle overlay or in-app IAP)
 
 **railguard (M5):**
+
 - `railguard_preview(project_path: String) -> Result<RuleFilePreview, Error>`
 - `railguard_apply(project_path: String, rules: Vec<RuleKind>) -> Result<(), Error>`
 
 **platform helpers:**
+
 - `platform_info() -> Result<PlatformInfo, Error>`
 - `clipboard_clear_after(seconds: u32) -> Result<(), Error>`
 
@@ -610,20 +623,20 @@ api-vault-relay/
 
 **엔드포인트 요약:**
 
-| 메서드 | 경로 | 인증 | 목적 |
-|:--|:--|:--|:--|
-| GET | `/health` | 없음 | 상태 체크 |
-| POST | `/auth/passkey/register` | 없음 | WebAuthn 등록 시작 |
-| POST | `/auth/passkey/verify` | 등록 challenge | 등록 검증, 세션 발급 |
-| POST | `/auth/passkey/assert` | 없음 | 로그인 assert |
-| POST | `/auth/oauth/:provider/callback` | 없음 | GitHub/Google callback 교환 |
-| POST | `/sync/snapshot` | 세션 JWT | 암호화 CRDT 스냅샷 업로드 |
-| GET | `/sync/deltas?since=<clock>` | 세션 JWT | 보류 중 델타 다운로드 |
-| POST | `/pair/create` | 세션 JWT | 페어링 challenge 생성(QR용) |
-| POST | `/pair/accept` | 세션 JWT | 짝 디바이스 등록 |
-| GET | `/me` | 세션 JWT | 사용자 메타데이터 + 구독 상태 |
-| POST | `/billing/paddle/webhook` | Paddle HMAC | 구독 이벤트 업데이트 |
-| POST | `/billing/revenuecat/webhook` | RC HMAC | 구독 이벤트 업데이트 |
+| 메서드 | 경로                             | 인증           | 목적                          |
+| :----- | :------------------------------- | :------------- | :---------------------------- |
+| GET    | `/health`                        | 없음           | 상태 체크                     |
+| POST   | `/auth/passkey/register`         | 없음           | WebAuthn 등록 시작            |
+| POST   | `/auth/passkey/verify`           | 등록 challenge | 등록 검증, 세션 발급          |
+| POST   | `/auth/passkey/assert`           | 없음           | 로그인 assert                 |
+| POST   | `/auth/oauth/:provider/callback` | 없음           | GitHub/Google callback 교환   |
+| POST   | `/sync/snapshot`                 | 세션 JWT       | 암호화 CRDT 스냅샷 업로드     |
+| GET    | `/sync/deltas?since=<clock>`     | 세션 JWT       | 보류 중 델타 다운로드         |
+| POST   | `/pair/create`                   | 세션 JWT       | 페어링 challenge 생성(QR용)   |
+| POST   | `/pair/accept`                   | 세션 JWT       | 짝 디바이스 등록              |
+| GET    | `/me`                            | 세션 JWT       | 사용자 메타데이터 + 구독 상태 |
+| POST   | `/billing/paddle/webhook`        | Paddle HMAC    | 구독 이벤트 업데이트          |
+| POST   | `/billing/revenuecat/webhook`    | RC HMAC        | 구독 이벤트 업데이트          |
 
 **D1 스키마 (릴레이):**
 
@@ -693,6 +706,7 @@ CREATE TABLE billing_events (
 ```
 
 **KV:**
+
 - `session:<jwt-jti>` → device_id, expiration
 - `rate-limit:<user_id>:<bucket>` → sliding window counter
 - `pair-challenge:<code>` → initiator device info, short TTL (5분)
@@ -728,13 +742,13 @@ CREATE TABLE billing_events (
 
 ### 4.2 OS Keyring 경로
 
-| 플랫폼 | 경로 |
-|:--|:--|
-| Windows | Credential Manager, target name `com.phoodul.apivault:master` |
-| macOS | Keychain Services, service `com.phoodul.apivault`, account `master`, kSecAttrAccessibleWhenUnlockedThisDeviceOnly |
-| Linux | libsecret, schema `com.phoodul.apivault.Master` |
-| iOS | Keychain, access group `$(AppIdentifierPrefix)com.phoodul.apivault`, `biometryCurrentSet` 옵션 |
-| Android | Android Keystore + EncryptedSharedPreferences (TEE-backed, `setUserAuthenticationRequired(true)`) |
+| 플랫폼  | 경로                                                                                                              |
+| :------ | :---------------------------------------------------------------------------------------------------------------- |
+| Windows | Credential Manager, target name `com.phoodul.apivault:master`                                                     |
+| macOS   | Keychain Services, service `com.phoodul.apivault`, account `master`, kSecAttrAccessibleWhenUnlockedThisDeviceOnly |
+| Linux   | libsecret, schema `com.phoodul.apivault.Master`                                                                   |
+| iOS     | Keychain, access group `$(AppIdentifierPrefix)com.phoodul.apivault`, `biometryCurrentSet` 옵션                    |
+| Android | Android Keystore + EncryptedSharedPreferences (TEE-backed, `setUserAuthenticationRequired(true)`)                 |
 
 **폴백:** Linux headless / 일부 Android 환경에서 keyring 불가 시 "세션당 재입력" 모드로 전환 (Argon2id 결과를 메모리에만 유지, 디스크 미보관). UX 경고 배너 표시.
 
@@ -748,6 +762,7 @@ CREATE TABLE billing_events (
 ### 4.4 Passkey (WebAuthn) + OAuth 흐름
 
 **Passkey 등록 흐름:**
+
 1. 클라이언트 → 서버 `POST /auth/passkey/register` (email)
 2. 서버 → challenge + userId + rp.id 응답
 3. 클라이언트 → `navigator.credentials.create(publicKey: challenge)` 브라우저 / Tauri WebView API
@@ -755,6 +770,7 @@ CREATE TABLE billing_events (
 5. 서버 → passkey 저장, 세션 JWT 발급
 
 **OAuth 흐름 (GitHub/Google):**
+
 1. 클라이언트 → 서버 `GET /auth/oauth/github/start` → state + authorize URL 응답
 2. 시스템 브라우저로 열어 인증 → deep link 콜백 `apivault://auth/callback?code=...&state=...`
 3. 클라이언트 → 서버 `POST /auth/oauth/github/callback` (code, state)
@@ -762,6 +778,7 @@ CREATE TABLE billing_events (
 5. 첫 가입 시 서버는 `salt_auth`, `salt_enc` 발급. 사용자는 별도의 master passphrase 를 생성(또는 Passkey를 master로 사용하는 WebAuthn PRF 옵션 — Phase 2)
 
 **Zero-Knowledge 호환 보장:**
+
 - OAuth 를 사용해도 서버는 `enc_key` 를 절대 보지 않는다.
 - `enc_key` 는 사용자의 **local master passphrase** 에서 파생된다 (OAuth 는 계정 식별 + 구독 매칭용).
 - Phase 2: WebAuthn PRF extension 으로 passkey 자체가 `enc_key` 소스 역할 가능(passphrase 부담 제거).
@@ -783,6 +800,7 @@ entry_N = {
 **최초 엔트리:** `prev_hash = [0u8; 32]`.
 
 **검증 알고리즘:**
+
 1. `entries = SELECT * FROM audit_log ORDER BY seq ASC`
 2. For each entry: recompute `entry_hash`, verify `entry.entry_hash == computed`.
 3. Verify `entry.prev_hash == prev.entry_hash`.
@@ -804,41 +822,41 @@ entry_N = {
 
 ### 5.1 기능 지원 매트릭스
 
-| 기능 | Desktop | Mobile | Web 뷰어 |
-|:--|:--|:--|:--|
-| 볼트 잠금 해제 (master passphrase) | 전체 | 전체 + Biometric | 지원 (Passkey 권장) |
-| Credential 등록/수정/삭제 | 전체 | 전체 | **읽기 전용** |
-| Credential 값 복호화 + 복사 | 전체 (30초 클립보드 만료) | 전체 | 전체 (브라우저 clipboard API) |
-| Graph 인터랙티브 | 전체 (React Flow + dagre) | 리스트 뷰로 대체 | 전체 |
-| Blast Radius 하이라이트 | 전체 | 리스트 표시 | 전체 |
-| Incident Feed | 전체 (로컬 폴링) | 알림 수신 (푸시) | 조회만 |
-| GitHub 커넥터 | 전체 | 부분 (토큰 저장만) | 불가 |
-| `.env` 스캔 (드롭 & 스캔) | 전체 | Android 제한 (DocumentFile API) | 불가 |
-| RAILGUARD 파일 생성 | 전체 | 불가 | 불가 |
-| Kill Switch (revoke) | 전체 | 전체 (biometric 2단계) | Pro 전체 |
-| Kill Switch 자동 배포(Pro) | 전체 | 불가 | 불가 |
-| Cmd+K Command Palette | 전체 | 하단 네비게이션으로 대체 | 전체 |
-| 감사 로그 열람 | 전체 | 전체 | 전체 |
-| 감사 로그 Export (Pro, Phase 2) | Pro 전체 | 불가 | Pro 전체 |
-| 동기화 (Yjs + SecSync) | 전체 | 전체 | 읽기 전용 subscribe |
-| 앱 자동 업데이트 | 전체 | 스토어 업데이트 | 브라우저 재로딩 |
+| 기능                               | Desktop                   | Mobile                          | Web 뷰어                      |
+| :--------------------------------- | :------------------------ | :------------------------------ | :---------------------------- |
+| 볼트 잠금 해제 (master passphrase) | 전체                      | 전체 + Biometric                | 지원 (Passkey 권장)           |
+| Credential 등록/수정/삭제          | 전체                      | 전체                            | **읽기 전용**                 |
+| Credential 값 복호화 + 복사        | 전체 (30초 클립보드 만료) | 전체                            | 전체 (브라우저 clipboard API) |
+| Graph 인터랙티브                   | 전체 (React Flow + dagre) | 리스트 뷰로 대체                | 전체                          |
+| Blast Radius 하이라이트            | 전체                      | 리스트 표시                     | 전체                          |
+| Incident Feed                      | 전체 (로컬 폴링)          | 알림 수신 (푸시)                | 조회만                        |
+| GitHub 커넥터                      | 전체                      | 부분 (토큰 저장만)              | 불가                          |
+| `.env` 스캔 (드롭 & 스캔)          | 전체                      | Android 제한 (DocumentFile API) | 불가                          |
+| RAILGUARD 파일 생성                | 전체                      | 불가                            | 불가                          |
+| Kill Switch (revoke)               | 전체                      | 전체 (biometric 2단계)          | Pro 전체                      |
+| Kill Switch 자동 배포(Pro)         | 전체                      | 불가                            | 불가                          |
+| Cmd+K Command Palette              | 전체                      | 하단 네비게이션으로 대체        | 전체                          |
+| 감사 로그 열람                     | 전체                      | 전체                            | 전체                          |
+| 감사 로그 Export (Pro, Phase 2)    | Pro 전체                  | 불가                            | Pro 전체                      |
+| 동기화 (Yjs + SecSync)             | 전체                      | 전체                            | 읽기 전용 subscribe           |
+| 앱 자동 업데이트                   | 전체                      | 스토어 업데이트                 | 브라우저 재로딩               |
 
 ### 5.2 공통 React 번들 + 조건부 분기 패턴
 
 ```typescript
 // src/lib/platform.ts
-export type Platform = 'desktop' | 'mobile' | 'web';
+export type Platform = "desktop" | "mobile" | "web";
 
 export function getPlatform(): Platform {
-  if (typeof window === 'undefined') return 'web';
-  if ('__TAURI_INTERNALS__' in window) {
+  if (typeof window === "undefined") return "web";
+  if ("__TAURI_INTERNALS__" in window) {
     const os = (window as any).__TAURI_OS_PLUGIN__?.platform;
-    return os === 'ios' || os === 'android' ? 'mobile' : 'desktop';
+    return os === "ios" || os === "android" ? "mobile" : "desktop";
   }
-  return 'web';
+  return "web";
 }
 
-export const isTauri = () => getPlatform() !== 'web';
+export const isTauri = () => getPlatform() !== "web";
 ```
 
 - 빌드 시 환경변수 `VITE_BUILD_TARGET=desktop|mobile|web` 로 tree-shakable 상수 주입.
@@ -847,13 +865,13 @@ export const isTauri = () => getPlatform() !== 'web';
 
 ### 5.3 Tauri v2 모바일 한계 대응
 
-| 문제 | 대응 |
-|:--|:--|
-| Android 디렉터리 선택 API 미구현 | `@tauri-apps/plugin-fs` 대신 `DocumentFile` 네이티브 플러그인 사용; `.env` 스캔은 사용자가 선택한 단일 파일 단위로만 |
-| iOS 앱 샌드박스 파일 접근 제약 | 사용자 폴더 드롭 불가 → 드롭&스캔은 데스크톱 전용 기능, 모바일에서는 수동 입력 |
-| `tauri-plugin-updater` 모바일 미지원 | 모바일은 App Store / Play Store 자체 업데이트 메커니즘 사용 |
-| `tauri-plugin-global-shortcut` 모바일 미지원 | 모바일에서 Cmd+K 대신 하단 탭 바 + 상단 검색 버튼 |
-| Android OS Keyring gap | Stronghold가 마스터 키 자체 보관 + `BiometricPrompt` 잠금 |
+| 문제                                         | 대응                                                                                                                 |
+| :------------------------------------------- | :------------------------------------------------------------------------------------------------------------------- |
+| Android 디렉터리 선택 API 미구현             | `@tauri-apps/plugin-fs` 대신 `DocumentFile` 네이티브 플러그인 사용; `.env` 스캔은 사용자가 선택한 단일 파일 단위로만 |
+| iOS 앱 샌드박스 파일 접근 제약               | 사용자 폴더 드롭 불가 → 드롭&스캔은 데스크톱 전용 기능, 모바일에서는 수동 입력                                       |
+| `tauri-plugin-updater` 모바일 미지원         | 모바일은 App Store / Play Store 자체 업데이트 메커니즘 사용                                                          |
+| `tauri-plugin-global-shortcut` 모바일 미지원 | 모바일에서 Cmd+K 대신 하단 탭 바 + 상단 검색 버튼                                                                    |
+| Android OS Keyring gap                       | Stronghold가 마스터 키 자체 보관 + `BiometricPrompt` 잠금                                                            |
 
 ---
 
@@ -861,19 +879,20 @@ export const isTauri = () => getPlatform() !== 'web';
 
 ### 6.1 Incident Feed 소스
 
-| 소스 | 엔드포인트 | 인증 | 폴링 주기 | 처리 |
-|:--|:--|:--|:--|:--|
-| NVD CVE API 2.0 | `https://services.nvd.nist.gov/rest/json/cves/2.0?lastModStartDate=...` | API 키(권장) | 2시간 증분 | CPE → Issuer 매핑 |
-| GitHub Advisory DB | `https://api.github.com/advisories?per_page=100` | PAT/App 토큰 | 24시간 전체 | ecosystem + CVE → Issuer |
-| CISA KEV | `https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json` | 없음 | 24시간 | KEV 플래그 주입 |
-| SaaS 상태 RSS | 각 공급자 Atom/RSS (OpenAI, Stripe, AWS, Vercel, Supabase, GitHub, Cloudflare, …) | 없음 | 5분 | keyword/provider 매핑 |
-| HIBP v3 | `https://haveibeenpwned.com/api/v3/breachedaccount/{email}` | API 키 구독 | 사용자 요청 시 | 이메일 유출 → 연관 credential flag |
+| 소스               | 엔드포인트                                                                            | 인증         | 폴링 주기      | 처리                               |
+| :----------------- | :------------------------------------------------------------------------------------ | :----------- | :------------- | :--------------------------------- |
+| NVD CVE API 2.0    | `https://services.nvd.nist.gov/rest/json/cves/2.0?lastModStartDate=...`               | API 키(권장) | 2시간 증분     | CPE → Issuer 매핑                  |
+| GitHub Advisory DB | `https://api.github.com/advisories?per_page=100`                                      | PAT/App 토큰 | 24시간 전체    | ecosystem + CVE → Issuer           |
+| CISA KEV           | `https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json` | 없음         | 24시간         | KEV 플래그 주입                    |
+| SaaS 상태 RSS      | 각 공급자 Atom/RSS (OpenAI, Stripe, AWS, Vercel, Supabase, GitHub, Cloudflare, …)     | 없음         | 5분            | keyword/provider 매핑              |
+| HIBP v3            | `https://haveibeenpwned.com/api/v3/breachedaccount/{email}`                           | API 키 구독  | 사용자 요청 시 | 이메일 유출 → 연관 credential flag |
 
 **Rate Limit 방어:** `api-vault-feeds` 내부에 Circuit Breaker (failsafe crate) + 각 소스별 토큰 버킷.
 
 ### 6.2 GitHub App 권한 스코프
 
 **GitHub App 설치 권한 요청:**
+
 - Repository permissions:
   - `secret_scanning_alerts: read`
   - `actions: read` (Actions Secrets 목록)
@@ -888,6 +907,7 @@ export const isTauri = () => getPlatform() !== 'web';
 ### 6.3 Cloudflare Workers + D1 + KV 바인딩
 
 `wrangler.toml` 예시:
+
 ```toml
 name = "api-vault-relay"
 main = "src/index.ts"
@@ -913,16 +933,19 @@ ENVIRONMENT = "production"
 ### 6.4 Paddle MoR + RevenueCat 흐름
 
 **Paddle (Web/Desktop 결제):**
+
 - 클라이언트 → Paddle JS SDK overlay → 결제 완료 → webhook `subscription.created` / `subscription.updated`
 - Workers `/billing/paddle/webhook` → HMAC 검증 → `users.plan = 'pro'` 업데이트 → `billing_events` 로깅
 - Paddle 고객 식별은 `custom_data.user_id` 로 연동
 
 **RevenueCat (iOS/Android IAP):**
+
 - 모바일 클라이언트 → RevenueCat SDK → Apple IAP / Play Billing
 - RevenueCat webhook → `/billing/revenuecat/webhook` → 동일하게 `users.plan` 업데이트
 - 크로스 플랫폼 구독 통합: RevenueCat Project의 `app_user_id` 를 릴레이의 `user_id` 와 매핑
 
 **엔타이틀먼트 확인:**
+
 - 클라이언트는 `GET /me` 로 `plan` 조회, 결과를 로컬 SQLite `settings` 에 5분 캐시.
 - Pro 전용 기능(자동 rotation, 커넥터 팩 등)은 호출 시 `plan` 확인; 만료 시 grace period 24시간.
 
@@ -952,13 +975,13 @@ matrix:
 
 ### 7.2 서명
 
-| 플랫폼 | 서명 방식 |
-|:--|:--|
-| Windows | Authenticode (Azure Trusted Signing 또는 SignPath.io) |
-| macOS | Developer ID + Notarization (Apple notary service) |
-| Linux (AppImage/deb) | GPG 배포 키 (선택) + minisign |
-| iOS | Apple Developer 인증서 + Provisioning Profile |
-| Android | Play Store Play App Signing |
+| 플랫폼               | 서명 방식                                             |
+| :------------------- | :---------------------------------------------------- |
+| Windows              | Authenticode (Azure Trusted Signing 또는 SignPath.io) |
+| macOS                | Developer ID + Notarization (Apple notary service)    |
+| Linux (AppImage/deb) | GPG 배포 키 (선택) + minisign                         |
+| iOS                  | Apple Developer 인증서 + Provisioning Profile         |
+| Android              | Play Store Play App Signing                           |
 
 ### 7.3 업데이트 채널
 
@@ -998,16 +1021,16 @@ matrix:
 
 ## 9. 오픈 이슈 (planner가 확정 불가능한 것들)
 
-| 항목 | 설명 | 제안 |
-|:--|:--|:--|
-| 도메인 확보 | `apivault.app` 가용 여부 | 사용자 확인 필요. 대안: `api-vault.dev`, `keyvault.dev` |
-| GitHub Organization | OSS/EE repo 분리를 위한 org 이름 | 사용자 결정 |
-| Apple Developer Program / Play Console | $99/년 + $25 등록비 | 사용자 결제 필요 |
-| Paddle 계정 승인 | 소프트웨어 벤더 검증 기간 1~2주 | M10 이전 신청 |
-| RevenueCat 프로젝트 | 무료 시작, $2.5K ARR 이후 유료 | M10에서 생성 |
-| Cloudflare 계정 | Workers Paid ($5/월)는 M9 직전 활성화 | 무료로 개발 시작 |
-| GitHub App registration | 릴레이에서 hosting 필요 | M5에서 생성 |
+| 항목                                   | 설명                                  | 제안                                                    |
+| :------------------------------------- | :------------------------------------ | :------------------------------------------------------ |
+| 도메인 확보                            | `apivault.app` 가용 여부              | 사용자 확인 필요. 대안: `api-vault.dev`, `keyvault.dev` |
+| GitHub Organization                    | OSS/EE repo 분리를 위한 org 이름      | 사용자 결정                                             |
+| Apple Developer Program / Play Console | $99/년 + $25 등록비                   | 사용자 결제 필요                                        |
+| Paddle 계정 승인                       | 소프트웨어 벤더 검증 기간 1~2주       | M10 이전 신청                                           |
+| RevenueCat 프로젝트                    | 무료 시작, $2.5K ARR 이후 유료        | M10에서 생성                                            |
+| Cloudflare 계정                        | Workers Paid ($5/월)는 M9 직전 활성화 | 무료로 개발 시작                                        |
+| GitHub App registration                | 릴레이에서 hosting 필요               | M5에서 생성                                             |
 
 ---
 
-*문서 끝.*
+_문서 끝._

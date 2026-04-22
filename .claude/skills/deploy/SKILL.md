@@ -13,6 +13,7 @@ allowed-tools: Bash(cargo *) Bash(npm *)
 4. `cargo tauri build` — 릴리스 빌드
 
 출력:
+
 - Windows: `src-tauri/target/release/bundle/msi/`
 - macOS: `src-tauri/target/release/bundle/dmg/`
 - Linux: `src-tauri/target/release/bundle/appimage/`

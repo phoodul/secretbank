@@ -1,11 +1,13 @@
 # Workflow Progress
 
 ## Last Checkpoint
+
 - Time: 2026-04-22 (Gate 2 통과)
 - Phase: Phase 3 — Implementation (진입 직전)
 - Step: Gate 2 승인 완료. Open Issues 7건 전부 확정 (모노레포→분리, Org=api-vault, Free=2대, 도메인/결제/서명/법률=JIT+권장안). project-decisions.md 갱신. 다음: 실행 모드 선택 → T001 implementator 호출.
 
 ## Completed
+
 - [x] Tauri v2 scaffold (commit 8f4c893)
 - [x] `user_research/` 자료 검토 (initial_idea.md + ChatGPT/Gemini Deep Research)
 - [x] ChatGPT vs Gemini Deep Research 플랫폼 관점 비교 분석 (사용자 요청)
@@ -49,24 +51,28 @@
 - [x] **T003 완료** — Tauri v2 플러그인 9종 활성화 (`cargo build --workspace` exit 0, `cargo test` exit 0, `cargo clippy -D warnings` exit 0, `tsc --noEmit` exit 0). Stronghold만 AppLocker 환경 제약으로 일시 비활성화(주석 처리), JS 패키지는 정상 설치.
 
 ## In Progress
+
 - [ ] Phase 3 Implementation — M0 Foundation (T004 이후 진행 중)
 
 ## Pending Decisions
+
 - Phase 3 실행 모드 (현재)
 - Gate 3 (배포 진행 승인)
 - Gate 4 (git push 승인)
 
 ## Key Shifts from Initial Plan
-| 항목 | 이전 | 현재 |
-|:--|:--|:--|
-| 플랫폼 | 데스크톱 전용 | 풀스택 (Desktop + Mobile + Web) |
-| 기간 | 3주 MVP | 고정 기간 없음, "가치 기준" MVP |
-| 동기화 | Phase 2 | Phase 0 필수 (E2EE + CRDT) |
-| 타겟 | 개발자 | 개발자 + 바이브 코더 |
-| 수익 | $49 단발 + $6/월 | Freemium + $2/월 Pro |
-| OSS | 미정 | Open Core (AGPL-3.0 + EE 독점) |
+
+| 항목   | 이전             | 현재                            |
+| :----- | :--------------- | :------------------------------ |
+| 플랫폼 | 데스크톱 전용    | 풀스택 (Desktop + Mobile + Web) |
+| 기간   | 3주 MVP          | 고정 기간 없음, "가치 기준" MVP |
+| 동기화 | Phase 2          | Phase 0 필수 (E2EE + CRDT)      |
+| 타겟   | 개발자           | 개발자 + 바이브 코더            |
+| 수익   | $49 단발 + $6/월 | Freemium + $2/월 Pro            |
+| OSS    | 미정             | Open Core (AGPL-3.0 + EE 독점)  |
 
 ## Next Action
+
 - 사용자가 `docs/architecture.md`, `docs/task.md`, `docs/implementation_plan.md` 검토 → Gate 2 승인
 - 승인 시 → Phase 3 Implementation 진입 (implementator 에이전트가 T001 부터 순차 실행)
 - Open Issues 7건 중 필수 결정(Free 디바이스 수, 모노레포 구조) 은 Gate 2 에서 함께 확정

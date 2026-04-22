@@ -142,11 +142,13 @@
 ## [2026-04-22] Gate 1 확정 사항 (Integrator Report 승인 후 8개 오픈 질문 결정)
 
 ### Q1 — Kill Switch 무료/Pro 경계 → **C (절충안)**
+
 - **결정:** Kill Switch 자체 (키 revoke, 2단계 확인 UI) 는 **무료** tier 포함. "revoke 이후 새 키 자동 배포"는 **Pro** 전용.
 - **이유:** 긴급 사고 대응은 신뢰 확보의 핵심이므로 무료로 제공. 사고 후 자동화 복구는 $2/월 가치를 정당화하는 고급 기능으로 분리.
 - **영향:** Kill Switch UI 와 revoke 엔드포인트는 MVP Must, 자동 배포 파이프라인은 Phase 2 Could.
 
 ### Q2 — 모바일 MVP 포함 여부 → **A (데스크톱 + 모바일 동시 출시)** ⚠️ integrator 권장(B)과 반대
+
 - **결정:** 데스크톱과 모바일을 **동시에 MVP에 포함**한다.
 - **이유:** "3주는 중요하지 않다, 실용적이고 가치 있는 앱이 목적"이라는 사용자 방향. Pro 구독의 핵심 동기인 "멀티 디바이스 E2EE 동기화"를 반쪽으로 출시하지 않기 위함.
 - **영향:**
@@ -155,6 +157,7 @@
   - 개발 기간이 크게 증가. "고정 기간 없음" 정책으로 대응.
 
 ### Q3 — 앱스토어 수수료 전략 → **A (RevenueCat + Apple IAP 15% / Google Play Billing)**
+
 - **결정:** iOS는 **Apple IAP Small Business Program (15%)**, Android는 **Google Play Billing**, 웹/데스크톱은 **Paddle MoR**. **RevenueCat** 으로 크로스 플랫폼 구독 상태 통합.
 - **이유:** 단순하고 사용자 편리. 외부 결제 링크 유도는 법률 리스크와 UX 복잡도 증가. Small Business 15% 수수료는 수용 가능한 손익.
 - **영향:**
@@ -163,6 +166,7 @@
   - 크로스 플랫폼 구독 동기화를 위해 **유저 계정 인증(OAuth/Passkey)** 이 Phase 1 후반부에 필요.
 
 ### Q4 — 라이선스 → **A (AGPL-3.0 + EE 독점 이중 라이선스)**
+
 - **결정:** OSS 코어 = **AGPL-3.0**, 프리미엄/클라우드 기능 = **독점 EE(Enterprise Edition) 라이선스** (Bitwarden 모델).
 - **이유:** SaaS 경쟁자의 무임 재판매를 강하게 차단. B2C 중심이므로 기업 기피 영향 미미. 커뮤니티 기여 수령은 CLA(Contributor License Agreement) 필수.
 - **영향:**
@@ -171,6 +175,7 @@
   - 향후 라이선스 변경(예: BUSL 전환) 가능성 대비 CLA 설정 필수.
 
 ### Q5 — GitHub 커넥터 무료 범위 → **B (읽기 무료, 쓰기 Pro)**
+
 - **결정:** 무료 tier = Secret Scanning 조회 + `.env` 파일 스캔(읽기). Pro = Actions Secrets 자동 갱신 + PR 자동 생성(쓰기).
 - **이유:** 읽기는 진입 장벽 제거 (유입·신뢰), 쓰기는 $2/월 가치 정당화 기능 (자동화로 시간 절약).
 - **영향:**
@@ -178,6 +183,7 @@
   - 무료 사용자도 "이 기능은 Pro에서 1-click 자동화됩니다" 업셀 UX 노출.
 
 ### Q6 — Stronghold v3 대체 기술 사전 결정 → **B (지금은 trait 추상화만)**
+
 - **결정:** `VaultStorage` trait 를 지금 설계하고, Stronghold 구현체를 교체 가능한 구조로 만든다. v3 대체 기술은 v3 출시 시점에 결정.
 - **이유:** v3 출시 시점 불확실. 미래 결정을 지금 고정하면 오히려 잘못될 수 있음. 추상화 레이어만 있으면 마이그레이션 비용은 관리 가능.
 - **영향:**
@@ -185,6 +191,7 @@
   - 단위 테스트용 `MockVaultStorage` 도 함께 제공.
 
 ### Q7 — 웹 대시보드 읽기 전용 뷰어 Phase 1 포함 → **A (포함)**
+
 - **결정:** Phase 1 후반부에 **웹 읽기 전용 뷰어** 를 포함. URL에서 그래프 조회, Incident 알림 조회, 계정 관리(구독 상태)가 가능.
 - **이유:** Q2=A(모바일 MVP 포함)와 짝을 이루어 "멀티 디바이스" 가치를 완성. 웹 뷰어는 공유 링크로 협업 트리거 기능도 됨(Phase 2 팀 기능의 기초).
 - **영향:**
@@ -193,6 +200,7 @@
   - 도메인·호스팅 필요 (Cloudflare Pages 권장).
 
 ### Q8 — RAILGUARD (.cursorrules 자동 생성) MVP 포함 → **A (포함)**
+
 - **결정:** 바이브 코더 페르소나 핵심 차별점으로 MVP Must 에 포함.
 - **이유:** 구현 복잡도 낮음 (텍스트 템플릿 + 파일 쓰기). Gemini Deep Research 섹션 4.1 의 "Cognitive Security Model" 해자(Moat) 포인트와 직결.
 - **영향:**
@@ -206,15 +214,19 @@
 **Q2=A 결정으로 MVP 범위가 기존 "데스크톱 우선" 플랜에서 크게 확장됨.** planner가 task.md 를 작성할 때 기준이 될 새 범위:
 
 ### MVP Must (Phase 1 출시 조건)
+
 로컬 볼트 + 수동 등록 + SQLite 그래프 모델 + React Flow 그래프 + ed25519 감사 로그 + NVD/GitHub Advisory Incident Feed + GitHub 커넥터(읽기) + Progressive Disclosure UX + 드롭&스캔 온보딩 + AGPL-3.0 + **Kill Switch (revoke) + RAILGUARD 룰 파일 생성 + 데스크톱(Win/Mac/Linux) + 모바일(iOS/Android) + 웹 읽기 뷰어 + Yjs+SecSync E2EE 동기화 + Cloudflare Workers 릴레이 서버 + Paddle+RevenueCat 결제 + 유저 인증(Passkey/OAuth)**
 
 ### MVP Should (가능하면 출시 포함)
+
 Cmd+K Command Palette + 보안 점수 시각화 + HIBP v3 + 자동 업데이트 + i18n(영/한/일 우선)
 
 ### Phase 2 (MVP 이후)
+
 자동 rotation 무중단 파이프라인 + 커넥터 팩(OpenAI/Stripe/AWS/Vercel/Supabase) + Blast Radius 시뮬레이션 + Incident Feed 프리미엄 + 감사 로그 Export + 팀 공유 볼트 + CISA KEV
 
 ### Won't
+
 LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets + Vanta/Drata 연동
 
 ---
@@ -253,6 +265,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 사용자가 `docs/architecture.md`, `docs/task.md`, `docs/implementation_plan.md` 3종을 승인하고 Open Issues 7건을 전부 확정함.
 
 ### Q1 — 리포지터리 구조 → **A (분리 레포)**
+
 - **결정:** 코어는 퍼블릭 AGPL-3.0 레포, 릴레이 서버는 별도 프라이빗 EE 레포로 분리한다.
   - `api-vault` (public, AGPL-3.0) — Tauri 앱, 코어 크레이트, React 프론트, 웹 읽기 뷰어
   - `api-vault-relay` (private, EE proprietary) — Cloudflare Workers 동기화 릴레이, 결제 웹훅
@@ -263,6 +276,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - 공통 프로토콜/타입은 퍼블릭 `api-vault` 에 정의하여 릴레이가 참조한다 (단방향 의존).
 
 ### Q2 — GitHub Organization 이름 → **`api-vault`**
+
 - **결정:** GitHub Organization 이름은 `api-vault`. 최종 URL은 `github.com/api-vault/api-vault` 와 `github.com/api-vault/api-vault-relay`.
 - **이유:** 제품명과 직접 일치, 기억하기 쉬움, 검색 유리.
 - **영향:**
@@ -271,6 +285,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - 도메인(Q4)도 `apivault.app` 또는 `api-vault.dev` 로 통일 고려.
 
 ### Q3 — Free tier 디바이스 수 → **A (2대)**
+
 - **결정:** 무료 tier 사용자는 최대 **2대 디바이스**까지 E2EE 동기화 가능. 3대부터 Pro 전환 필요.
 - **이유:** 바이브 코더 페르소나는 보통 PC + 스마트폰 두 디바이스에서 작업. 진입 장벽을 낮춰 "직접 써본 뒤 가치 체감" 경로를 열어둔다. 3대째부터 Pro 유도는 Bitwarden 패턴과 유사.
 - **영향:**
@@ -279,11 +294,13 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - 기존 project-decisions.md의 "Freemium" 설명을 갱신 (단일 기기 사용 → 2대까지 무료 동기화).
 
 ### Q4 — 도메인 → **해당 마일스톤(M12/M13) 직전 확보**
+
 - **결정:** 지금 당장은 확보하지 않음. M12(웹 읽기 뷰어)와 M13(Release) 직전에 가용성 확인 후 결정.
 - **후보 우선순위:** `apivault.app` > `api-vault.dev` > `keyvault.dev` > `apivault.io`
 - **영향:** 지금 단계의 코드에는 도메인 하드코딩 없이 `VITE_APP_DOMAIN` 환경변수로 주입.
 
 ### Q5 — 계정 등록/결제 타이밍 → **마일스톤별 Just-in-Time**
+
 - **결정:**
   - Apple Developer Program ($99/년) — **M11 시작 직전**에 등록
   - Google Play Console ($25 일회성) — **M11 시작 직전**에 등록
@@ -294,6 +311,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - **이유:** 선결제 비용을 최소화하면서 각 마일스톤에 맞춰 필요할 때만 활성화. 1인 개발자의 현금 흐름 보호.
 
 ### Q6 — Windows 서명 방식 → **A (SignPath OSS)**
+
 - **결정:** SignPath Foundation의 오픈소스 무료 코드 서명 프로그램을 이용한다.
 - **이유:** 비용 제로. 본 프로젝트는 AGPL-3.0 퍼블릭 코어이므로 자격 충족. 승인은 신청 후 1~2주.
 - **영향:**
@@ -302,6 +320,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - 만약 Pro 사용자 수가 수천 명 규모 이상으로 성장하여 SmartScreen reputation 이슈가 생기면 **EV 인증서 구매로 전환** 검토 (연 $300~600).
 
 ### Q7 — 법률 리뷰 예산 → **A (iubenda/Termly로 시작) → 추후 B 전환**
+
 - **결정:** 초기 출시는 자동화된 Privacy Policy/Terms 생성기(iubenda 또는 Termly, 월 $15 수준) 로 시작한다. Pro 사용자가 수천 명 규모로 성장한 시점에 변호사 1회 리뷰($500~$1,500) 로 전환.
 - **이유:**
   - 초기 비용 최소화 (1인 운영 원칙).
@@ -313,6 +332,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - Paddle/RevenueCat의 기본 소비자 보호 조항과 중복되지 않게 정리.
 
 ### 추가 — Stronghold 모바일 실패 시 우회 태스크 (planner Open Issue #8)
+
 - **결정:** M11 T105(Stronghold 모바일 PoC)에서 실패하면 즉시 확장 태스크를 열고 대체 구현을 진행한다. 대체 후보: (a) iOS Keychain/Android Keystore 직접 사용 + `age`/`rage` crate로 파일 암호화, (b) `rust-crypto` 직접 구현.
 - **이유:** Stronghold v2 모바일 지원은 research_raw.md 에서 🟡 조건부 평가. 데스크톱보다 성숙도 낮음.
 - **영향:** M11 T105를 PoC 성격으로 가볍게 설계하고, 실패 시 M11 태스크 수가 6개 → 10~12개로 늘어날 수 있음을 미리 인지.
@@ -430,4 +450,3 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - 앱 업데이트 = tauri-plugin-updater + minisign 서명 강제
 - 키 메모리 노출 = `secrecy` crate로 Zeroize, 클립보드 자동 만료 30초
 - Rust `unsafe` 정당화 없이 금지
-
