@@ -2,9 +2,9 @@
 
 ## Last Checkpoint
 
-- Time: 2026-04-22 (M1 T008~T009 완료)
-- Phase: Phase 3 — Implementation (M1 진행 중)
-- Step: T008(vault 시맨틱 토큰 + badge.tsx) + T009(shadcn/ui primitive 12종 + Toaster) 완료. 다음: T010 이후 (SQLite 스키마, 볼트 CRUD, 암호화 등)
+- Time: 2026-04-22 (M0 T010~T012 완료)
+- Phase: Phase 3 — Implementation (M0 완료, M1 진입 준비)
+- Step: T010(라우팅 + AppShell 셸 레이아웃) + T011(i18n en/ko/ja) + T012(dev-setup.md) 완료. M0 전체 완료. 다음: M1 핵심 데이터 모델 (SQLite 스키마, 볼트 CRUD, 암호화 등)
 
 ## Completed
 
@@ -54,15 +54,22 @@
 - [x] **T006 완료** — src-tauri/rustfmt.toml, eslint.config.js (flat config), .prettierrc, .prettierignore, package.json scripts 5종 추가, .github/workflows/ci.yml (rust + frontend job)
 - [x] **T007 완료** — README.md 전면 재작성 (About/Features/Stack/Platforms/Getting Started/Dev Commands/License/Contributing/한국어 요약)
 
+## Completed (continued)
+
+- [x] **T008 완료** — globals.css vault 시맨틱 토큰 4종 + badge.tsx (cva, 8 variants)
+- [x] **T009 완료** — shadcn/ui primitive 12종 설치 + Toaster 마운트
+- [x] **T010 완료** — react-router-dom@7 + AppShell/Sidebar/BottomNav + 5개 placeholder 페이지 + BrowserRouter 라우팅
+- [x] **T011 완료** — i18next + react-i18next + LanguageDetector, en/ko/ja 번역 파일, SettingsPage 언어 선택 UI
+- [x] **T012 완료** — docs/dev-setup.md (Prerequisites/First-time Setup/Daily Dev/Testing/Folder Layout/Troubleshooting/한국어 요약)
+
+**M0 전체 완료.**
+
 ## In Progress
 
-- [ ] M1 — 핵심 데이터 모델 + 볼트 CRUD (T010~T020)
-- [x] **T008 완료** — globals.css vault 시맨틱 토큰 4종 + badge.tsx (cva, 8 variants)
-- [x] **T009 완료** — shadcn/ui primitive 12종 설치 (dialog/input/label/form/tabs/tooltip/sonner/dropdown-menu/command/scroll-area/separator/skeleton) + Toaster 마운트
+- [ ] M1 — 핵심 데이터 모델 + 볼트 CRUD
 
 ## Pending Decisions
 
-- Phase 3 실행 모드 (현재)
 - Gate 3 (배포 진행 승인)
 - Gate 4 (git push 승인)
 
@@ -79,6 +86,4 @@
 
 ## Next Action
 
-- 사용자가 `docs/architecture.md`, `docs/task.md`, `docs/implementation_plan.md` 검토 → Gate 2 승인
-- 승인 시 → Phase 3 Implementation 진입 (implementator 에이전트가 T001 부터 순차 실행)
-- Open Issues 7건 중 필수 결정(Free 디바이스 수, 모노레포 구조) 은 Gate 2 에서 함께 확정
+- M1 진입: SQLite 스키마 설계 (T013), 볼트 CRUD Rust 커맨드 (T014~T017), 암호화 레이어 (T018~T020)

@@ -1,0 +1,28 @@
+{
+  "app": {
+    "title": "API Vault",
+    "subtitle": "API 키 의존성 그래프 관리 매니저"
+  },
+  "nav": {
+    "inventory": "인벤토리",
+    "graph": "그래프",
+    "incidents": "인시던트",
+    "audit": "감사 로그",
+    "settings": "설정"
+  },
+  "common": {
+    "loading": "로딩 중…",
+    "empty": "아직 아무것도 없습니다",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "search": "검색"
+  },
+  "settings": {
+    "theme": "테마",
+    "themeLight": "라이트",
+    "themeDark": "다크",
+    "themeSystem": "시스템",
+    "language": "언어"
+  }
+}

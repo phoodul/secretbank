@@ -2,6 +2,35 @@
 
 ## 2026-04-22
 
+### T010~T012 완료 — 라우팅 + i18n + 개발 가이드 (M0 완료)
+
+**T010: 라우팅 + 셸 레이아웃**
+
+- `react-router-dom@7.14.2` 설치
+- `src/lib/platform.ts` — `getPlatform()` (동기 best-effort) + `usePlatform()` (async Tauri OS 감지)
+- `src/components/shell/AppShell.tsx` — 데스크톱 Sidebar + 모바일 BottomNav 조건부 렌더, 상단 헤더
+- `src/components/shell/Sidebar.tsx` — 로고 + 5개 NavLink (active 하이라이트)
+- `src/components/shell/BottomNav.tsx` — 모바일 하단 탭 바
+- `src/pages/` — InventoryPage/GraphPage/IncidentsPage/AuditPage/SettingsPage (placeholder)
+- `src/App.tsx` — BrowserRouter + Routes 재작성 (5개 Route)
+
+**T011: i18n 초기 설정**
+
+- `i18next@26.0.6` + `react-i18next@17.0.4` + `i18next-browser-languagedetector@8.2.1` 설치
+- `src/lib/i18n.ts` — LanguageDetector + initReactI18next, fallback en, support en/ko/ja
+- `src/locales/{en,ko,ja}/common.json` — app/nav/common/settings 키 구조
+- `src/main.tsx` — `import "./lib/i18n"` 추가 (side-effect init)
+- Sidebar/BottomNav/AppShell/Pages 문자열 전부 `useTranslation()` 키로 전환
+- SettingsPage — 테마 탭 + 언어 탭 (i18n.changeLanguage 연동)
+
+**T012: 개발 가이드**
+
+- `docs/dev-setup.md` 신규 (약 280행) — Prerequisites/First-time Setup/Daily Dev/Testing/Folder Layout/Troubleshooting 5건/Docs Index/한국어 요약
+
+**검증 결과:** `pnpm typecheck` exit 0, `pnpm lint` 0 errors (5 warnings 기존 파일), `pnpm format:check` exit 0, `cargo build --workspace` exit 0.
+
+---
+
 ### 세션 시작 및 초기 정리
 
 - `/start-project` 실행. Orchestrator(Claude Opus 4.7) 세션 시작.

@@ -1,30 +1,25 @@
-import { ShieldCheck } from "lucide-react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
-import { useTheme } from "@/components/theme/theme-provider";
+import { AppShell } from "@/components/shell/AppShell";
+import { AuditPage } from "@/pages/AuditPage";
+import { GraphPage } from "@/pages/GraphPage";
+import { IncidentsPage } from "@/pages/IncidentsPage";
+import { InventoryPage } from "@/pages/InventoryPage";
+import { SettingsPage } from "@/pages/SettingsPage";
 
 function App() {
-  const { theme, setTheme } = useTheme();
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
-
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
-      <div className="flex items-center gap-3">
-        <ShieldCheck className="size-8 text-primary" aria-hidden />
-        <h1 className="text-2xl font-semibold tracking-tight">API Vault</h1>
-      </div>
-
-      <p className="max-w-md text-center text-sm text-muted-foreground">
-        Bitwarden for APIs, with Dependency Graph.
-      </p>
-
-      <Button variant="outline" size="sm" onClick={toggleTheme}>
-        Toggle theme ({theme})
-      </Button>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route index element={<InventoryPage />} />
+          <Route path="graph" element={<GraphPage />} />
+          <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="audit" element={<AuditPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
