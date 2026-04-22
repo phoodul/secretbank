@@ -7,6 +7,7 @@ import { GraphPage } from "@/pages/GraphPage";
 import { IncidentsPage } from "@/pages/IncidentsPage";
 import { InventoryPage } from "@/pages/InventoryPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { AutoLockGuard } from "@/features/vault/AutoLockGuard";
 import { LockScreen } from "@/features/vault/LockScreen";
 import { useVaultStatus } from "@/features/vault/use-vault-status";
 
@@ -28,6 +29,7 @@ function VaultGate() {
   if (status.state === "unlocked") {
     return (
       <BrowserRouter>
+        <AutoLockGuard />
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<InventoryPage />} />
