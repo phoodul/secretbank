@@ -26,22 +26,22 @@
 
 ## 마일스톤 목록
 
-| ID  | 이름                            | 태스크 범위 | Must 개수 | Status (2026-04-22) |
-| :-- | :------------------------------ | :---------- | :-------- | :------------------ |
-| M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료       |
+| ID  | 이름                            | 태스크 범위 | Must 개수 | Status (2026-04-22)        |
+| :-- | :------------------------------ | :---------- | :-------- | :------------------------- |
+| M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료              |
 | M1  | Local Vault Core                | T013~T024   | 12        | 🔄 10/12 (T023, T024 남음) |
-| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | ⏳ 대기             |
-| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ⏳ 대기             |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기             |
-| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
-| M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
-| M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
-| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기             |
-| M9  | Sync Infrastructure             | T087~T096   | 10        | ⏳ 대기             |
-| M10 | Payments                        | T097~T103   | 7         | ⏳ 대기             |
-| M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기             |
-| M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기             |
-| M13 | i18n + Updater + Release        | T114~T118   | 5         | ⏳ 대기             |
+| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 14+2S     | ⏳ 대기                    |
+| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ⏳ 대기                    |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기                    |
+| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기                    |
+| M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기                    |
+| M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기                    |
+| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기                    |
+| M9  | Sync Infrastructure             | T087~T096   | 10        | ⏳ 대기                    |
+| M10 | Payments                        | T097~T103   | 7         | ⏳ 대기                    |
+| M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기                    |
+| M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기                    |
+| M13 | i18n + Updater + Release        | T114~T118   | 5         | ⏳ 대기                    |
 
 ---
 
@@ -49,30 +49,30 @@
 
 매 태스크 구현이 끝나고 commiter 가 커밋을 만든 직후, orchestrator 가 이 표에 **즉시** 한 줄을 추가한다. 세션 종료 전에 누락 여부를 다시 확인한다.
 
-| Task ID | 제목                                           | 완료일     | 커밋 해시 |
-| :------ | :--------------------------------------------- | :--------- | :-------- |
-| T001    | Cargo 워크스페이스 분리 스캐폴드               | 2026-04-22 | `855c33c` |
-| T002    | Rust 핵심 의존성 (workspace.dependencies)      | 2026-04-22 | `855c33c` |
-| T003    | Tauri v2 플러그인 활성화 (9종, Stronghold 제외) | 2026-04-22 | `da0e5ae` |
-| T004    | LICENSE (AGPL-3.0) + LICENSE_FAQ.md             | 2026-04-22 | `de3706d` |
-| T005    | CLA 자동화 (CLA Assistant)                      | 2026-04-22 | `de3706d` |
+| Task ID | 제목                                                        | 완료일     | 커밋 해시 |
+| :------ | :---------------------------------------------------------- | :--------- | :-------- |
+| T001    | Cargo 워크스페이스 분리 스캐폴드                            | 2026-04-22 | `855c33c` |
+| T002    | Rust 핵심 의존성 (workspace.dependencies)                   | 2026-04-22 | `855c33c` |
+| T003    | Tauri v2 플러그인 활성화 (9종, Stronghold 제외)             | 2026-04-22 | `da0e5ae` |
+| T004    | LICENSE (AGPL-3.0) + LICENSE_FAQ.md                         | 2026-04-22 | `de3706d` |
+| T005    | CLA 자동화 (CLA Assistant)                                  | 2026-04-22 | `de3706d` |
 | T006    | 커밋 컨벤션 + lint 설정 (rustfmt/clippy/ESLint/Prettier/CI) | 2026-04-22 | `de3706d` |
-| T007    | README.md 초안                                  | 2026-04-22 | `de3706d` |
+| T007    | README.md 초안                                              | 2026-04-22 | `de3706d` |
 | T008    | Tailwind v4 시맨틱 토큰 (vault-danger/warning/success/info) | 2026-04-22 | `77c8c18` |
-| T009    | shadcn/ui primitive 12종 + Badge                | 2026-04-22 | `77c8c18` |
-| T010    | 라우팅 + 셸 레이아웃 (AppShell/Sidebar/BottomNav) | 2026-04-22 | `3c7d12d` |
-| T011    | i18n 초기 설정 (react-i18next, en/ko/ja)        | 2026-04-22 | `3c7d12d` |
-| T012    | 개발 가이드 `docs/dev-setup.md`                 | 2026-04-22 | `3c7d12d` |
-| T013    | SQLite 초기 스키마 + 마이그레이션               | 2026-04-22 | `df43b55` |
-| T014    | VaultStorage trait 정의                         | 2026-04-22 | `09b1079` |
-| T015    | MockVaultStorage + contract tests               | 2026-04-22 | `09b1079` |
-| T016    | AgeVaultStorage (age 0.11 + 옵션 α)             | 2026-04-22 | `c8b2c1e` |
-| T017    | KDF 유틸 (Argon2id + HKDF)                      | 2026-04-22 | `2ac1674` |
-| T018    | OS Keyring 래퍼                                 | 2026-04-22 | `2ac1674` |
-| T019    | SQLite 레포지터리 9개                           | 2026-04-22 | `57959f7` |
-| T020    | 도메인 모델 (api-vault-core)                    | 2026-04-22 | `57959f7` |
-| T021    | Tauri 커맨드 vault_init/unlock/lock/status       | 2026-04-22 | `9d6841c` |
-| T022    | Tauri 커맨드 credential_* (CRUD + reveal)        | 2026-04-22 | `9d6841c` |
+| T009    | shadcn/ui primitive 12종 + Badge                            | 2026-04-22 | `77c8c18` |
+| T010    | 라우팅 + 셸 레이아웃 (AppShell/Sidebar/BottomNav)           | 2026-04-22 | `3c7d12d` |
+| T011    | i18n 초기 설정 (react-i18next, en/ko/ja)                    | 2026-04-22 | `3c7d12d` |
+| T012    | 개발 가이드 `docs/dev-setup.md`                             | 2026-04-22 | `3c7d12d` |
+| T013    | SQLite 초기 스키마 + 마이그레이션                           | 2026-04-22 | `df43b55` |
+| T014    | VaultStorage trait 정의                                     | 2026-04-22 | `09b1079` |
+| T015    | MockVaultStorage + contract tests                           | 2026-04-22 | `09b1079` |
+| T016    | AgeVaultStorage (age 0.11 + 옵션 α)                         | 2026-04-22 | `c8b2c1e` |
+| T017    | KDF 유틸 (Argon2id + HKDF)                                  | 2026-04-22 | `2ac1674` |
+| T018    | OS Keyring 래퍼                                             | 2026-04-22 | `2ac1674` |
+| T019    | SQLite 레포지터리 9개                                       | 2026-04-22 | `57959f7` |
+| T020    | 도메인 모델 (api-vault-core)                                | 2026-04-22 | `57959f7` |
+| T021    | Tauri 커맨드 vault_init/unlock/lock/status                  | 2026-04-22 | `9d6841c` |
+| T022    | Tauri 커맨드 credential\_\* (CRUD + reveal)                 | 2026-04-22 | `9d6841c` |
 
 **완료 합계**: 22/118 (M0 완료 + M1 10/12)
 

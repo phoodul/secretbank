@@ -7,12 +7,14 @@
 **M0 Foundation**: 완료 (T001~T012, 12 태스크)
 
 **M1 Local Vault Core**: 10/12 완료
+
 - T013 SQLite 스키마 · T014/T015 VaultStorage trait/Mock · T016 AgeVaultStorage(age 0.11 + 옵션 α)
 - T017 KDF(Argon2id+HKDF) · T018 OS Keyring · T019 SQLite 레포지터리 · T020 도메인 모델
 - T021 Vault 커맨드 · T022 Credential 커맨드
 - **남은**: T023(클립보드), T024(Lock Screen UI)
 
 **블로커**: Windows Smart App Control On 상태로 `pnpm tauri dev` 풀 빌드 차단.
+
 - 진단: `Get-MpComputerStatus` → `SmartAppControlState: On`
 - 결정: 개발자 PC 만 SAC Off (재부팅 필요, 되돌릴 수 없음)
 - 배포 앱: Gate 2 Q6=A 의 SignPath OSS Authenticode 서명 계획 그대로 유지 — 최종 사용자 영향 없음
@@ -29,6 +31,7 @@
 **원인:** T001에서 `src-tauri/Cargo.toml`을 virtual manifest(workspace-only)로 교체한 결과 `@tauri-apps/cli`가 `[package]` 섹션을 찾지 못해 `"No package info in the config file"` 오류 발생.
 
 **변경 파일:**
+
 - `src-tauri/Cargo.toml` — `[workspace]` + `[package]`(api-vault) + `[[bin]]`(src/main.rs) + `[build-dependencies]`(tauri-build) + `[dependencies]`(플러그인 9종 mirror) 추가
 - `src-tauri/src/main.rs` — 신규 생성. `api_vault_app::run()` 호출 shim
 - `src-tauri/build.rs` — 신규 생성. `tauri_build::build()` 표준 호출
@@ -38,6 +41,7 @@
 - `src-tauri/tauri.conf.json` — `plugins.updater` 섹션 추가
 
 **검증 결과:**
+
 1. `cargo build --workspace` — exit 0
 2. `cargo test --workspace` — exit 0
 3. `cargo clippy --workspace -- -D warnings` — exit 0

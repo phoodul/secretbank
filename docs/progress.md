@@ -32,15 +32,19 @@
 ## 재부팅 후 Next Actions (순서)
 
 1. **SAC Off 확인:**
+
    ```powershell
    Get-MpComputerStatus | Select SmartAppControlState
    ```
+
    `Off` 출력되면 성공.
 
 2. **풀 빌드 검증:**
+
    ```
    pnpm tauri dev
    ```
+
    "No package info" 없이 창이 뜨는지 확인.
 
 3. **정상 동작이면 M1 마무리:**
@@ -53,6 +57,7 @@
 ## SAC/AppLocker/Defender 정책 기록
 
 `docs/project-decisions.md` 의 "개발 환경 정책" 섹션 A/A-2/A-3 참조:
+
 - A: Defender 실시간 보호 `target/` 예외 (적용됨)
 - A-2: 개발자 PC SAC Off (재부팅 대기)
 - A-3: 배포 시 SignPath OSS Authenticode 서명 (M13 예정)

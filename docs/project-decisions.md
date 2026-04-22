@@ -22,6 +22,7 @@
 ## [2026-04-22] 개발 환경 정책 (Windows SAC/Defender + 문제 해결 프로토콜 + 배포 서명 전략)
 
 ### A. Windows Defender 실시간 보호 제외 경로 (이미 적용됨)
+
 - **결정:** 로컬 개발자(Windows)는 `C:\Users\JSS\Projects\api-vault\src-tauri\target` 을 Windows Defender 실시간 보호의 제외 경로로 추가한다.
 - **수동 실행 (관리자 권한 PowerShell):**
   ```powershell
@@ -31,6 +32,7 @@
 - **상태:** 2026-04-22 사용자 적용 완료.
 
 ### A-2. Windows Smart App Control (SAC) Off — 개발자 PC 한정
+
 - **문제:** T021+T022 진행 중 `pnpm tauri dev` 풀 빌드가 `markup5ever` 등 proc-macro 와 build script `.exe` 실행 시 `os error 4551 (ERROR_FILE_HASH_NOT_ALLOWED)` 로 차단. 진단 결과 `SmartAppControlState: On` 확인. SAC 가 서명 없는 실행 파일을 일괄 차단하여 Cargo 컴파일이 불가.
 - **결정:** 개발자(나)의 Windows 11 기기에서 SAC 를 Off 로 전환한다.
   - 경로: Windows Security → App & browser control → Smart app control settings → **Off**.
@@ -45,6 +47,7 @@
   - CI 전용 빌드 → 피드백 루프가 수 분 단위 → M1~M13 전체 개발 효율 심각 저하.
 
 ### A-3. 최종 사용자 배포 시 SAC 대응 = 코드 서명 + reputation (Gate 2 Q6=A 와 일관)
+
 - **결정:** 개발자 PC 의 SAC Off 결정은 사용자 배포에 영향을 주지 않는다. 사용자가 받는 최종 앱은 **Authenticode 서명**으로 SAC 및 SmartScreen 을 통과시킨다.
 - **단계별 계획:**
   1. **M13 Release 직전:** [SignPath OSS Foundation](https://signpath.org/) 에 AGPL-3.0 공개 레포 증빙으로 신청 (무료). 승인 1~2주.
@@ -60,11 +63,13 @@
 - **레퍼런스:** Bitwarden / 1Password / Obsidian 등 독립 데스크톱 앱의 초기 배포 경험 — 모두 비슷한 과정을 거침.
 
 ### B. 테스트 실행 패턴: `-p <crate>` 우선
+
 - **결정:** `cargo test --workspace` 대신 **각 크레이트별로 `cargo test -p api-vault-<crate>`** 를 우선 사용한다. 전체 워크스페이스 테스트는 CI(Ubuntu) 에서 최종 검증.
 - **이유:** A 를 적용해도 일부 환경에서 첫 컴파일 직후 바이너리 실행이 지연될 수 있음. `-p` 로 크레이트를 좁히면 캐시 히트와 재현성이 좋다.
 - **영향:** implementator/tester 에이전트 호출 시 `cargo test -p <crate>` 패턴을 명시. 전체 워크스페이스 검증은 `cargo build --workspace` 와 `cargo clippy --workspace` 로 대체 (컴파일 + 정적 분석은 바이너리 실행이 없어 차단 미발생).
 
 ### C. 에러 대응 프로토콜 — "1회 자체 시도 → 실패 시 반드시 검색"
+
 - **결정:** implementator / problem-solver / tester 가 에러를 만났을 때:
   1. **1회 자체 수정 시도.** 에러 메시지를 읽고 명백한 원인을 고친다.
   2. **실패 시 반드시 외부 검색** — WebSearch/WebFetch 로 (a) 에러 메시지 원문 인용, (b) 크레이트/라이브러리 공식 이슈 트래커, (c) Stack Overflow · GitHub Discussions · 공식 문서에서 해결책을 찾는다.

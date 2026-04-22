@@ -12,21 +12,21 @@
 
 ### 환경 변수 / 비밀 목록
 
-| 키                                               | 용도                             | 등록 위치                  | 최초 필요 마일스톤 |
-| :----------------------------------------------- | :------------------------------- | :------------------------- | :----------------- |
-| `NVD_API_KEY`                                    | NVD CVE API 2.0 레이트 리밋 확대 | age 볼트 파일 `settings/nvd_api_key` | M4                 |
-| `GITHUB_APP_ID`                                  | GitHub App 식별자                | Cloudflare Workers secret  | M5                 |
-| `GITHUB_APP_PRIVATE_KEY`                         | GitHub App JWT 서명              | Cloudflare Workers secret  | M5                 |
-| `PADDLE_WEBHOOK_SECRET`                          | Paddle HMAC 검증                 | Cloudflare Workers secret  | M10                |
-| `REVENUECAT_WEBHOOK_SECRET`                      | RevenueCat HMAC 검증             | Cloudflare Workers secret  | M10                |
-| `JWT_SIGNING_KEY`                                | 릴레이 세션 JWT ES256 private    | Cloudflare Workers secret  | M8                 |
-| `MINISIGN_PRIVATE_KEY`                           | 앱 업데이트 서명                 | GitHub Actions secret      | M13                |
-| `MINISIGN_PASSWORD`                              | 위 private key 보호              | GitHub Actions secret      | M13                |
-| `APPLE_API_KEY_ID`                               | Fastlane 앱스토어 업로드         | GitHub Actions secret      | M13                |
-| `APPLE_API_ISSUER_ID`                            |                                  |                            |                    |
-| `APPLE_API_PRIVATE_KEY`                          |                                  |                            |                    |
-| `PLAY_SERVICE_ACCOUNT_JSON`                      | Fastlane Play 업로드             | GitHub Actions secret      | M13                |
-| `SIGNPATH_API_TOKEN` / `AZURE_TRUSTED_SIGNING_*` | Windows Authenticode             | GitHub Actions secret      | M13                |
+| 키                                               | 용도                             | 등록 위치                             | 최초 필요 마일스톤 |
+| :----------------------------------------------- | :------------------------------- | :------------------------------------ | :----------------- |
+| `NVD_API_KEY`                                    | NVD CVE API 2.0 레이트 리밋 확대 | age 볼트 파일 `settings/nvd_api_key`  | M4                 |
+| `GITHUB_APP_ID`                                  | GitHub App 식별자                | Cloudflare Workers secret             | M5                 |
+| `GITHUB_APP_PRIVATE_KEY`                         | GitHub App JWT 서명              | Cloudflare Workers secret             | M5                 |
+| `PADDLE_WEBHOOK_SECRET`                          | Paddle HMAC 검증                 | Cloudflare Workers secret             | M10                |
+| `REVENUECAT_WEBHOOK_SECRET`                      | RevenueCat HMAC 검증             | Cloudflare Workers secret             | M10                |
+| `JWT_SIGNING_KEY`                                | 릴레이 세션 JWT ES256 private    | Cloudflare Workers secret             | M8                 |
+| `MINISIGN_PRIVATE_KEY`                           | 앱 업데이트 서명                 | GitHub Actions secret                 | M13                |
+| `MINISIGN_PASSWORD`                              | 위 private key 보호              | GitHub Actions secret                 | M13                |
+| `APPLE_API_KEY_ID`                               | Fastlane 앱스토어 업로드         | GitHub Actions secret                 | M13                |
+| `APPLE_API_ISSUER_ID`                            |                                  |                                       |                    |
+| `APPLE_API_PRIVATE_KEY`                          |                                  |                                       |                    |
+| `PLAY_SERVICE_ACCOUNT_JSON`                      | Fastlane Play 업로드             | GitHub Actions secret                 | M13                |
+| `SIGNPATH_API_TOKEN` / `AZURE_TRUSTED_SIGNING_*` | Windows Authenticode             | GitHub Actions secret                 | M13                |
 | `HIBP_API_KEY`                                   | HIBP v3                          | age 볼트 파일 `settings/hibp_api_key` | M4 Should          |
 
 ### 계정 / 서비스 등록 순서
@@ -153,15 +153,15 @@ T013 ~ T024 (12개 Must)
 
 ### 핵심 기술 결정
 
-| 항목                           | 선택                    | 버전   | 근거                                                          |
-| :----------------------------- | :---------------------- | :----- | :------------------------------------------------------------ |
+| 항목                           | 선택                     | 버전   | 근거                                                                                                                                                                 |
+| :----------------------------- | :----------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 볼트 암호화 엔진               | `age` crate (RustCrypto) | 0.10+  | 2026-04-22 결정: Stronghold(libsodium-sys-stable AppLocker 이슈 + v3 deprecated 예정)에서 교체. age 는 표준 포맷(X25519 + ChaCha20-Poly1305), pure Rust, 모바일 호환 |
-| OS Keyring                     | `keyring` crate         | 3      | research_raw.md §7 — hwchen/keyring-rs, 데스크톱 3플랫폼      |
-| KDF                            | `argon2` crate          | 0.5    | OWASP 권장, age 에 전달할 symmetric key 파생용                |
-| HKDF                           | `hkdf` crate + `sha2`   | latest | 표준 — Argon2id 출력을 용도별 서브키(age-vault / crdt-root / value-root)로 분기 |
-| Digital Signature (device key) | `ed25519-dalek`         | 2      | research_raw.md §6, 가장 많은 사례                            |
-| X25519 (페어링, M9 선행)       | `x25519-dalek`          | 2      | age recipient 에도 동일 타입 재사용 가능                      |
-| AEAD (값 채널)                 | `chacha20poly1305`      | 0.10   | IETF 준수, age 내부와 동일 계열                              |
+| OS Keyring                     | `keyring` crate          | 3      | research_raw.md §7 — hwchen/keyring-rs, 데스크톱 3플랫폼                                                                                                             |
+| KDF                            | `argon2` crate           | 0.5    | OWASP 권장, age 에 전달할 symmetric key 파생용                                                                                                                       |
+| HKDF                           | `hkdf` crate + `sha2`    | latest | 표준 — Argon2id 출력을 용도별 서브키(age-vault / crdt-root / value-root)로 분기                                                                                      |
+| Digital Signature (device key) | `ed25519-dalek`          | 2      | research_raw.md §6, 가장 많은 사례                                                                                                                                   |
+| X25519 (페어링, M9 선행)       | `x25519-dalek`           | 2      | age recipient 에도 동일 타입 재사용 가능                                                                                                                             |
+| AEAD (값 채널)                 | `chacha20poly1305`       | 0.10   | IETF 준수, age 내부와 동일 계열                                                                                                                                      |
 
 ### age 볼트 초기화 패턴
 
@@ -244,13 +244,13 @@ async fn age_vault_passes_contract() { /* tempdir 에 vault.age 생성 */ }
 
 ### 리스크 & 완화
 
-| 리스크                                                    | 대응                                                                                                                           |
-| :-------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
+| 리스크                                                    | 대응                                                                                                                                      |
+| :-------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
 | 볼트 파일 전체 재암호화 I/O 비용 (put 마다 flush)         | `tokio::sync::Mutex` 로 `AgeVaultStorage` 보호, batch flush / dirty flag 로 과도한 재암호화 방지. 크래시 대비 atomic rename + `.bak` 유지 |
-| OS Keyring 이 Linux headless CI 에서 실패                 | CI 에서 `keyring` 관련 integration test 는 `#[cfg(not(target_os = "linux"))]`, unit test 만 남김. 앱에서는 폴백 세션 모드 안내 |
-| Argon2id 64MiB 메모리 비용이 iOS/저사양 Android 에서 부담 | 모바일 전용 프리셋 `m=32MiB, t=4, p=1` 로 완화 (M11에서 검증)                                                                  |
-| age recipient/포맷 선택 고정 부담                         | `VaultStorage` trait 로 격리되어 있으므로 X25519 ↔ scrypt 전환 시 파일 마이그레이션 유틸만 추가하면 됨. T016 착수 시 최종 결정 |
-| age 모바일 동작 검증                                      | `age` 는 pure Rust 이므로 Stronghold 의 libsodium-sys 같은 네이티브 빌드 이슈 없음. M11 T105 에서 기기 라운드트립 최종 확인    |
+| OS Keyring 이 Linux headless CI 에서 실패                 | CI 에서 `keyring` 관련 integration test 는 `#[cfg(not(target_os = "linux"))]`, unit test 만 남김. 앱에서는 폴백 세션 모드 안내            |
+| Argon2id 64MiB 메모리 비용이 iOS/저사양 Android 에서 부담 | 모바일 전용 프리셋 `m=32MiB, t=4, p=1` 로 완화 (M11에서 검증)                                                                             |
+| age recipient/포맷 선택 고정 부담                         | `VaultStorage` trait 로 격리되어 있으므로 X25519 ↔ scrypt 전환 시 파일 마이그레이션 유틸만 추가하면 됨. T016 착수 시 최종 결정            |
+| age 모바일 동작 검증                                      | `age` 는 pure Rust 이므로 Stronghold 의 libsodium-sys 같은 네이티브 빌드 이슈 없음. M11 T105 에서 기기 라운드트립 최종 확인               |
 
 ### 검증 체크리스트
 
@@ -757,12 +757,12 @@ fn chain_integrity_after_tamper() {
 
 ### 리스크 & 완화
 
-| 리스크                                          | 대응                                                                           |
-| :---------------------------------------------- | :----------------------------------------------------------------------------- |
-| O(n) 검증 비용이 수만 entry 에서 지연           | UI 에서 progress bar + 백그라운드 async 검증; Phase 2 Merkle 전환              |
+| 리스크                                          | 대응                                                                                     |
+| :---------------------------------------------- | :--------------------------------------------------------------------------------------- |
+| O(n) 검증 비용이 수만 entry 에서 지연           | UI 에서 progress bar + 백그라운드 async 검증; Phase 2 Merkle 전환                        |
 | device key 유실 시 체인 검증 불가               | age 볼트 마스터 패스프레이즈와 함께 복구되므로 사용자 패스프레이즈 분실 외 시나리오 없음 |
-| 멀티 디바이스 체인 병합 복잡성                  | 디바이스별 서브체인으로 처리, 표시 시 시간순 merge. 크로스 체인 링크는 Phase 2 |
-| 감사 로그가 SQLite 파일 직접 편집으로 변조 가능 | 체인 검증이 항상 변조 감지. UI 에서 명시적 경고                                |
+| 멀티 디바이스 체인 병합 복잡성                  | 디바이스별 서브체인으로 처리, 표시 시 시간순 merge. 크로스 체인 링크는 Phase 2           |
+| 감사 로그가 SQLite 파일 직접 편집으로 변조 가능 | 체인 검증이 항상 변조 감지. UI 에서 명시적 경고                                          |
 
 ### 검증 체크리스트
 
@@ -1278,14 +1278,14 @@ it("renders BottomNav only on mobile platform", () => {
 
 ### 리스크 & 완화
 
-| 리스크                                           | 대응                                                                              |
-| :----------------------------------------------- | :-------------------------------------------------------------------------------- |
+| 리스크                                           | 대응                                                                                                          |
+| :----------------------------------------------- | :------------------------------------------------------------------------------------------------------------ |
 | age 볼트 모바일 동작 실패                        | age 자체는 pure Rust 라 근본 호환성 문제 가능성 낮음. 파일 경로/권한 이슈 시 Tauri path API 로 경로 전략 조정 |
-| iOS 앱스토어 심사 거부                           | 미리 Guideline 2.1 (앱 완성도), 4.0 (디자인), 5.1.1 (데이터 수집) 체크리스트 리뷰 |
-| Android 파일 시스템 제한으로 드롭&스캔 동작 불가 | Mobile 에서는 기능 숨김 + "Use desktop app to scan" 안내                          |
-| Xcode 빌드 시간 길음 (5~10분)                    | `CARGO_TARGET_DIR` 공유, `[profile.dev] incremental = true`, clean 최소화         |
-| Android NDK 버전 호환성                          | `android { ndkVersion "25.2.9519653" }` 고정, GitHub Actions matrix 에도 동일     |
-| Apple Developer 심사 비용/시간                   | M10 이전 early submit (dev/internal track)                                        |
+| iOS 앱스토어 심사 거부                           | 미리 Guideline 2.1 (앱 완성도), 4.0 (디자인), 5.1.1 (데이터 수집) 체크리스트 리뷰                             |
+| Android 파일 시스템 제한으로 드롭&스캔 동작 불가 | Mobile 에서는 기능 숨김 + "Use desktop app to scan" 안내                                                      |
+| Xcode 빌드 시간 길음 (5~10분)                    | `CARGO_TARGET_DIR` 공유, `[profile.dev] incremental = true`, clean 최소화                                     |
+| Android NDK 버전 호환성                          | `android { ndkVersion "25.2.9519653" }` 고정, GitHub Actions matrix 에도 동일                                 |
+| Apple Developer 심사 비용/시간                   | M10 이전 early submit (dev/internal track)                                                                    |
 
 ### 검증 체크리스트
 
