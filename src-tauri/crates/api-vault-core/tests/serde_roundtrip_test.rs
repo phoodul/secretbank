@@ -1,6 +1,4 @@
-use api_vault_core::{
-    Credential, CredentialId, CredentialInput, CredentialStatus, Env, IssuerId,
-};
+use api_vault_core::{Credential, CredentialId, CredentialInput, CredentialStatus, Env, IssuerId};
 use time::OffsetDateTime;
 
 /// Serialize → deserialize 왕복 테스트.
@@ -26,18 +24,9 @@ fn credential_input_serde_roundtrip() {
 /// Env enum lowercase 직렬화 확인.
 #[test]
 fn env_enum_serde_roundtrip() {
-    assert_eq!(
-        serde_json::to_string(&Env::Dev).unwrap(),
-        "\"dev\""
-    );
-    assert_eq!(
-        serde_json::to_string(&Env::Staging).unwrap(),
-        "\"staging\""
-    );
-    assert_eq!(
-        serde_json::to_string(&Env::Prod).unwrap(),
-        "\"prod\""
-    );
+    assert_eq!(serde_json::to_string(&Env::Dev).unwrap(), "\"dev\"");
+    assert_eq!(serde_json::to_string(&Env::Staging).unwrap(), "\"staging\"");
+    assert_eq!(serde_json::to_string(&Env::Prod).unwrap(), "\"prod\"");
 
     let dev: Env = serde_json::from_str("\"dev\"").unwrap();
     let staging: Env = serde_json::from_str("\"staging\"").unwrap();

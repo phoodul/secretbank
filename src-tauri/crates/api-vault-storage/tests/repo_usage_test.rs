@@ -1,6 +1,4 @@
-use api_vault_core::{
-    CredentialInput, Env, IssuerInput, ProjectInput, UsageInput, UsageWhereKind,
-};
+use api_vault_core::{CredentialInput, Env, IssuerInput, ProjectInput, UsageInput, UsageWhereKind};
 use api_vault_storage::sqlite::{
     repositories::{
         credential::CredentialRepo, issuer::IssuerRepo, project::ProjectRepo, usage::UsageRepo,
@@ -64,7 +62,10 @@ async fn usage_insert_list_roundtrip(pool: SqlitePool) -> Result<(), StorageErro
     let usage_id = usage_repo.insert(&usage_input).await?;
 
     // 3. get_by_id
-    let usage = usage_repo.get_by_id(usage_id).await?.expect("usage should exist");
+    let usage = usage_repo
+        .get_by_id(usage_id)
+        .await?
+        .expect("usage should exist");
     assert_eq!(usage.id, usage_id);
     assert_eq!(usage.credential_id, credential_id);
     assert_eq!(usage.where_kind, UsageWhereKind::EnvVar);

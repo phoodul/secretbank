@@ -1,4 +1,4 @@
-use api_vault_core::{Issuer, IssuerInput, IssuerId};
+use api_vault_core::{Issuer, IssuerId, IssuerInput};
 use sqlx::{Row, SqlitePool};
 use time::OffsetDateTime;
 

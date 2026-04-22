@@ -1,4 +1,16 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+
+pub mod commands;
+pub mod context;
+
+use commands::credentials::{
+    credential_create, credential_delete, credential_get, credential_list, credential_reveal,
+    credential_update,
+};
+use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
+use context::AppContext;
+use tauri::Manager;
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -8,21 +20,57 @@ fn greet(name: &str) -> String {
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_sql::Builder::default().build())
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_http::init())
-        .invoke_handler(tauri::generate_handler![greet]);
+        .setup(|app| {
+            let data_dir = app
+                .path()
+                .app_data_dir()
+                .expect("failed to resolve app data dir");
 
-    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+            let ctx = tauri::async_runtime::block_on(AppContext::new(data_dir))
+                .expect("failed to initialise AppContext");
+
+            app.manage(ctx);
+            Ok(())
+        });
+
+    #[cfg(feature = "tauri-plugins")]
+    {
+        builder = builder
+            .plugin(tauri_plugin_sql::Builder::default().build())
+            .plugin(tauri_plugin_clipboard_manager::init())
+            .plugin(tauri_plugin_shell::init())
+            .plugin(tauri_plugin_os::init())
+            .plugin(tauri_plugin_notification::init())
+            .plugin(tauri_plugin_deep_link::init())
+            .plugin(tauri_plugin_http::init());
+    }
+
+    builder = builder.invoke_handler(tauri::generate_handler![
+        greet,
+        vault_init,
+        vault_unlock,
+        vault_lock,
+        vault_status,
+        credential_create,
+        credential_list,
+        credential_get,
+        credential_update,
+        credential_delete,
+        credential_reveal,
+    ]);
+
+    #[cfg(all(
+        feature = "tauri-plugins",
+        not(any(target_os = "android", target_os = "ios"))
+    ))]
     {
         builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
     }
 
-    #[cfg(any(target_os = "android", target_os = "ios"))]
+    #[cfg(all(
+        feature = "tauri-plugins",
+        any(target_os = "android", target_os = "ios")
+    ))]
     {
         builder = builder.plugin(tauri_plugin_biometric::init());
     }

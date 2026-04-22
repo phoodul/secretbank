@@ -60,8 +60,7 @@ pub(crate) fn ms_to_dt_opt(ms: Option<i64>) -> Result<Option<time::OffsetDateTim
 }
 
 pub(crate) fn dt_to_ms(dt: time::OffsetDateTime) -> i64 {
-    dt.unix_timestamp() * 1000
-        + (dt.nanosecond() as i64 / 1_000_000)
+    dt.unix_timestamp() * 1000 + (dt.nanosecond() as i64 / 1_000_000)
 }
 
 pub(crate) fn dt_to_ms_opt(dt: Option<time::OffsetDateTime>) -> Option<i64> {

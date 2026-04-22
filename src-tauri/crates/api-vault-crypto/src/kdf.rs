@@ -9,8 +9,7 @@ use crate::KdfError;
 
 /// Argon2id 파라미터: m_cost=65536 KiB (64 MiB), t_cost=3, p_cost=1, output=32 bytes.
 fn argon2_instance() -> Result<Argon2<'static>, KdfError> {
-    let params = Params::new(65536, 3, 1, Some(32))
-        .map_err(|e| KdfError::Argon2(e.to_string()))?;
+    let params = Params::new(65536, 3, 1, Some(32)).map_err(|e| KdfError::Argon2(e.to_string()))?;
     Ok(Argon2::new(Algorithm::Argon2id, Version::V0x13, params))
 }
 

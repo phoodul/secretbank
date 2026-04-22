@@ -9,25 +9,52 @@ edition = "2021"
 name = "api_vault_app"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[features]
+default = ["tauri-plugins"]
+tauri-plugins = [
+    "dep:tauri-plugin-sql",
+    "dep:tauri-plugin-clipboard-manager",
+    "dep:tauri-plugin-shell",
+    "dep:tauri-plugin-os",
+    "dep:tauri-plugin-notification",
+    "dep:tauri-plugin-deep-link",
+    "dep:tauri-plugin-http",
+]
+
 [dependencies]
 tauri = { workspace = true }
 tauri-plugin-opener = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+secrecy = { workspace = true }
+time = { workspace = true }
+async-trait = { workspace = true }
 
-# Tauri plugins (common)
-tauri-plugin-sql = { version = "2", features = ["sqlite"] }
-tauri-plugin-clipboard-manager = "2"
-tauri-plugin-shell = "2"
-tauri-plugin-os = "2"
-tauri-plugin-notification = "2"
-tauri-plugin-deep-link = "2"
-tauri-plugin-http = "2"
+api-vault-core = { path = "../api-vault-core" }
+api-vault-storage = { path = "../api-vault-storage" }
+api-vault-crypto = { path = "../api-vault-crypto" }
+
+# Tauri plugins (optional — disabled in test builds to skip problematic build scripts)
+tauri-plugin-sql      = { version = "2", features = ["sqlite"], optional = true }
+tauri-plugin-clipboard-manager = { version = "2", optional = true }
+tauri-plugin-shell    = { version = "2", optional = true }
+tauri-plugin-os       = { version = "2", optional = true }
+tauri-plugin-notification = { version = "2", optional = true }
+tauri-plugin-deep-link = { version = "2", optional = true }
+tauri-plugin-http     = { version = "2", optional = true }
 
 # updater: desktop-only (Windows, macOS, Linux).
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-updater = "2"
+tauri-plugin-updater = { version = "2", optional = true }
 
 # biometric: mobile-only (Android, iOS)
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
-tauri-plugin-biometric = "2"
+tauri-plugin-biometric = { version = "2", optional = true }
+
+[dev-dependencies]
+api-vault-storage = { path = "../api-vault-storage", features = ["mock"] }
+tokio = { workspace = true }

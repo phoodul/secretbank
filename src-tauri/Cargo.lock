@@ -151,6 +151,12 @@ dependencies = [
 name = "api-vault-app"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "api-vault-core",
+ "api-vault-crypto",
+ "api-vault-storage",
+ "async-trait",
+ "secrecy",
  "serde",
  "serde_json",
  "tauri",
@@ -164,6 +170,10 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-sql",
  "tauri-plugin-updater",
+ "thiserror 2.0.18",
+ "time",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

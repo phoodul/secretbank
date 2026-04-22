@@ -33,10 +33,7 @@ pub struct Device {
     pub public_key: Vec<u8>,
     #[serde(with = "time::serde::timestamp::milliseconds")]
     pub paired_at: OffsetDateTime,
-    #[serde(
-        default,
-        with = "time::serde::timestamp::milliseconds::option"
-    )]
+    #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
     pub last_seen_at: Option<OffsetDateTime>,
     pub status: DeviceStatus,
 }

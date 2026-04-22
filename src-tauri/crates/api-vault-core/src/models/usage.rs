@@ -31,10 +31,7 @@ pub struct Usage {
     pub where_kind: UsageWhereKind,
     /// e.g. `OPENAI_API_KEY` or `/apps/web/.env.local`
     pub where_value: String,
-    #[serde(
-        default,
-        with = "time::serde::timestamp::milliseconds::option"
-    )]
+    #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
     pub verified_at: Option<OffsetDateTime>,
     pub verified_by: Option<VerifiedBy>,
 }

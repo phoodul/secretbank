@@ -33,15 +33,9 @@ pub struct Credential {
     pub vault_ref: String,
     #[serde(with = "time::serde::timestamp::milliseconds")]
     pub created_at: OffsetDateTime,
-    #[serde(
-        default,
-        with = "time::serde::timestamp::milliseconds::option"
-    )]
+    #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
     pub last_rotated_at: Option<OffsetDateTime>,
-    #[serde(
-        default,
-        with = "time::serde::timestamp::milliseconds::option"
-    )]
+    #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
     pub expires_at: Option<OffsetDateTime>,
     pub owner: Option<String>,
     pub rotation_policy_days: Option<i32>,
@@ -60,10 +54,7 @@ pub struct CredentialInput {
     pub scope: Option<String>,
     pub rotation_policy_days: Option<i32>,
     pub rotation_runbook_id: Option<String>,
-    #[serde(
-        default,
-        with = "time::serde::timestamp::milliseconds::option"
-    )]
+    #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
     pub expires_at: Option<OffsetDateTime>,
     pub owner: Option<String>,
     pub hash_hint: Option<String>,
@@ -77,10 +68,7 @@ pub struct CredentialSummary {
     pub name: String,
     pub env: Env,
     pub status: CredentialStatus,
-    #[serde(
-        default,
-        with = "time::serde::timestamp::milliseconds::option"
-    )]
+    #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
     pub expires_at: Option<OffsetDateTime>,
 }
 

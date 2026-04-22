@@ -1,4 +1,4 @@
-use api_vault_core::{IssuerInput};
+use api_vault_core::IssuerInput;
 use api_vault_storage::sqlite::{repositories::issuer::IssuerRepo, StorageError};
 use sqlx::SqlitePool;
 
@@ -25,7 +25,10 @@ async fn issuer_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError> {
     assert_eq!(issuer.id, id);
     assert_eq!(issuer.slug, "openai");
     assert_eq!(issuer.display_name, "OpenAI");
-    assert_eq!(issuer.docs_url.as_deref(), Some("https://platform.openai.com/docs"));
+    assert_eq!(
+        issuer.docs_url.as_deref(),
+        Some("https://platform.openai.com/docs")
+    );
     assert_eq!(issuer.icon_key.as_deref(), Some("openai"));
 
     // list

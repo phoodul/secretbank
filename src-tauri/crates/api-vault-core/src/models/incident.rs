@@ -38,10 +38,7 @@ pub struct Incident {
     pub url: Option<String>,
     #[serde(with = "time::serde::timestamp::milliseconds")]
     pub detected_at: OffsetDateTime,
-    #[serde(
-        default,
-        with = "time::serde::timestamp::milliseconds::option"
-    )]
+    #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
     pub published_at: Option<OffsetDateTime>,
 }
 

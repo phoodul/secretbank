@@ -1,6 +1,5 @@
 use api_vault_core::{
-    CredentialId, DeploymentId, ProjectId, Usage, UsageId, UsageInput, UsageWhereKind,
-    VerifiedBy,
+    CredentialId, DeploymentId, ProjectId, Usage, UsageId, UsageInput, UsageWhereKind, VerifiedBy,
 };
 use sqlx::{Row, SqlitePool};
 

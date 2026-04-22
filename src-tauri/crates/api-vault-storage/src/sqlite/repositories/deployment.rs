@@ -1,4 +1,6 @@
-use api_vault_core::{Deployment, DeploymentId, DeploymentInput, DeploymentPlatform, Env, ProjectId};
+use api_vault_core::{
+    Deployment, DeploymentId, DeploymentInput, DeploymentPlatform, Env, ProjectId,
+};
 use sqlx::{Row, SqlitePool};
 use time::OffsetDateTime;
 

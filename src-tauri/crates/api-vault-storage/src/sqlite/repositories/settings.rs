@@ -19,7 +19,10 @@ impl<'a> SettingsRepo<'a> {
             .await?;
 
         use sqlx::Row;
-        Ok(row.map(|r| r.try_get::<Option<String>, _>("value")).transpose()?.flatten())
+        Ok(row
+            .map(|r| r.try_get::<Option<String>, _>("value"))
+            .transpose()?
+            .flatten())
     }
 
     pub async fn set(&self, key: &str, value: Option<&str>) -> Result<(), StorageError> {

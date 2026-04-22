@@ -1,6 +1,6 @@
 use api_vault_core::{
-    Credential, CredentialFilter, CredentialId, CredentialInput, CredentialPatch,
-    CredentialStatus, CredentialSummary, Env,
+    Credential, CredentialFilter, CredentialId, CredentialInput, CredentialPatch, CredentialStatus,
+    CredentialSummary, Env,
 };
 use sqlx::{Row, SqlitePool};
 use time::OffsetDateTime;
@@ -16,12 +16,28 @@ impl<'a> CredentialRepo<'a> {
         Self { pool }
     }
 
+    /// Insert a new credential row.
+    ///
+    /// `provided_id` — if `Some`, uses that id; otherwise generates a new one.
+    /// Callers that need to build a `vault_ref` from the id should pass `None`
+    /// and use the returned [`CredentialId`] to construct the ref afterwards
+    /// via [`CredentialRepo::set_vault_ref`].
     pub async fn insert(
         &self,
         input: &CredentialInput,
         vault_ref: String,
     ) -> Result<CredentialId, StorageError> {
-        let id = CredentialId::new();
+        self.insert_with_id(None, input, vault_ref).await
+    }
+
+    /// Insert with an optional caller-supplied id.
+    pub async fn insert_with_id(
+        &self,
+        id: Option<CredentialId>,
+        input: &CredentialInput,
+        vault_ref: String,
+    ) -> Result<CredentialId, StorageError> {
+        let id = id.unwrap_or_default();
         let id_str = id.to_string();
         let issuer_id_str = input.issuer_id.to_string();
         let env_str = env_to_str(input.env);
@@ -52,10 +68,7 @@ impl<'a> CredentialRepo<'a> {
         Ok(id)
     }
 
-    pub async fn get_by_id(
-        &self,
-        id: CredentialId,
-    ) -> Result<Option<Credential>, StorageError> {
+    pub async fn get_by_id(&self, id: CredentialId) -> Result<Option<Credential>, StorageError> {
         let id_str = id.to_string();
         let row = sqlx::query(
             r#"SELECT id, issuer_id, name, env, scope, vault_ref, created_at,
@@ -263,4 +276,3 @@ fn str_to_status(s: &str) -> Result<CredentialStatus, StorageError> {
         other => Err(StorageError::Parse(format!("unknown status: {other}"))),
     }
 }
-

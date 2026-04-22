@@ -124,6 +124,8 @@ fn str_to_status(s: &str) -> Result<DeviceStatus, StorageError> {
     match s {
         "active" => Ok(DeviceStatus::Active),
         "revoked" => Ok(DeviceStatus::Revoked),
-        other => Err(StorageError::Parse(format!("unknown device status: {other}"))),
+        other => Err(StorageError::Parse(format!(
+            "unknown device status: {other}"
+        ))),
     }
 }

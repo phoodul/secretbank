@@ -108,8 +108,10 @@ async fn credential_filter_by_env(pool: SqlitePool) -> Result<(), StorageError> 
         ..prod_input.clone()
     };
 
-    repo.insert(&prod_input, "credentials/prod".to_string()).await?;
-    repo.insert(&dev_input, "credentials/dev".to_string()).await?;
+    repo.insert(&prod_input, "credentials/prod".to_string())
+        .await?;
+    repo.insert(&dev_input, "credentials/dev".to_string())
+        .await?;
 
     let dev_only = repo
         .list(&CredentialFilter {
