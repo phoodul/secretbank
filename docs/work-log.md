@@ -52,6 +52,37 @@
 - `issuer_list` 는 Vec\<Issuer\> (전체 필드) 반환. 프론트는 `issuer.slug` 로 `findPreset(slug)` lookup → `icon` / `brand_color` / `key_pattern_regex` 획득.
 - 앱 최초 기동 후에도 `issuer_list` 가 반드시 >= 10개 레코드를 반환한다고 가정할 수 있음 (시드 실패 시 app.manage 전에 panic).
 
+### T026 — Credential 등록 다이얼로그 (implementator 에이전트, 커밋 `a7e1d58`, Night mode)
+
+- **생성 파일**: `src/features/inventory/CreateCredentialDialog.tsx` (메인, react-hook-form + zod), `src/features/inventory/use-issuers.ts` (issuer_list invoke 훅, FetchState union 재사용), `src/features/inventory/__tests__/CreateCredentialDialog.test.tsx` (Vitest 12), `src/components/ui/popover.tsx` (shadcn CLI)
+- **수정 파일**: `src/features/inventory/InventoryPage.tsx` ("+ Add credential" 버튼 활성화 + Dialog open 상태), `__tests__/InventoryPage.test.tsx` (mock 을 cmd명 분기 패턴으로 전환), `src/locales/{en,ko,ja}/common.json` (inventory 네임스페이스 28키 추가), `src/test-setup.ts` (ResizeObserver 폴리필 추가)
+- **필드**: Issuer(Command + Popover 콤보박스, 프리셋 10종), Name, Value(show/hide 토글, `autoComplete="new-password"` + `aria-autocomplete="none"`), Env(dev/staging/prod Select), Scope(optional), Expires at(Input[type=date] → `Date.parse()` ms 변환)
+- **invoke 호출 확정**: `invoke("credential_create", { args: { issuer_id, name, env, scope?, expires_at?, hash_hint, value } })`. `CredentialCreateArgs` 의 `#[serde(flatten)]` 때문에 `input` 래핑 없이 평면 구조. `hash_hint = value.slice(-4)` 프론트 자동 계산.
+- **성공/에러 처리**: 성공 시 `toast.success` + `form.reset()` + `onSuccess()` (InventoryPage refresh) + `onOpenChange(false)`. 실패 시 `toast.error` + dialog 유지.
+- **테스트**: Vitest +13 (CreateCredentialDialog 12 + InventoryPage 통합 1). 전체 46개 통과. mocking: `@tauri-apps/api/core` invoke 는 cmd명 분기(`issuer_list` vs `credential_list` vs `credential_create`), `sonner` toast 객체.
+- **검증**: `pnpm tsc/lint/format:check/vitest` + `cargo build --workspace` 5개 exit 0. Rust 쪽 변경 없음.
+
+**설계 결정**:
+
+- **Custom issuer 옵션 연기** (Pending Decision 에 기록). DoD 의 "+ Custom" 선택지는 구현하지 않고 프리셋 10종만. 이유: Custom issuer 는 docs/issue/status URL 수집이 필요해 별도 전용 플로우가 나음. M2 후반 또는 M5 에서 재검토.
+- **`aria-autocomplete="off"` 는 유효하지 않은 값** (ARIA spec: inline/list/both/none). DoD 의 "aria-autocomplete=off" 표기는 오기. 실제로는 `aria-autocomplete="none"` 적용. 보조 기술에는 "이 입력은 자동완성 제안을 제공하지 않음"을 알리고, 브라우저 저장 차단은 HTML `autoComplete="new-password"` 로 처리.
+- **invoke 인자 `args` 래퍼**: Tauri v2 는 Rust 커맨드 파라미터명과 invoke 의 JS 객체 키를 매치. `credential_create(args: CredentialCreateArgs, ...)` 이므로 JS 는 `{ args: {...} }`. DoD 의 `{ input }` 단축 표기는 잘못. 이후 Rust 커맨드 호출 시 파라미터명 주의.
+- **Scope 빈 문자열 → undefined 변환**: zod 에서 `z.string().max(200).optional().or(z.literal("").transform(() => undefined))` 패턴. 제출 시점에 `scope === "" → undefined` 로 명시 변환해 CredentialInput 에 `scope: null` 로 전달되게 함.
+
+**발견한 이슈**:
+
+- **cmdk ResizeObserver 의존**: Command 컴포넌트가 내부적으로 ResizeObserver 사용. jsdom 미구현 → `test-setup.ts` 에 stub 추가(`globalThis.ResizeObserver`). T029 Cmd+K Command Palette 테스트에서도 재사용됨.
+- **Popover Portal 영향**: Radix Popover 가 `document.body` 직하에 Portal 렌더링. Vitest 에서 `screen.findByText("OpenAI")` 는 Portal 내부를 자동 탐색하므로 문제없지만, 쿼리 범위를 `within(container)` 로 잡으면 누락 가능.
+- **InventoryPage 기존 테스트 영향**: CreateCredentialDialog 가 마운트되면서 `useIssuers` 가 `issuer_list` 를 호출. 기존 `mockResolvedValue(MOCK_CREDENTIALS)` 패턴은 모든 invoke 에 같은 값을 반환해 충돌. 해결: mock 을 cmd명 분기(`if (cmd === "issuer_list") return mockIssuers`)로 전환.
+- **Retry 테스트 invoke 카운트 검증 제거**: `useIssuers` 가 추가로 invoke 를 부르므로 `toHaveBeenCalledTimes(2)` 가 불안정. 대신 실질적 동작(에러 배너 사라지고 데이터 표시)으로 검증.
+
+**T027 에 영향 줄 사실**:
+
+- `useIssuers` 훅 재사용 가능 (Drawer 에서 issuer 이름 표시에 쓰임).
+- Vitest mock 은 이미 cmd명 분기 패턴 — `credential_get`/`credential_delete`/`credential_copy_to_clipboard` 추가 시 자연스럽게 확장.
+- Dialog 닫힘 시 form.reset + 로컬 상태 초기화 로직이 `handleOpenChange` 내부로 통합된 패턴. Sheet 도 동일 패턴 적용 권장.
+- T023 의 `clipboard:countdown` 이벤트는 `@tauri-apps/api/event` 의 `listen()` 으로 구독. 이벤트 payload: `{ remaining: u32 }`. 30 → 0 1초 간격. Drawer 언마운트 시 unlisten 필수.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)

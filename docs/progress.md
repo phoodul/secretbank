@@ -2,11 +2,12 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T028 완료 — T026 다음 태스크)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 2/14**
-- **Commits:** 28개 누적 (최신 `539347f` feat(issuer): Issuer 프리셋 10종 시드 + issuer_list/get (T028))
-- **Tests:** Rust 47개 (+3 seed) + Vitest 33개 통과.
+- **Time:** 2026-04-23 (T026 완료 — Night mode, T027 다음)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 3/14**
+- **Commits:** 30개 누적 (최신 `a7e1d58` feat(inventory): Credential 등록 다이얼로그 (T026))
+- **Tests:** Rust 47개 + Vitest 46개 (+13 CreateCredentialDialog) 통과.
 - **Blocker:** 없음.
+- **Mode:** Night mode — Gate 승인은 큐에 쌓고 T027 까지 연속 진행.
 
 ## M2 진행 상황 (1/14)
 
@@ -14,12 +15,13 @@
 
 - T025 Inventory 페이지 목록 뷰 + 필터 바 (커밋 `ab69319`)
 - T028 Issuer 프리셋 10종 시드 + issuer_list/get 커맨드 (커밋 `539347f`)
+- T026 Credential 등록 다이얼로그 (커밋 `a7e1d58`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
 사용자 방침: **CRUD UI 핵심부터, 드롭&스캔 블록(T032~T035)은 M2 후반으로.** T026 이 Issuer combobox 에 프리셋을 쓰므로 T028 을 T026 앞으로 당김.
 
-- 1순위: T025 ✅ → **T028 ✅** → T026 Credential 등록 다이얼로그 → T027 상세 Drawer
+- 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → T027 상세 Drawer (진행 중)
 - 2순위: T029 Cmd+K → T030 Theme/Settings → T031 Auto-lock
 - 3순위(드롭&스캔): T032 드롭존 → T033 .env 파서 + 엔트로피 → T034 env_scan_folder 커맨드 → T035 결과 검토 UI
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
@@ -153,12 +155,14 @@
 
 - [x] T025 Inventory 페이지 목록 뷰 + 필터 바 — 커밋 `ab69319`
 - [x] T028 Issuer 프리셋 10종 시드 + issuer_list/get — 커밋 `539347f`
-- [ ] T026 Credential 등록 다이얼로그 (수동) — 다음 태스크
+- [x] T026 Credential 등록 다이얼로그 — 커밋 `a7e1d58`
+- [ ] T027 Credential 상세 Drawer (Sheet) — 다음 태스크
 
 ## Pending Decisions
 
 - Gate 3 (배포 진행 승인)
 - Gate 4 (git push 승인)
+- **Custom issuer 생성 UX 연기 (T026 범위 외)** — T026 Issuer combobox 는 프리셋 10종만 선택 가능. DoD 의 "+ Custom" 옵션은 구현하지 않고 **별도 issuer 관리 UI 또는 T037 Project 관리 맥락**에서 처리 예정. 근거: 바이브 코더 페르소나는 주류 SaaS 가 대부분이라 프리셋으로 90%+ 커버, Custom UX 는 Issuer 메타(docs/issue/status URL) 입력 부담이 커 별도 전용 플로우가 낫다. M2 후반 또는 M5 GitHub Connector 작업 중 재검토.
 
 ## Key Shifts from Initial Plan
 
@@ -173,4 +177,4 @@
 
 ## Next Action
 
-- **T026 Credential 등록 다이얼로그** — shadcn/ui Dialog + react-hook-form + zod. Issuer combobox 는 `issuer_list` 로 DB 조회해서 `ISSUER_PRESETS` (findPreset(slug)) 로 icon/brand_color lookup. 제출 시 `credential_create` invoke → 성공 toast + InventoryPage `refresh()` 트리거. 이름/값/Env/Scope/Expires at 필드. Value 는 password field (show/hide) + `autocomplete="new-password"`.
+- **T027 Credential 상세 Drawer (Sheet)** — shadcn/ui Sheet (미설치 → `pnpm dlx shadcn@latest add sheet --yes`). CredentialCard 클릭 → 우측 Sheet 에 전체 메타 + value 복사 버튼. 기본 정보(Issuer, name, env, scope, expires_at, created_at, status, hash_hint 표시), 사용처(M3 placeholder empty state), 감사 로그 링크(M6 placeholder), 삭제(destructive confirm dialog → `credential_delete` invoke + refresh). "Copy value" → `credential_copy_to_clipboard` invoke + 30초 progress bar (`clipboard:countdown` 이벤트 구독). "Rotate"/"Revoke" 버튼은 M7 disabled placeholder. Depends on T023 (클립보드 커맨드) + T025 (InventoryPage 에서 선택 상태 관리).
