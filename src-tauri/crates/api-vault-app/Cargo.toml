@@ -19,6 +19,8 @@ tauri-plugins = [
     "dep:tauri-plugin-notification",
     "dep:tauri-plugin-deep-link",
     "dep:tauri-plugin-http",
+    "dep:tauri-plugin-updater",
+    "dep:tauri-plugin-biometric",
 ]
 
 [dependencies]
