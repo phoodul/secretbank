@@ -124,6 +124,13 @@ version = "0.1.0"
 [[package]]
 name = "api-vault-core"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "time",
+ "ulid",
+]
 
 [[package]]
 name = "api-vault-crypto"
@@ -152,9 +159,11 @@ version = "0.1.0"
 name = "api-vault-storage"
 version = "0.1.0"
 dependencies = [
+ "api-vault-core",
  "async-trait",
  "secrecy",
  "serde",
+ "serde_json",
  "sqlx",
  "thiserror 2.0.18",
  "time",

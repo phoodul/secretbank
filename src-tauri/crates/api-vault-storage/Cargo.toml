@@ -8,6 +8,7 @@ default = []
 mock = []
 
 [dependencies]
+api-vault-core = { path = "../api-vault-core" }
 sqlx      = { workspace = true }
 tokio     = { workspace = true }
 thiserror = { workspace = true }
@@ -15,9 +16,12 @@ time      = { workspace = true }
 ulid      = { workspace = true }
 tracing   = { workspace = true }
 serde     = { workspace = true }
+serde_json = { workspace = true }
 secrecy   = { workspace = true }
 zeroize   = { workspace = true }
 async-trait = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+sqlx  = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "macros", "migrate", "time", "uuid"] }
+api-vault-core = { path = "../api-vault-core" }

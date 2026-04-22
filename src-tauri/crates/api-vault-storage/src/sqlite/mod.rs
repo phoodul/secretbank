@@ -3,6 +3,8 @@ use std::path::Path;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 pub use sqlx::SqlitePool;
 
+pub mod repositories;
+
 /// Storage layer errors.
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
@@ -14,6 +16,9 @@ pub enum StorageError {
 
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("parse error: {0}")]
+    Parse(String),
 }
 
 impl serde::Serialize for StorageError {
@@ -39,4 +44,26 @@ pub async fn init_pool(db_path: &Path) -> Result<SqlitePool, StorageError> {
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     Ok(pool)
+}
+
+// ---------------------------------------------------------------------------
+// Unix-ms ↔ OffsetDateTime helpers (used by repositories)
+// ---------------------------------------------------------------------------
+
+pub(crate) fn ms_to_dt(ms: i64) -> Result<time::OffsetDateTime, StorageError> {
+    time::OffsetDateTime::from_unix_timestamp_nanos((ms as i128) * 1_000_000)
+        .map_err(|e| StorageError::Parse(e.to_string()))
+}
+
+pub(crate) fn ms_to_dt_opt(ms: Option<i64>) -> Result<Option<time::OffsetDateTime>, StorageError> {
+    ms.map(ms_to_dt).transpose()
+}
+
+pub(crate) fn dt_to_ms(dt: time::OffsetDateTime) -> i64 {
+    dt.unix_timestamp() * 1000
+        + (dt.nanosecond() as i64 / 1_000_000)
+}
+
+pub(crate) fn dt_to_ms_opt(dt: Option<time::OffsetDateTime>) -> Option<i64> {
+    dt.map(dt_to_ms)
 }
