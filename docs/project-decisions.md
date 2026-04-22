@@ -570,3 +570,17 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - **영향:**
   - `api_vault_app::run()` 공개 API 유지. 9개 lib 크레이트 변경 없음.
   - `crates/api-vault-app`은 이제 library crate. 향후 Tauri 명령 등록 및 플러그인 초기화의 거점 역할 유지.
+
+---
+
+## [2026-04-22] Tauri workspace 에서 `generate_context!` 는 **반드시 root crate 에서** 호출 [갱신: T001 재조정 결정 보강]
+
+- **결정:** `tauri::generate_context!()` 는 root crate (`src-tauri/src/main.rs`) 에서 호출하고 결과를 subcrate 의 `run(context: tauri::Context)` 로 넘긴다. subcrate 의 `lib.rs` 에서 직접 호출하면 안 된다.
+  - `src-tauri/src/main.rs` — `api_vault_app::run(tauri::generate_context!())` 로 변경.
+  - `src-tauri/crates/api-vault-app/src/lib.rs` — `pub fn run(context: tauri::Context)` 시그니처. 매크로 호출 제거, `.run(context)` 로 전달.
+  - `src-tauri/Cargo.toml` root `[dependencies]` 에 `serde`, `serde_json` 추가 (`generate_context!` 매크로 expansion 이 참조).
+- **이유:** `tauri_build::build()` 는 root crate 의 `build.rs` 에서 실행되어 `gen/schemas/{capabilities,acl-manifests}.json` 을 **root crate 의 OUT_DIR** 에 emit 한다. `generate_context!` 매크로는 호출 crate 의 `CARGO_MANIFEST_DIR` 기준으로 이 파일들을 찾아 플러그인 ACL 을 로드하는데, subcrate 에서 호출하면 subcrate 의 OUT_DIR 에서 찾다가 실패하여 **모든 플러그인 IPC 가 `Plugin not found` 로 차단된다**. 커스텀 `#[tauri::command]` 는 `core:default` 로만 검증되므로 이 문제가 드러나지 않다가 T023 수동 검증에서 처음 `tauri-plugin-sql` 을 호출했을 때 폭발.
+- **영향:**
+  - 이전 결정(T001 재조정 라인 450 "`tauri::generate_context!("../../tauri.conf.json")`으로 workspace root의 `tauri.conf.json` 경로 명시") 는 **잘못된 접근이었음**. 경로 명시로 `tauri.conf.json` 은 찾을 수 있지만 `gen/schemas/` ACL 매니페스트는 여전히 subcrate OUT_DIR 기준으로 탐색되어 플러그인이 모두 깨진다.
+  - 향후 Tauri workspace 분리 시 이 패턴을 **기본 규칙**으로 유지. `generate_context!` 의 모든 호출은 root crate 에서만 허용.
+  - 커밋: `eaece03 fix(tauri): generate_context!를 root crate 로 이동해 플러그인 ACL 복구`.
