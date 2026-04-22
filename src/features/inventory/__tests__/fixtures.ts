@@ -1,7 +1,7 @@
-import type { CredentialSummary } from "../types";
+import type { CredentialFull, CredentialSummary } from "../types";
 
-const NOW = Date.now();
-const DAY = 24 * 60 * 60 * 1000;
+export const NOW = Date.now();
+export const DAY = 24 * 60 * 60 * 1000;
 
 /** 테스트용 mock credential 10개 — 다양한 env/status/expires_at 조합 */
 export const MOCK_CREDENTIALS: CredentialSummary[] = [
@@ -86,3 +86,22 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     expires_at: NOW + 120 * DAY,
   },
 ];
+
+/** T027 테스트용 CredentialFull 픽스처 */
+export const MOCK_CREDENTIAL_FULL: CredentialFull = {
+  id: "01HZAAAAAAAAAAAAAAAAAAAAAA",
+  issuer_id: "01HZBBBBBBBBBBBBBBBBBBBBBB",
+  name: "OpenAI API Key",
+  env: "prod",
+  scope: "billing:read",
+  vault_ref: "credentials/01HZAAAAAAAAAAAAAAAAAAAAAA",
+  created_at: NOW - 30 * DAY,
+  last_rotated_at: NOW - 7 * DAY,
+  expires_at: NOW + 60 * DAY,
+  owner: null,
+  rotation_policy_days: 90,
+  rotation_runbook_id: null,
+  status: "active",
+  hash_hint: "abc1",
+  usages: [],
+};

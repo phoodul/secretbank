@@ -5,6 +5,7 @@ import type { CredentialSummary } from "./types";
 
 interface CredentialCardProps {
   credential: CredentialSummary;
+  onSelect?: (id: string) => void;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -48,12 +49,23 @@ function formatExpiry(expiresAt: number | null, t: (key: string) => string): str
   return new Date(expiresAt).toLocaleDateString();
 }
 
-export function CredentialCard({ credential }: CredentialCardProps) {
+export function CredentialCard({ credential, onSelect }: CredentialCardProps) {
   const { t } = useTranslation("common");
   const statusBadge = getStatusBadge(credential);
 
   return (
-    <Card className="group relative cursor-pointer transition-shadow hover:shadow-md">
+    <Card
+      className="group relative cursor-pointer transition-shadow hover:shadow-md"
+      onClick={() => onSelect?.(credential.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect?.(credential.id);
+        }
+      }}
+    >
       <CardContent className="p-4">
         {/* 항상 표시: 이름 + 상태 배지 */}
         <div className="flex items-start justify-between gap-2">

@@ -1,10 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import "@/lib/i18n";
 import { InventoryPage } from "../InventoryPage";
-import { MOCK_CREDENTIALS } from "./fixtures";
+import { MOCK_CREDENTIALS, MOCK_CREDENTIAL_FULL } from "./fixtures";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
@@ -18,20 +19,29 @@ vi.mock("sonner", () => ({
   },
 }));
 
+vi.mock("@tauri-apps/api/event", () => ({
+  listen: vi.fn(() => Promise.resolve(() => undefined)),
+}));
+
 import { invoke } from "@tauri-apps/api/core";
 
 const mockInvoke = vi.mocked(invoke);
 
 function renderPage() {
-  return render(<InventoryPage />);
+  return render(
+    <MemoryRouter>
+      <InventoryPage />
+    </MemoryRouter>,
+  );
 }
 
 describe("InventoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // credential_list → MOCK_CREDENTIALS, issuer_list → [] (Dialog는 열리지 않으므로 빈 배열)
+    // credential_list → MOCK_CREDENTIALS, issuer_list → [], credential_get → MOCK_CREDENTIAL_FULL
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "issuer_list") return Promise.resolve([]);
+      if (cmd === "credential_get") return Promise.resolve(MOCK_CREDENTIAL_FULL);
       return Promise.resolve(MOCK_CREDENTIALS);
     });
   });
@@ -203,6 +213,30 @@ describe("InventoryPage", () => {
       const addBtn = screen.getByRole("button", { name: /add credential/i });
       expect(addBtn).toBeInTheDocument();
       expect(addBtn).not.toBeDisabled();
+    });
+  });
+
+  it("[T027 통합] 카드 클릭 시 CredentialDetail Drawer가 열리고 credential_get이 호출된다", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // 목록 로드 대기
+    await waitFor(() => {
+      expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
+    });
+
+    // 첫 번째 카드 클릭
+    const card = screen.getByRole("button", { name: /openai api key/i });
+    await user.click(card);
+
+    // Drawer(Sheet) 헤더 확인 — SheetTitle은 heading role
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Credential details" })).toBeInTheDocument();
+    });
+
+    // credential_get 호출 확인
+    expect(mockInvoke).toHaveBeenCalledWith("credential_get", {
+      id: MOCK_CREDENTIALS[0].id,
     });
   });
 });

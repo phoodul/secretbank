@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CredentialDetail } from "./CredentialDetail";
 import { CredentialList } from "./CredentialList";
 import { useInventory } from "./use-inventory";
 import { CreateCredentialDialog } from "./CreateCredentialDialog";
@@ -19,6 +20,7 @@ export function InventoryPage() {
   const { t } = useTranslation("common");
   const { items, loading, error, filter, setFilter, search, setSearch, refresh } = useInventory();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const handleEnvChange = (value: string) => {
     if (value === "__all__") {
@@ -96,10 +98,21 @@ export function InventoryPage() {
       )}
 
       {/* 목록 */}
-      <CredentialList items={items} loading={loading} />
+      <CredentialList items={items} loading={loading} onSelect={setSelectedId} />
 
       {/* Credential 등록 다이얼로그 */}
       <CreateCredentialDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={refresh} />
+
+      {/* Credential 상세 Drawer */}
+      <CredentialDetail
+        open={selectedId !== null}
+        credentialId={selectedId}
+        onClose={() => setSelectedId(null)}
+        onDeleted={() => {
+          setSelectedId(null);
+          refresh();
+        }}
+      />
     </div>
   );
 }

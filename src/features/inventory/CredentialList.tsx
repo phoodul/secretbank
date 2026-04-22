@@ -7,6 +7,7 @@ import type { CredentialSummary } from "./types";
 interface CredentialListProps {
   items: CredentialSummary[];
   loading: boolean;
+  onSelect?: (id: string) => void;
 }
 
 function SkeletonGrid() {
@@ -32,14 +33,14 @@ function EmptyState() {
   );
 }
 
-export function CredentialList({ items, loading }: CredentialListProps) {
+export function CredentialList({ items, loading, onSelect }: CredentialListProps) {
   if (loading) return <SkeletonGrid />;
   if (items.length === 0) return <EmptyState />;
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {items.map((c) => (
-        <CredentialCard key={c.id} credential={c} />
+        <CredentialCard key={c.id} credential={c} onSelect={onSelect} />
       ))}
     </div>
   );
