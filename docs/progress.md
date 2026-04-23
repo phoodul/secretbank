@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T047 완료, **M3 7/8**)
-- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (7/8)**
-- **Commits:** 70개 누적 (최신 `1477c0f` perf: 그래프 렌더 최적화)
-- **Tests:** Rust 108+개 + Vitest 209개 통과 (+18 신규: areNodePropsEqual 유닛 10 + compact 렌더 8). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
+- **Time:** 2026-04-23 (T048 완료, **M3 8/8 ✅ — M3 종료**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 대기**
+- **Commits:** 72개 누적 (최신 `ebb9855` feat: 모바일 그래프 리스트 뷰)
+- **Tests:** Rust 108+개 + Vitest 221개 통과 (+12 신규: MobileGraphList 6 + useIsMobile 3 + GraphPage mobile 분기 2 + blast-radius 1). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반.
-- **Next:** T048.
+- **Next:** M4 T049 — Incident Feed (NVD/GitHub Advisory 피드 파서).
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
@@ -235,7 +235,7 @@
   3. BottomNav 6탭 UX 재검토 (Audit 을 Settings 내부로 이동?).
   4. Score factor 확장: usages 없음 factor 를 CredentialFull 전용으로 추가.
 
-## M3 진행 상황 (7/8)
+## M3 진행 상황 (8/8 ✅ 완료)
 
 ### 완료 ✅
 
@@ -246,6 +246,7 @@
 - **T045** 커스텀 노드 4종 (Issuer/Credential/Project/Deployment, React.memo, dagre handles) — 커밋 `07ff733`
 - **T046** Blast Radius 하이라이트 — 커밋 `4abe502`
 - **T047** Graph performance optimization — 커밋 `1477c0f`
+- **T048** Mobile graph alternate view (MobileGraphList + useIsMobile + GraphPage 분기) — 커밋 `ebb9855`
 
 ### T047 구현 교훈 (M3 후속 영향)
 
@@ -289,9 +290,10 @@
 - **도메인 모델 확인 결과**: `Credential.issuer_id`, `Usage.project_id`, `Deployment.project_id` 모두 non-Optional → 방어적 스킵 불필요. `Usage.deployment_id` 만 `Option` 이지만 현재 그래프 엣지 구성에는 안 쓰임 (DeployedAs 는 Deployment 측에서 도출).
 - **내부 `HashMap<NodeRef, NodeIndex>` 인덱스**: O(1) 노드 조회. T042 BFS 에서 `graph.node_index(NodeRef::Credential(id))` 로 시작점 잡을 때 활용.
 
-## Next Action (T048)
+## Next Action (M4 — T049)
 
-- **T048** — M3 마지막 태스크. 구체적 내용은 task.md T048 참조.
+- **M3 완료**. 다음은 M4 Incident Feed (T049~T058).
+- **T049** — NVD/GitHub Advisory 피드 파서 구현 예정.
 - DoD:
   - `src/features/graph/use-blast-radius-selection.ts` — 클릭 이벤트로 `invoke<BlastRadius>('blast_radius_for_credential', { id })` 호출. 로딩/에러/결과 상태 관리.
   - 결과에 따라 각 노드에 `data-status="primary|secondary|tertiary|dimmed"` 적용 (또는 `data.status` 로 React Flow data 에 주입).

@@ -31,8 +31,8 @@
 | M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료       |
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
-| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | 🔄 7/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기             |
+| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 대기             |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -99,8 +99,9 @@
 | T045    | 커스텀 React Flow 노드 4종 (Issuer/Credential/Project/Deployment) | 2026-04-23 | `07ff733` |
 | T046    | Blast Radius Highlight — credential 클릭 시 노드 3단계 강조     | 2026-04-23 | `4abe502` |
 | T047    | Graph performance optimization — memo 비교 + 뷰포트 컬링 + compact 모드 | 2026-04-23 | `1477c0f` |
+| T048    | Mobile graph alternate view — MobileGraphList + useIsMobile + GraphPage mobile 분기 | 2026-04-23 | `ebb9855` |
 
-**완료 합계**: 47/118 (M0 완료 + M1 완료 + M2 완료 ✅ + **M3 7/8**)
+**완료 합계**: 48/118 (M0 완료 + M1 완료 + M2 완료 ✅ + **M3 완료 ✅**)
 
 ---
 

@@ -1,5 +1,18 @@
 # Work Log
 
+## 2026-04-23 (T048 완료 — **M3 8/8 ✅, M3 종료**)
+
+### T048 — Mobile Graph List View (커밋 `ebb9855`)
+
+- **use-is-mobile.ts**: 기존 `usePlatform()` (src/lib/platform.ts)을 래핑하는 얇은 훅. `'web'`→`'desktop'` 매핑 포함. `@tauri-apps/plugin-os`의 `platform()`은 v2.x에서 동기 함수이나, 모듈 dynamic import가 비동기라 usePlatform()이 async-refine 패턴을 사용 중.
+- **MobileGraphList.tsx**: 신규 컴포넌트. Credentials 목록 + blast radius 버킷 트리 (ImpactTree 서브컴포넌트). 빈 credential 상태, 탭 토글(같은 credential 재탭 시 clear), loading/error 상태 렌더 포함.
+- **GraphPage.tsx**: `useIsMobile()` 통합. `data-testid="desktop-graph-page"/"mobile-graph-page"` 분기.
+- **use-blast-radius-selection.ts**: `OkState`에 `buckets: BlastRadius` 필드 추가. 기존 `statusMap` 소비자(DependencyGraph) 영향 없음.
+- **i18n**: 4개 로케일(en/ko/ja/zh) `graph.mobile.*` 키 추가.
+- **테스트 12개 추가**: MobileGraphList 6 + use-is-mobile 3 + GraphPage platform 분기 2 + blast-radius selection 기존 확장 1. 총 209 → 221.
+- **GraphPage 테스트 전략**: 모듈레벨 `vi.mock('../use-is-mobile', ...)` + 파일 스코프 `mockUseIsMobile = vi.fn()`으로 테스트별 `mockReturnValue` 재정의. `vi.doMock` + dynamic import는 hoisted mock 캐시를 이기지 못해 폐기.
+- **검증**: typecheck exit 0 / lint 0 errors / Vitest 221 pass (27 files) / cargo clippy exit 0.
+
 ## 2026-04-23 (T046 완료 — **M3 6/8**)
 
 ### T046 — Blast Radius Highlight (커밋 `4abe502`)
