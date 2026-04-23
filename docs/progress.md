@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 15:49 KST (T041 완료, **M3 1/8**)
-- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (1/8)**
-- **Commits:** 58개 누적 (최신 `f6cfb3f` docs: T041 완료 기록; 직전 `5256f71` feat(core): T041 PetGraph 그래프 엔진)
-- **Tests:** Rust 99+개 (+4 graph 유닛) + Vitest 140개 통과. `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
+- **Time:** 2026-04-23 17:03 KST (T042 완료, **M3 2/8**)
+- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (2/8)**
+- **Commits:** 61개 누적 (최신 `d878179` docs: T042 완료; 직전 `533485c` feat(core): T042 BFS 엔진)
+- **Tests:** Rust 104+개 (+5 blast_radius 유닛 = 누적 18 in api-vault-core) + Vitest 140개 통과. `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반.
-- **Next:** T042 Blast Radius 계산 (BFS with depth tracking on DependencyGraph).
+- **Next:** T043 Tauri 커맨드 `graph_fetch` / `blast_radius_for_credential` (프론트엔드 페이로드 직렬화).
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
@@ -235,11 +235,20 @@
   3. BottomNav 6탭 UX 재검토 (Audit 을 Settings 내부로 이동?).
   4. Score factor 확장: usages 없음 factor 를 CredentialFull 전용으로 추가.
 
-## M3 진행 상황 (1/8)
+## M3 진행 상황 (2/8)
 
 ### 완료 ✅
 
 - **T041** `api-vault-core` 그래프 모델 (petgraph DiGraph) — 커밋 `5256f71`
+- **T042** Blast Radius BFS (primary/secondary/tertiary depth buckets) — 커밋 `533485c`
+
+### T042 구현 교훈 (M3 후속 영향)
+
+- **방향성 확정**: `Direction::Outgoing` 만 따름. Credential → Project → Deployment 로 *아래로* 전파. Issuer 는 상위 노드라 결과에 포함 안 됨. T046 UI 하이라이트 시 "이 키를 잃으면 영향받는 것들" 의 직관과 일치.
+- **`BlastRadius { primary, secondary, tertiary }` 3-버킷 구조 유지**: 현재 모델에서는 tertiary 가 거의 빈 값이지만, 향후 URL/Service/Region 등 하위 노드 확장 여지를 위해 API 수축하지 않음.
+- **미존재 credential → 빈 값 (panic/Option 없음)**: T043 Tauri 커맨드가 `BlastRadius` 를 직렬화해 프론트로 보낼 때 `null` 이나 에러 분기 없이 빈 배열 3개로 통일 가능.
+- **결정론적 정렬**: `(discriminant, ULID string)` 기준. 같은 입력에 대해 항상 같은 출력 → React Flow 렌더 순서, 스냅샷 테스트, diff 친화적.
+- **`graph.rs` 불변**: 접근자 `node_index(NodeRef) -> Option<NodeIndex>` + `as_inner()` 만으로 BFS 구현 충분. T041 이 깔아둔 API 가 충분히 만족. 추가 확장 불필요.
 
 ### T041 구현 교훈 (M3 후속 영향)
 
@@ -250,11 +259,20 @@
 - **도메인 모델 확인 결과**: `Credential.issuer_id`, `Usage.project_id`, `Deployment.project_id` 모두 non-Optional → 방어적 스킵 불필요. `Usage.deployment_id` 만 `Option` 이지만 현재 그래프 엣지 구성에는 안 쓰임 (DeployedAs 는 Deployment 측에서 도출).
 - **내부 `HashMap<NodeRef, NodeIndex>` 인덱스**: O(1) 노드 조회. T042 BFS 에서 `graph.node_index(NodeRef::Credential(id))` 로 시작점 잡을 때 활용.
 
-## Next Action (T042)
+## Next Action (T043)
 
-- **T042 Blast Radius 계산** — `crates/api-vault-core/src/blast_radius.rs` 신설.
-- 시그니처: `pub fn blast_radius(graph: &DependencyGraph, cred_id: CredentialId) -> BlastRadius { primary, secondary, tertiary }` (각각 `Vec<NodeRef>`).
-- BFS with depth tracking: depth 1 = primary, depth 2 = secondary, depth 3+ = tertiary.
-- 방향: Credential 시작 → outgoing edges 따라 하위 (Project, Deployment) 로 전파. Issuer 는 상위 노드라 포함 대상 아님.
-- DoD 테스트: Issuer→Cred→Usage→Project→Deployment 체인에서 `blast_radius(cred)` 가 Project (primary) + Deployment (secondary) 포함 확인.
-- 선행 확인: T041 에서 노출한 `as_inner()`, `node_index()` 접근자를 사용해 petgraph 의 `Bfs` / `visit::Bfs` 또는 수동 queue BFS 구현.
+- **T043 Tauri 커맨드 `graph_fetch` / `blast_radius_for_credential`** — `src-tauri/crates/api-vault-app/src/commands/graph.rs` 신설.
+- DoD:
+  - `graph_fetch() -> GraphPayload { nodes: Vec<GraphNode>, edges: Vec<GraphEdge> }` — React Flow 친화 형태로 `NodeRef` / `EdgeKind` 변환.
+  - `GraphNode { id: String, kind: NodeKind, label: String, meta_json: serde_json::Value }` — React Flow 의 `Node<T>` 에 매핑.
+  - `GraphEdge { id: String, source: String, target: String, kind: EdgeKind }`.
+  - `blast_radius_for_credential(id: CredentialId) -> BlastRadius` — T042 결과 그대로 반환.
+- 구현 스케치:
+  1. 명령 핸들러에서 `AppState` (or DbPool) 추출 → 각 repo (`IssuerRepo`, `CredentialRepo`, `UsageRepo`, `ProjectRepo`, `DeploymentRepo`) 의 `list()` 호출해 Vec 수집.
+  2. `DependencyGraph::build(&issuers, &credentials, &usages, &projects, &deployments)` 로 그래프 조립.
+  3. `graph.nodes()` / `graph.edges()` 순회하면서 `NodeRef` → `GraphNode` 변환. label 은 credential 의 경우 `name`, project 의 경우 `name`, deployment 의 경우 `env+platform` 식으로 조립.
+  4. `commands/mod.rs` 에 `graph::graph_fetch`, `graph::blast_radius_for_credential` 등록 + `tauri::Builder::invoke_handler` 추가.
+- 선행 확인:
+  - `crates/api-vault-app/src/commands/` 의 기존 커맨드 하나를 읽어 AppState 패턴 확인 (예: credential.rs 또는 project.rs).
+  - `api-vault-app/Cargo.toml` 에 `api-vault-core` 이미 의존하므로 추가 의존성 불필요 (storage 도 이미 의존).
+- 테스트: 유닛 레벨에서 `GraphPayload` serde JSON 직렬화 → `{ "nodes": [...], "edges": [...] }` 모양 확인.
