@@ -1,5 +1,21 @@
 # Work Log
 
+## 2026-04-23 (T046 완료 — **M3 6/8**)
+
+### T046 — Blast Radius Highlight (커밋 `4abe502`)
+
+- **NodeRef JSON 형태 확인**: `#[serde(tag = "kind", content = "id", rename_all = "snake_case")]` → `{ "kind": "credential", "id": "01H..." }` 형식.
+- **신규 타입**: `BlastRadius`, `BlastRadiusNode` (types.ts); `NodeSelectionStatus`, `GraphNodeData.status?` (adapter.ts).
+- **신규 훅**: `use-blast-radius-selection.ts` — union state (idle/loading/ok/error), stale 요청 무시 (`reqIdRef`), `isActiveRef`로 불필요한 setState 방지 (무한루프 방지).
+- **DependencyGraph.tsx**: `onNodeClick` (credential 전용, toggle off), Esc 이벤트 리스너, `nodesWithStatus` useMemo (파생 계산, 상태 변이 없음). `selectionClear/Select/State`를 destructure해 useEffect deps 안정화.
+- **노드 컴포넌트 4종**: `data-status` attribute + outline 클래스 + inline style (outlineColor/outlineStyle) — tailwind-merge가 `outline` 단독 클래스를 `outline-[3px]`와 같은 카테고리로 deduplicate하는 현상 확인 → `data-status` 속성으로 테스트 assertion 변경.
+- **색맹 대응**: primary=3px solid / secondary=2px dashed / tertiary=1px dotted + opacity-35 dimmed.
+- **i18n**: 4개 로케일에 `graph.blastRadius.{loading,error,clearHint}` 추가.
+- **테스트 18개 추가**: hook 6 (idle/loading-ok/clear/stale/error-object/error-string) + DependencyGraph 통합 4 (via GraphPage) + nodes status assertion 8.
+- **핵심 버그 해결**: `useReactFlow: () => ({ fitView: vi.fn() })`이 매 렌더마다 새 fitView 생성 → useEffect 무한 재실행 → selectionClear() → 상태 리셋. 해결: factory closure 내 stable 참조 생성.
+- **Tailwind v4**: `outline-dashed`/`outline-dotted` 유틸리티 없음 → `outlineStyle` inline style 폴백.
+- **검증**: typecheck exit 0 / lint 0 errors (기존 6 warning 유지) / Vitest 191 pass (24 files) / cargo clippy exit 0.
+
 ## 2026-04-23 (T044 완료 — **M3 4/8**)
 
 ### T044 — React Flow + dagre 레이아웃 /graph 페이지 (커밋 `b118c99`)

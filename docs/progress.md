@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 20:02 KST (T045 완료, **M3 5/8**)
-- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (5/8)**
-- **Commits:** 67개 누적 (최신 `41d518c` docs: T045 완료; 직전 `07ff733` feat: 그래프 커스텀 노드 4종)
-- **Tests:** Rust 108+개 + Vitest 173개 통과 (+18 신규: 노드 16 + adapter 2). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
+- **Time:** 2026-04-23 (T046 완료, **M3 6/8**)
+- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (6/8)**
+- **Commits:** 69개 누적 (최신 `4abe502` feat: 블래스트 반경 하이라이트)
+- **Tests:** Rust 108+개 + Vitest 191개 통과 (+18 신규: hook 6 + DependencyGraph 통합 4 + nodes status 8). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반.
-- **Next:** T046 Blast Radius 하이라이트 (credential 노드 클릭 시 하위 노드 primary/secondary/tertiary 단계별 시각화 + 나머지 dim).
+- **Next:** T047 또는 T048.
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
