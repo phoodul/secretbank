@@ -31,7 +31,7 @@
 | M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료       |
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
-| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | 🔄 4/8 완료         |
+| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | 🔄 5/8 완료         |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기             |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
@@ -96,8 +96,9 @@
 | T042    | Credential blast radius BFS 엔진                                | 2026-04-23 | `533485c` |
 | T043    | Tauri commands `graph_fetch` + `blast_radius_for_credential`    | 2026-04-23 | `67cee48` |
 | T044    | React Flow 셋업 + dagre 레이아웃 /graph 페이지                  | 2026-04-23 | `b118c99` |
+| T045    | 커스텀 React Flow 노드 4종 (Issuer/Credential/Project/Deployment) | 2026-04-23 | `07ff733` |
 
-**완료 합계**: 44/118 (M0 완료 + M1 완료 + M2 완료 ✅ + **M3 4/8**)
+**완료 합계**: 45/118 (M0 완료 + M1 완료 + M2 완료 ✅ + **M3 5/8**)
 
 ---
 
