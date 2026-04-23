@@ -316,6 +316,11 @@
       "credential": "認証情報",
       "project": "プロジェクト",
       "deployment": "デプロイ"
+    },
+    "blastRadius": {
+      "loading": "ブラスト半径を計算中…",
+      "error": "ブラスト半径の計算に失敗しました",
+      "clearHint": "Esc キーで選択を解除"
     }
   },
   "commandPalette": {

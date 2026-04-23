@@ -37,3 +37,30 @@ export interface GraphPayload {
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
+
+// ---------------------------------------------------------------------------
+// Blast Radius types
+// ---------------------------------------------------------------------------
+
+/**
+ * One node reference in a blast-radius bucket.
+ *
+ * Mirrors the Rust `NodeRef` enum which is serialised with:
+ *   #[serde(tag = "kind", content = "id", rename_all = "snake_case")]
+ * so the JSON shape is: { "kind": "credential", "id": "01H…" }
+ */
+export interface BlastRadiusNode {
+  kind: NodeKind;
+  id: string;
+}
+
+export interface BlastRadius {
+  primary: BlastRadiusNode[];
+  secondary: BlastRadiusNode[];
+  tertiary: BlastRadiusNode[];
+}
+
+/** Extract the ULID string from a BlastRadiusNode. */
+export function blastNodeId(n: BlastRadiusNode): string {
+  return n.id;
+}

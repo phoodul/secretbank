@@ -316,6 +316,11 @@
       "credential": "Credential",
       "project": "Project",
       "deployment": "Deployment"
+    },
+    "blastRadius": {
+      "loading": "Computing blast radius…",
+      "error": "Failed to compute blast radius",
+      "clearHint": "Press Esc to clear selection"
     }
   },
   "commandPalette": {

@@ -316,6 +316,11 @@
       "credential": "凭证",
       "project": "项目",
       "deployment": "部署"
+    },
+    "blastRadius": {
+      "loading": "正在计算爆炸半径…",
+      "error": "计算爆炸半径失败",
+      "clearHint": "按 Esc 清除选择"
     }
   },
   "commandPalette": {

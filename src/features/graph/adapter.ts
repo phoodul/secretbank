@@ -2,6 +2,9 @@ import type { Edge, Node } from '@xyflow/react';
 import type { GraphEdge, GraphNode, GraphPayload, NodeKind } from './types';
 import { getLayoutedElements, type LayoutDirection } from './layout';
 
+/** Visual status assigned to a node when a blast-radius selection is active. */
+export type NodeSelectionStatus = 'primary' | 'secondary' | 'tertiary' | 'dimmed';
+
 export interface GraphNodeData extends Record<string, unknown> {
   label: string;
   kind: NodeKind;
@@ -9,6 +12,8 @@ export interface GraphNodeData extends Record<string, unknown> {
   meta: Record<string, unknown>;
   /** current layout direction — used by node components to pick handle positions */
   direction: LayoutDirection;
+  /** Present only when a blast-radius selection is active. */
+  status?: NodeSelectionStatus;
 }
 
 function toFlowNode(node: GraphNode, direction: LayoutDirection): Node<GraphNodeData> {

@@ -316,6 +316,11 @@
       "credential": "자격증명",
       "project": "프로젝트",
       "deployment": "배포"
+    },
+    "blastRadius": {
+      "loading": "블래스트 반경 계산 중…",
+      "error": "블래스트 반경 계산 실패",
+      "clearHint": "Esc 키를 눌러 선택 해제"
     }
   },
   "commandPalette": {

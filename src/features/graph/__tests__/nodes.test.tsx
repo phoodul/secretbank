@@ -76,6 +76,21 @@ describe('IssuerNode', () => {
     render(<IssuerNode {...makeProps({ ...data, direction: 'LR' })} />);
     expect(screen.getByText('GitHub')).toBeInTheDocument();
   });
+
+  it('status=dimmed → data-status="dimmed" 속성 포함 + opacity-35 클래스', () => {
+    const { container } = render(<IssuerNode {...makeProps({ ...data, status: 'dimmed' })} />);
+    const card = container.querySelector('[data-status="dimmed"]');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('opacity-35');
+  });
+
+  it('status=primary → data-status="primary" + outline-[3px] 클래스', () => {
+    const { container } = render(<IssuerNode {...makeProps({ ...data, status: 'primary' })} />);
+    const card = container.querySelector('[data-status="primary"]');
+    expect(card).not.toBeNull();
+    // tailwind-merge keeps outline-[3px] (width) even when 'outline' standalone is deduplicated
+    expect(card?.className).toContain('outline-[3px]');
+  });
 });
 
 describe('CredentialNode', () => {
@@ -105,6 +120,20 @@ describe('CredentialNode', () => {
   it('LR 방향에서도 렌더링 성공', () => {
     render(<CredentialNode {...makeProps({ ...data, direction: 'LR' })} />);
     expect(screen.getByText('My GitHub Token')).toBeInTheDocument();
+  });
+
+  it('status=dimmed → data-status="dimmed" + opacity-35 클래스', () => {
+    const { container } = render(<CredentialNode {...makeProps({ ...data, status: 'dimmed' })} />);
+    const card = container.querySelector('[data-status="dimmed"]');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('opacity-35');
+  });
+
+  it('status=primary → data-status="primary" + outline-[3px] 클래스', () => {
+    const { container } = render(<CredentialNode {...makeProps({ ...data, status: 'primary' })} />);
+    const card = container.querySelector('[data-status="primary"]');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('outline-[3px]');
   });
 });
 
@@ -136,6 +165,20 @@ describe('ProjectNode', () => {
     render(<ProjectNode {...makeProps({ ...data, direction: 'LR' })} />);
     expect(screen.getByText('My App')).toBeInTheDocument();
   });
+
+  it('status=dimmed → data-status="dimmed" + opacity-35 클래스', () => {
+    const { container } = render(<ProjectNode {...makeProps({ ...data, status: 'dimmed' })} />);
+    const card = container.querySelector('[data-status="dimmed"]');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('opacity-35');
+  });
+
+  it('status=primary → data-status="primary" + outline-[3px] 클래스', () => {
+    const { container } = render(<ProjectNode {...makeProps({ ...data, status: 'primary' })} />);
+    const card = container.querySelector('[data-status="primary"]');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('outline-[3px]');
+  });
 });
 
 describe('DeploymentNode', () => {
@@ -165,5 +208,19 @@ describe('DeploymentNode', () => {
   it('LR 방향에서도 렌더링 성공', () => {
     render(<DeploymentNode {...makeProps({ ...data, direction: 'LR' })} />);
     expect(screen.getByText('prod-server')).toBeInTheDocument();
+  });
+
+  it('status=dimmed → data-status="dimmed" + opacity-35 클래스', () => {
+    const { container } = render(<DeploymentNode {...makeProps({ ...data, status: 'dimmed' })} />);
+    const card = container.querySelector('[data-status="dimmed"]');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('opacity-35');
+  });
+
+  it('status=primary → data-status="primary" + outline-[3px] 클래스', () => {
+    const { container } = render(<DeploymentNode {...makeProps({ ...data, status: 'primary' })} />);
+    const card = container.querySelector('[data-status="primary"]');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('outline-[3px]');
   });
 });

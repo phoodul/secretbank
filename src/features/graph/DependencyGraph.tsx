@@ -1,6 +1,6 @@
 import '@xyflow/react/dist/style.css';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Background,
   Controls,
@@ -19,6 +19,7 @@ import { toReactFlowElements, type GraphNodeData } from './adapter';
 import type { LayoutDirection } from './layout';
 import { nodeTypes } from './node-types';
 import type { GraphPayload } from './types';
+import { useBlastRadiusSelection } from './use-blast-radius-selection';
 
 // ---------------------------------------------------------------------------
 // Inner component (needs to be inside ReactFlowProvider to call useReactFlow)
@@ -40,15 +41,55 @@ function InnerGraph({ payload, direction, onToggle }: InnerGraphProps) {
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialElements.edges);
 
+  const { state: selectionState, select: selectionSelect, clear: selectionClear } = useBlastRadiusSelection();
+
   // Re-layout when payload or direction changes
   useEffect(() => {
     const { nodes: ln, edges: le } = toReactFlowElements(payload, direction);
     setNodes(ln);
     setEdges(le);
+    // Clear blast-radius selection when graph data reloads
+    selectionClear();
     requestAnimationFrame(() => {
       fitView({ padding: 0.15 });
     });
-  }, [payload, direction, setNodes, setEdges, fitView]);
+  }, [payload, direction, setNodes, setEdges, fitView, selectionClear]);
+
+  // Click on a credential node → load blast radius; click again → toggle off
+  const onNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node<GraphNodeData>) => {
+      if (node.data.kind !== 'credential') return;
+      if (
+        selectionState.phase !== 'idle' &&
+        'credentialId' in selectionState &&
+        selectionState.credentialId === node.id
+      ) {
+        selectionClear();
+        return;
+      }
+      selectionSelect(node.id);
+    },
+    [selectionState, selectionSelect, selectionClear],
+  );
+
+  // Esc key clears selection
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') selectionClear();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectionClear]);
+
+  // Derive nodes with blast-radius status injected (does NOT mutate state)
+  const nodesWithStatus = useMemo(() => {
+    if (selectionState.phase !== 'ok') return nodes;
+    const sm = selectionState.statusMap;
+    return nodes.map((n) => {
+      const status = sm[n.id] ?? 'dimmed';
+      return { ...n, data: { ...n.data, status } };
+    });
+  }, [nodes, selectionState]);
 
   return (
     <div className="relative h-full w-full">
@@ -63,12 +104,19 @@ function InnerGraph({ payload, direction, onToggle }: InnerGraphProps) {
         </Button>
       </div>
 
+      {selectionState.phase === 'ok' && (
+        <p className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-md bg-background/80 px-3 py-1 text-xs text-muted-foreground shadow backdrop-blur-sm">
+          {t('graph.blastRadius.clearHint')}
+        </p>
+      )}
+
       <ReactFlow
-        nodes={nodes}
+        nodes={nodesWithStatus}
         edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
         fitView
         fitViewOptions={{ padding: 0.15 }}
         minZoom={0.1}
