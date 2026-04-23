@@ -13,7 +13,13 @@ export type StatusMap = Record<string, NodeSelectionStatus>;
 
 type IdleState = { phase: 'idle' };
 type LoadingState = { phase: 'loading'; credentialId: string };
-type OkState = { phase: 'ok'; credentialId: string; statusMap: StatusMap };
+type OkState = {
+  phase: 'ok';
+  credentialId: string;
+  statusMap: StatusMap;
+  /** Raw blast-radius buckets — consumed by MobileGraphList for the impact tree. */
+  buckets: BlastRadius;
+};
 type ErrorState = { phase: 'error'; credentialId: string; message: string };
 
 export type BlastRadiusState = IdleState | LoadingState | OkState | ErrorState;
@@ -67,7 +73,7 @@ export function useBlastRadiusSelection(): UseBlastRadiusSelection {
           statusMap[n.id] = 'tertiary';
         });
 
-        setState({ phase: 'ok', credentialId, statusMap });
+        setState({ phase: 'ok', credentialId, statusMap, buckets: br });
       })
       .catch((err: unknown) => {
         if (rid !== reqIdRef.current) return; // stale — discard

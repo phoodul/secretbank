@@ -5,6 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@/lib/i18n';
 import { GraphPage } from '../GraphPage';
 import type { GraphPayload } from '../types';
+import type { MobilePhase } from '../use-is-mobile';
+
+// ---------------------------------------------------------------------------
+// Mock useIsMobile — defaults to 'desktop'; tests can override via mockReturnValue.
+// ---------------------------------------------------------------------------
+const mockUseIsMobile = vi.fn<[], MobilePhase>(() => 'desktop');
+vi.mock('../use-is-mobile', () => ({
+  useIsMobile: () => mockUseIsMobile(),
+}));
 
 // ---------------------------------------------------------------------------
 // Mock @tauri-apps/api/core
@@ -62,6 +71,7 @@ function renderPage() {
 describe('GraphPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue('desktop');
   });
 
   afterEach(() => {
@@ -104,5 +114,33 @@ describe('GraphPage', () => {
     });
 
     expect(screen.getByRole('button', { name: /retry|재시도/i })).toBeInTheDocument();
+  });
+
+  it('데스크톱 플랫폼 — DependencyGraph 렌더 (rf-provider 존재)', async () => {
+    mockUseIsMobile.mockReturnValue('desktop');
+    mockInvoke.mockResolvedValueOnce(FIXTURE);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('desktop-graph-page')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('rf-provider')).toBeInTheDocument();
+    expect(screen.queryByTestId('mobile-graph-page')).not.toBeInTheDocument();
+  });
+
+  it('모바일 플랫폼 — MobileGraphList 렌더, DependencyGraph 없음', async () => {
+    mockUseIsMobile.mockReturnValue('mobile');
+    mockInvoke.mockResolvedValueOnce(FIXTURE);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mobile-graph-page')).toBeInTheDocument();
+    });
+
+    // MobileGraphList renders the credential list
+    expect(screen.getByText('My Token')).toBeInTheDocument();
+    // React Flow provider is NOT present
+    expect(screen.queryByTestId('rf-provider')).not.toBeInTheDocument();
   });
 });

@@ -3,13 +3,16 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { DependencyGraph } from './DependencyGraph';
+import { MobileGraphList } from './MobileGraphList';
 import { useGraphData } from './use-graph-data';
 import { useGraphNodesDraggable } from './use-graph-nodes-draggable';
+import { useIsMobile } from './use-is-mobile';
 
 export function GraphPage() {
   const { t } = useTranslation('common');
   const { state, refresh } = useGraphData();
   const [draggable] = useGraphNodesDraggable();
+  const platform = useIsMobile();
 
   if (state.phase === 'loading') {
     return (
@@ -48,8 +51,24 @@ export function GraphPage() {
     );
   }
 
+  // Mobile branch — hierarchical list view
+  if (platform === 'mobile') {
+    return (
+      <div className="flex h-full flex-col" data-testid="mobile-graph-page">
+        <header className="border-b px-4 py-3">
+          <h1 className="text-xl font-semibold">{t('graph.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('graph.mobile.subtitle')}</p>
+        </header>
+        <div className="flex-1 overflow-auto">
+          <MobileGraphList payload={state.data} />
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop branch — interactive React Flow graph
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" data-testid="desktop-graph-page">
       <header className="border-b px-4 py-3">
         <h1 className="text-xl font-semibold">{t('graph.title')}</h1>
         <p className="text-sm text-muted-foreground">{t('graph.subtitle')}</p>

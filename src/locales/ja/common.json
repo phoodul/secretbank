@@ -325,6 +325,18 @@
       "loading": "ブラスト半径を計算中…",
       "error": "ブラスト半径の計算に失敗しました",
       "clearHint": "Esc キーで選択を解除"
+    },
+    "mobile": {
+      "subtitle": "認証情報をタップすると影響範囲を確認できます。",
+      "credentialsTitle": "認証情報",
+      "impactTitle": "{{name}} の影響範囲",
+      "clear": "クリア",
+      "empty": "分析できる認証情報がまだありません。",
+      "bucket": {
+        "primary": "第1層（直接接続されたプロジェクト）",
+        "secondary": "第2層（デプロイ環境）",
+        "tertiary": "第3層（さらなる影響範囲）"
+      }
     }
   },
   "commandPalette": {

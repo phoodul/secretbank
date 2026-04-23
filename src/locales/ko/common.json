@@ -325,6 +325,18 @@
       "loading": "블래스트 반경 계산 중…",
       "error": "블래스트 반경 계산 실패",
       "clearHint": "Esc 키를 눌러 선택 해제"
+    },
+    "mobile": {
+      "subtitle": "자격증명을 탭하면 영향 범위를 확인할 수 있습니다.",
+      "credentialsTitle": "자격증명",
+      "impactTitle": "{{name}}의 영향 범위",
+      "clear": "초기화",
+      "empty": "분석할 자격증명이 아직 없습니다.",
+      "bucket": {
+        "primary": "1차 (직접 연결된 프로젝트)",
+        "secondary": "2차 (배포 환경)",
+        "tertiary": "3차 (추가 영향 범위)"
+      }
     }
   },
   "commandPalette": {

@@ -325,6 +325,18 @@
       "loading": "正在计算爆炸半径…",
       "error": "计算爆炸半径失败",
       "clearHint": "按 Esc 清除选择"
+    },
+    "mobile": {
+      "subtitle": "点击凭证即可查看其影响范围。",
+      "credentialsTitle": "凭证",
+      "impactTitle": "{{name}} 的影响范围",
+      "clear": "清除",
+      "empty": "暂无可分析的凭证。",
+      "bucket": {
+        "primary": "第一层（直接关联的项目）",
+        "secondary": "第二层（部署环境）",
+        "tertiary": "第三层（更深影响范围）"
+      }
     }
   },
   "commandPalette": {

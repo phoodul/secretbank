@@ -325,6 +325,18 @@
       "loading": "Computing blast radius…",
       "error": "Failed to compute blast radius",
       "clearHint": "Press Esc to clear selection"
+    },
+    "mobile": {
+      "subtitle": "Tap a credential to see its impact.",
+      "credentialsTitle": "Credentials",
+      "impactTitle": "Blast radius of {{name}}",
+      "clear": "Clear",
+      "empty": "No credentials to analyze yet.",
+      "bucket": {
+        "primary": "Primary (directly connected)",
+        "secondary": "Secondary (deployments)",
+        "tertiary": "Tertiary (further reaches)"
+      }
     }
   },
   "commandPalette": {
