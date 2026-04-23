@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import type { GraphNodeData } from '../adapter';
+import { areNodePropsEqual } from './shared';
 
 function DeploymentNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
   const { t } = useTranslation('common');
@@ -46,10 +47,12 @@ function DeploymentNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
             {t('graph.kind.deployment')}
           </span>
         </div>
-        <div className="mt-1 truncate text-sm font-semibold text-foreground">{data.label}</div>
+        {!data.compact && (
+          <div className="mt-1 truncate text-sm font-semibold text-foreground">{data.label}</div>
+        )}
       </Card>
     </>
   );
 }
 
-export const DeploymentNode = memo(DeploymentNodeInner);
+export const DeploymentNode = memo(DeploymentNodeInner, areNodePropsEqual);

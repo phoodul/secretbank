@@ -42,7 +42,11 @@
     "sourceCode": "ソースコード",
     "openAgpl": "AGPL-3.0ライセンスを表示",
     "openRepo": "GitHubリポジトリを開く",
-    "saveFailed": "設定の保存に失敗しました"
+    "saveFailed": "設定の保存に失敗しました",
+    "graph": "グラフ",
+    "performance": {
+      "draggableToggle": "ノードのドラッグを許可"
+    }
   },
   "inventory": {
     "title": "インベントリ",

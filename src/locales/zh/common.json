@@ -42,7 +42,11 @@
     "sourceCode": "源代码",
     "openAgpl": "查看 AGPL-3.0 许可证",
     "openRepo": "打开 GitHub 仓库",
-    "saveFailed": "保存设置失败"
+    "saveFailed": "保存设置失败",
+    "graph": "图形",
+    "performance": {
+      "draggableToggle": "允许拖动节点"
+    }
   },
   "inventory": {
     "title": "清单",

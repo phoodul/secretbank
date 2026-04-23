@@ -42,7 +42,11 @@
     "sourceCode": "Source code",
     "openAgpl": "View AGPL-3.0 license",
     "openRepo": "Open GitHub repository",
-    "saveFailed": "Failed to save setting"
+    "saveFailed": "Failed to save setting",
+    "graph": "Graph",
+    "performance": {
+      "draggableToggle": "Allow dragging nodes"
+    }
   },
   "inventory": {
     "title": "Inventory",

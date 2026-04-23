@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import type { GraphNodeData } from '../adapter';
+import { areNodePropsEqual } from './shared';
 
 function IssuerNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
   const { t } = useTranslation('common');
@@ -41,7 +42,9 @@ function IssuerNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
             {t('graph.kind.issuer')}
           </span>
         </div>
-        <div className="mt-1 truncate text-sm font-semibold text-foreground">{data.label}</div>
+        {!data.compact && (
+          <div className="mt-1 truncate text-sm font-semibold text-foreground">{data.label}</div>
+        )}
       </Card>
       <Handle
         type="source"
@@ -52,4 +55,4 @@ function IssuerNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
   );
 }
 
-export const IssuerNode = memo(IssuerNodeInner);
+export const IssuerNode = memo(IssuerNodeInner, areNodePropsEqual);

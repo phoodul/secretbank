@@ -29,6 +29,7 @@ vi.mock('@xyflow/react', async () => {
     useNodesState: (init: unknown[]) => [init, vi.fn(), vi.fn()],
     useEdgesState: (init: unknown[]) => [init, vi.fn(), vi.fn()],
     useReactFlow: () => ({ fitView: vi.fn() }),
+    useViewport: () => ({ zoom: 1, x: 0, y: 0 }),
     Panel: ({ children }: { children?: React.ReactNode }) =>
       React.createElement('div', {}, children),
   };

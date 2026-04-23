@@ -42,7 +42,11 @@
     "sourceCode": "소스 코드",
     "openAgpl": "AGPL-3.0 라이선스 보기",
     "openRepo": "GitHub 저장소 열기",
-    "saveFailed": "설정 저장에 실패했습니다"
+    "saveFailed": "설정 저장에 실패했습니다",
+    "graph": "그래프",
+    "performance": {
+      "draggableToggle": "노드 드래그 허용"
+    }
   },
   "inventory": {
     "title": "인벤토리",

@@ -14,6 +14,11 @@ export interface GraphNodeData extends Record<string, unknown> {
   direction: LayoutDirection;
   /** Present only when a blast-radius selection is active. */
   status?: NodeSelectionStatus;
+  /**
+   * Compact mode: hides node label to reduce visual noise.
+   * Activated when node count > 200 AND zoom < 0.5.
+   */
+  compact?: boolean;
 }
 
 function toFlowNode(node: GraphNode, direction: LayoutDirection): Node<GraphNodeData> {

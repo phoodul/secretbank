@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { DependencyGraph } from './DependencyGraph';
 import { useGraphData } from './use-graph-data';
+import { useGraphNodesDraggable } from './use-graph-nodes-draggable';
 
 export function GraphPage() {
   const { t } = useTranslation('common');
   const { state, refresh } = useGraphData();
+  const [draggable] = useGraphNodesDraggable();
 
   if (state.phase === 'loading') {
     return (
@@ -53,7 +55,7 @@ export function GraphPage() {
         <p className="text-sm text-muted-foreground">{t('graph.subtitle')}</p>
       </header>
       <div className="flex-1" style={{ minHeight: 0 }}>
-        <DependencyGraph payload={state.data} />
+        <DependencyGraph payload={state.data} nodesDraggable={draggable} />
       </div>
     </div>
   );

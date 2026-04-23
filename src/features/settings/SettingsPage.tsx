@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useGraphNodesDraggable } from "@/features/graph/use-graph-nodes-draggable";
 
 import { type AutoLockMinutes, useAutoLockMinutes } from "./use-settings";
 
@@ -52,6 +53,7 @@ export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { value: autoLock, loading: autoLockLoading, setValue: setAutoLock } = useAutoLockMinutes();
+  const [draggable, setDraggable] = useGraphNodesDraggable();
 
   const currentLang = i18n.language.startsWith("ko")
     ? "ko"
@@ -135,6 +137,39 @@ export function SettingsPage() {
               </SelectContent>
             </Select>
           )}
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Graph                                                                */}
+      {/* ------------------------------------------------------------------ */}
+      <section aria-labelledby="graph-heading" className="space-y-6">
+        <h2 id="graph-heading" className="text-base font-medium">
+          {t("settings.graph")}
+        </h2>
+
+        {/* Nodes draggable */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">{t("settings.performance.draggableToggle")}</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={draggable}
+            onClick={() => setDraggable(!draggable)}
+            className={[
+              "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              draggable ? "bg-primary" : "bg-input",
+            ].join(" ")}
+          >
+            <span
+              className={[
+                "pointer-events-none inline-block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform",
+                draggable ? "translate-x-5" : "translate-x-0",
+              ].join(" ")}
+            />
+          </button>
         </div>
       </section>
 

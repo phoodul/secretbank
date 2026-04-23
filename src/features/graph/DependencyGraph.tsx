@@ -10,6 +10,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  useViewport,
   type Node,
 } from '@xyflow/react';
 import { useTranslation } from 'react-i18next';
@@ -29,11 +30,13 @@ interface InnerGraphProps {
   payload: GraphPayload;
   direction: LayoutDirection;
   onToggle: () => void;
+  nodesDraggable: boolean;
 }
 
-function InnerGraph({ payload, direction, onToggle }: InnerGraphProps) {
+function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraphProps) {
   const { t } = useTranslation('common');
   const { fitView } = useReactFlow();
+  const { zoom } = useViewport();
 
   const initialElements = toReactFlowElements(payload, direction);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
@@ -42,6 +45,10 @@ function InnerGraph({ payload, direction, onToggle }: InnerGraphProps) {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialElements.edges);
 
   const { state: selectionState, select: selectionSelect, clear: selectionClear } = useBlastRadiusSelection();
+
+  // Compact mode: hide labels when graph is large AND zoomed out
+  const manyNodes = nodes.length > 200;
+  const compactMode = manyNodes && zoom < 0.5;
 
   // Re-layout when payload or direction changes
   useEffect(() => {
@@ -81,15 +88,17 @@ function InnerGraph({ payload, direction, onToggle }: InnerGraphProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [selectionClear]);
 
-  // Derive nodes with blast-radius status injected (does NOT mutate state)
-  const nodesWithStatus = useMemo(() => {
-    if (selectionState.phase !== 'ok') return nodes;
-    const sm = selectionState.statusMap;
+  // Derive nodes with blast-radius status + compact flag injected (does NOT mutate state)
+  const computedNodes = useMemo(() => {
+    const sm = selectionState.phase === 'ok' ? selectionState.statusMap : null;
+    if (!sm && !compactMode) return nodes;
     return nodes.map((n) => {
-      const status = sm[n.id] ?? 'dimmed';
-      return { ...n, data: { ...n.data, status } };
+      const next = { ...n.data };
+      if (sm) next.status = sm[n.id] ?? 'dimmed';
+      if (compactMode) next.compact = true;
+      return { ...n, data: next };
     });
-  }, [nodes, selectionState]);
+  }, [nodes, selectionState, compactMode]);
 
   return (
     <div className="relative h-full w-full">
@@ -111,12 +120,14 @@ function InnerGraph({ payload, direction, onToggle }: InnerGraphProps) {
       )}
 
       <ReactFlow
-        nodes={nodesWithStatus}
+        nodes={computedNodes}
         edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
+        onlyRenderVisibleElements
+        nodesDraggable={nodesDraggable}
         fitView
         fitViewOptions={{ padding: 0.15 }}
         minZoom={0.1}
@@ -136,13 +147,15 @@ function InnerGraph({ payload, direction, onToggle }: InnerGraphProps) {
 
 export interface DependencyGraphProps {
   payload: GraphPayload;
+  /** Whether nodes can be dragged. Default false for best performance. */
+  nodesDraggable?: boolean;
 }
 
 /**
  * Dependency graph canvas. Wraps `ReactFlowProvider` so `useReactFlow` is
  * available in the inner component. Direction state is lifted here.
  */
-export function DependencyGraph({ payload }: DependencyGraphProps) {
+export function DependencyGraph({ payload, nodesDraggable = false }: DependencyGraphProps) {
   const [direction, setDirection] = useState<LayoutDirection>('TB');
 
   const toggle = useCallback(() => {
@@ -151,7 +164,12 @@ export function DependencyGraph({ payload }: DependencyGraphProps) {
 
   return (
     <ReactFlowProvider>
-      <InnerGraph payload={payload} direction={direction} onToggle={toggle} />
+      <InnerGraph
+        payload={payload}
+        direction={direction}
+        onToggle={toggle}
+        nodesDraggable={nodesDraggable}
+      />
     </ReactFlowProvider>
   );
 }

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import type { GraphNodeData } from '../adapter';
+import { areNodePropsEqual } from './shared';
 
 function ProjectNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
   const { t } = useTranslation('common');
@@ -47,7 +48,9 @@ function ProjectNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
             {t('graph.kind.project')}
           </span>
         </div>
-        <div className="mt-1 truncate text-sm font-semibold text-foreground">{data.label}</div>
+        {!data.compact && (
+          <div className="mt-1 truncate text-sm font-semibold text-foreground">{data.label}</div>
+        )}
       </Card>
       <Handle
         type="source"
@@ -58,4 +61,4 @@ function ProjectNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
   );
 }
 
-export const ProjectNode = memo(ProjectNodeInner);
+export const ProjectNode = memo(ProjectNodeInner, areNodePropsEqual);
