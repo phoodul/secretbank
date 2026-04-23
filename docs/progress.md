@@ -9,6 +9,7 @@
 - **Blocker:** 없음.
 - **Mode:** 일반 (Night mode 종료됨).
 - **Milestone transition:** M2 ✅ (16/16) → M3 🔄 (0/8: T041 PetGraph 의존성 그래프 엔진부터).
+- **Session ended:** 2026-04-23 14:46 KST. 다음 세션에서 `/resume-project` 로 복원 후 T041 진입.
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 

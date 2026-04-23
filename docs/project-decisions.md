@@ -605,3 +605,79 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - UsageGraph (M3 T041~) 선행 데이터 확보 — 드롭&스캔으로 자동 생성된 usage 행들이 그래프 노드/엣지 소스가 됨.
 
 ---
+
+## [2026-04-23] i18n 지원 언어 확장 — 중국어(간체) 추가
+
+- **배경:** T011 i18n 초기 구성은 en/ko/ja 만 포함했다. 사용자가 세션 재개 시점에 "이전 대화에서 중국어 추가를 요청했다"고 확인.
+- **결정:** 지원 언어를 en / ko / **ja** / **zh(간체)** 4종으로 확장.
+- **구현 규약:**
+  1. 신규 locale 파일 `src/locales/zh/common.json` 은 en/ko/ja 와 **완전히 동일한 키 구조**를 유지. 누락 키 허용 금지 (i18next fallback 으로 en 표시는 가능하나, 팀 원칙상 4개 언어 일관 번역).
+  2. `src/lib/i18n.ts` `supportedLngs` 배열에 `"zh"` 등록 + `resources.zh` 추가.
+  3. `SettingsPage` 언어 셀렉터 `currentLang` 분기와 `<SelectItem>` 목록에 "中文" 옵션 추가.
+  4. **새 feature 에서 번역 키를 추가할 때마다 4개 언어 전부에 동기 업데이트.** 별도 자동화 없이 수동 규율로 유지 (PR 리뷰 시 locale diff 라인 수 4파일 비교).
+- **영향:**
+  - T036 Welcome(13키 × 4) / T037 Project(40키 × 4) / T038 Deployment(28키 × 4) / T039 Usage(22키 × 4) / T040 Security Score(20+키 × 4) 모두 동시 번역 완료.
+  - 추후 M3~M13 에서 추가되는 feature 는 본 규약을 계속 준수. 자동화(CI 키 누락 검사) 는 M13 Release 전 고려.
+- **커밋:** `1168210` (중국어 초기 추가), 이후 모든 T036+ 커밋에 zh 동기 포함.
+
+---
+
+## [2026-04-23] T040 — 보안 점수 설계 (3단계 + 7 factor, Rust authoritative)
+
+- **배경:** T040 DoD 는 "각 credential 에 간단한 위험도 점수 계산 + Card 의 3단계 색상 dot + hover tooltip". 구체 임계값과 factor 목록은 플래너가 지정하지 않음 → 구현자가 결정.
+- **결정:**
+  - **레벨 임계값**: `total ≥ 80` = **safe**, `total ≥ 50` = **warn**, 그 아래 = **danger**. 만점 100 에서 감점 방식.
+  - **Revoked / Compromised 단락**: status 가 Revoked 또는 Compromised 일 때는 나머지 factor 평가를 건너뛰고 즉시 `total=0, level=Danger, factors=[해당 코드]` 반환. 다른 factor 와 혼합하지 않음.
+  - **FactorCode 7종과 감점**:
+    | FactorCode | 조건 | penalty | severity |
+    |:--|:--|:-:|:--|
+    | `Revoked` | status==Revoked | 100 (단락) | Danger |
+    | `Compromised` | status==Compromised | 100 (단락) | Danger |
+    | `Expired` | expires_at ≤ now | 50 | Danger |
+    | `ExpiringSoon` | 0 < (expires_at − now) ≤ 30d | 20 | Warn |
+    | `RotationOverdue` | last_rotated + policy_days < now | 15 | Warn |
+    | `NoRotationHistory` | last_rotated==None & created_at ≤ now − 90d | 10 | Warn |
+    | `NoScope` | scope==None | 5 | Info |
+  - **Rust authoritative**: 점수 계산 로직은 `api-vault-core/src/security_score.rs` 의 pure 함수 (`score(cred)` / `score_at(cred, now)`). `CredentialSummary` 와 `CredentialFull` 응답에 서버가 계산한 `score: ScoreBreakdown` 필드를 주입. **프런트 TS 에 동일 로직 재구현 금지** — Single source of truth.
+  - **FactorCode 직렬화 규약**: `#[serde(rename_all = "snake_case")]` 로 JSON 에서 `"expired"` / `"expiring_soon"` 등 snake_case. 프런트 i18n 키는 `inventory.factor.{code}` / `inventory.factorShort.{code}` 자동 매핑.
+- **향후 factor 추가 규칙:**
+  1. `api-vault-core/src/security_score.rs` 의 `FactorCode` enum 에 variant 추가 + `score_at()` 내 분기 + 유닛 테스트.
+  2. 4개 언어 (`en/ko/ja/zh`) 의 `inventory.factor.{code}` 와 `inventory.factorShort.{code}` 키 동시 추가.
+  3. 프런트 UI 코드는 **수정 불필요** — SecurityDot 이 `inventory.factor.{factor.code}` 로 자동 매핑.
+- **Follow-up (M3 이후):**
+  - `usages.is_empty()` 기반 factor ("NoUsages") 는 `CredentialFull` 전용으로 추가 가능. 현재 list 경로는 usages 를 쿼리하지 않으므로 list 와 detail 의 score 값이 달라질 수 있음 — 추가 시점에 UX 결정 (list 에도 표시할지, detail 에서만 노출할지).
+- **커밋:** `11281cd` feat(security-score): T040 Credential 보안 점수 + 3단계 시각화.
+
+---
+
+## [2026-04-23] UI — BottomNav 모바일 6탭 확장 (T037 부수 결정, 재검토 예약)
+
+- **배경:** T037 에서 `/projects` 라우트를 추가하면서 `src/components/shell/BottomNav.tsx` 의 `grid-cols-5` 를 6개 네비 항목 수용을 위해 `grid-cols-6` 로 확장.
+- **결정 (잠정):** 모바일 BottomNav 는 6탭 구성 (Inventory / Projects / Graph / Incidents / Audit / Settings). 모바일 5탭 관례를 의도적으로 깼다.
+- **재검토 예약 (M3~M6 중):**
+  - 후보 A: Audit 탭을 Settings 내부로 이동 → 5탭으로 환원.
+  - 후보 B: 탭을 스크롤 구조 (overflow-x) 로 전환 → 7탭 이상 확장 가능.
+  - 후보 C: 현재 6탭 유지 (iPad/데스크톱 우선 사용 가정).
+- **판단 트리거:** M6 Audit Log 실제 구현 시점에 UX 검증. 만약 모바일에서 Audit 접근 빈도가 낮으면 A안 적용.
+- **커밋:** `bf67527` feat(projects): T037 Project CRUD 페이지 + 연결된 credential 뷰 (BottomNav 수정 포함).
+
+---
+
+## [2026-04-23] M2 종료 (Inventory UI + 드롭&스캔) — 16/16 완료 ✅
+
+- **기간:** 2026-04-22 T025 시작 ~ 2026-04-23 T040 완료.
+- **스코프:** 태스크 16 (Must 13 + Should 3) / 완료 100%.
+- **커밋 범위:** `ab69319` (T025) ~ `11281cd` (T040) + 문서 정리. 누적 57 commits (프로젝트 전체 기준).
+- **핵심 산출물:**
+  - **Backend Tauri 커맨드 28개**: vault 4 + credential 6 + issuer 2 + project 5 + deployment 4 + usage 4 + settings 2 + scanner 1.
+  - **Frontend features**: `inventory`, `projects`, `onboarding` (DropZone/Scan/Welcome), `settings`, `command-palette`.
+  - **도메인 로직 모듈**: `security_score` (T040), `env_scanner` (T033), `issuer-presets` (T028 Rust seed + TS 10종).
+  - **테스트**: Rust 95+ 통과 (security_score 9 + 기존), Vitest 140 통과.
+- **다음 마일스톤:** M3 Dependency Graph & Blast Radius (T041~T048). PetGraph 의존성 그래프 엔진 → React Flow 렌더 → blast radius 시뮬레이션.
+- **Follow-up 큐 (M3 이후 해결):**
+  1. 드롭&스캔 secure import 경로 (scan 결과의 실제 값을 재파싱해 age 볼트에 직접 주입 — T035 교훈).
+  2. Deployment 삭제 시 `usage.deployment_id` cascade 처리 (T038 교훈).
+  3. BottomNav 6탭 UX 재검토 (상단 항목 참조).
+  4. Security Score 에 `NoUsages` factor 추가 (CredentialFull 전용).
+
+---
