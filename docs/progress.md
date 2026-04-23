@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 18:09 KST (T043 완료, **M3 3/8**)
-- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (3/8)**
-- **Commits:** 63개 누적 (최신 `3a3102f` docs: T043 완료; 직전 `67cee48` feat(commands): T043 graph_fetch + blast_radius)
-- **Tests:** Rust 108+개 (+4 graph command unit = 누적 19+ in api-vault-app) + Vitest 140개 통과. `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
+- **Time:** 2026-04-23 19:45 KST (T044 완료, **M3 4/8**)
+- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (4/8)**
+- **Commits:** 65개 누적 (최신 `b118c99` feat(graph): T044 React Flow + dagre)
+- **Tests:** Rust 108+개 + Vitest 155개 통과 (+15 신규: layout 5 + adapter 6 + GraphPage 4). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반.
-- **Next:** T044 React Flow 셋업 + dagre 레이아웃 (`/graph` 페이지).
+- **Next:** T045 커스텀 노드 타입 (NodeKind별 색상/아이콘 표시).
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 

@@ -1,5 +1,24 @@
 # Work Log
 
+## 2026-04-23 (T044 완료 — **M3 4/8**)
+
+### T044 — React Flow + dagre 레이아웃 /graph 페이지 (커밋 `b118c99`)
+
+- **패키지**: `@xyflow/react@12.10.2` + `@dagrejs/dagre@3.0.0` pnpm 추가.
+- **신규 파일** (`src/features/graph/`):
+  - `types.ts`: GraphPayload/GraphNode/GraphEdge/NodeKind/GraphEdgeKind — Rust wire format 1:1 매핑 (snake_case 유지).
+  - `layout.ts`: `getLayoutedElements()` — dagre TB/LR 순수 함수; dagre 중심 좌표 → React Flow top-left 변환; 빈 입력 안전 처리.
+  - `adapter.ts`: `toReactFlowElements()` — GraphPayload → `Node<GraphNodeData>[] + Edge[]`; dagre 레이아웃 적용 후 반환.
+  - `use-graph-data.ts`: `invoke('graph_fetch')` union-state hook (use-inventory 패턴 — cancelled flag + tick refresh).
+  - `DependencyGraph.tsx`: ReactFlow + MiniMap + Controls + Background; `ReactFlowProvider` 외부 래핑 + TB/LR 토글 버튼 (shadcn Button); `useReactFlow().fitView()` 방향 변경 시 호출.
+  - `GraphPage.tsx`: 4-경로 (loading / error+retry / empty+Link to Inventory / graph canvas). i18n `graph.*` 키 사용.
+- **수정**: `src/pages/GraphPage.tsx` → feature re-export로 교체. `src/pages/GraphPage.tsx`는 1줄 re-export.
+- **i18n**: `graph.*` 키 15개 (title/subtitle/loading/error/empty/direction.tb/direction.lr/toggleDirection/kind.{issuer,credential,project,deployment}) + `common.retry` — 4개 로케일 모두 추가.
+- **테스트**: `__tests__/layout.test.ts` (5) + `__tests__/adapter.test.ts` (6) + `__tests__/GraphPage.test.tsx` (4) = 15 신규. 전체 155개 통과.
+- **검증**: typecheck exit 0 / lint 0 errors / vitest 155 pass / cargo clippy exit 0.
+- **시각 검증**: `pnpm tauri dev` 미실행 — 사용자 수동 확인 필요.
+- **Follow-up**: 엣지 kind 라벨이 plain text로만 표시됨; 커스텀 엣지 타입(스타일/색상)은 T045로 연기.
+
 ## 2026-04-23 (T040 완료 — **M2 종료 ✅ 16/16**)
 
 ### T040 — Inventory 보안 점수 + SecurityDot (직접 구현, 커밋 `11281cd`)
