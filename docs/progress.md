@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T048 완료, **M3 8/8 ✅ — M3 종료**)
+- **Time:** 2026-04-24 (T048 완료, **M3 8/8 ✅ — M3 종료**; 수동 검증 보류)
 - **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 대기**
 - **Commits:** 72개 누적 (최신 `ebb9855` feat: 모바일 그래프 리스트 뷰)
 - **Tests:** Rust 108+개 + Vitest 221개 통과 (+12 신규: MobileGraphList 6 + useIsMobile 3 + GraphPage mobile 분기 2 + blast-radius 1). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반.
-- **Next:** M4 T049 — Incident Feed (NVD/GitHub Advisory 피드 파서).
+- **Next:** (1) **M3 수동 검증 보류됨** — 사용자 일정 상 `pnpm tauri dev` 로 `/graph` 실사용 확인 미수행. M4 진입 전 또는 중에 재개 필요. 검증 체크리스트는 이 세션 대화록 참조 (`/graph` 렌더·4종 노드 색·Blast radius 하이라이트·Esc·Settings "Allow dragging"·mobile 리스트 분기). (2) 수동 검증 이후 M4 T049 — Incident Feed (NVD/GitHub Advisory 피드 파서).
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
