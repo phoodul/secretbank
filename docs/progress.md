@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 19:45 KST (T044 완료, **M3 4/8**)
-- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (4/8)**
-- **Commits:** 65개 누적 (최신 `b118c99` feat(graph): T044 React Flow + dagre)
-- **Tests:** Rust 108+개 + Vitest 155개 통과 (+15 신규: layout 5 + adapter 6 + GraphPage 4). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
+- **Time:** 2026-04-23 20:02 KST (T045 완료, **M3 5/8**)
+- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (5/8)**
+- **Commits:** 67개 누적 (최신 `41d518c` docs: T045 완료; 직전 `07ff733` feat: 그래프 커스텀 노드 4종)
+- **Tests:** Rust 108+개 + Vitest 173개 통과 (+18 신규: 노드 16 + adapter 2). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반.
-- **Next:** T045 커스텀 노드 타입 (NodeKind별 색상/아이콘 표시).
+- **Next:** T046 Blast Radius 하이라이트 (credential 노드 클릭 시 하위 노드 primary/secondary/tertiary 단계별 시각화 + 나머지 dim).
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
@@ -235,13 +235,26 @@
   3. BottomNav 6탭 UX 재검토 (Audit 을 Settings 내부로 이동?).
   4. Score factor 확장: usages 없음 factor 를 CredentialFull 전용으로 추가.
 
-## M3 진행 상황 (3/8)
+## M3 진행 상황 (5/8)
 
 ### 완료 ✅
 
 - **T041** `api-vault-core` 그래프 모델 (petgraph DiGraph) — 커밋 `5256f71`
 - **T042** Blast Radius BFS (primary/secondary/tertiary depth buckets) — 커밋 `533485c`
 - **T043** Tauri 커맨드 `graph_fetch` + `blast_radius_for_credential` — 커밋 `67cee48`
+- **T044** React Flow + dagre 레이아웃 (`/graph` 페이지, TB/LR 토글, MiniMap/Controls/Background) — 커밋 `b118c99`
+- **T045** 커스텀 노드 4종 (Issuer/Credential/Project/Deployment, React.memo, dagre handles) — 커밋 `07ff733`
+
+### T044/T045 구현 교훈 (M3 후속 영향)
+
+- **feature 폴더 전환**: `src/pages/GraphPage.tsx` 는 `@/features/graph/GraphPage` re-export 만 남김. 실제 로직/컴포넌트는 `src/features/graph/` 아래로 이동 → inventory 패턴과 일치.
+- **Handle 은 방향에 따라 top/bottom ↔ left/right**: `GraphNodeData.direction` 을 adapter 가 실어보내 각 노드가 자기 위치 결정. DependencyGraph 의 direction state 만 바꾸면 자동 재레이아웃 + 핸들 회전.
+- **Issuer 는 source 만 / Deployment 는 target 만**: 루트/리프 노드 구분은 핸들 선언에 반영. Credential/Project 는 양쪽.
+- **`nodeTypes` 는 모듈 스코프 상수**: JSX 인라인 시 React Flow 매 프레임 재렌더 경고. `node-types.ts` 싱글 소스로 고정.
+- **adapter type 변환**: `type: 'default'` → `type: node.kind` 로 바뀌면서 React Flow 가 자동으로 `nodeTypes` 맵에서 컴포넌트 선택.
+- **`vault-accent` / `vault-muted` 토큰 부재**: spec 의 "accent/muted" 언급은 globals.css 에 없는 토큰이라 `vault-info/warning/success + muted` 조합으로 대체. deployment 만 neutral `bg-muted`. T046 에서 dim 처리할 때도 동일 `muted` 활용.
+- **`@xyflow/react` 테스트**: jsdom 에서 `Handle` 이 provider context 요구 → `vi.mock('@xyflow/react', ...)` 로 Handle/MiniMap/Controls/Background 를 `() => null` 대체. 실제 앱에선 `ReactFlowProvider` 로 감싸 정상 동작.
+- **시각 검증은 수동**: `pnpm tauri dev` 로 사용자가 `/graph` 확인 필요. 현재 자동 테스트는 렌더 성공 + 클래스 존재만 검증.
 
 ### T043 구현 교훈 (M3 후속 영향)
 
@@ -268,25 +281,27 @@
 - **도메인 모델 확인 결과**: `Credential.issuer_id`, `Usage.project_id`, `Deployment.project_id` 모두 non-Optional → 방어적 스킵 불필요. `Usage.deployment_id` 만 `Option` 이지만 현재 그래프 엣지 구성에는 안 쓰임 (DeployedAs 는 Deployment 측에서 도출).
 - **내부 `HashMap<NodeRef, NodeIndex>` 인덱스**: O(1) 노드 조회. T042 BFS 에서 `graph.node_index(NodeRef::Credential(id))` 로 시작점 잡을 때 활용.
 
-## Next Action (T044)
+## Next Action (T046)
 
-- **T044 React Flow 셋업 + dagre 레이아웃** — `/graph` 페이지 기본 렌더.
+- **T046 Blast Radius 하이라이트** — Credential 노드 클릭 시 하위 그래프 단계별 강조 + 나머지 dim.
 - DoD:
-  - `@xyflow/react`, `@dagrejs/dagre` 패키지 설치 (pnpm).
-  - `src/features/graph/GraphPage.tsx` — 라우트 연결 + `invoke('graph_fetch')` 호출 + 로딩/에러 상태.
-  - `src/features/graph/DependencyGraph.tsx` — React Flow 컨테이너, `useReactFlow` hook, MiniMap + Controls + Background.
-  - `src/features/graph/layout.ts` — dagre 로 자동 위치 계산 (`TB` 방향 기본, `LR` 토글 버튼).
-  - Tauri JSON 스키마 (T043 의 GraphPayload) → React Flow `Node<T>` / `Edge` 로 변환하는 어댑터.
+  - `src/features/graph/use-blast-radius-selection.ts` — 클릭 이벤트로 `invoke<BlastRadius>('blast_radius_for_credential', { id })` 호출. 로딩/에러/결과 상태 관리.
+  - 결과에 따라 각 노드에 `data-status="primary|secondary|tertiary|dimmed"` 적용 (또는 `data.status` 로 React Flow data 에 주입).
+  - CSS: outline 색상 (primary=vault-danger, secondary=vault-warning, tertiary=muted-foreground) + opacity (dimmed=0.35).
+  - 색맹 대응: outline style 변형 (primary=solid 3px, secondary=dashed 2px, tertiary=dotted 1px) 으로 색 의존 축소.
+  - Esc 키로 선택 해제.
+  - Credential 노드 이외 (Issuer/Project/Deployment) 클릭 시 선택 해제하거나 무시.
 - 구현 스케치:
-  1. 패키지 설치: `pnpm add @xyflow/react @dagrejs/dagre`.
-  2. `src/features/graph/types.ts` — TS 타입 (GraphPayload, GraphNode, GraphEdge, NodeKind, GraphEdgeKind) T043 Rust 구조체와 1:1 매핑.
-  3. `src/features/graph/layout.ts` — `getLayoutedElements(nodes, edges, direction)` dagre 배치 알고리즘.
-  4. `src/features/graph/use-graph-data.ts` — `invoke<GraphPayload>('graph_fetch')` 를 react-query 나 useEffect + useReducer 로 호출. M2 패턴(union state `{phase:"loading"} | {phase:"ok"} | {phase:"error"}`) 재사용.
-  5. `src/features/graph/DependencyGraph.tsx` — React Flow 기본 ReactFlow + Background + Controls + MiniMap + 방향 토글 버튼.
-  6. `src/features/graph/GraphPage.tsx` — 라우트에 연결 (App.tsx 또는 routes.tsx).
-  7. Vitest: mock 10 nodes 렌더 후 dagre 계산 결과가 `x`, `y` 를 모든 노드에 할당했는지 검증.
+  1. `BlastRadius` TS 타입 `src/features/graph/types.ts` 에 추가 — Rust `BlastRadius { primary, secondary, tertiary }` 미러.
+  2. `use-blast-radius-selection.ts` — `{ selectedId: string | null, status: {[nodeId]: "primary"|"secondary"|"tertiary"|"dimmed"} | null, select(id), clear() }` 반환.
+  3. `DependencyGraph.tsx` 에서 `onNodeClick` 핸들러 연결 + Esc keydown 리스너 + 선택된 상태를 `nodes` 의 `data.status` 에 주입 (useMemo 로 재계산).
+  4. 각 노드 컴포넌트 (`IssuerNode/CredentialNode/ProjectNode/DeploymentNode`) 에서 `data.status` 읽어 Card className 에 조건부 스타일 추가.
+  5. i18n 키 `graph.blast.loading/error/none` 추가 (필요 시).
 - 선행 확인:
-  - `src/App.tsx` 또는 라우터 설정에서 `/graph` 라우트가 이미 placeholder 로 존재하는지 확인.
-  - i18n 키 `graph.title`, `graph.loading`, `graph.error`, `graph.direction.tb`, `graph.direction.lr` 추가 (ko/en/ja/zh).
-  - M0 T009 에서 설치된 shadcn 컴포넌트 중 `Card`, `Skeleton` 활용 가능 여부 확인.
-- Note: T045 (커스텀 노드 타입) 는 별도 태스크. T044 에서는 기본 React Flow default node 로 렌더하되 label + kind 표시.
+  - Rust 측 `blast_radius_for_credential` 은 T043 에서 이미 구현됨 (`CredentialId` 받아 `BlastRadius` 반환).
+  - Credential 노드 한정 클릭 로직: `node.data.kind === 'credential'` 체크.
+  - React Flow v12 `onNodeClick` 시그니처: `(event, node) => void`.
+- 테스트 (Vitest):
+  - `use-blast-radius-selection` 훅 단독 테스트: `invoke` mock → 상태 변화 검증.
+  - 노드 컴포넌트 `data.status='dimmed'` 시 opacity 클래스 존재 확인.
+  - Esc 키 → clear 호출 확인.
