@@ -2,14 +2,14 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T035 완료, M2 11/14)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 11/14**
-- **Commits:** 46개 누적 (최신 `6f31d56` feat(onboarding): T035 드롭&스캔 결과 검토 UI + project/usage 커맨드)
-- **Tests:** Rust 86개 + Vitest 114개 (+7 DetectedKeysReview & OnboardingScanPage 리팩터) 통과.
+- **Time:** 2026-04-23 (T036 완료, M2 12/14)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 12/14**
+- **Commits:** 48개 누적 (최신 `e22c452` feat(onboarding): T036 Welcome 3단계 온보딩 플로우; 직전 `1168210` feat(i18n): 중국어(zh-간체) 추가)
+- **Tests:** Rust 86개 + Vitest 120개 (+6 WelcomePage) 통과. `pnpm typecheck` / `pnpm lint` 신규 에러 없음.
 - **Blocker:** 없음.
 - **Mode:** 일반 (Night mode 종료됨).
 
-## M2 진행 상황 (1/14)
+## M2 진행 상황 (12/14)
 
 ### 완료 ✅
 
@@ -24,6 +24,8 @@
 - T033 env_scanner (엔트로피 3.5 + issuer regex 10 + .env/generic 파서, 커밋 `8e7c7a2`)
 - T034 env_scan_folder Tauri 커맨드 (spawn_blocking + scan:progress 이벤트, 커밋 `eeab911`)
 - T035 드롭&스캔 결과 검토 UI + project/usage Tauri 커맨드 (A안 풀 스코프, 커밋 `6f31d56`)
+- **i18n follow-up** 중국어(zh-간체) 로케일 추가 + Settings 언어 셀렉터 확장 (커밋 `1168210`)
+- **T036** Welcome 3단계 온보딩 + RequireOnboarding 가드 + `onboarding.done` 플래그 (커밋 `e22c452`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
@@ -172,7 +174,9 @@
 - [x] T033 env_scanner (엔트로피 + issuer regex + .env/generic 파서) — 커밋 `8e7c7a2`
 - [x] T034 env_scan_folder Tauri 커맨드 — 커밋 `eeab911`
 - [x] T035 결과 검토 UI (DetectedKeysReview) + project/usage 커맨드 — 커밋 `6f31d56`
-- [ ] T036 Welcome / 온보딩 플로우 — 다음 세션 진입점
+- [x] i18n 중국어(zh-간체) 로케일 추가 — 커밋 `1168210`
+- [x] T036 Welcome 3단계 온보딩 + RequireOnboarding 가드 — 커밋 `e22c452`
+- [ ] T037 Project 관리 페이지 — 다음 진입점
 
 ## Pending Decisions
 
@@ -199,8 +203,16 @@
 - **entropy-only 감지 항목은 import 불가** — `issuer_slug` 가 `None` 이면 issuer FK 를 결정할 수 없어 기본 체크 해제 + 선택해도 skip. UI 는 체크박스는 disabled 아니지만 Import 집계에서 제외됨.
 - **프론트 `Usage` 타입이 Rust 와 불일치** (legacy fields: `url`, `env_var_name`, `scanner_version`) — T035 에서는 건드리지 않고 DetectedKeysReview 는 `where_kind: "env_var"`, `where_value` 로 rust 커맨드에 전달. 추후 T037/T038 에서 frontend `Usage` 타입을 정리해야 함.
 
+## T036 구현 교훈 (M2 후속 영향)
+
+- **`useOnboardingDone()` 훅이 `useSetting<boolean>` 을 감싸며 기본값 false.** 스킵/완료 시 `settings_set("apivault.settings.onboarding.done","true")` 호출. T037 Project 페이지에서는 이 플래그를 건드릴 필요 없음.
+- **`RequireOnboarding` 가드의 예외 경로**: `/welcome`, `/onboarding/*` 은 가드 밖 라우트로 두어 드롭&스캔 중 리다이렉트 루프 방지. T037 이후 새 라우트(`/projects`, `/settings` 등)는 가드 안 `<AppShell />` 레이아웃에 중첩하면 자동 보호됨.
+- **CreateCredentialDialog 는 WelcomePage Step 2 에서 재사용** — 별도 축소형 dialog 필요 없음. 성공 콜백에서 Step 3 로 자동 진행.
+- **Progressive Disclosure 톤 확정** — Step 1 은 DropZone 설명만 (실제 드롭은 전역 DropZone 이 처리), Step 2 는 CTA 1개 ("Add your first key"), Step 3 는 완료 축하. 보안 경고 최소화 유지.
+- **번역 키 4개 언어 동기** 필요: 신규 `onboarding.welcome*` / `step*` 키를 en/ko/ja/zh 전부에 추가하는 패턴을 T037 Project UX 에도 그대로 적용한다.
+
 ## Next Action
 
-- **T036 Welcome / 온보딩 플로우** — `src/features/onboarding/WelcomePage.tsx` 3단계 (DropZone → Create first key → You're all set). 볼트 최초 생성 직후 라우트. `settings.onboarding_done` 플래그로 재진입 차단.
-- **선행 확인 필요**: `settings_get/set` 으로 boolean flag 관리 가능한지 점검 (T030 이미 구현). Progressive Disclosure 톤 + 스킵 옵션.
-- **이후 우선순위**: T036 → T037 (Project 관리 페이지 — 커맨드는 T035 에서 완비, CRUD UI 만) → T038 (Deployment) → T039 (Usage) → T040 (보안 점수).
+- **T037 Project 관리 페이지** — `/projects` 라우트 + CRUD UI. `project_list/create/update/delete` 커맨드는 T035 에서 이미 추가됨. 소속 credential 연결 UI 도 포함.
+- **선행 확인 필요**: T035 에서 추가된 `project_*` 커맨드 시그니처 확인 (`src-tauri/crates/api-vault-app/src/commands/projects.rs`). Dialog + Table 패턴은 T026/T025 재사용.
+- **이후 우선순위**: T037 → T038 (Deployment 관리, T037 의존) → T039 (Usage 링크 UI, T037+T027 의존) → T040 (보안 점수).

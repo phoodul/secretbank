@@ -1,5 +1,46 @@
 # Work Log
 
+## 2026-04-23 (T036 완료, M2 12/14)
+
+**세션 재개**: `/resume-project` → `last_session.json` 0바이트라 `docs/progress.md` 로 복원. M2 11/14 (T035 완료) 상태에서 재개. 사용자 요청으로 T036 전에 중국어 로케일 추가 선행.
+
+### i18n follow-up — 중국어(zh-간체) 로케일 추가 (직접 구현, 커밋 `1168210`)
+
+- **생성 파일**: `src/locales/zh/common.json` (en/ko/ja 와 동일 키 구조, 간체 중국어 전체 번역)
+- **수정 파일**: `src/lib/i18n.ts` (supportedLngs 에 `zh` 등록 + resources 추가), `src/features/settings/SettingsPage.tsx` (currentLang 분기 + "中文" 옵션)
+- **검증**: `pnpm typecheck` / `pnpm vitest run src/features/settings` (18 테스트) exit 0
+- **배경**: T011 i18n 초기 구성에서 en/ko/ja 만 포함했으나, 사용자 요청으로 중국어(CN 시장 커버리지) 추가. ja 파일의 app/nav/common 섹션 일부가 영어로 남아있는 점은 그대로 두고 zh 는 완전 번역으로 통일.
+
+### T036 — Welcome 3단계 온보딩 (직접 구현, 커밋 `e22c452`)
+
+- **생성 파일**:
+  - `src/features/onboarding/WelcomePage.tsx` (step state 1|2|3, DropZone/KeyRound/PartyPopper 아이콘, CreateCredentialDialog 재사용)
+  - `src/features/onboarding/use-onboarding.ts` (`useOnboardingDone` = `useSetting<boolean>` wrapper, key=`apivault.settings.onboarding.done`, parse `"true"/"false"`)
+  - `src/features/onboarding/__tests__/WelcomePage.test.tsx` (Vitest 6: 렌더/Next/Dialog open/Dialog success→Step3/Open Inventory 완료/Skip)
+- **수정 파일**:
+  - `src/App.tsx` — `RequireOnboarding` 가드 컴포넌트 + `/welcome` 라우트. `onboarding.done=false` 이면 `/welcome` 으로 리다이렉트. `/welcome`, `/onboarding/*` 는 가드 밖에 배치해 드롭&스캔 루프 방지.
+  - `src/locales/{en,ko,ja,zh}/common.json` — `onboarding.welcomeTitle/welcomeSubtitle/stepIndicator/stepDropTitle/stepDropDescription/stepManualTitle/stepManualDescription/stepDoneTitle/stepDoneDescription/createFirstKey/nextStep/skipOnboarding/openInventory` 13개 키 4개 언어 × 13 = 52개 추가
+- **UX 결정 (DoD 충족)**:
+  - Step 1 = DropZone 안내 (실제 드롭 핸들러는 전역 DropZone 이 처리, WelcomePage 는 설명만)
+  - Step 2 = "Add your first key" CTA → CreateCredentialDialog open → `onSuccess` 에서 자동 Step 3 진입
+  - Step 3 = "You're all set" + "Open Inventory" 버튼 → `setOnboardingDone(true)` + `navigate("/", {replace:true})`
+  - Skip 버튼 모든 스텝에서 동일 finish 동작
+  - Progressive Disclosure 톤 — 보안 경고/권한 설명 없이 3문장으로 끝.
+- **검증**: `pnpm typecheck` exit 0, `pnpm vitest run` 14 files / 120 tests pass (기존 114 + 신규 6), `pnpm lint` 신규 에러 0 (기존 fast-refresh 경고만 유지).
+
+**설계 교훈**:
+
+- **`RequireOnboarding` 가드 구조**: 라우트 트리 내 `<Route element={<RequireOnboarding><AppShell/></RequireOnboarding>}>` 로 감싸면 중첩 라우트는 자동 보호. 단, `/welcome` 과 `/onboarding/scan` 은 같은 `<Routes>` 하위 sibling 으로 두어 가드 우회. 이 패턴은 T037 이후 추가되는 `/projects` 등 모든 신규 라우트를 `AppShell` 중첩에 넣기만 하면 자동 보호됨.
+- **`useSetting<boolean>` 파서 패턴 확장 가능**: T030 의 `AUTO_LOCK_KEY` 와 같은 파일에 `useOnboardingDone` 만 추가하지 않고 별도 `use-onboarding.ts` 로 분리 — feature 경계 유지.
+- **CreateCredentialDialog mock 전략**: WelcomePage 테스트에서 실제 dialog 를 띄우면 useIssuers → invoke → Popover jsdom 이슈로 비대해짐. `vi.mock("@/features/inventory/CreateCredentialDialog", ...)` 로 3-button stub 으로 대체 → 6 테스트 0.7s 내 완료.
+
+### 부수 처리
+
+- `docs/task.md` 마일스톤 표 Status 컬럼 `🔄 11/14` → `🔄 12/14`. 진행 현황 표에 `T036` 줄 + `T011+` (중국어 follow-up) 줄 각각 추가.
+- `docs/progress.md` Last Checkpoint 갱신 (48개 커밋, Vitest 120개), T036 구현 교훈 5줄 추가, Next Action 을 T037 Project 관리 페이지로 전환.
+
+---
+
 ## 2026-04-23 (M2 진입, T025)
 
 **세션 재개**: `/resume-project` → `last_session.json` 이 0바이트라 `docs/progress.md` 로 컨텍스트 복원. M1 12/12 완료 + 수동 통합 검증 통과 상태에서 M2 진입.
