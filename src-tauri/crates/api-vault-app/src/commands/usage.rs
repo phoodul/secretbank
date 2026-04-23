@@ -4,7 +4,7 @@
 //! records where the key is referenced — typically an env var name or file
 //! path discovered during a folder scan.
 
-use api_vault_core::{CredentialId, Usage, UsageId, UsageInput};
+use api_vault_core::{CredentialId, ProjectId, Usage, UsageId, UsageInput};
 use api_vault_storage::sqlite::repositories::usage::UsageRepo;
 use serde::Serialize;
 use tauri::State;
@@ -42,4 +42,13 @@ pub async fn usage_list_for_credential(
 ) -> Result<Vec<Usage>, UsageCommandError> {
     let repo = UsageRepo::new(&state.pool);
     Ok(repo.list_for_credential(credential_id).await?)
+}
+
+#[tauri::command]
+pub async fn usage_list_for_project(
+    project_id: ProjectId,
+    state: State<'_, AppContext>,
+) -> Result<Vec<Usage>, UsageCommandError> {
+    let repo = UsageRepo::new(&state.pool);
+    Ok(repo.list_for_project(project_id).await?)
 }

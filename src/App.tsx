@@ -7,6 +7,7 @@ import { GraphPage } from "@/pages/GraphPage";
 import { IncidentsPage } from "@/pages/IncidentsPage";
 import { InventoryPage } from "@/pages/InventoryPage";
 import { OnboardingScanPage } from "@/pages/OnboardingScanPage";
+import { ProjectsPage } from "@/pages/ProjectsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { AutoLockGuard } from "@/features/vault/AutoLockGuard";
 import { DropZone } from "@/features/onboarding/DropZone";
@@ -62,6 +63,7 @@ function VaultGate() {
             }
           >
             <Route index element={<InventoryPage />} />
+            <Route path="projects" element={<ProjectsPage />} />
             <Route path="graph" element={<GraphPage />} />
             <Route path="incidents" element={<IncidentsPage />} />
             <Route path="audit" element={<AuditPage />} />

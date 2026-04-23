@@ -1,5 +1,13 @@
 import { NavLink } from "react-router-dom";
-import { AlertTriangle, FileText, Lock, Network, Settings, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  FileText,
+  FolderKanban,
+  Lock,
+  Network,
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -12,6 +20,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/", icon: Lock, labelKey: "nav.inventory" },
+  { to: "/projects", icon: FolderKanban, labelKey: "nav.projects" },
   { to: "/graph", icon: Network, labelKey: "nav.graph" },
   { to: "/incidents", icon: AlertTriangle, labelKey: "nav.incidents" },
   { to: "/audit", icon: FileText, labelKey: "nav.audit" },

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { AlertTriangle, FileText, Lock, Network, Settings } from "lucide-react";
+import { AlertTriangle, FileText, FolderKanban, Lock, Network, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/", icon: Lock, labelKey: "nav.inventory" },
+  { to: "/projects", icon: FolderKanban, labelKey: "nav.projects" },
   { to: "/graph", icon: Network, labelKey: "nav.graph" },
   { to: "/incidents", icon: AlertTriangle, labelKey: "nav.incidents" },
   { to: "/audit", icon: FileText, labelKey: "nav.audit" },
@@ -23,7 +24,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background">
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {navItems.map(({ to, icon: Icon, labelKey }) => (
           <NavLink
             key={to}
