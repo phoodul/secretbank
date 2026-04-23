@@ -1,5 +1,42 @@
 # Work Log
 
+## 2026-04-23 (T037 완료, M2 13/14)
+
+### T037 — Project 관리 페이지 (직접 구현, 커밋 `bf67527`)
+
+- **Rust 측 추가 커맨드 (3개)**:
+  - `src-tauri/crates/api-vault-app/src/commands/projects.rs` — `project_update(id, patch)` (update 후 갱신된 Project 반환) + `project_delete(id)`
+  - `src-tauri/crates/api-vault-app/src/commands/usage.rs` — `usage_list_for_project(project_id)`
+  - `lib.rs` invoke_handler 두 블록에 3개 추가 (feature="tauri-plugins" 분기 모두)
+  - `ProjectRepo::update/delete`, `UsageRepo::list_for_project` 는 이미 T019 에서 구현되어 있어 래핑만 수행.
+- **생성 파일 (프런트)**:
+  - `src/features/projects/types.ts` — `Project`, `ProjectInput`, `ProjectPatch`, `ProjectUsage`
+  - `src/features/projects/use-projects.ts` — `project_list` 로드 + 이름 검색 필터링 (useInventory 와 동일 FetchState 패턴)
+  - `src/features/projects/ProjectDialog.tsx` — 생성/편집 통합 Dialog. zod 스키마 (name 필수, repo_url/framework/runtime/local_path 선택). `editTarget` prop 존재 시 편집 모드, 빈 문자열 → `null` 로 변환하여 patch 전송.
+  - `src/features/projects/ProjectDetail.tsx` — Sheet drawer. 파생 loading 패턴 (`currentKey !== resolvedKey`) 으로 `react-hooks/set-state-in-effect` 규칙 준수. `usage_list_for_project` + `credential_list` 를 `Promise.all` 로 병렬 호출 후 Map 조인으로 linked credential 렌더.
+  - `src/features/projects/ProjectsPage.tsx` — 카드 그리드 + 검색 input + 생성 버튼 + 에러 배너. `ProjectList`/`ProjectCard` 는 같은 파일 내 private 컴포넌트.
+  - `src/pages/ProjectsPage.tsx` — 1줄 wrapper.
+  - `src/features/projects/__tests__/ProjectsPage.test.tsx` — Vitest 7 (empty, list render, search filter, Create dialog open, project_create 호출 + refresh, detail drawer open + linked credential 표시, delete confirm flow).
+- **수정 파일 (프런트)**:
+  - `src/App.tsx` — `/projects` 라우트 추가 (`<AppShell />` 중첩 → `RequireOnboarding` 자동 보호).
+  - `src/components/shell/Sidebar.tsx` + `BottomNav.tsx` — Projects 항목(`FolderKanban` 아이콘) 추가. BottomNav `grid-cols-5` → `grid-cols-6`.
+  - `src/locales/{en,ko,ja,zh}/common.json` — `nav.projects` + `projects.*` 40여 키 × 4 언어 동기.
+- **검증**: `cargo check/clippy -D warnings` exit 0, `pnpm typecheck` exit 0, `pnpm lint` 0 에러 (기존 6 경고 유지), `pnpm vitest run` 15 files / 127 tests pass (기존 120 + 신규 7).
+
+**설계 교훈**:
+
+- **`ProjectPatch` 빈 문자열 vs null** — Rust `#[derive(Default)]` + `Option<String>` 구조에서 JSON `""` 을 보내면 `Some("")` 가 저장된다. 비우기를 원하면 `null` 필수. 폼에서는 UX 간결성을 위해 빈 문자열 input 을 허용하고 submit 시 `values.field ?? null` 로 정규화.
+- **Promise.all 병렬 조인** — `usage_list_for_project(pid)` + `credential_list({})` 를 동시에 띄우면 single round-trip 수준으로 끝남. credential 을 Map 으로 indexing 후 usages 순회하며 dedup. usage 가 같은 credential 을 여러 번 참조하더라도 카드는 한 번만 렌더.
+- **BottomNav 탭 6개** — 5탭 관례를 넘어섰다. iPad/모바일 레이아웃에서 텍스트가 약간 좁아지지만 아이콘 가시성은 유지. M6 Audit 구현 완료 전에 "Audit 을 Settings 내부로 이동" UX 재검토 여지 있음. 이번엔 단순히 grid-cols-6 으로 해결.
+- **파생 loading 패턴 표준화** — `CredentialDetail` (T027) → `ProjectDetail` (T037) → 이후 `DeploymentSection` (T038) 까지 동일한 `currentKey / resolvedKey / settledState` 3-tuple 패턴을 반복. 공용 훅 추출 여지가 생겼지만, 아직 3회 반복 수준이라 "3번째 직전에 추출" 원칙에 따라 T038 에서 판단.
+
+### 부수 처리
+
+- `docs/task.md` 마일스톤 표 Status `🔄 12/14` → `🔄 13/14`. 진행 현황 표에 `T037` 줄 추가 + 완료 합계 37/118.
+- `docs/progress.md` Last Checkpoint 갱신 (50 커밋, Vitest 127), T037 구현 교훈 섹션 교체, Next Action 을 T038 Deployment 관리로 전환, In Progress 체크박스에 T037 체크 + T038/T039/T040 리스트업.
+
+---
+
 ## 2026-04-23 (T036 완료, M2 12/14)
 
 **세션 재개**: `/resume-project` → `last_session.json` 0바이트라 `docs/progress.md` 로 복원. M2 11/14 (T035 완료) 상태에서 재개. 사용자 요청으로 T036 전에 중국어 로케일 추가 선행.
