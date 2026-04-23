@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T046 완료, **M3 6/8**)
-- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (6/8)**
-- **Commits:** 69개 누적 (최신 `4abe502` feat: 블래스트 반경 하이라이트)
-- **Tests:** Rust 108+개 + Vitest 191개 통과 (+18 신규: hook 6 + DependencyGraph 통합 4 + nodes status 8). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
+- **Time:** 2026-04-23 (T047 완료, **M3 7/8**)
+- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (7/8)**
+- **Commits:** 70개 누적 (최신 `1477c0f` perf: 그래프 렌더 최적화)
+- **Tests:** Rust 108+개 + Vitest 209개 통과 (+18 신규: areNodePropsEqual 유닛 10 + compact 렌더 8). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반.
-- **Next:** T047 또는 T048.
+- **Next:** T048.
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
@@ -235,7 +235,7 @@
   3. BottomNav 6탭 UX 재검토 (Audit 을 Settings 내부로 이동?).
   4. Score factor 확장: usages 없음 factor 를 CredentialFull 전용으로 추가.
 
-## M3 진행 상황 (5/8)
+## M3 진행 상황 (7/8)
 
 ### 완료 ✅
 
@@ -244,6 +244,14 @@
 - **T043** Tauri 커맨드 `graph_fetch` + `blast_radius_for_credential` — 커밋 `67cee48`
 - **T044** React Flow + dagre 레이아웃 (`/graph` 페이지, TB/LR 토글, MiniMap/Controls/Background) — 커밋 `b118c99`
 - **T045** 커스텀 노드 4종 (Issuer/Credential/Project/Deployment, React.memo, dagre handles) — 커밋 `07ff733`
+- **T046** Blast Radius 하이라이트 — 커밋 `4abe502`
+- **T047** Graph performance optimization — 커밋 `1477c0f`
+
+### T047 구현 교훈 (M3 후속 영향)
+
+- **`useViewport` mock 필수**: jsdom 환경에서 `useViewport` 도 `useReactFlow` 처럼 mock 에 명시해야 함. `DependencyGraph.blastRadius.test.tsx` 와 `GraphPage.test.tsx` 양쪽에 `useViewport: () => ({ zoom: 1, x: 0, y: 0 })` 추가.
+- **compact mode 구현 위치**: `useViewport()` 는 `ReactFlowProvider` 내부에서만 동작하므로 `InnerGraph` 에 위치. zoom 변화마다 `computedNodes` useMemo 재계산되나, 실제 노드 컴포넌트는 `areNodePropsEqual` 로 compact 필드 변화 시에만 재렌더.
+- **`nodesDraggable` localStorage**: Rust settings 테이블 변경 없이 프론트엔드만으로 처리. `apivault:graph:nodesDraggable` 키로 저장. 기본값 `false` (60fps 우선).
 
 ### T044/T045 구현 교훈 (M3 후속 영향)
 
@@ -281,9 +289,9 @@
 - **도메인 모델 확인 결과**: `Credential.issuer_id`, `Usage.project_id`, `Deployment.project_id` 모두 non-Optional → 방어적 스킵 불필요. `Usage.deployment_id` 만 `Option` 이지만 현재 그래프 엣지 구성에는 안 쓰임 (DeployedAs 는 Deployment 측에서 도출).
 - **내부 `HashMap<NodeRef, NodeIndex>` 인덱스**: O(1) 노드 조회. T042 BFS 에서 `graph.node_index(NodeRef::Credential(id))` 로 시작점 잡을 때 활용.
 
-## Next Action (T046)
+## Next Action (T048)
 
-- **T046 Blast Radius 하이라이트** — Credential 노드 클릭 시 하위 그래프 단계별 강조 + 나머지 dim.
+- **T048** — M3 마지막 태스크. 구체적 내용은 task.md T048 참조.
 - DoD:
   - `src/features/graph/use-blast-radius-selection.ts` — 클릭 이벤트로 `invoke<BlastRadius>('blast_radius_for_credential', { id })` 호출. 로딩/에러/결과 상태 관리.
   - 결과에 따라 각 노드에 `data-status="primary|secondary|tertiary|dimmed"` 적용 (또는 `data.status` 로 React Flow data 에 주입).
