@@ -1,8 +1,10 @@
+pub mod blast_radius;
 pub mod graph;
 pub mod id;
 pub mod models;
 pub mod security_score;
 
+pub use blast_radius::{blast_radius, BlastRadius};
 pub use graph::{DependencyGraph, EdgeKind, NodeRef};
 pub use id::{
     AuditLogId, CredentialId, DeploymentId, DeviceId, IncidentId, IncidentMatchId, IssuerId,
