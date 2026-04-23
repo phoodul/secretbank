@@ -22,16 +22,21 @@ export interface CredentialFilter {
   expiring_within_days?: number;
 }
 
-/** credential_get 커맨드가 반환하는 Usage 원소 */
+export type UsageWhereKind = "env_var" | "file_path" | "code_ref";
+export type UsageVerifiedBy = "scan" | "manual" | "runtime";
+
+/** credential_get 커맨드가 반환하는 Usage 원소 (Rust `api_vault_core::Usage`) */
 export interface Usage {
   id: string;
+  credential_id: string;
   project_id: string;
   deployment_id: string | null;
-  credential_id: string;
-  url: string | null;
-  env_var_name: string | null;
-  scanner_version: string | null;
-  created_at: number;
+  where_kind: UsageWhereKind;
+  /** e.g. "OPENAI_API_KEY" or "/apps/web/.env.local" */
+  where_value: string;
+  /** ms timestamp */
+  verified_at: number | null;
+  verified_by: UsageVerifiedBy | null;
 }
 
 /**

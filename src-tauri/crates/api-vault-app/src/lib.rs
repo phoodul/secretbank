@@ -17,7 +17,9 @@ use commands::projects::{
 };
 use commands::scanner::env_scan_folder;
 use commands::settings::{settings_get, settings_set};
-use commands::usage::{usage_create, usage_list_for_credential, usage_list_for_project};
+use commands::usage::{
+    usage_create, usage_delete, usage_list_for_credential, usage_list_for_project,
+};
 use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
 use context::AppContext;
 use tauri::Manager;
@@ -92,6 +94,7 @@ pub fn run(context: tauri::Context) {
             deployment_update,
             deployment_delete,
             usage_create,
+            usage_delete,
             usage_list_for_credential,
             usage_list_for_project,
             settings_get,
@@ -126,6 +129,7 @@ pub fn run(context: tauri::Context) {
             deployment_update,
             deployment_delete,
             usage_create,
+            usage_delete,
             usage_list_for_credential,
             usage_list_for_project,
             settings_get,

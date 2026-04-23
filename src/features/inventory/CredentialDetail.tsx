@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { UsageSection } from "./UsageSection";
 import type { CredentialFull } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -440,30 +441,11 @@ export function CredentialDetail({
             </section>
 
             {/* === 5. Usages section === */}
-            <section>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("inventory.sectionUsages")}
-              </h3>
-              {cred.usages.length === 0 ? (
-                <p className="rounded-md border border-dashed px-3 py-4 text-xs text-muted-foreground">
-                  {t("inventory.noUsages")}
-                </p>
-              ) : (
-                <ul className="divide-y divide-border rounded-md border">
-                  {cred.usages.map((u) => (
-                    <li key={u.id} className="flex flex-col gap-0.5 px-3 py-2">
-                      <span className="text-xs font-mono">{u.project_id.slice(0, 8)}</span>
-                      {u.env_var_name && (
-                        <span className="text-xs text-muted-foreground">{u.env_var_name}</span>
-                      )}
-                      {u.url && (
-                        <span className="text-xs text-muted-foreground truncate">{u.url}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            <UsageSection
+              credentialId={cred.id}
+              usages={cred.usages}
+              onChanged={fetchDetail}
+            />
 
             {/* === 6. Audit section === */}
             <section>

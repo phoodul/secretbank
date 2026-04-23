@@ -52,3 +52,13 @@ pub async fn usage_list_for_project(
     let repo = UsageRepo::new(&state.pool);
     Ok(repo.list_for_project(project_id).await?)
 }
+
+#[tauri::command]
+pub async fn usage_delete(
+    id: UsageId,
+    state: State<'_, AppContext>,
+) -> Result<(), UsageCommandError> {
+    let repo = UsageRepo::new(&state.pool);
+    repo.delete(id).await?;
+    Ok(())
+}
