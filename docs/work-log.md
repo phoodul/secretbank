@@ -1,5 +1,55 @@
 # Work Log
 
+## 2026-04-23 (T040 완료 — **M2 종료 ✅ 16/16**)
+
+### T040 — Inventory 보안 점수 + SecurityDot (직접 구현, 커밋 `11281cd`)
+
+- **Rust 측**:
+  - `api-vault-core/src/security_score.rs` 신규 — pure `score(cred)` / `score_at(cred, now)` (테스트용 시간 주입 가능). `ScoreLevel`(safe ≥80 / warn ≥50 / danger) + `FactorCode` 7종(Expired/ExpiringSoon/RotationOverdue/NoRotationHistory/NoScope/Revoked/Compromised) + `ScoreFactor { code, severity, penalty, days }` + `ScoreBreakdown { total, level, factors }`. Revoked/Compromised 는 즉시 0점 danger 단락 — 다른 factor 와 혼합 안 함.
+  - `api-vault-core/src/lib.rs` — `score_credential`, `score_credential_at` 및 관련 타입 re-export.
+  - `models/credential.rs` — `CredentialSummary` 에 `score: ScoreBreakdown` 필드 추가 (required). `CredentialPatch`/`CredentialFilter` 는 영향 없음.
+  - `api-vault-storage/repositories/credential.rs` — `list` 의 SQL SELECT 를 full 필드로 확장, `row_to_credential` 재사용해 full cred 를 조립한 뒤 `score_credential(&cred)` 으로 score 계산 → `CredentialSummary.score` 에 주입. `list` 반환 shape 만 바뀌었고 get_by_id 등 다른 경로는 그대로.
+  - `api-vault-app/commands/credentials.rs` — `CredentialFull` 에 `pub score: ScoreBreakdown` 필드 추가 (flatten 된 Credential 과 병렬). `credential_get` 이 `score_credential(&credential)` 계산 후 주입.
+  - Rust 유닛 테스트 9 (건강=100/safe, revoked→0/danger, compromised→0/danger, expired −50, expiring_soon −20 ≤30d, rotation_overdue −15, no_rotation_history +90d −10, no_scope −5, multi-factor clamp 테스트). 결정적 base time (epoch `1_700_000_000`) + `Duration::days(offset)` 로 시간 의존 테스트 안정화.
+- **Frontend 측**:
+  - `src/features/inventory/types.ts` — `ScoreLevel`/`FactorCode`/`FactorSeverity`/`ScoreFactor`/`ScoreBreakdown` 미러 타입 + `CredentialSummary.score`/`CredentialFull.score` 필드 추가.
+  - `src/features/inventory/SecurityDot.tsx` 신규 — Tailwind 시맨틱 토큰 `bg-vault-success`/`warning`/`danger` 로 색상 dot + shadcn Tooltip 으로 factor 목록·총점·해결 제안. `TooltipProvider` 를 컴포넌트 내부에 배치 → 어디에 삽입해도 독립 동작. `data-level` 속성 + rich `aria-label` (점수 + factor 짧은 요약) 로 접근성 확보.
+  - `CredentialCard` 상단에 SecurityDot 삽입 (이름 왼쪽).
+  - `src/locales/{en,ko,ja,zh}/common.json` — `inventory.scoreTooltipTitle`/`scoreAllGood`/`scoreLevel(Safe|Warn|Danger)` + nested `inventory.factor.{code}` 7개 + `inventory.factorShort.{code}` 7개 × 4 언어 (88키 추가).
+  - 기존 fixtures 3곳 (`inventory/__tests__/fixtures.ts`, `inventory/__tests__/CredentialCard.test.tsx`, `projects/__tests__/ProjectsPage.test.tsx`, `onboarding/__tests__/DetectedKeysReview.test.tsx`) 에 `score` 필드 기본값(`MOCK_SAFE_SCORE`) 주입 — required 필드 추가 시 필수 작업.
+- **테스트**: `src/features/inventory/__tests__/SecurityDot.test.tsx` Vitest 4 (safe/warn 변형/warn 기본/danger revoked 각각 dot 색 클래스 + data-level + aria-label 검증).
+- **검증**: `cargo clippy -D warnings` exit 0, `cargo test --workspace` 전체 통과 (+9 security_score), `pnpm typecheck` exit 0, `pnpm lint` 0 에러 / 기존 6 경고 유지, `pnpm vitest run` 18 files / 140 tests (기존 136 + 신규 4) pass.
+
+**설계 교훈**:
+
+- **Rust authoritative / 프런트 렌더**: TS 재구현 대신 서버에서 계산해 응답에 주입. FactorCode enum 은 `serde snake_case` → 프런트 리터럴 유니온 타입으로 그대로 매칭. 새 factor 추가 시 Rust enum + 4언어 키만 늘리면 UI 변경 불필요.
+- **Revoked/Compromised 단락 로직**: 이들은 "다른 문제를 덧붙여 봤자 의미 없는" 최종 상태. `return` 으로 나머지 체크를 건너뛰는 편이 가독성과 의미 모두 우수.
+- **시맨틱 토큰 첫 소비**: `bg-vault-success/warning/danger` 는 T008 에서 추가되어 M0~M1 에선 badge 에만 쓰였다. T040 에서 SecurityDot 이 첫 대량 소비처. 다크 모드 자동 대응 + hex 하드코딩 없음.
+- **Required 필드 추가 리팩터링 패턴**: `CredentialSummary.score` 를 required 로 추가한 순간 프런트 모든 mock/fixtures 가 컴파일 실패. `MOCK_SAFE_SCORE` 공용 상수 export 로 일괄 해결. 향후 비슷한 필드 확장 시 같은 패턴 — fixtures 중앙집중화가 중요.
+- **Score freshness**: 만료 판정이 `now` 의존이므로 DB 에 캐시하지 않음. 매 `credential_list` 호출마다 재계산 (비용 적음). 장기 캐시 필요해지면 클라이언트 TTL 또는 서버 폴링 추가.
+
+### M2 종료 요약
+
+- **16/16 태스크 완료** — Must 13개 ✅ + Should 3개 ✅.
+- **커밋**: T025 `ab69319` ~ T040 `11281cd` + 문서/fixup 다수. 누적 56 commits.
+- **핵심 UX 스택**: Inventory 목록 + 필터 바 + Card (보안 dot/hover disclosure) + Cmd+K palette + Settings (theme/language/auto-lock) + idle Auto-lock + 드롭&스캔(3단계 파이프라인) + Welcome 3-step 온보딩 + RequireOnboarding 가드 + Project CRUD + Deployment CRUD + Usage 링크 UI + 보안 점수 시각화.
+- **Backend 커맨드 총계**: vault 4 + credential 6 + issuer 2 + project 5 + deployment 4 + usage 4 + settings 2 + scanner 1 = **28 Tauri 커맨드**.
+- **테스트**: Rust 95+개 + Vitest 140개 + 모두 통과. `pnpm lint` / `pnpm typecheck` / `cargo clippy -D warnings` 전부 green.
+
+**Follow-up 큐** (M3 이후 해결):
+
+1. 드롭&스캔 secure import 경로 — scan 결과의 실제 값을 재파싱해 age 볼트에 직접 주입 (T035 교훈).
+2. Deployment 삭제 시 usage.deployment_id cascade (T038 교훈).
+3. BottomNav 6탭 UX 재검토 (Audit 을 Settings 내부로 이동 or 스크롤 구조?).
+4. Score factor 확장: usages 없음 factor (`CredentialFull` 전용).
+
+### 부수 처리
+
+- `docs/task.md` — M2 Status `🔄 15/16` → `✅ 16/16`, M3 Status `⏳ 대기` → `🔄 대기` (현재 작업 대상). 진행 표에 T040 줄. 완료 합계 40/118 + **M2 완료** 표기.
+- `docs/progress.md` — Last Checkpoint (56 커밋, Rust 95+ / Vitest 140, Milestone transition 명시), T040 교훈 7개 (Rust authoritative / Revoked 단락 / 시맨틱 토큰 첫 소비 / Required 필드 리팩터링 패턴 / Score freshness 등) + **M2 종료 요약 섹션** + Follow-up 큐 4건, Next Action 을 T041 PetGraph 의존성 그래프 엔진으로 전환.
+
+---
+
 ## 2026-04-23 (T039 완료, M2 15/16 — M2 Must 전체 완료)
 
 ### T039 — Usage 링크 UI (직접 구현, 커밋 `cff6bf8`)

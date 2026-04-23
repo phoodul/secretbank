@@ -2,15 +2,15 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T039 완료, M2 15/16)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 15/16** (Must 13/13 ✅, Should 2/3)
-- **Commits:** 54개 누적 (최신 `cff6bf8` feat(inventory): T039 Usage 링크 UI; 직전 `3072909` T038 Deployment)
-- **Tests:** Rust 86개 + Vitest 136개 (+4 UsageSection) 통과. `pnpm typecheck` / `pnpm lint` 에러 0 / `cargo clippy -D warnings` exit 0.
+- **Time:** 2026-04-23 (T040 완료, **M2 16/16 ✅ 전체 완료**)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI ✅ 완료**, M3 Dependency Graph & Blast Radius 진입 준비
+- **Commits:** 56개 누적 (최신 `11281cd` feat(security-score): T040 3단계 시각화; 직전 `cff6bf8` T039 Usage 링크)
+- **Tests:** Rust 95+개 (+9 security_score 유닛) + Vitest 140개 (+4 SecurityDot) 통과. `pnpm typecheck` / `pnpm lint` 에러 0 / `cargo clippy -D warnings` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반 (Night mode 종료됨).
-- **Note:** M2 Must 13개 전부 완료. 남은 1개는 T040 (보안 점수 시각화, Should).
+- **Milestone transition:** M2 ✅ (16/16) → M3 🔄 (0/8: T041 PetGraph 의존성 그래프 엔진부터).
 
-## M2 진행 상황 (15/16)
+## M2 진행 상황 (16/16 ✅ 완료)
 
 ### 완료 ✅
 
@@ -30,6 +30,7 @@
 - **T037** Project CRUD 페이지 + 연결된 credential 뷰 + project_update/delete + usage_list_for_project (커밋 `bf67527`)
 - **T038** Deployment CRUD (ProjectDetail 내부 섹션) + DeploymentPatch + deployment_* 커맨드 4개 (커밋 `3072909`)
 - **T039** Usage 링크 UI (Credential ↔ Project 수동 연결) + usage_delete 커맨드 + 프론트 Usage 타입 Rust 일치 정정 (커밋 `cff6bf8`)
+- **T040** Inventory 보안 점수 + SecurityDot (3단계 safe/warn/danger + 7 factor) + Rust security_score 유닛 테스트 9 + score 를 CredentialSummary/CredentialFull 응답에 주입 (커밋 `11281cd`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
@@ -183,7 +184,8 @@
 - [x] T037 Project CRUD 페이지 + 연결된 credential 뷰 — 커밋 `bf67527`
 - [x] T038 Deployment CRUD (ProjectDetail 내부 섹션) — 커밋 `3072909`
 - [x] T039 Usage 링크 UI — 커밋 `cff6bf8`
-- [ ] T040 Inventory 보안 점수 시각화 (Should) — 다음 진입점, M2 마지막
+- [x] T040 Inventory 보안 점수 + SecurityDot — 커밋 `11281cd`
+- ✅ **M2 완료 (16/16)** — 다음은 M3 Dependency Graph & Blast Radius (T041~T048)
 
 ## Pending Decisions
 
@@ -210,18 +212,31 @@
 - **entropy-only 감지 항목은 import 불가** — `issuer_slug` 가 `None` 이면 issuer FK 를 결정할 수 없어 기본 체크 해제 + 선택해도 skip. UI 는 체크박스는 disabled 아니지만 Import 집계에서 제외됨.
 - **프론트 `Usage` 타입이 Rust 와 불일치** (legacy fields: `url`, `env_var_name`, `scanner_version`) — T035 에서는 건드리지 않고 DetectedKeysReview 는 `where_kind: "env_var"`, `where_value` 로 rust 커맨드에 전달. 추후 T037/T038 에서 frontend `Usage` 타입을 정리해야 함.
 
-## T039 구현 교훈 (M2 후속 영향)
+## T040 구현 교훈 (M3 이후 영향)
 
-- **프론트 Usage 타입 shape 정정 완료**: 기존 `src/features/inventory/types.ts` 의 `Usage` 는 scanner/legacy DTO 인 `url`/`env_var_name`/`scanner_version` 를 참조했지만, `credential_get` 의 실제 Rust 응답은 `where_kind`/`where_value`/`verified_at`/`verified_by` shape. 즉 기존 렌더는 undefined 를 출력 중이었음 (T035 교훈에서 예고). T039 에서 완전 교체. Onboarding 쪽 `DetectedKeyInfo.env_var_name` 은 `Usage` 와 무관한 scanner DTO 이므로 그대로 둠.
-- **`usage_delete` 커맨드 추가** (이전엔 repo 에만 존재): `UsageRepo::delete` 는 T019 에서 이미 구현되어 있었고 커맨드만 신설. 커맨드 네이밍은 `usage_delete(id)` 단일 파라미터 — `credential_delete` 와 동일 패턴.
-- **UsageSection 의 프로젝트 이름 해석**: Usage 행에서 project_id 를 보여주는 대신 `project_list` 를 Map 캐시로 조회해 `project.name` 표시. 실패 시 `id.slice(0,8)…` 폴백. Add form 을 열 때는 별도로 project_list 다시 호출 — 폼이 열릴 때만 필요하므로 지연 로드.
-- **Add form UX**: Detail Sheet 라는 좁은 영역에서 form 을 별도 Dialog 로 열지 않고 섹션 내부에 토글로 펼침. 상태 간소화 (Dialog 관리 state 제거). Close 는 X 버튼 or "Cancel" 버튼 둘 다 동작.
-- **where_kind placeholder 힌트**: 선택된 kind 에 따라 `whereValue` input placeholder 가 `OPENAI_API_KEY` / `/apps/web/.env.local` / `src/lib/auth.ts:42` 로 바뀜 — 사용자가 어떤 형식을 입력해야 하는지 자연스럽게 안내.
-- **onChanged = credential_get refetch**: UsageSection 의 usage 변경 후 `onChanged()` 콜백이 `CredentialDetail` 의 `fetchDetail` (기존 retry 트리거 재활용) 을 호출. 재조회로 `cred.usages` 가 갱신되어 UI 자동 반영. Local 캐시 수정 대신 서버 진실을 다시 가져오는 방식 — M2 규모에선 충분하고 단순.
-- **Cascade 안전망**: T038 교훈에서 언급한 "deployment_id dangling" 은 현재 UsageSection 에서 deployment 를 조회하지 않으므로 표면화되지 않음. 추후 "어떤 배포에 쓰이는지" 배지가 필요해지면 deployment_list + null-safe 처리 추가.
+- **Rust 에서 authoritative 계산 → 응답에 주입**: 프런트에서 TS 로 같은 로직을 중복 구현하는 대신 `CredentialRepo::list` 가 `row_to_credential(r)` 로 full cred 를 조립한 뒤 `score_credential(&cred)` 을 호출해 `CredentialSummary.score` 에 포함. `credential_get` 도 `CredentialFull.score` 로 동일 계산. 프런트는 단순 렌더러. Single source of truth 유지.
+- **`score_at(cred, now)` 분리**: `score(cred)` 는 `OffsetDateTime::now_utc()` 를 쓰고, 테스트용 `score_at(cred, now)` 는 time 주입. 9개 유닛 테스트가 결정적 base time (`1_700_000_000` epoch + day offset) 기준으로 검증.
+- **Revoked/Compromised 는 단락**: status 가 `Revoked` 또는 `Compromised` 일 때는 나머지 factor 평가 건너뛰고 즉시 `total=0, level=Danger, factors=[해당 코드]` 반환. 이후 factor 와 혼합하지 않음 — "폐기된 키"에 "만료 임박" 메시지 덧붙이는 건 혼란스러움.
+- **FactorCode enum + i18n 키 매핑**: Rust 측 `#[serde(rename_all = "snake_case")]` 덕에 JSON 이 `"expired"` / `"expiring_soon"` 등 snake_case. 프런트는 `inventory.factor.{code}` 를 자동 매핑해 i18n 번역. 새 factor 추가 시 Rust enum + 4개 언어 키만 추가하면 UI 코드 수정 불필요.
+- **`bg-vault-success/warning/danger` 시맨틱 토큰 활용**: T008 에서 추가한 토큰이 T040 에서 첫 실제 소비처. 다크 모드 자동 대응. 별도 hex 하드코딩 없음.
+- **shadcn Tooltip provider 는 컴포넌트 내부에 배치**: SecurityDot 자체가 TooltipProvider 를 감싸서 어디에 삽입돼도 독립 동작. CredentialCard 는 SecurityDot 을 단순 import 만 하면 됨.
+- **기존 fixtures 전면 업데이트 필요**: CredentialSummary/CredentialFull 에 required `score` 필드를 추가하면 프런트 테스트 파일 3곳(fixtures/CredentialCard.test/ProjectsPage.test/DetectedKeysReview.test) 의 모든 mock 에 `score` 를 채워야 함. `MOCK_SAFE_SCORE` 상수 export 로 간결화. 이런 "Required 필드 추가" 리팩터링은 다음에도 빈번할 것이므로 패턴 숙지.
+- **Score 는 서버 fresh**: 만료 판정이 시점 의존. `credential_list` 가 호출될 때마다 다시 계산되므로 DB 에 저장하지 않음. 클라이언트 캐시에 오래 머물 경우 stale 가능 — 현재 refresh 주기(사용자 상호작용 + 드롭&스캔 후) 에서는 문제 없음. 추후 폴링이 필요하면 interval fetch 추가.
 
-## Next Action
+## M2 종료 요약
 
-- **T040 Inventory 보안 점수 시각화 (Should)** — `crates/api-vault-core/src/security_score.rs` 에 `fn score(cred: &Credential, usages: &[Usage]) -> ScoreBreakdown` 추가. Credential 카드에 3단계 색상 dot (safe/warn/danger), hover 시 tooltip 으로 factor 노출.
-- **선행 확인**: `api-vault-core` 에 `security_score` 모듈이 아직 없으므로 신설. Credential 카드는 `src/features/inventory/CredentialCard.tsx`. Tooltip 컴포넌트는 shadcn/ui 이미 도입됨.
-- **M2 종료**: T040 이 M2 마지막 태스크. 완료 즉시 M2 ✅ 전환 → M3 Dependency Graph & Blast Radius (T041~T048) 로 이동.
+- **16/16 태스크 완료** (Must 13 + Should 3). 누적 56 커밋.
+- **핵심 구조**: Inventory 목록 + 필터 + Card 그리드 + Cmd+K + Settings + Auto-lock + 드롭&스캔(3단계) + Welcome 온보딩 + Project CRUD + Deployment CRUD + Usage 링크 + Security Score.
+- **테스트**: Rust 95+개 (security_score 9 신규 포함) + Vitest 140개 (UsageSection 4 + SecurityDot 4 포함). 전부 통과.
+- **Backend 커맨드 총계**: vault 4 + credential 6 + issuer 2 + project 5 + deployment 4 + usage 4 + settings 2 + scanner 1 = **28 Tauri 커맨드**.
+- **Follow-up 큐** (M3 이후 처리):
+  1. 드롭&스캔 secure import 경로 (T035 교훈) — scan 결과를 실제 값으로 재파싱해 age 볼트에 주입.
+  2. Deployment 삭제 시 usage.deployment_id cascade 처리 (T038 교훈).
+  3. BottomNav 6탭 UX 재검토 (Audit 을 Settings 내부로 이동?).
+  4. Score factor 확장: usages 없음 factor 를 CredentialFull 전용으로 추가.
+
+## Next Action (M3 진입)
+
+- **T041 PetGraph 기반 의존성 그래프 엔진** — `crates/api-vault-core/src/graph.rs` 신설 (또는 별도 `api-vault-graph` crate). `build_graph(repos)` 가 Issuer → Credential → Usage → Project → Deployment 노드/엣지 조립. PetGraph `DiGraph<Node, Edge>` 사용.
+- **선행 확인**: `api-vault-core/Cargo.toml` 에 `petgraph` 의존성 추가 필요. `models/` 노드들은 이미 모두 정의 완료. 엣지 방향은 architecture.md 의 ER 다이어그램 참조.
+- **이후 M3 흐름**: T041 엔진 → T042 Tauri 커맨드 `graph_build` → T043 React Flow 렌더 → T044 필터 (issuer/env) → T045 blast radius 알고리즘 (credential 한 노드 제거 시 도달 불가해지는 하위 노드 집합 계산) → T046 preview UI → T047/T048 성능/접근성.

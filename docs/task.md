@@ -30,8 +30,8 @@
 | :-- | :------------------------------ | :---------- | :-------- | :------------------ |
 | M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료       |
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
-| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | 🔄 15/16 완료       |
-| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ⏳ 대기             |
+| M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
+| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | 🔄 대기             |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기             |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
@@ -91,8 +91,9 @@
 | T037    | Project 관리 페이지 (CRUD + 연결 credential 뷰)                 | 2026-04-23 | `bf67527` |
 | T038    | Deployment 관리 (ProjectDetail 내부 섹션, 플랫폼 5종)           | 2026-04-23 | `3072909` |
 | T039    | Usage 링크 UI (Credential ↔ Project 수동 연결, usage_delete)    | 2026-04-23 | `cff6bf8` |
+| T040    | Inventory 보안 점수 + SecurityDot (3단계 + 7 factor)            | 2026-04-23 | `11281cd` |
 
-**완료 합계**: 39/118 (M0 완료 + M1 완료 + M2 15/16)
+**완료 합계**: 40/118 (M0 완료 + M1 완료 + **M2 완료** ✅)
 
 ---
 
