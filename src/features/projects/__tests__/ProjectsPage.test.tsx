@@ -56,6 +56,7 @@ function makeCred(overrides: Partial<CredentialSummary> = {}): CredentialSummary
     status: "active",
     expires_at: null,
     hash_hint: "abcd",
+    score: { total: 100, level: "safe", factors: [] },
     ...overrides,
   };
 }

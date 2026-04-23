@@ -129,6 +129,7 @@ describe("DetectedKeysReview", () => {
         status: "active",
         expires_at: null,
         hash_hint: "dupe",
+        score: { total: 100, level: "safe", factors: [] },
       },
     ];
     renderReview(detected, existing);

@@ -1,7 +1,14 @@
-import type { CredentialFull, CredentialSummary } from "../types";
+import type { CredentialFull, CredentialSummary, ScoreBreakdown } from "../types";
 
 export const NOW = Date.now();
 export const DAY = 24 * 60 * 60 * 1000;
+
+/** 테스트용 기본 score — safe/100 */
+export const MOCK_SAFE_SCORE: ScoreBreakdown = {
+  total: 100,
+  level: "safe",
+  factors: [],
+};
 
 /** 테스트용 mock credential 10개 — 다양한 env/status/expires_at 조합 */
 export const MOCK_CREDENTIALS: CredentialSummary[] = [
@@ -13,6 +20,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "active",
     expires_at: NOW + 60 * DAY,
     hash_hint: "aaaa",
+    score: MOCK_SAFE_SCORE,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAB",
@@ -22,6 +30,11 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "active",
     expires_at: NOW + 10 * DAY, // expiring soon
     hash_hint: null,
+    score: {
+      total: 80,
+      level: "safe",
+      factors: [{ code: "expiring_soon", severity: "warn", penalty: 20, days: 10 }],
+    },
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAC",
@@ -31,6 +44,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "active",
     expires_at: null,
     hash_hint: null,
+    score: MOCK_SAFE_SCORE,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAD",
@@ -40,6 +54,11 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "active",
     expires_at: NOW - 5 * DAY, // expired
     hash_hint: null,
+    score: {
+      total: 50,
+      level: "warn",
+      factors: [{ code: "expired", severity: "danger", penalty: 50, days: 5 }],
+    },
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAE",
@@ -49,6 +68,11 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "revoked",
     expires_at: null,
     hash_hint: null,
+    score: {
+      total: 0,
+      level: "danger",
+      factors: [{ code: "revoked", severity: "danger", penalty: 100, days: null }],
+    },
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAF",
@@ -58,6 +82,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "active",
     expires_at: NOW + 90 * DAY,
     hash_hint: null,
+    score: MOCK_SAFE_SCORE,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAG",
@@ -67,6 +92,11 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "compromised",
     expires_at: null,
     hash_hint: null,
+    score: {
+      total: 0,
+      level: "danger",
+      factors: [{ code: "compromised", severity: "danger", penalty: 100, days: null }],
+    },
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAH",
@@ -76,6 +106,11 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "active",
     expires_at: NOW + 20 * DAY, // expiring soon
     hash_hint: null,
+    score: {
+      total: 80,
+      level: "safe",
+      factors: [{ code: "expiring_soon", severity: "warn", penalty: 20, days: 20 }],
+    },
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAI",
@@ -85,6 +120,11 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "revoked",
     expires_at: null,
     hash_hint: null,
+    score: {
+      total: 0,
+      level: "danger",
+      factors: [{ code: "revoked", severity: "danger", penalty: 100, days: null }],
+    },
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAJ",
@@ -94,6 +134,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     status: "active",
     expires_at: NOW + 120 * DAY,
     hash_hint: null,
+    score: MOCK_SAFE_SCORE,
   },
 ];
 
@@ -114,4 +155,5 @@ export const MOCK_CREDENTIAL_FULL: CredentialFull = {
   status: "active",
   hash_hint: "abc1",
   usages: [],
+  score: MOCK_SAFE_SCORE,
 };

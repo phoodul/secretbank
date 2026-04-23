@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 
 use api_vault_core::{
-    AuditAction, AuditActor, AuditLog, AuditLogId, Credential, CredentialFilter, CredentialId,
-    CredentialInput, CredentialPatch, CredentialSummary, Usage,
+    score_credential, AuditAction, AuditActor, AuditLog, AuditLogId, Credential, CredentialFilter,
+    CredentialId, CredentialInput, CredentialPatch, CredentialSummary, ScoreBreakdown, Usage,
 };
 use api_vault_storage::sqlite::repositories::{
     audit::AuditRepo, credential::CredentialRepo, usage::UsageRepo,
@@ -61,12 +61,14 @@ impl From<api_vault_storage::vault::VaultError> for CredentialCommandError {
 // Response types
 // ---------------------------------------------------------------------------
 
-/// Full credential view (metadata + usages, no secret value).
+/// Full credential view (metadata + usages + risk score, no secret value).
 #[derive(Debug, Serialize)]
 pub struct CredentialFull {
     #[serde(flatten)]
     pub credential: Credential,
     pub usages: Vec<Usage>,
+    /// Security score computed from the credential fields (T040).
+    pub score: ScoreBreakdown,
 }
 
 // ---------------------------------------------------------------------------
@@ -192,8 +194,13 @@ pub async fn credential_get(
         .ok_or(CredentialCommandError::NotFound)?;
 
     let usages = usage_repo.list_for_credential(id).await?;
+    let score = score_credential(&credential);
 
-    Ok(CredentialFull { credential, usages })
+    Ok(CredentialFull {
+        credential,
+        usages,
+        score,
+    })
 }
 
 #[tauri::command]

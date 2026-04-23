@@ -1,9 +1,14 @@
 pub mod id;
 pub mod models;
+pub mod security_score;
 
 pub use id::{
     AuditLogId, CredentialId, DeploymentId, DeviceId, IncidentId, IncidentMatchId, IssuerId,
     ProjectId, UsageId,
+};
+pub use security_score::{
+    score as score_credential, score_at as score_credential_at, FactorCode, FactorSeverity,
+    ScoreBreakdown, ScoreFactor, ScoreLevel,
 };
 pub use models::audit_log::{AuditAction, AuditActor, AuditLog};
 pub use models::credential::{

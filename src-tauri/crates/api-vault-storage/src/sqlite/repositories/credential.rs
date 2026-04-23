@@ -1,6 +1,6 @@
 use api_vault_core::{
-    Credential, CredentialFilter, CredentialId, CredentialInput, CredentialPatch, CredentialStatus,
-    CredentialSummary, Env,
+    score_credential, Credential, CredentialFilter, CredentialId, CredentialInput, CredentialPatch,
+    CredentialStatus, CredentialSummary, Env,
 };
 use sqlx::{Row, SqlitePool};
 use time::OffsetDateTime;
@@ -87,8 +87,11 @@ impl<'a> CredentialRepo<'a> {
         &self,
         filter: &CredentialFilter,
     ) -> Result<Vec<CredentialSummary>, StorageError> {
+        // T040: full columns required so we can compute the security score.
         let mut qb = sqlx::QueryBuilder::new(
-            "SELECT id, issuer_id, name, env, status, expires_at, hash_hint FROM credential WHERE 1=1",
+            "SELECT id, issuer_id, name, env, scope, vault_ref, created_at, last_rotated_at, \
+             expires_at, owner, rotation_policy_days, rotation_runbook_id, status, hash_hint \
+             FROM credential WHERE 1=1",
         );
 
         if let Some(issuer_id) = &filter.issuer_id {
@@ -115,24 +118,17 @@ impl<'a> CredentialRepo<'a> {
 
         rows.iter()
             .map(|r| {
-                let id_str: String = r.try_get("id")?;
-                let issuer_id_str: String = r.try_get("issuer_id")?;
-                let env_str: String = r.try_get("env")?;
-                let status_str: String = r.try_get("status")?;
-                let expires_ms: Option<i64> = r.try_get("expires_at")?;
-
+                let cred = row_to_credential(r)?;
+                let score = score_credential(&cred);
                 Ok(CredentialSummary {
-                    id: id_str
-                        .parse()
-                        .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))?,
-                    issuer_id: issuer_id_str
-                        .parse()
-                        .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))?,
-                    name: r.try_get("name")?,
-                    env: str_to_env(&env_str)?,
-                    status: str_to_status(&status_str)?,
-                    expires_at: ms_to_dt_opt(expires_ms)?,
-                    hash_hint: r.try_get("hash_hint")?,
+                    id: cred.id,
+                    issuer_id: cred.issuer_id,
+                    name: cred.name,
+                    env: cred.env,
+                    status: cred.status,
+                    expires_at: cred.expires_at,
+                    hash_hint: cred.hash_hint,
+                    score,
                 })
             })
             .collect()

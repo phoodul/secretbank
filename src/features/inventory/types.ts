@@ -1,6 +1,34 @@
 export type Env = "dev" | "staging" | "prod";
 export type CredentialStatus = "active" | "revoked" | "compromised";
 
+// ---------------------------------------------------------------------------
+// Security score (T040) — mirrors api_vault_core::security_score
+// ---------------------------------------------------------------------------
+
+export type ScoreLevel = "safe" | "warn" | "danger";
+export type FactorSeverity = "info" | "warn" | "danger";
+export type FactorCode =
+  | "expired"
+  | "expiring_soon"
+  | "rotation_overdue"
+  | "no_rotation_history"
+  | "no_scope"
+  | "revoked"
+  | "compromised";
+
+export interface ScoreFactor {
+  code: FactorCode;
+  severity: FactorSeverity;
+  penalty: number;
+  days: number | null;
+}
+
+export interface ScoreBreakdown {
+  total: number;
+  level: ScoreLevel;
+  factors: ScoreFactor[];
+}
+
 /** credential_list 커맨드가 반환하는 원소 */
 export interface CredentialSummary {
   id: string;
@@ -12,6 +40,8 @@ export interface CredentialSummary {
   expires_at: number | null;
   /** Last 4 characters of the secret. Used for duplicate detection. */
   hash_hint: string | null;
+  /** Server-computed security score (T040). */
+  score: ScoreBreakdown;
 }
 
 /** credential_list 커맨드에 전달하는 필터 */
@@ -60,4 +90,6 @@ export interface CredentialFull {
   status: CredentialStatus;
   hash_hint: string | null;
   usages: Usage[];
+  /** Server-computed security score (T040). */
+  score: ScoreBreakdown;
 }

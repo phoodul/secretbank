@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
 use crate::id::{CredentialId, IssuerId};
+use crate::security_score::ScoreBreakdown;
 
 /// Environment tier for a credential or deployment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -74,6 +75,8 @@ pub struct CredentialSummary {
     /// drop-scan import flow (T035). `None` for records imported before
     /// hash_hint was required.
     pub hash_hint: Option<String>,
+    /// Risk score computed on the server (T040).
+    pub score: ScoreBreakdown,
 }
 
 /// Partial update — all fields optional.

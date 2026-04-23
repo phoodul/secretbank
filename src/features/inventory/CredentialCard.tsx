@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+
+import { SecurityDot } from "./SecurityDot";
 import type { CredentialSummary } from "./types";
 
 interface CredentialCardProps {
@@ -67,9 +69,12 @@ export function CredentialCard({ credential, onSelect }: CredentialCardProps) {
       }}
     >
       <CardContent className="p-4">
-        {/* 항상 표시: 이름 + 상태 배지 */}
+        {/* 항상 표시: 보안 점수 dot + 이름 + 상태 배지 */}
         <div className="flex items-start justify-between gap-2">
-          <span className="truncate font-medium text-sm leading-tight">{credential.name}</span>
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            <SecurityDot score={credential.score} />
+            <span className="truncate text-sm leading-tight font-medium">{credential.name}</span>
+          </div>
           <Badge variant={statusBadge.variant} className="shrink-0 text-xs">
             {t(statusBadge.labelKey)}
           </Badge>
