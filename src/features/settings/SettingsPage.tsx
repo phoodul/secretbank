@@ -57,7 +57,9 @@ export function SettingsPage() {
     ? "ko"
     : i18n.language.startsWith("ja")
       ? "ja"
-      : "en";
+      : i18n.language.startsWith("zh")
+        ? "zh"
+        : "en";
 
   return (
     <div className="max-w-2xl space-y-8 p-6">
@@ -96,6 +98,7 @@ export function SettingsPage() {
               <SelectItem value="en">English</SelectItem>
               <SelectItem value="ko">한국어</SelectItem>
               <SelectItem value="ja">日本語</SelectItem>
+              <SelectItem value="zh">中文</SelectItem>
             </SelectContent>
           </Select>
         </div>
