@@ -1,4 +1,5 @@
 pub mod credentials;
+pub mod deployments;
 pub mod issuer;
 pub mod projects;
 pub mod scanner;

@@ -35,3 +35,11 @@ pub struct DeploymentInput {
     pub platform: DeploymentPlatform,
     pub env: Env,
 }
+
+/// Partial update for a deployment. `project_id` is intentionally immutable.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct DeploymentPatch {
+    pub url: Option<String>,
+    pub platform: Option<DeploymentPlatform>,
+    pub env: Option<Env>,
+}

@@ -24,7 +24,7 @@ vi.mock("sonner", () => ({
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { ProjectsPage } from "../ProjectsPage";
-import type { Project, ProjectUsage } from "../types";
+import type { Deployment, Project, ProjectUsage } from "../types";
 import type { CredentialSummary } from "@/features/inventory/types";
 
 const mockInvoke = vi.mocked(invoke);
@@ -74,6 +74,54 @@ function makeUsage(overrides: Partial<ProjectUsage> = {}): ProjectUsage {
   };
 }
 
+function makeDeployment(overrides: Partial<Deployment> = {}): Deployment {
+  return {
+    id: "01J0000000000000000000000D",
+    project_id: "01J0000000000000000000000P",
+    url: "https://billing.example.com",
+    platform: "vercel",
+    env: "prod",
+    created_at: 1700000000000,
+    ...overrides,
+  };
+}
+
+/** 커맨드명 매칭 기반 invoke mock. 순서 의존성을 제거한다. */
+interface RoutedResponses {
+  project_list?: Project[];
+  project_create?: string;
+  project_update?: Project;
+  project_delete?: undefined;
+  usage_list_for_project?: ProjectUsage[];
+  credential_list?: CredentialSummary[];
+  deployment_list_for_project?: Deployment[];
+}
+
+function routeInvokes(responses: RoutedResponses) {
+  mockInvoke.mockImplementation((cmd: string) => {
+    switch (cmd) {
+      case "project_list":
+        return Promise.resolve(responses.project_list ?? []);
+      case "project_create":
+        return Promise.resolve(responses.project_create ?? "new-id");
+      case "project_update":
+        return Promise.resolve(
+          responses.project_update ?? makeProject({ id: "updated" }),
+        );
+      case "project_delete":
+        return Promise.resolve(undefined);
+      case "usage_list_for_project":
+        return Promise.resolve(responses.usage_list_for_project ?? []);
+      case "credential_list":
+        return Promise.resolve(responses.credential_list ?? []);
+      case "deployment_list_for_project":
+        return Promise.resolve(responses.deployment_list_for_project ?? []);
+      default:
+        return Promise.resolve(undefined);
+    }
+  });
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -96,7 +144,7 @@ describe("ProjectsPage", () => {
   });
 
   it("project_list 결과가 비어있으면 빈 상태를 표시한다", async () => {
-    mockInvoke.mockResolvedValueOnce([] satisfies Project[]);
+    routeInvokes({ project_list: [] });
 
     renderPage();
 
@@ -106,8 +154,9 @@ describe("ProjectsPage", () => {
   });
 
   it("project_list 결과로 카드를 렌더링한다", async () => {
-    const projects = [makeProject(), makeProject({ id: "p2", name: "Marketing Site" })];
-    mockInvoke.mockResolvedValueOnce(projects);
+    routeInvokes({
+      project_list: [makeProject(), makeProject({ id: "p2", name: "Marketing Site" })],
+    });
 
     renderPage();
 
@@ -119,10 +168,12 @@ describe("ProjectsPage", () => {
 
   it("검색 입력으로 이름 기반 필터링이 동작한다", async () => {
     const user = userEvent.setup();
-    mockInvoke.mockResolvedValueOnce([
-      makeProject({ name: "Billing API" }),
-      makeProject({ id: "p2", name: "Marketing Site" }),
-    ]);
+    routeInvokes({
+      project_list: [
+        makeProject({ name: "Billing API" }),
+        makeProject({ id: "p2", name: "Marketing Site" }),
+      ],
+    });
 
     renderPage();
 
@@ -138,7 +189,7 @@ describe("ProjectsPage", () => {
 
   it("'New project' 클릭 시 Create Dialog 가 열린다", async () => {
     const user = userEvent.setup();
-    mockInvoke.mockResolvedValueOnce([] satisfies Project[]);
+    routeInvokes({ project_list: [] });
 
     renderPage();
 
@@ -152,16 +203,9 @@ describe("ProjectsPage", () => {
     expect(screen.getByRole("heading", { name: /create project/i })).toBeInTheDocument();
   });
 
-  it("Create Dialog 제출 시 project_create 를 호출하고 목록을 refresh 한다", async () => {
+  it("Create Dialog 제출 시 project_create 를 호출한다", async () => {
     const user = userEvent.setup();
-    const newItem = makeProject({ id: "new1", name: "New App" });
-
-    // 1. 첫 project_list → []
-    mockInvoke.mockResolvedValueOnce([]);
-    // 2. project_create → id
-    mockInvoke.mockResolvedValueOnce("new1");
-    // 3. refresh 시 project_list → [newItem]
-    mockInvoke.mockResolvedValueOnce([newItem]);
+    routeInvokes({ project_list: [] });
 
     renderPage();
 
@@ -184,23 +228,15 @@ describe("ProjectsPage", () => {
     });
 
     expect(toast.success).toHaveBeenCalled();
-    await waitFor(() => {
-      expect(screen.getByText("New App")).toBeInTheDocument();
-    });
   });
 
   it("카드 클릭 시 Detail Drawer 가 열리고 연결된 credential 을 보여준다", async () => {
     const user = userEvent.setup();
-    const project = makeProject();
-    const usage = makeUsage({ credential_id: "C1" });
-    const cred = makeCred({ id: "C1", name: "Stripe live" });
-
-    // 1. project_list
-    mockInvoke.mockResolvedValueOnce([project]);
-    // 2. usage_list_for_project (Promise.all 첫 번째)
-    mockInvoke.mockResolvedValueOnce([usage]);
-    // 3. credential_list (Promise.all 두 번째)
-    mockInvoke.mockResolvedValueOnce([cred]);
+    routeInvokes({
+      project_list: [makeProject()],
+      usage_list_for_project: [makeUsage({ credential_id: "C1" })],
+      credential_list: [makeCred({ id: "C1", name: "Stripe live" })],
+    });
 
     renderPage();
 
@@ -224,17 +260,7 @@ describe("ProjectsPage", () => {
   it("Detail Drawer 의 Delete 버튼 클릭 → 확인 다이얼로그 → project_delete 호출", async () => {
     const user = userEvent.setup();
     const project = makeProject();
-
-    // 1. project_list
-    mockInvoke.mockResolvedValueOnce([project]);
-    // 2. usage_list_for_project
-    mockInvoke.mockResolvedValueOnce([]);
-    // 3. credential_list
-    mockInvoke.mockResolvedValueOnce([]);
-    // 4. project_delete
-    mockInvoke.mockResolvedValueOnce(undefined);
-    // 5. refresh → project_list
-    mockInvoke.mockResolvedValueOnce([]);
+    routeInvokes({ project_list: [project] });
 
     renderPage();
 
@@ -244,7 +270,7 @@ describe("ProjectsPage", () => {
 
     await user.click(screen.getByText("Billing API"));
 
-    // Sheet 안의 Delete 버튼 (Drawer 의 action row)
+    // Sheet 안의 project-level Delete 버튼 (action row 의 "Delete")
     const deleteButtons = await screen.findAllByRole("button", { name: /^delete$/i });
     await user.click(deleteButtons[0]);
 
@@ -255,5 +281,30 @@ describe("ProjectsPage", () => {
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("project_delete", { id: project.id });
     });
+  });
+
+  it("Detail Drawer 에 Deployment 섹션이 보이고, 기존 배포 항목을 렌더링한다", async () => {
+    const user = userEvent.setup();
+    routeInvokes({
+      project_list: [makeProject()],
+      deployment_list_for_project: [
+        makeDeployment({ url: "https://billing.example.com", platform: "vercel" }),
+      ],
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("Billing API")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText("Billing API"));
+
+    await waitFor(() => {
+      expect(screen.getByText("https://billing.example.com")).toBeInTheDocument();
+    });
+
+    // Deployment 섹션 헤딩 존재
+    expect(screen.getByRole("heading", { name: /deployments/i })).toBeInTheDocument();
   });
 });

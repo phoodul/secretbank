@@ -34,6 +34,34 @@ export interface ProjectPatch {
   local_path?: string | null;
 }
 
+/** deployment_* 커맨드가 다루는 Rust Deployment 타입 (api_vault_core::Deployment) */
+export type DeploymentPlatform = "vercel" | "railway" | "fly" | "netlify" | "other";
+
+export interface Deployment {
+  id: string;
+  project_id: string;
+  url: string;
+  platform: DeploymentPlatform;
+  env: "dev" | "staging" | "prod";
+  /** ms timestamp */
+  created_at: number;
+}
+
+/** deployment_create 입력 (api_vault_core::DeploymentInput) */
+export interface DeploymentInput {
+  project_id: string;
+  url: string;
+  platform: DeploymentPlatform;
+  env: "dev" | "staging" | "prod";
+}
+
+/** deployment_update patch (api_vault_core::DeploymentPatch) — 모든 필드 optional */
+export interface DeploymentPatch {
+  url?: string;
+  platform?: DeploymentPlatform;
+  env?: "dev" | "staging" | "prod";
+}
+
 /** usage_list_for_project 반환 타입 */
 export interface ProjectUsage {
   id: string;

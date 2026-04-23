@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { DeploymentSection } from "./DeploymentSection";
 import type { CredentialSummary } from "@/features/inventory/types";
 import type { Project, ProjectUsage } from "./types";
 
@@ -180,6 +181,9 @@ export function ProjectDetail({
                 />
               </div>
             </section>
+
+            {/* Deployments */}
+            <DeploymentSection projectId={project.id} />
 
             {/* Linked credentials */}
             <section>

@@ -9,6 +9,9 @@ use commands::credentials::{
     credential_update,
 };
 use commands::issuer::{issuer_get, issuer_list};
+use commands::deployments::{
+    deployment_create, deployment_delete, deployment_list_for_project, deployment_update,
+};
 use commands::projects::{
     project_create, project_delete, project_get, project_list, project_update,
 };
@@ -84,6 +87,10 @@ pub fn run(context: tauri::Context) {
             project_get,
             project_update,
             project_delete,
+            deployment_create,
+            deployment_list_for_project,
+            deployment_update,
+            deployment_delete,
             usage_create,
             usage_list_for_credential,
             usage_list_for_project,
@@ -114,6 +121,10 @@ pub fn run(context: tauri::Context) {
             project_get,
             project_update,
             project_delete,
+            deployment_create,
+            deployment_list_for_project,
+            deployment_update,
+            deployment_delete,
             usage_create,
             usage_list_for_credential,
             usage_list_for_project,

@@ -10,7 +10,7 @@ pub use models::credential::{
     Credential, CredentialFilter, CredentialInput, CredentialPatch, CredentialStatus,
     CredentialSummary, Env,
 };
-pub use models::deployment::{Deployment, DeploymentInput, DeploymentPlatform};
+pub use models::deployment::{Deployment, DeploymentInput, DeploymentPatch, DeploymentPlatform};
 pub use models::device::{Device, DeviceInput, DevicePlatform, DeviceStatus};
 pub use models::incident::{
     Incident, IncidentMatch, IncidentSeverity, IncidentSource, MatchReason,

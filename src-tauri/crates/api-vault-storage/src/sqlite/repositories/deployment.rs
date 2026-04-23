@@ -1,5 +1,5 @@
 use api_vault_core::{
-    Deployment, DeploymentId, DeploymentInput, DeploymentPlatform, Env, ProjectId,
+    Deployment, DeploymentId, DeploymentInput, DeploymentPatch, DeploymentPlatform, Env, ProjectId,
 };
 use sqlx::{Row, SqlitePool};
 use time::OffsetDateTime;
@@ -66,6 +66,47 @@ impl<'a> DeploymentRepo<'a> {
         .await?;
 
         rows.iter().map(row_to_deployment).collect()
+    }
+
+    pub async fn update(
+        &self,
+        id: DeploymentId,
+        patch: &DeploymentPatch,
+    ) -> Result<(), StorageError> {
+        let id_str = id.to_string();
+        let mut qb = sqlx::QueryBuilder::new("UPDATE deployment SET ");
+        let mut first = true;
+
+        if let Some(ref url) = patch.url {
+            qb.push("url = ");
+            qb.push_bind(url.clone());
+            first = false;
+        }
+        if let Some(platform) = patch.platform {
+            if !first {
+                qb.push(", ");
+            }
+            qb.push("platform = ");
+            qb.push_bind(platform_to_str(platform).to_string());
+            first = false;
+        }
+        if let Some(env) = patch.env {
+            if !first {
+                qb.push(", ");
+            }
+            qb.push("env = ");
+            qb.push_bind(env_to_str(env).to_string());
+            first = false;
+        }
+
+        if first {
+            return Ok(());
+        }
+
+        qb.push(" WHERE id = ");
+        qb.push_bind(id_str);
+        qb.build().execute(self.pool).await?;
+        Ok(())
     }
 
     pub async fn delete(&self, id: DeploymentId) -> Result<(), StorageError> {
