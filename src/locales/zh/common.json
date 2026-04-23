@@ -175,7 +175,20 @@
     "importCount": "导入 {{count}} 个密钥",
     "importing": "导入中…",
     "importSuccess": "已将 {{count}} 个密钥导入 {{project}}",
-    "importFailed": "导入失败"
+    "importFailed": "导入失败",
+    "welcomeTitle": "欢迎使用 API Vault",
+    "welcomeSubtitle": "只需 3 步即可快速完成设置。",
+    "stepIndicator": "第 {{current}} / {{total}} 步",
+    "stepDropTitle": "拖入项目文件夹",
+    "stepDropDescription": "将项目文件夹拖到窗口任意位置，我们会扫描 .env 与配置文件中的 API 密钥。",
+    "stepManualTitle": "或者手动添加第一个密钥",
+    "stepManualDescription": "想自己录入？现在注册一个凭证，值会加密后保存在本地保险库。",
+    "stepDoneTitle": "一切就绪",
+    "stepDoneDescription": "在清单中管理凭证、吊销密钥并追踪使用情况。",
+    "createFirstKey": "添加第一个密钥",
+    "nextStep": "下一步",
+    "skipOnboarding": "稍后再说",
+    "openInventory": "打开清单"
   },
   "commandPalette": {
     "searchPlaceholder": "输入命令或搜索…",

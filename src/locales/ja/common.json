@@ -175,7 +175,20 @@
     "importCount": "{{count}}個インポート",
     "importing": "インポート中…",
     "importSuccess": "{{project}} に {{count}} 個のキーをインポートしました",
-    "importFailed": "インポート失敗"
+    "importFailed": "インポート失敗",
+    "welcomeTitle": "API Vault へようこそ",
+    "welcomeSubtitle": "3ステップで素早くセットアップしましょう。",
+    "stepIndicator": "ステップ {{current}} / {{total}}",
+    "stepDropTitle": "プロジェクトフォルダをドロップ",
+    "stepDropDescription": "ウィンドウ内のどこにでもプロジェクトフォルダをドラッグすると、.env や設定ファイルから API キーを検出します。",
+    "stepManualTitle": "手動で最初のキーを追加",
+    "stepManualDescription": "ご自分で入力したい場合は、今すぐ認証情報を登録してください。値はローカルボールトに暗号化されて保存されます。",
+    "stepDoneTitle": "準備完了",
+    "stepDoneDescription": "インベントリで認証情報を管理し、キーの失効や利用箇所の追跡ができます。",
+    "createFirstKey": "最初のキーを追加",
+    "nextStep": "次へ",
+    "skipOnboarding": "あとで",
+    "openInventory": "インベントリを開く"
   },
   "commandPalette": {
     "searchPlaceholder": "コマンドまたは検索ワードを入力…",

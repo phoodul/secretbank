@@ -175,7 +175,20 @@
     "importCount": "Import {{count}} keys",
     "importing": "Importing…",
     "importSuccess": "{{count}} keys imported to {{project}}",
-    "importFailed": "Import failed"
+    "importFailed": "Import failed",
+    "welcomeTitle": "Welcome to API Vault",
+    "welcomeSubtitle": "Let's get you set up in 3 quick steps.",
+    "stepIndicator": "Step {{current}} of {{total}}",
+    "stepDropTitle": "Drop your project folder",
+    "stepDropDescription": "Drag a project folder anywhere in the window and we'll scan .env and config files for API keys.",
+    "stepManualTitle": "Or add your first key manually",
+    "stepManualDescription": "Prefer to enter a key yourself? Register a credential now and we'll keep it encrypted in your local vault.",
+    "stepDoneTitle": "You're all set",
+    "stepDoneDescription": "Open your inventory to manage credentials, revoke keys, and track usage.",
+    "createFirstKey": "Add your first key",
+    "nextStep": "Next",
+    "skipOnboarding": "Skip for now",
+    "openInventory": "Open Inventory"
   },
   "commandPalette": {
     "searchPlaceholder": "Type a command or search…",
