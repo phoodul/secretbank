@@ -7,17 +7,20 @@ export interface GraphNodeData extends Record<string, unknown> {
   kind: NodeKind;
   /** renamed from meta_json for JS ergonomics */
   meta: Record<string, unknown>;
+  /** current layout direction — used by node components to pick handle positions */
+  direction: LayoutDirection;
 }
 
-function toFlowNode(node: GraphNode): Node<GraphNodeData> {
+function toFlowNode(node: GraphNode, direction: LayoutDirection): Node<GraphNodeData> {
   return {
     id: node.id,
-    type: 'default',
+    type: node.kind, // routes to custom node component via nodeTypes map
     position: { x: 0, y: 0 }, // will be overwritten by dagre
     data: {
       label: node.label,
       kind: node.kind,
       meta: node.meta_json,
+      direction,
     },
   };
 }
@@ -42,7 +45,7 @@ export function toReactFlowElements(
   payload: GraphPayload,
   direction: LayoutDirection,
 ): { nodes: Node<GraphNodeData>[]; edges: Edge[] } {
-  const rfNodes = payload.nodes.map(toFlowNode);
+  const rfNodes = payload.nodes.map((n) => toFlowNode(n, direction));
   const rfEdges = payload.edges.map(toFlowEdge);
   return getLayoutedElements(rfNodes, rfEdges, { direction });
 }

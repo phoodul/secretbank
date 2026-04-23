@@ -85,4 +85,24 @@ describe('toReactFlowElements', () => {
     expect(nodes).toEqual([]);
     expect(edges).toEqual([]);
   });
+
+  it('node.type 이 node.kind 와 일치 (custom node routing)', () => {
+    const { nodes } = toReactFlowElements(FIXTURE_PAYLOAD, 'TB');
+
+    const issuerNode = nodes.find((n) => n.id === 'issuer-1');
+    const credNode = nodes.find((n) => n.id === 'cred-1');
+    const projNode = nodes.find((n) => n.id === 'proj-1');
+
+    expect(issuerNode?.type).toBe('issuer');
+    expect(credNode?.type).toBe('credential');
+    expect(projNode?.type).toBe('project');
+  });
+
+  it('data.direction 이 toReactFlowElements 에 전달한 direction 과 일치', () => {
+    const { nodes: tbNodes } = toReactFlowElements(FIXTURE_PAYLOAD, 'TB');
+    const { nodes: lrNodes } = toReactFlowElements(FIXTURE_PAYLOAD, 'LR');
+
+    expect(tbNodes[0].data.direction).toBe('TB');
+    expect(lrNodes[0].data.direction).toBe('LR');
+  });
 });

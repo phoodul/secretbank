@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { toReactFlowElements, type GraphNodeData } from './adapter';
 import type { LayoutDirection } from './layout';
+import { nodeTypes } from './node-types';
 import type { GraphPayload } from './types';
 
 // ---------------------------------------------------------------------------
@@ -65,6 +66,7 @@ function InnerGraph({ payload, direction, onToggle }: InnerGraphProps) {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         fitView
