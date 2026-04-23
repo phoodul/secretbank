@@ -8,6 +8,7 @@ use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
     credential_update,
 };
+use commands::graph::{blast_radius_for_credential, graph_fetch};
 use commands::issuer::{issuer_get, issuer_list};
 use commands::deployments::{
     deployment_create, deployment_delete, deployment_list_for_project, deployment_update,
@@ -100,6 +101,8 @@ pub fn run(context: tauri::Context) {
             settings_get,
             settings_set,
             env_scan_folder,
+            graph_fetch,
+            blast_radius_for_credential,
         ]);
     }
 
@@ -135,6 +138,8 @@ pub fn run(context: tauri::Context) {
             settings_get,
             settings_set,
             env_scan_folder,
+            graph_fetch,
+            blast_radius_for_credential,
         ]);
     }
 

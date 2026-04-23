@@ -194,6 +194,22 @@ impl<'a> CredentialRepo<'a> {
         Ok(())
     }
 
+    /// Return every credential row without filtering, ordered by id ASC.
+    ///
+    /// Used by the graph builder (T043) which needs the full slice.
+    pub async fn list_all(&self) -> Result<Vec<Credential>, StorageError> {
+        let rows = sqlx::query(
+            r#"SELECT id, issuer_id, name, env, scope, vault_ref, created_at,
+                      last_rotated_at, expires_at, owner, rotation_policy_days,
+                      rotation_runbook_id, status, hash_hint
+               FROM credential ORDER BY id ASC"#,
+        )
+        .fetch_all(self.pool)
+        .await?;
+
+        rows.iter().map(row_to_credential).collect()
+    }
+
     pub async fn delete(&self, id: CredentialId) -> Result<(), StorageError> {
         let id_str = id.to_string();
         sqlx::query("DELETE FROM credential WHERE id = ?")

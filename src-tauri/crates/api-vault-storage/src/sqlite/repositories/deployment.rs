@@ -109,6 +109,20 @@ impl<'a> DeploymentRepo<'a> {
         Ok(())
     }
 
+    /// Return every deployment row without filtering, ordered by created_at DESC.
+    ///
+    /// Used by the graph builder (T043).
+    pub async fn list_all(&self) -> Result<Vec<Deployment>, StorageError> {
+        let rows = sqlx::query(
+            r#"SELECT id, project_id, url, platform, env, created_at
+               FROM deployment ORDER BY created_at DESC"#,
+        )
+        .fetch_all(self.pool)
+        .await?;
+
+        rows.iter().map(row_to_deployment).collect()
+    }
+
     pub async fn delete(&self, id: DeploymentId) -> Result<(), StorageError> {
         let id_str = id.to_string();
         sqlx::query("DELETE FROM deployment WHERE id = ?")

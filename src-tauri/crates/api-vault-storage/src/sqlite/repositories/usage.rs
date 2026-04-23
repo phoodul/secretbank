@@ -86,6 +86,21 @@ impl<'a> UsageRepo<'a> {
         rows.iter().map(row_to_usage).collect()
     }
 
+    /// Return every usage row without filtering, ordered by id ASC.
+    ///
+    /// Used by the graph builder (T043).
+    pub async fn list_all(&self) -> Result<Vec<Usage>, StorageError> {
+        let rows = sqlx::query(
+            r#"SELECT id, credential_id, project_id, deployment_id, where_kind, where_value,
+                      verified_at, verified_by
+               FROM usage ORDER BY id ASC"#,
+        )
+        .fetch_all(self.pool)
+        .await?;
+
+        rows.iter().map(row_to_usage).collect()
+    }
+
     pub async fn delete(&self, id: UsageId) -> Result<(), StorageError> {
         let id_str = id.to_string();
         sqlx::query("DELETE FROM usage WHERE id = ?")
