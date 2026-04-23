@@ -2,14 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T040 완료, **M2 16/16 ✅ 전체 완료**)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI ✅ 완료**, M3 Dependency Graph & Blast Radius 진입 준비
-- **Commits:** 56개 누적 (최신 `11281cd` feat(security-score): T040 3단계 시각화; 직전 `cff6bf8` T039 Usage 링크)
-- **Tests:** Rust 95+개 (+9 security_score 유닛) + Vitest 140개 (+4 SecurityDot) 통과. `pnpm typecheck` / `pnpm lint` 에러 0 / `cargo clippy -D warnings` exit 0.
+- **Time:** 2026-04-23 15:49 KST (T041 완료, **M3 1/8**)
+- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (1/8)**
+- **Commits:** 58개 누적 (최신 `f6cfb3f` docs: T041 완료 기록; 직전 `5256f71` feat(core): T041 PetGraph 그래프 엔진)
+- **Tests:** Rust 99+개 (+4 graph 유닛) + Vitest 140개 통과. `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
-- **Mode:** 일반 (Night mode 종료됨).
-- **Milestone transition:** M2 ✅ (16/16) → M3 🔄 (0/8: T041 PetGraph 의존성 그래프 엔진부터).
-- **Session ended:** 2026-04-23 14:46 KST. 다음 세션에서 `/resume-project` 로 복원 후 T041 진입.
+- **Mode:** 일반.
+- **Next:** T042 Blast Radius 계산 (BFS with depth tracking on DependencyGraph).
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
@@ -236,8 +235,26 @@
   3. BottomNav 6탭 UX 재검토 (Audit 을 Settings 내부로 이동?).
   4. Score factor 확장: usages 없음 factor 를 CredentialFull 전용으로 추가.
 
-## Next Action (M3 진입)
+## M3 진행 상황 (1/8)
 
-- **T041 PetGraph 기반 의존성 그래프 엔진** — `crates/api-vault-core/src/graph.rs` 신설 (또는 별도 `api-vault-graph` crate). `build_graph(repos)` 가 Issuer → Credential → Usage → Project → Deployment 노드/엣지 조립. PetGraph `DiGraph<Node, Edge>` 사용.
-- **선행 확인**: `api-vault-core/Cargo.toml` 에 `petgraph` 의존성 추가 필요. `models/` 노드들은 이미 모두 정의 완료. 엣지 방향은 architecture.md 의 ER 다이어그램 참조.
-- **이후 M3 흐름**: T041 엔진 → T042 Tauri 커맨드 `graph_build` → T043 React Flow 렌더 → T044 필터 (issuer/env) → T045 blast radius 알고리즘 (credential 한 노드 제거 시 도달 불가해지는 하위 노드 집합 계산) → T046 preview UI → T047/T048 성능/접근성.
+### 완료 ✅
+
+- **T041** `api-vault-core` 그래프 모델 (petgraph DiGraph) — 커밋 `5256f71`
+
+### T041 구현 교훈 (M3 후속 영향)
+
+- **`build(issuers, credentials, usages, projects, deployments)` 로 확정** (spec 의 `build_from_repo(&Repos)` 는 버림). 이유: `api-vault-core` 가 `api-vault-storage` 에 역의존하면 계층 뒤집힘. T043 Tauri 커맨드 계층이 repos 에서 데이터를 뽑아 슬라이스로 넘긴다.
+- **`NodeRef` 는 도메인 newtype ID 를 감쌈** (`IssuerId` 등), raw `Ulid` 아님. `Copy + Eq + Hash + Serialize + Deserialize + Debug` 모두 만족해 petgraph node weight + T043 직렬화에 모두 재사용 가능.
+- **엣지 의미 확정**: `Issues` (Issuer→Credential, `Credential.issuer_id`), `UsedBy` (Credential→Project, `Usage` 경유 + 중복 제거), `DeployedAs` (Project→Deployment, `Deployment.project_id`).
+- **UsedBy 중복 제거**: 동일 (credential, project) 쌍의 Usage 가 여러 개여도 엣지 1개. T046 블래스트 반경 시각화에서 중복 하이라이트 방지.
+- **도메인 모델 확인 결과**: `Credential.issuer_id`, `Usage.project_id`, `Deployment.project_id` 모두 non-Optional → 방어적 스킵 불필요. `Usage.deployment_id` 만 `Option` 이지만 현재 그래프 엣지 구성에는 안 쓰임 (DeployedAs 는 Deployment 측에서 도출).
+- **내부 `HashMap<NodeRef, NodeIndex>` 인덱스**: O(1) 노드 조회. T042 BFS 에서 `graph.node_index(NodeRef::Credential(id))` 로 시작점 잡을 때 활용.
+
+## Next Action (T042)
+
+- **T042 Blast Radius 계산** — `crates/api-vault-core/src/blast_radius.rs` 신설.
+- 시그니처: `pub fn blast_radius(graph: &DependencyGraph, cred_id: CredentialId) -> BlastRadius { primary, secondary, tertiary }` (각각 `Vec<NodeRef>`).
+- BFS with depth tracking: depth 1 = primary, depth 2 = secondary, depth 3+ = tertiary.
+- 방향: Credential 시작 → outgoing edges 따라 하위 (Project, Deployment) 로 전파. Issuer 는 상위 노드라 포함 대상 아님.
+- DoD 테스트: Issuer→Cred→Usage→Project→Deployment 체인에서 `blast_radius(cred)` 가 Project (primary) + Deployment (secondary) 포함 확인.
+- 선행 확인: T041 에서 노출한 `as_inner()`, `node_index()` 접근자를 사용해 petgraph 의 `Bfs` / `visit::Bfs` 또는 수동 queue BFS 구현.
