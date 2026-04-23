@@ -17,7 +17,8 @@
     "save": "保存",
     "cancel": "取消",
     "delete": "删除",
-    "search": "搜索"
+    "search": "搜索",
+    "retry": "重试"
   },
   "settings": {
     "title": "设置",
@@ -298,6 +299,24 @@
     "deleteTitle": "删除部署",
     "deleteDescription": "要删除“{{url}}”吗？引用此部署的使用记录会保留，但将解除关联。",
     "deleteConfirm": "删除"
+  },
+  "graph": {
+    "title": "依赖关系图",
+    "subtitle": "追踪从发行者到部署环境的凭证流转。",
+    "loading": "正在加载图谱…",
+    "error": "加载图谱失败",
+    "empty": "还没有与项目关联的凭证 — 先添加凭证，然后关联使用记录。",
+    "direction": {
+      "tb": "从上到下",
+      "lr": "从左到右"
+    },
+    "toggleDirection": "切换方向",
+    "kind": {
+      "issuer": "发行者",
+      "credential": "凭证",
+      "project": "项目",
+      "deployment": "部署"
+    }
   },
   "commandPalette": {
     "searchPlaceholder": "输入命令或搜索…",

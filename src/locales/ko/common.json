@@ -17,7 +17,8 @@
     "save": "저장",
     "cancel": "취소",
     "delete": "삭제",
-    "search": "검색"
+    "search": "검색",
+    "retry": "재시도"
   },
   "settings": {
     "title": "설정",
@@ -298,6 +299,24 @@
     "deleteTitle": "배포 삭제",
     "deleteDescription": "\"{{url}}\"을(를) 삭제할까요? 이 배포를 참조하는 사용처는 유지되지만 링크가 해제됩니다.",
     "deleteConfirm": "삭제"
+  },
+  "graph": {
+    "title": "의존성 그래프",
+    "subtitle": "발급처에서 배포까지 자격증명 흐름을 추적합니다.",
+    "loading": "그래프 로딩 중…",
+    "error": "그래프를 불러오지 못했습니다",
+    "empty": "아직 프로젝트와 연결된 자격증명이 없습니다 — 자격증명을 추가한 후 사용처를 연결하세요.",
+    "direction": {
+      "tb": "위에서 아래로",
+      "lr": "왼쪽에서 오른쪽으로"
+    },
+    "toggleDirection": "방향 전환",
+    "kind": {
+      "issuer": "발급처",
+      "credential": "자격증명",
+      "project": "프로젝트",
+      "deployment": "배포"
+    }
   },
   "commandPalette": {
     "searchPlaceholder": "명령어 또는 검색어 입력…",

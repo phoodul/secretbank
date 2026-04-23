@@ -17,7 +17,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "search": "Search"
+    "search": "Search",
+    "retry": "Retry"
   },
   "settings": {
     "title": "Settings",
@@ -298,6 +299,24 @@
     "deleteTitle": "Delete deployment",
     "deleteDescription": "Remove \"{{url}}\"? Usages referencing this deployment will stay but lose their link.",
     "deleteConfirm": "Delete"
+  },
+  "graph": {
+    "title": "Dependency Graph",
+    "subtitle": "Trace credentials from issuers to deployments.",
+    "loading": "Loading graph…",
+    "error": "Failed to load graph",
+    "empty": "No credentials wired to projects yet — add a credential, then link usages.",
+    "direction": {
+      "tb": "Top to bottom",
+      "lr": "Left to right"
+    },
+    "toggleDirection": "Toggle direction",
+    "kind": {
+      "issuer": "Issuer",
+      "credential": "Credential",
+      "project": "Project",
+      "deployment": "Deployment"
+    }
   },
   "commandPalette": {
     "searchPlaceholder": "Type a command or search…",

@@ -17,7 +17,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "search": "Search"
+    "search": "Search",
+    "retry": "再試行"
   },
   "settings": {
     "title": "設定",
@@ -298,6 +299,24 @@
     "deleteTitle": "デプロイを削除",
     "deleteDescription": "「{{url}}」を削除しますか？ このデプロイを参照する利用箇所は残りますが、リンクは解除されます。",
     "deleteConfirm": "削除"
+  },
+  "graph": {
+    "title": "依存関係グラフ",
+    "subtitle": "発行者からデプロイまで認証情報の流れを追跡します。",
+    "loading": "グラフを読み込み中…",
+    "error": "グラフの読み込みに失敗しました",
+    "empty": "まだプロジェクトに紐づいた認証情報がありません — 認証情報を追加して利用箇所を連携してください。",
+    "direction": {
+      "tb": "上から下",
+      "lr": "左から右"
+    },
+    "toggleDirection": "方向を切り替え",
+    "kind": {
+      "issuer": "発行者",
+      "credential": "認証情報",
+      "project": "プロジェクト",
+      "deployment": "デプロイ"
+    }
   },
   "commandPalette": {
     "searchPlaceholder": "コマンドまたは検索ワードを入力…",
