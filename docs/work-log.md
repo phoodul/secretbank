@@ -1,5 +1,33 @@
 # Work Log
 
+## 2026-04-24 (세션 정리 — M3 전체 회고, 수동 검증 보류)
+
+### M3 Dependency Graph & Blast Radius — 8/8 ✅ 종료
+
+T041~T048 중 T044/T046/T048 은 개별 엔트리 아래 존재. 여기선 누락된 5개 태스크 요약.
+
+- **T041** `api-vault-core` petgraph 그래프 모델 (커밋 `5256f71`) — `DependencyGraph { DiGraph<NodeRef, EdgeKind> + HashMap<NodeRef, NodeIndex> }`. `build_from_repo(&Repos)` 대신 `build(&[Issuer], &[Credential], &[Usage], &[Project], &[Deployment])` 로 확정 (core→storage 역의존 방지). `NodeRef` 는 도메인 newtype ID. `UsedBy` 엣지는 (cred, project) 쌍 중복 제거. 4 유닛 테스트.
+- **T042** Blast Radius BFS (커밋 `533485c`) — `fn blast_radius(graph, CredentialId) -> BlastRadius { primary, secondary, tertiary }`. `Direction::Outgoing` 만 전파 (Issuer 제외). 미존재 cred → 빈 값 반환. `(discriminant, ULID)` 결정론적 정렬. 5 유닛 테스트.
+- **T043** Tauri 커맨드 `graph_fetch` + `blast_radius_for_credential` (커밋 `67cee48`) — `GraphEdgeKind`/`NodeKind` 는 코어 enum 의 와이어 미러 (snake_case 고정). `CredentialRepo/UsageRepo/DeploymentRepo` 에 `list_all()` 추가. `load_graph()` 공유 헬퍼 (5-테이블 로드). 4 payload serde 테스트.
+- **T045** 커스텀 노드 4종 (커밋 `07ff733`) — Issuer(`Building2`+vault-info)/Credential(`KeyRound`+vault-warning)/Project(`FolderGit2`+vault-success)/Deployment(`Server`+muted). `node-types.ts` 모듈 스코프 상수. `GraphNodeData.direction` → 핸들 위치 자동 회전. Issuer=source only / Deployment=target only / Credential·Project=both. 18 렌더/컬러 테스트.
+- **T047** 성능 최적화 (커밋 `1477c0f`) — `areNodePropsEqual` 커스텀 비교 (label/kind/direction/status/compact 만 비교). `onlyRenderVisibleElements` 뷰포트 컬링. `nodesDraggable` localStorage 토글 + Settings UI. 노드>200 + zoom<0.5 시 compact 모드 (label 숨김). `performance.md` 메모. 18 유닛 테스트.
+
+### 전체 M3 통계
+
+- **누적 커밋 22개** (T041~T048 + docs/progress 체크포인트)
+- **Vitest 140 → 221** (+81 M3 기간 증분: T044 +15, T045 +18, T046 +18, T047 +18, T048 +12)
+- **Rust 테스트 ~13 추가** (T041 +4, T042 +5, T043 +4)
+- **Backend 커맨드 누계 30** (M2 종료 시 28 + `graph_fetch` + `blast_radius_for_credential`)
+- **신규 프론트 의존성 2**: `@xyflow/react@12.10.2`, `@dagrejs/dagre@3.0.0`
+
+### 수동 검증 상태
+
+`pnpm tauri dev` 로 `/graph` 실사용 확인은 **사용자 일정 상 보류** (커밋 `2c5cca0`). 다음 세션에서 `/resume-project` 하면 progress.md Next Action 에 명시됨. 자동 테스트는 221/221 green 이지만 React Flow 렌더링·custom 노드 색상·blast radius outline·mobile 분기는 실기 확인 전이므로 "베타 자신감" 수준.
+
+### 다음 마일스톤
+
+**M4 Incident Feed** (T049~T058, Must 8 + Should 2) — NVD/GitHub Advisory 피드 파서, 볼트 credential 매칭, Incident 목록 UI. 태스크표는 `docs/task.md` 참조.
+
 ## 2026-04-23 (T048 완료 — **M3 8/8 ✅, M3 종료**)
 
 ### T048 — Mobile Graph List View (커밋 `ebb9855`)
