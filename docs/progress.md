@@ -2,13 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 17:03 KST (T042 완료, **M3 2/8**)
-- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (2/8)**
-- **Commits:** 61개 누적 (최신 `d878179` docs: T042 완료; 직전 `533485c` feat(core): T042 BFS 엔진)
-- **Tests:** Rust 104+개 (+5 blast_radius 유닛 = 누적 18 in api-vault-core) + Vitest 140개 통과. `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
+- **Time:** 2026-04-23 18:09 KST (T043 완료, **M3 3/8**)
+- **Phase:** Phase 3 — Implementation, **M3 Dependency Graph & Blast Radius 🔄 진행 중 (3/8)**
+- **Commits:** 63개 누적 (최신 `3a3102f` docs: T043 완료; 직전 `67cee48` feat(commands): T043 graph_fetch + blast_radius)
+- **Tests:** Rust 108+개 (+4 graph command unit = 누적 19+ in api-vault-app) + Vitest 140개 통과. `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반.
-- **Next:** T043 Tauri 커맨드 `graph_fetch` / `blast_radius_for_credential` (프론트엔드 페이로드 직렬화).
+- **Next:** T044 React Flow 셋업 + dagre 레이아웃 (`/graph` 페이지).
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
@@ -235,12 +235,21 @@
   3. BottomNav 6탭 UX 재검토 (Audit 을 Settings 내부로 이동?).
   4. Score factor 확장: usages 없음 factor 를 CredentialFull 전용으로 추가.
 
-## M3 진행 상황 (2/8)
+## M3 진행 상황 (3/8)
 
 ### 완료 ✅
 
 - **T041** `api-vault-core` 그래프 모델 (petgraph DiGraph) — 커밋 `5256f71`
 - **T042** Blast Radius BFS (primary/secondary/tertiary depth buckets) — 커밋 `533485c`
+- **T043** Tauri 커맨드 `graph_fetch` + `blast_radius_for_credential` — 커밋 `67cee48`
+
+### T043 구현 교훈 (M3 후속 영향)
+
+- **`GraphEdgeKind` 는 `api-vault-core::EdgeKind` 의 직렬화 미러**: 와이어 포맷 snake_case (`"used_by"`, `"deployed_as"`, `"issues"`) 를 커맨드 레이어에서 "고정". 코어가 향후 enum 이름 리팩토링해도 프론트 계약 안깨짐. `NodeKind` 도 동일 패턴.
+- **`list_all()` 추가된 3 repo**: `CredentialRepo`, `UsageRepo`, `DeploymentRepo` — 기존 `list(filter)` / `list_for_project` / `list_for_credential` 로는 그래프 전체 로드 불가. 다른 전체 스캔 기능(T047 뷰포트 컬링 이전의 초기 로드, 향후 Audit 전체 내보내기 등)에서도 재사용 가능.
+- **`load_graph(state)` 공유 헬퍼**: `graph_fetch` 와 `blast_radius_for_credential` 모두 동일 데이터 로드 필요 → 같은 모듈 private async fn 으로 추출. T046 UI 클릭 시 `blast_radius_for_credential` 호출할 때마다 5개 테이블 리스트를 다시 조회 — 현 규모 (10s~100s of rows) 에서는 문제 없지만 M3 성능 이슈 나오면 상태(캐시) 전환 검토.
+- **`Deployment.url` 은 non-Optional**: `deployment_label()` 이 "url @ env" 단순 조립. 빈 문자열/누락 분기 불필요.
+- **`meta_json: serde_json::Value`**: 노드 타입별 추가 속성을 스키마리스로 실어 보냄 — 프론트 에서 `node.data.meta_json.env` 처럼 접근. 향후 새 메타 필드 추가 시 Rust 만 바꾸면 됨 (프론트 타입 정의 선택적 확장).
 
 ### T042 구현 교훈 (M3 후속 영향)
 
@@ -259,20 +268,25 @@
 - **도메인 모델 확인 결과**: `Credential.issuer_id`, `Usage.project_id`, `Deployment.project_id` 모두 non-Optional → 방어적 스킵 불필요. `Usage.deployment_id` 만 `Option` 이지만 현재 그래프 엣지 구성에는 안 쓰임 (DeployedAs 는 Deployment 측에서 도출).
 - **내부 `HashMap<NodeRef, NodeIndex>` 인덱스**: O(1) 노드 조회. T042 BFS 에서 `graph.node_index(NodeRef::Credential(id))` 로 시작점 잡을 때 활용.
 
-## Next Action (T043)
+## Next Action (T044)
 
-- **T043 Tauri 커맨드 `graph_fetch` / `blast_radius_for_credential`** — `src-tauri/crates/api-vault-app/src/commands/graph.rs` 신설.
+- **T044 React Flow 셋업 + dagre 레이아웃** — `/graph` 페이지 기본 렌더.
 - DoD:
-  - `graph_fetch() -> GraphPayload { nodes: Vec<GraphNode>, edges: Vec<GraphEdge> }` — React Flow 친화 형태로 `NodeRef` / `EdgeKind` 변환.
-  - `GraphNode { id: String, kind: NodeKind, label: String, meta_json: serde_json::Value }` — React Flow 의 `Node<T>` 에 매핑.
-  - `GraphEdge { id: String, source: String, target: String, kind: EdgeKind }`.
-  - `blast_radius_for_credential(id: CredentialId) -> BlastRadius` — T042 결과 그대로 반환.
+  - `@xyflow/react`, `@dagrejs/dagre` 패키지 설치 (pnpm).
+  - `src/features/graph/GraphPage.tsx` — 라우트 연결 + `invoke('graph_fetch')` 호출 + 로딩/에러 상태.
+  - `src/features/graph/DependencyGraph.tsx` — React Flow 컨테이너, `useReactFlow` hook, MiniMap + Controls + Background.
+  - `src/features/graph/layout.ts` — dagre 로 자동 위치 계산 (`TB` 방향 기본, `LR` 토글 버튼).
+  - Tauri JSON 스키마 (T043 의 GraphPayload) → React Flow `Node<T>` / `Edge` 로 변환하는 어댑터.
 - 구현 스케치:
-  1. 명령 핸들러에서 `AppState` (or DbPool) 추출 → 각 repo (`IssuerRepo`, `CredentialRepo`, `UsageRepo`, `ProjectRepo`, `DeploymentRepo`) 의 `list()` 호출해 Vec 수집.
-  2. `DependencyGraph::build(&issuers, &credentials, &usages, &projects, &deployments)` 로 그래프 조립.
-  3. `graph.nodes()` / `graph.edges()` 순회하면서 `NodeRef` → `GraphNode` 변환. label 은 credential 의 경우 `name`, project 의 경우 `name`, deployment 의 경우 `env+platform` 식으로 조립.
-  4. `commands/mod.rs` 에 `graph::graph_fetch`, `graph::blast_radius_for_credential` 등록 + `tauri::Builder::invoke_handler` 추가.
+  1. 패키지 설치: `pnpm add @xyflow/react @dagrejs/dagre`.
+  2. `src/features/graph/types.ts` — TS 타입 (GraphPayload, GraphNode, GraphEdge, NodeKind, GraphEdgeKind) T043 Rust 구조체와 1:1 매핑.
+  3. `src/features/graph/layout.ts` — `getLayoutedElements(nodes, edges, direction)` dagre 배치 알고리즘.
+  4. `src/features/graph/use-graph-data.ts` — `invoke<GraphPayload>('graph_fetch')` 를 react-query 나 useEffect + useReducer 로 호출. M2 패턴(union state `{phase:"loading"} | {phase:"ok"} | {phase:"error"}`) 재사용.
+  5. `src/features/graph/DependencyGraph.tsx` — React Flow 기본 ReactFlow + Background + Controls + MiniMap + 방향 토글 버튼.
+  6. `src/features/graph/GraphPage.tsx` — 라우트에 연결 (App.tsx 또는 routes.tsx).
+  7. Vitest: mock 10 nodes 렌더 후 dagre 계산 결과가 `x`, `y` 를 모든 노드에 할당했는지 검증.
 - 선행 확인:
-  - `crates/api-vault-app/src/commands/` 의 기존 커맨드 하나를 읽어 AppState 패턴 확인 (예: credential.rs 또는 project.rs).
-  - `api-vault-app/Cargo.toml` 에 `api-vault-core` 이미 의존하므로 추가 의존성 불필요 (storage 도 이미 의존).
-- 테스트: 유닛 레벨에서 `GraphPayload` serde JSON 직렬화 → `{ "nodes": [...], "edges": [...] }` 모양 확인.
+  - `src/App.tsx` 또는 라우터 설정에서 `/graph` 라우트가 이미 placeholder 로 존재하는지 확인.
+  - i18n 키 `graph.title`, `graph.loading`, `graph.error`, `graph.direction.tb`, `graph.direction.lr` 추가 (ko/en/ja/zh).
+  - M0 T009 에서 설치된 shadcn 컴포넌트 중 `Card`, `Skeleton` 활용 가능 여부 확인.
+- Note: T045 (커스텀 노드 타입) 는 별도 태스크. T044 에서는 기본 React Flow default node 로 렌더하되 label + kind 표시.
