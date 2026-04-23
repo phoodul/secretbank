@@ -1,7 +1,9 @@
+pub mod graph;
 pub mod id;
 pub mod models;
 pub mod security_score;
 
+pub use graph::{DependencyGraph, EdgeKind, NodeRef};
 pub use id::{
     AuditLogId, CredentialId, DeploymentId, DeviceId, IncidentId, IncidentMatchId, IssuerId,
     ProjectId, UsageId,
