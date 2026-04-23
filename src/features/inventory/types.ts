@@ -10,6 +10,8 @@ export interface CredentialSummary {
   status: CredentialStatus;
   /** ms timestamp (nullable) */
   expires_at: number | null;
+  /** Last 4 characters of the secret. Used for duplicate detection. */
+  hash_hint: string | null;
 }
 
 /** credential_list 커맨드에 전달하는 필터 */

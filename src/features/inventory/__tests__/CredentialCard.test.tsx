@@ -17,6 +17,7 @@ function makeCredential(overrides: Partial<CredentialSummary> = {}): CredentialS
     env: "prod",
     status: "active",
     expires_at: null,
+    hash_hint: null,
     ...overrides,
   };
 }

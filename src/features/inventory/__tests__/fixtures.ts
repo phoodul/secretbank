@@ -12,6 +12,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "prod",
     status: "active",
     expires_at: NOW + 60 * DAY,
+    hash_hint: "aaaa",
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAB",
@@ -20,6 +21,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "prod",
     status: "active",
     expires_at: NOW + 10 * DAY, // expiring soon
+    hash_hint: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAC",
@@ -28,6 +30,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "dev",
     status: "active",
     expires_at: null,
+    hash_hint: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAD",
@@ -36,6 +39,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "staging",
     status: "active",
     expires_at: NOW - 5 * DAY, // expired
+    hash_hint: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAE",
@@ -44,6 +48,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "prod",
     status: "revoked",
     expires_at: null,
+    hash_hint: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAF",
@@ -52,6 +57,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "dev",
     status: "active",
     expires_at: NOW + 90 * DAY,
+    hash_hint: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAG",
@@ -60,6 +66,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "staging",
     status: "compromised",
     expires_at: null,
+    hash_hint: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAH",
@@ -68,6 +75,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "prod",
     status: "active",
     expires_at: NOW + 20 * DAY, // expiring soon
+    hash_hint: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAI",
@@ -76,6 +84,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "dev",
     status: "revoked",
     expires_at: null,
+    hash_hint: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAJ",
@@ -84,6 +93,7 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     env: "staging",
     status: "active",
     expires_at: NOW + 120 * DAY,
+    hash_hint: null,
   },
 ];
 

@@ -70,6 +70,10 @@ pub struct CredentialSummary {
     pub status: CredentialStatus,
     #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
     pub expires_at: Option<OffsetDateTime>,
+    /// Last 4 characters of the secret. Used for duplicate detection in
+    /// drop-scan import flow (T035). `None` for records imported before
+    /// hash_hint was required.
+    pub hash_hint: Option<String>,
 }
 
 /// Partial update — all fields optional.

@@ -88,7 +88,7 @@ impl<'a> CredentialRepo<'a> {
         filter: &CredentialFilter,
     ) -> Result<Vec<CredentialSummary>, StorageError> {
         let mut qb = sqlx::QueryBuilder::new(
-            "SELECT id, issuer_id, name, env, status, expires_at FROM credential WHERE 1=1",
+            "SELECT id, issuer_id, name, env, status, expires_at, hash_hint FROM credential WHERE 1=1",
         );
 
         if let Some(issuer_id) = &filter.issuer_id {
@@ -132,6 +132,7 @@ impl<'a> CredentialRepo<'a> {
                     env: str_to_env(&env_str)?,
                     status: str_to_status(&status_str)?,
                     expires_at: ms_to_dt_opt(expires_ms)?,
+                    hash_hint: r.try_get("hash_hint")?,
                 })
             })
             .collect()
