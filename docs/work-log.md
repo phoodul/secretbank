@@ -274,6 +274,41 @@
 - T035 는 결과 테이블 UI + `credential_create` 일괄 + project/usage 자동 생성. 규모 가장 큰 M2 태스크.
 - 메인 대화 세션 누적이 길어 Night mode 규칙(200K 상한 근접 시 상태 보고) 적용 — T035 는 다음 세션 진입점으로 미루고 상태 보고.
 
+### T035 — 드롭&스캔 결과 검토 UI + project/usage 커맨드 (메인 세션, 커밋 `6f31d56`)
+
+**세션 재개 직후**: `/resume-project` 로 progress.md 복원. Night mode 종료. 사용자가 `A안 (풀 스코프)` 결정 → project/usage 커맨드 래퍼도 T035 범위에 포함. `docs/project-decisions.md` 에 즉시 기록.
+
+- **신규 Rust 파일**:
+  - `crates/api-vault-app/src/commands/projects.rs` — `project_create(input: ProjectInput)` / `project_list()` / `project_get(id)` (thin wrapper, 별도 Rust 테스트 없음 — repo integration test 가 이미 `repo_project_test.rs` 에 존재).
+  - `crates/api-vault-app/src/commands/usage.rs` — `usage_create(input: UsageInput)` / `usage_list_for_credential(credential_id)`.
+- **수정 Rust 파일**:
+  - `commands/mod.rs` (pub mod projects; pub mod usage;), `lib.rs` (두 invoke_handler 블록에 5개 커맨드 등록).
+  - `api-vault-core/src/models/credential.rs` — `CredentialSummary.hash_hint: Option<String>` 필드 추가 (중복 감지용).
+  - `api-vault-storage/src/sqlite/repositories/credential.rs` — `list()` SELECT 에 `hash_hint` 추가, 매핑 추가.
+- **신규 프론트 파일**:
+  - `src/features/onboarding/{types,use-import-detected,DetectedKeysReview}.tsx` + `__tests__/DetectedKeysReview.test.tsx`
+- **수정 프론트 파일**:
+  - `src/features/inventory/types.ts` — `CredentialSummary` 에 `hash_hint: string | null` 추가
+  - `src/features/inventory/__tests__/{fixtures,CredentialCard.test}.tsx` — 새 필드 보완
+  - `src/pages/OnboardingScanPage.tsx` — placeholder 제거, `env_scan_folder` invoke + `scan:progress` listen + `DetectedKeysReview` 렌더
+  - `src/features/onboarding/__tests__/OnboardingScanPage.test.tsx` — 새 행동에 맞게 리팩터
+  - `src/locales/{en,ko,ja}/common.json` — onboarding 네임스페이스 14개 키 추가
+- **import 플로우**: `project_create(folder name)` → 선택된 각 DetectedKey 마다 `credential_create` (hash_hint=value_hint, value="scanned:unknown") → `usage_create` (where_kind="env_var"). 실패 시 failures 카운터 증가, best-effort 순차 실행.
+- **중복 감지**: `existingCredentials.hash_hint === detected.value_hint` 시 체크박스 disabled + "Already tracked" 배지.
+- **Vitest +7** (DetectedKeysReview 5 + OnboardingScanPage 리팩터 2개 추가). 전체 Vitest 114 / Rust 86 통과. typecheck + clippy -D warnings exit 0.
+
+**T035 구현 교훈 (M2 후속)**:
+
+- **스캔 값 본체는 저장되지 않음** — 스캐너가 마지막 4자만 반환하므로 import 시 credential.value 로 `"scanned:unknown"` placeholder 를 저장. 사용자가 reveal 하면 이 placeholder 가 노출되어 UX 가 불완전. **Follow-up**: Rust 쪽에서 file_path+line 으로 재파싱 → 값만 추출 → age 볼트에 주입하는 "secure import" 경로 필요. M2 종료 전 또는 M3 초반 태스크 후보.
+- **entropy-only 감지는 import 불가**: `issuer_slug === null` 인 detection 은 issuer FK 없이 credential 생성 불가 → 기본 미선택 + 체크해도 skip. 이 한계는 UX 상 "검출은 되는데 등록 안 됨" 으로 혼란 여지 → T036 온보딩에서 설명 텍스트로 보완 예정.
+- **프론트 `Usage` 타입이 Rust 와 불일치** (legacy: `url/env_var_name/scanner_version`) — T035 는 건드리지 않고 커맨드 invoke 시에만 Rust 쉐이프(`where_kind/where_value`)로 맞춰 보냄. 정리는 T037/T038 에서 같이.
+- **`useEffect` + `useInventory` hook 순서 주의**: OnboardingScanPage 에서 path 가 없을 때 early return 하면 hook 순서가 바뀌어 React 경고. 해결: useInventory 를 먼저 호출하고 조건부 분기는 뒤에서 처리. 테스트에서 `credential_list` 기본 mock 필요.
+
+**부수 처리**:
+
+- `docs/project-decisions.md` 에 "T035 범위 — Project/Usage Tauri 커맨드 동시 구현 (A안)" 섹션 즉시 추가 (대안 B/C 기각 사유 기록).
+- `src/locales/` 3언어 모두 onboarding 키 동기화.
+
 ---
 
 ## 2026-04-22 (M1 완료, SAC Off 적용 후 재개)

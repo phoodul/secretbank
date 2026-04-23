@@ -584,3 +584,24 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - 이전 결정(T001 재조정 라인 450 "`tauri::generate_context!("../../tauri.conf.json")`으로 workspace root의 `tauri.conf.json` 경로 명시") 는 **잘못된 접근이었음**. 경로 명시로 `tauri.conf.json` 은 찾을 수 있지만 `gen/schemas/` ACL 매니페스트는 여전히 subcrate OUT_DIR 기준으로 탐색되어 플러그인이 모두 깨진다.
   - 향후 Tauri workspace 분리 시 이 패턴을 **기본 규칙**으로 유지. `generate_context!` 의 모든 호출은 root crate 에서만 허용.
   - 커밋: `eaece03 fix(tauri): generate_context!를 root crate 로 이동해 플러그인 ACL 복구`.
+
+---
+
+## [2026-04-23] T035 범위 — Project/Usage Tauri 커맨드 동시 구현 (A안)
+
+- **결정:** T035 드롭&스캔 결과 검토 UI 를 구현하면서 `project_create` / `usage_create` Tauri 커맨드 래퍼도 같은 태스크에서 함께 추가한다. T035 DoD ("폴더명으로 Project 자동 생성 → Usage 자동 생성") 를 풀 스코프로 만족시키기 위해 선택된 A안.
+- **대안 기각:**
+  - B안 (credential 만 등록, project/usage 는 T037/T038 로 연기): DoD 의 "import → project + usage 자동 링크" 가 깨짐. 사용자가 스캔 결과를 import 해도 Inventory 에서 어느 프로젝트에 속하는지 알 수 없어 UX 반쪽.
+  - C안 (project 만 추가, usage 는 T038): project 단독으로는 "어느 파일에서 어떤 env var 로 쓰이는가" 추적 불가. UsageGraph (M3) 의 선행 데이터가 쌓이지 않음.
+- **구현 범위 (T035 확장):**
+  1. `crates/api-vault-app/src/commands/projects.rs` 신설 — `project_create(input: ProjectInput)` + `project_list()` + `project_get(id)`. storage repo `project.rs` 는 이미 존재.
+  2. `crates/api-vault-app/src/commands/usage.rs` 신설 — `usage_create(input: UsageInput)` + `usage_list_by_credential(id)`. storage repo `usage.rs` 는 이미 존재.
+  3. `commands/mod.rs` 에 `pub mod projects; pub mod usage;` 등록, `lib.rs` 의 `invoke_handler!` 에 커맨드 추가.
+  4. Vault unlock 상태 체크(기존 credential 커맨드 패턴) 재사용.
+  5. `src/features/onboarding/DetectedKeysReview.tsx` — 테이블 + 일괄 import 플로우 (project_create → credential_create × n → usage_create × n, 단일 트랜잭션 대신 best-effort 순차 실행, 실패 시 toast 에 성공/실패 건수 표시).
+- **영향:**
+  - T037 "Project 관리 페이지" 는 CRUD UI 측면만 남음 (커맨드는 T035 에서 완비). Priority Should 유지.
+  - T038 "Deployment 관리" 는 project-scoped deployment CRUD 가 본 스코프. usage 커맨드와 별개. 영향 없음.
+  - UsageGraph (M3 T041~) 선행 데이터 확보 — 드롭&스캔으로 자동 생성된 usage 행들이 그래프 노드/엣지 소스가 됨.
+
+---

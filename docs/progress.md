@@ -2,12 +2,12 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T034 완료, M2 10/14, 세션 용량 점검 시점)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 10/14**
-- **Commits:** 45개 누적 (최신 `eeab911` feat(scanner): env_scan_folder 커맨드 (T034))
-- **Tests:** Rust 86개 (+3 env_scan_folder) + Vitest 107개 통과.
+- **Time:** 2026-04-23 (T035 완료, M2 11/14)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 11/14**
+- **Commits:** 46개 누적 (최신 `6f31d56` feat(onboarding): T035 드롭&스캔 결과 검토 UI + project/usage 커맨드)
+- **Tests:** Rust 86개 + Vitest 114개 (+7 DetectedKeysReview & OnboardingScanPage 리팩터) 통과.
 - **Blocker:** 없음.
-- **Mode:** Night mode — 세션 누적 토큰 점검 후 T035 여부 결정.
+- **Mode:** 일반 (Night mode 종료됨).
 
 ## M2 진행 상황 (1/14)
 
@@ -23,6 +23,7 @@
 - T032 드롭 존 + /onboarding/scan placeholder (Tauri v2 onDragDropEvent, 커밋 `6f121ee`)
 - T033 env_scanner (엔트로피 3.5 + issuer regex 10 + .env/generic 파서, 커밋 `8e7c7a2`)
 - T034 env_scan_folder Tauri 커맨드 (spawn_blocking + scan:progress 이벤트, 커밋 `eeab911`)
+- T035 드롭&스캔 결과 검토 UI + project/usage Tauri 커맨드 (A안 풀 스코프, 커밋 `6f31d56`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
@@ -30,7 +31,7 @@
 
 - 1순위: T025 ✅ → **T028 ✅** → **T026 ✅** → **T027 ✅** (1순위 블록 완주)
 - 2순위: **T029 ✅** → **T030 ✅** → **T031 ✅** (2순위 블록 완주)
-- 3순위(드롭&스캔): **T032 ✅** → **T033 ✅** → **T034 ✅** → T035 결과 검토 UI (진행 중)
+- 3순위(드롭&스캔): **T032 ✅** → **T033 ✅** → **T034 ✅** → **T035 ✅** (3순위 블록 완주)
 - 마무리: T036 온보딩 / T037 Project / T038 Deployment / T039 Usage / T040 보안 점수
 
 ### T025 구현 교훈 (M2 후속에 영향)
@@ -170,7 +171,8 @@
 - [x] T032 드롭 존 + 라우트 placeholder — 커밋 `6f121ee`
 - [x] T033 env_scanner (엔트로피 + issuer regex + .env/generic 파서) — 커밋 `8e7c7a2`
 - [x] T034 env_scan_folder Tauri 커맨드 — 커밋 `eeab911`
-- [ ] T035 결과 검토 UI (DetectedKeysReview) — 다음 세션 진입점
+- [x] T035 결과 검토 UI (DetectedKeysReview) + project/usage 커맨드 — 커밋 `6f31d56`
+- [ ] T036 Welcome / 온보딩 플로우 — 다음 세션 진입점
 
 ## Pending Decisions
 
@@ -190,9 +192,15 @@
 | 수익   | $49 단발 + $6/월 | Freemium + $2/월 Pro            |
 | OSS    | 미정             | Open Core (AGPL-3.0 + EE 독점)  |
 
+## T035 구현 교훈 (M2 후속 영향)
+
+- **드롭&스캔 값 본체는 저장하지 않음.** 스캐너가 `value_hint` 마지막 4자만 반환하므로 일괄 import 시 credential 의 secret 본체로 `"scanned:unknown"` 플레이스홀더를 저장. 사용자가 credential detail 에서 reveal 하면 placeholder 가 노출된다. **Follow-up 필요**: 스캔 결과에서 재스캔으로 실제 값을 채우는 "secure import" 경로(파일 위치/라인 번호로 Rust 측에서 재파싱해 age 볼트에 직접 주입). M2 종료 전 또는 M3 초반에 배치.
+- **`credential_list` 의 `CredentialSummary` 에 `hash_hint` 추가됨** (중복 감지용). 기존 호출자 영향 없음 (field는 선택이며 CredentialCard/CredentialList 는 참조 안 함). fixtures.ts 10개, CredentialCard.test 의 makeCredential 만 보완.
+- **entropy-only 감지 항목은 import 불가** — `issuer_slug` 가 `None` 이면 issuer FK 를 결정할 수 없어 기본 체크 해제 + 선택해도 skip. UI 는 체크박스는 disabled 아니지만 Import 집계에서 제외됨.
+- **프론트 `Usage` 타입이 Rust 와 불일치** (legacy fields: `url`, `env_var_name`, `scanner_version`) — T035 에서는 건드리지 않고 DetectedKeysReview 는 `where_kind: "env_var"`, `where_value` 로 rust 커맨드에 전달. 추후 T037/T038 에서 frontend `Usage` 타입을 정리해야 함.
+
 ## Next Action
 
-- **T035 드롭&스캔 결과 검토 UI** — `src/features/onboarding/DetectedKeysReview.tsx` 테이블 (체크박스 / Issuer 아이콘 / env_var_name / 파일경로 / 마지막 4자 / confidence 배지). OnboardingScanPage 가 `invoke("env_scan_folder", { path })` 호출 → 결과 렌더. 선택 체크박스 + "Import N keys" 버튼 → `credential_create` 일괄 호출. 폴더명으로 Project 자동 생성(`project_create` — 선행 커맨드 필요) + `usage_create` 로 `(project_id, credential_id, file_path, env_var_name)` 링크.
-- **선행 필요 (T035 내부에서 해결)**: `project_create` / `usage_create` Tauri 커맨드 — api-vault-core / storage 에 repos 는 존재, 커맨드 래퍼 없음. T035 범위에 선언해 함께 구현하거나 이를 별도 태스크(T037/T038 일부)로 미루고 T035 는 credential 만 등록. **결정 보류** — 구현 시 판단.
-- **이벤트 구독**: `listen<ScanProgress>("scan:progress", ...)` discriminated union `{ phase: "started"|"done" }`. 로딩 표시 + 완료 시 invoke resolve 대기.
-- **중복 감지**: DoD "Already tracked" — credential.hash_hint 매칭으로 1차 필터. 이미 있는 엔트리는 체크박스 비활성 + "Already tracked" 배지.
+- **T036 Welcome / 온보딩 플로우** — `src/features/onboarding/WelcomePage.tsx` 3단계 (DropZone → Create first key → You're all set). 볼트 최초 생성 직후 라우트. `settings.onboarding_done` 플래그로 재진입 차단.
+- **선행 확인 필요**: `settings_get/set` 으로 boolean flag 관리 가능한지 점검 (T030 이미 구현). Progressive Disclosure 톤 + 스킵 옵션.
+- **이후 우선순위**: T036 → T037 (Project 관리 페이지 — 커맨드는 T035 에서 완비, CRUD UI 만) → T038 (Deployment) → T039 (Usage) → T040 (보안 점수).
