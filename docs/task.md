@@ -31,7 +31,7 @@
 | M0  | Foundation                      | T001~T012   | 12        | ✅ 12/12 완료       |
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
-| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | 🔄 2/8 완료         |
+| M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | 🔄 3/8 완료         |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ⏳ 대기             |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
@@ -94,8 +94,9 @@
 | T040    | Inventory 보안 점수 + SecurityDot (3단계 + 7 factor)            | 2026-04-23 | `11281cd` |
 | T041    | `api-vault-core` 그래프 모델 (petgraph DiGraph)                 | 2026-04-23 | `5256f71` |
 | T042    | Credential blast radius BFS 엔진                                | 2026-04-23 | `533485c` |
+| T043    | Tauri commands `graph_fetch` + `blast_radius_for_credential`    | 2026-04-23 | `67cee48` |
 
-**완료 합계**: 42/118 (M0 완료 + M1 완료 + M2 완료 ✅ + **M3 2/8**)
+**완료 합계**: 43/118 (M0 완료 + M1 완료 + M2 완료 ✅ + **M3 3/8**)
 
 ---
 
