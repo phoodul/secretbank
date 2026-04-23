@@ -1,5 +1,40 @@
 # Work Log
 
+## 2026-04-23 (T039 완료, M2 15/16 — M2 Must 전체 완료)
+
+### T039 — Usage 링크 UI (직접 구현, 커밋 `cff6bf8`)
+
+- **Rust 측**:
+  - `commands/usage.rs` 에 `usage_delete(id)` 추가. `UsageRepo::delete` 는 T019 에 이미 존재했고 커맨드만 신설.
+  - `lib.rs` invoke_handler 두 블록에 등록.
+- **Frontend 측**:
+  - `src/features/inventory/types.ts` — `Usage` 타입을 Rust `api_vault_core::Usage` 와 정확히 일치하도록 전면 교체. 기존 legacy 필드(`url`, `env_var_name`, `scanner_version`, `created_at`) → 실제 JSON shape (`where_kind`, `where_value`, `verified_at`, `verified_by`). `UsageWhereKind` (`"env_var" | "file_path" | "code_ref"`) + `UsageVerifiedBy` 유니온 타입도 추가.
+  - `src/features/inventory/UsageSection.tsx` 신규 — CredentialDetail 내부 Usages 섹션 교체용:
+    - 헤더의 "Link" ghost 버튼 → 섹션 내부에 inline form 토글 (Dialog 대신 간결)
+    - Project Select (lazy-load: form 이 열릴 때만 `project_list` 호출)
+    - WhereKind Select (env_var / file_path / code_ref) — 선택값에 따라 WhereValue input placeholder 가 `OPENAI_API_KEY` / `/apps/web/.env.local` / `src/lib/auth.ts:42` 로 힌트 변경
+    - WhereValue Input → "Link usage" → `usage_create(input)` + `onChanged()`
+    - 목록은 Map 캐시로 project 이름 해석 (`project_list` 호출, 실패 시 id slice 폴백)
+    - 각 행 Trash 아이콘 → `usage_delete(id)` + `onChanged()`
+  - `src/features/inventory/CredentialDetail.tsx` — inline Usages 섹션 제거, `<UsageSection credentialId={cred.id} usages={cred.usages} onChanged={fetchDetail} />` 삽입. `fetchDetail` (기존 retry 트리거) 재활용 → usage 변경 후 `credential_get` 재조회로 `cred.usages` 자동 갱신.
+  - `src/locales/{en,ko,ja,zh}/common.json` — inventory 네임스페이스에 `linkUsage` / `linkUsageTitle` / `linkProject(+Placeholder)` / `noProjectsAvailable` / `loadProjectsFailed` / `linkWhereKind` / `linkWhereValue` / `whereKind(EnvVar|FilePath|CodeRef)` / `linkAdd` / `linking` / `usageCreated` / `usageCreateFailed` / `removeUsage` / `usageDeleted` / `usageDeleteFailed` — 22키 × 4 언어. 기존 `noUsages` 메시지도 T039 안내 문구로 교체 ("아래에서 직접 추가" 포함).
+- **테스트**: `src/features/inventory/__tests__/UsageSection.test.tsx` Vitest 4 — empty / list+project 이름 해석 / Add flow (Link 버튼 → project_list → Select → WhereValue → usage_create 검증) / Remove flow (Trash → usage_delete).
+- **검증**: `cargo check/clippy -D warnings` exit 0, `pnpm typecheck` exit 0, `pnpm lint` 0 에러 / 기존 6 경고 유지, `pnpm vitest run` 17 files / 136 tests pass (기존 132 + 신규 4). CredentialDetail 기존 테스트(fixtures `usages: []`)에 회귀 없음.
+
+**설계 교훈**:
+
+- **레거시 타입 정리 효과**: 프론트 `Usage` 가 scanner DTO (`env_var_name`) 를 참조하던 탓에 CredentialDetail 이 사실상 undefined 를 렌더 중이었다 — 테스트가 빈 배열만 다뤘던 탓에 드러나지 않음. T039 기점으로 `credential_get` 의 실제 shape 과 일치. Onboarding 쪽 `DetectedKeyInfo.env_var_name` 은 Usage 와 다른 별개 scanner DTO 이므로 보존.
+- **Inline form vs Dialog**: Add 플로우를 별도 Dialog 로 하지 않고 섹션 내부에 펼침/접힘 form 으로. 좁은 Sheet 공간 절약 + state 관리 간결. DeploymentSection 은 Dialog 방식을 썼는데 — 차이는 "필드 개수 + UX 복잡도". UsageSection 은 필드 3개 + placeholder 힌트가 간단해 inline 이 더 나음.
+- **Server truth 재조회 전략**: onChanged 콜백이 credential_get 전체 refetch 를 유발. usages 로컬 setState 조작 대비 단순하고 race 안전. M2 규모에서는 credential_get 이 저렴 (usages ≤ 수십개). 대규모에서는 패치 프로토콜로 전환 필요.
+- **lazy-load `project_list`**: UsageSection 이 mount 될 때 항상 project_list 를 치는 대신 (usages 에 이름 해석용 1회 + form 이 열릴 때 추가 1회) 2단계 로드. form 을 열지 않는 단순 조회 케이스의 네트워크 비용 절약.
+
+### 부수 처리
+
+- `docs/task.md` Status `🔄 14/14` 표기 오기재를 이전 턴에서 `🔄 14/16` 으로 고친 데 이어, 이번에 `🔄 15/16` 로 업데이트. 진행 표에 T039 줄 추가. 완료 합계 39/118.
+- `docs/progress.md` Last Checkpoint 갱신 (54 커밋, Vitest 136), T039 구현 교훈 섹션으로 교체 (레거시 타입 정정 / Inline form 결정 / Server truth 재조회 / lazy-load), Next Action 을 T040 보안 점수로 전환. M2 Must 13/13 전부 완료 표기.
+
+---
+
 ## 2026-04-23 (T038 완료, M2 14/16)
 
 ### T038 — Deployment CRUD (직접 구현, 커밋 `3072909`)

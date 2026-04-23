@@ -2,15 +2,15 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T038 완료, M2 14/16)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 14/16** (Must 12/13, Should 2/3)
-- **Commits:** 52개 누적 (최신 `3072909` feat(deployments): T038 Deployment CRUD; 직전 `bf67527` T037 Project CRUD)
-- **Tests:** Rust 86개 + Vitest 132개 (+5 Deployment 관련) 통과. `pnpm typecheck` / `pnpm lint` 에러 0 / `cargo clippy -D warnings` exit 0.
+- **Time:** 2026-04-23 (T039 완료, M2 15/16)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 15/16** (Must 13/13 ✅, Should 2/3)
+- **Commits:** 54개 누적 (최신 `cff6bf8` feat(inventory): T039 Usage 링크 UI; 직전 `3072909` T038 Deployment)
+- **Tests:** Rust 86개 + Vitest 136개 (+4 UsageSection) 통과. `pnpm typecheck` / `pnpm lint` 에러 0 / `cargo clippy -D warnings` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반 (Night mode 종료됨).
-- **Note:** 마일스톤 표 "Must 개수" 수치를 `14+2S` → `13+3S` 로 정정 (T037/T038/T040 = Should, T039 = Must). 실제 Priority 분포와 일치.
+- **Note:** M2 Must 13개 전부 완료. 남은 1개는 T040 (보안 점수 시각화, Should).
 
-## M2 진행 상황 (14/16)
+## M2 진행 상황 (15/16)
 
 ### 완료 ✅
 
@@ -29,6 +29,7 @@
 - **T036** Welcome 3단계 온보딩 + RequireOnboarding 가드 + `onboarding.done` 플래그 (커밋 `e22c452`)
 - **T037** Project CRUD 페이지 + 연결된 credential 뷰 + project_update/delete + usage_list_for_project (커밋 `bf67527`)
 - **T038** Deployment CRUD (ProjectDetail 내부 섹션) + DeploymentPatch + deployment_* 커맨드 4개 (커밋 `3072909`)
+- **T039** Usage 링크 UI (Credential ↔ Project 수동 연결) + usage_delete 커맨드 + 프론트 Usage 타입 Rust 일치 정정 (커밋 `cff6bf8`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
@@ -181,8 +182,8 @@
 - [x] T036 Welcome 3단계 온보딩 + RequireOnboarding 가드 — 커밋 `e22c452`
 - [x] T037 Project CRUD 페이지 + 연결된 credential 뷰 — 커밋 `bf67527`
 - [x] T038 Deployment CRUD (ProjectDetail 내부 섹션) — 커밋 `3072909`
-- [ ] T039 Usage 링크 UI (Must) — 다음 진입점
-- [ ] T040 Inventory 보안 점수 시각화 (Should) — 이후
+- [x] T039 Usage 링크 UI — 커밋 `cff6bf8`
+- [ ] T040 Inventory 보안 점수 시각화 (Should) — 다음 진입점, M2 마지막
 
 ## Pending Decisions
 
@@ -209,17 +210,18 @@
 - **entropy-only 감지 항목은 import 불가** — `issuer_slug` 가 `None` 이면 issuer FK 를 결정할 수 없어 기본 체크 해제 + 선택해도 skip. UI 는 체크박스는 disabled 아니지만 Import 집계에서 제외됨.
 - **프론트 `Usage` 타입이 Rust 와 불일치** (legacy fields: `url`, `env_var_name`, `scanner_version`) — T035 에서는 건드리지 않고 DetectedKeysReview 는 `where_kind: "env_var"`, `where_value` 로 rust 커맨드에 전달. 추후 T037/T038 에서 frontend `Usage` 타입을 정리해야 함.
 
-## T038 구현 교훈 (M2 후속 영향)
+## T039 구현 교훈 (M2 후속 영향)
 
-- **`DeploymentPatch` 신설** (기존에는 없었음) — `Option<String>` url, `Option<DeploymentPlatform>` platform, `Option<Env>` env. `project_id` 는 의도적으로 불변 (다른 프로젝트로 옮기는 건 삭제→재생성 경로). T037 의 `ProjectPatch` 와 다른 점: 문자열 외에도 enum 필드가 있어 `QueryBuilder` 에서 `push_bind(platform_to_str(p).to_string())` 형식으로 값 변환 필요.
-- **Enum 업데이트 시 QueryBuilder 패턴**: `platform`/`env` 는 문자열 컬럼이므로 QueryBuilder 에 `.to_string()` 을 명시해야 sqlx Encode 바운드가 맞는다. `&'static str` 을 bind 하면 수명 관련 E0597 발생 가능.
-- **Dialog 의 enum 필드 prefill**: `DeploymentDialog` 가 `editTarget` 이 있을 때 `form.reset({ platform: editTarget.platform, env: editTarget.env })` 로 그대로 넘기면 Rust enum 문자열이 Zod `z.enum(["vercel", ...])` 와 일치해야 함. 현재 `DeploymentPlatform` 타입 정의가 소문자 5종("vercel"/"railway"/"fly"/"netlify"/"other") 로 `serde(rename_all = "lowercase")` 직렬화와 일치하므로 수동 매핑 불필요.
-- **DeploymentSection 의 Add 버튼은 ghost + 소형**: Section header 안에 `+` 아이콘 + 텍스트. Detail Sheet 라는 좁은 공간에서 action 을 2차 계층(섹션 내)에 두기 위한 패턴. T039 Usage 섹션도 동일 구조로 만든다.
-- **테스트 mock 방식 전환**: 기존 `mockResolvedValueOnce` 시퀀스 방식은 `DeploymentSection` 이 자식으로 추가되면서 호출 순서가 혼잡 — 자식 effect 가 부모 effect 보다 먼저 실행되는 React 규칙 때문. `ProjectsPage.test.tsx` 를 `mockInvoke.mockImplementation((cmd) => ...)` 라우팅 방식으로 리팩터링. 커맨드명으로 응답을 매칭하므로 중첩 컴포넌트 추가에 강건.
-- **Cascade delete 주의**: `usage` 테이블에 `deployment_id` FK 가 있으므로 deployment 삭제 시 usage 는 유지되지만 `deployment_id` 가 dangling 가능. 현재는 DB 제약 없이 허용 (usage row 유지 + deployment_id NULL 아님 = 참조 오류). T039 Usage UI 에서 표시할 때 deployment 조회 실패 시 graceful fallback 필요. Follow-up 으로 남김.
+- **프론트 Usage 타입 shape 정정 완료**: 기존 `src/features/inventory/types.ts` 의 `Usage` 는 scanner/legacy DTO 인 `url`/`env_var_name`/`scanner_version` 를 참조했지만, `credential_get` 의 실제 Rust 응답은 `where_kind`/`where_value`/`verified_at`/`verified_by` shape. 즉 기존 렌더는 undefined 를 출력 중이었음 (T035 교훈에서 예고). T039 에서 완전 교체. Onboarding 쪽 `DetectedKeyInfo.env_var_name` 은 `Usage` 와 무관한 scanner DTO 이므로 그대로 둠.
+- **`usage_delete` 커맨드 추가** (이전엔 repo 에만 존재): `UsageRepo::delete` 는 T019 에서 이미 구현되어 있었고 커맨드만 신설. 커맨드 네이밍은 `usage_delete(id)` 단일 파라미터 — `credential_delete` 와 동일 패턴.
+- **UsageSection 의 프로젝트 이름 해석**: Usage 행에서 project_id 를 보여주는 대신 `project_list` 를 Map 캐시로 조회해 `project.name` 표시. 실패 시 `id.slice(0,8)…` 폴백. Add form 을 열 때는 별도로 project_list 다시 호출 — 폼이 열릴 때만 필요하므로 지연 로드.
+- **Add form UX**: Detail Sheet 라는 좁은 영역에서 form 을 별도 Dialog 로 열지 않고 섹션 내부에 토글로 펼침. 상태 간소화 (Dialog 관리 state 제거). Close 는 X 버튼 or "Cancel" 버튼 둘 다 동작.
+- **where_kind placeholder 힌트**: 선택된 kind 에 따라 `whereValue` input placeholder 가 `OPENAI_API_KEY` / `/apps/web/.env.local` / `src/lib/auth.ts:42` 로 바뀜 — 사용자가 어떤 형식을 입력해야 하는지 자연스럽게 안내.
+- **onChanged = credential_get refetch**: UsageSection 의 usage 변경 후 `onChanged()` 콜백이 `CredentialDetail` 의 `fetchDetail` (기존 retry 트리거 재활용) 을 호출. 재조회로 `cred.usages` 가 갱신되어 UI 자동 반영. Local 캐시 수정 대신 서버 진실을 다시 가져오는 방식 — M2 규모에선 충분하고 단순.
+- **Cascade 안전망**: T038 교훈에서 언급한 "deployment_id dangling" 은 현재 UsageSection 에서 deployment 를 조회하지 않으므로 표면화되지 않음. 추후 "어떤 배포에 쓰이는지" 배지가 필요해지면 deployment_list + null-safe 처리 추가.
 
 ## Next Action
 
-- **T039 Usage 링크 UI (Must, T027+T037 의존)** — `src/features/inventory/UsageSection.tsx` 를 `CredentialDetail` 내부에 확장. 현재 `noUsages` 빈 상태만 있고, Project 선택 + where_kind/where_value 입력 + `usage_create` 호출 UI 가 없다. + 목록에서 제거 버튼(`usage_delete` 커맨드 신규 필요 — 현재는 `UsageRepo::delete` 만 있고 커맨드 미노출).
-- **선행 확인**: `UsageRepo::delete` 는 이미 있지만 Tauri `usage_delete` 커맨드는 미등록. `commands/usage.rs` 에 추가해야 함. 같은 작업 중에 `CredentialDetail` 의 `Usage` 타입이 프론트와 Rust 가 불일치(프론트: `url`/`env_var_name`/`scanner_version` legacy, Rust: `where_kind`/`where_value`)한 문제도 정리 — T035 교훈에서 예고됨.
-- **이후 우선순위**: T039 → T040 (보안 점수, Should) → M2 종료.
+- **T040 Inventory 보안 점수 시각화 (Should)** — `crates/api-vault-core/src/security_score.rs` 에 `fn score(cred: &Credential, usages: &[Usage]) -> ScoreBreakdown` 추가. Credential 카드에 3단계 색상 dot (safe/warn/danger), hover 시 tooltip 으로 factor 노출.
+- **선행 확인**: `api-vault-core` 에 `security_score` 모듈이 아직 없으므로 신설. Credential 카드는 `src/features/inventory/CredentialCard.tsx`. Tooltip 컴포넌트는 shadcn/ui 이미 도입됨.
+- **M2 종료**: T040 이 M2 마지막 태스크. 완료 즉시 M2 ✅ 전환 → M3 Dependency Graph & Blast Radius (T041~T048) 로 이동.
