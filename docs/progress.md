@@ -2,14 +2,15 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-23 (T037 완료, M2 13/14)
-- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 13/14**
-- **Commits:** 50개 누적 (최신 `bf67527` feat(projects): T037 Project CRUD 페이지; 직전 `e22c452` T036 Welcome)
-- **Tests:** Rust 86개 + Vitest 127개 (+7 ProjectsPage) 통과. `pnpm typecheck` / `pnpm lint` 에러 0 / `cargo clippy -D warnings` exit 0.
+- **Time:** 2026-04-23 (T038 완료, M2 14/16)
+- **Phase:** Phase 3 — Implementation, **M2 Inventory UI 14/16** (Must 12/13, Should 2/3)
+- **Commits:** 52개 누적 (최신 `3072909` feat(deployments): T038 Deployment CRUD; 직전 `bf67527` T037 Project CRUD)
+- **Tests:** Rust 86개 + Vitest 132개 (+5 Deployment 관련) 통과. `pnpm typecheck` / `pnpm lint` 에러 0 / `cargo clippy -D warnings` exit 0.
 - **Blocker:** 없음.
 - **Mode:** 일반 (Night mode 종료됨).
+- **Note:** 마일스톤 표 "Must 개수" 수치를 `14+2S` → `13+3S` 로 정정 (T037/T038/T040 = Should, T039 = Must). 실제 Priority 분포와 일치.
 
-## M2 진행 상황 (13/14)
+## M2 진행 상황 (14/16)
 
 ### 완료 ✅
 
@@ -27,6 +28,7 @@
 - **i18n follow-up** 중국어(zh-간체) 로케일 추가 + Settings 언어 셀렉터 확장 (커밋 `1168210`)
 - **T036** Welcome 3단계 온보딩 + RequireOnboarding 가드 + `onboarding.done` 플래그 (커밋 `e22c452`)
 - **T037** Project CRUD 페이지 + 연결된 credential 뷰 + project_update/delete + usage_list_for_project (커밋 `bf67527`)
+- **T038** Deployment CRUD (ProjectDetail 내부 섹션) + DeploymentPatch + deployment_* 커맨드 4개 (커밋 `3072909`)
 
 ### 진행 순서 결정 (2026-04-23, 수정)
 
@@ -178,9 +180,9 @@
 - [x] i18n 중국어(zh-간체) 로케일 추가 — 커밋 `1168210`
 - [x] T036 Welcome 3단계 온보딩 + RequireOnboarding 가드 — 커밋 `e22c452`
 - [x] T037 Project CRUD 페이지 + 연결된 credential 뷰 — 커밋 `bf67527`
-- [ ] T038 Deployment 관리 (프로젝트 내부) — 다음 진입점
-- [ ] T039 Usage 링크 UI — 이후
-- [ ] T040 Inventory 보안 점수 시각화 — 이후
+- [x] T038 Deployment CRUD (ProjectDetail 내부 섹션) — 커밋 `3072909`
+- [ ] T039 Usage 링크 UI (Must) — 다음 진입점
+- [ ] T040 Inventory 보안 점수 시각화 (Should) — 이후
 
 ## Pending Decisions
 
@@ -207,17 +209,17 @@
 - **entropy-only 감지 항목은 import 불가** — `issuer_slug` 가 `None` 이면 issuer FK 를 결정할 수 없어 기본 체크 해제 + 선택해도 skip. UI 는 체크박스는 disabled 아니지만 Import 집계에서 제외됨.
 - **프론트 `Usage` 타입이 Rust 와 불일치** (legacy fields: `url`, `env_var_name`, `scanner_version`) — T035 에서는 건드리지 않고 DetectedKeysReview 는 `where_kind: "env_var"`, `where_value` 로 rust 커맨드에 전달. 추후 T037/T038 에서 frontend `Usage` 타입을 정리해야 함.
 
-## T037 구현 교훈 (M2 후속 영향)
+## T038 구현 교훈 (M2 후속 영향)
 
-- **`project_update` 커맨드 반환 타입**: 기존 `project_create` 가 `ProjectId` (= String) 을 반환하는 것과 달리, `project_update` 는 업데이트 후 갱신된 `Project` 를 반환하도록 설계. `get_by_id` 를 한 번 더 호출. 프론트가 optimistic update 없이 서버 진실을 받기 쉬워짐.
-- **`ProjectPatch` 는 Rust `#[derive(Default)]` + `Option<String>` 필드**: 프런트에서 빈 문자열을 보내면 `Some("")` 로 저장됨. 빈값은 `null` 로 전송해야 `None` 저장. `ProjectDialog` 의 `onSubmit` 에서 `values.field ?? null` 로 일관 처리.
-- **소속 credential 렌더링 = usage ⨝ credential 조인**: `usage_list_for_project(pid)` + `credential_list({})` 두 커맨드를 `Promise.all` 로 병렬 호출 후 `Map<credential_id, CredentialSummary>` 조인. N+1 없음. 동일 credential 이 같은 project 에 여러 usage 로 매핑될 수 있으므로 `Set<credential_id>` 로 dedup.
-- **파생 loading 패턴 재확인**: `ProjectDetail` 도 `CredentialDetail` 처럼 `currentKey !== resolvedKey` 파생으로 loading 표시 — effect body 에서 `setState({phase:"loading"})` 호출은 `react-hooks/set-state-in-effect` 규칙 위반. T038 Deployment 섹션 작성 시에도 동일 패턴 적용.
-- **BottomNav grid-cols-5 → 6 확장**: 모바일 5탭 관례를 깨는 변경. M6 Audit 구현 전까지는 Audit 탭 숨김 대안도 고려 가능하나, 이번엔 그냥 6개로 유지. 차후 Audit 탭을 Settings 내부로 옮기거나 탭을 스크롤 구조로 전환하는 UX 재검토 여지 있음.
-- **소속 credential UI 는 read-only**: T037 범위는 "보여주기"만. credential 추가/제거는 T039 Usage 링크 UI 에서 담당. `noLinkedCredentials` 빈 상태 메시지에 "T039 예정" 으로 명시.
+- **`DeploymentPatch` 신설** (기존에는 없었음) — `Option<String>` url, `Option<DeploymentPlatform>` platform, `Option<Env>` env. `project_id` 는 의도적으로 불변 (다른 프로젝트로 옮기는 건 삭제→재생성 경로). T037 의 `ProjectPatch` 와 다른 점: 문자열 외에도 enum 필드가 있어 `QueryBuilder` 에서 `push_bind(platform_to_str(p).to_string())` 형식으로 값 변환 필요.
+- **Enum 업데이트 시 QueryBuilder 패턴**: `platform`/`env` 는 문자열 컬럼이므로 QueryBuilder 에 `.to_string()` 을 명시해야 sqlx Encode 바운드가 맞는다. `&'static str` 을 bind 하면 수명 관련 E0597 발생 가능.
+- **Dialog 의 enum 필드 prefill**: `DeploymentDialog` 가 `editTarget` 이 있을 때 `form.reset({ platform: editTarget.platform, env: editTarget.env })` 로 그대로 넘기면 Rust enum 문자열이 Zod `z.enum(["vercel", ...])` 와 일치해야 함. 현재 `DeploymentPlatform` 타입 정의가 소문자 5종("vercel"/"railway"/"fly"/"netlify"/"other") 로 `serde(rename_all = "lowercase")` 직렬화와 일치하므로 수동 매핑 불필요.
+- **DeploymentSection 의 Add 버튼은 ghost + 소형**: Section header 안에 `+` 아이콘 + 텍스트. Detail Sheet 라는 좁은 공간에서 action 을 2차 계층(섹션 내)에 두기 위한 패턴. T039 Usage 섹션도 동일 구조로 만든다.
+- **테스트 mock 방식 전환**: 기존 `mockResolvedValueOnce` 시퀀스 방식은 `DeploymentSection` 이 자식으로 추가되면서 호출 순서가 혼잡 — 자식 effect 가 부모 effect 보다 먼저 실행되는 React 규칙 때문. `ProjectsPage.test.tsx` 를 `mockInvoke.mockImplementation((cmd) => ...)` 라우팅 방식으로 리팩터링. 커맨드명으로 응답을 매칭하므로 중첩 컴포넌트 추가에 강건.
+- **Cascade delete 주의**: `usage` 테이블에 `deployment_id` FK 가 있으므로 deployment 삭제 시 usage 는 유지되지만 `deployment_id` 가 dangling 가능. 현재는 DB 제약 없이 허용 (usage row 유지 + deployment_id NULL 아님 = 참조 오류). T039 Usage UI 에서 표시할 때 deployment 조회 실패 시 graceful fallback 필요. Follow-up 으로 남김.
 
 ## Next Action
 
-- **T038 Deployment 관리 (프로젝트 내부)** — `src/features/projects/DeploymentSection.tsx` 를 `ProjectDetail` 내부에 삽입. 각 프로젝트에 여러 deployment URL + platform(vercel/railway/fly) 연결. `deployment_*` 커맨드는 아직 없음 → Rust 쪽 신규.
-- **선행 확인**: `src-tauri/crates/api-vault-core/src/models/deployment.rs` 에 `Deployment`/`DeploymentInput`/`DeploymentPatch` 가 있는지, `DeploymentRepo` 에 `list_for_project` 메서드가 있는지 확인. 없으면 T037 패턴 그대로 추가.
-- **이후 우선순위**: T038 → T039 (Usage 링크 UI, T027+T037 의존) → T040 (보안 점수).
+- **T039 Usage 링크 UI (Must, T027+T037 의존)** — `src/features/inventory/UsageSection.tsx` 를 `CredentialDetail` 내부에 확장. 현재 `noUsages` 빈 상태만 있고, Project 선택 + where_kind/where_value 입력 + `usage_create` 호출 UI 가 없다. + 목록에서 제거 버튼(`usage_delete` 커맨드 신규 필요 — 현재는 `UsageRepo::delete` 만 있고 커맨드 미노출).
+- **선행 확인**: `UsageRepo::delete` 는 이미 있지만 Tauri `usage_delete` 커맨드는 미등록. `commands/usage.rs` 에 추가해야 함. 같은 작업 중에 `CredentialDetail` 의 `Usage` 타입이 프론트와 Rust 가 불일치(프론트: `url`/`env_var_name`/`scanner_version` legacy, Rust: `where_kind`/`where_value`)한 문제도 정리 — T035 교훈에서 예고됨.
+- **이후 우선순위**: T039 → T040 (보안 점수, Should) → M2 종료.

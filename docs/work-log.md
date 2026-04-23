@@ -1,5 +1,40 @@
 # Work Log
 
+## 2026-04-23 (T038 완료, M2 14/16)
+
+### T038 — Deployment CRUD (직접 구현, 커밋 `3072909`)
+
+- **Rust 측**:
+  - `api-vault-core/src/models/deployment.rs` — `DeploymentPatch` 신규 (`Option<String>` url, `Option<DeploymentPlatform>` platform, `Option<Env>` env). `project_id` 는 의도적으로 불변.
+  - `api-vault-core/src/lib.rs` — `DeploymentPatch` re-export.
+  - `api-vault-storage/src/sqlite/repositories/deployment.rs` — `update(id, &DeploymentPatch)` 추가. `QueryBuilder` 로 동적 SET, enum 필드는 `platform_to_str(p).to_string()` / `env_to_str(env).to_string()` 로 변환 bind.
+  - `api-vault-app/src/commands/deployments.rs` 신규 — `deployment_create`/`deployment_list_for_project`/`deployment_update`/`deployment_delete` 4개. `deployment_update` 는 `project_update` 와 동일하게 갱신된 `Deployment` 를 반환.
+  - `commands/mod.rs` + `lib.rs` invoke_handler 두 블록에 신규 커맨드 4개 등록.
+- **Frontend 측**:
+  - `src/features/projects/types.ts` — `Deployment`/`DeploymentInput`/`DeploymentPatch`/`DeploymentPlatform` 추가.
+  - `src/features/projects/DeploymentDialog.tsx` 신규 — 생성/편집 통합. zod 스키마 (url: URL 검증, platform 5종 enum, env 3종 enum). 프런트 enum 값이 Rust `serde(rename_all = "lowercase")` 와 정확히 일치.
+  - `src/features/projects/DeploymentSection.tsx` 신규 — 섹션 헤더 + "Add" ghost 버튼 + 리스트 (URL / platform · env badge / 편집/삭제 아이콘 버튼) + AlertDialog 삭제 확인. 파생 loading 패턴 (`currentKey !== resolvedKey`) 유지.
+  - `src/features/projects/ProjectDetail.tsx` — `DeploymentSection` 삽입 (Metadata 섹션 아래, Linked credentials 위).
+  - `src/locales/{en,ko,ja,zh}/common.json` — `deployments.*` 네임스페이스 28키 × 4 언어.
+- **테스트**:
+  - `src/features/projects/__tests__/ProjectsPage.test.tsx` 를 `mockImplementation((cmd) => ...)` 커맨드명 라우팅 방식으로 리팩터링 — 기존 `mockResolvedValueOnce` 시퀀스 방식은 자식 컴포넌트(DeploymentSection) 마운트로 invoke 순서가 뒤섞여 fragile. 라우팅 방식은 중첩 컴포넌트 추가에 강건. 기존 7 케이스 전부 그대로 통과 + "Detail Drawer 에 Deployment 섹션 + 기존 배포 렌더" 케이스 1개 추가.
+  - `src/features/projects/__tests__/DeploymentSection.test.tsx` 신규 Vitest 4 — empty / list / create flow (Add 버튼 → Dialog 제출 → deployment_create + refresh) / delete flow (확인 다이얼로그).
+- **검증**: `cargo clippy -D warnings` exit 0, `pnpm typecheck` exit 0, `pnpm lint` 0 에러 / 기존 6 경고 유지, `pnpm vitest run` 16 files / 132 tests (기존 127 + 5 신규) pass.
+
+**설계 교훈**:
+
+- **DeploymentPatch SQL QueryBuilder**: enum 필드를 `push_bind(&'static str)` 로 하면 수명 오류 가능 → `.to_string()` 명시. 첫 필드 아닌 경우 `qb.push(", ")` 분기. `ProjectRepo::update` 의 macro_rules! 대신 enum 필드 때문에 수동 분기로 작성 (향후 `update` 빌더 공용 매크로 추출 여지 있으나 현 시점은 premature).
+- **Mock 라우팅 전환 경험칙**: 테스트가 컴포넌트 트리의 부모-자식 관계에 의존해 invoke 순서를 가정하면 부서지기 쉽다. `mockImplementation((cmd) => responses[cmd])` 방식이 표준. Promise.all 내부 순서도 자동 커버.
+- **Cascade 경고**: Deployment 삭제 시 usage.deployment_id 가 dangling 될 수 있음. DB FK 에 `ON DELETE SET NULL` 이 걸려있다면 안전하지만, 현재 스키마 확인은 T039 작업 때 병행. T039 Usage UI 는 deployment 존재 여부를 optional 로 처리해야 함.
+- **enum rename_all=lowercase 위력**: Rust 측 `DeploymentPlatform::{Vercel, Railway, ...}` 가 JSON 으로는 `"vercel"`, `"railway"` 소문자가 되고, Zod `z.enum(["vercel", ...])` 와 자연스럽게 매칭. 프런트 타입 선언(`"vercel" | "railway" | ...`) 만 맞추면 수동 매핑 불필요.
+
+### 부수 처리 (수치 정정)
+
+- **마일스톤 표 "Must 개수" 수치 정정**: 기존 `14+2S` 는 잘못 기록된 값. 실제로 task.md 의 T025~T040 Priority 집계는 Must 13 + Should 3 (T037/T038/T040 = Should, T039 = Must). 이를 반영해 `13+3S` 로 수정하고 Status 를 `14/16 완료` 로 전환.
+- `docs/progress.md` Last Checkpoint 갱신 (52 커밋, Vitest 132), T038 구현 교훈 6개 (DeploymentPatch QueryBuilder / enum bind / Dialog prefill / Section Add UX / Mock 라우팅 / Cascade 주의), Next Action 을 T039 Usage UI 로 전환 + 선행 확인(Usage 타입 불일치 정리) 명시.
+
+---
+
 ## 2026-04-23 (T037 완료, M2 13/14)
 
 ### T037 — Project 관리 페이지 (직접 구현, 커밋 `bf67527`)
