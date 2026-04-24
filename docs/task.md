@@ -33,7 +33,7 @@
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ✅ 10/10 완료       |
-| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | 🔄 4/10 완료        |
+| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | 🔄 6/10 완료 (릴레이 의존 4건 defer)|
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
 | M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기             |
@@ -114,8 +114,10 @@
 | T060    | GitHub App 등록 runbook + GithubConnector skeleton (Connector impl placeholder + 4 tests)                                                                                    | 2026-04-25 | `ec6b042` |
 | T065    | RAILGUARD 템플릿 라이브러리 (4 tpl + render() + 8 snapshot tests)                                                                                                              | 2026-04-25 | `8ec8b32` |
 | T066    | RAILGUARD preview/apply Tauri 커맨드 (ApplyMode: Overwrite{backup}/Append/SkipExisting + atomic tmp→rename + 6 tempdir tests)                                                | 2026-04-25 | `f57e84a` |
+| T067    | RAILGUARD UI (/railguard 페이지 + 프로젝트 경로 + 4 체크박스 + Preview/Apply 2단계 + DetectedKeysReview CTA + Sidebar/BottomNav nav + Vitest 6)                                | 2026-04-25 | `892f671` |
+| T068    | DetectedKeysReview → RAILGUARD 조건부 CTA (mount 시 railguard_preview 탐색, 모두 존재하면 숨김 + Vitest +1)                                                                   | 2026-04-25 | `d23ef6d` |
 
-**완료 합계**: 62/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 4/10)
+**완료 합계**: 64/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 6/10 — T061/T062/T063/T064 은 Cloudflare Workers 릴레이 + 빌링 외부 인프라 의존으로 Night mode 스코프 밖)
 
 ### T054/T058 follow-up commits (Night mode 2026-04-25, 태스크 진행 표에는 별도 항목 아님)
 
