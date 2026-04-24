@@ -164,6 +164,7 @@ dependencies = [
  "async-trait",
  "ed25519-dalek",
  "hex",
+ "rand 0.8.6",
  "rand_core 0.6.4",
  "secrecy",
  "serde",

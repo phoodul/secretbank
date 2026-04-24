@@ -29,6 +29,7 @@ use commands::usage::{
 };
 use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
 use commands::vault_settings::{vault_setting_get, vault_setting_set};
+use commands::kill_switch::{kill_switch_request_confirm, kill_switch_revoke};
 use commands::railguard::{railguard_apply, railguard_preview};
 use context::AppContext;
 use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
@@ -134,6 +135,8 @@ pub fn run(context: tauri::Context) {
             railguard_apply,
             audit_list,
             audit_verify_chain,
+            kill_switch_request_confirm,
+            kill_switch_revoke,
         ]);
     }
 
@@ -181,6 +184,8 @@ pub fn run(context: tauri::Context) {
             railguard_apply,
             audit_list,
             audit_verify_chain,
+            kill_switch_request_confirm,
+            kill_switch_revoke,
         ]);
     }
 

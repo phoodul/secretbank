@@ -12,6 +12,7 @@ use api_vault_storage::sqlite::{init_pool, SqlitePool};
 use api_vault_storage::vault::{VaultError, VaultStorage};
 
 use crate::audit_ctx::AuditCtx;
+use crate::commands::kill_switch::ConfirmTokenStore;
 use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
 
@@ -57,6 +58,12 @@ pub struct AppContext {
     /// 모든 뮤테이팅 커맨드가 이 헬퍼를 통해 감사 항목을 기록한다.
     /// vault 가 잠겨 있으면 경고를 기록하고 skip — 호출자의 작업은 계속 진행된다.
     pub audit: Arc<AuditCtx>,
+
+    /// Kill Switch용 단기 토큰 저장소.
+    ///
+    /// `kill_switch_request_confirm` 이 발급한 16바이트 랜덤 토큰(32 hex char)을
+    /// 5분 TTL 로 보관한다. `kill_switch_revoke` 가 소비(one-shot)하여 유효성을 검증한다.
+    pub kill_switch_tokens: Arc<ConfirmTokenStore>,
 }
 
 impl AppContext {
@@ -94,6 +101,7 @@ impl AppContext {
             feed_scheduler: Arc::new(Mutex::new(None)),
             device_identity,
             audit,
+            kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
         })
     }
 

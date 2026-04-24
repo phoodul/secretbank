@@ -34,8 +34,8 @@
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ✅ 10/10 완료       |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | 🔄 6/10 완료 (릴레이 의존 4건 defer)|
-| M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
-| M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
+| M6  | Audit Log                       | T069~T074   | 6         | ✅ 6/6 완료         |
+| M7  | Kill Switch                     | T075~T078   | 4         | 🔄 1/4 완료             |
 | M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기             |
 | M9  | Sync Infrastructure             | T087~T096   | 10        | ⏳ 대기             |
 | M10 | Payments                        | T097~T103   | 7         | ⏳ 대기             |
@@ -116,8 +116,15 @@
 | T066    | RAILGUARD preview/apply Tauri 커맨드 (ApplyMode: Overwrite{backup}/Append/SkipExisting + atomic tmp→rename + 6 tempdir tests)                                                | 2026-04-25 | `f57e84a` |
 | T067    | RAILGUARD UI (/railguard 페이지 + 프로젝트 경로 + 4 체크박스 + Preview/Apply 2단계 + DetectedKeysReview CTA + Sidebar/BottomNav nav + Vitest 6)                                | 2026-04-25 | `892f671` |
 | T068    | DetectedKeysReview → RAILGUARD 조건부 CTA (mount 시 railguard_preview 탐색, 모두 존재하면 숨김 + Vitest +1)                                                                   | 2026-04-25 | `d23ef6d` |
+| T069    | api-vault-audit 크레이트 (append/verify + ed25519 + SHA-256 canonical + 7 tests)                                                                                              | 2026-04-25 | `79a8c1e` |
+| T070    | Device identity 서비스 (ensure_device_keys: 볼트 + SQLite + 3원 정합 + partial-state 복구 + 3 tests)                                                                          | 2026-04-25 | `ee30a79` |
+| T071    | Audit write 훅 모든 mutating 커맨드 (AuditCtx best-effort + 15 커맨드 훅 + AuditRepo 재작성 + 4 tests; DoD 편차: SQL 트랜잭션 래핑 미적용)                                   | 2026-04-25 | `e55b03d` |
+| T072    | audit_list + audit_verify_chain 커맨드 (AuditEntry/ChainVerifyReport + hex 인코딩 + device별 VerifyingKey 검증 + 5 tests)                                                    | 2026-04-25 | `cf01646` |
+| T073    | Audit UI (/audit 타임라인 + VerifyChainBanner + AuditFilterBar + 44 i18n 키 + Vitest 6)                                                                                        | 2026-04-25 | `4a3d8e2` |
+| T074    | CredentialDetail Audit 섹션 (AuditForCredential + AuditPage useSearchParams 프리필 + action-family 공유 유틸 + Vitest 5)                                                      | 2026-04-25 | `4ac1c79` |
+| T075    | Kill Switch 백엔드 (ConfirmTokenStore 16바이트 hex 토큰 TTL 5분 + kill_switch_request_confirm + kill_switch_revoke {cred_id, token, also_delete_value} + 오탐 보호 + 6 tests) | 2026-04-25 | PENDING |
 
-**완료 합계**: 64/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 6/10 — T061/T062/T063/T064 은 Cloudflare Workers 릴레이 + 빌링 외부 인프라 의존으로 Night mode 스코프 밖)
+**완료 합계**: 71/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 6/10 — T061/T062/T063/T064 defer + M6 ✅ 6/6 + **M7 🔄 1/4**)
 
 ### T054/T058 follow-up commits (Night mode 2026-04-25, 태스크 진행 표에는 별도 항목 아님)
 
