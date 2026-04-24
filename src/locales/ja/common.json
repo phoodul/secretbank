@@ -9,6 +9,7 @@
     "graph": "Graph",
     "incidents": "Incidents",
     "audit": "Audit Log",
+    "railguard": "RAILGUARD",
     "settings": "Settings"
   },
   "common": {
@@ -251,7 +252,12 @@
     "createFirstKey": "最初のキーを追加",
     "nextStep": "次へ",
     "skipOnboarding": "あとで",
-    "openInventory": "インベントリを開く"
+    "openInventory": "インベントリを開く",
+    "railguardCta": {
+      "title": "AI ガードレールルールを追加しますか?",
+      "body": "AI エディタが API キーをハードコードしないようにします。",
+      "action": "ルールをプレビュー"
+    }
   },
   "projects": {
     "title": "プロジェクト",
@@ -409,6 +415,50 @@
       "warningBanner_other": "{{count}} 件のアクティブなインシデントがこの資格情報に影響しています。確認して失効を検討してください。",
       "revokeCta": "資格情報を失効",
       "revokeUnavailable": "M7 Kill Switch リリース後に利用可能"
+    }
+  },
+  "railguard": {
+    "title": "RAILGUARD",
+    "subtitle": "プロジェクト用 AI ガードレールルール — AI エディタによる API キーのハードコードを防止します。",
+    "projectPath": "プロジェクトパス",
+    "projectPathPlaceholder": "例: /home/user/my-project",
+    "browse": "参照",
+    "rules": {
+      "label": "ルールファイル",
+      "cursorRules": ".cursorrules",
+      "windsurfRules": ".windsurfrules",
+      "claudeMd": "CLAUDE.md",
+      "copilotInstructions": ".github/copilot-instructions.md"
+    },
+    "advanced": "詳細オプション",
+    "frameworks": "フレームワーク",
+    "issuers": "API プロバイダー",
+    "frameworksHelp": "例: Next.js, Fastify (カンマ区切り)",
+    "issuersHelp": "例: Stripe, OpenAI (カンマ区切り)",
+    "preview": "プレビュー",
+    "previewing": "プレビュー中…",
+    "apply": "適用",
+    "applying": "適用中…",
+    "action": {
+      "create": "作成",
+      "update": "更新",
+      "skip": "スキップ"
+    },
+    "mode": {
+      "overwriteWithBackup": "上書き (バックアップあり)",
+      "overwriteNoBackup": "上書き (バックアップなし)",
+      "append": "追記",
+      "skipExisting": "既存をスキップ"
+    },
+    "applied": {
+      "title": "{{count}} ファイル書き込み完了",
+      "empty": "書き込まれたファイルはありません (すべてスキップ)。",
+      "backupCreated": "バックアップ作成済み: {{path}}"
+    },
+    "error": {
+      "preview": "プレビューの生成に失敗しました",
+      "apply": "ルールファイルの適用に失敗しました",
+      "projectPathRequired": "プロジェクトパスを入力してください"
     }
   },
   "commandPalette": {

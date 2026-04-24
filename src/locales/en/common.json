@@ -9,6 +9,7 @@
     "graph": "Graph",
     "incidents": "Incidents",
     "audit": "Audit Log",
+    "railguard": "RAILGUARD",
     "settings": "Settings"
   },
   "common": {
@@ -251,7 +252,12 @@
     "createFirstKey": "Add your first key",
     "nextStep": "Next",
     "skipOnboarding": "Skip for now",
-    "openInventory": "Open Inventory"
+    "openInventory": "Open Inventory",
+    "railguardCta": {
+      "title": "Add AI guardrail rules?",
+      "body": "Keep your AI editor from hardcoding API keys.",
+      "action": "Preview rules"
+    }
   },
   "projects": {
     "title": "Projects",
@@ -409,6 +415,50 @@
       "warningBanner_other": "{{count}} active incidents affect this credential. Review and consider revoking.",
       "revokeCta": "Revoke credential",
       "revokeUnavailable": "Available when Kill Switch (M7) ships"
+    }
+  },
+  "railguard": {
+    "title": "RAILGUARD",
+    "subtitle": "AI guardrail rules for your project — keeps AI editors from hardcoding API keys.",
+    "projectPath": "Project path",
+    "projectPathPlaceholder": "e.g. /home/user/my-project",
+    "browse": "Browse",
+    "rules": {
+      "label": "Rule files",
+      "cursorRules": ".cursorrules",
+      "windsurfRules": ".windsurfrules",
+      "claudeMd": "CLAUDE.md",
+      "copilotInstructions": ".github/copilot-instructions.md"
+    },
+    "advanced": "Advanced options",
+    "frameworks": "Frameworks",
+    "issuers": "API providers",
+    "frameworksHelp": "e.g. Next.js, Fastify (comma-separated)",
+    "issuersHelp": "e.g. Stripe, OpenAI (comma-separated)",
+    "preview": "Preview",
+    "previewing": "Previewing…",
+    "apply": "Apply",
+    "applying": "Applying…",
+    "action": {
+      "create": "Create",
+      "update": "Update",
+      "skip": "Skip"
+    },
+    "mode": {
+      "overwriteWithBackup": "Overwrite (with backup)",
+      "overwriteNoBackup": "Overwrite (no backup)",
+      "append": "Append",
+      "skipExisting": "Skip existing"
+    },
+    "applied": {
+      "title": "{{count}} file(s) written",
+      "empty": "No files were written (all skipped).",
+      "backupCreated": "Backup created: {{path}}"
+    },
+    "error": {
+      "preview": "Failed to generate preview",
+      "apply": "Failed to apply rule files",
+      "projectPathRequired": "Please enter a project path"
     }
   },
   "commandPalette": {

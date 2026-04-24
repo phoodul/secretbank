@@ -9,6 +9,7 @@
     "graph": "그래프",
     "incidents": "인시던트",
     "audit": "감사 로그",
+    "railguard": "RAILGUARD",
     "settings": "설정"
   },
   "common": {
@@ -251,7 +252,12 @@
     "createFirstKey": "첫 키 추가하기",
     "nextStep": "다음",
     "skipOnboarding": "나중에 하기",
-    "openInventory": "인벤토리 열기"
+    "openInventory": "인벤토리 열기",
+    "railguardCta": {
+      "title": "AI 가드레일 규칙 추가?",
+      "body": "AI 에디터가 API 키를 하드코딩하지 못하게 방지합니다.",
+      "action": "규칙 미리보기"
+    }
   },
   "projects": {
     "title": "프로젝트",
@@ -409,6 +415,50 @@
       "warningBanner_other": "활성 인시던트 {{count}}개가 이 자격증명에 영향을 줍니다. 검토 후 폐기를 고려하세요.",
       "revokeCta": "자격증명 폐기",
       "revokeUnavailable": "M7 Kill Switch 출시 후 사용 가능"
+    }
+  },
+  "railguard": {
+    "title": "RAILGUARD",
+    "subtitle": "프로젝트용 AI 가드레일 규칙 — AI 에디터의 API 키 하드코딩을 방지합니다.",
+    "projectPath": "프로젝트 경로",
+    "projectPathPlaceholder": "예: /home/user/my-project",
+    "browse": "찾아보기",
+    "rules": {
+      "label": "규칙 파일",
+      "cursorRules": ".cursorrules",
+      "windsurfRules": ".windsurfrules",
+      "claudeMd": "CLAUDE.md",
+      "copilotInstructions": ".github/copilot-instructions.md"
+    },
+    "advanced": "고급 옵션",
+    "frameworks": "프레임워크",
+    "issuers": "API 공급자",
+    "frameworksHelp": "예: Next.js, Fastify (쉼표로 구분)",
+    "issuersHelp": "예: Stripe, OpenAI (쉼표로 구분)",
+    "preview": "미리보기",
+    "previewing": "미리보는 중…",
+    "apply": "적용",
+    "applying": "적용 중…",
+    "action": {
+      "create": "생성",
+      "update": "업데이트",
+      "skip": "건너뜀"
+    },
+    "mode": {
+      "overwriteWithBackup": "덮어쓰기 (백업 포함)",
+      "overwriteNoBackup": "덮어쓰기 (백업 없음)",
+      "append": "추가",
+      "skipExisting": "기존 파일 건너뜀"
+    },
+    "applied": {
+      "title": "{{count}}개 파일 작성 완료",
+      "empty": "작성된 파일이 없습니다 (모두 건너뜀).",
+      "backupCreated": "백업 생성됨: {{path}}"
+    },
+    "error": {
+      "preview": "미리보기 생성 실패",
+      "apply": "규칙 파일 적용 실패",
+      "projectPathRequired": "프로젝트 경로를 입력하세요"
     }
   },
   "commandPalette": {

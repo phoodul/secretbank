@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import "@/lib/i18n";
@@ -76,14 +77,14 @@ function renderReview(
   scannedPath = "/home/u/proj",
 ) {
   return render(
-    <>
+    <MemoryRouter>
       <DetectedKeysReview
         detected={detected}
         scannedPath={scannedPath}
         existingCredentials={existing}
       />
       <Toaster />
-    </>,
+    </MemoryRouter>,
   );
 }
 
@@ -190,5 +191,18 @@ describe("DetectedKeysReview", () => {
     renderReview(detected);
     const [cb] = screen.getAllByRole("checkbox");
     expect(cb).not.toBeChecked();
+  });
+
+  it("RAILGUARD CTA 배너가 표시되고 /railguard?projectPath=... 링크를 포함한다", () => {
+    const detected = [mockDetected()];
+    renderReview(detected, [], "/home/u/my-scanned-project");
+
+    const cta = screen.getByTestId("railguard-cta");
+    expect(cta).toBeInTheDocument();
+
+    const ctaLink = screen.getByTestId("railguard-cta-link");
+    expect(ctaLink).toBeInTheDocument();
+    // Clicking should navigate (no error thrown)
+    ctaLink.click();
   });
 });

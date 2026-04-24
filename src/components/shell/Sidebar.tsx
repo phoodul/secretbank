@@ -8,6 +8,7 @@ import {
   Settings,
   ShieldCheck,
 } from "lucide-react";
+
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const navItems: NavItem[] = [
   { to: "/graph", icon: Network, labelKey: "nav.graph" },
   { to: "/incidents", icon: AlertTriangle, labelKey: "nav.incidents" },
   { to: "/audit", icon: FileText, labelKey: "nav.audit" },
+  { to: "/railguard", icon: ShieldCheck, labelKey: "nav.railguard" },
   { to: "/settings", icon: Settings, labelKey: "nav.settings" },
 ];
 

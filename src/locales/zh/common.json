@@ -9,6 +9,7 @@
     "graph": "图谱",
     "incidents": "事件",
     "audit": "审计日志",
+    "railguard": "RAILGUARD",
     "settings": "设置"
   },
   "common": {
@@ -251,7 +252,12 @@
     "createFirstKey": "添加第一个密钥",
     "nextStep": "下一步",
     "skipOnboarding": "稍后再说",
-    "openInventory": "打开清单"
+    "openInventory": "打开清单",
+    "railguardCta": {
+      "title": "添加 AI 安全规则?",
+      "body": "防止 AI 编辑器硬编码 API 密钥。",
+      "action": "预览规则"
+    }
   },
   "projects": {
     "title": "项目",
@@ -409,6 +415,50 @@
       "warningBanner_other": "{{count}} 个活跃安全事件影响此凭证，请审查并考虑吊销。",
       "revokeCta": "吊销凭证",
       "revokeUnavailable": "M7 Kill Switch 发布后可用"
+    }
+  },
+  "railguard": {
+    "title": "RAILGUARD",
+    "subtitle": "为项目生成 AI 安全规则 — 防止 AI 编辑器硬编码 API 密钥。",
+    "projectPath": "项目路径",
+    "projectPathPlaceholder": "例: /home/user/my-project",
+    "browse": "浏览",
+    "rules": {
+      "label": "规则文件",
+      "cursorRules": ".cursorrules",
+      "windsurfRules": ".windsurfrules",
+      "claudeMd": "CLAUDE.md",
+      "copilotInstructions": ".github/copilot-instructions.md"
+    },
+    "advanced": "高级选项",
+    "frameworks": "框架",
+    "issuers": "API 提供商",
+    "frameworksHelp": "例: Next.js, Fastify（逗号分隔）",
+    "issuersHelp": "例: Stripe, OpenAI（逗号分隔）",
+    "preview": "预览",
+    "previewing": "预览中…",
+    "apply": "应用",
+    "applying": "应用中…",
+    "action": {
+      "create": "创建",
+      "update": "更新",
+      "skip": "跳过"
+    },
+    "mode": {
+      "overwriteWithBackup": "覆盖（带备份）",
+      "overwriteNoBackup": "覆盖（不备份）",
+      "append": "追加",
+      "skipExisting": "跳过已有文件"
+    },
+    "applied": {
+      "title": "已写入 {{count}} 个文件",
+      "empty": "未写入任何文件（均已跳过）。",
+      "backupCreated": "已创建备份: {{path}}"
+    },
+    "error": {
+      "preview": "预览生成失败",
+      "apply": "规则文件应用失败",
+      "projectPathRequired": "请输入项目路径"
     }
   },
   "commandPalette": {

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Wand2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export function DetectedKeysReview({
   onImportComplete,
 }: DetectedKeysReviewProps) {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
   const { issuers } = useIssuers();
   const { state, importSelected } = useImportDetected();
 
@@ -212,6 +214,30 @@ export function DetectedKeysReview({
             </div>
           );
         })}
+      </div>
+
+      {/* RAILGUARD CTA */}
+      <div
+        className="flex items-center gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm"
+        data-testid="railguard-cta"
+      >
+        <Wand2 className="size-4 shrink-0 text-blue-500" aria-hidden />
+        <div className="flex-1">
+          <span className="font-medium text-blue-700 dark:text-blue-300">
+            {t("onboarding.railguardCta.title")}
+          </span>{" "}
+          <span className="text-muted-foreground">{t("onboarding.railguardCta.body")}</span>
+        </div>
+        <button
+          type="button"
+          className="shrink-0 text-xs font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+          onClick={() =>
+            navigate(`/railguard?projectPath=${encodeURIComponent(scannedPath)}`)
+          }
+          data-testid="railguard-cta-link"
+        >
+          {t("onboarding.railguardCta.action")} →
+        </button>
       </div>
     </div>
   );

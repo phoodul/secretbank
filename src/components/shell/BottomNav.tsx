@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { AlertTriangle, FileText, FolderKanban, Lock, Network, Settings } from "lucide-react";
+import { AlertTriangle, FileText, FolderKanban, Lock, Network, Settings, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
   { to: "/graph", icon: Network, labelKey: "nav.graph" },
   { to: "/incidents", icon: AlertTriangle, labelKey: "nav.incidents" },
   { to: "/audit", icon: FileText, labelKey: "nav.audit" },
+  { to: "/railguard", icon: ShieldCheck, labelKey: "nav.railguard" },
   { to: "/settings", icon: Settings, labelKey: "nav.settings" },
 ];
 
@@ -24,7 +25,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background">
-      <div className="grid grid-cols-6">
+      <div className="grid grid-cols-7">
         {navItems.map(({ to, icon: Icon, labelKey }) => (
           <NavLink
             key={to}

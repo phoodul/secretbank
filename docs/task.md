@@ -33,7 +33,7 @@
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ✅ 10/10 완료       |
-| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
+| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | 🔄 4/10 완료        |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
 | M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기             |
@@ -110,9 +110,20 @@
 | T056    | Incidents 페이지 UI (IncidentsPage + IncidentCard + use-incidents + types + i18n 4개 로케일 + Vitest 5 tests + incident_list 반환 확장 + FeedScheduler incidents:updated emit) | 2026-04-25 | `7bfac7c` |
 | T057    | Credential Detail에 Incidents 섹션 통합 (list_incidents_with_matches_for_credential + IncidentsForCredential + use-incidents-for-credential + i18n 4개 + Vitest 5 tests + 2 repo tests) | 2026-04-25 | `3858a5d` |
 | T058    | NVD API Key Setting UI (VaultStorage::flush + vault_setting_get/set 커맨드 + IntegrationsSection + i18n 4개 + flush/locked 테스트 2개 + 커맨드 테스트 5개 + Vitest 6 tests) | 2026-04-25 | `35548dd` |
+| T059    | Connector trait 정의 (Auth/RemoteKey/RotationCap/ConnectorError + async_trait + MockConnector feature-gated + 6 tests)                                                       | 2026-04-25 | `119e11c` |
+| T060    | GitHub App 등록 runbook + GithubConnector skeleton (Connector impl placeholder + 4 tests)                                                                                    | 2026-04-25 | `ec6b042` |
 | T065    | RAILGUARD 템플릿 라이브러리 (4 tpl + render() + 8 snapshot tests)                                                                                                              | 2026-04-25 | `8ec8b32` |
+| T066    | RAILGUARD preview/apply Tauri 커맨드 (ApplyMode: Overwrite{backup}/Append/SkipExisting + atomic tmp→rename + 6 tempdir tests)                                                | 2026-04-25 | `f57e84a` |
 
-**완료 합계**: 59/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 1/10)
+**완료 합계**: 62/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 4/10)
+
+### T054/T058 follow-up commits (Night mode 2026-04-25, 태스크 진행 표에는 별도 항목 아님)
+
+| 주제                                                         | 커밋 해시 |
+| :----------------------------------------------------------- | :-------- |
+| typecheck 5 에러 hotfix (GraphPage.test.tsx vi.fn 시그니처)   | `c49ed8f` |
+| Migration 0002 — incident (source, source_id) UNIQUE + INSERT OR IGNORE | `00e8bde` |
+| RunEvent::Exit 전환 (scheduler shutdown 완료 보장)            | `6acbf64` |
 
 ---
 

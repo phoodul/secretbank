@@ -2,23 +2,69 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-25 (Night mode 자율 연속 실행 — T056 완료, T057 진행 중).
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 8/10 완료**.
-- **Commits:** 88개 누적. 이번 세션 신규:
-  - `85f347a` fix(app): 피드 스케줄러 spawn 을 tokio context 안으로 이동
-  - `7d5f3f3` feat(graph): 노드 드래그 위치 영속화 + Reset layout 버튼
-  - `2708a6d` docs: M3 수동 검증 결과 + 2 hotfix/feature 커밋 기록
-  - `ed45951` docs: 세션 종료 — M3 검증 follow-up 완료 + Vision/Scheduler 결정 기록
-  - `7bfac7c` feat(app): **T056 Incidents 페이지 UI 구현** (Night mode)
-- **Tests:** Rust workspace 전 통과 (incident repo 12개 포함, 3개 신규) / Vitest **242개** (237 + 5 신규). 전부 통과. `pnpm typecheck` pre-existing 5 에러 지속 (GraphPage.test.tsx — 신규 에러 없음). `cargo clippy` / `pnpm lint` pass.
+- **Time:** 2026-04-25 02:4x (Night mode 자율 연속 실행 — **M4 완료 + M5 4/10**).
+- **Phase:** Phase 3 — Implementation, **M4 ✅ 10/10 완료**, **M5 🔄 4/10**.
+- **Commits:** 95개 누적. 이번 세션(Night mode) 신규 10개:
+  - `7bfac7c` feat(app): T056 Incidents 페이지 UI 구현
+  - `3858a5d` feat(app): T057 Credential Detail 에 Incidents 섹션 통합
+  - `35548dd` feat(app): T058 NVD API 키 설정 UI (age 볼트 저장 + 스케줄러 재구성) → **M4 10/10 완료 🎉**
+  - `c49ed8f` fix(test): GraphPage vi.fn generic 시그니처 업데이트 (typecheck 5 에러 해소)
+  - `00e8bde` fix(storage): 인시던트 중복 방지 — UNIQUE (source, source_id) + INSERT OR IGNORE
+  - `6acbf64` fix(app): 앱 종료 훅을 RunEvent::Exit 로 전환 (scheduler shutdown 완료 보장)
+  - `119e11c` feat(connectors): T059 Connector trait 정의 (M5 착수)
+  - `ec6b042` feat(connectors): T060 GitHub App skeleton + 등록 runbook
+  - `8ec8b32` feat(railguard): T065 템플릿 라이브러리 (4 AI 에디터 룰 파일)
+  - `f57e84a` feat(app): T066 RAILGUARD preview/apply 커맨드
+- **Tests:** Rust workspace 전 통과 (api-vault-connectors 45, api-vault-railguard 8, api-vault-app 43 등) / Vitest **254개** 전부 통과. `pnpm typecheck` **에러 0** (5개 pre-existing 모두 해소). `cargo clippy --workspace -- -D warnings` clean. `pnpm lint` clean.
 - **Blocker:** 없음.
 - **Mode:** 🌙 **Night mode — 연속 자율 실행**. Gate 외 중간 승인 요청 없음, 큐에 쌓아 진행.
-- **Next (진행 중):**
-  1. **T057 Credential Detail Incidents 섹션 통합** — `CredentialDetail` 에 매칭된 incident 목록 + "revoke 권장" CTA (M7 Kill Switch 로 이어짐).
-  2. **T058 NVD API key Settings** — Integrations 섹션 + 저장 시 feed scheduler 재로드. (Should 우선순위)
-  3. (대기 큐) Storage migration 0002 — `incident (source, source_id)` UNIQUE.
-  4. (대기 큐) Tauri shutdown `RunEvent::Exit` 전환.
-  5. (대기 큐) `pnpm typecheck` 5 에러 hotfix.
+- **Next (대기 큐):**
+  1. **T067 RAILGUARD UI** — 프론트엔드 `/railguard` 페이지 + T035 결과 화면 CTA. 필요한 Rust 커맨드 (`railguard_preview/apply`) 는 T066 에서 이미 완성.
+  2. **T068 .env 스캐너 → RAILGUARD 자동 제안** (Should).
+  3. **T063 GitHub 커넥터 UI** — 연결/저장소/스캔. 단, deep link 수신 및 릴레이 의존 부분은 T061 완료 후 통합.
+  4. **T061 Cloudflare Workers 릴레이** — 외부 인프라 (Cloudflare 계정, wrangler 배포) 필요. Night mode 스코프 밖. 사용자 수동 설정 후 재개.
+  5. **T062 GitHub Secret Scanning 읽기** — wiremock 기반으로는 작업 가능하나 실제 동작은 T061 릴레이 완료 후. Night mode 에서 구현 시도 여부 판단 필요.
+
+## M4 완료 + M5 착수 (Night mode 2026-04-25)
+
+### 주요 성과
+- **M4 Incident Feed 100% 완료**. 피드 폴링 → 매칭 → 알림 → UI 표시 → 설정(NVD key) 전체 파이프라인이 end-to-end 로 동작.
+- **M5 RAILGUARD 하단 (T065/T066) 완료**. AI 에디터(Cursor/Windsurf/Claude/Copilot) 룰 파일을 프로젝트 컨텍스트로 렌더하고 안전하게 디스크에 쓸 수 있는 기반 확보.
+- **M5 커넥터 하단 (T059/T060) 완료**. 공통 `Connector` trait + GitHub connector skeleton. 실제 API 호출 구현은 릴레이 의존 (T061+) 때문에 defer.
+- **T054 follow-up 3건 전부 해소**: typecheck 에러, incident UNIQUE, RunEvent::Exit.
+
+## T066 구현 교훈 (M5 후속 영향)
+
+- **원자적 쓰기 = tmp + rename**: `std::fs::rename` 은 POSIX/Windows 둘 다 atomic. 일반 `fs::write` 는 중간에 크래시 시 파일이 truncated 된 상태로 남을 수 있음. tmp 에 전체 쓰고 rename 하는 패턴은 vault 에서 이미 사용 중 → railguard 에도 동일 패턴 복제.
+- **`ApplyMode::SkipExisting + 파일 없음 = Create**: 스펙이 "Skip if exists" 의미면 반대로 "없으면 write" 는 자연스러운 동작. 테스트에서 명시적으로 커버.
+- **`.github/` 자동 mkdir**: Copilot instructions 경로만 2단계 깊이. 다른 3개는 프로젝트 루트. `path.parent()` 가 프로젝트 루트와 다를 때만 mkdir.
+- **`tempfile` 이 dev-dep 에만**: 프로덕션 코드에서 tempfile 사용하려면 `[dependencies]` 로 옮겨야 함. 현재는 수동 tmp 경로 (`{path}.railguard-tmp`) + rename 으로 우회. 추후 여러 크레이트가 atomic write 를 필요로 하면 공통 헬퍼로 추출.
+
+## T065 구현 교훈 (M5 후속 영향)
+
+- **템플릿 엔진 안 씀**: 조건/반복이 필요 없는 단순 `{{VAR}}` 치환은 `str::replace` 세 번이 tera/handlebars 보다 깨끗. 나중에 룰에 조건(e.g. "if has Stripe") 을 넣어야 하면 그때 도입.
+- **`{{FRAMEWORKS}}` / `{{ISSUERS}}` 빈 배열 fallback**: 감지 결과가 비었을 때 템플릿에 빈 문자열이 들어가면 어색한 문장("For  projects, ..."). `"general"` / `"your providers"` 로 치환해 자연스럽게 유지.
+- **4개 에디터 tone 맞추기**: Cursor/Windsurf 는 거의 동일 (헤더 `For Cursor` ↔ `For Windsurf` 만 다름), Claude 는 prose 형식으로 룰당 설명 1-2문장, Copilot 은 넘버링된 instructions 형식. 스냅샷 테스트는 invariant 만 검증 (10개 룰 번호 모두 존재, 변수 잔여 없음 등) — 정확한 문구 diff 는 insta 없이 유지 관리 불가능하므로 invariant 수준으로.
+
+## T059/T060 구현 교훈 (M5 후속 영향)
+
+- **`fetch_incidents(&Auth)`**: 원 DoD 는 파라미터 없었으나 private repo Secret Scanning 알림 폴링에 auth 필수. trait 전역으로 `&Auth` 추가.
+- **`Connector` = `Send + Sync`**: 여러 공급자를 동시에 poll 하려면 trait object 를 `Arc<dyn Connector + Send + Sync>` 로 저장. `async_trait` 가 자동 `Pin<Box<dyn Future>>` 로 변환.
+- **`MockConnector` feature-gated (`testing`)**: dev 환경에서 불필요한 dep 제거. M5 후속 태스크 (T062, T063, T064) 가 이 mock 을 테스트에서 사용.
+- **GitHub App 는 private key 릴레이 분리 원칙**: 클라이언트(데스크톱)는 `installation_id` + 릴레이 발급 `installation_token` (1h) 만 본다. private key 는 릴레이 wrangler secret. runbook `docs/runbooks/github-app-registration.md` 에 환경변수 표로 명시.
+
+## T058 구현 교훈 (M4 후속 영향)
+
+- **`VaultStorage::flush()` 신설 이유**: 기존엔 `lock()` 에서만 디스크 flush. 설정값(NVD key) 저장 후 언락 유지하면 크래시 시 설정 유실. `flush()` 는 private `flush_unlocked()` 헬퍼를 `lock()` 과 공유.
+- **화이트리스트 키**: `vault_setting_set` 는 `nvd_api_key | ghsa_token` 만 허용. 임의 키 쓰기 차단으로 공격면 축소 + 향후 스키마 관리 단순화.
+- **스케줄러 재구성 = shutdown + spawn**: `reconfigure` 메서드 대신 handle 교체. `vault_unlock` 성공 후에도 동일 호출 — 저장된 키가 즉시 poller 에 반영됨.
+- **`vault_setting_set` 의 scheduler restart 실패는 비치명**: 키는 이미 저장됐으므로 UX 에 에러 노출 안 함, tracing 경고만. 사용자는 다음 폴링에서 자동 복구.
+
+## T057 구현 교훈 (M4 후속 영향)
+
+- **`incident_matches_for_credential` 반환 업그레이드**: T055 에서 `Vec<Incident>` 였으나 T057 UI 가 매칭 detail 필요 → `Vec<IncidentListEntry>` 로 통일. `list_incidents_with_matches_for_credential` 는 해당 credential 의 match 만 포함 (incident 전체 match 아님).
+- **Revoke CTA 패턴**: `onRevokeRequested` prop 미전달 시 disabled + tooltip "Available in M7 Kill Switch". CredentialDetail 의 Primary actions 에 이미 Revoke 버튼이 있어 중복 피함.
+- **`react-hooks/set-state-in-effect` 우회**: null credentialId 분기에서 `Promise.resolve().then()` microtask 로 setState 를 effect 바깥으로 미룸.
 
 ## T056 구현 교훈 (M4 후속 영향)
 
