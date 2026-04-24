@@ -511,6 +511,19 @@
   "killSwitch": {
     "revoke": "失効",
     "revoked": "失効済み",
+    "bulk": {
+      "action": "{{issuer}} からすべて失効 ({{count}})",
+      "dialogTitle": "一括失効",
+      "warning": "<strong>{{issuer}}</strong> の認証情報 <strong>{{count}}</strong> 件を失効します。",
+      "typeIssuerLabel": "{{name}} を入力して確認",
+      "alsoDeleteValues": "暗号化された値も削除する",
+      "continue": "続行",
+      "confirm": "理解しました、{{count}} 件の認証情報を失効",
+      "progress": "{{total}} 件中 {{revoked}} 件失効済み",
+      "doneSuccess": "{{revoked}} 件の認証情報を失効しました。",
+      "doneWithFailures": "{{revoked}} 件失効完了。失敗: {{failed}} 件。",
+      "close": "閉じる"
+    },
     "dialog": {
       "title": "認証情報を失効",
       "warning": "この認証情報を失効状態としてマークします。外部サービスにはまだ通知されません — プロバイダーコンソールでキーを直接ローテーションまたは削除する必要があります。",

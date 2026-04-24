@@ -511,6 +511,19 @@
   "killSwitch": {
     "revoke": "폐기",
     "revoked": "폐기됨",
+    "bulk": {
+      "action": "{{issuer}}에서 모두 폐기 ({{count}})",
+      "dialogTitle": "일괄 폐기",
+      "warning": "<strong>{{issuer}}</strong>의 자격증명 <strong>{{count}}</strong>개를 폐기합니다.",
+      "typeIssuerLabel": "{{name}} 을(를) 입력하여 확인",
+      "alsoDeleteValues": "암호화된 값도 함께 삭제",
+      "continue": "계속",
+      "confirm": "이해했습니다, {{count}}개 자격증명 폐기",
+      "progress": "{{total}}개 중 {{revoked}}개 폐기됨",
+      "doneSuccess": "{{revoked}}개 자격증명이 폐기되었습니다.",
+      "doneWithFailures": "{{revoked}}개 폐기 완료. 실패: {{failed}}개.",
+      "close": "닫기"
+    },
     "dialog": {
       "title": "자격증명 폐기",
       "warning": "이 자격증명을 폐기 상태로 표시합니다. 외부 서비스는 아직 알 수 없습니다 — 공급자 콘솔에서 직접 키를 교체하거나 삭제해야 합니다.",

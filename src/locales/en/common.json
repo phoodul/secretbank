@@ -511,6 +511,19 @@
   "killSwitch": {
     "revoke": "Revoke",
     "revoked": "Revoked",
+    "bulk": {
+      "action": "Revoke all from {{issuer}} ({{count}})",
+      "dialogTitle": "Bulk revoke",
+      "warning": "This will revoke <strong>{{count}}</strong> credentials from <strong>{{issuer}}</strong>.",
+      "typeIssuerLabel": "Type {{name}} to confirm",
+      "alsoDeleteValues": "Also delete encrypted values",
+      "continue": "Continue",
+      "confirm": "I understand, revoke {{count}} credentials",
+      "progress": "Revoked {{revoked}} of {{total}}",
+      "doneSuccess": "Revoked {{revoked}} credentials.",
+      "doneWithFailures": "Revoked {{revoked}}. Failed: {{failed}}.",
+      "close": "Close"
+    },
     "dialog": {
       "title": "Revoke credential",
       "warning": "This will mark the credential as revoked. External services won't know yet — you'll still need to rotate or delete the key in the provider console.",

@@ -55,6 +55,9 @@ describe("InventoryPage", () => {
       if (cmd === "credential_get") return Promise.resolve(MOCK_CREDENTIAL_FULL);
       if (cmd === "incident_matches_for_credential") return Promise.resolve([]);
       if (cmd === "audit_list") return Promise.resolve([]);
+      // bulk revoke commands — no-op in Inventory tests
+      if (cmd === "kill_switch_request_confirm_issuer") return Promise.resolve("mock-token");
+      if (cmd === "kill_switch_revoke_issuer") return Promise.resolve({ revoked: 0, failed: [] });
       return Promise.resolve(MOCK_CREDENTIALS);
     });
   });
@@ -272,6 +275,67 @@ describe("InventoryPage", () => {
       expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
     expect(screen.getByText("Add credential")).toBeInTheDocument();
+  });
+
+  it("[T078] Issuer 필터가 'all'이면 bulk revoke 버튼이 숨겨진다", async () => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
+    });
+
+    // issuer 필터가 '__all__'인 상태에서는 버튼이 없어야 함
+    expect(screen.queryByTestId("bulk-revoke-action-btn")).not.toBeInTheDocument();
+  });
+
+  it("[T078] Issuer 필터를 특정 issuer로 설정하면 bulk revoke 버튼이 나타난다", async () => {
+    const MOCK_ISSUER = {
+      id: "01HZBBBBBBBBBBBBBBBBBBBBBB",
+      slug: "openai",
+      display_name: "OpenAI",
+      docs_url: null,
+      issue_url: null,
+      status_url: null,
+      security_feed_url: null,
+      connector_id: null,
+      icon_key: null,
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    };
+    const user = userEvent.setup();
+
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "issuer_list") return Promise.resolve([MOCK_ISSUER]);
+      if (cmd === "credential_get") return Promise.resolve(MOCK_CREDENTIAL_FULL);
+      if (cmd === "incident_matches_for_credential") return Promise.resolve([]);
+      if (cmd === "audit_list") return Promise.resolve([]);
+      if (cmd === "kill_switch_request_confirm_issuer") return Promise.resolve("mock-token");
+      if (cmd === "kill_switch_revoke_issuer") return Promise.resolve({ revoked: 0, failed: [] });
+      // issuer_id 필터 적용 — active 크리덴셜만 반환
+      return Promise.resolve(
+        MOCK_CREDENTIALS.filter(
+          (c) => c.issuer_id === MOCK_ISSUER.id && c.status !== "revoked",
+        ),
+      );
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
+    });
+
+    // Issuer 필터 선택
+    const issuerTrigger = screen.getByRole("combobox", { name: /^issuer$/i });
+    await user.click(issuerTrigger);
+
+    const openAIOption = await screen.findByRole("option", { name: "OpenAI" });
+    await user.click(openAIOption);
+
+    // bulk revoke 버튼이 나타나야 함
+    await waitFor(() => {
+      expect(screen.getByTestId("bulk-revoke-action-btn")).toBeInTheDocument();
+    });
   });
 
   it("[T027 통합] 카드 클릭 시 CredentialDetail Drawer가 열리고 credential_get이 호출된다", async () => {

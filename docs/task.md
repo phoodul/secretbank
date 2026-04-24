@@ -35,7 +35,7 @@
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ✅ 10/10 완료       |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | 🔄 6/10 완료 (릴레이 의존 4건 defer)|
 | M6  | Audit Log                       | T069~T074   | 6         | ✅ 6/6 완료         |
-| M7  | Kill Switch                     | T075~T078   | 4         | 🔄 1/4 완료             |
+| M7  | Kill Switch                     | T075~T078   | 4         | ✅ 4/4 완료             |
 | M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기             |
 | M9  | Sync Infrastructure             | T087~T096   | 10        | ⏳ 대기             |
 | M10 | Payments                        | T097~T103   | 7         | ⏳ 대기             |
@@ -122,9 +122,12 @@
 | T072    | audit_list + audit_verify_chain 커맨드 (AuditEntry/ChainVerifyReport + hex 인코딩 + device별 VerifyingKey 검증 + 5 tests)                                                    | 2026-04-25 | `cf01646` |
 | T073    | Audit UI (/audit 타임라인 + VerifyChainBanner + AuditFilterBar + 44 i18n 키 + Vitest 6)                                                                                        | 2026-04-25 | `4a3d8e2` |
 | T074    | CredentialDetail Audit 섹션 (AuditForCredential + AuditPage useSearchParams 프리필 + action-family 공유 유틸 + Vitest 5)                                                      | 2026-04-25 | `4ac1c79` |
-| T075    | Kill Switch 백엔드 (ConfirmTokenStore 16바이트 hex 토큰 TTL 5분 + kill_switch_request_confirm + kill_switch_revoke {cred_id, token, also_delete_value} + 오탐 보호 + 6 tests) | 2026-04-25 | PENDING |
+| T075    | Kill Switch 백엔드 (ConfirmTokenStore 16바이트 hex 토큰 TTL 5분 + kill_switch_request_confirm + kill_switch_revoke {cred_id, token, also_delete_value} + 오탐 보호 + 6 tests) | 2026-04-25 | `ae471e9` |
+| T076    | Kill Switch Dialog (2단계 확인 다이얼로그 + useKillSwitch 훅 + KillSwitchDialog + Vitest 5 tests) | 2026-04-25 | `27c307b` |
+| T077    | Revoked 시각화 + Hide revoked 필터 (CredentialCard/List 상태 뱃지 + HideRevoked 체크박스 + Vitest +3) | 2026-04-25 | `0a26ff1` |
+| T078    | Bulk Revoke Issuer 단위 (IssuerConfirmTokenStore + kill_switch_request_confirm_issuer + kill_switch_revoke_issuer + progress 이벤트 + BulkRevokeDialog + useBulkKillSwitch + Inventory 통합 + i18n 4개 + Rust 9→9+2 tests + Vitest 5 tests + InventoryPage +2 tests; DoD 편차: IssuerDetail 페이지 대신 InventoryPage issuer 필터 통합) | 2026-04-25 | PENDING |
 
-**완료 합계**: 71/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 6/10 — T061/T062/T063/T064 defer + M6 ✅ 6/6 + **M7 🔄 1/4**)
+**완료 합계**: 74/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 6/10 — T061/T062/T063/T064 defer + M6 ✅ 6/6 + **M7 🔄 4/4 = ✅**)
 
 ### T054/T058 follow-up commits (Night mode 2026-04-25, 태스크 진행 표에는 별도 항목 아님)
 

@@ -1,6 +1,6 @@
-//! Kill Switch commands — two-step credential revocation.
+//! Kill Switch commands — two-step credential and bulk issuer revocation.
 //!
-//! # Flow
+//! # Single-credential flow
 //!
 //! 1. `kill_switch_request_confirm(cred_id)` — validates the credential exists,
 //!    issues a 16-byte random hex token with a 5-minute TTL, and returns it.
@@ -8,10 +8,18 @@
 //!    token, updates credential status to `Revoked`, optionally deletes the
 //!    age-vault secret, and records an audit entry.
 //!
+//! # Bulk issuer flow (T078)
+//!
+//! 1. `kill_switch_request_confirm_issuer(issuer_id)` — validates the issuer
+//!    exists, issues a token stored in a separate `IssuerConfirmTokenStore`.
+//! 2. `kill_switch_revoke_issuer(input)` — consumes the issuer token, fetches
+//!    all credentials for the issuer, optionally validates expected count, and
+//!    revokes each sequentially. Emits `kill-switch:progress` events.
+//!
 //! # Token consumption semantics
 //!
 //! `consume()` returns `false` if the token is unknown, expired, or belongs to
-//! a *different* credential ID. Importantly, a wrong-cred-id mismatch does
+//! a *different* subject ID. Importantly, a wrong-id mismatch does
 //! **not** remove the token from the store — a typo in the ID field must not
 //! silently burn the user's one-shot confirmation token.
 
@@ -19,12 +27,13 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use api_vault_audit::AuditActor;
-use api_vault_core::{CredentialId, CredentialPatch, CredentialStatus};
+use api_vault_core::{CredentialFilter, CredentialId, CredentialPatch, CredentialStatus, IssuerId};
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
+use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
 use api_vault_storage::vault::VaultError;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use tauri::State;
+use tauri::{Emitter, State};
 use thiserror::Error;
 use tokio::sync::Mutex;
 
@@ -105,6 +114,75 @@ impl ConfirmTokenStore {
 }
 
 // ---------------------------------------------------------------------------
+// Issuer token store (T078)
+// ---------------------------------------------------------------------------
+
+/// Short-lived confirmation token keyed by issuer.
+#[derive(Debug, Clone)]
+pub struct IssuerConfirmToken {
+    pub token: String,
+    pub issuer_id: IssuerId,
+    pub expires_at: Instant,
+}
+
+/// Separate TTL store for issuer-scoped bulk-revoke tokens.
+///
+/// Kept separate from `ConfirmTokenStore` to avoid any cross-contamination
+/// between single-credential and bulk-issuer tokens.
+#[derive(Default)]
+pub struct IssuerConfirmTokenStore {
+    inner: Mutex<HashMap<String, IssuerConfirmToken>>,
+}
+
+impl IssuerConfirmTokenStore {
+    pub async fn issue(&self, issuer_id: IssuerId, ttl: Duration) -> String {
+        let bytes: [u8; 16] = rand::thread_rng().gen();
+        let hex: String = bytes.iter().map(|b| format!("{:02x}", b)).collect();
+
+        let mut guard = self.inner.lock().await;
+        guard.retain(|_, v| v.expires_at > Instant::now());
+        guard.insert(
+            hex.clone(),
+            IssuerConfirmToken {
+                token: hex.clone(),
+                issuer_id,
+                expires_at: Instant::now() + ttl,
+            },
+        );
+        hex
+    }
+
+    /// Returns `Ok(issuer_id)` if token is valid, `Err` otherwise.
+    ///
+    /// Wrong-issuer-id mismatch does NOT consume the token.
+    pub async fn consume(
+        &self,
+        token: &str,
+        issuer_id: &IssuerId,
+    ) -> Result<IssuerId, ()> {
+        let mut guard = self.inner.lock().await;
+
+        let entry = match guard.get(token) {
+            Some(e) => e.clone(),
+            None => return Err(()),
+        };
+
+        if entry.expires_at <= Instant::now() {
+            guard.remove(token);
+            return Err(());
+        }
+
+        if &entry.issuer_id != issuer_id {
+            // Leave entry — wrong issuer id doesn't burn the token.
+            return Err(());
+        }
+
+        guard.remove(token);
+        Ok(entry.issuer_id)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Error type
 // ---------------------------------------------------------------------------
 
@@ -114,11 +192,20 @@ pub enum KillSwitchError {
     #[error("invalid credential id")]
     InvalidCredId,
 
+    #[error("invalid issuer id")]
+    InvalidIssuerId,
+
     #[error("credential not found")]
     NotFound,
 
+    #[error("issuer not found")]
+    IssuerNotFound,
+
     #[error("invalid or expired confirmation token")]
     InvalidToken,
+
+    #[error("expected {expected} credentials but found {actual}")]
+    ExpectedCountMismatch { expected: u32, actual: u32 },
 
     #[error("vault locked")]
     VaultLocked,
@@ -128,6 +215,29 @@ pub enum KillSwitchError {
 
     #[error("internal: {message}")]
     Internal { message: String },
+}
+
+// ---------------------------------------------------------------------------
+// Bulk result types (T078)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Serialize)]
+pub struct KillSwitchBulkResult {
+    pub revoked: u32,
+    pub failed: Vec<FailedRevoke>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FailedRevoke {
+    pub credential_id: String,
+    pub message: String,
+}
+
+/// Progress event payload emitted during bulk revoke.
+#[derive(Debug, Serialize, Clone)]
+pub struct KillSwitchProgress {
+    pub revoked: u32,
+    pub total: u32,
 }
 
 impl From<api_vault_storage::sqlite::StorageError> for KillSwitchError {
@@ -147,6 +257,11 @@ fn parse_cred_id(s: &str) -> Result<CredentialId, KillSwitchError> {
     s.parse().map_err(|_| KillSwitchError::InvalidCredId)
 }
 
+/// Parse a ULID string into `IssuerId`, mapping errors to `InvalidIssuerId`.
+fn parse_issuer_id(s: &str) -> Result<IssuerId, KillSwitchError> {
+    s.parse().map_err(|_| KillSwitchError::InvalidIssuerId)
+}
+
 /// Core revoke logic extracted so tests can call it without `State<>`.
 pub async fn do_revoke(
     ctx: &AppContext,
@@ -160,7 +275,18 @@ pub async fn do_revoke(
         return Err(KillSwitchError::InvalidToken);
     }
 
-    // 2. Update credential status → Revoked.
+    do_revoke_internal(ctx, cred_id, also_delete_value).await
+}
+
+/// Revoke a single credential without consuming a token.
+///
+/// Called internally by bulk revoke (which already validated the issuer token).
+pub async fn do_revoke_internal(
+    ctx: &AppContext,
+    cred_id: CredentialId,
+    also_delete_value: bool,
+) -> Result<(), KillSwitchError> {
+    // 1. Update credential status → Revoked.
     let repo = CredentialRepo::new(&ctx.pool);
     let patch = CredentialPatch {
         status: Some(CredentialStatus::Revoked),
@@ -168,7 +294,7 @@ pub async fn do_revoke(
     };
     repo.update(cred_id, &patch).await?;
 
-    // 3. Optionally delete vault secret.
+    // 2. Optionally delete vault secret.
     if also_delete_value {
         let vault_ref = format!("credentials/{cred_id}");
         let mut vault = ctx.vault.write().await;
@@ -194,7 +320,7 @@ pub async fn do_revoke(
         })?;
     }
 
-    // 4. Audit.
+    // 3. Audit.
     let payload = serde_json::json!({ "also_delete_value": also_delete_value }).to_string();
     ctx.audit
         .record(
@@ -258,6 +384,109 @@ pub async fn kill_switch_revoke(
 }
 
 // ---------------------------------------------------------------------------
+// Bulk issuer commands (T078)
+// ---------------------------------------------------------------------------
+
+/// Step 1 (issuer) — request a confirmation token for bulk-revoking all
+/// credentials under a given issuer.
+#[tauri::command]
+pub async fn kill_switch_request_confirm_issuer(
+    issuer_id: String,
+    state: State<'_, AppContext>,
+) -> Result<String, KillSwitchError> {
+    let id = parse_issuer_id(&issuer_id)?;
+
+    // Verify the issuer exists.
+    let repo = IssuerRepo::new(&state.pool);
+    repo.get_by_id(id)
+        .await
+        .map_err(|e| KillSwitchError::Storage {
+            message: e.to_string(),
+        })?
+        .ok_or(KillSwitchError::IssuerNotFound)?;
+
+    let token = state
+        .issuer_kill_switch_tokens
+        .issue(id, Duration::from_secs(300))
+        .await;
+
+    Ok(token)
+}
+
+/// Input payload for `kill_switch_revoke_issuer`.
+#[derive(Debug, Deserialize)]
+pub struct KillSwitchRevokeIssuerInput {
+    pub issuer_id: String,
+    pub token: String,
+    pub also_delete_values: bool,
+    pub expected_count: Option<u32>,
+}
+
+/// Step 2 (issuer) — consume the issuer token and bulk-revoke all credentials.
+///
+/// Emits `kill-switch:progress` events after each credential revocation.
+/// Returns `KillSwitchBulkResult` with revoked count and any per-credential failures.
+#[tauri::command]
+pub async fn kill_switch_revoke_issuer(
+    input: KillSwitchRevokeIssuerInput,
+    state: State<'_, AppContext>,
+    app_handle: tauri::AppHandle,
+) -> Result<KillSwitchBulkResult, KillSwitchError> {
+    let issuer_id = parse_issuer_id(&input.issuer_id)?;
+
+    // 1. Consume issuer token.
+    state
+        .issuer_kill_switch_tokens
+        .consume(&input.token, &issuer_id)
+        .await
+        .map_err(|_| KillSwitchError::InvalidToken)?;
+
+    // 2. Fetch all credentials for this issuer.
+    let cred_repo = CredentialRepo::new(&state.pool);
+    let filter = CredentialFilter {
+        issuer_id: Some(issuer_id),
+        ..Default::default()
+    };
+    let credentials = cred_repo
+        .list(&filter)
+        .await
+        .map_err(KillSwitchError::from)?;
+
+    // 3. Optional expected-count safety check.
+    if let Some(expected) = input.expected_count {
+        let actual = credentials.len() as u32;
+        if expected != actual {
+            return Err(KillSwitchError::ExpectedCountMismatch { expected, actual });
+        }
+    }
+
+    let total = credentials.len() as u32;
+    let mut revoked: u32 = 0;
+    let mut failed: Vec<FailedRevoke> = Vec::new();
+
+    // 4. Sequentially revoke each credential.
+    for cred in &credentials {
+        match do_revoke_internal(&state, cred.id, input.also_delete_values).await {
+            Ok(()) => {
+                revoked += 1;
+            }
+            Err(e) => {
+                failed.push(FailedRevoke {
+                    credential_id: cred.id.to_string(),
+                    message: e.to_string(),
+                });
+            }
+        }
+
+        // Emit progress after each attempt.
+        let progress = KillSwitchProgress { revoked, total };
+        let _ = app_handle.emit("kill-switch:progress", &progress);
+    }
+
+    Ok(KillSwitchBulkResult { revoked, failed })
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -265,7 +494,7 @@ pub async fn kill_switch_revoke(
 mod tests {
     use std::sync::Arc;
 
-    use api_vault_core::{CredentialInput, CredentialStatus, Env, IssuerInput, IssuerId};
+    use api_vault_core::{CredentialFilter, CredentialInput, CredentialStatus, Env, IssuerInput, IssuerId};
     use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
     use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
     use api_vault_storage::vault::mock::MockVaultStorage;
@@ -352,6 +581,7 @@ mod tests {
             device_identity,
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
+            issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
         }
     }
 
@@ -476,6 +706,183 @@ mod tests {
         // Credential must remain Active.
         let unchanged = repo.get_by_id(cred_id).await.unwrap().unwrap();
         assert_eq!(unchanged.status, CredentialStatus::Active);
+    }
+
+    // -----------------------------------------------------------------------
+    // T7 (T078): IssuerConfirmTokenStore — issue/consume/wrong-subject
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn issuer_token_store_issue_and_consume() {
+        let store = IssuerConfirmTokenStore::default();
+        let issuer_id: IssuerId = IssuerId::new();
+
+        let token = store.issue(issuer_id, Duration::from_secs(300)).await;
+
+        // First consume: valid
+        let result = store.consume(&token, &issuer_id).await;
+        assert!(result.is_ok(), "first consume should succeed");
+        assert_eq!(result.unwrap(), issuer_id);
+
+        // Second consume: one-shot, must fail
+        let result2 = store.consume(&token, &issuer_id).await;
+        assert!(result2.is_err(), "second consume should fail (one-shot)");
+    }
+
+    #[tokio::test]
+    async fn issuer_token_store_wrong_subject_does_not_consume() {
+        let store = IssuerConfirmTokenStore::default();
+        let issuer_a: IssuerId = IssuerId::new();
+        let issuer_b: IssuerId = IssuerId::new();
+
+        let token = store.issue(issuer_a, Duration::from_secs(300)).await;
+
+        // Wrong issuer — must not consume
+        assert!(
+            store.consume(&token, &issuer_b).await.is_err(),
+            "wrong issuer_id should return Err"
+        );
+
+        // Correct issuer — must still work
+        assert!(
+            store.consume(&token, &issuer_a).await.is_ok(),
+            "correct issuer_id should succeed after wrong-id attempt"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // T8 (T078): Bulk revoke — 3 under issuer A, 2 under issuer B
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn bulk_revoke_revokes_only_issuer_a_credentials() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+        let ctx = make_ctx(pool.clone(), vault);
+
+        let issuer_repo = api_vault_storage::sqlite::repositories::issuer::IssuerRepo::new(&pool);
+
+        // Issuer A
+        let issuer_a = issuer_repo
+            .insert(&IssuerInput {
+                slug: "issuer-a".to_string(),
+                display_name: "Issuer A".to_string(),
+                docs_url: None,
+                issue_url: None,
+                status_url: None,
+                security_feed_url: None,
+                connector_id: None,
+                icon_key: None,
+            })
+            .await
+            .expect("issuer A insert");
+
+        // Issuer B
+        let issuer_b = issuer_repo
+            .insert(&IssuerInput {
+                slug: "issuer-b".to_string(),
+                display_name: "Issuer B".to_string(),
+                docs_url: None,
+                issue_url: None,
+                status_url: None,
+                security_feed_url: None,
+                connector_id: None,
+                icon_key: None,
+            })
+            .await
+            .expect("issuer B insert");
+
+        let cred_repo = CredentialRepo::new(&pool);
+
+        // Seed 3 under issuer A
+        let mut cred_a_ids = Vec::new();
+        for i in 0..3 {
+            let cred_id = CredentialId::new();
+            let input = CredentialInput {
+                issuer_id: issuer_a,
+                name: format!("Key A{i}"),
+                env: Env::Dev,
+                scope: None,
+                owner: None,
+                rotation_policy_days: None,
+                rotation_runbook_id: None,
+                expires_at: None,
+                hash_hint: None,
+            };
+            cred_repo
+                .insert_with_id(Some(cred_id), &input, format!("credentials/{cred_id}"))
+                .await
+                .expect("insert cred A");
+            cred_a_ids.push(cred_id);
+        }
+
+        // Seed 2 under issuer B
+        let mut cred_b_ids = Vec::new();
+        for i in 0..2 {
+            let cred_id = CredentialId::new();
+            let input = CredentialInput {
+                issuer_id: issuer_b,
+                name: format!("Key B{i}"),
+                env: Env::Dev,
+                scope: None,
+                owner: None,
+                rotation_policy_days: None,
+                rotation_runbook_id: None,
+                expires_at: None,
+                hash_hint: None,
+            };
+            cred_repo
+                .insert_with_id(Some(cred_id), &input, format!("credentials/{cred_id}"))
+                .await
+                .expect("insert cred B");
+            cred_b_ids.push(cred_id);
+        }
+
+        // Run bulk revoke for issuer A using do_revoke_internal directly
+        let filter = CredentialFilter {
+            issuer_id: Some(issuer_a),
+            ..Default::default()
+        };
+        let creds_a = cred_repo.list(&filter).await.expect("list A");
+        assert_eq!(creds_a.len(), 3, "should find 3 credentials under issuer A");
+
+        let mut revoked_count = 0u32;
+        for cred in &creds_a {
+            do_revoke_internal(&ctx, cred.id, false)
+                .await
+                .expect("revoke internal");
+            revoked_count += 1;
+        }
+        assert_eq!(revoked_count, 3);
+
+        // Verify issuer A credentials are all Revoked
+        for cred_id in &cred_a_ids {
+            let updated = cred_repo
+                .get_by_id(*cred_id)
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                updated.status,
+                CredentialStatus::Revoked,
+                "cred A{} should be revoked",
+                cred_id
+            );
+        }
+
+        // Verify issuer B credentials remain Active
+        for cred_id in &cred_b_ids {
+            let unchanged = cred_repo
+                .get_by_id(*cred_id)
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                unchanged.status,
+                CredentialStatus::Active,
+                "cred B{} should still be active",
+                cred_id
+            );
+        }
     }
 
     // -----------------------------------------------------------------------

@@ -12,7 +12,7 @@ use api_vault_storage::sqlite::{init_pool, SqlitePool};
 use api_vault_storage::vault::{VaultError, VaultStorage};
 
 use crate::audit_ctx::AuditCtx;
-use crate::commands::kill_switch::ConfirmTokenStore;
+use crate::commands::kill_switch::{ConfirmTokenStore, IssuerConfirmTokenStore};
 use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
 
@@ -59,11 +59,17 @@ pub struct AppContext {
     /// vault 가 잠겨 있으면 경고를 기록하고 skip — 호출자의 작업은 계속 진행된다.
     pub audit: Arc<AuditCtx>,
 
-    /// Kill Switch용 단기 토큰 저장소.
+    /// Kill Switch용 단기 토큰 저장소 (단일 credential).
     ///
     /// `kill_switch_request_confirm` 이 발급한 16바이트 랜덤 토큰(32 hex char)을
     /// 5분 TTL 로 보관한다. `kill_switch_revoke` 가 소비(one-shot)하여 유효성을 검증한다.
     pub kill_switch_tokens: Arc<ConfirmTokenStore>,
+
+    /// Kill Switch용 단기 토큰 저장소 (Issuer 단위 bulk revoke, T078).
+    ///
+    /// `kill_switch_request_confirm_issuer` 가 발급하고
+    /// `kill_switch_revoke_issuer` 가 소비(one-shot)한다.
+    pub issuer_kill_switch_tokens: Arc<IssuerConfirmTokenStore>,
 }
 
 impl AppContext {
@@ -102,6 +108,7 @@ impl AppContext {
             device_identity,
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
+            issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
         })
     }
 
