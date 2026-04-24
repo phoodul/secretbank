@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>GitHub Status</title>
+    <link>https://www.githubstatus.com</link>
+    <description>Status history for GitHub services</description>
+    <item>
+      <title>Actions Performance Degradation</title>
+      <description>We are investigating performance degradation in GitHub Actions.</description>
+      <link>https://www.githubstatus.com/incidents/gh001</link>
+      <pubDate>Fri, 18 Apr 2026 16:00:00 GMT</pubDate>
+      <guid>https://www.githubstatus.com/incidents/gh001</guid>
+    </item>
+    <item>
+      <title>Resolved: Actions Performance Degradation</title>
+      <description>GitHub Actions is operating normally.</description>
+      <link>https://www.githubstatus.com/incidents/gh001</link>
+      <pubDate>Fri, 18 Apr 2026 17:30:00 GMT</pubDate>
+      <guid>https://www.githubstatus.com/incidents/gh001#resolved</guid>
+    </item>
+  </channel>
+</rss>

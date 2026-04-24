@@ -12,6 +12,9 @@ time = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 governor = { workspace = true }
+feed-rs = { workspace = true }
+futures = { workspace = true }
+chrono = { workspace = true }
 
 [dev-dependencies]
 wiremock = "0.6"

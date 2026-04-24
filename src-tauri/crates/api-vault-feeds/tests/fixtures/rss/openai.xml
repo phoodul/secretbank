@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>OpenAI Status</title>
+    <link>https://status.openai.com</link>
+    <description>Status history for OpenAI services</description>
+    <item>
+      <title>API Latency Investigation</title>
+      <description>We are investigating elevated latency on the API.</description>
+      <link>https://status.openai.com/incidents/abc123</link>
+      <pubDate>Mon, 21 Apr 2026 10:00:00 GMT</pubDate>
+      <guid>https://status.openai.com/incidents/abc123</guid>
+    </item>
+    <item>
+      <title>Resolved: API Latency</title>
+      <description>This incident has been resolved after 30 minutes.</description>
+      <link>https://status.openai.com/incidents/abc123</link>
+      <pubDate>Mon, 21 Apr 2026 10:30:00 GMT</pubDate>
+      <guid>https://status.openai.com/incidents/abc123#resolved</guid>
+    </item>
+  </channel>
+</rss>

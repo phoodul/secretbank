@@ -49,6 +49,11 @@ petgraph = "0.8"
 # Rate limiting
 governor = "0.10"
 
+# Feed parsing
+feed-rs = "2"
+futures = "0.3"
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+
 # File scanning / env parsing
 regex = "1"
 ignore = "0.4"

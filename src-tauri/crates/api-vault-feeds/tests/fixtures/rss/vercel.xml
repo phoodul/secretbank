@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Vercel Status</title>
+    <link>https://www.vercel-status.com</link>
+    <description>Status history for Vercel services</description>
+    <item>
+      <title>Deployment Failures in Edge Network</title>
+      <description>We are investigating deployment failures across the edge network.</description>
+      <link>https://www.vercel-status.com/incidents/vercel001</link>
+      <pubDate>Mon, 21 Apr 2026 14:00:00 GMT</pubDate>
+      <guid>https://www.vercel-status.com/incidents/vercel001</guid>
+    </item>
+    <item>
+      <title>Resolved: Deployment Failures in Edge Network</title>
+      <description>Deployments are processing normally again.</description>
+      <link>https://www.vercel-status.com/incidents/vercel001</link>
+      <pubDate>Mon, 21 Apr 2026 15:45:00 GMT</pubDate>
+      <guid>https://www.vercel-status.com/incidents/vercel001#resolved</guid>
+    </item>
+  </channel>
+</rss>

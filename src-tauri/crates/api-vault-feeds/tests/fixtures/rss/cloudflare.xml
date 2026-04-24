@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Cloudflare Status</title>
+    <link>https://www.cloudflarestatus.com</link>
+    <description>Status history for Cloudflare services</description>
+    <item>
+      <title>DNS Resolution Issues</title>
+      <description>We are investigating DNS resolution issues affecting some users.</description>
+      <link>https://www.cloudflarestatus.com/incidents/cf001</link>
+      <pubDate>Sat, 19 Apr 2026 20:00:00 GMT</pubDate>
+      <guid>https://www.cloudflarestatus.com/incidents/cf001</guid>
+    </item>
+    <item>
+      <title>Resolved: DNS Resolution Issues</title>
+      <description>DNS resolution is operating normally.</description>
+      <link>https://www.cloudflarestatus.com/incidents/cf001</link>
+      <pubDate>Sat, 19 Apr 2026 21:15:00 GMT</pubDate>
+      <guid>https://www.cloudflarestatus.com/incidents/cf001#resolved</guid>
+    </item>
+  </channel>
+</rss>

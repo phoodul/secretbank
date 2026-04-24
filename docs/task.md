@@ -32,7 +32,7 @@
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 2/10 완료        |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 3/10 완료        |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -102,8 +102,9 @@
 | T048    | Mobile graph alternate view — MobileGraphList + useIsMobile + GraphPage mobile 분기 | 2026-04-23 | `ebb9855` |
 | T049    | NVD CVE API 2.0 클라이언트 (api-vault-feeds 크레이트 + governor rate limiter + wiremock 6 tests) | 2026-04-24 | `9a7895f` |
 | T050    | GHSA 클라이언트 (GhsaClient + Link 헤더 커서 페이지네이션 + wiremock 9 tests) | 2026-04-24 | `344e024` |
+| T051    | SaaS 상태 RSS 클라이언트 (RssClient + 10 프리셋 + feed-rs + 9 tests)           | 2026-04-24 | _(pending commit)_ |
 
-**완료 합계**: 50/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 2/10**)
+**완료 합계**: 51/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 3/10**)
 
 ---
 
@@ -846,12 +847,15 @@
 - **Depends on**: T002
 - **Goal**: 10개 공급자 RSS/Atom 폴링.
 - **DoD**:
-  - `crates/api-vault-feeds/src/rss.rs`
-  - 프리셋 10개 URL (OpenAI, Stripe, AWS, Vercel, Supabase, GitHub, Cloudflare, Anthropic, Google Cloud, Paddle)
-  - `feed-rs` crate 로 파싱
-  - `fn fetch_all(sources: &[RssSource]) -> Vec<RssEntry>`
-- **Files Touched**: `crates/api-vault-feeds/src/rss.rs`, `crates/api-vault-feeds/src/sources.rs`
-- **Tests**: Rust — 실제 RSS 샘플 fixture 10개 파싱
+  - `crates/api-vault-feeds/src/rss.rs`, `crates/api-vault-feeds/src/sources.rs`
+  - 프리셋 10개 URL (2026-04-24 기준 실제 호스트 확인): OpenAI `status.openai.com/history.rss`, Stripe `www.stripestatus.com/history.rss` (구 status.stripe.com 폐기), AWS `status.aws.amazon.com/rss/all.rss`, Vercel `www.vercel-status.com/history.rss`, Supabase `status.supabase.com/history.rss`, GitHub `www.githubstatus.com/history.rss`, Cloudflare `www.cloudflarestatus.com/history.rss`, Anthropic `status.claude.com/history.rss` (구 status.anthropic.com 리다이렉트), GCP `status.cloud.google.com/en/feed.atom` (Atom 전용), Paddle `paddlestatus.com/history.rss`
+  - `feed-rs` crate 2.x 로 파싱 (RSS 2.0 + Atom 1.0 통합)
+  - `RssClient::fetch_all(&self, sources: &[RssSource]) -> Vec<RssEntry>` (실패 소스는 tracing::warn 후 skip, 성공만 수집)
+  - `RssClient::fetch_one(&self, source: &RssSource) -> Result<Vec<RssEntry>, RssError>`
+  - 동시성 제어: `tokio::sync::Semaphore::new(4)` + `futures::future::join_all`
+  - chrono → time 변환 헬퍼 (feed-rs 는 chrono::DateTime<Utc> 반환, 프로젝트는 time crate 사용)
+- **Files Touched**: `crates/api-vault-feeds/src/rss.rs`, `crates/api-vault-feeds/src/sources.rs`, `crates/api-vault-feeds/tests/fixtures/rss/*.xml` (10개)
+- **Tests**: Rust — fixture 10개 파싱 + fetch_all/fetch_one wiremock 시나리오 (단위 6 + 통합 3 = 9건)
 
 ### T052. HIBP v3 클라이언트
 

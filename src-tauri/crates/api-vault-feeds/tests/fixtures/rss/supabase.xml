@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Supabase Status</title>
+    <link>https://status.supabase.com</link>
+    <description>Status history for Supabase services</description>
+    <item>
+      <title>Database Connection Errors</title>
+      <description>We are investigating increased database connection errors.</description>
+      <link>https://status.supabase.com/incidents/sb001</link>
+      <pubDate>Thu, 24 Apr 2026 12:00:00 GMT</pubDate>
+      <guid>https://status.supabase.com/incidents/sb001</guid>
+    </item>
+    <item>
+      <title>Resolved: Database Connection Errors</title>
+      <description>Database connections are stable again.</description>
+      <link>https://status.supabase.com/incidents/sb001</link>
+      <pubDate>Thu, 24 Apr 2026 13:20:00 GMT</pubDate>
+      <guid>https://status.supabase.com/incidents/sb001#resolved</guid>
+    </item>
+  </channel>
+</rss>

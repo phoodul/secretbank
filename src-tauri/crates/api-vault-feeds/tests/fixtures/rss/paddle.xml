@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Paddle Status</title>
+    <link>https://paddlestatus.com</link>
+    <description>Status history for Paddle payment services</description>
+    <item>
+      <title>Checkout Availability Issues</title>
+      <description>We are investigating issues with checkout availability.</description>
+      <link>https://paddlestatus.com/incidents/pdl001</link>
+      <pubDate>Thu, 17 Apr 2026 11:00:00 GMT</pubDate>
+      <guid>https://paddlestatus.com/incidents/pdl001</guid>
+    </item>
+    <item>
+      <title>Resolved: Checkout Availability Issues</title>
+      <description>Checkout is fully operational again.</description>
+      <link>https://paddlestatus.com/incidents/pdl001</link>
+      <pubDate>Thu, 17 Apr 2026 12:30:00 GMT</pubDate>
+      <guid>https://paddlestatus.com/incidents/pdl001#resolved</guid>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Amazon Web Services Service Status</title>
+    <link>https://status.aws.amazon.com</link>
+    <description>AWS service health status history</description>
+    <item>
+      <title>Informational message: US-EAST-1 EC2 connectivity</title>
+      <description>We are investigating connectivity issues in US-EAST-1.</description>
+      <link>https://status.aws.amazon.com/incidents/aws001</link>
+      <pubDate>Wed, 23 Apr 2026 06:00:00 GMT</pubDate>
+      <guid>https://status.aws.amazon.com/incidents/aws001</guid>
+    </item>
+    <item>
+      <title>Service restored: US-EAST-1 EC2 connectivity</title>
+      <description>Connectivity has been restored in US-EAST-1.</description>
+      <link>https://status.aws.amazon.com/incidents/aws001</link>
+      <pubDate>Wed, 23 Apr 2026 07:30:00 GMT</pubDate>
+      <guid>https://status.aws.amazon.com/incidents/aws001#resolved</guid>
+    </item>
+  </channel>
+</rss>

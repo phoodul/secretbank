@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Google Cloud Status</title>
+  <updated>2026-04-21T10:30:00Z</updated>
+  <id>https://status.cloud.google.com</id>
+  <link rel="alternate" href="https://status.cloud.google.com"/>
+  <entry>
+    <id>urn:gcp:incident:gcp001</id>
+    <title>Cloud Storage: Object reads returning errors</title>
+    <updated>2026-04-21T10:00:00Z</updated>
+    <published>2026-04-21T09:45:00Z</published>
+    <summary>We are investigating reports of object read errors in Cloud Storage.</summary>
+    <link href="https://status.cloud.google.com/incidents/gcp001"/>
+  </entry>
+  <entry>
+    <id>urn:gcp:incident:gcp001#resolved</id>
+    <title>Resolved: Cloud Storage object reads returning errors</title>
+    <updated>2026-04-21T10:30:00Z</updated>
+    <published>2026-04-21T10:30:00Z</published>
+    <summary>Cloud Storage is operating normally.</summary>
+    <link href="https://status.cloud.google.com/incidents/gcp001"/>
+  </entry>
+</feed>

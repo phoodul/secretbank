@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Anthropic Status</title>
+    <link>https://status.claude.com</link>
+    <description>Status history for Anthropic / Claude services</description>
+    <item>
+      <title>Claude API Elevated Error Rates</title>
+      <description>We are investigating elevated error rates on the Claude API.</description>
+      <link>https://status.claude.com/incidents/ant001</link>
+      <pubDate>Sun, 20 Apr 2026 09:00:00 GMT</pubDate>
+      <guid>https://status.claude.com/incidents/ant001</guid>
+    </item>
+    <item>
+      <title>Resolved: Claude API Elevated Error Rates</title>
+      <description>Error rates have returned to normal levels.</description>
+      <link>https://status.claude.com/incidents/ant001</link>
+      <pubDate>Sun, 20 Apr 2026 10:00:00 GMT</pubDate>
+      <guid>https://status.claude.com/incidents/ant001#resolved</guid>
+    </item>
+  </channel>
+</rss>

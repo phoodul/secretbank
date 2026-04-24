@@ -2,13 +2,25 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (**T050 완료, M4 🔄 2/10**)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 2/10 완료**
-- **Commits:** 74개 누적 (T050 커밋 추가 예정)
-- **Tests:** Rust 123+개 (api-vault-feeds 15 = ghsa 9 + nvd 6) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
-- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러는 GraphPage.test.tsx 회귀로 T049/T050 무관 — Pending Decisions 참조.)
+- **Time:** 2026-04-24 (**T051 완료, M4 🔄 3/10**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 3/10 완료**
+- **Commits:** 76개 누적 (T051 커밋 추가 예정)
+- **Tests:** Rust 132+개 (api-vault-feeds 24 = rss 9 + ghsa 9 + nvd 6) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
+- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러는 GraphPage.test.tsx 회귀로 T049/T050/T051 무관 — Pending Decisions 참조.)
 - **Mode:** 일반.
-- **Next:** T051 RSS 클라이언트 (10개 SaaS 상태 피드, `feed-rs` 파서). M3 수동 검증 여전히 보류 중.
+- **Next:** T052 HIBP v3 클라이언트 (Should 우선순위). M3 수동 검증 여전히 보류.
+
+## T051 구현 교훈 (M4 후속 영향)
+
+- **chrono ↔ time 변환 헬퍼 필수**: feed-rs 2.x 는 `chrono::DateTime<Utc>` 를 public API 로 노출. 프로젝트 표준은 `time::OffsetDateTime`. unix timestamp (초 + nanoseconds) 경유 변환 헬퍼 `chrono_to_time(dt) -> Option<OffsetDateTime>` 로 나노초 정밀도까지 보존. workspace deps 에 `chrono = { default-features = false, features = ["std"] }` 추가 필요.
+- **`ParseFeedError` `Send + Sync + Error`**: feed-rs 에러는 thiserror `#[from]` 직접 사용 가능. String 변환 불필요 → 에러 체인 보존.
+- **실 URL 정정 10건 중 3건**: Anthropic `status.anthropic.com` → `status.claude.com` (302), Stripe `status.stripe.com/history.rss` 404 → `www.stripestatus.com/history.rss`, Paddle `status.paddle.com` → `paddlestatus.com` (301). **status.<brand>.com 관행 의존 금지** — 새 공급자 추가 시 매번 실 접속 확인.
+- **GCP Atom-only / AWS RSS-only**: 공급자별 포맷 차이 존재. `FeedFormat::Rss | Atom` enum 으로 정보 기록 (feed-rs 는 자동 감지하므로 동작엔 불필요, 문서용).
+- **동시성 제어는 Semaphore(4) + join_all**: 10개 소스 동시 GET 은 저희 머신/상대 서버 모두 과도. `tokio::sync::Semaphore::new(4)` + `futures::future::join_all` 로 한 번에 최대 4개만 실행. governor 는 각 소스당 호출 빈도가 낮아 불필요.
+- **실패는 swallow 후 warn**: `fetch_all` 은 10개 중 1-2 소스 실패해도 나머지를 반환. `tracing::warn!(slug, url, error)` 만 남기고 엔트리는 비워 계속 진행. T053 매칭 엔진이 부분 데이터로 동작 가능하게 유지. 에러 디테일은 `fetch_one` 로 단일 호출 시에만 반환.
+- **fixture 전략**: 실 공급자 응답 캡처는 변동성 크므로 **표준 RSS 2.0/Atom 1.0 최소 샘플** 10개를 수동 작성 (슬러그만 다르게, 2 entry씩, 각 < 2KB). 테스트는 파싱 성공 + entry 수 + 필드 매핑만 검증. 실제 공급자 응답 호환성은 통합 테스트 아닌 프로덕션 모니터링으로.
+- **`reqwest::Client::clone()` 는 커넥션 풀 공유**: 내부에 `Arc` 가 있어 각 async task 에 `http.clone()` 전달 가능. 10 concurrent 호출 시 커넥션 reuse.
+- **Atom `<published>` 선택적**: GCP 처럼 일부 entry 는 `published` 없이 `updated` 만. `Entry.published` 도 `Option<chrono::DateTime>` — 매핑에서 둘 다 `Option<OffsetDateTime>` 로 유지.
 
 ## T050 구현 교훈 (M4 후속 영향)
 

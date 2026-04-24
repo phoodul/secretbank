@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Stripe Status</title>
+    <link>https://www.stripestatus.com</link>
+    <description>Status history for Stripe services</description>
+    <item>
+      <title>Payment Processing Degraded</title>
+      <description>We are investigating reports of payment processing failures.</description>
+      <link>https://www.stripestatus.com/incidents/stripe001</link>
+      <pubDate>Tue, 22 Apr 2026 08:00:00 GMT</pubDate>
+      <guid>https://www.stripestatus.com/incidents/stripe001</guid>
+    </item>
+    <item>
+      <title>Resolved: Payment Processing Degraded</title>
+      <description>This incident has been resolved.</description>
+      <link>https://www.stripestatus.com/incidents/stripe001</link>
+      <pubDate>Tue, 22 Apr 2026 09:15:00 GMT</pubDate>
+      <guid>https://www.stripestatus.com/incidents/stripe001#resolved</guid>
+    </item>
+  </channel>
+</rss>
