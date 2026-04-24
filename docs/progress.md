@@ -2,13 +2,30 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (**M3 수동 검증 완료 + 2 hotfix/feature 커밋, M4 🔄 7/10 그대로**)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 7/10 완료** + M3 수동 검증 회귀 처리.
-- **Commits:** 86개 누적 (hotfix `85f347a`, drag 영속화 `7d5f3f3` 추가).
-- **Tests:** Rust 188+개 유지 / Vitest **236개** (221 + 15 신규: use-graph-node-positions 11 + adapter savedPositions 4). 전부 통과. `pnpm typecheck` pre-existing 5 에러 지속 (GraphPage.test.tsx — 신규 에러 없음).
+- **Time:** 2026-04-25 (**세션 종료 — M3 검증 완료 + Y 경로 마무리, T056 직전**).
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 7/10 완료**. M3 수동 검증 및 follow-up 3건 전부 처리됨.
+- **Commits:** 87개 누적. 이번 세션 신규 4개:
+  - `85f347a` fix(app): 피드 스케줄러 spawn 을 tokio context 안으로 이동 (M3 검증 중 발견한 기동 panic hotfix)
+  - `7d5f3f3` feat(graph): 노드 드래그 위치 영속화 + Reset layout 버튼 (C 옵션, +15 테스트)
+  - `2708a6d` docs: M3 수동 검증 결과 + 2 hotfix/feature 커밋 기록
+  - (+ 이번 세션 종료 시점에 프로젝트 의사결정 기록 추가 예정)
+- **Tests:** Rust 188+개 유지 / Vitest **236개** (221 + 15 신규). 전부 통과. `pnpm typecheck` pre-existing 5 에러 지속 (GraphPage.test.tsx — 신규 에러 없음).
 - **Blocker:** 없음.
-- **Mode:** 일반 (꼼꼼한 Y 경로 진행 중).
-- **Next:** 사용자가 live app 에서 드래그 영속화 수동 확인 후 → **T056 Incidents 페이지 UI**.
+- **Mode:** 세션 종료. 재개 시 일반 모드.
+- **Next (재개 시):**
+  1. **T056 Incidents 페이지 UI 진입** — 사전 탐색 완료:
+     - 기존 `/incidents` 라우트는 `src/pages/IncidentsPage.tsx` placeholder (제목 + "empty" 메시지만).
+     - Rust 측 4 Tauri 커맨드는 T055 (a1605e0) 에서 이미 완성: `incident_list(filter?)`, `incident_dismiss(id)`, `incident_matches_for_credential(cred_id)`, `incident_feed_refresh()`.
+     - 도메인 모델 위치: `api-vault-core::{Incident, IncidentFilter, IncidentSeverity, IncidentSource, IncidentMatch, MatchReason}`.
+     - `incidents:updated` 이벤트: **아직 Rust 측에서 emit 하지 않음** (T054 스케줄러가 emit 하도록 확장 필요 — T056 구현 시 병행).
+  2. 구현 파일 (DoD):
+     - `src/features/incidents/IncidentsPage.tsx` — 필터 탭 (All / Critical / Affecting my keys / Dismissed) + IncidentCard 리스트 + 빈/로딩/에러 상태
+     - `src/features/incidents/IncidentCard.tsx` — severity bar + source 배지 + 영향 credential 칩 + View/Dismiss
+     - `src/features/incidents/use-incidents.ts` — `invoke('incident_list')` + `listen('incidents:updated')`
+     - `src/pages/IncidentsPage.tsx` → `@/features/incidents/IncidentsPage` re-export
+     - 4 locales `incidents.*` i18n 키
+     - Vitest — 10 mock incident 렌더 + 필터 동작
+  3. 이후: T057 Credential Detail Incidents 섹션, T058 NVD API key Settings (Should).
 
 ## M3 수동 검증 결과 (2026-04-24 저녁)
 

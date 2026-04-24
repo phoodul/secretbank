@@ -663,6 +663,41 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 
 ---
 
+## [2026-04-24] 그래프 노드 위치 영속화 (T047 follow-up, C 옵션 채택)
+
+- **결정:** 사용자가 드래그로 배치한 노드 위치를 **localStorage 에 영구 저장**. 앱 재시작 및 페이지 이동 후에도 유지.
+- **이유:** 사용자 의견 — "드래그해도 저장 안 되면 드래그 기능의 목적이 없다". 유스케이스(복잡한 그래프 정리 / 비즈니스 그룹핑 / 프레젠테이션) 는 모두 영속화 전제. "MVP 이상 탁월함 지향" 비전과 일치.
+- **영향:**
+  - `src/features/graph/use-graph-node-positions.ts` 훅 신규 (localStorage key `apivault:graph:nodePositions`, `setPosition` / `clear` / `pruneStale` API).
+  - `adapter.toReactFlowElements(payload, direction, savedPositions?)` 3번째 파라미터 — dagre 위에 merge.
+  - `DependencyGraph` 가 `onNodeDragStop` 저장 + 조건부 "Reset layout" 버튼 + payload 변경 시 stale entry 자동 prune.
+  - 4 locales `graph.resetLayout` i18n 키 (en/ko/ja/zh).
+- **대안 기각:** A(현상 유지 — UX 의도 미충족), B(세션 내만 — 앱 재시작마다 리셋되어 실익 낮음), D(드래그 기능 제거 — 유스케이스 가치 있음).
+- **커밋:** `7d5f3f3` feat(graph): 노드 드래그 위치 영속화 + Reset layout 버튼.
+
+---
+
+## [2026-04-24] 프로젝트 비전 확정 — "MVP 이상 탁월함 지향"
+
+- **결정:** "필요 최소한" 구현 타협 금지. 동 기능 세계 최고 프로그램을 **능가하는** 완성도 목표. **월 $2 / 년 $15 글로벌 SaaS** 판매.
+- **이유:** 저가격 × 고품질 포지셔닝이 시장 경쟁력의 핵심. 저렴한 가격이 UX 허술함의 정당화가 될 수 없다.
+- **영향 (이후 모든 의사결정에 적용):**
+  - 옵션 제시 시 "빠른 대신 허술함 / 느리지만 제대로" 중 **제대로** 를 기본 권장.
+  - 기능 축소(D 옵션 류) 는 "단순화가 실제 사용자 가치에 부합할 때만" 제안. 구현 부담 회피용 제안 금지.
+  - UX 디테일(드래그 영속화 같은 당연한 기대) 은 언제나 충족.
+- **메모:** 개인 메모리 `project_vision.md` 에 자동 기록됨 (향후 모든 세션에서 로드).
+
+---
+
+## [2026-04-24] 피드 스케줄러 spawn 패턴 확정 (M3 수동 검증 중 발견)
+
+- **결정:** `tauri::Builder::setup` 안에서 tokio 런타임 핸들을 요구하는 **모든 동기 호출** (`JoinSet::spawn`, `tokio::spawn`, `Handle::current`) 은 반드시 `tauri::async_runtime::block_on` 안에서 실행한다.
+- **이유:** `setup` 콜백은 tokio 런타임 context 바깥에서 실행돼 동기 spawn 시 panic (`there is no reactor running`).
+- **영향:** T054 `spawn_feed_scheduler` 호출이 `setup` 에서 panic → hotfix 로 `block_on` 안으로 이동. 향후 setup 에 추가되는 모든 service 초기화 코드가 같은 패턴 준수 필요.
+- **커밋:** `85f347a` fix(app): 피드 스케줄러 spawn 을 tokio context 안으로 이동.
+
+---
+
 ## [2026-04-23] M2 종료 (Inventory UI + 드롭&스캔) — 16/16 완료 ✅
 
 - **기간:** 2026-04-22 T025 시작 ~ 2026-04-23 T040 완료.
