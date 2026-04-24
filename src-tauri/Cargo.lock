@@ -229,6 +229,7 @@ dependencies = [
 name = "api-vault-feeds"
 version = "0.1.0"
 dependencies = [
+ "api-vault-core",
  "chrono",
  "feed-rs",
  "futures",

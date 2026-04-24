@@ -2,13 +2,29 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (**T052 완료, M4 🔄 4/10**)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 4/10 완료**
-- **Commits:** 78개 누적 (T052 커밋 추가 예정)
-- **Tests:** Rust 142+개 (api-vault-feeds 34 = hibp 10 + rss 9 + ghsa 9 + nvd 6) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
-- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러는 GraphPage.test.tsx 회귀로 M4 Rust 크레이트 작업과 무관 — Pending Decisions 참조.)
+- **Time:** 2026-04-24 (**T053 완료, M4 🔄 5/10**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 5/10 완료** (feed 소스 4종 + 매칭 엔진 완료)
+- **Commits:** 80개 누적 (T053 커밋 추가 예정)
+- **Tests:** Rust 156+개 (api-vault-feeds 48 = matcher 14 + hibp 10 + rss 9 + ghsa 9 + nvd 6) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
+- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러 지속 — 매칭/피드 Rust 크레이트와 무관.)
 - **Mode:** 일반.
-- **Next:** T053 Incident 매칭 엔진 (Must, T049/T050/T051 의존 블록 종료). 이후 T054 스케줄러 → T055 Tauri 커맨드 → T056/T057 UI.
+- **Next:** T054 스케줄러 (tokio interval 2h/24h/5min + Circuit Breaker + SQLite incident/incident_match insert). **주요 설계 포인트**: 4개 feed DTO → Incident 정규화 책임은 T054 에 속함 (T053 은 매칭만 담당). slug alias (RSS "gcp" → Issuer "google") 도 T054 에서 해결.
+
+## T053 구현 교훈 (M4 후속 영향)
+
+- **`IncidentMatch` 에 `confidence` 필드 없음**: api-vault-core 도메인 모델은 confidence 미보관. DoD 의 "confidence score < 0.3 제외" 는 매칭 엔진 **내부 상수** (`CONFIDENCE_THRESHOLD=0.3`, `CONFIDENCE_ISSUER_MATCH=1.0`, `CONFIDENCE_KEYWORD=0.6`) 로만 구현. 추후 UI 에 confidence 표시가 필요하면 api-vault-core 스키마 변경 + 0002 migration 필요 — 현재는 미결정.
+- **`slug.len() >= 3` false positive 방지**: 짧은 slug (e.g. "ai") 가 무관한 텍스트에 빈발해 오매칭 유발. display_name 매칭은 길이 제한 없음 (display_name 자체가 유의미한 토큰).
+- **대소문자 무시 단순 substring**: regex/word-boundary 의존 없이 `haystack.to_lowercase().contains(&needle.to_lowercase())`. UTF-8 byte slice 경계 존중하므로 한글 safe. 워드 바운더리가 필요해지면 `regex` workspace dep 추가 후 교체.
+- **결정론적 정렬**: `HashMap` iteration 비결정 → `sort_by_key((reason discriminant, credential_id ULID string))` 로 픽스. 테스트 + UI 리스트 순서 안정화.
+- **`api-vault-core` path dep 추가**: `api-vault-feeds` 가 이제 core 를 의존. 단방향 (core → feeds 없음). resolver="2" 기본 동작으로 즉시 컴파일. 향후 T054 `feed_scheduler` 가 api-vault-storage 도 추가로 의존 예정.
+- **순수 함수 = 비동기 아님**: matcher 는 `#[test]` 동기 함수. tokio 불필요. 50ms 대기 없이 즉시 검증 가능 — TDD 루프 빠름.
+- **slug 불일치 (RSS "gcp" vs Issuer "google") 는 T053 범위 외**: 현재 T053 은 `incident.issuer_id` 가 이미 올바르게 설정돼 있다고 가정하고 매칭만 수행. T054 스케줄러가 RSS entry 를 Incident 로 변환할 때 `canonical_source_slug("gcp") → "google"` 같은 매핑 헬퍼로 issuer_id 해결 필요.
+- **T054 설계 미리보기 (DoD 해석)**:
+  - feed 별 polling interval (NVD 2h, GHSA 24h, RSS 5min) — HIBP 는 on-demand 만 (스케줄러 대상 아님, T053 매칭은 지원).
+  - Circuit Breaker 연속 3회 실패 → 1h backoff. `governor` 의 건강성 체크와 별개의 간단 카운터로 구현 권장.
+  - 앱 시작 시 `tauri::Builder::setup` 에서 `tokio::spawn(scheduler_loop)` + shutdown 시 AbortHandle.
+  - 4 DTO → Incident 정규화는 스케줄러의 `normalize_*` 함수 4개로 분리 (match_incident 전 준비).
+  - `IncidentRepo.insert` + `matcher::match_incident(...)` + `IncidentRepo.insert_match(...)` 파이프라인.
 
 ## T052 구현 교훈 (M4 후속 영향)
 

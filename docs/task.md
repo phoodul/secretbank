@@ -32,7 +32,7 @@
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 4/10 완료        |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 5/10 완료        |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -104,8 +104,9 @@
 | T050    | GHSA 클라이언트 (GhsaClient + Link 헤더 커서 페이지네이션 + wiremock 9 tests) | 2026-04-24 | `344e024` |
 | T051    | SaaS 상태 RSS 클라이언트 (RssClient + 10 프리셋 + feed-rs + 9 tests)           | 2026-04-24 | `5d9ec6b` |
 | T052    | HIBP v3 클라이언트 (HibpClient + check_email + urlencoding + wiremock 10 tests) | 2026-04-24 | `7e8b27e` |
+| T053    | Incident 매칭 엔진 (match_incident + IssuerMatch/Keyword + 14 tests)            | 2026-04-24 | _(pending commit)_ |
 
-**완료 합계**: 52/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 4/10**)
+**완료 합계**: 53/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 5/10**)
 
 ---
 
@@ -884,12 +885,19 @@
 - **Depends on**: T049, T050, T051
 - **Goal**: 수집된 incident 를 issuer_id + keyword 기반으로 등록된 credential 과 매칭.
 - **DoD**:
-  - `crates/api-vault-feeds/src/matcher.rs`
-  - `fn match_incident(incident: &Incident, credentials: &[Credential], issuers: &[Issuer]) -> Vec<IncidentMatch>`
-  - 매칭 규칙: issuer.slug 매칭 > keyword 매칭 (title/body에 issuer display_name 포함)
-  - false positive 감소 위해 confidence score (0.0~1.0), < 0.3 제외
-- **Files Touched**: `crates/api-vault-feeds/src/matcher.rs`
-- **Tests**: Rust — 10개 fixture incident x 5 credential 매트릭스
+  - `crates/api-vault-feeds/src/matcher.rs` — 순수 함수 (비동기 아님)
+  - 공개: `pub fn match_incident(incident: &Incident, credentials: &[Credential], issuers: &[Issuer]) -> Vec<IncidentMatch>` (+ 테스트용 결정론 헬퍼 `pub fn match_incident_at(..., now: OffsetDateTime)`)
+  - 기존 `api-vault-core::models::{Incident, IncidentMatch, MatchReason, Credential, Issuer}` 재사용 (신규 타입 정의 금지, `api-vault-core` path dep 추가)
+  - 매칭 규칙:
+    1. `incident.issuer_id == credential.issuer_id` → `reason: IssuerMatch`, 내부 confidence 1.0
+    2. `incident.title + body` 의 lowercase substring 에 issuer `display_name` 또는 `slug` 포함 (slug 는 `len >= 3` 필터, false positive 방지) → 해당 issuer 의 credential 들에 `reason: Keyword`, 내부 confidence 0.6
+    3. 동일 credential 중복 시 IssuerMatch 우선 (dedupe)
+    4. 내부 `CONFIDENCE_THRESHOLD = 0.3` 필터 (현재 모든 reason 이 ≥ 0.6 이라 실효 없음이나 향후 weaker signal 대비 구조 유지)
+  - confidence 는 `IncidentMatch` 구조체에 저장 안 함 (core 모델에 해당 필드 없음) — 내부 상수로만 사용
+  - `Explicit` reason 은 생성 금지 (사용자 명시 override 용, 다른 경로에서 생성)
+  - 결정론적 정렬: `(reason discriminant, credential_id ULID string)` 기준
+- **Files Touched**: `crates/api-vault-feeds/src/matcher.rs`, `crates/api-vault-feeds/src/lib.rs`, `crates/api-vault-feeds/Cargo.toml` (+api-vault-core path dep)
+- **Tests**: Rust 14 개 (DoD 10 + bonus 4: short_slug false positive 방지, matched_at 주입, multi-word display_name, 결정론 순서). 순수 `#[test]`, fixture 는 인라인 helper.
 
 ### T054. 스케줄러 (tokio interval, 폴링 주기 관리)
 
