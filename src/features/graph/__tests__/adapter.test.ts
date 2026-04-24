@@ -105,4 +105,36 @@ describe('toReactFlowElements', () => {
     expect(tbNodes[0].data.direction).toBe('TB');
     expect(lrNodes[0].data.direction).toBe('LR');
   });
+
+  it('savedPositions 이 있으면 해당 id 만 dagre 위치를 덮어쓴다', () => {
+    const { nodes } = toReactFlowElements(FIXTURE_PAYLOAD, 'TB', {
+      'cred-1': { x: 999, y: 888 },
+    });
+    const credNode = nodes.find((n) => n.id === 'cred-1');
+    expect(credNode?.position).toEqual({ x: 999, y: 888 });
+  });
+
+  it('savedPositions 에 없는 노드는 dagre 기본 위치를 유지', () => {
+    const withoutSaved = toReactFlowElements(FIXTURE_PAYLOAD, 'TB');
+    const withSavedForCredOnly = toReactFlowElements(FIXTURE_PAYLOAD, 'TB', {
+      'cred-1': { x: 999, y: 888 },
+    });
+
+    const issuerBefore = withoutSaved.nodes.find((n) => n.id === 'issuer-1')!;
+    const issuerAfter = withSavedForCredOnly.nodes.find((n) => n.id === 'issuer-1')!;
+
+    expect(issuerAfter.position).toEqual(issuerBefore.position);
+  });
+
+  it('savedPositions 이 undefined 이면 모든 노드가 dagre 위치', () => {
+    const a = toReactFlowElements(FIXTURE_PAYLOAD, 'TB');
+    const b = toReactFlowElements(FIXTURE_PAYLOAD, 'TB', undefined);
+    expect(a.nodes.map((n) => n.position)).toEqual(b.nodes.map((n) => n.position));
+  });
+
+  it('savedPositions 이 빈 객체여도 크래시 없이 dagre 위치 사용', () => {
+    const a = toReactFlowElements(FIXTURE_PAYLOAD, 'TB');
+    const b = toReactFlowElements(FIXTURE_PAYLOAD, 'TB', {});
+    expect(a.nodes.map((n) => n.position)).toEqual(b.nodes.map((n) => n.position));
+  });
 });

@@ -315,6 +315,7 @@
       "lr": "Left to right"
     },
     "toggleDirection": "Toggle direction",
+    "resetLayout": "Reset layout",
     "kind": {
       "issuer": "Issuer",
       "credential": "Credential",

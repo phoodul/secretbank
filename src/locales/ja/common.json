@@ -315,6 +315,7 @@
       "lr": "左から右"
     },
     "toggleDirection": "方向を切り替え",
+    "resetLayout": "レイアウトをリセット",
     "kind": {
       "issuer": "発行者",
       "credential": "認証情報",

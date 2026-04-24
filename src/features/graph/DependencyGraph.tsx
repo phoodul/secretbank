@@ -21,6 +21,7 @@ import type { LayoutDirection } from './layout';
 import { nodeTypes } from './node-types';
 import type { GraphPayload } from './types';
 import { useBlastRadiusSelection } from './use-blast-radius-selection';
+import { useGraphNodePositions } from './use-graph-node-positions';
 
 // ---------------------------------------------------------------------------
 // Inner component (needs to be inside ReactFlowProvider to call useReactFlow)
@@ -38,7 +39,14 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
   const { fitView } = useReactFlow();
   const { zoom } = useViewport();
 
-  const initialElements = toReactFlowElements(payload, direction);
+  const {
+    positions: savedPositions,
+    setPosition: savePosition,
+    clear: clearPositions,
+    pruneStale: prunePositions,
+  } = useGraphNodePositions();
+
+  const initialElements = toReactFlowElements(payload, direction, savedPositions);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
     initialElements.nodes,
   );
@@ -52,7 +60,9 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
 
   // Re-layout when payload or direction changes
   useEffect(() => {
-    const { nodes: ln, edges: le } = toReactFlowElements(payload, direction);
+    // Drop saved positions for nodes that no longer exist in the payload
+    prunePositions(payload.nodes.map((n) => n.id));
+    const { nodes: ln, edges: le } = toReactFlowElements(payload, direction, savedPositions);
     setNodes(ln);
     setEdges(le);
     // Clear blast-radius selection when graph data reloads
@@ -60,7 +70,28 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
     requestAnimationFrame(() => {
       fitView({ padding: 0.15 });
     });
-  }, [payload, direction, setNodes, setEdges, fitView, selectionClear]);
+  }, [payload, direction, savedPositions, prunePositions, setNodes, setEdges, fitView, selectionClear]);
+
+  // Persist node position when the user finishes dragging
+  const onNodeDragStop = useCallback(
+    (_: React.MouseEvent, node: Node<GraphNodeData>) => {
+      savePosition(node.id, { x: node.position.x, y: node.position.y });
+    },
+    [savePosition],
+  );
+
+  // Reset layout: drop saved positions and re-run dagre
+  const onResetLayout = useCallback(() => {
+    clearPositions();
+    const { nodes: ln, edges: le } = toReactFlowElements(payload, direction);
+    setNodes(ln);
+    setEdges(le);
+    requestAnimationFrame(() => {
+      fitView({ padding: 0.15 });
+    });
+  }, [clearPositions, payload, direction, setNodes, setEdges, fitView]);
+
+  const hasSavedPositions = Object.keys(savedPositions).length > 0;
 
   // Click on a credential node → load blast radius; click again → toggle off
   const onNodeClick = useCallback(
@@ -102,7 +133,17 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute right-3 top-3 z-10">
+      <div className="absolute right-3 top-3 z-10 flex gap-2">
+        {hasSavedPositions && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onResetLayout}
+            aria-label={t('graph.resetLayout')}
+          >
+            {t('graph.resetLayout')}
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"
@@ -126,6 +167,7 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
+        onNodeDragStop={onNodeDragStop}
         onlyRenderVisibleElements
         nodesDraggable={nodesDraggable}
         fitView

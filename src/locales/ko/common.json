@@ -315,6 +315,7 @@
       "lr": "왼쪽에서 오른쪽으로"
     },
     "toggleDirection": "방향 전환",
+    "resetLayout": "레이아웃 초기화",
     "kind": {
       "issuer": "발급처",
       "credential": "자격증명",

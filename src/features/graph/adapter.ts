@@ -1,6 +1,7 @@
 import type { Edge, Node } from '@xyflow/react';
 import type { GraphEdge, GraphNode, GraphPayload, NodeKind } from './types';
 import { getLayoutedElements, type LayoutDirection } from './layout';
+import type { NodePositionMap } from './use-graph-node-positions';
 
 /** Visual status assigned to a node when a blast-radius selection is active. */
 export type NodeSelectionStatus = 'primary' | 'secondary' | 'tertiary' | 'dimmed';
@@ -50,12 +51,24 @@ function toFlowEdge(edge: GraphEdge): Edge {
 /**
  * Converts a backend GraphPayload to React Flow elements with dagre layout
  * applied.
+ *
+ * If `savedPositions` is provided, any node whose id is present in the map
+ * has its dagre-computed position overridden by the saved one. Nodes not in
+ * the map keep the dagre default. This preserves the user's manually-dragged
+ * arrangement across page navigation and app restart.
  */
 export function toReactFlowElements(
   payload: GraphPayload,
   direction: LayoutDirection,
+  savedPositions?: NodePositionMap,
 ): { nodes: Node<GraphNodeData>[]; edges: Edge[] } {
   const rfNodes = payload.nodes.map((n) => toFlowNode(n, direction));
   const rfEdges = payload.edges.map(toFlowEdge);
-  return getLayoutedElements(rfNodes, rfEdges, { direction });
+  const laid = getLayoutedElements(rfNodes, rfEdges, { direction });
+  if (!savedPositions) return laid;
+  const merged = laid.nodes.map((n) => {
+    const saved = savedPositions[n.id];
+    return saved ? { ...n, position: { x: saved.x, y: saved.y } } : n;
+  });
+  return { nodes: merged, edges: laid.edges };
 }

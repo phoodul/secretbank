@@ -315,6 +315,7 @@
       "lr": "从左到右"
     },
     "toggleDirection": "切换方向",
+    "resetLayout": "重置布局",
     "kind": {
       "issuer": "发行者",
       "credential": "凭证",
