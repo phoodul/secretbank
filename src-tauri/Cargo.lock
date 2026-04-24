@@ -163,6 +163,7 @@ dependencies = [
  "api-vault-storage",
  "async-trait",
  "ed25519-dalek",
+ "hex",
  "rand_core 0.6.4",
  "secrecy",
  "serde",

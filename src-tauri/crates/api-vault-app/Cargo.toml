@@ -47,6 +47,7 @@ api-vault-audit = { path = "../api-vault-audit" }
 tokio-util = { workspace = true }
 ed25519-dalek = { version = "2", features = ["rand_core"] }
 rand_core = { version = "0.6", features = ["std"] }
+hex = { workspace = true }
 
 # Tauri plugins (optional — disabled in test builds to skip problematic build scripts)
 tauri-plugin-sql      = { version = "2", features = ["sqlite"], optional = true }

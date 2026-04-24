@@ -6,6 +6,7 @@ pub mod context;
 pub mod services;
 pub mod setup;
 
+use commands::audit::{audit_list, audit_verify_chain};
 use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
     credential_update,
@@ -131,6 +132,8 @@ pub fn run(context: tauri::Context) {
             incident_feed_refresh,
             railguard_preview,
             railguard_apply,
+            audit_list,
+            audit_verify_chain,
         ]);
     }
 
@@ -176,6 +179,8 @@ pub fn run(context: tauri::Context) {
             incident_feed_refresh,
             railguard_preview,
             railguard_apply,
+            audit_list,
+            audit_verify_chain,
         ]);
     }
 
