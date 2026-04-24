@@ -106,7 +106,7 @@
 | T052    | HIBP v3 클라이언트 (HibpClient + check_email + urlencoding + wiremock 10 tests) | 2026-04-24 | `7e8b27e` |
 | T053    | Incident 매칭 엔진 (match_incident + IssuerMatch/Keyword + 14 tests)            | 2026-04-24 | `2da9770` |
 | T054    | 피드 스케줄러 (FeedSchedulerHandle + Breaker + normalize 3종 + 20 tests)        | 2026-04-24 | `50f459f` |
-| T055    | Tauri 커맨드 incident_* (list/dismiss/matches_for_credential/feed_refresh + IncidentFilter + repo 확장 + 12 tests) | 2026-04-24 | _(pending commit)_ |
+| T055    | Tauri 커맨드 incident_* (list/dismiss/matches_for_credential/feed_refresh + IncidentFilter + repo 확장 + 12 tests) | 2026-04-24 | `a1605e0` |
 
 **완료 합계**: 55/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 7/10**)
 
