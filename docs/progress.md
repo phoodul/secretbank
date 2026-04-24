@@ -2,13 +2,25 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (**T049 완료, M4 🔄 1/10 진입**)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 1/10 완료**
-- **Commits:** 72개 누적 (T049 커밋 추가 예정)
-- **Tests:** Rust 114+개 (api-vault-feeds 6 신규 포함) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
-- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러는 `GraphPage.test.tsx` 의 vitest 타입 회귀로 T049 와 무관 — Pending Decisions 참조.)
+- **Time:** 2026-04-24 (**T050 완료, M4 🔄 2/10**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 2/10 완료**
+- **Commits:** 74개 누적 (T050 커밋 추가 예정)
+- **Tests:** Rust 123+개 (api-vault-feeds 15 = ghsa 9 + nvd 6) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
+- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러는 GraphPage.test.tsx 회귀로 T049/T050 무관 — Pending Decisions 참조.)
 - **Mode:** 일반.
-- **Next:** T050 GitHub Advisory DB 클라이언트 (GHSA + 페이지네이션 Link 헤더). M3 수동 검증은 여전히 보류 중 (M4 중 tauri dev 띄우는 시점에 겸행).
+- **Next:** T051 RSS 클라이언트 (10개 SaaS 상태 피드, `feed-rs` 파서). M3 수동 검증 여전히 보류 중.
+
+## T050 구현 교훈 (M4 후속 영향)
+
+- **GHSA 페이지네이션은 커서 기반 + Link 헤더 full URL 재사용**: 과거 GitHub REST 는 `?page=N` 숫자였지만 `/advisories` 는 `after=<base64>` 불투명 커서. 직접 커서 값을 파싱·재구성하지 말고 **Link 헤더의 next URL 을 그대로 다음 요청에 사용**하는 게 공식 권장 방식. 구현은 로컬 `parse_next_link` 헬퍼로 단위 테스트 3건 별도 커버.
+- **`modified` 파라미터 GitHub search 구문**: `?modified=>2026-01-01T00:00:00Z` 형태. `>` 가 reqwest `.query()` 에 의해 percent-encode 자동 처리. `sort=updated&direction=asc` 고정으로 증분 안정성 확보.
+- **`references` 스키마 모호성 방어**: research 문서는 `Vec<String>` 이라 하지만 실제 응답이 `[{url: String}]` 로 바뀔 여지가 있어, `serde_json::Value` 로 받아 양쪽을 모두 처리하는 deserializer 를 둠. API 스키마 변경 시 무음 적응.
+- **`cvss` 필드 제거(2025-04-01)**: 현재 스키마는 `cvss_severities: { cvss_v3, cvss_v4 }`. 모든 필드 Optional. `cvss_v3_score: Option<f32>`, `cvss_v3_vector: Option<String>` 형태로 DTO 평탄화.
+- **`cwes` 배열 구조**: `[{cwe_id, name}]` — 단순 문자열 배열 아님. `cwe_ids: Vec<String>` 으로 평탄화하면서 `cwe_id` 필드만 추출.
+- **User-Agent 필수**: GitHub API 는 UA 없으면 403. `reqwest::Client::builder().user_agent("api-vault/0.1.0").build()` 로 클라이언트 수준 설정. 각 요청에서 따로 붙일 필요 없음.
+- **Bearer 토큰 + API Version 헤더**: `Authorization: Bearer <token>` + `Accept: application/vnd.github+json` + `X-GitHub-Api-Version: 2022-11-28`. 2026-03-10 버전도 있으나 현재 필요한 추가 필드 없어 보수적으로 2022-11-28 유지.
+- **Rate limiter 단위**: PAT 5000/h → `Quota::with_period(720ms).allow_burst(10)` (NvdClient 의 `with_period` 스타일과 일관). `Quota::per_hour(5000)` 도 가능하지만 NvdClient 와 패턴 통일.
+- **wiremock 2-페이지 체인**: 첫 mock 이 `{mock_server.uri()}/page2` 를 Link 헤더에 넣고, 두 번째 mock 이 `path("/page2")` 를 매칭. `query_param_is_missing` 보다 path 분기가 결정론적.
 
 ## T049 구현 교훈 (M4 후속 영향)
 

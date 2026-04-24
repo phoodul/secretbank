@@ -32,7 +32,7 @@
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 1/10 완료        |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 2/10 완료        |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -101,8 +101,9 @@
 | T047    | Graph performance optimization — memo 비교 + 뷰포트 컬링 + compact 모드 | 2026-04-23 | `1477c0f` |
 | T048    | Mobile graph alternate view — MobileGraphList + useIsMobile + GraphPage mobile 분기 | 2026-04-23 | `ebb9855` |
 | T049    | NVD CVE API 2.0 클라이언트 (api-vault-feeds 크레이트 + governor rate limiter + wiremock 6 tests) | 2026-04-24 | `9a7895f` |
+| T050    | GHSA 클라이언트 (GhsaClient + Link 헤더 커서 페이지네이션 + wiremock 9 tests) | 2026-04-24 | _(pending commit)_ |
 
-**완료 합계**: 49/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 1/10**)
+**완료 합계**: 50/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 2/10**)
 
 ---
 
@@ -832,10 +833,11 @@
 - **Goal**: GHSA 목록 수집.
 - **DoD**:
   - `crates/api-vault-feeds/src/ghsa.rs`
-  - `fn fetch_advisories(since: OffsetDateTime, pat_or_app_token: &str) -> Result<Vec<GhsaAdvisory>>`
-  - 페이지네이션(`Link` 헤더) 처리
+  - `GhsaClient::fetch_advisories(&self, since: OffsetDateTime) -> Result<Vec<GhsaAdvisory>, GhsaError>` (token 은 생성자 주입)
+  - 페이지네이션(`Link` 헤더 커서, `after=<base64>` 불투명 문자열) 처리
+  - `sort=updated&direction=asc`, `modified=>{since}` (GitHub search 구문), `per_page=100`, API Version `2022-11-28`, User-Agent 필수
 - **Files Touched**: `crates/api-vault-feeds/src/ghsa.rs`
-- **Tests**: Rust — wiremock
+- **Tests**: Rust — wiremock (단일/페이지네이션/429/503/nullable 필드 총 9건)
 
 ### T051. 주요 SaaS 상태 RSS 클라이언트
 
