@@ -8,7 +8,14 @@
 - **Tests:** Rust 188+개 (api-vault-app 36 + api-vault-feeds 48 + api-vault-storage repo 18 + api-vault-core 21 + 통합/기타) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
 - **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러 지속.)
 - **Mode:** 일반.
-- **Next:** T056 Incidents 페이지 UI (Must) — `/incidents` 라우트 + IncidentCard + 필터 탭 (All/Critical/Affecting/Dismissed) + listen('incidents:updated') 실시간 업데이트. 프런트 Rust 커맨드 연동.
+- **Next:** **세션 종료 (2026-04-24)**. 재개 시 우선순위:
+  1. **M3 수동 검증 재개** (사용자 요청) — `pnpm tauri dev` 로 `/graph` 실사용. 체크리스트:
+     - `/graph` 렌더 + 4종 커스텀 노드 색 (Issuer info / Credential warning / Project success / Deployment muted)
+     - Blast radius outline (primary solid 3px / secondary dashed 2px / tertiary dotted 1px) + Esc 해제
+     - Settings "Allow dragging" 토글 반영 (localStorage `apivault:graph:nodesDraggable`)
+     - 모바일 뷰포트 MobileGraphList 분기 (`data-testid="mobile-graph-page"`)
+  2. 수동 검증 후 **T056 Incidents 페이지 UI** — `/incidents` 라우트 + IncidentCard + 필터 탭 (All/Critical/Affecting/Dismissed) + `listen('incidents:updated')` + 4 Tauri 커맨드 연동.
+  3. 이후 T057 Credential Detail Incidents 섹션, T058 NVD API key Settings (Should).
 
 ## T055 구현 교훈 (M4 후속 영향)
 

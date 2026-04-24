@@ -1,5 +1,50 @@
 # Work Log
 
+## 2026-04-24 (세션 종료 — M4 7/10 도달, 수동 검증 재개 대기)
+
+### M4 Incident Feed — 5 Rust 블록 완주 (T049~T055)
+
+한 세션 내에 피드 수집 4종 + 매칭 엔진 + 스케줄러 + IPC 커맨드를 연속 완주. UI 는 다음 세션 (T056).
+
+- **T049** NVD CVE API 2.0 클라이언트 (커밋 `9a7895f`) — `NvdClient::fetch_incremental` + governor 5/50 req/30s + 페이지네이션(resultsPerPage=2000) + 120일 범위 pre-check. 2026-04-15 NVD 정책 변경 반영 (`cvssMetricV31` Optional). wiremock 6 tests.
+- **T050** GHSA 클라이언트 (커밋 `344e024`) — `GhsaClient::fetch_advisories` + Link 헤더 커서 페이지네이션 (next URL full 재사용) + Bearer PAT + `X-GitHub-Api-Version: 2022-11-28` + User-Agent 필수. `cvss_severities.cvss_v3` 평탄화 (2025-04-01 스키마 변경). wiremock 9 tests.
+- **T051** SaaS 상태 RSS 클라이언트 (커밋 `5d9ec6b`) — `RssClient::fetch_all` + `sources::default_presets()` 10종 + feed-rs 2.x + `futures::join_all` + `Semaphore(4)`. 실 URL 정정 (Anthropic→status.claude.com, Stripe→www.stripestatus.com, Paddle→paddlestatus.com, GCP Atom-only, AWS RSS-only). chrono↔time 변환 헬퍼. 테스트 9 (단위 6 + wiremock 3) + fixture 10개.
+- **T052** HIBP v3 클라이언트 (커밋 `7e8b27e`) — `HibpClient::check_email` + `urlencoding::encode` path-segment 수동 + `hibp-api-key` 헤더 + `truncateResponse=false`. **HTTP 404 → `Ok(Vec::new())`** (HIBP 특유 "breach 없음" 정상 semantics). PascalCase serde 21 필드, `Attribution`/`DisclosureUrl`/`LogoPath`/`IsStealerLog` Optional 방어. wiremock 10 tests.
+- **T053** Incident 매칭 엔진 (커밋 `2da9770`) — `match_incident(incident, credentials, issuers) -> Vec<IncidentMatch>` + `match_incident_at(now)` 결정론 헬퍼. IssuerMatch(1.0) > Keyword(0.6, display_name/slug substring) + `slug.len() >= 3` false positive 방지. confidence 는 내부 상수 `CONFIDENCE_THRESHOLD=0.3`. `api-vault-core` 기존 `Incident`/`IncidentMatch`/`MatchReason` 재사용. `api-vault-feeds → api-vault-core` path dep 추가. 순수 동기 `#[test]` 14개.
+- **T054** 피드 스케줄러 (커밋 `50f459f`) — `FeedSchedulerHandle { cancel, join_set }` + `spawn_feed_scheduler(pool, config)` + `Breaker` (3 연속 실패 → 1h cooldown) + `MissedTickBehavior::Delay`. `CancellationToken` + `JoinSet::join_next()` 로 graceful shutdown (abort() 탈피). `FeedSchedulerConfig` key-gate: NVD/GHSA None 이면 spawn 생략 (기본값 RSS 만). HIBP 는 on-demand 전용. `normalize_nvd/ghsa/rss` + `canonical_source_slug("gcp") → "google"` alias. `AppContext.feed_scheduler` 필드 + `lib.rs setup` spawn + `on_window_event(Destroyed) → shutdown()`. `tokio-util = "0.7"` workspace dep 추가. 테스트 20 (normalize 14 + Breaker 4 + config/spawn 2).
+- **T055** Tauri 커맨드 `incident_*` (커밋 `a1605e0`) — `incident_list(filter?)` / `incident_dismiss(id)` / `incident_matches_for_credential(cred_id)` / `incident_feed_refresh()`. `IncidentFilter` DTO (core) 추가 (source/severity/issuer_id/include_dismissed). `IncidentRepo` 3 확장 (`list(&filter)` / `list_incidents_for_credential` / `dismiss_matches_for_incident`). SQL: `?1 IS NULL OR col = ?1` 선택 필터 + `GROUP BY HAVING` 전체 dismissed 제외. incident-level dismiss 는 `incident_match.dismissed_at` batch update 로 우회. `FeedSchedulerHandle` 에 `pool + config` 저장 + `trigger_once()` 추가. `IncidentCommandError` `#[serde(tag="code")]` snake_case. 테스트 12 (core 1 + storage 9 + app 3).
+
+### 전체 M4 누적 통계
+
+- **태스크**: M4 7/10 (T049~T055 완료, 남은 것 T056 UI / T057 Credential Detail 통합 / T058 NVD API key Settings Should)
+- **세션 누적 커밋 14개** (태스크 7 + 해시 기록 docs 7)
+- **Rust 테스트 ~70 신규** (feeds 48 = nvd 6 + ghsa 9 + rss 9 + hibp 10 + matcher 14 = 48, app 20 신규 (normalize 14 + Breaker/config/spawn 6), storage 9 신규, core 1)
+- **Backend Tauri 커맨드 누계 34** (기존 30 + `incident_list/dismiss/matches_for_credential/feed_refresh` 4)
+- **신규 Rust crate deps**: `governor` 0.10, `feed-rs` 2, `futures` 0.3, `chrono` 0.4, `urlencoding` 2, `tokio-util` 0.7. wiremock 0.6 dev-dep.
+- **신규 path dep**: `api-vault-feeds → api-vault-core`.
+
+### 수동 검증 상태 (M3 + M4 누적)
+
+`pnpm tauri dev` 실사용 확인은 **여전히 보류**. M3 `/graph` 체크리스트가 남아 있고, M4 의 Rust 커맨드 (incident_*) 도 프론트 UI 가 아직 없어 실사용 테스트 대상 아님. 다음 세션 수동 검증은 **M3 체크리스트** 로 재개:
+
+- `/graph` 렌더 + 4종 커스텀 노드 색 (Issuer/Credential/Project/Deployment)
+- Blast radius outline (primary solid 3px / secondary dashed 2px / tertiary dotted 1px) + Esc 해제
+- Settings "Allow dragging" 토글 반영
+- 모바일 뷰포트 MobileGraphList 분기
+
+M4 UI (T056 Incidents 페이지) 완성 이후에는 `/incidents` 목록 + `incident_feed_refresh` 버튼 + 필터 탭 실사용 확인 추가 예정.
+
+### Pending Decisions (세션 종료 시점)
+
+- Storage migration 0002 — `incident (source, source_id) UNIQUE` + `INSERT OR IGNORE` 전환 (T054 교훈)
+- Tauri shutdown `RunEvent::Exit` 전환 (T054 교훈)
+- pre-existing `pnpm typecheck` 5 에러 (GraphPage.test.tsx vi.fn generic)
+- T058 NVD API key Settings UI → `FeedSchedulerHandle::reconfigure` 패턴 필요 (T055 교훈)
+
+### 다음 마일스톤
+
+**M4 잔여 (T056/T057/T058)** → 수동 검증 → M5 GitHub Connector + RAILGUARD. `/resume-project` 로 컨텍스트 복원 가능.
+
 ## 2026-04-24 (세션 정리 — M3 전체 회고, 수동 검증 보류)
 
 ### M3 Dependency Graph & Blast Radius — 8/8 ✅ 종료
