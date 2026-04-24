@@ -254,6 +254,11 @@ dependencies = [
 [[package]]
 name = "api-vault-railguard"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 2.0.18",
+ "tracing",
+]
 
 [[package]]
 name = "api-vault-storage"
