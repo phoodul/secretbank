@@ -315,21 +315,26 @@ async fn poll_rss_once(
     let mut stored = 0usize;
     for entry in &entries {
         let incident = normalize_rss(entry, &index, now);
-        // PK 중복은 storage Err 로 반환 → debug 후 skip
-        if let Err(e) = incident_repo.insert(&incident).await {
-            tracing::debug!(?e, source_id = %incident.source_id, "incident insert skipped (likely duplicate)");
-            continue;
+        let canonical_id = match incident_repo.insert(&incident).await {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::warn!(?e, source_id = %incident.source_id, "rss incident insert failed");
+                continue;
+            }
+        };
+        // Count only newly-inserted rows (canonical_id == incident.id).
+        if canonical_id == incident.id {
+            stored += 1;
         }
-        stored += 1;
 
-        // 매칭 → insert_match
+        // Associate matches with the canonical incident id.
         let matches = match_incident(&incident, &credentials, &issuers);
         for m in matches {
             if let Err(e) = incident_repo
-                .insert_match(m.incident_id, m.credential_id, m.reason)
+                .insert_match(canonical_id, m.credential_id, m.reason)
                 .await
             {
-                tracing::debug!(?e, "incident_match insert skipped");
+                tracing::debug!(?e, "rss incident_match insert skipped");
             }
         }
     }
@@ -401,16 +406,21 @@ async fn poll_nvd_once(
     let mut stored = 0usize;
     for cve in &cves {
         let incident = normalize_nvd(cve, now);
-        if let Err(e) = incident_repo.insert(&incident).await {
-            tracing::debug!(?e, source_id = %incident.source_id, "nvd incident insert skipped");
-            continue;
+        let canonical_id = match incident_repo.insert(&incident).await {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::warn!(?e, source_id = %incident.source_id, "nvd incident insert failed");
+                continue;
+            }
+        };
+        if canonical_id == incident.id {
+            stored += 1;
         }
-        stored += 1;
 
         let matches = match_incident(&incident, &credentials, &issuers);
         for m in matches {
             if let Err(e) = incident_repo
-                .insert_match(m.incident_id, m.credential_id, m.reason)
+                .insert_match(canonical_id, m.credential_id, m.reason)
                 .await
             {
                 tracing::debug!(?e, "nvd incident_match insert skipped");
@@ -485,16 +495,21 @@ async fn poll_ghsa_once(
     let mut stored = 0usize;
     for adv in &advisories {
         let incident = normalize_ghsa(adv, now);
-        if let Err(e) = incident_repo.insert(&incident).await {
-            tracing::debug!(?e, source_id = %incident.source_id, "ghsa incident insert skipped");
-            continue;
+        let canonical_id = match incident_repo.insert(&incident).await {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::warn!(?e, source_id = %incident.source_id, "ghsa incident insert failed");
+                continue;
+            }
+        };
+        if canonical_id == incident.id {
+            stored += 1;
         }
-        stored += 1;
 
         let matches = match_incident(&incident, &credentials, &issuers);
         for m in matches {
             if let Err(e) = incident_repo
-                .insert_match(m.incident_id, m.credential_id, m.reason)
+                .insert_match(canonical_id, m.credential_id, m.reason)
                 .await
             {
                 tracing::debug!(?e, "ghsa incident_match insert skipped");

@@ -44,7 +44,13 @@ impl<'a> IncidentRepo<'a> {
         Self { pool }
     }
 
-    pub async fn insert(&self, incident: &Incident) -> Result<(), StorageError> {
+    /// Insert an incident, ignoring duplicates on `(source, source_id)`.
+    ///
+    /// Returns the canonical [`IncidentId`] — either the freshly-inserted row's
+    /// id or the pre-existing row's id when the row was already present.
+    /// Callers should use the returned id when inserting `incident_match` rows
+    /// so that matches are always associated with the canonical incident record.
+    pub async fn insert(&self, incident: &Incident) -> Result<IncidentId, StorageError> {
         let id_str = incident.id.to_string();
         let issuer_id_str = incident.issuer_id.map(|i| i.to_string());
         let source_str = source_to_str(incident.source);
@@ -53,7 +59,7 @@ impl<'a> IncidentRepo<'a> {
         let published_ms = incident.published_at.map(dt_to_ms);
 
         sqlx::query(
-            r#"INSERT INTO incident
+            r#"INSERT OR IGNORE INTO incident
                (id, source, source_id, issuer_id, severity, title, body, url, detected_at, published_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
         )
@@ -70,7 +76,17 @@ impl<'a> IncidentRepo<'a> {
         .execute(self.pool)
         .await?;
 
-        Ok(())
+        // Fetch the canonical id (new insert or pre-existing duplicate).
+        let row = sqlx::query("SELECT id FROM incident WHERE source = ? AND source_id = ?")
+            .bind(source_str)
+            .bind(&incident.source_id)
+            .fetch_one(self.pool)
+            .await?;
+
+        let canonical_id_str: String = row.try_get("id")?;
+        canonical_id_str
+            .parse()
+            .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))
     }
 
     pub async fn get_by_id(&self, id: IncidentId) -> Result<Option<Incident>, StorageError> {
@@ -1128,6 +1144,36 @@ mod tests {
             .unwrap();
 
         assert!(entries.is_empty(), "매치 없는 credential은 빈 배열 반환");
+    }
+
+    // -----------------------------------------------------------------------
+    // T15: insert — 동일 (source, source_id) 두 번 삽입 시 canonical id 반환,
+    //       행은 1개만 존재해야 함
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_insert_returns_canonical_id_on_duplicate() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let mut inc = make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "DUP");
+        // First insert — returns the row's own id.
+        let id1 = repo.insert(&inc).await.unwrap();
+        assert_eq!(id1, inc.id, "첫 번째 삽입은 자신의 id를 반환해야 함");
+
+        // Second insert: same (source, source_id) but a fresh IncidentId.
+        let original_id = inc.id;
+        inc.id = IncidentId::new();
+        let id2 = repo.insert(&inc).await.unwrap();
+        assert_eq!(id2, original_id, "두 번째 삽입은 기존 canonical id를 반환해야 함");
+
+        // The table must contain exactly one row for this (source, source_id).
+        let filter = IncidentFilter {
+            source: Some(IncidentSource::Nvd),
+            ..Default::default()
+        };
+        let rows = repo.list(&filter).await.unwrap();
+        let dup_rows: Vec<_> = rows.iter().filter(|r| r.source_id == "CVE-TEST-DUP").collect();
+        assert_eq!(dup_rows.len(), 1, "중복 삽입 후에도 행은 1개여야 함");
     }
 
     // -----------------------------------------------------------------------

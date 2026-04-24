@@ -109,7 +109,7 @@
 | T055    | Tauri 커맨드 incident_* (list/dismiss/matches_for_credential/feed_refresh + IncidentFilter + repo 확장 + 12 tests) | 2026-04-24 | `a1605e0` |
 | T056    | Incidents 페이지 UI (IncidentsPage + IncidentCard + use-incidents + types + i18n 4개 로케일 + Vitest 5 tests + incident_list 반환 확장 + FeedScheduler incidents:updated emit) | 2026-04-25 | `7bfac7c` |
 | T057    | Credential Detail에 Incidents 섹션 통합 (list_incidents_with_matches_for_credential + IncidentsForCredential + use-incidents-for-credential + i18n 4개 + Vitest 5 tests + 2 repo tests) | 2026-04-25 | `3858a5d` |
-| T058    | NVD API Key Setting UI (VaultStorage::flush + vault_setting_get/set 커맨드 + IntegrationsSection + i18n 4개 + flush/locked 테스트 2개 + 커맨드 테스트 5개 + Vitest 6 tests) | 2026-04-25 | (미커밋) |
+| T058    | NVD API Key Setting UI (VaultStorage::flush + vault_setting_get/set 커맨드 + IntegrationsSection + i18n 4개 + flush/locked 테스트 2개 + 커맨드 테스트 5개 + Vitest 6 tests) | 2026-04-25 | `35548dd` |
 
 **완료 합계**: 58/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 ✅ 10/10**)
 
