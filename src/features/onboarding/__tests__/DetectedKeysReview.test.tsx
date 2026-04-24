@@ -91,6 +91,19 @@ function renderReview(
 describe("DetectedKeysReview", () => {
   beforeEach(() => {
     invokeSpy.mockReset();
+    // Default railguard_preview response: all 4 files missing → CTA shown.
+    // Individual tests can override before rendering.
+    invokeSpy.mockImplementation((cmd: string) => {
+      if (cmd === "railguard_preview") {
+        return Promise.resolve([
+          { kind: "cursor_rules", path: ".cursorrules", content: "", exists: false, action: "create" },
+          { kind: "windsurf_rules", path: ".windsurfrules", content: "", exists: false, action: "create" },
+          { kind: "claude_md", path: "CLAUDE.md", content: "", exists: false, action: "create" },
+          { kind: "copilot_instructions", path: ".github/copilot-instructions.md", content: "", exists: false, action: "create" },
+        ]);
+      }
+      return Promise.resolve(null);
+    });
   });
 
   afterEach(() => {
@@ -152,6 +165,7 @@ describe("DetectedKeysReview", () => {
     ];
 
     invokeSpy.mockImplementation((cmd: string) => {
+      if (cmd === "railguard_preview") return Promise.resolve([]);
       if (cmd === "project_create") return Promise.resolve("01HZPROJECT00000000000000");
       if (cmd === "credential_create") return Promise.resolve("01HZCRED00000000000000000");
       if (cmd === "usage_create") return Promise.resolve("01HZUSAGE0000000000000000");
@@ -165,7 +179,9 @@ describe("DetectedKeysReview", () => {
     await user.click(button);
 
     await waitFor(() => {
-      const commands = invokeSpy.mock.calls.map((c) => c[0] as string);
+      const commands = invokeSpy.mock.calls
+        .map((c) => c[0] as string)
+        .filter((c) => c !== "railguard_preview");
       expect(commands).toEqual([
         "project_create",
         "credential_create",
@@ -193,16 +209,39 @@ describe("DetectedKeysReview", () => {
     expect(cb).not.toBeChecked();
   });
 
-  it("RAILGUARD CTA 배너가 표시되고 /railguard?projectPath=... 링크를 포함한다", () => {
+  it("RAILGUARD CTA 배너가 표시되고 /railguard?projectPath=... 링크를 포함한다", async () => {
     const detected = [mockDetected()];
     renderReview(detected, [], "/home/u/my-scanned-project");
 
-    const cta = screen.getByTestId("railguard-cta");
+    // CTA defaults to visible; probe returns "all missing" → stays visible.
+    const cta = await screen.findByTestId("railguard-cta");
     expect(cta).toBeInTheDocument();
 
     const ctaLink = screen.getByTestId("railguard-cta-link");
     expect(ctaLink).toBeInTheDocument();
     // Clicking should navigate (no error thrown)
     ctaLink.click();
+  });
+
+  it("T068 — 모든 RAILGUARD 룰 파일이 이미 존재하면 CTA 배너를 숨긴다", async () => {
+    // Override default mock: every rule file already exists → banner should disappear.
+    invokeSpy.mockImplementation((cmd: string) => {
+      if (cmd === "railguard_preview") {
+        return Promise.resolve([
+          { kind: "cursor_rules", path: ".cursorrules", content: "", exists: true, action: "skip" },
+          { kind: "windsurf_rules", path: ".windsurfrules", content: "", exists: true, action: "skip" },
+          { kind: "claude_md", path: "CLAUDE.md", content: "", exists: true, action: "skip" },
+          { kind: "copilot_instructions", path: ".github/copilot-instructions.md", content: "", exists: true, action: "skip" },
+        ]);
+      }
+      return Promise.resolve(null);
+    });
+
+    const detected = [mockDetected()];
+    renderReview(detected, [], "/home/u/ready-project");
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("railguard-cta")).not.toBeInTheDocument();
+    });
   });
 });

@@ -1,14 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { KeyRound, Wand2 } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useIssuers } from "@/features/inventory/use-issuers";
 import { findPreset } from "@/features/inventory/issuer-presets";
 import type { CredentialSummary } from "@/features/inventory/types";
+import { ALL_RULE_KINDS } from "@/features/railguard/types";
+import type { RuleFilePreview } from "@/features/railguard/types";
 
 import type { DetectedKey } from "./types";
 import { useImportDetected } from "./use-import-detected";
@@ -91,6 +94,30 @@ export function DetectedKeysReview({
   const projectName = folderNameFromPath(scannedPath);
   const selectedCount = selected.size;
   const isImporting = state.phase === "importing";
+
+  // T068: probe the project folder for existing RAILGUARD rule files.
+  // Hide the CTA only when all 4 files already exist; otherwise show it
+  // (including when the probe fails — fail open so users can still discover the feature).
+  const [railguardMissing, setRailguardMissing] = useState<boolean>(true);
+  useEffect(() => {
+    if (!scannedPath) return;
+    let cancelled = false;
+    invoke<RuleFilePreview[]>("railguard_preview", {
+      projectPath: scannedPath,
+      rules: ALL_RULE_KINDS,
+      context: { project_name: projectName, frameworks: [], issuers: [] },
+    })
+      .then((previews) => {
+        if (cancelled) return;
+        setRailguardMissing(previews.some((p) => !p.exists));
+      })
+      .catch(() => {
+        // Probe failed (e.g. path invalid) — keep CTA visible (default state).
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scannedPath, projectName]);
 
   async function handleImport() {
     if (selectedCount === 0) return;
@@ -216,7 +243,8 @@ export function DetectedKeysReview({
         })}
       </div>
 
-      {/* RAILGUARD CTA */}
+      {/* RAILGUARD CTA — shown only when ≥1 rule file is missing (T068). */}
+      {railguardMissing ? (
       <div
         className="flex items-center gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm"
         data-testid="railguard-cta"
@@ -239,6 +267,7 @@ export function DetectedKeysReview({
           {t("onboarding.railguardCta.action")} →
         </button>
       </div>
+      ) : null}
     </div>
   );
 }
