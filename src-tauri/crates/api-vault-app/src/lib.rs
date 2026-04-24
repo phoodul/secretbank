@@ -189,19 +189,20 @@ pub fn run(context: tauri::Context) {
         builder = builder.plugin(tauri_plugin_biometric::init());
     }
 
-    builder
-        .on_window_event(|window, event| {
-            if matches!(event, tauri::WindowEvent::Destroyed) {
-                let state = window.state::<AppContext>();
-                let scheduler_arc = state.feed_scheduler.clone();
-                tauri::async_runtime::spawn(async move {
-                    let mut guard = scheduler_arc.lock().await;
-                    if let Some(handle) = guard.take() {
-                        handle.shutdown().await;
-                    }
-                });
-            }
-        })
-        .run(context)
-        .expect("error while running tauri application");
+    let app = builder
+        .build(context)
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        if matches!(event, tauri::RunEvent::Exit) {
+            let state = app_handle.state::<AppContext>();
+            let scheduler_arc = state.feed_scheduler.clone();
+            tauri::async_runtime::block_on(async move {
+                let mut guard = scheduler_arc.lock().await;
+                if let Some(handle) = guard.take() {
+                    handle.shutdown().await;
+                }
+            });
+        }
+    });
 }

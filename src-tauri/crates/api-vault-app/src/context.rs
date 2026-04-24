@@ -39,7 +39,8 @@ pub struct AppContext {
     /// 피드 스케줄러 핸들.
     ///
     /// 앱 시작 시 `spawn_feed_scheduler` 로 생성하여 저장한다.
-    /// 앱 종료 시 `on_window_event(Destroyed)` 훅에서 `handle.shutdown()` 호출.
+    /// 앱 종료 시 `RunEvent::Exit` 훅에서 `block_on(handle.shutdown())` 으로 호출 — 프로세스
+    /// 종료 전에 cancellation token + JoinSet drain 이 완료되는 것을 보장한다.
     pub feed_scheduler: Arc<Mutex<Option<FeedSchedulerHandle>>>,
 }
 
