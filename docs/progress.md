@@ -2,30 +2,33 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-25 (**세션 종료 — M3 검증 완료 + Y 경로 마무리, T056 직전**).
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 7/10 완료**. M3 수동 검증 및 follow-up 3건 전부 처리됨.
-- **Commits:** 87개 누적. 이번 세션 신규 4개:
-  - `85f347a` fix(app): 피드 스케줄러 spawn 을 tokio context 안으로 이동 (M3 검증 중 발견한 기동 panic hotfix)
-  - `7d5f3f3` feat(graph): 노드 드래그 위치 영속화 + Reset layout 버튼 (C 옵션, +15 테스트)
+- **Time:** 2026-04-25 (Night mode 자율 연속 실행 — T056 완료, T057 진행 중).
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 8/10 완료**.
+- **Commits:** 88개 누적. 이번 세션 신규:
+  - `85f347a` fix(app): 피드 스케줄러 spawn 을 tokio context 안으로 이동
+  - `7d5f3f3` feat(graph): 노드 드래그 위치 영속화 + Reset layout 버튼
   - `2708a6d` docs: M3 수동 검증 결과 + 2 hotfix/feature 커밋 기록
-  - (+ 이번 세션 종료 시점에 프로젝트 의사결정 기록 추가 예정)
-- **Tests:** Rust 188+개 유지 / Vitest **236개** (221 + 15 신규). 전부 통과. `pnpm typecheck` pre-existing 5 에러 지속 (GraphPage.test.tsx — 신규 에러 없음).
+  - `ed45951` docs: 세션 종료 — M3 검증 follow-up 완료 + Vision/Scheduler 결정 기록
+  - `7bfac7c` feat(app): **T056 Incidents 페이지 UI 구현** (Night mode)
+- **Tests:** Rust workspace 전 통과 (incident repo 12개 포함, 3개 신규) / Vitest **242개** (237 + 5 신규). 전부 통과. `pnpm typecheck` pre-existing 5 에러 지속 (GraphPage.test.tsx — 신규 에러 없음). `cargo clippy` / `pnpm lint` pass.
 - **Blocker:** 없음.
-- **Mode:** 세션 종료. 재개 시 일반 모드.
-- **Next (재개 시):**
-  1. **T056 Incidents 페이지 UI 진입** — 사전 탐색 완료:
-     - 기존 `/incidents` 라우트는 `src/pages/IncidentsPage.tsx` placeholder (제목 + "empty" 메시지만).
-     - Rust 측 4 Tauri 커맨드는 T055 (a1605e0) 에서 이미 완성: `incident_list(filter?)`, `incident_dismiss(id)`, `incident_matches_for_credential(cred_id)`, `incident_feed_refresh()`.
-     - 도메인 모델 위치: `api-vault-core::{Incident, IncidentFilter, IncidentSeverity, IncidentSource, IncidentMatch, MatchReason}`.
-     - `incidents:updated` 이벤트: **아직 Rust 측에서 emit 하지 않음** (T054 스케줄러가 emit 하도록 확장 필요 — T056 구현 시 병행).
-  2. 구현 파일 (DoD):
-     - `src/features/incidents/IncidentsPage.tsx` — 필터 탭 (All / Critical / Affecting my keys / Dismissed) + IncidentCard 리스트 + 빈/로딩/에러 상태
-     - `src/features/incidents/IncidentCard.tsx` — severity bar + source 배지 + 영향 credential 칩 + View/Dismiss
-     - `src/features/incidents/use-incidents.ts` — `invoke('incident_list')` + `listen('incidents:updated')`
-     - `src/pages/IncidentsPage.tsx` → `@/features/incidents/IncidentsPage` re-export
-     - 4 locales `incidents.*` i18n 키
-     - Vitest — 10 mock incident 렌더 + 필터 동작
-  3. 이후: T057 Credential Detail Incidents 섹션, T058 NVD API key Settings (Should).
+- **Mode:** 🌙 **Night mode — 연속 자율 실행**. Gate 외 중간 승인 요청 없음, 큐에 쌓아 진행.
+- **Next (진행 중):**
+  1. **T057 Credential Detail Incidents 섹션 통합** — `CredentialDetail` 에 매칭된 incident 목록 + "revoke 권장" CTA (M7 Kill Switch 로 이어짐).
+  2. **T058 NVD API key Settings** — Integrations 섹션 + 저장 시 feed scheduler 재로드. (Should 우선순위)
+  3. (대기 큐) Storage migration 0002 — `incident (source, source_id)` UNIQUE.
+  4. (대기 큐) Tauri shutdown `RunEvent::Exit` 전환.
+  5. (대기 큐) `pnpm typecheck` 5 에러 hotfix.
+
+## T056 구현 교훈 (M4 후속 영향)
+
+- **`incident_list` 반환 타입 확장** — `Vec<Incident>` → `Vec<IncidentListEntry { incident, matches: Vec<IncidentMatchDetail> }>`. `IncidentMatchDetail` 은 repo 에서 LEFT JOIN 으로 credential label + issuer display_name 까지 조립해 UI 가 N+1 호출 없이 credential chip 을 렌더 가능. T057 도 동일 패턴 활용 (`incident_matches_for_credential` 확장 불필요 — UI 측에서 `incident_list()` 결과에서 매칭된 것만 필터하거나, 기존 커맨드 반환 타입을 Detail 로 업그레이드).
+- **`IncidentEventEmitter` trait** — 프로덕션은 `TauriEmitter { handle: AppHandle }` (clone cheap, `handle.emit(name, ())`), 테스트는 `NoopEmitter`. `FeedSchedulerConfig { emitter: Option<Arc<dyn IncidentEventEmitter>> }` 로 주입 → 기존 20 스케줄러 테스트 업데이트 필요 (NoopEmitter 주입).
+- **Emit 타이밍**: 각 폴러 (RSS/NVD/GHSA) 성공 사이클에서 "≥1 insert 성공" 조건일 때만 emit. `trigger_once` 도 같은 조건. `incident_feed_refresh` 커맨드는 scheduler `trigger_once` 가 내부 emit 처리 → 커맨드 재emit 불필요.
+- **UI 측 "Affecting my keys" 필터**: 서버 `IncidentFilter` 는 issuer_id 축만 있고 "has matches" 축은 없음. 서버는 `include_dismissed: false` + 전체 목록을 반환하고, 클라이언트에서 `matches.length > 0 && matches.some(m => m.dismissed_at == null)` 로 narrow. Dismissed 탭은 `include_dismissed: true` + `matches.every(dismissed)` 로 narrow. 이 트레이드오프 선택 이유: 사용자 단일 desktop 에서 incident 수백개 수준이라 클라이언트 필터로 충분하고, 서버 SQL 복잡도 증가 회피.
+- **`@tauri-apps/plugin-shell` dynamic import + `window.open` fallback** — 설치되지 않은 환경 (Vitest jsdom) 에서도 `View` 버튼 동작. 프로덕션에선 dynamic import 성공해서 `openUrl()` 호출 → external browser.
+- **`date-fns@4.1.0`** — ESM-only 이지만 Vite 정상 작동. `formatDistanceToNow` 로 relative date ("2h ago"). 로케일은 i18n 과 별개 — 추후 `formatDistanceToNow(date, { locale: ko })` 로 확장 가능.
+- **`react-hooks/set-state-in-effect` lint**: effect 내부에서 setState 호출 금지. `refresh()` callback 에서 `setFetchState({ phase: "loading" })` 호출, effect 는 callback 만 호출. 필터 변경 시 이전 데이터가 유지된 채로 fetch 완료 후 업데이트 (기존 `use-inventory.ts` 패턴과 동일).
 
 ## M3 수동 검증 결과 (2026-04-24 저녁)
 

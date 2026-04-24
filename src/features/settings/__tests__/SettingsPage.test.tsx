@@ -54,8 +54,13 @@ function renderPage() {
 describe("SettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // 기본: settings_get → null (기본값 5 사용)
-    mockInvoke.mockResolvedValue(null);
+    // 기본: 모든 invoke 호출 → null
+    // IntegrationsSection 이 vault_status, vault_setting_get 을 호출하므로
+    // 기본값으로 locked 상태 반환하도록 설정한다.
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "vault_status") return Promise.resolve({ state: "locked" });
+      return Promise.resolve(null);
+    });
   });
 
   afterEach(() => {
@@ -121,7 +126,12 @@ describe("SettingsPage", () => {
 
   // 6. settings_get "30" 반환 → Select 에 "30 minutes" 표시
   it('settings_get 이 "30" 이면 Auto-lock Select 에 "30 minutes" 가 표시된다', async () => {
-    mockInvoke.mockResolvedValueOnce("30");
+    // IntegrationsSection → vault_status 먼저 호출됨
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "vault_status") return Promise.resolve({ state: "locked" });
+      if (cmd === "settings_get") return Promise.resolve("30");
+      return Promise.resolve(null);
+    });
 
     renderPage();
 
@@ -161,8 +171,13 @@ describe("SettingsPage", () => {
   // 8. settings_set 실패 → toast.error 호출
   it("settings_set 실패 시 toast.error 를 호출한다", async () => {
     const user = userEvent.setup();
-    mockInvoke.mockResolvedValueOnce(null); // settings_get
-    mockInvoke.mockRejectedValueOnce(new Error("db error")); // settings_set
+    // vault_status (IntegrationsSection), settings_get, settings_set 순서
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "vault_status") return Promise.resolve({ state: "locked" });
+      if (cmd === "settings_get") return Promise.resolve(null);
+      if (cmd === "settings_set") return Promise.reject(new Error("db error"));
+      return Promise.resolve(null);
+    });
 
     renderPage();
 

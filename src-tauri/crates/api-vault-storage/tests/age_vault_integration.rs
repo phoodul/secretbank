@@ -201,3 +201,58 @@ async fn backup_created_on_flush() {
             .collect::<Vec<_>>()
     );
 }
+
+// ─────────────────────────────────────────────
+//  8. flush() — unlocked 상태에서 디스크 영속화 (잠금 없이)
+// ─────────────────────────────────────────────
+#[tokio::test]
+async fn flush_persists_data_while_staying_unlocked() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+
+    // 초기화 + 잠금 해제 + 값 저장 + flush (lock 아님)
+    {
+        let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+        vault.initialize(&make_password("pw")).await.unwrap();
+        vault.unlock(make_password("pw")).await.unwrap();
+        vault
+            .put_secret("settings/nvd_api_key", make_secret(b"nvd-test-key"))
+            .await
+            .unwrap();
+        // flush: 잠금 없이 디스크에 기록
+        vault.flush().await.unwrap();
+        // 아직 unlocked 상태여야 함
+        assert!(vault.is_unlocked().await, "flush 후 여전히 unlocked 상태여야 함");
+    }
+
+    // 새 인스턴스로 열어서 값 확인 (flush 로 디스크에 쓰였으므로 복원 가능)
+    {
+        let mut vault2 = AgeVaultStorage::open(&vault_path).await.unwrap();
+        vault2.unlock(make_password("pw")).await.unwrap();
+        let val = vault2.get_secret("settings/nvd_api_key").await.unwrap();
+        assert_eq!(
+            val.expose_secret(),
+            b"nvd-test-key",
+            "flush 후 새 인스턴스에서 값이 복원되어야 함"
+        );
+    }
+}
+
+// ─────────────────────────────────────────────
+//  9. flush() — locked 상태에서 호출 시 NotUnlocked 에러
+// ─────────────────────────────────────────────
+#[tokio::test]
+async fn flush_while_locked_returns_not_unlocked() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+    vault.initialize(&make_password("pw")).await.unwrap();
+    // initialize 후 Locked 상태
+    let result = vault.flush().await;
+    assert!(
+        matches!(result, Err(VaultError::NotUnlocked)),
+        "Locked 상태에서 flush → NotUnlocked 에러, got: {:?}",
+        result
+    );
+}

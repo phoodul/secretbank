@@ -130,9 +130,19 @@ pub async fn vault_init(
 pub async fn vault_unlock(
     password: String,
     state: State<'_, AppContext>,
+    app_handle: tauri::AppHandle,
 ) -> Result<(), VaultCommandError> {
-    let mut vault = state.vault.write().await;
-    do_vault_unlock(vault.as_mut(), &password).await
+    {
+        let mut vault = state.vault.write().await;
+        do_vault_unlock(vault.as_mut(), &password).await?;
+    }
+    // 볼트가 열렸으므로 저장된 API 키로 스케줄러를 재구성한다.
+    if let Err(e) =
+        crate::commands::vault_settings::reconfigure_feed_scheduler(&state, &app_handle).await
+    {
+        tracing::warn!(error = %e, "vault_unlock 후 스케줄러 재구성 실패 (비치명적)");
+    }
+    Ok(())
 }
 
 #[tauri::command]

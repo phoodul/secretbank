@@ -26,6 +26,7 @@ use commands::usage::{
     usage_create, usage_delete, usage_list_for_credential, usage_list_for_project,
 };
 use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
+use commands::vault_settings::{vault_setting_get, vault_setting_set};
 use context::AppContext;
 use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
 use tauri::Manager;
@@ -93,6 +94,8 @@ pub fn run(context: tauri::Context) {
             vault_unlock,
             vault_lock,
             vault_status,
+            vault_setting_get,
+            vault_setting_set,
             credential_create,
             credential_list,
             credential_get,
@@ -135,6 +138,8 @@ pub fn run(context: tauri::Context) {
             vault_unlock,
             vault_lock,
             vault_status,
+            vault_setting_get,
+            vault_setting_set,
             credential_create,
             credential_list,
             credential_get,

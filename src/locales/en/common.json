@@ -46,7 +46,22 @@
     "graph": "Graph",
     "performance": {
       "draggableToggle": "Allow dragging nodes"
-    }
+    },
+    "integrations": "Integrations",
+    "integrationsDescription": "External APIs and feed sources.",
+    "nvdApiKey": "NVD API Key",
+    "nvdApiKeyDescription": "Used by the incident feed to poll the National Vulnerability Database with higher rate limits. Your key is encrypted inside the vault.",
+    "nvdApiKeyPlaceholder": "Paste your NVD API key",
+    "nvdApiKeyRequestLink": "Request an NVD API key",
+    "saveKey": "Save",
+    "clearKey": "Clear",
+    "showKey": "Show",
+    "hideKey": "Hide",
+    "keySaved": "Key saved",
+    "keyCleared": "Key cleared",
+    "saveKeyFailed": "Failed to save key",
+    "vaultLockedWarning": "Unlock the vault to change this setting.",
+    "keyConfiguredPlaceholder": "Configured (hidden)"
   },
   "inventory": {
     "title": "Inventory",

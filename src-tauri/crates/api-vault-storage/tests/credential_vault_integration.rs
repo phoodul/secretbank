@@ -268,4 +268,8 @@ impl VaultStorage for FaultyVaultStorage {
     ) -> Result<Vec<String>, api_vault_storage::vault::VaultError> {
         self.inner.list_secrets(prefix).await
     }
+
+    async fn flush(&mut self) -> Result<(), api_vault_storage::vault::VaultError> {
+        self.inner.flush().await
+    }
 }

@@ -118,4 +118,12 @@ impl VaultStorage for MockVaultStorage {
         paths.sort();
         Ok(paths)
     }
+
+    async fn flush(&mut self) -> Result<(), VaultError> {
+        if !self.unlocked {
+            return Err(VaultError::NotUnlocked);
+        }
+        // Mock: no-op — in-memory store needs no disk I/O.
+        Ok(())
+    }
 }

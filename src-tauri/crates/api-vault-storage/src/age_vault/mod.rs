@@ -445,4 +445,26 @@ impl VaultStorage for AgeVaultStorage {
             _ => Err(VaultError::NotUnlocked),
         }
     }
+
+    /// 잠금 해제 상태를 유지하면서 메모리 레코드를 디스크에 즉시 기록한다.
+    ///
+    /// `dirty` 여부와 무관하게 항상 디스크에 쓴다 (설정 변경 후 즉시 안전 보장).
+    /// `Locked` / `NotInitialized` 상태에서 호출하면 `VaultError::NotUnlocked` 반환.
+    async fn flush(&mut self) -> Result<(), VaultError> {
+        let mut state = self.state.write().await;
+
+        match &mut *state {
+            VaultState::Unlocked {
+                header,
+                identity,
+                records,
+                dirty,
+            } => {
+                Self::flush_unlocked(&self.path, header, identity, records)?;
+                *dirty = false;
+                Ok(())
+            }
+            _ => Err(VaultError::NotUnlocked),
+        }
+    }
 }

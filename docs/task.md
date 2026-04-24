@@ -32,7 +32,7 @@
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 7/10 완료        |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | ✅ 10/10 완료       |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -107,8 +107,11 @@
 | T053    | Incident 매칭 엔진 (match_incident + IssuerMatch/Keyword + 14 tests)            | 2026-04-24 | `2da9770` |
 | T054    | 피드 스케줄러 (FeedSchedulerHandle + Breaker + normalize 3종 + 20 tests)        | 2026-04-24 | `50f459f` |
 | T055    | Tauri 커맨드 incident_* (list/dismiss/matches_for_credential/feed_refresh + IncidentFilter + repo 확장 + 12 tests) | 2026-04-24 | `a1605e0` |
+| T056    | Incidents 페이지 UI (IncidentsPage + IncidentCard + use-incidents + types + i18n 4개 로케일 + Vitest 5 tests + incident_list 반환 확장 + FeedScheduler incidents:updated emit) | 2026-04-25 | `7bfac7c` |
+| T057    | Credential Detail에 Incidents 섹션 통합 (list_incidents_with_matches_for_credential + IncidentsForCredential + use-incidents-for-credential + i18n 4개 + Vitest 5 tests + 2 repo tests) | 2026-04-25 | `3858a5d` |
+| T058    | NVD API Key Setting UI (VaultStorage::flush + vault_setting_get/set 커맨드 + IntegrationsSection + i18n 4개 + flush/locked 테스트 2개 + 커맨드 테스트 5개 + Vitest 6 tests) | 2026-04-25 | (미커밋) |
 
-**완료 합계**: 55/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 7/10**)
+**완료 합계**: 58/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 ✅ 10/10**)
 
 ---
 

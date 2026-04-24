@@ -46,7 +46,22 @@
     "graph": "그래프",
     "performance": {
       "draggableToggle": "노드 드래그 허용"
-    }
+    },
+    "integrations": "통합",
+    "integrationsDescription": "외부 API 및 피드 소스.",
+    "nvdApiKey": "NVD API 키",
+    "nvdApiKeyDescription": "인시던트 피드가 국가 취약점 데이터베이스를 더 높은 요청 한도로 폴링하는 데 사용됩니다. 키는 볼트 내부에 암호화되어 저장됩니다.",
+    "nvdApiKeyPlaceholder": "NVD API 키를 붙여넣으세요",
+    "nvdApiKeyRequestLink": "NVD API 키 신청",
+    "saveKey": "저장",
+    "clearKey": "삭제",
+    "showKey": "표시",
+    "hideKey": "숨기기",
+    "keySaved": "키가 저장되었습니다",
+    "keyCleared": "키가 삭제되었습니다",
+    "saveKeyFailed": "키 저장에 실패했습니다",
+    "vaultLockedWarning": "이 설정을 변경하려면 볼트를 잠금 해제하세요.",
+    "keyConfiguredPlaceholder": "설정됨 (숨김)"
   },
   "inventory": {
     "title": "인벤토리",

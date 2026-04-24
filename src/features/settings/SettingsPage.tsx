@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGraphNodesDraggable } from "@/features/graph/use-graph-nodes-draggable";
 
+import { IntegrationsSection } from "./IntegrationsSection";
 import { type AutoLockMinutes, useAutoLockMinutes } from "./use-settings";
 
 // ---------------------------------------------------------------------------
@@ -139,6 +140,11 @@ export function SettingsPage() {
           )}
         </div>
       </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Integrations                                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <IntegrationsSection />
 
       {/* ------------------------------------------------------------------ */}
       {/* Graph                                                                */}

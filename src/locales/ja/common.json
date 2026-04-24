@@ -46,7 +46,22 @@
     "graph": "グラフ",
     "performance": {
       "draggableToggle": "ノードのドラッグを許可"
-    }
+    },
+    "integrations": "連携",
+    "integrationsDescription": "外部 API とフィードソース。",
+    "nvdApiKey": "NVD API キー",
+    "nvdApiKeyDescription": "インシデントフィードが国家脆弱性データベースをより高いレート制限でポーリングするために使用されます。キーはボールト内部で暗号化されます。",
+    "nvdApiKeyPlaceholder": "NVD API キーを貼り付ける",
+    "nvdApiKeyRequestLink": "NVD API キーをリクエスト",
+    "saveKey": "保存",
+    "clearKey": "削除",
+    "showKey": "表示",
+    "hideKey": "非表示",
+    "keySaved": "キーを保存しました",
+    "keyCleared": "キーを削除しました",
+    "saveKeyFailed": "キーの保存に失敗しました",
+    "vaultLockedWarning": "この設定を変更するにはボールトをアンロックしてください。",
+    "keyConfiguredPlaceholder": "設定済み（非表示）"
   },
   "inventory": {
     "title": "インベントリ",

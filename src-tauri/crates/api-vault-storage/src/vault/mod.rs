@@ -124,6 +124,16 @@ pub trait VaultStorage: Send + Sync {
     /// The returned list is sorted lexicographically. Pass `""` to list all
     /// paths. Returns [`VaultError::NotUnlocked`] if the vault is locked.
     async fn list_secrets(&self, prefix: &str) -> Result<Vec<String>, VaultError>;
+
+    /// Flush in-memory records to disk while keeping the vault unlocked.
+    ///
+    /// Re-encrypts the current in-memory records and atomically writes them to
+    /// the vault file. Clears the `dirty` flag on success. Returns
+    /// [`VaultError::NotUnlocked`] if the vault is locked.
+    ///
+    /// Unlike [`lock`], `flush` does **not** zeroize key material — the vault
+    /// stays in the *unlocked* state after this call.
+    async fn flush(&mut self) -> Result<(), VaultError>;
 }
 
 #[cfg(any(test, feature = "mock"))]

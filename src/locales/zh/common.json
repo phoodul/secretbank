@@ -46,7 +46,22 @@
     "graph": "图形",
     "performance": {
       "draggableToggle": "允许拖动节点"
-    }
+    },
+    "integrations": "集成",
+    "integrationsDescription": "外部 API 和数据源。",
+    "nvdApiKey": "NVD API 密钥",
+    "nvdApiKeyDescription": "用于让事件订阅以更高的速率限制轮询国家漏洞数据库。您的密钥在保险库中加密存储。",
+    "nvdApiKeyPlaceholder": "粘贴您的 NVD API 密钥",
+    "nvdApiKeyRequestLink": "申请 NVD API 密钥",
+    "saveKey": "保存",
+    "clearKey": "清除",
+    "showKey": "显示",
+    "hideKey": "隐藏",
+    "keySaved": "密钥已保存",
+    "keyCleared": "密钥已清除",
+    "saveKeyFailed": "保存密钥失败",
+    "vaultLockedWarning": "请先解锁保险库以更改此设置。",
+    "keyConfiguredPlaceholder": "已配置（隐藏）"
   },
   "inventory": {
     "title": "清单",
