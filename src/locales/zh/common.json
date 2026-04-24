@@ -461,6 +461,48 @@
       "projectPathRequired": "请输入项目路径"
     }
   },
+  "audit": {
+    "title": "审计日志",
+    "subtitle": "针对每次变更的防篡改日志。",
+    "empty": "暂无审计条目。",
+    "error": "加载审计日志失败。",
+    "loadMore": "加载更多",
+    "verify": {
+      "action": "验证完整性",
+      "verifying": "正在验证链…",
+      "success": "已验证 {{devices}} 台设备共 {{entries}} 条记录，全部有效。",
+      "failed": "链已损坏 — 请查看每台设备的详细信息。",
+      "devicePanel": "每设备验证结果"
+    },
+    "filter": {
+      "action": "操作前缀",
+      "actionPlaceholder": "例: credential.",
+      "subjectKind": "对象类型",
+      "subjectKindAny": "全部",
+      "deviceId": "设备 ID",
+      "deviceIdPlaceholder": "设备 ID…",
+      "clear": "清除"
+    },
+    "table": {
+      "time": "时间",
+      "actor": "执行者",
+      "action": "操作",
+      "subject": "对象",
+      "device": "设备"
+    },
+    "actor": {
+      "localUser": "本地用户",
+      "system": "系统",
+      "connector": "连接器"
+    },
+    "actionFamily": {
+      "create": "创建",
+      "update": "更新",
+      "delete": "删除",
+      "reveal": "查看 / 读取",
+      "default": "其他"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "输入命令或搜索…",
     "noResults": "未找到结果",

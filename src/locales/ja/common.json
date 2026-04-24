@@ -461,6 +461,48 @@
       "projectPathRequired": "プロジェクトパスを入力してください"
     }
   },
+  "audit": {
+    "title": "監査ログ",
+    "subtitle": "すべての変更に対する改ざん防止ログ。",
+    "empty": "監査エントリはまだありません。",
+    "error": "監査ログの読み込みに失敗しました。",
+    "loadMore": "さらに読み込む",
+    "verify": {
+      "action": "整合性を検証",
+      "verifying": "チェーンを検証中…",
+      "success": "{{devices}} 台のデバイスにわたる {{entries}} 件のエントリがすべて検証されました。",
+      "failed": "チェーンが破損しています — デバイスごとの詳細を確認してください。",
+      "devicePanel": "デバイス別検証結果"
+    },
+    "filter": {
+      "action": "アクション接頭辞",
+      "actionPlaceholder": "例: credential.",
+      "subjectKind": "対象種別",
+      "subjectKindAny": "すべて",
+      "deviceId": "デバイス ID",
+      "deviceIdPlaceholder": "デバイス ID…",
+      "clear": "クリア"
+    },
+    "table": {
+      "time": "時刻",
+      "actor": "アクター",
+      "action": "アクション",
+      "subject": "対象",
+      "device": "デバイス"
+    },
+    "actor": {
+      "localUser": "ローカルユーザー",
+      "system": "システム",
+      "connector": "コネクター"
+    },
+    "actionFamily": {
+      "create": "作成",
+      "update": "更新",
+      "delete": "削除",
+      "reveal": "表示 / 読取",
+      "default": "その他"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "コマンドまたは検索ワードを入力…",
     "noResults": "結果が見つかりません",

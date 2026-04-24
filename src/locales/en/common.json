@@ -461,6 +461,48 @@
       "projectPathRequired": "Please enter a project path"
     }
   },
+  "audit": {
+    "title": "Audit Log",
+    "subtitle": "Tamper-evident log of every mutation.",
+    "empty": "No audit entries yet.",
+    "error": "Failed to load audit log.",
+    "loadMore": "Load more",
+    "verify": {
+      "action": "Verify integrity",
+      "verifying": "Verifying chain…",
+      "success": "All {{entries}} entries verified across {{devices}} device(s).",
+      "failed": "Chain broken — check per-device details below.",
+      "devicePanel": "Per-device verification"
+    },
+    "filter": {
+      "action": "Action prefix",
+      "actionPlaceholder": "e.g. credential.",
+      "subjectKind": "Subject kind",
+      "subjectKindAny": "All kinds",
+      "deviceId": "Device ID",
+      "deviceIdPlaceholder": "Device ID…",
+      "clear": "Clear"
+    },
+    "table": {
+      "time": "Time",
+      "actor": "Actor",
+      "action": "Action",
+      "subject": "Subject",
+      "device": "Device"
+    },
+    "actor": {
+      "localUser": "Local user",
+      "system": "System",
+      "connector": "Connector"
+    },
+    "actionFamily": {
+      "create": "Create",
+      "update": "Update",
+      "delete": "Delete",
+      "reveal": "Reveal / Read",
+      "default": "Other"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "Type a command or search…",
     "noResults": "No results found",

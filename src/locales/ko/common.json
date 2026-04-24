@@ -461,6 +461,48 @@
       "projectPathRequired": "프로젝트 경로를 입력하세요"
     }
   },
+  "audit": {
+    "title": "감사 로그",
+    "subtitle": "모든 변경 사항에 대한 변조 방지 로그.",
+    "empty": "아직 감사 항목이 없습니다.",
+    "error": "감사 로그를 불러오지 못했습니다.",
+    "loadMore": "더 불러오기",
+    "verify": {
+      "action": "무결성 검증",
+      "verifying": "체인 검증 중…",
+      "success": "{{devices}}개 디바이스에 걸친 {{entries}}개 항목이 모두 검증되었습니다.",
+      "failed": "체인이 손상되었습니다 — 디바이스별 상세 내용을 확인하세요.",
+      "devicePanel": "디바이스별 검증 결과"
+    },
+    "filter": {
+      "action": "액션 접두사",
+      "actionPlaceholder": "예: credential.",
+      "subjectKind": "대상 종류",
+      "subjectKindAny": "전체",
+      "deviceId": "디바이스 ID",
+      "deviceIdPlaceholder": "디바이스 ID…",
+      "clear": "초기화"
+    },
+    "table": {
+      "time": "시간",
+      "actor": "행위자",
+      "action": "액션",
+      "subject": "대상",
+      "device": "디바이스"
+    },
+    "actor": {
+      "localUser": "로컬 사용자",
+      "system": "시스템",
+      "connector": "커넥터"
+    },
+    "actionFamily": {
+      "create": "생성",
+      "update": "수정",
+      "delete": "삭제",
+      "reveal": "조회 / 열람",
+      "default": "기타"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "명령어 또는 검색어 입력…",
     "noResults": "결과 없음",
