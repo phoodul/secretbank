@@ -110,8 +110,9 @@
 | T056    | Incidents 페이지 UI (IncidentsPage + IncidentCard + use-incidents + types + i18n 4개 로케일 + Vitest 5 tests + incident_list 반환 확장 + FeedScheduler incidents:updated emit) | 2026-04-25 | `7bfac7c` |
 | T057    | Credential Detail에 Incidents 섹션 통합 (list_incidents_with_matches_for_credential + IncidentsForCredential + use-incidents-for-credential + i18n 4개 + Vitest 5 tests + 2 repo tests) | 2026-04-25 | `3858a5d` |
 | T058    | NVD API Key Setting UI (VaultStorage::flush + vault_setting_get/set 커맨드 + IntegrationsSection + i18n 4개 + flush/locked 테스트 2개 + 커맨드 테스트 5개 + Vitest 6 tests) | 2026-04-25 | `35548dd` |
+| T065    | RAILGUARD 템플릿 라이브러리 (4 tpl + render() + 8 snapshot tests)                                                                                                              | 2026-04-25 | `8ec8b32` |
 
-**완료 합계**: 58/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 ✅ 10/10**)
+**완료 합계**: 59/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 1/10)
 
 ---
 
