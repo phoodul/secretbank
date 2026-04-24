@@ -1,5 +1,6 @@
 //! Tauri commands for key-value app settings (T030).
 
+use api_vault_audit::AuditActor;
 use serde::Serialize;
 use tauri::State;
 
@@ -47,6 +48,18 @@ pub async fn settings_set(
     SettingsRepo::new(&state.pool)
         .set(&key, value.as_deref())
         .await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "settings.set",
+            "settings",
+            key.clone(),
+            Some(serde_json::json!({"key": key}).to_string()),
+        )
+        .await;
+
     Ok(())
 }
 
@@ -67,25 +80,19 @@ mod tests {
         (pool, dir)
     }
 
-    // Tauri command 는 State 주입이 필요해 간접 호출이 어렵다.
-    // 대신 SettingsRepo 동작을 직접 검증 — 커맨드는 얇은 래퍼.
     #[tokio::test]
     async fn set_then_get_roundtrip() {
         let (pool, _dir) = make_pool().await;
         let repo = SettingsRepo::new(&pool);
 
-        // 초기에는 None
         assert_eq!(repo.get("k1").await.unwrap(), None);
 
-        // 값 저장
         repo.set("k1", Some("v1")).await.unwrap();
         assert_eq!(repo.get("k1").await.unwrap(), Some("v1".to_string()));
 
-        // 값 업데이트 (ON CONFLICT UPDATE)
         repo.set("k1", Some("v2")).await.unwrap();
         assert_eq!(repo.get("k1").await.unwrap(), Some("v2".to_string()));
 
-        // None 으로 리셋
         repo.set("k1", None).await.unwrap();
         assert_eq!(repo.get("k1").await.unwrap(), None);
     }

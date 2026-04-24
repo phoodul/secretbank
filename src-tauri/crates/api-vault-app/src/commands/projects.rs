@@ -1,9 +1,6 @@
 //! Tauri commands for project CRUD (T035).
-//!
-//! Projects group credentials by the repository/folder that consumes them.
-//! Used by the drop-scan import flow to auto-create a project from the scanned
-//! folder name before registering detected credentials.
 
+use api_vault_audit::AuditActor;
 use api_vault_core::{Project, ProjectId, ProjectInput, ProjectPatch};
 use api_vault_storage::sqlite::repositories::project::ProjectRepo;
 use serde::Serialize;
@@ -35,7 +32,20 @@ pub async fn project_create(
     state: State<'_, AppContext>,
 ) -> Result<ProjectId, ProjectCommandError> {
     let repo = ProjectRepo::new(&state.pool);
-    Ok(repo.insert(&input).await?)
+    let id = repo.insert(&input).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "project.create",
+            "project",
+            id.to_string(),
+            Some(serde_json::json!({"name": input.name}).to_string()),
+        )
+        .await;
+
+    Ok(id)
 }
 
 #[tauri::command]
@@ -63,6 +73,18 @@ pub async fn project_update(
 ) -> Result<Project, ProjectCommandError> {
     let repo = ProjectRepo::new(&state.pool);
     repo.update(id, &patch).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "project.update",
+            "project",
+            id.to_string(),
+            None,
+        )
+        .await;
+
     repo.get_by_id(id).await?.ok_or(ProjectCommandError::NotFound)
 }
 
@@ -73,5 +95,17 @@ pub async fn project_delete(
 ) -> Result<(), ProjectCommandError> {
     let repo = ProjectRepo::new(&state.pool);
     repo.delete(id).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "project.delete",
+            "project",
+            id.to_string(),
+            None,
+        )
+        .await;
+
     Ok(())
 }

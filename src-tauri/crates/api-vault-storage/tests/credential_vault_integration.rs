@@ -6,13 +6,10 @@
 //! Compiled only when the `mock` feature is enabled.
 #![cfg(feature = "mock")]
 
-use api_vault_core::{
-    AuditAction, AuditActor, AuditLog, AuditLogId, CredentialFilter, CredentialId, CredentialInput,
-    Env, IssuerInput,
-};
+use api_vault_core::{CredentialFilter, CredentialId, CredentialInput, Env, IssuerInput};
 use api_vault_storage::{
     sqlite::{
-        repositories::{audit::AuditRepo, credential::CredentialRepo, issuer::IssuerRepo},
+        repositories::{credential::CredentialRepo, issuer::IssuerRepo},
         SqlitePool,
     },
     vault::{mock::MockVaultStorage, ExposeSecret, SecretBytes, VaultStorage},
@@ -75,22 +72,8 @@ async fn credential_create(
         return Err(TestError::from(vault_err));
     }
 
-    // Minimal audit entry (no hash chain for testing).
-    let audit = AuditLog {
-        id: AuditLogId::new(),
-        seq: 0,
-        device_id: None,
-        actor: AuditActor::LocalUser,
-        action: AuditAction::CredentialCreate,
-        subject_kind: "credential".to_owned(),
-        subject_id: id.to_string(),
-        payload_json: None,
-        prev_hash: None,
-        entry_hash: None,
-        signature: None,
-        created_at: time::OffsetDateTime::now_utc(),
-    };
-    let _ = AuditRepo::new(pool).insert(&audit).await;
+    // Audit is best-effort — skipped in this integration test
+    // (no signing key available; the real audit path is in AuditCtx).
 
     Ok(id)
 }

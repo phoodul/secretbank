@@ -5,6 +5,7 @@
 //! Vault path convention: `"settings/{key}"`
 //! Key whitelist: `["nvd_api_key", "ghsa_token"]`
 
+use api_vault_audit::AuditActor;
 use serde::Serialize;
 use tauri::{AppHandle, State};
 use thiserror::Error;
@@ -215,6 +216,17 @@ pub async fn vault_setting_set(
         .map_err(|e| VaultSettingError::SchedulerRestart {
             message: e.to_string(),
         })?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "vault_setting.set",
+            "vault_setting",
+            key.clone(),
+            Some(serde_json::json!({"key": key}).to_string()),
+        )
+        .await;
 
     Ok(())
 }

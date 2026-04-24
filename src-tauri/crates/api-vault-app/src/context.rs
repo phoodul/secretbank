@@ -11,6 +11,7 @@ use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::{init_pool, SqlitePool};
 use api_vault_storage::vault::{VaultError, VaultStorage};
 
+use crate::audit_ctx::AuditCtx;
 use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
 
@@ -48,8 +49,14 @@ pub struct AppContext {
     ///
     /// 볼트 잠금 해제(`vault_unlock`) 후 `ensure_device_keys` 가 성공하면 채워진다.
     /// 볼트 잠금(`vault_lock`) 시 `None` 으로 초기화된다.
-    /// `None` 상태에서 감사 로그 서명은 불가능하다 (T071 에서 활성화).
+    /// `None` 상태에서 감사 로그 서명은 불가능하다.
     pub device_identity: Arc<RwLock<Option<DeviceIdentity>>>,
+
+    /// Best-effort audit context.
+    ///
+    /// 모든 뮤테이팅 커맨드가 이 헬퍼를 통해 감사 항목을 기록한다.
+    /// vault 가 잠겨 있으면 경고를 기록하고 skip — 호출자의 작업은 계속 진행된다.
+    pub audit: Arc<AuditCtx>,
 }
 
 impl AppContext {
@@ -64,23 +71,29 @@ impl AppContext {
         // SQLite pool.
         let db_path = data_dir.join("vault.db");
         let pool = init_pool(&db_path).await?;
+        let pool = Arc::new(pool);
 
         // Age vault (open in Locked or NotInitialized state).
         let vault_path = data_dir.join("vault.age");
         let age_vault = AgeVaultStorage::open(&vault_path).await?;
         let vault: Box<dyn VaultStorage + Send + Sync> = Box::new(age_vault);
 
+        // Device identity starts as None — populated after vault_unlock.
+        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> =
+            Arc::new(RwLock::new(None));
+
+        // Audit context — shares pool and device_identity.
+        let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));
+
         Ok(Self {
             vault: Arc::new(RwLock::new(vault)),
-            pool: Arc::new(pool),
+            pool,
             data_dir,
             user_id: "default".to_owned(),
-            // 초기 상태: 타이머 없음
             clipboard_controller: Arc::new(Mutex::new(None)),
-            // 초기 상태: 스케줄러 없음 (setup 에서 채워짐)
             feed_scheduler: Arc::new(Mutex::new(None)),
-            // 초기 상태: 볼트 잠금 해제 후 채워짐
-            device_identity: Arc::new(RwLock::new(None)),
+            device_identity,
+            audit,
         })
     }
 

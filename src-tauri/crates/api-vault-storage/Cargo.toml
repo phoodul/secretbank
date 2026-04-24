@@ -9,6 +9,7 @@ mock = []
 
 [dependencies]
 api-vault-core = { path = "../api-vault-core" }
+api-vault-audit = { path = "../api-vault-audit" }
 sqlx      = { workspace = true }
 tokio     = { workspace = true }
 thiserror = { workspace = true }

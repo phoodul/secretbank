@@ -3,6 +3,7 @@
 //! Each command delegates to a pure helper function so unit tests
 //! can exercise logic without a running Tauri app.
 
+use api_vault_audit::AuditActor;
 use serde::Serialize;
 use tauri::State;
 
@@ -123,7 +124,20 @@ pub async fn vault_init(
     state
         .initialize_vault(&secret)
         .await
-        .map_err(VaultCommandError::from)
+        .map_err(VaultCommandError::from)?;
+
+    state
+        .audit
+        .record(
+            AuditActor::System,
+            "vault.init",
+            "vault",
+            state.user_id.clone(),
+            None,
+        )
+        .await;
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -163,6 +177,18 @@ pub async fn vault_unlock(
             }
         }
     }
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "vault.unlock",
+            "vault",
+            state.user_id.clone(),
+            None,
+        )
+        .await;
+
     Ok(())
 }
 
@@ -175,6 +201,18 @@ fn hostname_or_default() -> String {
 
 #[tauri::command]
 pub async fn vault_lock(state: State<'_, AppContext>) -> Result<(), VaultCommandError> {
+    // 잠금 전에 먼저 audit 기록 (identity 가 있는 동안)
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "vault.lock",
+            "vault",
+            state.user_id.clone(),
+            None,
+        )
+        .await;
+
     // 디바이스 identity 클리어 (서명 키를 메모리에서 제거)
     {
         let mut guard = state.device_identity.write().await;

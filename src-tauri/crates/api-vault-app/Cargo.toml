@@ -70,3 +70,4 @@ api-vault-storage = { path = "../api-vault-storage", features = ["mock"] }
 # test-util: tokio::time::pause / advance / start_paused 사용을 위해 필요
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "test-util"] }
 tempfile = "3"
+secrecy = { workspace = true }

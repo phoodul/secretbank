@@ -1,5 +1,6 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
+pub mod audit_ctx;
 pub mod commands;
 pub mod context;
 pub mod services;

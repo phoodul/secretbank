@@ -281,6 +281,7 @@ name = "api-vault-storage"
 version = "0.1.0"
 dependencies = [
  "age",
+ "api-vault-audit",
  "api-vault-core",
  "api-vault-crypto",
  "async-trait",

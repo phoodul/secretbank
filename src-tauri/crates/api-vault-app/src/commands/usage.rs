@@ -1,9 +1,6 @@
 //! Tauri commands for usage records (T035).
-//!
-//! A `Usage` links a credential to a project (optionally a deployment) and
-//! records where the key is referenced — typically an env var name or file
-//! path discovered during a folder scan.
 
+use api_vault_audit::AuditActor;
 use api_vault_core::{CredentialId, ProjectId, Usage, UsageId, UsageInput};
 use api_vault_storage::sqlite::repositories::usage::UsageRepo;
 use serde::Serialize;
@@ -32,7 +29,20 @@ pub async fn usage_create(
     state: State<'_, AppContext>,
 ) -> Result<UsageId, UsageCommandError> {
     let repo = UsageRepo::new(&state.pool);
-    Ok(repo.insert(&input).await?)
+    let id = repo.insert(&input).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "usage.create",
+            "usage",
+            id.to_string(),
+            None,
+        )
+        .await;
+
+    Ok(id)
 }
 
 #[tauri::command]
@@ -60,5 +70,17 @@ pub async fn usage_delete(
 ) -> Result<(), UsageCommandError> {
     let repo = UsageRepo::new(&state.pool);
     repo.delete(id).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "usage.delete",
+            "usage",
+            id.to_string(),
+            None,
+        )
+        .await;
+
     Ok(())
 }

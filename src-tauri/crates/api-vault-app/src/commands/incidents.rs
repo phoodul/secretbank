@@ -10,9 +10,8 @@ use serde::Serialize;
 use tauri::State;
 use thiserror::Error;
 
-use api_vault_core::{
-    CredentialId, IncidentFilter, IncidentId,
-};
+use api_vault_audit::AuditActor;
+use api_vault_core::{CredentialId, IncidentFilter, IncidentId};
 use api_vault_storage::sqlite::repositories::incident::{IncidentListEntry, IncidentRepo};
 
 use crate::context::AppContext;
@@ -82,7 +81,20 @@ pub async fn incident_dismiss(
     state: State<'_, AppContext>,
 ) -> Result<u64, IncidentCommandError> {
     let repo = IncidentRepo::new(&state.pool);
-    Ok(repo.dismiss_matches_for_incident(id).await?)
+    let count = repo.dismiss_matches_for_incident(id).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "incident.dismiss",
+            "incident",
+            id.to_string(),
+            None,
+        )
+        .await;
+
+    Ok(count)
 }
 
 /// 특정 credential 에 연결된 Incident 목록을 반환한다 (active + dismissed 모두).
@@ -107,11 +119,26 @@ pub async fn incident_matches_for_credential(
 pub async fn incident_feed_refresh(
     state: State<'_, AppContext>,
 ) -> Result<usize, IncidentCommandError> {
-    let guard = state.feed_scheduler.lock().await;
-    let handle = guard
-        .as_ref()
-        .ok_or(IncidentCommandError::SchedulerUnavailable)?;
-    Ok(handle.trigger_once().await?)
+    let count = {
+        let guard = state.feed_scheduler.lock().await;
+        let handle = guard
+            .as_ref()
+            .ok_or(IncidentCommandError::SchedulerUnavailable)?;
+        handle.trigger_once().await?
+    };
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "incident.feed_refresh",
+            "incident",
+            "feed",
+            None,
+        )
+        .await;
+
+    Ok(count)
 }
 
 // ---------------------------------------------------------------------------

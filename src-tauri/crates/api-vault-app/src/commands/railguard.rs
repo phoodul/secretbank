@@ -3,6 +3,7 @@
 //! `railguard_preview` — 실제 파일을 쓰지 않고 예상 결과를 반환한다.
 //! `railguard_apply`   — 선택한 모드로 룰 파일을 프로젝트 경로에 기록한다.
 
+use api_vault_audit::AuditActor;
 use api_vault_railguard::{render, RenderContext, RuleKind};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -248,14 +249,30 @@ pub async fn railguard_apply(
     rules: Vec<RuleKind>,
     context: RenderContext,
     mode: ApplyMode,
-    _state: State<'_, AppContext>,
+    state: State<'_, AppContext>,
 ) -> Result<Vec<RuleFileApplied>, RailguardError> {
     let path = validate_project_path(&project_path)?;
-    tokio::task::spawn_blocking(move || apply_rules(&path, &rules, &context, mode))
+    let applied = tokio::task::spawn_blocking(move || apply_rules(&path, &rules, &context, mode))
         .await
         .map_err(|e| RailguardError::Io {
             message: e.to_string(),
-        })?
+        })??;
+
+    // Truncate path to 255 chars for subject_id
+    let subject_id: String = project_path.chars().take(255).collect();
+    let files_written = applied.iter().filter(|a| a.wrote_bytes > 0).count();
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "railguard.apply",
+            "railguard",
+            subject_id,
+            Some(serde_json::json!({"files_written": files_written}).to_string()),
+        )
+        .await;
+
+    Ok(applied)
 }
 
 // ---------------------------------------------------------------------------

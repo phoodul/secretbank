@@ -1,9 +1,6 @@
 //! Tauri commands for deployment CRUD (T038).
-//!
-//! A `Deployment` is a specific environment of a project (e.g. vercel staging
-//! URL). Usages may reference a deployment to disambiguate which instance of a
-//! credential is used where.
 
+use api_vault_audit::AuditActor;
 use api_vault_core::{Deployment, DeploymentId, DeploymentInput, DeploymentPatch, ProjectId};
 use api_vault_storage::sqlite::repositories::deployment::DeploymentRepo;
 use serde::Serialize;
@@ -35,7 +32,20 @@ pub async fn deployment_create(
     state: State<'_, AppContext>,
 ) -> Result<DeploymentId, DeploymentCommandError> {
     let repo = DeploymentRepo::new(&state.pool);
-    Ok(repo.insert(&input).await?)
+    let id = repo.insert(&input).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "deployment.create",
+            "deployment",
+            id.to_string(),
+            Some(serde_json::json!({"url": input.url}).to_string()),
+        )
+        .await;
+
+    Ok(id)
 }
 
 #[tauri::command]
@@ -55,6 +65,18 @@ pub async fn deployment_update(
 ) -> Result<Deployment, DeploymentCommandError> {
     let repo = DeploymentRepo::new(&state.pool);
     repo.update(id, &patch).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "deployment.update",
+            "deployment",
+            id.to_string(),
+            None,
+        )
+        .await;
+
     repo.get_by_id(id)
         .await?
         .ok_or(DeploymentCommandError::NotFound)
@@ -67,5 +89,17 @@ pub async fn deployment_delete(
 ) -> Result<(), DeploymentCommandError> {
     let repo = DeploymentRepo::new(&state.pool);
     repo.delete(id).await?;
+
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            "deployment.delete",
+            "deployment",
+            id.to_string(),
+            None,
+        )
+        .await;
+
     Ok(())
 }
