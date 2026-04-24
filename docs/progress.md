@@ -2,20 +2,65 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (**T055 완료, M4 🔄 7/10**)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 7/10 완료** (피드 4종 + 매칭 + 스케줄러 + IPC 커맨드 완료)
-- **Commits:** 84개 누적 (T055 커밋 추가 예정)
-- **Tests:** Rust 188+개 (api-vault-app 36 + api-vault-feeds 48 + api-vault-storage repo 18 + api-vault-core 21 + 통합/기타) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
-- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러 지속.)
-- **Mode:** 일반.
-- **Next:** **세션 종료 (2026-04-24)**. 재개 시 우선순위:
-  1. **M3 수동 검증 재개** (사용자 요청) — `pnpm tauri dev` 로 `/graph` 실사용. 체크리스트:
-     - `/graph` 렌더 + 4종 커스텀 노드 색 (Issuer info / Credential warning / Project success / Deployment muted)
-     - Blast radius outline (primary solid 3px / secondary dashed 2px / tertiary dotted 1px) + Esc 해제
-     - Settings "Allow dragging" 토글 반영 (localStorage `apivault:graph:nodesDraggable`)
-     - 모바일 뷰포트 MobileGraphList 분기 (`data-testid="mobile-graph-page"`)
-  2. 수동 검증 후 **T056 Incidents 페이지 UI** — `/incidents` 라우트 + IncidentCard + 필터 탭 (All/Critical/Affecting/Dismissed) + `listen('incidents:updated')` + 4 Tauri 커맨드 연동.
-  3. 이후 T057 Credential Detail Incidents 섹션, T058 NVD API key Settings (Should).
+- **Time:** 2026-04-24 (**M3 수동 검증 완료 + 2 hotfix/feature 커밋, M4 🔄 7/10 그대로**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 7/10 완료** + M3 수동 검증 회귀 처리.
+- **Commits:** 86개 누적 (hotfix `85f347a`, drag 영속화 `7d5f3f3` 추가).
+- **Tests:** Rust 188+개 유지 / Vitest **236개** (221 + 15 신규: use-graph-node-positions 11 + adapter savedPositions 4). 전부 통과. `pnpm typecheck` pre-existing 5 에러 지속 (GraphPage.test.tsx — 신규 에러 없음).
+- **Blocker:** 없음.
+- **Mode:** 일반 (꼼꼼한 Y 경로 진행 중).
+- **Next:** 사용자가 live app 에서 드래그 영속화 수동 확인 후 → **T056 Incidents 페이지 UI**.
+
+## M3 수동 검증 결과 (2026-04-24 저녁)
+
+| # | 항목 | 결과 |
+|:--|:----|:----|
+| ① | `/graph` 렌더 + 4 노드 색 | ✅ Issuer/Credential/Deployment 확인. Project 는 프로젝트 생성 전이라 육안 검증 defer. |
+| ② | TB ↔ LR 방향 토글 + 핸들 회전 | ✅ 모두 정상 |
+| ③ | Blast Radius (빨강 실선 + 주황 점선 + Esc 복원 + 비-Credential 무시) | ✅ 전부 통과. "주황 점선이 실선처럼 보인다" 는 시각 오해 (안쪽 카드 border + 바깥쪽 outline 2줄 겹침). 점선 자체는 정상 동작. |
+| ④ | Settings "Allow dragging" 토글 | ✅ localStorage `apivault:graph:nodesDraggable` 영속 + 동작 반영 확인. |
+| ⑤ | 모바일 MobileGraphList 분기 | 🕒 **M11 defer**. `useIsMobile` 이 OS 기반이라 Windows 에서 viewport 조작으로는 트리거 불가. Vitest 자동 테스트로는 커버됨. |
+
+## 수동 검증 중 발견/처리한 이슈
+
+### 1. 피드 스케줄러 기동 panic (🔥 hotfix)
+
+**증상:** 앱 기동 시 `panic: there is no reactor running, must be called from the context of a Tokio 1.x runtime` — `feed_scheduler.rs:172` `JoinSet::spawn`.
+
+**원인:** `tauri::Builder::setup` 콜백은 tokio 런타임 context 바깥에서 실행됨. `spawn_feed_scheduler` 가 동기적으로 `JoinSet::spawn` 을 호출할 때 tokio 핸들을 요구해서 panic.
+
+**수정:** `spawn_feed_scheduler` 호출을 기존 `block_on(AppContext::new(...))` 패턴과 동일하게 `tauri::async_runtime::block_on` 안으로 이동. 커밋 `85f347a`.
+
+**재발 방지 교훈:** Tauri `setup` 안에서 tokio 런타임 핸들을 요구하는 모든 동기 호출(`tokio::spawn`, `JoinSet::spawn`, `Handle::current`)은 반드시 `block_on(async {...})` 안에서 실행해야 함. 향후 다른 service 를 `setup` 에 추가할 때 같은 패턴 적용.
+
+### 2. default direction 이 LR 로 보였다는 관찰 → 시각 해석 차이로 close
+
+- 코드는 `useState<LayoutDirection>('TB')` 로 TB 시작 확정. 버튼 텍스트도 "Top to bottom" 으로 TB 일치.
+- 사용자가 처음 "좌→우" 로 느꼈던 건 issuer 10종이 최상단 rank 에 옆으로 쭉 펼쳐져서 wide-and-short 로 보였기 때문. 실제 flow 는 TB.
+
+### 3. 드래그 위치 영속화 승격 (C 옵션 구현, 커밋 `7d5f3f3`)
+
+**배경:** 사용자가 "드래그해도 위치 저장 안 되면 드래그 기능의 목적이 없다" 고 정당하게 지적. 원래 스펙은 B(세션 내) 또는 A(no-op) 였으나 C(영구) 로 승격.
+
+**구현:**
+- `src/features/graph/use-graph-node-positions.ts` — localStorage key `apivault:graph:nodePositions`, `{nodeId: {x,y}}` 맵. `setPosition` / `clear` / `pruneStale` API. 손상된 JSON / 타입 불일치 방어.
+- `adapter.toReactFlowElements(payload, direction, savedPositions?)` — 3번째 파라미터 추가. dagre 결과 위에 savedPositions 덮어씌움. 없는 노드는 dagre 기본 유지.
+- `DependencyGraph` — `onNodeDragStop` 으로 position 저장, payload 변경 시 `pruneStale(currentIds)`, `hasSavedPositions && <Reset Layout>` 버튼 조건부 렌더.
+- 4 locales 에 `graph.resetLayout` 키 (`Reset layout` / `레이아웃 초기화` / `レイアウトをリセット` / `重置布局`).
+- Vitest 15 신규 (use-graph-node-positions 11 + adapter savedPositions 4).
+
+**남은 검증:** 사용자가 live app 에서 (1) 노드 드래그 → 다른 페이지 이동 → /graph 복귀 시 위치 유지 (2) 앱 재시작 후 위치 유지 (3) "Reset layout" 버튼 클릭 시 auto-layout 복귀 수동 확인.
+
+## M3 수동 검증 Queue 처리 현황
+
+| # | 이슈 | 상태 |
+|:--|:----|:-----|
+| 1 | default direction LR 로 보임 | ✅ Close (시각 해석 차이, 코드 정상) |
+| 2 | Project 초록색 노드 육안 확인 | 🕒 Defer (프로젝트 1개 생성 후 확인 가능, 기능 동작엔 영향 없음) |
+| 3 | 노드 드래그 위치 영속화 UX | ✅ C 옵션 구현 완료 (커밋 `7d5f3f3`) |
+
+## Project Vision 메모 저장 (2026-04-24)
+
+사용자 비전 확정: **MVP 이상의 탁월함 지향, 월 $2 / 년 $15 글로벌 SaaS**. "필요 최소한 구현" 타협 금지. 경쟁 제품을 능가하는 완성도 목표. `~/.claude/projects/.../memory/project_vision.md` 에 저장.
 
 ## T055 구현 교훈 (M4 후속 영향)
 
