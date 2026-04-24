@@ -27,7 +27,7 @@ use commands::usage::{
 };
 use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
 use context::AppContext;
-use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig};
+use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
 use tauri::Manager;
 
 #[cfg(feature = "tauri-plugins")]
@@ -58,7 +58,10 @@ pub fn run(context: tauri::Context) {
             // 피드 스케줄러 시작 (기본값: RSS 만 활성, NVD/GHSA 는 API key 없으면 비활성)
             // `spawn_feed_scheduler` 내부 `JoinSet::spawn` 은 tokio 런타임 context 를
             // 동기적으로 요구하므로 반드시 `block_on` 안에서 호출한다.
-            let scheduler_config = FeedSchedulerConfig::default();
+            let scheduler_config = FeedSchedulerConfig {
+                emitter: Some(std::sync::Arc::new(TauriEmitter::new(app.handle().clone()))),
+                ..Default::default()
+            };
             tauri::async_runtime::block_on(async {
                 let scheduler_handle = spawn_feed_scheduler(ctx.pool.clone(), scheduler_config);
                 *ctx.feed_scheduler.lock().await = Some(scheduler_handle);

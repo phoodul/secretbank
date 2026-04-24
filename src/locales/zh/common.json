@@ -340,6 +340,53 @@
       }
     }
   },
+  "incidents": {
+    "title": "安全事件",
+    "empty": "暂无安全事件。",
+    "loading": "正在加载安全事件…",
+    "error": "加载安全事件失败",
+    "refresh": "刷新订阅源",
+    "refreshing": "刷新中…",
+    "tabs": {
+      "all": "全部",
+      "critical": "严重",
+      "affecting": "影响我的密钥",
+      "dismissed": "已忽略"
+    },
+    "severity": {
+      "info": "信息",
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "critical": "严重"
+    },
+    "source": {
+      "nvd": "NVD",
+      "ghsa": "GHSA",
+      "rss": "RSS",
+      "hibp": "HIBP"
+    },
+    "card": {
+      "matchedCredentials": "匹配的凭证",
+      "noMatches": "无匹配凭证",
+      "view": "查看",
+      "dismiss": "忽略",
+      "dismissed": "已忽略"
+    },
+    "match": {
+      "reason": {
+        "issuer_match": "发行者匹配",
+        "keyword": "关键字匹配",
+        "explicit": "精确匹配"
+      }
+    },
+    "toast": {
+      "dismissSuccess": "已忽略该安全事件",
+      "dismissError": "忽略安全事件失败",
+      "refreshSuccess": "获取到 {{count}} 条新安全事件",
+      "refreshError": "刷新订阅源失败"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "输入命令或搜索…",
     "noResults": "未找到结果",

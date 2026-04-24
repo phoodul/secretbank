@@ -340,6 +340,53 @@
       }
     }
   },
+  "incidents": {
+    "title": "Incidents",
+    "empty": "No incidents to show.",
+    "loading": "Loading incidents…",
+    "error": "Failed to load incidents",
+    "refresh": "Refresh feeds",
+    "refreshing": "Refreshing…",
+    "tabs": {
+      "all": "All",
+      "critical": "Critical",
+      "affecting": "Affecting my keys",
+      "dismissed": "Dismissed"
+    },
+    "severity": {
+      "info": "Info",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "source": {
+      "nvd": "NVD",
+      "ghsa": "GHSA",
+      "rss": "RSS",
+      "hibp": "HIBP"
+    },
+    "card": {
+      "matchedCredentials": "Matched credentials",
+      "noMatches": "No credentials matched",
+      "view": "View",
+      "dismiss": "Dismiss",
+      "dismissed": "Dismissed"
+    },
+    "match": {
+      "reason": {
+        "issuer_match": "Issuer match",
+        "keyword": "Keyword match",
+        "explicit": "Explicit match"
+      }
+    },
+    "toast": {
+      "dismissSuccess": "Incident dismissed",
+      "dismissError": "Failed to dismiss incident",
+      "refreshSuccess": "{{count}} new incident(s) fetched",
+      "refreshError": "Failed to refresh feeds"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "Type a command or search…",
     "noResults": "No results found",

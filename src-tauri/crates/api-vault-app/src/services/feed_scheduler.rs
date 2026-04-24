@@ -24,6 +24,45 @@ use tokio_util::sync::CancellationToken;
 use crate::services::feed_normalize::{build_issuer_index, normalize_ghsa, normalize_nvd, normalize_rss};
 
 // ---------------------------------------------------------------------------
+// Event emitter abstraction (테스트 가능성을 위해 trait 로 분리)
+// ---------------------------------------------------------------------------
+
+/// Tauri 이벤트 `incidents:updated` 를 방출하는 추상 인터페이스.
+///
+/// 프로덕션: `TauriEmitter` (AppHandle 래퍼).
+/// 테스트: `NoopEmitter`.
+pub trait IncidentEventEmitter: Send + Sync + 'static {
+    fn emit_incidents_updated(&self);
+}
+
+/// 프로덕션 구현 — Tauri `AppHandle` 로 전체 창에 이벤트를 방출한다.
+pub struct TauriEmitter {
+    app_handle: tauri::AppHandle,
+}
+
+impl TauriEmitter {
+    pub fn new(app_handle: tauri::AppHandle) -> Self {
+        Self { app_handle }
+    }
+}
+
+impl IncidentEventEmitter for TauriEmitter {
+    fn emit_incidents_updated(&self) {
+        use tauri::Emitter as _;
+        if let Err(e) = self.app_handle.emit("incidents:updated", ()) {
+            tracing::warn!(error = %e, "incidents:updated 이벤트 방출 실패");
+        }
+    }
+}
+
+/// 테스트 전용 — 이벤트를 방출하지 않는다.
+pub struct NoopEmitter;
+
+impl IncidentEventEmitter for NoopEmitter {
+    fn emit_incidents_updated(&self) {}
+}
+
+// ---------------------------------------------------------------------------
 // 에러 모델
 // ---------------------------------------------------------------------------
 
@@ -83,6 +122,7 @@ impl Breaker {
 /// 폴링 주기 및 API 키 설정.
 ///
 /// `Default::default()` = NVD/GHSA 비활성, RSS 만 5분 간격.
+/// `emitter` 는 폴러가 새 incident 를 저장한 후 이벤트를 방출하는 데 사용된다.
 #[derive(Clone)]
 pub struct FeedSchedulerConfig {
     /// NVD CVE API 키. None 이면 NVD 폴러를 spawn 하지 않는다.
@@ -92,6 +132,8 @@ pub struct FeedSchedulerConfig {
     pub nvd_interval: Duration,
     pub ghsa_interval: Duration,
     pub rss_interval: Duration,
+    /// 새 incident 가 저장될 때 방출할 이벤트 에미터. None 이면 이벤트 없음.
+    pub emitter: Option<Arc<dyn IncidentEventEmitter>>,
 }
 
 impl Default for FeedSchedulerConfig {
@@ -102,6 +144,7 @@ impl Default for FeedSchedulerConfig {
             nvd_interval: Duration::from_secs(2 * 60 * 60),
             ghsa_interval: Duration::from_secs(24 * 60 * 60),
             rss_interval: Duration::from_secs(5 * 60),
+            emitter: None,
         }
     }
 }
@@ -116,6 +159,7 @@ pub struct FeedSchedulerHandle {
     join_set: JoinSet<()>,
     pool: Arc<SqlitePool>,
     config: FeedSchedulerConfig,
+    emitter: Option<Arc<dyn IncidentEventEmitter>>,
 }
 
 impl FeedSchedulerHandle {
@@ -129,6 +173,7 @@ impl FeedSchedulerHandle {
     ///
     /// 정기 스케줄과 독립적으로 동작 (interval bypass).
     /// 반환값 = 전체 소스 합산 저장된 incident 개수.
+    /// 1개 이상 저장되면 `incidents:updated` 이벤트를 방출한다.
     pub async fn trigger_once(&self) -> Result<usize, FeedSchedulerError> {
         let mut total = 0usize;
 
@@ -150,6 +195,12 @@ impl FeedSchedulerHandle {
             total += poll_ghsa_once(&self.pool, &ghsa_client, since).await?;
         }
 
+        if total > 0 {
+            if let Some(emitter) = self.emitter.as_ref() {
+                emitter.emit_incidents_updated();
+            }
+        }
+
         Ok(total)
     }
 }
@@ -167,12 +218,14 @@ pub fn spawn_feed_scheduler(
 ) -> FeedSchedulerHandle {
     let cancel = CancellationToken::new();
     let mut join_set = JoinSet::new();
+    let emitter = config.emitter.clone();
 
     // RSS 는 항상 활성
     join_set.spawn(run_rss_poller(
         pool.clone(),
         config.rss_interval,
         cancel.clone(),
+        emitter.clone(),
     ));
 
     // NVD 는 key 있을 때만
@@ -182,6 +235,7 @@ pub fn spawn_feed_scheduler(
             key,
             config.nvd_interval,
             cancel.clone(),
+            emitter.clone(),
         ));
     }
 
@@ -192,17 +246,23 @@ pub fn spawn_feed_scheduler(
             token,
             config.ghsa_interval,
             cancel.clone(),
+            emitter.clone(),
         ));
     }
 
-    FeedSchedulerHandle { cancel, join_set, pool, config }
+    FeedSchedulerHandle { cancel, join_set, pool, config, emitter }
 }
 
 // ---------------------------------------------------------------------------
 // RSS 폴러
 // ---------------------------------------------------------------------------
 
-async fn run_rss_poller(pool: Arc<SqlitePool>, interval: Duration, cancel: CancellationToken) {
+async fn run_rss_poller(
+    pool: Arc<SqlitePool>,
+    interval: Duration,
+    cancel: CancellationToken,
+    emitter: Option<Arc<dyn IncidentEventEmitter>>,
+) {
     let mut ticker = tokio::time::interval(interval);
     ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
     let mut breaker = Breaker::new();
@@ -221,6 +281,11 @@ async fn run_rss_poller(pool: Arc<SqlitePool>, interval: Duration, cancel: Cance
                     Ok(count) => {
                         tracing::info!(count, "rss poll complete");
                         breaker.on_success();
+                        if count > 0 {
+                            if let Some(e) = emitter.as_ref() {
+                                e.emit_incidents_updated();
+                            }
+                        }
                     }
                     Err(e) => {
                         tracing::warn!(error = %e, "rss poll failed");
@@ -281,6 +346,7 @@ async fn run_nvd_poller(
     api_key: String,
     interval: Duration,
     cancel: CancellationToken,
+    emitter: Option<Arc<dyn IncidentEventEmitter>>,
 ) {
     let mut ticker = tokio::time::interval(interval);
     ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
@@ -301,6 +367,11 @@ async fn run_nvd_poller(
                     Ok(count) => {
                         tracing::info!(count, "nvd poll complete");
                         breaker.on_success();
+                        if count > 0 {
+                            if let Some(e) = emitter.as_ref() {
+                                e.emit_incidents_updated();
+                            }
+                        }
                     }
                     Err(e) => {
                         tracing::warn!(error = %e, "nvd poll failed");
@@ -359,6 +430,7 @@ async fn run_ghsa_poller(
     token: String,
     interval: Duration,
     cancel: CancellationToken,
+    emitter: Option<Arc<dyn IncidentEventEmitter>>,
 ) {
     let mut ticker = tokio::time::interval(interval);
     ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
@@ -379,6 +451,11 @@ async fn run_ghsa_poller(
                     Ok(count) => {
                         tracing::info!(count, "ghsa poll complete");
                         breaker.on_success();
+                        if count > 0 {
+                            if let Some(e) = emitter.as_ref() {
+                                e.emit_incidents_updated();
+                            }
+                        }
                     }
                     Err(e) => {
                         tracing::warn!(error = %e, "ghsa poll failed");
@@ -545,6 +622,7 @@ mod tests {
             rss_interval: Duration::from_secs(9999),
             nvd_interval: Duration::from_secs(9999),
             ghsa_interval: Duration::from_secs(9999),
+            emitter: Some(Arc::new(NoopEmitter)),
         };
 
         let handle = spawn_feed_scheduler(pool_arc, config);

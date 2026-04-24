@@ -1,7 +1,10 @@
-//! Tauri 커맨드 — Incident Feed (T055).
+//! Tauri 커맨드 — Incident Feed (T055/T056).
 //!
 //! incident_list, incident_dismiss, incident_matches_for_credential,
 //! incident_feed_refresh 4개를 제공한다.
+//!
+//! T056 변경: `incident_list` 반환 타입이 `Vec<Incident>` → `Vec<IncidentListEntry>` 로
+//! 변경되었다. `IncidentListEntry` 는 incident + 연결된 credential 정보를 포함한다.
 
 use serde::Serialize;
 use tauri::State;
@@ -10,7 +13,7 @@ use thiserror::Error;
 use api_vault_core::{
     CredentialId, Incident, IncidentFilter, IncidentId,
 };
-use api_vault_storage::sqlite::repositories::incident::IncidentRepo;
+use api_vault_storage::sqlite::repositories::incident::{IncidentListEntry, IncidentRepo};
 
 use crate::context::AppContext;
 
@@ -57,14 +60,17 @@ impl From<crate::services::feed_scheduler::FeedSchedulerError> for IncidentComma
 /// Incident 목록을 필터링하여 반환한다.
 ///
 /// `filter` 가 None 이면 기본 필터(dismissed=false, 소스/심각도/issuer 무제한) 적용.
+///
+/// 반환: `Vec<IncidentListEntry>` — 각 항목은 `incident` + `matches` 배열을 포함한다.
+/// `matches` 에는 연결된 credential 이름/issuer 정보가 포함되어 있어 UI 에서 바로 사용 가능.
 #[tauri::command]
 pub async fn incident_list(
     filter: Option<IncidentFilter>,
     state: State<'_, AppContext>,
-) -> Result<Vec<Incident>, IncidentCommandError> {
+) -> Result<Vec<IncidentListEntry>, IncidentCommandError> {
     let filter = filter.unwrap_or_default();
     let repo = IncidentRepo::new(&state.pool);
-    Ok(repo.list(&filter).await?)
+    Ok(repo.list_with_matches(&filter).await?)
 }
 
 /// `incident_id` 에 해당하는 모든 활성 match 를 dismissed 처리한다.

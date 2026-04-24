@@ -2,10 +2,38 @@ use api_vault_core::{
     CredentialId, Incident, IncidentFilter, IncidentId, IncidentMatch, IncidentMatchId,
     IncidentSeverity, IncidentSource, IssuerId, MatchReason,
 };
+use serde::Serialize;
 use sqlx::{Row, SqlitePool};
 use time::OffsetDateTime;
 
 use crate::sqlite::{dt_to_ms, ms_to_dt, ms_to_dt_opt, StorageError};
+
+// ---------------------------------------------------------------------------
+// Rich list entry (used by incident_list Tauri command)
+// ---------------------------------------------------------------------------
+
+/// Enriched match detail returned by `list_with_matches`.
+#[derive(Debug, Clone, Serialize)]
+pub struct IncidentMatchDetail {
+    pub id: IncidentMatchId,
+    pub credential_id: CredentialId,
+    /// The `label` field stored in the `credential` table.
+    pub credential_label: String,
+    /// `issuers.display_name` joined from the credential's issuer.
+    pub issuer_display_name: Option<String>,
+    pub reason: MatchReason,
+    #[serde(with = "time::serde::timestamp::milliseconds")]
+    pub matched_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub dismissed_at: Option<OffsetDateTime>,
+}
+
+/// Incident bundled with its match details. Returned by `incident_list`.
+#[derive(Debug, Clone, Serialize)]
+pub struct IncidentListEntry {
+    pub incident: Incident,
+    pub matches: Vec<IncidentMatchDetail>,
+}
 
 pub struct IncidentRepo<'a> {
     pool: &'a SqlitePool,
@@ -206,6 +234,143 @@ impl<'a> IncidentRepo<'a> {
         .await?;
 
         rows.iter().map(row_to_incident).collect()
+    }
+
+    /// Return incidents with their match details in a single query.
+    ///
+    /// Applies the same filter axes as `list`. Uses a LEFT JOIN so that
+    /// incidents with zero matches are still included (matches will be empty).
+    /// Rows are grouped in Rust after the flat SQL result.
+    pub async fn list_with_matches(
+        &self,
+        filter: &IncidentFilter,
+    ) -> Result<Vec<IncidentListEntry>, StorageError> {
+        let source_str = filter.source.map(source_to_str);
+        let severity_str = filter.severity.map(severity_to_str);
+        let issuer_id_str = filter.issuer_id.map(|i| i.to_string());
+        let include_dismissed: i64 = if filter.include_dismissed { 1 } else { 0 };
+
+        // One query: incident LEFT JOIN incident_match LEFT JOIN credential LEFT JOIN issuer.
+        // The dismissed-filter sub-select is the same as in `list`.
+        let rows = sqlx::query(
+            r#"SELECT
+                 i.id          AS inc_id,
+                 i.source      AS inc_source,
+                 i.source_id   AS inc_source_id,
+                 i.issuer_id   AS inc_issuer_id,
+                 i.severity    AS inc_severity,
+                 i.title       AS inc_title,
+                 i.body        AS inc_body,
+                 i.url         AS inc_url,
+                 i.detected_at AS inc_detected_at,
+                 i.published_at AS inc_published_at,
+                 im.id          AS match_id,
+                 im.credential_id AS match_cred_id,
+                 im.reason     AS match_reason,
+                 im.matched_at AS match_matched_at,
+                 im.dismissed_at AS match_dismissed_at,
+                 c.name        AS cred_label,
+                 iss.display_name AS issuer_display_name
+               FROM incident i
+               LEFT JOIN incident_match im ON im.incident_id = i.id
+               LEFT JOIN credential c ON c.id = im.credential_id
+               LEFT JOIN issuer iss ON iss.id = c.issuer_id
+               WHERE
+                 (?1 IS NULL OR i.source = ?1)
+                 AND (?2 IS NULL OR i.severity = ?2)
+                 AND (?3 IS NULL OR i.issuer_id = ?3)
+                 AND (
+                   ?4 = 1
+                   OR i.id NOT IN (
+                     SELECT im2.incident_id
+                     FROM incident_match im2
+                     GROUP BY im2.incident_id
+                     HAVING SUM(CASE WHEN im2.dismissed_at IS NULL THEN 0 ELSE 1 END) = COUNT(*)
+                     AND COUNT(*) > 0
+                   )
+                 )
+               ORDER BY i.detected_at DESC, im.matched_at ASC"#,
+        )
+        .bind(source_str)
+        .bind(severity_str)
+        .bind(&issuer_id_str)
+        .bind(include_dismissed)
+        .fetch_all(self.pool)
+        .await?;
+
+        // Group flat rows by incident id (preserving order).
+        let mut entries: Vec<IncidentListEntry> = Vec::new();
+
+        for row in &rows {
+            let inc_id_str: String = row.try_get("inc_id")?;
+            let inc_id: IncidentId = inc_id_str
+                .parse()
+                .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))?;
+
+            // Find or create the entry for this incident.
+            if entries.last().map(|e| e.incident.id) != Some(inc_id) {
+                let source_str: String = row.try_get("inc_source")?;
+                let severity_str_val: String = row.try_get("inc_severity")?;
+                let issuer_id_s: Option<String> = row.try_get("inc_issuer_id")?;
+                let detected_ms: i64 = row.try_get("inc_detected_at")?;
+                let published_ms: Option<i64> = row.try_get("inc_published_at")?;
+
+                let incident = Incident {
+                    id: inc_id,
+                    source: str_to_source(&source_str)?,
+                    source_id: row.try_get("inc_source_id")?,
+                    issuer_id: issuer_id_s
+                        .map(|s| {
+                            s.parse::<IssuerId>()
+                                .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))
+                        })
+                        .transpose()?,
+                    severity: str_to_severity(&severity_str_val)?,
+                    title: row.try_get("inc_title")?,
+                    body: row.try_get("inc_body")?,
+                    url: row.try_get("inc_url")?,
+                    detected_at: ms_to_dt(detected_ms)?,
+                    published_at: ms_to_dt_opt(published_ms)?,
+                };
+                entries.push(IncidentListEntry { incident, matches: Vec::new() });
+            }
+
+            // Append match detail if a match row exists (LEFT JOIN may produce NULL).
+            let match_id_str: Option<String> = row.try_get("match_id")?;
+            if let Some(mid_str) = match_id_str {
+                let cred_id_str: String = row.try_get("match_cred_id")?;
+                let reason_str: String = row.try_get("match_reason")?;
+                let matched_ms: i64 = row.try_get("match_matched_at")?;
+                let dismissed_at_str: Option<String> = row.try_get("match_dismissed_at")?;
+
+                let dismissed_at = dismissed_at_str
+                    .map(|s| {
+                        OffsetDateTime::parse(&s, &time::format_description::well_known::Rfc3339)
+                            .map_err(|e| StorageError::Parse(e.to_string()))
+                    })
+                    .transpose()?;
+
+                let detail = IncidentMatchDetail {
+                    id: mid_str
+                        .parse()
+                        .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))?,
+                    credential_id: cred_id_str
+                        .parse()
+                        .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))?,
+                    credential_label: row.try_get("cred_label")?,
+                    issuer_display_name: row.try_get("issuer_display_name")?,
+                    reason: str_to_reason(&reason_str)?,
+                    matched_at: ms_to_dt(matched_ms)?,
+                    dismissed_at,
+                };
+
+                if let Some(entry) = entries.last_mut() {
+                    entry.matches.push(detail);
+                }
+            }
+        }
+
+        Ok(entries)
     }
 
     /// Dismiss every active (non-dismissed) match of `incident_id`.
@@ -703,5 +868,98 @@ mod tests {
         let filter = IncidentFilter::default();
         let remaining = repo.list(&filter).await.unwrap();
         assert!(remaining.is_empty());
+    }
+
+    // -----------------------------------------------------------------------
+    // T10: list_with_matches — match 없는 incident: matches 배열이 비어있어야 함
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_with_matches_empty_matches() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let inc = make_incident(IncidentSource::Nvd, IncidentSeverity::Info, None, "nomatch");
+        repo.insert(&inc).await.unwrap();
+
+        let filter = IncidentFilter::default();
+        let entries = repo.list_with_matches(&filter).await.unwrap();
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].incident.source_id, "CVE-TEST-nomatch");
+        assert!(entries[0].matches.is_empty(), "match 없는 incident 의 matches 는 빈 배열이어야 함");
+    }
+
+    // -----------------------------------------------------------------------
+    // T11: list_with_matches — match 여러 개: credential label / issuer name 포함
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_with_matches_multiple_matches() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "stripe").await;
+        let cred_a = insert_credential(&pool, issuer_id, "stripe-live").await;
+        let cred_b = insert_credential(&pool, issuer_id, "stripe-test").await;
+
+        let inc = make_incident(IncidentSource::Rss, IncidentSeverity::High, None, "multi");
+        repo.insert(&inc).await.unwrap();
+        repo.insert_match(inc.id, cred_a, MatchReason::IssuerMatch).await.unwrap();
+        repo.insert_match(inc.id, cred_b, MatchReason::Keyword).await.unwrap();
+
+        let filter = IncidentFilter::default();
+        let entries = repo.list_with_matches(&filter).await.unwrap();
+
+        assert_eq!(entries.len(), 1);
+        let entry = &entries[0];
+        assert_eq!(entry.incident.source_id, "CVE-TEST-multi");
+        assert_eq!(entry.matches.len(), 2);
+
+        let labels: Vec<&str> = entry.matches.iter().map(|m| m.credential_label.as_str()).collect();
+        assert!(labels.contains(&"stripe-live"));
+        assert!(labels.contains(&"stripe-test"));
+
+        // issuer_display_name 이 채워져 있어야 함
+        for m in &entry.matches {
+            assert_eq!(m.issuer_display_name.as_deref(), Some("stripe"), "issuer display_name 은 'stripe' 이어야 함");
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // T12: list_with_matches — dismissed match 포함/제외 동작 확인
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_with_matches_dismissed_handling() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "github").await;
+        let cred_a = insert_credential(&pool, issuer_id, "gh-active").await;
+        let cred_b = insert_credential(&pool, issuer_id, "gh-dismissed").await;
+
+        // Incident A: match 하나 active, 하나 dismissed → default filter 에 포함됨
+        let inc_a = make_incident(IncidentSource::Rss, IncidentSeverity::Medium, None, "DA");
+        repo.insert(&inc_a).await.unwrap();
+        repo.insert_match(inc_a.id, cred_a, MatchReason::IssuerMatch).await.unwrap();
+        let m_b = repo.insert_match(inc_a.id, cred_b, MatchReason::Keyword).await.unwrap();
+        repo.dismiss_match(m_b).await.unwrap();
+
+        // Incident B: match 모두 dismissed → default filter 에서 제외됨
+        let inc_b = make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "DB");
+        repo.insert(&inc_b).await.unwrap();
+        let m_c = repo.insert_match(inc_b.id, cred_b, MatchReason::Keyword).await.unwrap();
+        repo.dismiss_match(m_c).await.unwrap();
+
+        // default filter: inc_A 만 포함, inc_B 제외
+        let filter = IncidentFilter::default();
+        let entries = repo.list_with_matches(&filter).await.unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].incident.source_id, "CVE-TEST-DA");
+        // 두 match 모두 포함 (active + dismissed)
+        assert_eq!(entries[0].matches.len(), 2);
+
+        // include_dismissed = true: 둘 다 포함
+        let filter_all = IncidentFilter { include_dismissed: true, ..Default::default() };
+        let entries_all = repo.list_with_matches(&filter_all).await.unwrap();
+        assert_eq!(entries_all.len(), 2);
     }
 }

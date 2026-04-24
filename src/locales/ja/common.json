@@ -340,6 +340,53 @@
       }
     }
   },
+  "incidents": {
+    "title": "インシデント",
+    "empty": "表示するインシデントはありません。",
+    "loading": "インシデントを読み込み中…",
+    "error": "インシデントの読み込みに失敗しました",
+    "refresh": "フィードを更新",
+    "refreshing": "更新中…",
+    "tabs": {
+      "all": "すべて",
+      "critical": "重大",
+      "affecting": "自分のキーに影響",
+      "dismissed": "解除済み"
+    },
+    "severity": {
+      "info": "情報",
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "critical": "重大"
+    },
+    "source": {
+      "nvd": "NVD",
+      "ghsa": "GHSA",
+      "rss": "RSS",
+      "hibp": "HIBP"
+    },
+    "card": {
+      "matchedCredentials": "一致した認証情報",
+      "noMatches": "一致した認証情報なし",
+      "view": "表示",
+      "dismiss": "解除",
+      "dismissed": "解除済み"
+    },
+    "match": {
+      "reason": {
+        "issuer_match": "発行者マッチ",
+        "keyword": "キーワードマッチ",
+        "explicit": "明示的マッチ"
+      }
+    },
+    "toast": {
+      "dismissSuccess": "インシデントを解除しました",
+      "dismissError": "インシデントの解除に失敗しました",
+      "refreshSuccess": "新しいインシデントを {{count}} 件取得しました",
+      "refreshError": "フィードの更新に失敗しました"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "コマンドまたは検索ワードを入力…",
     "noResults": "結果が見つかりません",

@@ -340,6 +340,53 @@
       }
     }
   },
+  "incidents": {
+    "title": "인시던트",
+    "empty": "표시할 인시던트가 없습니다.",
+    "loading": "인시던트 로딩 중…",
+    "error": "인시던트를 불러오지 못했습니다",
+    "refresh": "피드 새로고침",
+    "refreshing": "새로고침 중…",
+    "tabs": {
+      "all": "전체",
+      "critical": "심각",
+      "affecting": "내 키 영향",
+      "dismissed": "해제됨"
+    },
+    "severity": {
+      "info": "정보",
+      "low": "낮음",
+      "medium": "보통",
+      "high": "높음",
+      "critical": "심각"
+    },
+    "source": {
+      "nvd": "NVD",
+      "ghsa": "GHSA",
+      "rss": "RSS",
+      "hibp": "HIBP"
+    },
+    "card": {
+      "matchedCredentials": "매칭된 자격증명",
+      "noMatches": "매칭된 자격증명 없음",
+      "view": "보기",
+      "dismiss": "해제",
+      "dismissed": "해제됨"
+    },
+    "match": {
+      "reason": {
+        "issuer_match": "발급처 매치",
+        "keyword": "키워드 매치",
+        "explicit": "직접 매치"
+      }
+    },
+    "toast": {
+      "dismissSuccess": "인시던트가 해제되었습니다",
+      "dismissError": "인시던트 해제 실패",
+      "refreshSuccess": "새 인시던트 {{count}}개를 가져왔습니다",
+      "refreshError": "피드 새로고침 실패"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "명령어 또는 검색어 입력…",
     "noResults": "결과 없음",
