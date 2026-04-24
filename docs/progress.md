@@ -2,13 +2,24 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (**T051 완료, M4 🔄 3/10**)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 3/10 완료**
-- **Commits:** 76개 누적 (T051 커밋 추가 예정)
-- **Tests:** Rust 132+개 (api-vault-feeds 24 = rss 9 + ghsa 9 + nvd 6) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
-- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러는 GraphPage.test.tsx 회귀로 T049/T050/T051 무관 — Pending Decisions 참조.)
+- **Time:** 2026-04-24 (**T052 완료, M4 🔄 4/10**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 4/10 완료**
+- **Commits:** 78개 누적 (T052 커밋 추가 예정)
+- **Tests:** Rust 142+개 (api-vault-feeds 34 = hibp 10 + rss 9 + ghsa 9 + nvd 6) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
+- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러는 GraphPage.test.tsx 회귀로 M4 Rust 크레이트 작업과 무관 — Pending Decisions 참조.)
 - **Mode:** 일반.
-- **Next:** T052 HIBP v3 클라이언트 (Should 우선순위). M3 수동 검증 여전히 보류.
+- **Next:** T053 Incident 매칭 엔진 (Must, T049/T050/T051 의존 블록 종료). 이후 T054 스케줄러 → T055 Tauri 커맨드 → T056/T057 UI.
+
+## T052 구현 교훈 (M4 후속 영향)
+
+- **HIBP 404 = "breach 없음" 정상**: 다른 feed 클라이언트(T049/T050)와 달리 404 를 에러로 처리하면 안 됨. `Ok(Vec::new())` 로 변환. T053 매칭 엔진은 "안전한 이메일" 조회 응답을 같은 경로로 처리 가능.
+- **Email URL 인코딩은 수동**: path segment 는 reqwest `.query()` 가 자동 처리하지 않음. `urlencoding::encode(email)` 로 `+ → %2B`, `@ → %40` 수동 변환 후 `format!("{}/breachedaccount/{}", base, encoded)`. workspace 에 `urlencoding = "2"` 신규 추가.
+- **Rate limit 전략**: Core 1 티어 10 RPM 을 최소 공통분모로 하드코딩. 상위 티어 API key 도 보수적으로 이 제한에 묶임. 티어 분기가 필요해지면 `HibpClient::new_with_rate(api_key, rpm)` 추가 예정.
+- **PascalCase serde**: 전 필드 대문자 시작. `#[serde(rename_all = "PascalCase")]` 를 struct 레벨 1회 선언으로 21개 필드 매핑 완성.
+- **`BreachDate` 는 `String` 유지**: `"2013-10-04"` 날짜-only 포맷. `OffsetDateTime` 으로 바꾸면 시간 00:00:00Z 채워져 의미 왜곡. `String` 으로 두고 UI/DB 레이어에서 `time::Date::parse` 로 해석.
+- **Defensive `Option` 확장**: 리서치에서 non-nullable 로 표기된 `LogoPath`/`IsStealerLog` 도 Optional 로 선언. HIBP 는 과거에도 필드를 사후 추가한 이력이 있어 구버전 breach 레코드에 누락 가능.
+- **User-Agent + hibp-api-key 둘 다 필수**: UA 누락 → 403, api-key 누락 → 401. reqwest Client builder 에서 UA 전역 설정 + 매 요청 hibp-api-key 헤더 부착.
+- **429 `retry-after` 헤더 대기초 정수**: T049 NVD, T050 GHSA 와 동일한 재시도 힌트 포맷 (초 정수). `HibpError::RateLimited { retry_after: Duration }` 공통 패턴 유지.
 
 ## T051 구현 교훈 (M4 후속 영향)
 

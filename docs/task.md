@@ -32,7 +32,7 @@
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 3/10 완료        |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 4/10 완료        |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -103,8 +103,9 @@
 | T049    | NVD CVE API 2.0 클라이언트 (api-vault-feeds 크레이트 + governor rate limiter + wiremock 6 tests) | 2026-04-24 | `9a7895f` |
 | T050    | GHSA 클라이언트 (GhsaClient + Link 헤더 커서 페이지네이션 + wiremock 9 tests) | 2026-04-24 | `344e024` |
 | T051    | SaaS 상태 RSS 클라이언트 (RssClient + 10 프리셋 + feed-rs + 9 tests)           | 2026-04-24 | `5d9ec6b` |
+| T052    | HIBP v3 클라이언트 (HibpClient + check_email + urlencoding + wiremock 10 tests) | 2026-04-24 | _(pending commit)_ |
 
-**완료 합계**: 51/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 3/10**)
+**완료 합계**: 52/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 4/10**)
 
 ---
 
@@ -865,10 +866,16 @@
 - **Goal**: 이메일 유출 조회.
 - **DoD**:
   - `crates/api-vault-feeds/src/hibp.rs`
-  - `fn check_email(email: &str, api_key: &str) -> Result<Vec<Breach>>`
-  - `User-Agent` 헤더 필수
-- **Files Touched**: `crates/api-vault-feeds/src/hibp.rs`
-- **Tests**: Rust — wiremock
+  - `HibpClient::check_email(&self, email: &str) -> Result<Vec<HibpBreach>, HibpError>` (api_key 는 생성자 주입)
+  - 엔드포인트: `GET https://haveibeenpwned.com/api/v3/breachedaccount/{email}?truncateResponse=false`
+  - Email path segment 는 `urlencoding::encode` 로 수동 percent-encoding (reqwest `.query()` 는 path 에 적용 안 됨)
+  - `hibp-api-key` 헤더 + `User-Agent` 헤더 (reqwest Client builder user_agent) 둘 다 필수
+  - HTTP 404 → `Ok(Vec::new())` ("breach 없음" 은 정상 응답, Err 아님)
+  - `HibpError` variants: `Unauthorized(401)`, `Forbidden(403)`, `BadRequest(400)`, `RateLimited(429 + retry-after)`, `Server(5xx)`, `Http`, `Decode`, `ParseTime`
+  - Rate limiter: Core 1 티어 10 req/min (governor `Quota::per_minute(10)`)
+  - `HibpBreach` DTO: PascalCase serde 로 21 필드 매핑, `Attribution`/`DisclosureUrl`/`LogoPath`/`IsStealerLog` Optional, `BreachDate` 는 `String` 유지 (`YYYY-MM-DD` — OffsetDateTime 변환 시 혼란), `AddedDate`/`ModifiedDate` 는 RFC3339 파싱
+- **Files Touched**: `crates/api-vault-feeds/src/hibp.rs`, `src-tauri/Cargo.toml` (+urlencoding), `api-vault-feeds/Cargo.toml`, `api-vault-feeds/src/lib.rs`
+- **Tests**: Rust — wiremock 10 tests (200/404-empty/401/403/429+retry-after/503 + hibp-api-key 헤더 검증 + truncateResponse 쿼리 검증 + email URL-encode path 검증 + Optional 필드 null 파싱)
 
 ### T053. Incident 매칭 엔진
 

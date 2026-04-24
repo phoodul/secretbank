@@ -15,6 +15,7 @@ governor = { workspace = true }
 feed-rs = { workspace = true }
 futures = { workspace = true }
 chrono = { workspace = true }
+urlencoding = { workspace = true }
 
 [dev-dependencies]
 wiremock = "0.6"
