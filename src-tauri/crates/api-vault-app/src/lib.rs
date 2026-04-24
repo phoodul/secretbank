@@ -56,9 +56,11 @@ pub fn run(context: tauri::Context) {
             tracing::info!("issuer preset seed: {} rows inserted", seed_count);
 
             // 피드 스케줄러 시작 (기본값: RSS 만 활성, NVD/GHSA 는 API key 없으면 비활성)
+            // `spawn_feed_scheduler` 내부 `JoinSet::spawn` 은 tokio 런타임 context 를
+            // 동기적으로 요구하므로 반드시 `block_on` 안에서 호출한다.
             let scheduler_config = FeedSchedulerConfig::default();
-            let scheduler_handle = spawn_feed_scheduler(ctx.pool.clone(), scheduler_config);
             tauri::async_runtime::block_on(async {
+                let scheduler_handle = spawn_feed_scheduler(ctx.pool.clone(), scheduler_config);
                 *ctx.feed_scheduler.lock().await = Some(scheduler_handle);
             });
 
