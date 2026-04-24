@@ -125,7 +125,7 @@
 | T075    | Kill Switch 백엔드 (ConfirmTokenStore 16바이트 hex 토큰 TTL 5분 + kill_switch_request_confirm + kill_switch_revoke {cred_id, token, also_delete_value} + 오탐 보호 + 6 tests) | 2026-04-25 | `ae471e9` |
 | T076    | Kill Switch Dialog (2단계 확인 다이얼로그 + useKillSwitch 훅 + KillSwitchDialog + Vitest 5 tests) | 2026-04-25 | `27c307b` |
 | T077    | Revoked 시각화 + Hide revoked 필터 (CredentialCard/List 상태 뱃지 + HideRevoked 체크박스 + Vitest +3) | 2026-04-25 | `0a26ff1` |
-| T078    | Bulk Revoke Issuer 단위 (IssuerConfirmTokenStore + kill_switch_request_confirm_issuer + kill_switch_revoke_issuer + progress 이벤트 + BulkRevokeDialog + useBulkKillSwitch + Inventory 통합 + i18n 4개 + Rust 9→9+2 tests + Vitest 5 tests + InventoryPage +2 tests; DoD 편차: IssuerDetail 페이지 대신 InventoryPage issuer 필터 통합) | 2026-04-25 | PENDING |
+| T078    | Bulk Revoke Issuer 단위 (IssuerConfirmTokenStore + kill_switch_request_confirm_issuer + kill_switch_revoke_issuer + progress 이벤트 + BulkRevokeDialog + useBulkKillSwitch + Inventory 통합 + i18n 4개 + Rust 9→9+2 tests + Vitest 5 tests + InventoryPage +2 tests; DoD 편차: IssuerDetail 페이지 대신 InventoryPage issuer 필터 통합) | 2026-04-25 | `59c3ac8` |
 
 **완료 합계**: 74/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 6/10 — T061/T062/T063/T064 defer + M6 ✅ 6/6 + **M7 🔄 4/4 = ✅**)
 
