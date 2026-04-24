@@ -142,11 +142,44 @@ pub async fn vault_unlock(
     {
         tracing::warn!(error = %e, "vault_unlock 후 스케줄러 재구성 실패 (비치명적)");
     }
+    // 디바이스 서명 키 보장 — 실패해도 unlock 자체를 막지 않는다.
+    {
+        use crate::services::device_identity::{detect_platform, ensure_device_keys};
+        let platform = detect_platform();
+        match ensure_device_keys(
+            state.vault.clone(),
+            &state.pool,
+            hostname_or_default(),
+            platform,
+        )
+        .await
+        {
+            Ok(identity) => {
+                let mut guard = state.device_identity.write().await;
+                *guard = Some(identity);
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "device identity 초기화 실패 (비치명적)");
+            }
+        }
+    }
     Ok(())
+}
+
+/// 호스트명 또는 기본값 `"this-device"` 를 반환한다.
+fn hostname_or_default() -> String {
+    std::env::var("COMPUTERNAME")
+        .or_else(|_| std::env::var("HOSTNAME"))
+        .unwrap_or_else(|_| "this-device".to_owned())
 }
 
 #[tauri::command]
 pub async fn vault_lock(state: State<'_, AppContext>) -> Result<(), VaultCommandError> {
+    // 디바이스 identity 클리어 (서명 키를 메모리에서 제거)
+    {
+        let mut guard = state.device_identity.write().await;
+        *guard = None;
+    }
     let mut vault = state.vault.write().await;
     do_vault_lock(vault.as_mut()).await
 }

@@ -75,6 +75,17 @@ impl<'a> DeviceRepo<'a> {
             .await?;
         Ok(())
     }
+
+    pub async fn list_active(&self) -> Result<Vec<Device>, StorageError> {
+        let rows = sqlx::query(
+            r#"SELECT id, name, platform, public_key, paired_at, last_seen_at, status
+               FROM device WHERE status = 'active' ORDER BY paired_at ASC"#,
+        )
+        .fetch_all(self.pool)
+        .await?;
+
+        rows.iter().map(row_to_device).collect()
+    }
 }
 
 fn row_to_device(r: &sqlx::sqlite::SqliteRow) -> Result<Device, StorageError> {

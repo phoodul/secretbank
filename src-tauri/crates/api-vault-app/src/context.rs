@@ -11,6 +11,7 @@ use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::{init_pool, SqlitePool};
 use api_vault_storage::vault::{VaultError, VaultStorage};
 
+use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
 
 /// Application-wide shared state, managed by Tauri.
@@ -42,6 +43,13 @@ pub struct AppContext {
     /// 앱 종료 시 `RunEvent::Exit` 훅에서 `block_on(handle.shutdown())` 으로 호출 — 프로세스
     /// 종료 전에 cancellation token + JoinSet drain 이 완료되는 것을 보장한다.
     pub feed_scheduler: Arc<Mutex<Option<FeedSchedulerHandle>>>,
+
+    /// 현재 디바이스의 ed25519 서명 키 페어.
+    ///
+    /// 볼트 잠금 해제(`vault_unlock`) 후 `ensure_device_keys` 가 성공하면 채워진다.
+    /// 볼트 잠금(`vault_lock`) 시 `None` 으로 초기화된다.
+    /// `None` 상태에서 감사 로그 서명은 불가능하다 (T071 에서 활성화).
+    pub device_identity: Arc<RwLock<Option<DeviceIdentity>>>,
 }
 
 impl AppContext {
@@ -71,6 +79,8 @@ impl AppContext {
             clipboard_controller: Arc::new(Mutex::new(None)),
             // 초기 상태: 스케줄러 없음 (setup 에서 채워짐)
             feed_scheduler: Arc::new(Mutex::new(None)),
+            // 초기 상태: 볼트 잠금 해제 후 채워짐
+            device_identity: Arc::new(RwLock::new(None)),
         })
     }
 

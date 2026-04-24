@@ -154,6 +154,7 @@ name = "api-vault-app"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "api-vault-audit",
  "api-vault-connectors",
  "api-vault-core",
  "api-vault-crypto",
@@ -161,6 +162,8 @@ dependencies = [
  "api-vault-railguard",
  "api-vault-storage",
  "async-trait",
+ "ed25519-dalek",
+ "rand_core 0.6.4",
  "secrecy",
  "serde",
  "serde_json",
