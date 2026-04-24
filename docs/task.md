@@ -32,7 +32,7 @@
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 6/10 완료        |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 7/10 완료        |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -106,8 +106,9 @@
 | T052    | HIBP v3 클라이언트 (HibpClient + check_email + urlencoding + wiremock 10 tests) | 2026-04-24 | `7e8b27e` |
 | T053    | Incident 매칭 엔진 (match_incident + IssuerMatch/Keyword + 14 tests)            | 2026-04-24 | `2da9770` |
 | T054    | 피드 스케줄러 (FeedSchedulerHandle + Breaker + normalize 3종 + 20 tests)        | 2026-04-24 | `50f459f` |
+| T055    | Tauri 커맨드 incident_* (list/dismiss/matches_for_credential/feed_refresh + IncidentFilter + repo 확장 + 12 tests) | 2026-04-24 | _(pending commit)_ |
 
-**완료 합계**: 54/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 6/10**)
+**완료 합계**: 55/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 7/10**)
 
 ---
 
@@ -927,13 +928,17 @@
 - **Depends on**: T054
 - **Goal**: 프론트에 feed 제공.
 - **DoD**:
-  - `crates/api-vault-app/src/commands/incidents.rs`
-  - `incident_feed_refresh()` — 즉시 폴링 트리거
-  - `incident_list(filter)` — 필터(dismissed 포함 여부, issuer_id, severity)
-  - `incident_dismiss(id)`
-  - `incident_matches_for_credential(cred_id) -> Vec<Incident>`
-- **Files Touched**: `crates/api-vault-app/src/commands/incidents.rs`
-- **Tests**: Rust — CRUD
+  - `crates/api-vault-app/src/commands/incidents.rs` 신규 + 4 Tauri 커맨드 + `IncidentCommandError` (`#[serde(tag="code", rename_all="snake_case")]` NotFound/SchedulerUnavailable/Scheduler/Internal)
+  - `incident_feed_refresh(state) -> Result<usize, ...>` — `FeedSchedulerHandle::trigger_once()` 위임, 삽입 incident 수 반환
+  - `incident_list(filter: Option<IncidentFilter>, state) -> Result<Vec<Incident>, ...>` — filter None 이면 default
+  - `incident_dismiss(id: IncidentId, state) -> Result<u64, ...>` — 해당 incident 의 모든 활성 match 를 dismiss (incident 테이블 자체는 수정 안 함, `incident_match.dismissed_at` 만 채움), 업데이트 row 수 반환
+  - `incident_matches_for_credential(credential_id: CredentialId, state) -> Result<Vec<Incident>, ...>` — credential 에 **활성 match** (dismissed 제외) 가 연결된 incident 반환
+  - `IncidentFilter` DTO 신규 (`api-vault-core/src/models/incident.rs`): `source: Option<IncidentSource>`, `severity: Option<IncidentSeverity>`, `issuer_id: Option<IssuerId>`, `include_dismissed: bool` (default false — 모든 match 가 dismissed 인 incident 제외; match 없는 incident 는 포함)
+  - `IncidentRepo` 3 메서드 확장: `list(&filter)`, `list_incidents_for_credential(cred_id)`, `dismiss_matches_for_incident(incident_id)` — SQL 은 `?1 IS NULL OR col = ?1` 선택 필터 + `GROUP BY HAVING` 서브쿼리로 전체 dismissed 제외
+  - `FeedSchedulerHandle` 에 `pool: Arc<SqlitePool>` + `config: FeedSchedulerConfig` 필드 추가 (Clone derive) → `trigger_once()` 가 RSS 항상 + NVD/GHSA 는 key-gate 로 즉시 폴
+  - `lib.rs` `generate_handler!` 에 4 커맨드 등록, `commands/mod.rs` 에 `pub mod incidents;`
+- **Files Touched**: `crates/api-vault-app/src/commands/incidents.rs` (신규), `commands/mod.rs`, `lib.rs`, `services/feed_scheduler.rs` (+trigger_once), `api-vault-core/src/models/incident.rs` (+IncidentFilter), `api-vault-core/src/lib.rs` (re-export), `api-vault-storage/src/sqlite/repositories/incident.rs` (+3 메서드)
+- **Tests**: Rust — core IncidentFilter default smoke + storage 9 (list 무필터/source/severity/issuer_id 필터/dismissed 제외/match 없음 포함/credential 매치 기본/dismissed 무시/dismiss 여러 row) + app 3 (error 변환 + serde tag snake_case). **12+ 신규**.
 
 ### T056. Incidents 페이지 UI
 

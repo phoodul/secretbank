@@ -10,6 +10,9 @@ use commands::credentials::{
     credential_update,
 };
 use commands::graph::{blast_radius_for_credential, graph_fetch};
+use commands::incidents::{
+    incident_dismiss, incident_feed_refresh, incident_list, incident_matches_for_credential,
+};
 use commands::issuer::{issuer_get, issuer_list};
 use commands::deployments::{
     deployment_create, deployment_delete, deployment_list_for_project, deployment_update,
@@ -112,6 +115,10 @@ pub fn run(context: tauri::Context) {
             env_scan_folder,
             graph_fetch,
             blast_radius_for_credential,
+            incident_list,
+            incident_dismiss,
+            incident_matches_for_credential,
+            incident_feed_refresh,
         ]);
     }
 
@@ -149,6 +156,10 @@ pub fn run(context: tauri::Context) {
             env_scan_folder,
             graph_fetch,
             blast_radius_for_credential,
+            incident_list,
+            incident_dismiss,
+            incident_matches_for_credential,
+            incident_feed_refresh,
         ]);
     }
 

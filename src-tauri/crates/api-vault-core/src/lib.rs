@@ -22,7 +22,7 @@ pub use models::credential::{
 pub use models::deployment::{Deployment, DeploymentInput, DeploymentPatch, DeploymentPlatform};
 pub use models::device::{Device, DeviceInput, DevicePlatform, DeviceStatus};
 pub use models::incident::{
-    Incident, IncidentMatch, IncidentSeverity, IncidentSource, MatchReason,
+    Incident, IncidentFilter, IncidentMatch, IncidentSeverity, IncidentSource, MatchReason,
 };
 pub use models::issuer::{Issuer, IssuerInput};
 pub use models::project::{Project, ProjectInput, ProjectPatch};

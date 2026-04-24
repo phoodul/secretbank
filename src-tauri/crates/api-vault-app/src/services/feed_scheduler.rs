@@ -83,6 +83,7 @@ impl Breaker {
 /// 폴링 주기 및 API 키 설정.
 ///
 /// `Default::default()` = NVD/GHSA 비활성, RSS 만 5분 간격.
+#[derive(Clone)]
 pub struct FeedSchedulerConfig {
     /// NVD CVE API 키. None 이면 NVD 폴러를 spawn 하지 않는다.
     pub nvd_api_key: Option<String>,
@@ -113,6 +114,8 @@ impl Default for FeedSchedulerConfig {
 pub struct FeedSchedulerHandle {
     cancel: CancellationToken,
     join_set: JoinSet<()>,
+    pool: Arc<SqlitePool>,
+    config: FeedSchedulerConfig,
 }
 
 impl FeedSchedulerHandle {
@@ -120,6 +123,34 @@ impl FeedSchedulerHandle {
     pub async fn shutdown(mut self) {
         self.cancel.cancel();
         while self.join_set.join_next().await.is_some() {}
+    }
+
+    /// 모든 활성화된 소스에 대해 즉시 1회 폴링을 실행한다.
+    ///
+    /// 정기 스케줄과 독립적으로 동작 (interval bypass).
+    /// 반환값 = 전체 소스 합산 저장된 incident 개수.
+    pub async fn trigger_once(&self) -> Result<usize, FeedSchedulerError> {
+        let mut total = 0usize;
+
+        // RSS 는 항상 실행
+        let rss_client = RssClient::new();
+        total += poll_rss_once(&self.pool, &rss_client).await?;
+
+        // NVD 는 key 있을 때만
+        if let Some(key) = self.config.nvd_api_key.as_ref() {
+            let nvd_client = NvdClient::new(Some(key.clone()));
+            let since = OffsetDateTime::now_utc() - time::Duration::hours(2);
+            total += poll_nvd_once(&self.pool, &nvd_client, since).await?;
+        }
+
+        // GHSA 는 token 있을 때만
+        if let Some(token) = self.config.ghsa_token.as_ref() {
+            let ghsa_client = GhsaClient::new(token.clone());
+            let since = OffsetDateTime::now_utc() - time::Duration::hours(24);
+            total += poll_ghsa_once(&self.pool, &ghsa_client, since).await?;
+        }
+
+        Ok(total)
     }
 }
 
@@ -145,7 +176,7 @@ pub fn spawn_feed_scheduler(
     ));
 
     // NVD 는 key 있을 때만
-    if let Some(key) = config.nvd_api_key {
+    if let Some(key) = config.nvd_api_key.clone() {
         join_set.spawn(run_nvd_poller(
             pool.clone(),
             key,
@@ -155,7 +186,7 @@ pub fn spawn_feed_scheduler(
     }
 
     // GHSA 는 token 있을 때만
-    if let Some(token) = config.ghsa_token {
+    if let Some(token) = config.ghsa_token.clone() {
         join_set.spawn(run_ghsa_poller(
             pool.clone(),
             token,
@@ -164,7 +195,7 @@ pub fn spawn_feed_scheduler(
         ));
     }
 
-    FeedSchedulerHandle { cancel, join_set }
+    FeedSchedulerHandle { cancel, join_set, pool, config }
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,159 @@
+//! Tauri 커맨드 — Incident Feed (T055).
+//!
+//! incident_list, incident_dismiss, incident_matches_for_credential,
+//! incident_feed_refresh 4개를 제공한다.
+
+use serde::Serialize;
+use tauri::State;
+use thiserror::Error;
+
+use api_vault_core::{
+    CredentialId, Incident, IncidentFilter, IncidentId,
+};
+use api_vault_storage::sqlite::repositories::incident::IncidentRepo;
+
+use crate::context::AppContext;
+
+// ---------------------------------------------------------------------------
+// Error type
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Error, Serialize)]
+#[serde(tag = "code", rename_all = "snake_case")]
+pub enum IncidentCommandError {
+    #[error("incident not found")]
+    NotFound,
+
+    #[error("scheduler is not initialised")]
+    SchedulerUnavailable,
+
+    #[error("scheduler error: {message}")]
+    Scheduler { message: String },
+
+    #[error("internal: {message}")]
+    Internal { message: String },
+}
+
+impl From<api_vault_storage::sqlite::StorageError> for IncidentCommandError {
+    fn from(e: api_vault_storage::sqlite::StorageError) -> Self {
+        Self::Internal {
+            message: e.to_string(),
+        }
+    }
+}
+
+impl From<crate::services::feed_scheduler::FeedSchedulerError> for IncidentCommandError {
+    fn from(e: crate::services::feed_scheduler::FeedSchedulerError) -> Self {
+        Self::Scheduler {
+            message: e.to_string(),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tauri commands
+// ---------------------------------------------------------------------------
+
+/// Incident 목록을 필터링하여 반환한다.
+///
+/// `filter` 가 None 이면 기본 필터(dismissed=false, 소스/심각도/issuer 무제한) 적용.
+#[tauri::command]
+pub async fn incident_list(
+    filter: Option<IncidentFilter>,
+    state: State<'_, AppContext>,
+) -> Result<Vec<Incident>, IncidentCommandError> {
+    let filter = filter.unwrap_or_default();
+    let repo = IncidentRepo::new(&state.pool);
+    Ok(repo.list(&filter).await?)
+}
+
+/// `incident_id` 에 해당하는 모든 활성 match 를 dismissed 처리한다.
+///
+/// 반환값 = 업데이트된 row 수 (이미 모두 dismissed 이면 0).
+#[tauri::command]
+pub async fn incident_dismiss(
+    id: IncidentId,
+    state: State<'_, AppContext>,
+) -> Result<u64, IncidentCommandError> {
+    let repo = IncidentRepo::new(&state.pool);
+    Ok(repo.dismiss_matches_for_incident(id).await?)
+}
+
+/// 특정 credential 에 연결된 Incident 목록을 반환한다 (dismissed match 제외).
+///
+/// Credential Detail 패널에서 "이 키에 영향을 주는 이슈" 목록으로 사용.
+#[tauri::command]
+pub async fn incident_matches_for_credential(
+    credential_id: CredentialId,
+    state: State<'_, AppContext>,
+) -> Result<Vec<Incident>, IncidentCommandError> {
+    let repo = IncidentRepo::new(&state.pool);
+    Ok(repo.list_incidents_for_credential(credential_id).await?)
+}
+
+/// 스케줄러를 즉시 1회 폴링하고 저장된 incident 개수를 반환한다.
+///
+/// 앱 시작 후 스케줄러가 초기화되기 전에 호출하면 `SchedulerUnavailable` 에러.
+#[tauri::command]
+pub async fn incident_feed_refresh(
+    state: State<'_, AppContext>,
+) -> Result<usize, IncidentCommandError> {
+    let guard = state.feed_scheduler.lock().await;
+    let handle = guard
+        .as_ref()
+        .ok_or(IncidentCommandError::SchedulerUnavailable)?;
+    Ok(handle.trigger_once().await?)
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use api_vault_storage::sqlite::StorageError;
+
+    // -----------------------------------------------------------------------
+    // T1: StorageError → IncidentCommandError::Internal
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_error_conversion_from_storage_error() {
+        let storage_err = StorageError::Parse("bad data".to_owned());
+        let cmd_err = IncidentCommandError::from(storage_err);
+        match cmd_err {
+            IncidentCommandError::Internal { message } => {
+                assert!(message.contains("bad data"));
+            }
+            other => panic!("예상과 다른 variant: {other:?}"),
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // T2: FeedSchedulerError → IncidentCommandError::Scheduler
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_error_conversion_from_scheduler_error() {
+        use crate::services::feed_scheduler::FeedSchedulerError;
+        use api_vault_feeds::NvdError;
+
+        let sched_err = FeedSchedulerError::Nvd(NvdError::RangeTooLarge { days: 200 });
+        let cmd_err = IncidentCommandError::from(sched_err);
+        match cmd_err {
+            IncidentCommandError::Scheduler { message } => {
+                assert!(!message.is_empty());
+            }
+            other => panic!("예상과 다른 variant: {other:?}"),
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // T3: serde tag + snake_case — { "code": "not_found" }
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_error_serde_tag_snake_case() {
+        let err = IncidentCommandError::NotFound;
+        let val = serde_json::to_value(&err).unwrap();
+        assert_eq!(val["code"], "not_found");
+    }
+}

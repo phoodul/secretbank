@@ -1,6 +1,7 @@
 pub mod credentials;
 pub mod deployments;
 pub mod graph;
+pub mod incidents;
 pub mod issuer;
 pub mod projects;
 pub mod scanner;

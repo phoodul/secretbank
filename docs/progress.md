@@ -2,13 +2,24 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (**T054 완료, M4 🔄 6/10**)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 6/10 완료** (피드 4종 + 매칭 + 스케줄러 완료)
-- **Commits:** 82개 누적 (T054 커밋 추가 예정)
-- **Tests:** Rust 176+개 (api-vault-app 33 + api-vault-feeds 48 + 기타) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
+- **Time:** 2026-04-24 (**T055 완료, M4 🔄 7/10**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 7/10 완료** (피드 4종 + 매칭 + 스케줄러 + IPC 커맨드 완료)
+- **Commits:** 84개 누적 (T055 커밋 추가 예정)
+- **Tests:** Rust 188+개 (api-vault-app 36 + api-vault-feeds 48 + api-vault-storage repo 18 + api-vault-core 21 + 통합/기타) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
 - **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러 지속.)
 - **Mode:** 일반.
-- **Next:** T055 Tauri 커맨드 `incident_*` (Must) — `incident_feed_refresh`, `incident_list(filter)`, `incident_dismiss`, `incident_matches_for_credential`. 프론트 UI 준비.
+- **Next:** T056 Incidents 페이지 UI (Must) — `/incidents` 라우트 + IncidentCard + 필터 탭 (All/Critical/Affecting/Dismissed) + listen('incidents:updated') 실시간 업데이트. 프런트 Rust 커맨드 연동.
+
+## T055 구현 교훈 (M4 후속 영향)
+
+- **`IncidentFilter` SQL bind 패턴**: `Option<&str>` bind 시 sqlx 가 NULL 로 내보냄. SQL 은 `?1 IS NULL OR col = ?1` 패턴으로 각 필터 축이 None 이면 자동 skip. Rust 측 enum → `&'static str` 변환은 기존 `source_to_str`/`severity_to_str` 헬퍼 재사용.
+- **Incident dismiss 는 match-level 로**: incident 테이블에 `dismissed_at` 컬럼 추가 대신 `incident_match.dismissed_at` 여러 row 를 batch update. 단일 사용자 desktop app 에서는 "모든 매치 dismiss = 사용자 관점 dismiss" 동일. 다중 사용자 (서버 sync) 확장 시 incident-level dismiss 별도 설계 필요.
+- **"모든 match 가 dismissed 인 incident 제외" SQL**: `GROUP BY incident_id HAVING SUM(CASE WHEN dismissed_at IS NULL THEN 0 ELSE 1 END) = COUNT(*)` 서브쿼리 + `id NOT IN`. match 없는 incident 는 서브쿼리에 아예 포함 안 되므로 자연스럽게 list 에 포함 (global feed 목록 유지).
+- **`FeedSchedulerHandle` 에 pool + config 저장 = trigger_once 재사용**: 기존 `spawn_feed_scheduler` 가 config 를 `move` 로 소비 → Clone derive 추가 후 복제본 보관. `poll_rss_once` / `poll_nvd_once` / `poll_ghsa_once` 는 이미 private file-local 이라 pub 전환 없이 handle 안에서 직접 호출.
+- **Tauri command unit test 전략**: `State` 주입 의존으로 커맨드 함수 직접 테스트는 어려움. 대신 **에러 변환 + serde tag 형식** 만 커버 (3 tests). 실제 커맨드 동작은 T056 vitest + mock invoke 에서 e2e 검증.
+- **storage crate 확장 동반**: T053~T054 때 "storage 수정 금지" 스코프였지만 T055 는 UI-facing 커맨드라 repo 확장 불가피. 순환 의존 없음 확인 (core → storage → app + feeds).
+- **`Option<IncidentFilter>` 커맨드 파라미터**: 프런트가 filter 생략 시 `undefined` 로 보내도 `filter.unwrap_or_default()` 로 허용. default = 모든 축 None + `include_dismissed: false`.
+- **T058 API key UI 연계 필요**: 현재 `FeedSchedulerConfig::default()` 의 `nvd_api_key`/`ghsa_token` 모두 None 이라 trigger_once 도 RSS 만 실행. T058 에서 settings 테이블에 key 저장 + `spawn_feed_scheduler` 재호출 (또는 handle.reconfigure) 패턴 필요. 현재는 Pending.
 
 ## T054 구현 교훈 (M4 후속 영향)
 

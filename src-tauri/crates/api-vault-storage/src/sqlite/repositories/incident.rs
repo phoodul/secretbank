@@ -1,6 +1,6 @@
 use api_vault_core::{
-    CredentialId, Incident, IncidentId, IncidentMatch, IncidentMatchId, IncidentSeverity,
-    IncidentSource, IssuerId, MatchReason,
+    CredentialId, Incident, IncidentFilter, IncidentId, IncidentMatch, IncidentMatchId,
+    IncidentSeverity, IncidentSource, IssuerId, MatchReason,
 };
 use sqlx::{Row, SqlitePool};
 use time::OffsetDateTime;
@@ -144,6 +144,90 @@ impl<'a> IncidentRepo<'a> {
 
         rows.iter().map(row_to_match).collect()
     }
+
+    /// List incidents matching the given filter, ordered by `detected_at DESC`.
+    ///
+    /// When `filter.include_dismissed` is false, incidents whose *every*
+    /// `incident_match` row has `dismissed_at IS NOT NULL` are excluded.
+    /// An incident with zero matches is always included.
+    pub async fn list(&self, filter: &IncidentFilter) -> Result<Vec<Incident>, StorageError> {
+        let source_str = filter.source.map(source_to_str);
+        let severity_str = filter.severity.map(severity_to_str);
+        let issuer_id_str = filter.issuer_id.map(|i| i.to_string());
+        let include_dismissed: i64 = if filter.include_dismissed { 1 } else { 0 };
+
+        let rows = sqlx::query(
+            r#"SELECT id, source, source_id, issuer_id, severity, title, body, url,
+                      detected_at, published_at
+               FROM incident
+               WHERE
+                 (?1 IS NULL OR source = ?1)
+                 AND (?2 IS NULL OR severity = ?2)
+                 AND (?3 IS NULL OR issuer_id = ?3)
+                 AND (
+                   ?4 = 1
+                   OR id NOT IN (
+                     SELECT im.incident_id
+                     FROM incident_match im
+                     GROUP BY im.incident_id
+                     HAVING SUM(CASE WHEN im.dismissed_at IS NULL THEN 0 ELSE 1 END) = COUNT(*)
+                     AND COUNT(*) > 0
+                   )
+                 )
+               ORDER BY detected_at DESC"#,
+        )
+        .bind(source_str)
+        .bind(severity_str)
+        .bind(&issuer_id_str)
+        .bind(include_dismissed)
+        .fetch_all(self.pool)
+        .await?;
+
+        rows.iter().map(row_to_incident).collect()
+    }
+
+    /// Return all incidents that have at least one active (non-dismissed) match
+    /// to `credential_id`. Used by the Credential Detail panel.
+    pub async fn list_incidents_for_credential(
+        &self,
+        credential_id: CredentialId,
+    ) -> Result<Vec<Incident>, StorageError> {
+        let cid_str = credential_id.to_string();
+        let rows = sqlx::query(
+            r#"SELECT DISTINCT i.id, i.source, i.source_id, i.issuer_id, i.severity,
+                      i.title, i.body, i.url, i.detected_at, i.published_at
+               FROM incident i
+               INNER JOIN incident_match m ON m.incident_id = i.id
+               WHERE m.credential_id = ? AND m.dismissed_at IS NULL
+               ORDER BY i.detected_at DESC"#,
+        )
+        .bind(&cid_str)
+        .fetch_all(self.pool)
+        .await?;
+
+        rows.iter().map(row_to_incident).collect()
+    }
+
+    /// Dismiss every active (non-dismissed) match of `incident_id`.
+    /// Returns the number of rows updated.
+    pub async fn dismiss_matches_for_incident(
+        &self,
+        incident_id: IncidentId,
+    ) -> Result<u64, StorageError> {
+        let id_str = incident_id.to_string();
+        let now = OffsetDateTime::now_utc()
+            .format(&time::format_description::well_known::Rfc3339)
+            .map_err(|e| StorageError::Parse(e.to_string()))?;
+
+        let result =
+            sqlx::query("UPDATE incident_match SET dismissed_at = ? WHERE incident_id = ? AND dismissed_at IS NULL")
+                .bind(&now)
+                .bind(&id_str)
+                .execute(self.pool)
+                .await?;
+
+        Ok(result.rows_affected())
+    }
 }
 
 fn row_to_incident(r: &sqlx::sqlite::SqliteRow) -> Result<Incident, StorageError> {
@@ -260,5 +344,364 @@ fn str_to_reason(s: &str) -> Result<MatchReason, StorageError> {
         "keyword" => Ok(MatchReason::Keyword),
         "explicit" => Ok(MatchReason::Explicit),
         other => Err(StorageError::Parse(format!("unknown reason: {other}"))),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use api_vault_core::{CredentialId, IncidentId, IssuerId};
+    use crate::sqlite::init_pool;
+    use crate::sqlite::repositories::credential::CredentialRepo;
+    use crate::sqlite::repositories::issuer::IssuerRepo;
+    use api_vault_core::{CredentialInput, Env, IssuerInput};
+    use tempfile::tempdir;
+    use time::OffsetDateTime;
+
+    /// 테스트용 SQLite pool 생성 헬퍼 (tempfile + init_pool).
+    async fn make_pool() -> (tempfile::TempDir, SqlitePool) {
+        let dir = tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let pool = init_pool(&db_path).await.unwrap();
+        (dir, pool)
+    }
+
+    /// 기본 Issuer 를 DB 에 삽입하고 ID 를 반환한다.
+    async fn insert_issuer(pool: &SqlitePool, slug: &str) -> IssuerId {
+        let repo = IssuerRepo::new(pool);
+        repo.insert(&IssuerInput {
+            slug: slug.to_owned(),
+            display_name: slug.to_owned(),
+            docs_url: None,
+            issue_url: None,
+            status_url: None,
+            security_feed_url: None,
+            connector_id: None,
+            icon_key: None,
+        })
+        .await
+        .unwrap()
+    }
+
+    /// 기본 Credential 을 DB 에 삽입하고 ID 를 반환한다.
+    async fn insert_credential(pool: &SqlitePool, issuer_id: IssuerId, name: &str) -> CredentialId {
+        let repo = CredentialRepo::new(pool);
+        repo.insert(
+            &CredentialInput {
+                issuer_id,
+                name: name.to_owned(),
+                env: Env::Prod,
+                scope: None,
+                owner: None,
+                rotation_policy_days: None,
+                rotation_runbook_id: None,
+                expires_at: None,
+                hash_hint: None,
+            },
+            format!("vault/credentials/{name}"),
+        )
+        .await
+        .unwrap()
+    }
+
+    /// 기본 Incident 를 구성하는 빌더 (source/severity/issuer_id 커스터마이즈 가능).
+    fn make_incident(
+        source: IncidentSource,
+        severity: IncidentSeverity,
+        issuer_id: Option<IssuerId>,
+        suffix: &str,
+    ) -> Incident {
+        let now = OffsetDateTime::now_utc();
+        Incident {
+            id: IncidentId::new(),
+            source,
+            source_id: format!("CVE-TEST-{suffix}"),
+            issuer_id,
+            severity,
+            title: format!("Test incident {suffix}"),
+            body: None,
+            url: None,
+            detected_at: now,
+            published_at: None,
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // T1: list — 기본 필터 없이 3개 모두 반환, detected_at DESC 정렬
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_all_no_filter() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        // 순서를 다르게 삽입해 정렬 확인
+        let base = OffsetDateTime::from_unix_timestamp(1_700_000_000).unwrap();
+        let mut i1 = make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "1");
+        i1.detected_at = base;
+        let mut i2 = make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "2");
+        i2.detected_at = base + time::Duration::seconds(10);
+        let mut i3 = make_incident(IncidentSource::Ghsa, IncidentSeverity::Critical, None, "3");
+        i3.detected_at = base + time::Duration::seconds(20);
+
+        repo.insert(&i1).await.unwrap();
+        repo.insert(&i2).await.unwrap();
+        repo.insert(&i3).await.unwrap();
+
+        let filter = IncidentFilter::default();
+        let results = repo.list(&filter).await.unwrap();
+
+        assert_eq!(results.len(), 3);
+        // DESC 정렬: i3 → i2 → i1
+        assert_eq!(results[0].source_id, "CVE-TEST-3");
+        assert_eq!(results[1].source_id, "CVE-TEST-2");
+        assert_eq!(results[2].source_id, "CVE-TEST-1");
+    }
+
+    // -----------------------------------------------------------------------
+    // T2: list — source 필터 (nvd 1개)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_filter_by_source() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        repo.insert(&make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "nvd"))
+            .await
+            .unwrap();
+        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "rss1"))
+            .await
+            .unwrap();
+        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "rss2"))
+            .await
+            .unwrap();
+
+        let filter = IncidentFilter {
+            source: Some(IncidentSource::Nvd),
+            ..Default::default()
+        };
+        let results = repo.list(&filter).await.unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].source_id, "CVE-TEST-nvd");
+    }
+
+    // -----------------------------------------------------------------------
+    // T3: list — severity 필터
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_filter_by_severity() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        repo.insert(&make_incident(IncidentSource::Nvd, IncidentSeverity::Critical, None, "crit"))
+            .await
+            .unwrap();
+        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "low"))
+            .await
+            .unwrap();
+
+        let filter = IncidentFilter {
+            severity: Some(IncidentSeverity::Critical),
+            ..Default::default()
+        };
+        let results = repo.list(&filter).await.unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].source_id, "CVE-TEST-crit");
+    }
+
+    // -----------------------------------------------------------------------
+    // T4: list — issuer_id 필터
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_filter_by_issuer_id() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_a = insert_issuer(&pool, "stripe").await;
+        let issuer_b = insert_issuer(&pool, "openai").await;
+
+        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_a), "a1"))
+            .await
+            .unwrap();
+        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_a), "a2"))
+            .await
+            .unwrap();
+        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_b), "b1"))
+            .await
+            .unwrap();
+        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "none"))
+            .await
+            .unwrap();
+
+        let filter = IncidentFilter {
+            issuer_id: Some(issuer_a),
+            ..Default::default()
+        };
+        let results = repo.list(&filter).await.unwrap();
+
+        assert_eq!(results.len(), 2);
+        for r in &results {
+            assert_eq!(r.issuer_id, Some(issuer_a));
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // T5: list — 모든 match 가 dismissed 인 incident 는 기본 제외,
+    //           include_dismissed = true 이면 포함
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_excludes_all_dismissed_incidents_by_default() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "github").await;
+        let cred_id = insert_credential(&pool, issuer_id, "gh-token").await;
+
+        // Incident A: match 2개 모두 dismissed
+        let inc_a = make_incident(IncidentSource::Rss, IncidentSeverity::High, None, "A");
+        repo.insert(&inc_a).await.unwrap();
+        let m1 = repo.insert_match(inc_a.id, cred_id, MatchReason::IssuerMatch).await.unwrap();
+        let m2 = repo.insert_match(inc_a.id, cred_id, MatchReason::Keyword).await.unwrap();
+        repo.dismiss_match(m1).await.unwrap();
+        repo.dismiss_match(m2).await.unwrap();
+
+        // Incident B: match 1개 활성
+        let inc_b = make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "B");
+        repo.insert(&inc_b).await.unwrap();
+        repo.insert_match(inc_b.id, cred_id, MatchReason::Keyword).await.unwrap();
+
+        // include_dismissed = false (default) → B 만
+        let filter_default = IncidentFilter::default();
+        let results = repo.list(&filter_default).await.unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].source_id, "CVE-TEST-B");
+
+        // include_dismissed = true → A, B 모두
+        let filter_all = IncidentFilter {
+            include_dismissed: true,
+            ..Default::default()
+        };
+        let results_all = repo.list(&filter_all).await.unwrap();
+        assert_eq!(results_all.len(), 2);
+    }
+
+    // -----------------------------------------------------------------------
+    // T6: list — match 없는 incident 는 항상 포함 (default filter)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_includes_incident_without_matches() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        // match 없는 incident
+        let inc = make_incident(IncidentSource::Nvd, IncidentSeverity::Info, None, "nomatch");
+        repo.insert(&inc).await.unwrap();
+
+        let filter = IncidentFilter::default();
+        let results = repo.list(&filter).await.unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].source_id, "CVE-TEST-nomatch");
+    }
+
+    // -----------------------------------------------------------------------
+    // T7: list_incidents_for_credential — 기본
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_incidents_for_credential_basic() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "aws").await;
+        let cred_x = insert_credential(&pool, issuer_id, "aws-key").await;
+        let cred_y = insert_credential(&pool, issuer_id, "aws-key-2").await;
+
+        let inc1 = make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "I1");
+        let inc2 = make_incident(IncidentSource::Nvd, IncidentSeverity::Low, None, "I2");
+        let inc3 = make_incident(IncidentSource::Rss, IncidentSeverity::Critical, None, "I3");
+        repo.insert(&inc1).await.unwrap();
+        repo.insert(&inc2).await.unwrap();
+        repo.insert(&inc3).await.unwrap();
+
+        repo.insert_match(inc1.id, cred_x, MatchReason::IssuerMatch).await.unwrap();
+        repo.insert_match(inc2.id, cred_x, MatchReason::Keyword).await.unwrap();
+        repo.insert_match(inc3.id, cred_y, MatchReason::IssuerMatch).await.unwrap();
+
+        let results = repo.list_incidents_for_credential(cred_x).await.unwrap();
+        assert_eq!(results.len(), 2);
+
+        let results_y = repo.list_incidents_for_credential(cred_y).await.unwrap();
+        assert_eq!(results_y.len(), 1);
+    }
+
+    // -----------------------------------------------------------------------
+    // T8: list_incidents_for_credential — dismissed match 는 무시
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_incidents_for_credential_ignores_dismissed() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "google").await;
+        let cred_x = insert_credential(&pool, issuer_id, "gcp-key").await;
+
+        let inc1 = make_incident(IncidentSource::Rss, IncidentSeverity::High, None, "D1");
+        let inc2 = make_incident(IncidentSource::Rss, IncidentSeverity::High, None, "D2");
+        repo.insert(&inc1).await.unwrap();
+        repo.insert(&inc2).await.unwrap();
+
+        // inc1 의 match: dismissed
+        let m = repo.insert_match(inc1.id, cred_x, MatchReason::Keyword).await.unwrap();
+        repo.dismiss_match(m).await.unwrap();
+        // inc2 의 match: active
+        repo.insert_match(inc2.id, cred_x, MatchReason::Keyword).await.unwrap();
+
+        let results = repo.list_incidents_for_credential(cred_x).await.unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].source_id, "CVE-TEST-D2");
+    }
+
+    // -----------------------------------------------------------------------
+    // T9: dismiss_matches_for_incident — active 만 업데이트
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_dismiss_matches_for_incident_updates_active_only() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "vercel").await;
+        let cred_a = insert_credential(&pool, issuer_id, "vercel-a").await;
+        let cred_b = insert_credential(&pool, issuer_id, "vercel-b").await;
+        let cred_c = insert_credential(&pool, issuer_id, "vercel-c").await;
+
+        let inc = make_incident(IncidentSource::Rss, IncidentSeverity::Medium, None, "I");
+        repo.insert(&inc).await.unwrap();
+
+        // match 3개: cred_a 이미 dismissed, cred_b/cred_c active
+        let m_a = repo.insert_match(inc.id, cred_a, MatchReason::Keyword).await.unwrap();
+        repo.dismiss_match(m_a).await.unwrap();
+        repo.insert_match(inc.id, cred_b, MatchReason::Keyword).await.unwrap();
+        repo.insert_match(inc.id, cred_c, MatchReason::Keyword).await.unwrap();
+
+        let updated = repo.dismiss_matches_for_incident(inc.id).await.unwrap();
+        assert_eq!(updated, 2, "활성 2개만 업데이트되어야 함");
+
+        // 이후 모든 match 가 dismissed 상태여야 함
+        let matches = repo.list_matches_for_credential(cred_a).await.unwrap();
+        assert!(matches[0].dismissed_at.is_some());
+        let matches_b = repo.list_matches_for_credential(cred_b).await.unwrap();
+        assert!(matches_b[0].dismissed_at.is_some());
+        let matches_c = repo.list_matches_for_credential(cred_c).await.unwrap();
+        assert!(matches_c[0].dismissed_at.is_some());
+
+        // list (include_dismissed=false) 는 이 incident 를 제외해야 함
+        let filter = IncidentFilter::default();
+        let remaining = repo.list(&filter).await.unwrap();
+        assert!(remaining.is_empty());
     }
 }

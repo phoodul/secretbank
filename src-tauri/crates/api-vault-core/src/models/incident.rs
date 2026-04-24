@@ -64,3 +64,21 @@ pub struct IncidentMatch {
     #[serde(with = "time::serde::rfc3339::option")]
     pub dismissed_at: Option<OffsetDateTime>,
 }
+
+/// Filter for listing incidents from the local store.
+///
+/// All fields are optional. `None` means "no filter on this axis".
+/// `include_dismissed` defaults to `false` (hide incidents whose matches are all dismissed).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct IncidentFilter {
+    #[serde(default)]
+    pub source: Option<IncidentSource>,
+    #[serde(default)]
+    pub severity: Option<IncidentSeverity>,
+    #[serde(default)]
+    pub issuer_id: Option<IssuerId>,
+    /// When true, return incidents even if all their matches are dismissed.
+    /// When false or omitted, exclude those incidents.
+    #[serde(default)]
+    pub include_dismissed: bool,
+}
