@@ -102,7 +102,7 @@
 | T048    | Mobile graph alternate view — MobileGraphList + useIsMobile + GraphPage mobile 분기 | 2026-04-23 | `ebb9855` |
 | T049    | NVD CVE API 2.0 클라이언트 (api-vault-feeds 크레이트 + governor rate limiter + wiremock 6 tests) | 2026-04-24 | `9a7895f` |
 | T050    | GHSA 클라이언트 (GhsaClient + Link 헤더 커서 페이지네이션 + wiremock 9 tests) | 2026-04-24 | `344e024` |
-| T051    | SaaS 상태 RSS 클라이언트 (RssClient + 10 프리셋 + feed-rs + 9 tests)           | 2026-04-24 | _(pending commit)_ |
+| T051    | SaaS 상태 RSS 클라이언트 (RssClient + 10 프리셋 + feed-rs + 9 tests)           | 2026-04-24 | `5d9ec6b` |
 
 **완료 합계**: 51/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 3/10**)
 
