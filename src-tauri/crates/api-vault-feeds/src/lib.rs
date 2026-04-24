@@ -1,5 +1,3 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn smoke() {}
-}
+pub mod nvd;
+
+pub use nvd::{NvdClient, NvdCve, NvdError};

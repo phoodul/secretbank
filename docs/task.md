@@ -32,7 +32,7 @@
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 대기             |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 1/10 완료        |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -100,8 +100,9 @@
 | T046    | Blast Radius Highlight — credential 클릭 시 노드 3단계 강조     | 2026-04-23 | `4abe502` |
 | T047    | Graph performance optimization — memo 비교 + 뷰포트 컬링 + compact 모드 | 2026-04-23 | `1477c0f` |
 | T048    | Mobile graph alternate view — MobileGraphList + useIsMobile + GraphPage mobile 분기 | 2026-04-23 | `ebb9855` |
+| T049    | NVD CVE API 2.0 클라이언트 (api-vault-feeds 크레이트 + governor rate limiter + wiremock 6 tests) | 2026-04-24 | _(pending commit)_ |
 
-**완료 합계**: 48/118 (M0 완료 + M1 완료 + M2 완료 ✅ + **M3 완료 ✅**)
+**완료 합계**: 49/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 1/10**)
 
 ---
 
@@ -817,8 +818,8 @@
 - **Goal**: 증분 쿼리로 CVE 수집.
 - **DoD**:
   - `crates/api-vault-feeds/src/nvd.rs`
-  - `fn fetch_incremental(since: OffsetDateTime, api_key: Option<&str>) -> Result<Vec<NvdCve>>`
-  - Rate limit: 키 없음 50req/30s, 키 있음 100req/30s → `governor` crate 로 토큰 버킷
+  - `NvdClient::fetch_incremental(&self, since: OffsetDateTime) -> Result<Vec<NvdCve>, NvdError>` (api_key는 NvdClient 생성 시 주입)
+  - Rate limit: 키 없음 5req/30s, 키 있음 50req/30s → `governor` crate 로 토큰 버킷 (NVD 공식 2026 기준)
   - `lastModStartDate`, `lastModEndDate` 파라미터 사용
 - **Files Touched**: `crates/api-vault-feeds/src/nvd.rs`, `Cargo.toml`
 - **Tests**: Rust — wiremock 서버로 200, 429, 503 응답 시나리오

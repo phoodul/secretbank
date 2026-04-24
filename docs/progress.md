@@ -2,13 +2,23 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (T048 완료, **M3 8/8 ✅ — M3 종료**; 수동 검증 보류)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 대기**
-- **Commits:** 72개 누적 (최신 `ebb9855` feat: 모바일 그래프 리스트 뷰)
-- **Tests:** Rust 108+개 + Vitest 221개 통과 (+12 신규: MobileGraphList 6 + useIsMobile 3 + GraphPage mobile 분기 2 + blast-radius 1). `cargo clippy -D warnings` exit 0 / `pnpm typecheck` exit 0.
-- **Blocker:** 없음.
+- **Time:** 2026-04-24 (**T049 완료, M4 🔄 1/10 진입**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 1/10 완료**
+- **Commits:** 72개 누적 (T049 커밋 추가 예정)
+- **Tests:** Rust 114+개 (api-vault-feeds 6 신규 포함) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
+- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러는 `GraphPage.test.tsx` 의 vitest 타입 회귀로 T049 와 무관 — Pending Decisions 참조.)
 - **Mode:** 일반.
-- **Next:** (1) **M3 수동 검증 보류됨** — 사용자 일정 상 `pnpm tauri dev` 로 `/graph` 실사용 확인 미수행. M4 진입 전 또는 중에 재개 필요. 검증 체크리스트는 이 세션 대화록 참조 (`/graph` 렌더·4종 노드 색·Blast radius 하이라이트·Esc·Settings "Allow dragging"·mobile 리스트 분기). (2) 수동 검증 이후 M4 T049 — Incident Feed (NVD/GitHub Advisory 피드 파서).
+- **Next:** T050 GitHub Advisory DB 클라이언트 (GHSA + 페이지네이션 Link 헤더). M3 수동 검증은 여전히 보류 중 (M4 중 tauri dev 띄우는 시점에 겸행).
+
+## T049 구현 교훈 (M4 후속 영향)
+
+- **wiremock path 매칭**: `MockServer::start().await` 의 `mock_server.uri()` 는 `http://127.0.0.1:{port}` root URI. base_url 로 그대로 쓰면 HTTP 경로가 `/` 가 되어 `path("/")` 매칭 필수. `path("")` 실패.
+- **serde camelCase + 미사용 필드 `_` prefix 함정**: `#[serde(rename_all = "camelCase")]` 적용 시 필드명 앞 `_` 를 붙이면 `_resultsPerPage` 로 변환을 시도해 deserialize 실패. 해결: 안 쓰는 필드는 구조체에서 **완전 제거** (serde(default) 덕에 JSON 키 있어도 무시).
+- **NVD timestamp 파싱**: NVD 응답 `2026-04-01T12:00:00.000` 은 오프셋 없음. `OffsetDateTime::parse` 직접 실패 → `PrimitiveDateTime::parse` 후 `.assume_utc()` 가 정석. 밀리초 없는 포맷 fallback 도 추가.
+- **governor burst 초기화 동작**: `Quota::with_period(6s).allow_burst(5)` 는 초기 토큰이 `burst=5` 미리 채워진 상태로 시작 → 첫 5 요청은 즉시 통과. 2페이지 페이지네이션 테스트 실시간 대기 없이 통과.
+- **task.md DoD 수치 정정됨**: task.md 원문의 "50/100 req/30s" 는 구 정보. 2026 공식값 **5/50 req/30s** 로 정정. NVD API 정책은 2026-04-15 breaking change (`cvssMetricV31` Optional, `vulnStatus: "Not Scheduled"` 추가) 도 반영 — `base_severity: Option<String>` / `base_score: Option<f32>`.
+- **NvdClient 는 struct + method 시그니처**: DoD 의 free function `fetch_incremental(since, api_key)` 는 rate limiter 재생성 문제로 폐기. `NvdClient::new(api_key)` 에서 limiter 를 한 번 만들고 재사용하는 구조가 필수. T050/T052 도 동일 패턴 (`GhsaClient`, `HibpClient`) 권장.
+- **120일 상한 pre-check**: NVD API 가 120일 초과 범위에 에러 반환. `fetch_incremental` 는 HTTP 호출 전 `(now - since).whole_days() > 120` 체크 후 `NvdError::RangeTooLarge { days }` 즉시 반환 — 네트워크 왕복 낭비 방지.
 
 ## M2 진행 상황 (16/16 ✅ 완료)
 
@@ -191,6 +201,7 @@
 
 - Gate 3 (배포 진행 승인)
 - Gate 4 (git push 승인)
+- **`pnpm typecheck` 5 에러 (pre-existing, T049 무관)** — `src/features/graph/__tests__/GraphPage.test.tsx` 13/15/74/120/133 줄. `vi.fn<[], void>()` 구식 generic + `vi.mocked(...).mockReturnValue("desktop" as never)` 패턴이 vitest 현행 타입에서 never 추론. T049 진입 직전 stash 검증으로 pre-existing 확인 (M3 커밋 `ebb9855` 시점에도 재현). M4 중에 별도 fix (`vi.fn<() => void>()` 또는 mock 타입 수정) 커밋으로 처리. 진행에는 영향 없음 (vitest 런타임은 정상 통과).
 - **Custom issuer 생성 UX 연기 (T026 범위 외)** — T026 Issuer combobox 는 프리셋 10종만 선택 가능. DoD 의 "+ Custom" 옵션은 구현하지 않고 **별도 issuer 관리 UI 또는 T037 Project 관리 맥락**에서 처리 예정. 근거: 바이브 코더 페르소나는 주류 SaaS 가 대부분이라 프리셋으로 90%+ 커버, Custom UX 는 Issuer 메타(docs/issue/status URL) 입력 부담이 커 별도 전용 플로우가 낫다. M2 후반 또는 M5 GitHub Connector 작업 중 재검토.
 - **T034 per-file progress streaming / 10k 파일 상한 follow-up** — 현재 `env_scan_folder` 는 `scan:progress` 이벤트를 Started/Done 2회만 emit. 진행률 표시는 T035 UI 에서 spinner 로 처리 가능하나, 초대형 프로젝트(>10k 파일) 에서 UX 저하 가능. `scan_path` 를 iterator 기반으로 재구조화해 per-file 카운터 emit 하도록 확장은 별도 태스크. M2 후 또는 M3 에 배치.
 
