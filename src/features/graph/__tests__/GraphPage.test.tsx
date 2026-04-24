@@ -10,7 +10,7 @@ import type { MobilePhase } from '../use-is-mobile';
 // ---------------------------------------------------------------------------
 // Mock useIsMobile — defaults to 'desktop'; tests can override via mockReturnValue.
 // ---------------------------------------------------------------------------
-const mockUseIsMobile = vi.fn<[], MobilePhase>(() => 'desktop');
+const mockUseIsMobile = vi.fn<() => MobilePhase>(() => 'desktop');
 vi.mock('../use-is-mobile', () => ({
   useIsMobile: () => mockUseIsMobile(),
 }));
