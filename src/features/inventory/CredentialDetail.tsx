@@ -40,6 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { UsageSection } from "./UsageSection";
+import { IncidentsForCredential } from "@/features/incidents/IncidentsForCredential";
 import type { CredentialFull } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -446,6 +447,14 @@ export function CredentialDetail({
               usages={cred.usages}
               onChanged={fetchDetail}
             />
+
+            {/* === 5b. Incidents section === */}
+            <section>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("inventory.sectionIncidents")}
+              </h3>
+              <IncidentsForCredential credentialId={cred.id} />
+            </section>
 
             {/* === 6. Audit section === */}
             <section>

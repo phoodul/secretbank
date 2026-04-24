@@ -27,18 +27,22 @@ vi.mock("sonner", () => ({
   },
 }));
 
-// listen mock — 핸들러 캡처 패턴
+// listen mock — clipboard:countdown 핸들러만 캡처, 나머지는 무시
 let eventHandler: ((e: { payload: { remaining: number } }) => void) | null = null;
 let unlistenCalled = false;
 
 vi.mock("@tauri-apps/api/event", () => ({
-  listen: vi.fn((_event: string, handler: (e: { payload: { remaining: number } }) => void) => {
-    eventHandler = handler;
-    unlistenCalled = false;
-    return Promise.resolve(() => {
-      unlistenCalled = true;
-      eventHandler = null;
-    });
+  listen: vi.fn((event: string, handler: (e: { payload: { remaining: number } }) => void) => {
+    if (event === "clipboard:countdown") {
+      eventHandler = handler;
+      unlistenCalled = false;
+      return Promise.resolve(() => {
+        unlistenCalled = true;
+        eventHandler = null;
+      });
+    }
+    // incidents:updated 등 다른 이벤트는 no-op unlisten 반환
+    return Promise.resolve(() => undefined);
   }),
 }));
 
@@ -96,6 +100,7 @@ describe("CredentialDetail", () => {
       if (cmd === "credential_get") return Promise.resolve(MOCK_CREDENTIAL_FULL);
       if (cmd === "credential_delete") return Promise.resolve(undefined);
       if (cmd === "credential_copy_to_clipboard") return Promise.resolve(undefined);
+      if (cmd === "incident_matches_for_credential") return Promise.resolve([]);
       return Promise.resolve(undefined);
     });
   });

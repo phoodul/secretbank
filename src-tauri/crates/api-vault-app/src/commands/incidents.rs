@@ -11,7 +11,7 @@ use tauri::State;
 use thiserror::Error;
 
 use api_vault_core::{
-    CredentialId, Incident, IncidentFilter, IncidentId,
+    CredentialId, IncidentFilter, IncidentId,
 };
 use api_vault_storage::sqlite::repositories::incident::{IncidentListEntry, IncidentRepo};
 
@@ -85,16 +85,19 @@ pub async fn incident_dismiss(
     Ok(repo.dismiss_matches_for_incident(id).await?)
 }
 
-/// 특정 credential 에 연결된 Incident 목록을 반환한다 (dismissed match 제외).
+/// 특정 credential 에 연결된 Incident 목록을 반환한다 (active + dismissed 모두).
 ///
 /// Credential Detail 패널에서 "이 키에 영향을 주는 이슈" 목록으로 사용.
+/// 반환: `Vec<IncidentListEntry>` — matches 배열에는 이 credential 의 match만 포함.
 #[tauri::command]
 pub async fn incident_matches_for_credential(
     credential_id: CredentialId,
     state: State<'_, AppContext>,
-) -> Result<Vec<Incident>, IncidentCommandError> {
+) -> Result<Vec<IncidentListEntry>, IncidentCommandError> {
     let repo = IncidentRepo::new(&state.pool);
-    Ok(repo.list_incidents_for_credential(credential_id).await?)
+    Ok(repo
+        .list_incidents_with_matches_for_credential(&credential_id)
+        .await?)
 }
 
 /// 스케줄러를 즉시 1회 폴링하고 저장된 incident 개수를 반환한다.

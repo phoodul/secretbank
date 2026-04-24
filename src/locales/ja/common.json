@@ -107,6 +107,7 @@
     "clipboardCleared": "クリップボードを削除しました",
     "sectionMetadata": "詳細",
     "sectionUsages": "リンクされた利用箇所",
+    "sectionIncidents": "インシデント",
     "sectionAudit": "監査ログ",
     "viewAuditLog": "監査履歴を表示",
     "noUsages": "まだ利用箇所がリンクされていません。プロジェクトフォルダをドロップして自動スキャンするか、下から追加してください。",
@@ -385,6 +386,14 @@
       "dismissError": "インシデントの解除に失敗しました",
       "refreshSuccess": "新しいインシデントを {{count}} 件取得しました",
       "refreshError": "フィードの更新に失敗しました"
+    },
+    "credentialSection": {
+      "empty": "この資格情報に影響するインシデントはありません",
+      "warningBanner": "{{count}} 件のアクティブなインシデントがこの資格情報に影響しています。確認して失効を検討してください。",
+      "warningBanner_one": "{{count}} 件のアクティブなインシデントがこの資格情報に影響しています。確認して失効を検討してください。",
+      "warningBanner_other": "{{count}} 件のアクティブなインシデントがこの資格情報に影響しています。確認して失効を検討してください。",
+      "revokeCta": "資格情報を失効",
+      "revokeUnavailable": "M7 Kill Switch リリース後に利用可能"
     }
   },
   "commandPalette": {

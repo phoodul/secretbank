@@ -107,6 +107,7 @@
     "clipboardCleared": "剪贴板已清除",
     "sectionMetadata": "详情",
     "sectionUsages": "关联使用处",
+    "sectionIncidents": "事件",
     "sectionAudit": "审计日志",
     "viewAuditLog": "查看审计记录",
     "noUsages": "尚未关联使用处。拖入项目文件夹自动扫描，或在下方手动添加。",
@@ -385,6 +386,14 @@
       "dismissError": "忽略安全事件失败",
       "refreshSuccess": "获取到 {{count}} 条新安全事件",
       "refreshError": "刷新订阅源失败"
+    },
+    "credentialSection": {
+      "empty": "没有影响此凭证的安全事件",
+      "warningBanner": "{{count}} 个活跃安全事件影响此凭证，请审查并考虑吊销。",
+      "warningBanner_one": "{{count}} 个活跃安全事件影响此凭证，请审查并考虑吊销。",
+      "warningBanner_other": "{{count}} 个活跃安全事件影响此凭证，请审查并考虑吊销。",
+      "revokeCta": "吊销凭证",
+      "revokeUnavailable": "M7 Kill Switch 发布后可用"
     }
   },
   "commandPalette": {

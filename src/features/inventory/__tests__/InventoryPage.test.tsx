@@ -51,6 +51,7 @@ describe("InventoryPage", () => {
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "issuer_list") return Promise.resolve([]);
       if (cmd === "credential_get") return Promise.resolve(MOCK_CREDENTIAL_FULL);
+      if (cmd === "incident_matches_for_credential") return Promise.resolve([]);
       return Promise.resolve(MOCK_CREDENTIALS);
     });
   });

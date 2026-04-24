@@ -373,6 +373,124 @@ impl<'a> IncidentRepo<'a> {
         Ok(entries)
     }
 
+    /// Return incidents (with match details) that have at least one match
+    /// to `credential_id`.  The `matches` array contains **only** the match
+    /// rows for this credential, not all matches of the incident.
+    ///
+    /// Both active and dismissed matches are returned; the UI decides what
+    /// to show. Results are ordered by `detected_at DESC`.
+    pub async fn list_incidents_with_matches_for_credential(
+        &self,
+        credential_id: &CredentialId,
+    ) -> Result<Vec<IncidentListEntry>, StorageError> {
+        let cid_str = credential_id.to_string();
+
+        // INNER JOIN ensures only incidents that have at least one match for
+        // this credential are included. We still get the issuer / label via
+        // the same LEFT JOINs used by list_with_matches.
+        let rows = sqlx::query(
+            r#"SELECT
+                 i.id           AS inc_id,
+                 i.source       AS inc_source,
+                 i.source_id    AS inc_source_id,
+                 i.issuer_id    AS inc_issuer_id,
+                 i.severity     AS inc_severity,
+                 i.title        AS inc_title,
+                 i.body         AS inc_body,
+                 i.url          AS inc_url,
+                 i.detected_at  AS inc_detected_at,
+                 i.published_at AS inc_published_at,
+                 im.id          AS match_id,
+                 im.credential_id AS match_cred_id,
+                 im.reason      AS match_reason,
+                 im.matched_at  AS match_matched_at,
+                 im.dismissed_at AS match_dismissed_at,
+                 c.name         AS cred_label,
+                 iss.display_name AS issuer_display_name
+               FROM incident i
+               INNER JOIN incident_match im ON im.incident_id = i.id
+                                           AND im.credential_id = ?1
+               LEFT JOIN credential c ON c.id = im.credential_id
+               LEFT JOIN issuer iss ON iss.id = c.issuer_id
+               ORDER BY i.detected_at DESC, im.matched_at ASC"#,
+        )
+        .bind(&cid_str)
+        .fetch_all(self.pool)
+        .await?;
+
+        // Group flat rows by incident id (preserving DESC order).
+        let mut entries: Vec<IncidentListEntry> = Vec::new();
+
+        for row in &rows {
+            let inc_id_str: String = row.try_get("inc_id")?;
+            let inc_id: IncidentId = inc_id_str
+                .parse()
+                .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))?;
+
+            if entries.last().map(|e| e.incident.id) != Some(inc_id) {
+                let source_str: String = row.try_get("inc_source")?;
+                let severity_str_val: String = row.try_get("inc_severity")?;
+                let issuer_id_s: Option<String> = row.try_get("inc_issuer_id")?;
+                let detected_ms: i64 = row.try_get("inc_detected_at")?;
+                let published_ms: Option<i64> = row.try_get("inc_published_at")?;
+
+                let incident = Incident {
+                    id: inc_id,
+                    source: str_to_source(&source_str)?,
+                    source_id: row.try_get("inc_source_id")?,
+                    issuer_id: issuer_id_s
+                        .map(|s| {
+                            s.parse::<IssuerId>()
+                                .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))
+                        })
+                        .transpose()?,
+                    severity: str_to_severity(&severity_str_val)?,
+                    title: row.try_get("inc_title")?,
+                    body: row.try_get("inc_body")?,
+                    url: row.try_get("inc_url")?,
+                    detected_at: ms_to_dt(detected_ms)?,
+                    published_at: ms_to_dt_opt(published_ms)?,
+                };
+                entries.push(IncidentListEntry { incident, matches: Vec::new() });
+            }
+
+            let match_id_str: Option<String> = row.try_get("match_id")?;
+            if let Some(mid_str) = match_id_str {
+                let cred_id_str: String = row.try_get("match_cred_id")?;
+                let reason_str: String = row.try_get("match_reason")?;
+                let matched_ms: i64 = row.try_get("match_matched_at")?;
+                let dismissed_at_str: Option<String> = row.try_get("match_dismissed_at")?;
+
+                let dismissed_at = dismissed_at_str
+                    .map(|s| {
+                        OffsetDateTime::parse(&s, &time::format_description::well_known::Rfc3339)
+                            .map_err(|e| StorageError::Parse(e.to_string()))
+                    })
+                    .transpose()?;
+
+                let detail = IncidentMatchDetail {
+                    id: mid_str
+                        .parse()
+                        .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))?,
+                    credential_id: cred_id_str
+                        .parse()
+                        .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))?,
+                    credential_label: row.try_get("cred_label")?,
+                    issuer_display_name: row.try_get("issuer_display_name")?,
+                    reason: str_to_reason(&reason_str)?,
+                    matched_at: ms_to_dt(matched_ms)?,
+                    dismissed_at,
+                };
+
+                if let Some(entry) = entries.last_mut() {
+                    entry.matches.push(detail);
+                }
+            }
+        }
+
+        Ok(entries)
+    }
+
     /// Dismiss every active (non-dismissed) match of `incident_id`.
     /// Returns the number of rows updated.
     pub async fn dismiss_matches_for_incident(
@@ -922,6 +1040,94 @@ mod tests {
         for m in &entry.matches {
             assert_eq!(m.issuer_display_name.as_deref(), Some("stripe"), "issuer display_name 은 'stripe' 이어야 함");
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // T13: list_incidents_with_matches_for_credential
+    //      — credential 2개 incident, 하나 active 하나 dismissed 모두 반환
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_incidents_with_matches_for_credential_basic() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "aws-t13").await;
+        let cred_x = insert_credential(&pool, issuer_id, "aws-t13-key").await;
+        let cred_y = insert_credential(&pool, issuer_id, "aws-t13-other").await;
+
+        let inc1 = make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "T13-A");
+        let inc2 = make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "T13-B");
+        // inc3 matches only cred_y — must NOT appear for cred_x
+        let inc3 = make_incident(IncidentSource::Rss, IncidentSeverity::Critical, None, "T13-C");
+        repo.insert(&inc1).await.unwrap();
+        repo.insert(&inc2).await.unwrap();
+        repo.insert(&inc3).await.unwrap();
+
+        // inc1 → cred_x (active)
+        repo.insert_match(inc1.id, cred_x, MatchReason::IssuerMatch).await.unwrap();
+        // inc2 → cred_x (dismissed)
+        let m2 = repo.insert_match(inc2.id, cred_x, MatchReason::Keyword).await.unwrap();
+        repo.dismiss_match(m2).await.unwrap();
+        // inc3 → cred_y only
+        repo.insert_match(inc3.id, cred_y, MatchReason::IssuerMatch).await.unwrap();
+
+        let entries = repo
+            .list_incidents_with_matches_for_credential(&cred_x)
+            .await
+            .unwrap();
+
+        // Both inc1 (active) and inc2 (dismissed) are returned
+        assert_eq!(entries.len(), 2, "cred_x の incidents は2件であるべき");
+
+        let ids: Vec<&str> = entries.iter().map(|e| e.incident.source_id.as_str()).collect();
+        assert!(ids.contains(&"CVE-TEST-T13-A"), "inc1 が含まれること");
+        assert!(ids.contains(&"CVE-TEST-T13-B"), "inc2 が含まれること");
+
+        // Each entry's matches array must contain only the match for cred_x
+        for entry in &entries {
+            assert_eq!(entry.matches.len(), 1);
+            assert_eq!(entry.matches[0].credential_id, cred_x);
+        }
+
+        // Check dismissed_at semantics
+        let inc1_entry = entries.iter().find(|e| e.incident.source_id == "CVE-TEST-T13-A").unwrap();
+        assert!(inc1_entry.matches[0].dismissed_at.is_none(), "active match은 dismissed_at이 None");
+
+        let inc2_entry = entries.iter().find(|e| e.incident.source_id == "CVE-TEST-T13-B").unwrap();
+        assert!(inc2_entry.matches[0].dismissed_at.is_some(), "dismissed match은 dismissed_at이 Some");
+
+        // cred_y should have 1 entry (inc3 only)
+        let entries_y = repo
+            .list_incidents_with_matches_for_credential(&cred_y)
+            .await
+            .unwrap();
+        assert_eq!(entries_y.len(), 1);
+        assert_eq!(entries_y[0].incident.source_id, "CVE-TEST-T13-C");
+    }
+
+    // -----------------------------------------------------------------------
+    // T14: list_incidents_with_matches_for_credential — no matches → empty vec
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_list_incidents_with_matches_for_credential_empty() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "empty-t14").await;
+        let cred_no_match = insert_credential(&pool, issuer_id, "unused-key").await;
+
+        // Insert an incident with a match for a different credential
+        let cred_other = insert_credential(&pool, issuer_id, "other-key").await;
+        let inc = make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "T14");
+        repo.insert(&inc).await.unwrap();
+        repo.insert_match(inc.id, cred_other, MatchReason::Explicit).await.unwrap();
+
+        let entries = repo
+            .list_incidents_with_matches_for_credential(&cred_no_match)
+            .await
+            .unwrap();
+
+        assert!(entries.is_empty(), "매치 없는 credential은 빈 배열 반환");
     }
 
     // -----------------------------------------------------------------------

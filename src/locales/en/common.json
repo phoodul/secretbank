@@ -107,6 +107,7 @@
     "clipboardCleared": "Clipboard cleared",
     "sectionMetadata": "Details",
     "sectionUsages": "Linked usages",
+    "sectionIncidents": "Incidents",
     "sectionAudit": "Audit log",
     "viewAuditLog": "View audit trail",
     "noUsages": "No usages linked yet. Drop a project folder to auto-scan, or add one below.",
@@ -385,6 +386,14 @@
       "dismissError": "Failed to dismiss incident",
       "refreshSuccess": "{{count}} new incident(s) fetched",
       "refreshError": "Failed to refresh feeds"
+    },
+    "credentialSection": {
+      "empty": "No incidents affecting this credential",
+      "warningBanner": "{{count}} active incident(s) affect this credential. Review and consider revoking.",
+      "warningBanner_one": "{{count}} active incident affects this credential. Review and consider revoking.",
+      "warningBanner_other": "{{count}} active incidents affect this credential. Review and consider revoking.",
+      "revokeCta": "Revoke credential",
+      "revokeUnavailable": "Available when Kill Switch (M7) ships"
     }
   },
   "commandPalette": {

@@ -107,6 +107,7 @@
     "clipboardCleared": "클립보드 삭제됨",
     "sectionMetadata": "상세 정보",
     "sectionUsages": "연결된 사용처",
+    "sectionIncidents": "인시던트",
     "sectionAudit": "감사 로그",
     "viewAuditLog": "감사 이력 보기",
     "noUsages": "아직 연결된 사용처가 없습니다. 프로젝트 폴더를 드롭해 자동 스캔하거나 아래에서 직접 추가하세요.",
@@ -385,6 +386,14 @@
       "dismissError": "인시던트 해제 실패",
       "refreshSuccess": "새 인시던트 {{count}}개를 가져왔습니다",
       "refreshError": "피드 새로고침 실패"
+    },
+    "credentialSection": {
+      "empty": "이 자격증명에 영향을 주는 인시던트가 없습니다",
+      "warningBanner": "{{count}}개의 활성 인시던트가 이 자격증명에 영향을 줍니다. 검토 후 폐기를 고려하세요.",
+      "warningBanner_one": "활성 인시던트 {{count}}개가 이 자격증명에 영향을 줍니다. 검토 후 폐기를 고려하세요.",
+      "warningBanner_other": "활성 인시던트 {{count}}개가 이 자격증명에 영향을 줍니다. 검토 후 폐기를 고려하세요.",
+      "revokeCta": "자격증명 폐기",
+      "revokeUnavailable": "M7 Kill Switch 출시 후 사용 가능"
     }
   },
   "commandPalette": {
