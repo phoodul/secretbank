@@ -4,6 +4,7 @@ pub mod graph;
 pub mod incidents;
 pub mod issuer;
 pub mod projects;
+pub mod railguard;
 pub mod scanner;
 pub mod settings;
 pub mod usage;

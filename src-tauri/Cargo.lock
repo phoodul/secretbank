@@ -158,6 +158,7 @@ dependencies = [
  "api-vault-core",
  "api-vault-crypto",
  "api-vault-feeds",
+ "api-vault-railguard",
  "api-vault-storage",
  "async-trait",
  "secrecy",

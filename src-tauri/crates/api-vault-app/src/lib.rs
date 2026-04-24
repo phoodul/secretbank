@@ -27,6 +27,7 @@ use commands::usage::{
 };
 use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
 use commands::vault_settings::{vault_setting_get, vault_setting_set};
+use commands::railguard::{railguard_apply, railguard_preview};
 use context::AppContext;
 use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
 use tauri::Manager;
@@ -127,6 +128,8 @@ pub fn run(context: tauri::Context) {
             incident_dismiss,
             incident_matches_for_credential,
             incident_feed_refresh,
+            railguard_preview,
+            railguard_apply,
         ]);
     }
 
@@ -170,6 +173,8 @@ pub fn run(context: tauri::Context) {
             incident_dismiss,
             incident_matches_for_credential,
             incident_feed_refresh,
+            railguard_preview,
+            railguard_apply,
         ]);
     }
 

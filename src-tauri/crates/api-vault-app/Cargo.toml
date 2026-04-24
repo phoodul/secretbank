@@ -42,6 +42,7 @@ api-vault-storage = { path = "../api-vault-storage" }
 api-vault-crypto = { path = "../api-vault-crypto" }
 api-vault-connectors = { path = "../api-vault-connectors" }
 api-vault-feeds = { path = "../api-vault-feeds" }
+api-vault-railguard = { path = "../api-vault-railguard" }
 tokio-util = { workspace = true }
 
 # Tauri plugins (optional — disabled in test builds to skip problematic build scripts)
