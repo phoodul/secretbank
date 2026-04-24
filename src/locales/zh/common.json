@@ -186,7 +186,8 @@
     "loadDetailFailed": "加载凭证详情失败",
     "auditEmpty": "暂无审计条目。",
     "auditViewAll": "查看全部 →",
-    "auditError": "加载审计条目失败"
+    "auditError": "加载审计条目失败",
+    "hideRevoked": "隐藏已撤销"
   },
   "vault": {
     "unlockTitle": "解锁保险库",

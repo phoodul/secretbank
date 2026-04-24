@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -17,10 +19,41 @@ import { useInventory } from "./use-inventory";
 import { CreateCredentialDialog } from "./CreateCredentialDialog";
 import type { CredentialFilter, CredentialStatus, Env } from "./types";
 
+const HIDE_REVOKED_KEY = "apivault:inventory:hideRevoked";
+
+function readHideRevoked(): boolean {
+  try {
+    const stored = localStorage.getItem(HIDE_REVOKED_KEY);
+    if (stored === null) return true; // default: hide revoked
+    return stored === "true";
+  } catch {
+    return true;
+  }
+}
+
+function writeHideRevoked(value: boolean): void {
+  try {
+    localStorage.setItem(HIDE_REVOKED_KEY, String(value));
+  } catch {
+    // ignore
+  }
+}
+
 export function InventoryPage() {
   const { t } = useTranslation("common");
-  const { items, loading, error, filter, setFilter, search, setSearch, refresh } = useInventory();
+  const { items: rawItems, loading, error, filter, setFilter, search, setSearch, refresh } = useInventory();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [hideRevoked, setHideRevoked] = useState<boolean>(readHideRevoked);
+
+  const items = useMemo(() => {
+    if (!hideRevoked) return rawItems;
+    return rawItems.filter((c) => c.status !== "revoked");
+  }, [rawItems, hideRevoked]);
+
+  const handleHideRevokedChange = (checked: boolean) => {
+    setHideRevoked(checked);
+    writeHideRevoked(checked);
+  };
 
   // Command Palette "Create credential" — navigate("/?action=create")로 트리거.
   // 초기 렌더에서 쿼리를 읽어 dialogOpen 초기값으로 사용하고, 즉시 query를 제거한다.
@@ -97,6 +130,19 @@ export function InventoryPage() {
             <SelectItem value="compromised">{t("inventory.statusCompromised")}</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Hide revoked 토글 */}
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="hide-revoked"
+            checked={hideRevoked}
+            onCheckedChange={(checked) => handleHideRevokedChange(checked === true)}
+            aria-label={t("inventory.hideRevoked")}
+          />
+          <Label htmlFor="hide-revoked" className="cursor-pointer text-sm">
+            {t("inventory.hideRevoked")}
+          </Label>
+        </div>
       </div>
 
       {/* 에러 배너 */}

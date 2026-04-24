@@ -47,6 +47,8 @@ function renderPage() {
 describe("InventoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Hide revoked 토글 기본값을 false로 설정해 모든 크리덴셜이 보이게 함
+    localStorage.setItem("apivault:inventory:hideRevoked", "false");
     // credential_list → MOCK_CREDENTIALS, issuer_list → [], credential_get → MOCK_CREDENTIAL_FULL
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "issuer_list") return Promise.resolve([]);
@@ -59,6 +61,7 @@ describe("InventoryPage", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it("10개 credential 카드를 렌더링한다", async () => {
@@ -215,6 +218,40 @@ describe("InventoryPage", () => {
         filter: { status: "revoked" },
       });
     });
+  });
+
+  it("Hide revoked 토글이 기본적으로 비활성화(false)이면 revoked 크리덴셜이 보인다", async () => {
+    // beforeEach에서 hideRevoked=false로 설정됨
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
+    });
+
+    // revoked 2개(AWS Access Key, Cloudflare API Key)가 표시되어야 함
+    expect(screen.getByText("AWS Access Key")).toBeInTheDocument();
+    expect(screen.getByText("Cloudflare API Key")).toBeInTheDocument();
+  });
+
+  it("Hide revoked 토글을 활성화(true)하면 revoked 크리덴셜이 사라진다", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("AWS Access Key")).toBeInTheDocument();
+    });
+
+    // Hide revoked 체크박스 클릭
+    const checkbox = screen.getByRole("checkbox", { name: /hide revoked/i });
+    await user.click(checkbox);
+
+    await waitFor(() => {
+      expect(screen.queryByText("AWS Access Key")).not.toBeInTheDocument();
+      expect(screen.queryByText("Cloudflare API Key")).not.toBeInTheDocument();
+    });
+
+    // active 크리덴셜은 여전히 표시
+    expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
   });
 
   it("'+ Add credential' 버튼이 렌더링되고 클릭 가능하다", async () => {

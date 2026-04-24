@@ -186,7 +186,8 @@
     "loadDetailFailed": "認証情報の詳細の読み込みに失敗しました",
     "auditEmpty": "まだ監査エントリがありません。",
     "auditViewAll": "すべて表示 →",
-    "auditError": "監査エントリの読み込みに失敗しました"
+    "auditError": "監査エントリの読み込みに失敗しました",
+    "hideRevoked": "失効済みを非表示"
   },
   "vault": {
     "unlockTitle": "ボールトのロック解除",

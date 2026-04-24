@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 import { SecurityDot } from "./SecurityDot";
 import type { CredentialSummary } from "./types";
@@ -73,7 +74,15 @@ export function CredentialCard({ credential, onSelect }: CredentialCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-1.5">
             <SecurityDot score={credential.score} />
-            <span className="truncate text-sm leading-tight font-medium">{credential.name}</span>
+            <span
+              className={cn(
+                "truncate text-sm leading-tight font-medium",
+                credential.status === "revoked" && "line-through text-muted-foreground opacity-60",
+              )}
+              data-status={credential.status}
+            >
+              {credential.name}
+            </span>
           </div>
           <Badge variant={statusBadge.variant} className="shrink-0 text-xs">
             {t(statusBadge.labelKey)}

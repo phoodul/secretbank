@@ -80,6 +80,18 @@ describe("CredentialCard", () => {
     expect(screen.getByText("Revoked")).toBeInTheDocument();
   });
 
+  it("status=revoked → 이름에 line-through 스타일이 적용된다", () => {
+    render(<CredentialCard credential={makeCredential({ status: "revoked", name: "Dead Key" })} />);
+    const nameEl = screen.getByText("Dead Key");
+    expect(nameEl).toHaveClass("line-through");
+  });
+
+  it("status=active → 이름에 line-through 스타일이 없다", () => {
+    render(<CredentialCard credential={makeCredential({ status: "active", name: "Live Key" })} />);
+    const nameEl = screen.getByText("Live Key");
+    expect(nameEl).not.toHaveClass("line-through");
+  });
+
   it("hover 시 issuer_id 축약형이 나타난다", async () => {
     const user = userEvent.setup();
     const { container } = render(

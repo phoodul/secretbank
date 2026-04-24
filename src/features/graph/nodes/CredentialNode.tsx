@@ -14,6 +14,8 @@ function CredentialNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
   const targetPos = isLR ? Position.Left : Position.Top;
   const sourcePos = isLR ? Position.Right : Position.Bottom;
   const status = data.status;
+  const credentialStatus = data.meta.status as string | undefined;
+  const isRevoked = credentialStatus === 'revoked';
 
   return (
     <>
@@ -24,22 +26,26 @@ function CredentialNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
       />
       <Card
         data-status={status}
+        data-credential-status={credentialStatus}
         className={cn(
           'min-w-[160px] max-w-[220px] border-2 px-3 py-2 shadow-sm transition-all duration-200',
           'bg-vault-warning/10 border-vault-warning/30',
+          isRevoked && 'opacity-60',
           status === 'primary' && 'outline outline-[3px] outline-offset-2',
           status === 'secondary' && 'outline outline-2 outline-offset-2',
           status === 'tertiary' && 'outline outline-1 outline-offset-1',
           status === 'dimmed' && 'opacity-35',
         )}
         style={
-          status === 'primary'
-            ? { outlineColor: 'var(--vault-danger)', outlineStyle: 'solid' }
-            : status === 'secondary'
-              ? { outlineColor: 'var(--vault-warning)', outlineStyle: 'dashed' }
-              : status === 'tertiary'
-                ? { outlineColor: 'var(--muted-foreground)', outlineStyle: 'dotted' }
-                : undefined
+          isRevoked
+            ? { outlineColor: 'var(--vault-danger)', outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 }
+            : status === 'primary'
+              ? { outlineColor: 'var(--vault-danger)', outlineStyle: 'solid' }
+              : status === 'secondary'
+                ? { outlineColor: 'var(--vault-warning)', outlineStyle: 'dashed' }
+                : status === 'tertiary'
+                  ? { outlineColor: 'var(--muted-foreground)', outlineStyle: 'dotted' }
+                  : undefined
         }
       >
         <div className="flex items-center gap-2">
@@ -49,7 +55,14 @@ function CredentialNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
           </span>
         </div>
         {!data.compact && (
-          <div className="mt-1 truncate text-sm font-semibold text-foreground">{data.label}</div>
+          <div
+            className={cn(
+              'mt-1 truncate text-sm font-semibold text-foreground',
+              isRevoked && 'line-through text-muted-foreground',
+            )}
+          >
+            {data.label}
+          </div>
         )}
       </Card>
       <Handle

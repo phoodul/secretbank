@@ -186,7 +186,8 @@
     "loadDetailFailed": "Failed to load credential details",
     "auditEmpty": "No audit entries yet.",
     "auditViewAll": "View all →",
-    "auditError": "Failed to load audit entries"
+    "auditError": "Failed to load audit entries",
+    "hideRevoked": "Hide revoked"
   },
   "vault": {
     "unlockTitle": "Unlock Vault",
