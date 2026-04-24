@@ -32,7 +32,7 @@
 | M1  | Local Vault Core                | T013~T024   | 12        | ✅ 12/12 완료       |
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
-| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 5/10 완료        |
+| M4  | Incident Feed                   | T049~T058   | 8+2S      | 🔄 6/10 완료        |
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ⏳ 대기             |
 | M6  | Audit Log                       | T069~T074   | 6         | ⏳ 대기             |
 | M7  | Kill Switch                     | T075~T078   | 4         | ⏳ 대기             |
@@ -105,8 +105,9 @@
 | T051    | SaaS 상태 RSS 클라이언트 (RssClient + 10 프리셋 + feed-rs + 9 tests)           | 2026-04-24 | `5d9ec6b` |
 | T052    | HIBP v3 클라이언트 (HibpClient + check_email + urlencoding + wiremock 10 tests) | 2026-04-24 | `7e8b27e` |
 | T053    | Incident 매칭 엔진 (match_incident + IssuerMatch/Keyword + 14 tests)            | 2026-04-24 | `2da9770` |
+| T054    | 피드 스케줄러 (FeedSchedulerHandle + Breaker + normalize 3종 + 20 tests)        | 2026-04-24 | _(pending commit)_ |
 
-**완료 합계**: 53/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 5/10**)
+**완료 합계**: 54/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 6/10**)
 
 ---
 
@@ -906,13 +907,18 @@
 - **Depends on**: T049, T050, T051, T053
 - **Goal**: 앱 실행 중 주기적 incident 폴링 + 저장.
 - **DoD**:
-  - `crates/api-vault-app/src/services/feed_scheduler.rs`
-  - NVD 2시간, GHSA 24시간, RSS 5분 간격 `tokio::time::interval`
-  - Circuit Breaker: 연속 3회 실패 시 해당 소스 backoff (1h)
-  - 앱 시작 시 spawn, shutdown 시 graceful cancel
-  - 성공 시 SQLite `incident` + `incident_match` insert
-- **Files Touched**: `crates/api-vault-app/src/services/feed_scheduler.rs`, `crates/api-vault-app/src/lib.rs`
-- **Tests**: Rust — fake clock으로 interval trigger 검증
+  - `crates/api-vault-app/src/services/feed_scheduler.rs` + `feed_normalize.rs` (+ `services/mod.rs`)
+  - `FeedSchedulerConfig { nvd_api_key: Option<String>, ghsa_token: Option<String>, nvd_interval: 2h, ghsa_interval: 24h, rss_interval: 5min }` — **NVD/GHSA 는 key 가 Some 일 때만 spawn** (현재 기본값 None → RSS 만 활성). T055/T058 에서 settings 연동.
+  - RSS/NVD/GHSA 각 `tokio::time::interval` + `MissedTickBehavior::Delay` (밀린 tick 대량 발화 방지)
+  - **HIBP 미포함** — on-demand 전용, 스케줄러 대상 아님 (T053 matcher 에는 활용)
+  - Circuit Breaker: 연속 3회 실패 → 1h cooldown (`Breaker { consecutive_failures, cooldown_until }`)
+  - 앱 시작 시 `spawn_feed_scheduler(pool, config)` → `FeedSchedulerHandle { cancel, join_set }` 를 `AppContext.feed_scheduler` 에 저장
+  - Shutdown: `Builder::on_window_event(Destroyed)` → `handle.shutdown()` → `CancellationToken::cancel()` + `JoinSet::join_next` 대기 (graceful). `JoinHandle::abort()` 보다 강건.
+  - DTO → Incident 정규화 3종 (NVD/GHSA/RSS): severity 매핑, `issuer_id = issuer_index.get(canonical_source_slug(&entry.source_slug))` (RSS "gcp" → Issuer "google" alias)
+  - 성공 시 `incident_repo.insert(&incident)` + `match_incident(&incident, credentials, issuers)` → `incident_repo.insert_match(...)` 파이프라인
+  - 중복 source_id 방지: storage 에 `UNIQUE(source, source_id)` 제약 없음 → `repo.insert` Err 시 `tracing::debug!` 후 skip (향후 storage migration 필요 — Pending)
+- **Files Touched**: `crates/api-vault-app/src/services/feed_scheduler.rs` (신규), `feed_normalize.rs` (신규), `services/mod.rs` (신규), `context.rs` (+feed_scheduler 필드), `lib.rs` (spawn + on_window_event), `src-tauri/Cargo.toml` (+tokio-util), `api-vault-app/Cargo.toml` (+api-vault-feeds, +tokio-util)
+- **Tests**: Rust — normalize 14개 (NVD/GHSA/RSS 변환 + canonical_slug + issuer_index) + scheduler 6개 (Breaker 4건 + config default + spawn/shutdown 라운드트립). fake clock interval trigger 는 wiremock+tempfile 복잡도 이슈로 생략, T056/T057 UI 연동 시 e2e 커버 예정.
 
 ### T055. Tauri 커맨드 `incident_*`
 

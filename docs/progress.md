@@ -2,13 +2,31 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-24 (**T053 완료, M4 🔄 5/10**)
-- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 5/10 완료** (feed 소스 4종 + 매칭 엔진 완료)
-- **Commits:** 80개 누적 (T053 커밋 추가 예정)
-- **Tests:** Rust 156+개 (api-vault-feeds 48 = matcher 14 + hibp 10 + rss 9 + ghsa 9 + nvd 6) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
-- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러 지속 — 매칭/피드 Rust 크레이트와 무관.)
+- **Time:** 2026-04-24 (**T054 완료, M4 🔄 6/10**)
+- **Phase:** Phase 3 — Implementation, **M4 Incident Feed 🔄 6/10 완료** (피드 4종 + 매칭 + 스케줄러 완료)
+- **Commits:** 82개 누적 (T054 커밋 추가 예정)
+- **Tests:** Rust 176+개 (api-vault-app 33 + api-vault-feeds 48 + 기타) + Vitest 221개. `cargo clippy --workspace -D warnings` exit 0 / `cargo test --workspace` 회귀 없음.
+- **Blocker:** 없음. (pre-existing `pnpm typecheck` 5 에러 지속.)
 - **Mode:** 일반.
-- **Next:** T054 스케줄러 (tokio interval 2h/24h/5min + Circuit Breaker + SQLite incident/incident_match insert). **주요 설계 포인트**: 4개 feed DTO → Incident 정규화 책임은 T054 에 속함 (T053 은 매칭만 담당). slug alias (RSS "gcp" → Issuer "google") 도 T054 에서 해결.
+- **Next:** T055 Tauri 커맨드 `incident_*` (Must) — `incident_feed_refresh`, `incident_list(filter)`, `incident_dismiss`, `incident_matches_for_credential`. 프론트 UI 준비.
+
+## T054 구현 교훈 (M4 후속 영향)
+
+- **`CancellationToken` + `JoinSet::join_next()` 가 `JoinHandle::abort()` 보다 강건**: `abort()` 는 강제 중단으로 async drop 보장 없음. `CancellationToken` 은 태스크가 `tokio::select! { _ = cancel.cancelled() => break, ... }` 로 정상 종료 경로를 타게 함 → resource cleanup 보장. T023 clipboard 도 향후 이 패턴으로 전환 고려.
+- **`MissedTickBehavior::Delay` 필수**: `tokio::time::interval` 기본 `Burst` 모드는 interval 작업이 길어지면 밀린 tick 이 한꺼번에 발화 — 실제 HTTP poll 에선 폭주. `Delay` 로 "이전 tick 끝난 후 새 interval 시작" 동작.
+- **`IssuerRepo::new(&SqlitePool)` lifetime 참조**: storage 크레이트 repo 는 `&'a SqlitePool` 받음. `Arc<SqlitePool>` 에서 `&*pool` 로 deref 해서 전달. 스케줄러가 `Arc<SqlitePool>` 을 보관하고 호출 시점에 임시 `&` 재획득.
+- **`source_id` UNIQUE 제약 미적용 → Err skip 방어**: `incident` 테이블에 `(source, source_id)` UNIQUE 없어 재폴링 시 중복 INSERT 에러 발생. `tracing::debug!` 후 skip 으로 처리. **Pending**: storage migration 으로 UNIQUE 추가 + `INSERT OR IGNORE` 전환 필요.
+- **`Tauri on_window_event(Destroyed)` 타이밍 주의**: 마지막 윈도우 destroy 시점에 `spawn(async shutdown)` 비동기라 프로세스가 즉시 종료되면 cancel 이 전파되지 않을 수 있음. production 안정성은 `RunEvent::Exit` 전환 시 개선 — **Pending**.
+- **스케줄러 integration 테스트 (fake clock) 생략**: `poll_rss_once` 가 DB + HTTP 의존성 있어 `tokio::time::pause()` + `advance()` 로 ticker trigger 검증하려면 mock pool + wiremock 복잡 조합 필요. 현재는 Breaker 단위 + normalize 단위 + spawn/shutdown 라운드트립까지만 커버. 전체 파이프라인은 T056/T057 UI 연동 시 e2e 테스트로 커버 예정.
+- **`FeedSchedulerConfig` key-gate 설계**: `nvd_api_key: Option<String>`, `ghsa_token: Option<String>` 이 None 이면 해당 폴러 spawn 생략. 현재 `FeedSchedulerConfig::default()` = 전부 None → RSS 만 활성. T055 에서 Tauri 커맨드가 settings 조회로 채워 `spawn_feed_scheduler` 재구성 기능 추가 예정. T058 에서 NVD API key Settings UI.
+
+## Pending Decisions (갱신)
+
+- Gate 3 (배포 진행 승인)
+- Gate 4 (git push 승인)
+- **`pnpm typecheck` 5 에러 (pre-existing)** — GraphPage.test.tsx vi.fn generic 타입. M4 마무리 시 또는 별도 hotfix 커밋.
+- **Storage migration 0002 — `incident (source, source_id)` UNIQUE** (T054 교훈). T056 이전 또는 T056 과 함께 처리.
+- **Tauri shutdown `RunEvent::Exit` 전환** (T054 교훈). production 배포 전 (M13) 처리.
 
 ## T053 구현 교훈 (M4 후속 영향)
 

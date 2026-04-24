@@ -11,6 +11,8 @@ use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::{init_pool, SqlitePool};
 use api_vault_storage::vault::{VaultError, VaultStorage};
 
+use crate::services::feed_scheduler::FeedSchedulerHandle;
+
 /// Application-wide shared state, managed by Tauri.
 ///
 /// Access via `State<'_, AppContext>` in command handlers.
@@ -33,6 +35,12 @@ pub struct AppContext {
     /// 새 복사 요청이 오면 이전 핸들을 `.abort()` 하여 타이머를 취소한다.
     /// `None` = 타이머 없음 (앱 초기 상태 또는 만료 완료 후).
     pub clipboard_controller: Arc<Mutex<Option<JoinHandle<()>>>>,
+
+    /// 피드 스케줄러 핸들.
+    ///
+    /// 앱 시작 시 `spawn_feed_scheduler` 로 생성하여 저장한다.
+    /// 앱 종료 시 `on_window_event(Destroyed)` 훅에서 `handle.shutdown()` 호출.
+    pub feed_scheduler: Arc<Mutex<Option<FeedSchedulerHandle>>>,
 }
 
 impl AppContext {
@@ -60,6 +68,8 @@ impl AppContext {
             user_id: "default".to_owned(),
             // 초기 상태: 타이머 없음
             clipboard_controller: Arc::new(Mutex::new(None)),
+            // 초기 상태: 스케줄러 없음 (setup 에서 채워짐)
+            feed_scheduler: Arc::new(Mutex::new(None)),
         })
     }
 

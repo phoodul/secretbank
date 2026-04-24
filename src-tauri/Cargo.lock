@@ -157,6 +157,7 @@ dependencies = [
  "api-vault-connectors",
  "api-vault-core",
  "api-vault-crypto",
+ "api-vault-feeds",
  "api-vault-storage",
  "async-trait",
  "secrecy",
@@ -178,6 +179,7 @@ dependencies = [
  "thiserror 2.0.18",
  "time",
  "tokio",
+ "tokio-util",
  "tracing",
 ]
 
@@ -7080,6 +7082,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
+ "futures-util",
  "pin-project-lite",
  "tokio",
 ]

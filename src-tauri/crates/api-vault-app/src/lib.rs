@@ -2,6 +2,7 @@
 
 pub mod commands;
 pub mod context;
+pub mod services;
 pub mod setup;
 
 use commands::credentials::{
@@ -23,6 +24,7 @@ use commands::usage::{
 };
 use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
 use context::AppContext;
+use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig};
 use tauri::Manager;
 
 #[cfg(feature = "tauri-plugins")]
@@ -49,6 +51,13 @@ pub fn run(context: tauri::Context) {
             let seed_count = tauri::async_runtime::block_on(setup::seed_issuer_presets(&ctx.pool))
                 .expect("failed to seed issuer presets");
             tracing::info!("issuer preset seed: {} rows inserted", seed_count);
+
+            // 피드 스케줄러 시작 (기본값: RSS 만 활성, NVD/GHSA 는 API key 없으면 비활성)
+            let scheduler_config = FeedSchedulerConfig::default();
+            let scheduler_handle = spawn_feed_scheduler(ctx.pool.clone(), scheduler_config);
+            tauri::async_runtime::block_on(async {
+                *ctx.feed_scheduler.lock().await = Some(scheduler_handle);
+            });
 
             app.manage(ctx);
             Ok(())
@@ -160,6 +169,18 @@ pub fn run(context: tauri::Context) {
     }
 
     builder
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                let state = window.state::<AppContext>();
+                let scheduler_arc = state.feed_scheduler.clone();
+                tauri::async_runtime::spawn(async move {
+                    let mut guard = scheduler_arc.lock().await;
+                    if let Some(handle) = guard.take() {
+                        handle.shutdown().await;
+                    }
+                });
+            }
+        })
         .run(context)
         .expect("error while running tauri application");
 }

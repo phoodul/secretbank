@@ -1,0 +1,523 @@
+//! 주기적 incident 폴링 스케줄러.
+//!
+//! `spawn_feed_scheduler` 를 앱 시작 시 호출하면 RSS(5분)/NVD(2h)/GHSA(24h) 폴러가
+//! 각각 독립 tokio task 로 실행된다. `FeedSchedulerHandle::shutdown()` 으로 graceful cancel.
+//!
+//! # API key gate
+//! NVD / GHSA 는 `FeedSchedulerConfig` 에 key/token 이 Some 일 때만 spawn 된다.
+//! 현재 기본값(`Default::default()`)은 전부 None → RSS 만 동작.
+
+use std::sync::Arc;
+use std::time::Duration;
+
+use api_vault_feeds::{
+    default_presets, match_incident, GhsaClient, NvdClient, RssClient,
+};
+use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
+use api_vault_storage::sqlite::repositories::incident::IncidentRepo;
+use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
+use api_vault_storage::sqlite::SqlitePool;
+use time::OffsetDateTime;
+use tokio::task::JoinSet;
+use tokio_util::sync::CancellationToken;
+
+use crate::services::feed_normalize::{build_issuer_index, normalize_ghsa, normalize_nvd, normalize_rss};
+
+// ---------------------------------------------------------------------------
+// 에러 모델
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, thiserror::Error)]
+pub enum FeedSchedulerError {
+    #[error("Storage error: {0}")]
+    Storage(#[from] api_vault_storage::sqlite::StorageError),
+
+    #[error("Nvd feed error: {0}")]
+    Nvd(#[from] api_vault_feeds::NvdError),
+
+    #[error("Ghsa feed error: {0}")]
+    Ghsa(#[from] api_vault_feeds::GhsaError),
+}
+
+// ---------------------------------------------------------------------------
+// Circuit Breaker
+// ---------------------------------------------------------------------------
+
+/// 연속 실패 횟수를 추적하고 3회 이상이면 1시간 cooldown 을 적용한다.
+#[derive(Debug)]
+pub(crate) struct Breaker {
+    consecutive_failures: u32,
+    cooldown_until: Option<tokio::time::Instant>,
+}
+
+impl Breaker {
+    pub(crate) fn new() -> Self {
+        Self {
+            consecutive_failures: 0,
+            cooldown_until: None,
+        }
+    }
+
+    /// 현재 시각 기준으로 breaker 가 열려 있으면 true (폴 생략해야 함).
+    pub(crate) fn is_open(&self, now: tokio::time::Instant) -> bool {
+        self.cooldown_until.is_some_and(|until| now < until)
+    }
+
+    pub(crate) fn on_success(&mut self) {
+        self.consecutive_failures = 0;
+        self.cooldown_until = None;
+    }
+
+    pub(crate) fn on_failure(&mut self, now: tokio::time::Instant) {
+        self.consecutive_failures += 1;
+        if self.consecutive_failures >= 3 {
+            self.cooldown_until = Some(now + Duration::from_secs(3600));
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 스케줄러 설정
+// ---------------------------------------------------------------------------
+
+/// 폴링 주기 및 API 키 설정.
+///
+/// `Default::default()` = NVD/GHSA 비활성, RSS 만 5분 간격.
+pub struct FeedSchedulerConfig {
+    /// NVD CVE API 키. None 이면 NVD 폴러를 spawn 하지 않는다.
+    pub nvd_api_key: Option<String>,
+    /// GitHub PAT (GHSA 조회). None 이면 GHSA 폴러를 spawn 하지 않는다.
+    pub ghsa_token: Option<String>,
+    pub nvd_interval: Duration,
+    pub ghsa_interval: Duration,
+    pub rss_interval: Duration,
+}
+
+impl Default for FeedSchedulerConfig {
+    fn default() -> Self {
+        Self {
+            nvd_api_key: None,
+            ghsa_token: None,
+            nvd_interval: Duration::from_secs(2 * 60 * 60),
+            ghsa_interval: Duration::from_secs(24 * 60 * 60),
+            rss_interval: Duration::from_secs(5 * 60),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 스케줄러 핸들
+// ---------------------------------------------------------------------------
+
+/// `spawn_feed_scheduler` 가 반환하는 핸들. Graceful shutdown 을 제공한다.
+pub struct FeedSchedulerHandle {
+    cancel: CancellationToken,
+    join_set: JoinSet<()>,
+}
+
+impl FeedSchedulerHandle {
+    /// 모든 폴러 태스크를 취소하고 완료를 기다린다.
+    pub async fn shutdown(mut self) {
+        self.cancel.cancel();
+        while self.join_set.join_next().await.is_some() {}
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 스케줄러 spawn
+// ---------------------------------------------------------------------------
+
+/// 피드 폴러 태스크들을 spawn 하고 핸들을 반환한다.
+///
+/// RSS 는 항상 spawn. NVD/GHSA 는 config 에 key 가 있을 때만.
+pub fn spawn_feed_scheduler(
+    pool: Arc<SqlitePool>,
+    config: FeedSchedulerConfig,
+) -> FeedSchedulerHandle {
+    let cancel = CancellationToken::new();
+    let mut join_set = JoinSet::new();
+
+    // RSS 는 항상 활성
+    join_set.spawn(run_rss_poller(
+        pool.clone(),
+        config.rss_interval,
+        cancel.clone(),
+    ));
+
+    // NVD 는 key 있을 때만
+    if let Some(key) = config.nvd_api_key {
+        join_set.spawn(run_nvd_poller(
+            pool.clone(),
+            key,
+            config.nvd_interval,
+            cancel.clone(),
+        ));
+    }
+
+    // GHSA 는 token 있을 때만
+    if let Some(token) = config.ghsa_token {
+        join_set.spawn(run_ghsa_poller(
+            pool.clone(),
+            token,
+            config.ghsa_interval,
+            cancel.clone(),
+        ));
+    }
+
+    FeedSchedulerHandle { cancel, join_set }
+}
+
+// ---------------------------------------------------------------------------
+// RSS 폴러
+// ---------------------------------------------------------------------------
+
+async fn run_rss_poller(pool: Arc<SqlitePool>, interval: Duration, cancel: CancellationToken) {
+    let mut ticker = tokio::time::interval(interval);
+    ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+    let mut breaker = Breaker::new();
+    let rss_client = RssClient::new();
+
+    loop {
+        tokio::select! {
+            _ = cancel.cancelled() => break,
+            _ = ticker.tick() => {
+                let now = tokio::time::Instant::now();
+                if breaker.is_open(now) {
+                    tracing::debug!("rss poller breaker open, skipping tick");
+                    continue;
+                }
+                match poll_rss_once(&pool, &rss_client).await {
+                    Ok(count) => {
+                        tracing::info!(count, "rss poll complete");
+                        breaker.on_success();
+                    }
+                    Err(e) => {
+                        tracing::warn!(error = %e, "rss poll failed");
+                        breaker.on_failure(now);
+                    }
+                }
+            }
+        }
+    }
+}
+
+async fn poll_rss_once(
+    pool: &Arc<SqlitePool>,
+    rss_client: &RssClient,
+) -> Result<usize, FeedSchedulerError> {
+    let issuer_repo = IssuerRepo::new(pool);
+    let credential_repo = CredentialRepo::new(pool);
+    let incident_repo = IncidentRepo::new(pool);
+
+    let issuers = issuer_repo.list().await?;
+    let credentials = credential_repo.list_all().await?;
+    let index = build_issuer_index(&issuers);
+
+    let entries = rss_client.fetch_all(&default_presets()).await;
+    let now = OffsetDateTime::now_utc();
+
+    let mut stored = 0usize;
+    for entry in &entries {
+        let incident = normalize_rss(entry, &index, now);
+        // PK 중복은 storage Err 로 반환 → debug 후 skip
+        if let Err(e) = incident_repo.insert(&incident).await {
+            tracing::debug!(?e, source_id = %incident.source_id, "incident insert skipped (likely duplicate)");
+            continue;
+        }
+        stored += 1;
+
+        // 매칭 → insert_match
+        let matches = match_incident(&incident, &credentials, &issuers);
+        for m in matches {
+            if let Err(e) = incident_repo
+                .insert_match(m.incident_id, m.credential_id, m.reason)
+                .await
+            {
+                tracing::debug!(?e, "incident_match insert skipped");
+            }
+        }
+    }
+
+    Ok(stored)
+}
+
+// ---------------------------------------------------------------------------
+// NVD 폴러
+// ---------------------------------------------------------------------------
+
+async fn run_nvd_poller(
+    pool: Arc<SqlitePool>,
+    api_key: String,
+    interval: Duration,
+    cancel: CancellationToken,
+) {
+    let mut ticker = tokio::time::interval(interval);
+    ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+    let mut breaker = Breaker::new();
+    let nvd_client = NvdClient::new(Some(api_key));
+
+    loop {
+        tokio::select! {
+            _ = cancel.cancelled() => break,
+            _ = ticker.tick() => {
+                let now_instant = tokio::time::Instant::now();
+                if breaker.is_open(now_instant) {
+                    tracing::debug!("nvd poller breaker open, skipping tick");
+                    continue;
+                }
+                let since = OffsetDateTime::now_utc() - time::Duration::hours(2);
+                match poll_nvd_once(&pool, &nvd_client, since).await {
+                    Ok(count) => {
+                        tracing::info!(count, "nvd poll complete");
+                        breaker.on_success();
+                    }
+                    Err(e) => {
+                        tracing::warn!(error = %e, "nvd poll failed");
+                        breaker.on_failure(now_instant);
+                    }
+                }
+            }
+        }
+    }
+}
+
+async fn poll_nvd_once(
+    pool: &Arc<SqlitePool>,
+    nvd_client: &NvdClient,
+    since: OffsetDateTime,
+) -> Result<usize, FeedSchedulerError> {
+    let issuer_repo = IssuerRepo::new(pool);
+    let credential_repo = CredentialRepo::new(pool);
+    let incident_repo = IncidentRepo::new(pool);
+
+    let issuers = issuer_repo.list().await?;
+    let credentials = credential_repo.list_all().await?;
+
+    let cves = nvd_client.fetch_incremental(since).await?;
+    let now = OffsetDateTime::now_utc();
+
+    let mut stored = 0usize;
+    for cve in &cves {
+        let incident = normalize_nvd(cve, now);
+        if let Err(e) = incident_repo.insert(&incident).await {
+            tracing::debug!(?e, source_id = %incident.source_id, "nvd incident insert skipped");
+            continue;
+        }
+        stored += 1;
+
+        let matches = match_incident(&incident, &credentials, &issuers);
+        for m in matches {
+            if let Err(e) = incident_repo
+                .insert_match(m.incident_id, m.credential_id, m.reason)
+                .await
+            {
+                tracing::debug!(?e, "nvd incident_match insert skipped");
+            }
+        }
+    }
+
+    Ok(stored)
+}
+
+// ---------------------------------------------------------------------------
+// GHSA 폴러
+// ---------------------------------------------------------------------------
+
+async fn run_ghsa_poller(
+    pool: Arc<SqlitePool>,
+    token: String,
+    interval: Duration,
+    cancel: CancellationToken,
+) {
+    let mut ticker = tokio::time::interval(interval);
+    ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+    let mut breaker = Breaker::new();
+    let ghsa_client = GhsaClient::new(token);
+
+    loop {
+        tokio::select! {
+            _ = cancel.cancelled() => break,
+            _ = ticker.tick() => {
+                let now_instant = tokio::time::Instant::now();
+                if breaker.is_open(now_instant) {
+                    tracing::debug!("ghsa poller breaker open, skipping tick");
+                    continue;
+                }
+                let since = OffsetDateTime::now_utc() - time::Duration::hours(24);
+                match poll_ghsa_once(&pool, &ghsa_client, since).await {
+                    Ok(count) => {
+                        tracing::info!(count, "ghsa poll complete");
+                        breaker.on_success();
+                    }
+                    Err(e) => {
+                        tracing::warn!(error = %e, "ghsa poll failed");
+                        breaker.on_failure(now_instant);
+                    }
+                }
+            }
+        }
+    }
+}
+
+async fn poll_ghsa_once(
+    pool: &Arc<SqlitePool>,
+    ghsa_client: &GhsaClient,
+    since: OffsetDateTime,
+) -> Result<usize, FeedSchedulerError> {
+    let issuer_repo = IssuerRepo::new(pool);
+    let credential_repo = CredentialRepo::new(pool);
+    let incident_repo = IncidentRepo::new(pool);
+
+    let issuers = issuer_repo.list().await?;
+    let credentials = credential_repo.list_all().await?;
+
+    let advisories = ghsa_client.fetch_advisories(since).await?;
+    let now = OffsetDateTime::now_utc();
+
+    let mut stored = 0usize;
+    for adv in &advisories {
+        let incident = normalize_ghsa(adv, now);
+        if let Err(e) = incident_repo.insert(&incident).await {
+            tracing::debug!(?e, source_id = %incident.source_id, "ghsa incident insert skipped");
+            continue;
+        }
+        stored += 1;
+
+        let matches = match_incident(&incident, &credentials, &issuers);
+        for m in matches {
+            if let Err(e) = incident_repo
+                .insert_match(m.incident_id, m.credential_id, m.reason)
+                .await
+            {
+                tracing::debug!(?e, "ghsa incident_match insert skipped");
+            }
+        }
+    }
+
+    Ok(stored)
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn instant_minus_secs(secs: u64) -> tokio::time::Instant {
+        // tokio::time::Instant 는 Duration 뺄셈을 지원하지 않으므로
+        // now() 를 기준으로 과거를 표현하기 위해 cooldown_until 직접 조작 불가.
+        // 대신 now + very_small 으로 대략 동일 시각을 표현한다.
+        // 실제로 "이미 지난 cooldown" 을 테스트하려면 cooldown_until 을 now() 보다 과거로 설정해야 하므로
+        // Instant::now() - Duration 이 필요한데, tokio Instant 는 checked_sub 로 처리 가능.
+        let base = tokio::time::Instant::now();
+        // saturating sub: 언더플로우 방지
+        base.checked_sub(Duration::from_secs(secs)).unwrap_or(base)
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 1: 연속 3회 실패 → breaker 열림
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_breaker_opens_after_3_failures() {
+        let mut b = Breaker::new();
+        let now = tokio::time::Instant::now();
+
+        b.on_failure(now);
+        b.on_failure(now);
+        assert!(!b.is_open(now), "2회 실패 후에는 아직 닫혀 있어야 함");
+
+        b.on_failure(now);
+        // cooldown_until = now + 1h → is_open(now) == true
+        assert!(b.is_open(now), "3회 실패 후 breaker 가 열려야 함");
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 2: on_success → 실패 카운터 초기화
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_breaker_clears_on_success() {
+        let mut b = Breaker::new();
+        let now = tokio::time::Instant::now();
+
+        b.on_failure(now);
+        b.on_failure(now);
+        assert_eq!(b.consecutive_failures, 2);
+
+        b.on_success();
+        assert_eq!(b.consecutive_failures, 0);
+        assert!(b.cooldown_until.is_none());
+        assert!(!b.is_open(now));
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 3: cooldown_until 이 과거 → is_open = false
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_breaker_closed_when_cooldown_expired() {
+        let mut b = Breaker::new();
+        // cooldown_until 을 현재 시각보다 1초 이전으로 직접 설정
+        let past = instant_minus_secs(1);
+        b.cooldown_until = Some(past);
+
+        let now = tokio::time::Instant::now();
+        // past < now 이므로 is_open == false
+        assert!(!b.is_open(now), "cooldown 만료 후에는 breaker 가 닫혀야 함");
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 4: 2회 실패 → is_open = false (3회 미만)
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_breaker_not_open_before_3_failures() {
+        let mut b = Breaker::new();
+        let now = tokio::time::Instant::now();
+
+        b.on_failure(now);
+        b.on_failure(now);
+
+        assert!(!b.is_open(now));
+    }
+
+    // -----------------------------------------------------------------------
+    // Test: FeedSchedulerConfig::default() — NVD/GHSA 키 없음
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_feed_scheduler_config_default_has_no_keys() {
+        let cfg = FeedSchedulerConfig::default();
+        assert!(cfg.nvd_api_key.is_none());
+        assert!(cfg.ghsa_token.is_none());
+        assert_eq!(cfg.rss_interval, Duration::from_secs(5 * 60));
+        assert_eq!(cfg.nvd_interval, Duration::from_secs(2 * 60 * 60));
+        assert_eq!(cfg.ghsa_interval, Duration::from_secs(24 * 60 * 60));
+    }
+
+    // -----------------------------------------------------------------------
+    // Test: spawn + immediate shutdown (RSS 만 활성, 실제 HTTP 없음)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_scheduler_spawn_and_shutdown_immediately() {
+        // 실제 DB 없이 종료 경로만 검증한다.
+        // pool 생성 없이 테스트하기 위해 interval 을 매우 길게 설정해 tick 이 안 오도록 함.
+        use tempfile::tempdir;
+        use api_vault_storage::sqlite::init_pool;
+
+        let dir = tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let pool = init_pool(&db_path).await.unwrap();
+        let pool_arc = Arc::new(pool);
+
+        let config = FeedSchedulerConfig {
+            nvd_api_key: None,
+            ghsa_token: None,
+            rss_interval: Duration::from_secs(9999),
+            nvd_interval: Duration::from_secs(9999),
+            ghsa_interval: Duration::from_secs(9999),
+        };
+
+        let handle = spawn_feed_scheduler(pool_arc, config);
+        // 즉시 shutdown → deadlock 없이 완료되어야 함
+        handle.shutdown().await;
+    }
+}
