@@ -191,12 +191,16 @@ version = "0.1.0"
 name = "api-vault-connectors"
 version = "0.1.0"
 dependencies = [
+ "api-vault-core",
+ "async-trait",
  "ignore",
  "once_cell",
  "regex",
  "serde",
  "tempfile",
  "thiserror 2.0.18",
+ "time",
+ "tokio",
  "tracing",
 ]
 
