@@ -507,6 +507,28 @@
     },
     "filteredByCredential": "자격증명 {{id}} 기준으로 필터링됨"
   },
+  "killSwitch": {
+    "revoke": "폐기",
+    "revoked": "폐기됨",
+    "dialog": {
+      "title": "자격증명 폐기",
+      "warning": "이 자격증명을 폐기 상태로 표시합니다. 외부 서비스는 아직 알 수 없습니다 — 공급자 콘솔에서 직접 키를 교체하거나 삭제해야 합니다.",
+      "typeNameLabel": "{{name}} 을(를) 입력하여 확인",
+      "typeNamePlaceholder": "자격증명 이름",
+      "alsoDeleteValue": "암호화된 값도 함께 삭제",
+      "alsoDeleteValueHint": "볼트에서 값이 영구적으로 제거됩니다.",
+      "cancel": "취소",
+      "continue": "계속",
+      "confirmWarning": "이 작업은 되돌릴 수 없습니다.",
+      "confirm": "이해했습니다, 지금 폐기",
+      "done": "자격증명이 폐기되었습니다",
+      "close": "닫기"
+    },
+    "toast": {
+      "success": "자격증명이 폐기되었습니다",
+      "error": "자격증명 폐기에 실패했습니다"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "명령어 또는 검색어 입력…",
     "noResults": "결과 없음",

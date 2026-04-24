@@ -507,6 +507,28 @@
     },
     "filteredByCredential": "按凭证 {{id}} 过滤"
   },
+  "killSwitch": {
+    "revoke": "吊销",
+    "revoked": "已吊销",
+    "dialog": {
+      "title": "吊销凭证",
+      "warning": "这将把凭证标记为已吊销。外部服务暂时不会知道 — 您仍需在提供商控制台中轮换或删除密钥。",
+      "typeNameLabel": "输入 {{name}} 以确认",
+      "typeNamePlaceholder": "凭证名称",
+      "alsoDeleteValue": "同时删除加密值",
+      "alsoDeleteValueHint": "该值将从您的保险库中永久删除。",
+      "cancel": "取消",
+      "continue": "继续",
+      "confirmWarning": "此操作无法撤销。",
+      "confirm": "我已了解，立即吊销",
+      "done": "凭证已吊销",
+      "close": "关闭"
+    },
+    "toast": {
+      "success": "凭证已吊销",
+      "error": "吊销凭证失败"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "输入命令或搜索…",
     "noResults": "未找到结果",

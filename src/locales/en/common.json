@@ -507,6 +507,28 @@
     },
     "filteredByCredential": "Filtered by credential {{id}}"
   },
+  "killSwitch": {
+    "revoke": "Revoke",
+    "revoked": "Revoked",
+    "dialog": {
+      "title": "Revoke credential",
+      "warning": "This will mark the credential as revoked. External services won't know yet — you'll still need to rotate or delete the key in the provider console.",
+      "typeNameLabel": "Type {{name}} to confirm",
+      "typeNamePlaceholder": "Credential name",
+      "alsoDeleteValue": "Also delete the encrypted value",
+      "alsoDeleteValueHint": "The value will be permanently removed from your vault.",
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "confirmWarning": "This cannot be undone.",
+      "confirm": "I understand, revoke now",
+      "done": "Credential revoked",
+      "close": "Close"
+    },
+    "toast": {
+      "success": "Credential revoked",
+      "error": "Failed to revoke credential"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "Type a command or search…",
     "noResults": "No results found",

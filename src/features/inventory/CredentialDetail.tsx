@@ -41,6 +41,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { UsageSection } from "./UsageSection";
 import { IncidentsForCredential } from "@/features/incidents/IncidentsForCredential";
 import { AuditForCredential } from "@/features/audit/AuditForCredential";
+import { KillSwitchDialog } from "@/features/kill-switch/KillSwitchDialog";
 import type { CredentialFull } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -167,6 +168,7 @@ export function CredentialDetail({
   const [remaining, setRemaining] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [killSwitchOpen, setKillSwitchOpen] = useState(false);
 
   // unlisten ref — Drawer 닫힐 때 정리
   const unlistenRef = useRef<UnlistenFn | null>(null);
@@ -287,10 +289,15 @@ export function CredentialDetail({
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       setDeleteDialogOpen(false);
+      setKillSwitchOpen(false);
       setRemaining(0);
       onClose();
     }
   };
+
+  const handleRevokeRequested = useCallback(() => {
+    setKillSwitchOpen(true);
+  }, []);
 
   // ------------------------------------------------------------------
   // Render
@@ -360,17 +367,20 @@ export function CredentialDetail({
                   <TooltipContent>{t("inventory.m7ComingSoon")}</TooltipContent>
                 </Tooltip>
 
-                {/* Revoke — disabled placeholder */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={0} className="inline-flex">
-                      <Button size="sm" variant="outline" disabled>
-                        {t("inventory.revoke")}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>{t("inventory.m7ComingSoon")}</TooltipContent>
-                </Tooltip>
+                {/* Revoke — active if not already revoked */}
+                {cred?.status === "revoked" ? (
+                  <Button size="sm" variant="outline" disabled>
+                    {t("killSwitch.revoked")}
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRevokeRequested}
+                  >
+                    {t("killSwitch.revoke")}
+                  </Button>
+                )}
               </div>
             </TooltipProvider>
 
@@ -453,7 +463,10 @@ export function CredentialDetail({
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("inventory.sectionIncidents")}
               </h3>
-              <IncidentsForCredential credentialId={cred.id} />
+              <IncidentsForCredential
+                credentialId={cred.id}
+                onRevokeRequested={cred.status !== "revoked" ? handleRevokeRequested : undefined}
+              />
             </section>
 
             {/* === 6. Audit section === */}
@@ -478,6 +491,17 @@ export function CredentialDetail({
           </div>
         )}
       </SheetContent>
+
+      {/* Kill Switch Dialog */}
+      <KillSwitchDialog
+        open={killSwitchOpen}
+        onOpenChange={setKillSwitchOpen}
+        credentialId={credentialId}
+        credentialName={cred?.name ?? ""}
+        onRevoked={() => {
+          onDeleted();
+        }}
+      />
 
       {/* Delete confirmation AlertDialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

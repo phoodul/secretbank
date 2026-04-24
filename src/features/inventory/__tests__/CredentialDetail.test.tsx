@@ -102,6 +102,8 @@ describe("CredentialDetail", () => {
       if (cmd === "credential_copy_to_clipboard") return Promise.resolve(undefined);
       if (cmd === "incident_matches_for_credential") return Promise.resolve([]);
       if (cmd === "audit_list") return Promise.resolve([]);
+      if (cmd === "kill_switch_request_confirm") return Promise.resolve("a".repeat(32));
+      if (cmd === "kill_switch_revoke") return Promise.resolve(undefined);
       return Promise.resolve(undefined);
     });
   });
@@ -151,15 +153,16 @@ describe("CredentialDetail", () => {
     expect(rotateBtn).toBeDisabled();
   });
 
-  it("Revoke 버튼이 disabled 상태다", async () => {
+  it("active 자격증명의 Revoke 버튼이 활성화 상태다", async () => {
     renderDetail();
 
     await waitFor(() => {
       expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
     });
 
-    const revokeBtn = screen.getByRole("button", { name: /revoke/i });
-    expect(revokeBtn).toBeDisabled();
+    // active 상태이면 Revoke 버튼이 활성화되어 있어야 한다 (M7 구현 완료)
+    const revokeBtn = screen.getByRole("button", { name: /^revoke$/i });
+    expect(revokeBtn).not.toBeDisabled();
   });
 
   // ------------------------------------------------------------------

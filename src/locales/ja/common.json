@@ -507,6 +507,28 @@
     },
     "filteredByCredential": "認証情報 {{id}} でフィルタリング中"
   },
+  "killSwitch": {
+    "revoke": "失効",
+    "revoked": "失効済み",
+    "dialog": {
+      "title": "認証情報を失効",
+      "warning": "この認証情報を失効状態としてマークします。外部サービスにはまだ通知されません — プロバイダーコンソールでキーを直接ローテーションまたは削除する必要があります。",
+      "typeNameLabel": "{{name}} を入力して確認",
+      "typeNamePlaceholder": "認証情報名",
+      "alsoDeleteValue": "暗号化された値も削除する",
+      "alsoDeleteValueHint": "値はボールトから完全に削除されます。",
+      "cancel": "キャンセル",
+      "continue": "続行",
+      "confirmWarning": "この操作は元に戻せません。",
+      "confirm": "理解しました、今すぐ失効",
+      "done": "認証情報が失効しました",
+      "close": "閉じる"
+    },
+    "toast": {
+      "success": "認証情報が失効しました",
+      "error": "認証情報の失効に失敗しました"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "コマンドまたは検索ワードを入力…",
     "noResults": "結果が見つかりません",
