@@ -35,7 +35,7 @@ export function useAudit(filter: AuditListInput): UseAuditResult {
 
     invoke<AuditEntry[]>("audit_list", { input: effectiveFilter })
       .then((data) => {
-        if (!cancelled) setFetchState({ phase: "ok", data });
+        if (!cancelled) setFetchState({ phase: "ok", data: Array.isArray(data) ? data : [] });
       })
       .catch((err: unknown) => {
         if (!cancelled) {

@@ -183,7 +183,10 @@
     "deleteFailed": "Failed to delete credential",
     "copyFailed": "Failed to copy value",
     "vaultLocked": "Vault is locked",
-    "loadDetailFailed": "Failed to load credential details"
+    "loadDetailFailed": "Failed to load credential details",
+    "auditEmpty": "No audit entries yet.",
+    "auditViewAll": "View all →",
+    "auditError": "Failed to load audit entries"
   },
   "vault": {
     "unlockTitle": "Unlock Vault",
@@ -501,7 +504,8 @@
       "delete": "Delete",
       "reveal": "Reveal / Read",
       "default": "Other"
-    }
+    },
+    "filteredByCredential": "Filtered by credential {{id}}"
   },
   "commandPalette": {
     "searchPlaceholder": "Type a command or search…",

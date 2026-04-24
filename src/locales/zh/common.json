@@ -183,7 +183,10 @@
     "deleteFailed": "删除凭证失败",
     "copyFailed": "复制值失败",
     "vaultLocked": "保险库已锁定",
-    "loadDetailFailed": "加载凭证详情失败"
+    "loadDetailFailed": "加载凭证详情失败",
+    "auditEmpty": "暂无审计条目。",
+    "auditViewAll": "查看全部 →",
+    "auditError": "加载审计条目失败"
   },
   "vault": {
     "unlockTitle": "解锁保险库",
@@ -501,7 +504,8 @@
       "delete": "删除",
       "reveal": "查看 / 读取",
       "default": "其他"
-    }
+    },
+    "filteredByCredential": "按凭证 {{id}} 过滤"
   },
   "commandPalette": {
     "searchPlaceholder": "输入命令或搜索…",

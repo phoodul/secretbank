@@ -101,6 +101,7 @@ describe("CredentialDetail", () => {
       if (cmd === "credential_delete") return Promise.resolve(undefined);
       if (cmd === "credential_copy_to_clipboard") return Promise.resolve(undefined);
       if (cmd === "incident_matches_for_credential") return Promise.resolve([]);
+      if (cmd === "audit_list") return Promise.resolve([]);
       return Promise.resolve(undefined);
     });
   });
@@ -339,6 +340,8 @@ describe("CredentialDetail", () => {
         if (callCount === 1) return Promise.reject("network error");
         return Promise.resolve(MOCK_CREDENTIAL_FULL);
       }
+      if (cmd === "incident_matches_for_credential") return Promise.resolve([]);
+      if (cmd === "audit_list") return Promise.resolve([]);
       return Promise.resolve(undefined);
     });
 

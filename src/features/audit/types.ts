@@ -56,23 +56,6 @@ export interface ChainVerifyReport {
   all_valid: boolean;
 }
 
-/** Action family — derived from the action string prefix for color-coding. */
-export type ActionFamily =
-  | "create"
-  | "update"
-  | "delete"
-  | "reveal"
-  | "lock"
-  | "feed"
-  | "default";
-
-/** Derive a color family from an action string. */
-export function actionFamily(action: string): ActionFamily {
-  if (action.endsWith(".create")) return "create";
-  if (action.endsWith(".update") || action.endsWith(".edit")) return "update";
-  if (action.endsWith(".delete") || action.endsWith(".revoke")) return "delete";
-  if (action.includes(".reveal") || action.includes(".read")) return "reveal";
-  if (action.includes(".lock") || action.includes(".unlock")) return "lock";
-  if (action.startsWith("feed_")) return "feed";
-  return "default";
-}
+// Re-export from shared util — consumers can import from either location.
+export type { ActionFamily } from "./action-family";
+export { actionFamily } from "./action-family";

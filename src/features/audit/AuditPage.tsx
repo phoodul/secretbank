@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { AuditFilterBar } from "./AuditFilterBar";
@@ -12,7 +13,18 @@ const DEFAULT_LIMIT = 100;
 
 export function AuditPage() {
   const { t } = useTranslation("common");
-  const [filter, setFilter] = useState<AuditListInput>({ limit: DEFAULT_LIMIT, offset: 0 });
+  const [searchParams] = useSearchParams();
+
+  // Prefill filter from query params (e.g. from AuditForCredential "View all" link).
+  const paramSubjectKind = searchParams.get("subject_kind") ?? undefined;
+  const paramSubjectId = searchParams.get("subject_id") ?? undefined;
+
+  const [filter, setFilter] = useState<AuditListInput>({
+    limit: DEFAULT_LIMIT,
+    offset: 0,
+    subject_kind: paramSubjectKind,
+    subject_id: paramSubjectId,
+  });
   const [page, setPage] = useState(0);
 
   // Keep filter + pagination in sync.
@@ -42,6 +54,16 @@ export function AuditPage() {
         <h1 className="text-xl font-semibold tracking-tight">{t("audit.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("audit.subtitle")}</p>
       </div>
+
+      {/* Breadcrumb — shown when filtered by a specific credential */}
+      {paramSubjectKind === "credential" && paramSubjectId && (
+        <p
+          className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+          data-testid="audit-filtered-breadcrumb"
+        >
+          {t("audit.filteredByCredential", { id: paramSubjectId })}
+        </p>
+      )}
 
       {/* Integrity verify banner */}
       <VerifyChainBanner verifyChain={verifyChain} />

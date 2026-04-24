@@ -9,7 +9,6 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { toast } from "sonner";
@@ -41,6 +40,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import { UsageSection } from "./UsageSection";
 import { IncidentsForCredential } from "@/features/incidents/IncidentsForCredential";
+import { AuditForCredential } from "@/features/audit/AuditForCredential";
 import type { CredentialFull } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -458,15 +458,10 @@ export function CredentialDetail({
 
             {/* === 6. Audit section === */}
             <section>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("inventory.sectionAudit")}
               </h3>
-              <Link
-                to={`/audit?credential=${cred.id}`}
-                className="text-xs text-primary underline-offset-4 hover:underline"
-              >
-                {t("inventory.viewAuditLog")} →
-              </Link>
+              <AuditForCredential credentialId={cred.id} />
             </section>
 
             {/* === 7. Footer — Delete === */}

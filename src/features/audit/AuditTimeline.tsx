@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { AuditEntry } from "./types";
-import { actionFamily } from "./types";
+import { actionFamily, ACTION_FAMILY_CLASS } from "./action-family";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -61,15 +61,8 @@ function ActorBadge({ actor, label }: ActorBadgeProps) {
 // Action badge
 // ---------------------------------------------------------------------------
 
-const FAMILY_CLASS: Record<string, string> = {
-  create: "bg-green-500/15 text-green-700 dark:text-green-300",
-  update: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  delete: "bg-red-500/15 text-red-700 dark:text-red-300",
-  reveal: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  lock: "bg-slate-500/15 text-slate-600 dark:text-slate-300",
-  feed: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
-  default: "bg-muted text-muted-foreground",
-};
+// Use the shared constant from action-family.ts.
+const FAMILY_CLASS = ACTION_FAMILY_CLASS;
 
 interface ActionBadgeProps {
   action: string;

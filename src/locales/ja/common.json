@@ -183,7 +183,10 @@
     "deleteFailed": "認証情報の削除に失敗しました",
     "copyFailed": "値のコピーに失敗しました",
     "vaultLocked": "ボールトがロックされています",
-    "loadDetailFailed": "認証情報の詳細の読み込みに失敗しました"
+    "loadDetailFailed": "認証情報の詳細の読み込みに失敗しました",
+    "auditEmpty": "まだ監査エントリがありません。",
+    "auditViewAll": "すべて表示 →",
+    "auditError": "監査エントリの読み込みに失敗しました"
   },
   "vault": {
     "unlockTitle": "ボールトのロック解除",
@@ -501,7 +504,8 @@
       "delete": "削除",
       "reveal": "表示 / 読取",
       "default": "その他"
-    }
+    },
+    "filteredByCredential": "認証情報 {{id}} でフィルタリング中"
   },
   "commandPalette": {
     "searchPlaceholder": "コマンドまたは検索ワードを入力…",
