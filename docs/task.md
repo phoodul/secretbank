@@ -100,7 +100,7 @@
 | T046    | Blast Radius Highlight — credential 클릭 시 노드 3단계 강조     | 2026-04-23 | `4abe502` |
 | T047    | Graph performance optimization — memo 비교 + 뷰포트 컬링 + compact 모드 | 2026-04-23 | `1477c0f` |
 | T048    | Mobile graph alternate view — MobileGraphList + useIsMobile + GraphPage mobile 분기 | 2026-04-23 | `ebb9855` |
-| T049    | NVD CVE API 2.0 클라이언트 (api-vault-feeds 크레이트 + governor rate limiter + wiremock 6 tests) | 2026-04-24 | _(pending commit)_ |
+| T049    | NVD CVE API 2.0 클라이언트 (api-vault-feeds 크레이트 + governor rate limiter + wiremock 6 tests) | 2026-04-24 | `9a7895f` |
 
 **완료 합계**: 49/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + **M4 🔄 1/10**)
 
