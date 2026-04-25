@@ -2,6 +2,13 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use time::OffsetDateTime;
 
+/// GitHub 저장소 참조 — owner/repo 쌍으로 단일 repo 를 식별.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RepoRef {
+    pub owner: String,
+    pub repo: String,
+}
+
 /// 커넥터 인증 정보. 공급자마다 필요한 필드가 달라 enum 으로 분기.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]

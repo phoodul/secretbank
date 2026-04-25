@@ -13,7 +13,7 @@ pub use env_scanner::{scan_path, DetectedKey};
 pub mod github;
 
 mod types;
-pub use types::{Auth, ConnectorError, RemoteKey, RotationCap};
+pub use types::{Auth, ConnectorError, RemoteKey, RepoRef, RotationCap};
 
 use api_vault_core::Incident;
 use async_trait::async_trait;
