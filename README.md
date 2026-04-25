@@ -102,5 +102,5 @@ can be merged. When you open a PR, the CLA bot will guide you through the proces
 API Vault는 API 키를 단순 보관하는 것을 넘어 **의존성 그래프**를 통해 "어떤 키가 어느 프로젝트·배포 환경에 쓰이고,
 폐기 시 무엇이 깨지는지"를 추적합니다. 로컬 볼트는 `age` 암호화로 보호되며, 서버는 암호문만 릴레이하는
 **Zero-Knowledge 아키텍처**를 사용합니다. 데스크톱(Windows/macOS/Linux)과 모바일(iOS/Android)을 동시 지원하고,
-월 $2 Pro 플랜으로 멀티 디바이스 E2EE 동기화를 제공합니다. 코어는 **AGPL-3.0 오픈소스**이며,
+**월 $1 / 년 $10** Pro 플랜으로 멀티 디바이스 E2EE 동기화 + 자동 rotation 을 제공합니다. 코어는 **AGPL-3.0 오픈소스**이며,
 프리미엄 커넥터·자동 rotation 등은 EE 독점 라이선스로 별도 제공됩니다.

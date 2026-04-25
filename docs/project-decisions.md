@@ -163,7 +163,7 @@
     - 기본 Graph 보기
     - CVE/NVD 공용 Incident feed
     - GitHub 커넥터 1개
-  - **Pro ($2/월)** — 프로슈머·바이브 코더·1인 프리랜서 대상
+  - **Pro ($1/월 또는 $10/년)** — 프로슈머·바이브 코더·1인 프리랜서 대상 _(2026-04-25 인하)_
     - **멀티 디바이스 E2EE 동기화** (데스크톱 ↔ 모바일 ↔ 웹)
     - **자동 rotation** (무중단 Zero-Downtime 파이프라인)
     - **Incident Feed 프리미엄** (공급자 status RSS, Twitter/X 모니터링, AI 요약)
@@ -173,10 +173,10 @@
     - **Audit Log Export**
   - **Team (Phase 2)** — $10/seat/월
     - 팀 공유 볼트, SSO, RBAC, SCIM
-- **이유:** 5000만 사용자 목표에 도달하려면 무료 진입 장벽 제거가 필수 (Bitwarden 모델). $2/월은 Bitwarden Premium($1)과 1Password Individual($3~5) 사이의 **프로슈머 가격대**.
+- **이유:** 5000만 사용자 목표에 도달하려면 무료 진입 장벽 제거가 필수 (Bitwarden 모델). 2026-04-25 인하 후 $1/월 = Bitwarden Premium 과 동률, 1Password Individual ($3~5) 보다 한참 저렴한 **신규 카테고리 침투 가격**.
 - **영향:**
   - 무료 tier의 기능이 충분히 쓸만해야 한다 ("유인 광고형 무료"는 바이브 코더 페르소나에게 역효과).
-  - **"멀티 디바이스 동기화" 자체가 $2/월 구매 동기의 핵심**이 되도록 설계.
+  - **"멀티 디바이스 동기화 + 자동 rotation" 이 $1/월 구매 동기의 두 기둥**이 되도록 설계.
   - 결제 인프라(Stripe, Apple IAP, Google Play Billing) 필요 → Research Phase에서 1인 운영 관점으로 비교.
 
 ---
@@ -211,9 +211,9 @@
 ## [2026-04-22] 개발 기간 정책 — **[갱신 전 결정 대체]**
 
 - **결정:** **고정된 MVP 기간 없음.** "3주 MVP" 제약은 폐기.
-- **이유:** 목표가 "3주 내 출시"가 아니라 **"실용적이고 가치 있는 앱을 월 $2에 전 세계 사용자에게 제공"**. 품질과 실제 유용성이 출시 시점보다 우선.
+- **이유:** 목표가 "3주 내 출시"가 아니라 **"실용적이고 가치 있는 앱을 월 $1·년 $10 에 전 세계 사용자에게 제공"**. 품질과 실제 유용성이 출시 시점보다 우선.
 - **영향:**
-  - MVP 범위는 "3주에 들어가는 것"이 아니라 **"Pro 구독을 $2에 결제할 가치가 있는 최소 기능"** 기준으로 재정의한다.
+  - MVP 범위는 "3주에 들어가는 것"이 아니라 **"Pro 구독을 $1/월 에 결제할 가치가 있는 최소 기능"** 기준으로 재정의한다.
   - 구체적 태스크 분할은 planner가 `docs/task.md` 에 작성 (Phase 2.6).
 
 ---
@@ -223,7 +223,7 @@
 ### Q1 — Kill Switch 무료/Pro 경계 → **C (절충안)**
 
 - **결정:** Kill Switch 자체 (키 revoke, 2단계 확인 UI) 는 **무료** tier 포함. "revoke 이후 새 키 자동 배포"는 **Pro** 전용.
-- **이유:** 긴급 사고 대응은 신뢰 확보의 핵심이므로 무료로 제공. 사고 후 자동화 복구는 $2/월 가치를 정당화하는 고급 기능으로 분리.
+- **이유:** 긴급 사고 대응은 신뢰 확보의 핵심이므로 무료로 제공. 사고 후 자동화 복구 (자동 rotation) 는 Pro 가치를 정당화하는 핵심 기능으로 분리.
 - **영향:** Kill Switch UI 와 revoke 엔드포인트는 MVP Must, 자동 배포 파이프라인은 Phase 2 Could.
 
 ### Q2 — 모바일 MVP 포함 여부 → **A (데스크톱 + 모바일 동시 출시)** ⚠️ integrator 권장(B)과 반대
@@ -256,7 +256,7 @@
 ### Q5 — GitHub 커넥터 무료 범위 → **B (읽기 무료, 쓰기 Pro)**
 
 - **결정:** 무료 tier = Secret Scanning 조회 + `.env` 파일 스캔(읽기). Pro = Actions Secrets 자동 갱신 + PR 자동 생성(쓰기).
-- **이유:** 읽기는 진입 장벽 제거 (유입·신뢰), 쓰기는 $2/월 가치 정당화 기능 (자동화로 시간 절약).
+- **이유:** 읽기는 진입 장벽 제거 (유입·신뢰), 쓰기는 Pro 가치 정당화 기능 (자동화로 시간 절약).
 - **영향:**
   - GitHub App 권한은 초기 설치 시 읽기·쓰기 모두 요청하되, 쓰기 동작은 Pro 라이선스 검증 후 실행.
   - 무료 사용자도 "이 기능은 Pro에서 1-click 자동화됩니다" 업셀 UX 노출.
@@ -679,13 +679,57 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 
 ## [2026-04-24] 프로젝트 비전 확정 — "MVP 이상 탁월함 지향"
 
-- **결정:** "필요 최소한" 구현 타협 금지. 동 기능 세계 최고 프로그램을 **능가하는** 완성도 목표. **월 $2 / 년 $15 글로벌 SaaS** 판매.
+- **결정:** "필요 최소한" 구현 타협 금지. 동 기능 세계 최고 프로그램을 **능가하는** 완성도 목표. 글로벌 SaaS 판매 (가격은 [2026-04-25] 결정 참조).
 - **이유:** 저가격 × 고품질 포지셔닝이 시장 경쟁력의 핵심. 저렴한 가격이 UX 허술함의 정당화가 될 수 없다.
 - **영향 (이후 모든 의사결정에 적용):**
   - 옵션 제시 시 "빠른 대신 허술함 / 느리지만 제대로" 중 **제대로** 를 기본 권장.
   - 기능 축소(D 옵션 류) 는 "단순화가 실제 사용자 가치에 부합할 때만" 제안. 구현 부담 회피용 제안 금지.
   - UX 디테일(드래그 영속화 같은 당연한 기대) 은 언제나 충족.
 - **메모:** 개인 메모리 `project_vision.md` 에 자동 기록됨 (향후 모든 세션에서 로드).
+
+---
+
+## [2026-04-25] 가격 인하 — Pro $2/월·$15/년 → **$1/월·$10/년**
+
+- **결정:** Pro 플랜 가격을 **$1/월 또는 $10/년** 으로 인하. 기존 결정 ($2/월·$15/년) 대체.
+- **이유:**
+  - 사용자 판단: "$1/월·$10/년 이면 충분히 지갑을 연다." — 진입장벽 ↓ 으로 무료 → Pro 전환률 ↑ 우선.
+  - 가격 비교: Bitwarden Premium ($1/월) 과 동률, 1Password Individual ($3-5/월) 보다 한참 저렴 → "API 키 관리 SaaS" 라는 신규 카테고리에 가격 우위로 침투.
+  - 연간 할인: $10/년 = 월 $0.83 → 사실상 2개월 무료. 연간 결제 유도.
+- **영향:**
+  - 기존 모든 의사결정 항목의 "$2/월" / "$15/년" 표기를 일괄 갱신 (이 문서 + README 한국어 요약 + memory `project_vision.md` 등).
+  - "Pro 구독을 $X 에 결제할 가치가 있는 최소 기능" 기준점이 $2 → $1 로 낮아지지만, **기능 축소 의미 아님** — 가격 인하는 진입장벽 완화이고 품질 기준은 그대로 유지 (위 비전 결정과 일치).
+  - Apple/Google IAP 최소 가격 단위 ($0.99 / $0.99) 와 정렬 — IAP 문제 없음. Paddle MoR 도 $1 결제 처리 가능 (수수료 비율은 약간 ↑).
+  - **자동 rotation 은 Pro 핵심 가치 기둥으로 격상** (다음 결정 참조).
+  - **팀 플랜 가격 별도 검토 필요** — 사용자당 모델은 향후 결정 (현재 placeholder $10/seat/월 그대로 유지).
+
+---
+
+## [2026-04-25] 자동 rotation — Must 격상 + 본격 마일스톤화
+
+- **결정:** **자동 rotation** 을 Pro 의 **핵심 가치 기둥** 으로 격상하고 별도 마일스톤 (M14 또는 M5 후속) 으로 분리. 기존 task.md 의 T064 (Pro 게이트) 와 별개로, 실제 rotation 파이프라인 구현을 정식 태스크로 추가한다.
+- **이유:**
+  - 사용자 강조: "자동 rotation 이 기능은 반드시 필요하다."
+  - 시장 전략 분석 (`user_research/apivault_strategy.md`) 에서 3단계 (기업이 돈 내는 이유) 의 핵심 기능으로 식별 — "키 회전 자동화" 가 보안 사고 예방·규정 준수·시간 절약의 직접적 가치.
+  - 데이터 해자 + 락인 구조의 일부: rotation 파이프라인이 깊게 연동되면 **떠나는 비용 ↑**.
+- **영향 — rotation capability 단계화** (T059 `RotationCap { Full / Partial / Manual }` 활용):
+  - **Phase R1 — Full**: AWS IAM (`CreateAccessKey + DeleteAccessKey`), GCP Service Account Key, Azure Key Vault. 완전 무중단 자동 rotation 구현.
+  - **Phase R2 — Partial**: Stripe restricted key (rolling), GitHub fine-grained PAT (만료일 기반 알림 + 수동 rotation 가이드), Vercel/Netlify 환경변수.
+  - **Phase R3 — Manual + Provider intelligence**: OpenAI / Anthropic / Slack 등 자동 rotation 미지원 provider 는 webhook 기반 알림 (provider 가 키 deprecation 발표 시) + 수동 step-by-step 가이드.
+  - **Phase R4 — Schedule + Health**: 사용자 정책 (예: 90일마다) + rotation 실패 alert + rollback (이전 키 30일 grace period 후 폐기).
+- **마일스톤 신설:** task.md 에 **M14 — Auto Rotation** 추가. M9 (Sync) 완료 후 진입. 릴레이 의존 (provider API 호출 위한 OAuth/credential 보관) 이라 M5/M9 와 동시에 설계 진행.
+- **커밋 / 후속:** task.md 에 새 마일스톤 + 6~10 태스크 추가 후 별도 PR.
+
+---
+
+## [2026-04-25] 백로그 — 시장 전략 부합 권장 조치 (즉시 결정 보류, 다음 세션 검토)
+
+`user_research/apivault_strategy.md` 점검 결과 도출된 후속 안건. 즉시 구현 아님, 향후 마일스톤 검토 시 우선 고려.
+
+1. **팀 플랜 가격 결정**: 사용자당 $10/seat/월 (현재 placeholder) 유지 vs 인하 ($5~8/seat/월) 검토. 결정 타이밍 = M9 동기화 인프라 완료 후, Team 플랜 첫 출시 전.
+2. **익명 집계 통계 옵트인**: zero-knowledge 가 네트워크 효과 약화 → 사용자가 명시 옵트인 시 "어떤 issuer 가 가장 많이 노출되는가" 같은 익명 집계 채널 도입. 데이터 해자 회복 경로. M9 이후 실험.
+3. **SDK 로드맵**: npm (`@apivault/sdk`), pip (`apivault`), cargo (`apivault-sdk`) 패키지로 코드 안에서 import → 락인 강화. M5 connector 완료 + M9 동기화 안정화 후 신설 마일스톤 (M15) 검토.
+4. **CI/CD 통합 마일스톤**: GitHub Actions / GitLab CI / Vercel preview / Netlify build hook 통합으로 키 누출 차단 자동화. M5 GitHub connector (T060+) 완료 후 진입.
 
 ---
 

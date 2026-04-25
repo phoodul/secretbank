@@ -3,8 +3,8 @@
 > 작성자: Planner Agent
 > 작성일: 2026-04-22
 > 참조: docs/architecture.md (구조), docs/implementation_plan.md (TDD 세부)
-> 총 태스크: **118개** (Must 82 / Should 21 / Could 15)
-> 총 마일스톤: **14개** (M0 ~ M13)
+> 총 태스크: **125개** (Must 89 / Should 21 / Could 15)
+> 총 마일스톤: **15개** (M0 ~ M14)
 
 ---
 
@@ -13,7 +13,7 @@
 각 태스크는 다음 필드를 가진다.
 
 - **ID**: `T001` ~
-- **Milestone**: `M0` ~ `M13`
+- **Milestone**: `M0` ~ `M14`
 - **Priority**: `Must` (MVP 필수) | `Should` (MVP 가능하면) | `Could` (Phase 2)
 - **Depends on**: 선행 태스크 ID (없으면 `-`)
 - **Title**: 동사 + 대상
@@ -42,6 +42,7 @@
 | M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기             |
 | M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기             |
 | M13 | i18n + Updater + Release        | T114~T118   | 5         | ⏳ 대기             |
+| M14 | Auto Rotation                   | T119~T125   | 7         | ⏳ 대기             |
 
 ---
 
@@ -1861,6 +1862,105 @@
 
 ---
 
+## M14 — Auto Rotation
+
+자동 rotation 은 Pro 의 핵심 가치 기둥. T059 `Connector` trait `RotationCap { Full / Partial / Manual }` 활용. 4 phase 단계화: R1 Full → R2 Partial → R3 Manual + provider intelligence → R4 Schedule + Health.
+
+### T119. Rotation 도메인 모델 + 상태 머신
+
+- **Milestone**: M14
+- **Priority**: Must
+- **Depends on**: T020, T059, T071
+- **Goal**: rotation 진행 상태 추적 모델.
+- **DoD**:
+  - `crates/api-vault-core/src/models/rotation.rs`
+  - `RotationJob { id, credential_id, connector_id, state: RotationState, started_at, finished_at, error: Option<String> }`
+  - `enum RotationState { Pending, IssuingNewKey, UpdatingUsages, RevokingOldKey, Completed, Failed, RolledBack }`
+  - SQLite migration 0004 추가: `rotation_job` 테이블 + index `(credential_id, started_at DESC)`
+- **Files Touched**: `crates/api-vault-core/src/models/rotation.rs`, `crates/api-vault-storage/migrations/0004_rotation_job.sql`, `crates/api-vault-storage/src/sqlite/repositories/rotation.rs`
+- **Tests**: Rust — repo CRUD, 상태 전이 invariant (terminal state 진입 후 변경 불가)
+
+### T120. Phase R1 — AWS IAM Full rotation 구현
+
+- **Milestone**: M14
+- **Priority**: Must
+- **Depends on**: T119, T059
+- **Goal**: AWS IAM access key 무중단 자동 회전.
+- **DoD**:
+  - `crates/api-vault-connectors/src/aws/mod.rs` — `AwsIamConnector` 구현 (`Connector` trait + `RotationCap::Full`)
+  - `rotate(credential)` 메서드: CreateAccessKey → 사용처 업데이트 (`UsageRepo` 의 모든 row) → 30초 헬스체크 → DeleteAccessKey
+  - 실패 시 RolledBack: 새 키 즉시 폐기
+  - 릴레이 경유 OAuth credential 사용 (T119 와 별도 OAuth 보관 모델)
+- **Files Touched**: `crates/api-vault-connectors/src/aws/mod.rs`, `crates/api-vault-connectors/src/aws/iam.rs`
+- **Tests**: Rust — `aws-sdk-mock` 또는 wiremock 기반 5 시나리오 (성공 / 헬스체크 실패 / 권한 부족 / 롤백 / 동시 rotation 거부)
+
+### T121. Phase R2 — Stripe / GCP / Azure rotation
+
+- **Milestone**: M14
+- **Priority**: Must
+- **Depends on**: T120
+- **Goal**: 두 번째 batch 의 Full rotation 가능 provider.
+- **DoD**:
+  - Stripe restricted key rolling (rolling key API): `crates/api-vault-connectors/src/stripe/`
+  - GCP Service Account Key: `crates/api-vault-connectors/src/gcp/`
+  - Azure Key Vault rotation: `crates/api-vault-connectors/src/azure/`
+- **Files Touched**: `crates/api-vault-connectors/src/{stripe,gcp,azure}/`
+- **Tests**: Rust — 각 provider 별 wiremock fixture
+
+### T122. Phase R3 — Manual + provider intelligence
+
+- **Milestone**: M14
+- **Priority**: Must
+- **Depends on**: T120
+- **Goal**: 자동 rotation 미지원 provider (OpenAI, Anthropic, Slack 등) 에 대한 webhook + 가이드.
+- **DoD**:
+  - 릴레이가 provider 의 deprecation 알림 webhook 수신 → 사용자에게 push notification
+  - Credential Detail 화면에 step-by-step rotation 가이드 (provider 별 markdown)
+  - "Mark as rotated" 버튼 — 사용자가 수동 회전 후 새 키를 등록하면 옛 키 자동 revoke
+- **Files Touched**: `src/features/rotation/ManualRotationGuide.tsx`, `crates/api-vault-app/src/commands/rotation.rs`
+- **Tests**: Vitest — 가이드 렌더, "Mark as rotated" 플로우
+
+### T123. Phase R4 — Rotation 스케줄러 + Health monitoring
+
+- **Milestone**: M14
+- **Priority**: Must
+- **Depends on**: T120, T071
+- **Goal**: 사용자 정책 기반 자동 트리거 + rotation 실패 alert + 30일 grace period.
+- **DoD**:
+  - Settings 화면: "Rotate every {N} days" (default 90)
+  - rotation_job 상태가 Failed 면 Incident Feed 에 자동 항목 추가 + push notification
+  - 옛 키 30일 grace period (DeleteAccessKey 즉시가 아니라 30일 후) — credentials 테이블 `pending_revoke_at` 컬럼 추가
+  - 사용자가 grace period 동안 "Rollback" 버튼으로 즉시 복구 가능
+- **Files Touched**: `crates/api-vault-app/src/services/rotation_scheduler.rs`, `src/features/settings/RotationPolicySection.tsx`
+- **Tests**: Rust — fake clock 기반 스케줄 트리거 / Vitest — 정책 UI
+
+### T124. Rotation UI (`/rotations`)
+
+- **Milestone**: M14
+- **Priority**: Must
+- **Depends on**: T119, T009
+- **Goal**: 진행 중 / 과거 rotation 작업 타임라인.
+- **DoD**:
+  - `src/features/rotation/RotationsPage.tsx` — RotationJob 리스트 + 상태별 색상 + 수동 트리거 버튼 ("Rotate now")
+  - Credential Detail 에 RotationsForCredential 서브 섹션 (최근 5개)
+- **Files Touched**: `src/features/rotation/RotationsPage.tsx`, `src/features/rotation/RotationsForCredential.tsx`, `src/pages/RotationsPage.tsx`
+- **Tests**: Vitest — 리스트 렌더, "Rotate now" 클릭 invoke
+
+### T125. Pro 엔타이틀먼트 게이트 + Free 사용자 안내
+
+- **Milestone**: M14
+- **Priority**: Must
+- **Depends on**: T120, T064
+- **Goal**: Pro 가입 사용자만 자동 rotation 사용 가능.
+- **DoD**:
+  - T120 ~ T123 의 모든 자동 rotation 진입점에 `entitlement::require_pro` 가드
+  - Free 사용자에게는 RotationsPage 가 잠금 상태 표시 + "Upgrade to Pro" CTA
+  - 수동 rotation (T122) 은 Free 도 가능 (가이드만 제공)
+- **Files Touched**: `crates/api-vault-app/src/commands/rotation.rs`, `src/features/rotation/RotationsPage.tsx`
+- **Tests**: Rust — Free/Pro 분기 / Vitest — 잠금 UI
+
+---
+
 ## Open Issues (사용자 확인 필요)
 
 이들은 docs/project-decisions.md 값과 충돌하거나 사용자 결정이 필요한 사항. planner 가 임의 결정 금지.
@@ -1925,10 +2025,10 @@ M13 (Release) — depends on all prior milestones
 
 | 우선순위                          | 개수    | 비율     |
 | :-------------------------------- | :------ | :------- |
-| Must                              | 82      | 69.5%    |
-| Should                            | 21      | 17.8%    |
-| Could (Phase 2, 이 문서에 미포함) | 15      | 12.7%    |
-| **Total**                         | **118** | **100%** |
+| Must                              | 89      | 71.2%    |
+| Should                            | 21      | 16.8%    |
+| Could (Phase 2, 이 문서에 미포함) | 15      | 12.0%    |
+| **Total**                         | **125** | **100%** |
 
 | 마일스톤  | 태스크 수 |
 | :-------- | :-------- |
@@ -1946,7 +2046,8 @@ M13 (Release) — depends on all prior milestones
 | M11       | 6         |
 | M12       | 4         |
 | M13       | 5         |
-| **Total** | **118**   |
+| M14       | 7         |
+| **Total** | **125**   |
 
 ---
 
