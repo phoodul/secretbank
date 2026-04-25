@@ -26,16 +26,26 @@ pub struct ChainVerification {
 
 /// Deterministic canonical serialization for hashing and signing.
 ///
-/// Format (all integers big-endian):
-/// - seq: i64 BE (8 bytes)
-/// - device_id: u16 BE length + utf8 bytes; 0xFFFF sentinel for None
-/// - actor: u8 length + utf8 bytes
-/// - action: u16 BE length + utf8 bytes
-/// - subject_kind: u8 length + utf8 bytes
-/// - subject_id: u16 BE length + utf8 bytes
-/// - payload_json: u32 BE length + utf8 bytes; 0xFFFFFFFF sentinel for None
-/// - created_at_unix_ms: i64 BE (8 bytes)
-/// - prev_hash: 32 bytes verbatim
+/// ## Wire format (all integers big-endian)
+///
+/// ```text
+/// seq              : i64 BE  (8 bytes)
+/// device_id        : 0x00                        — None
+///                  | 0x01 || u16 BE(len) || utf8 — Some(s)
+/// actor            : u8(len) || utf8
+/// action           : u16 BE(len) || utf8
+/// subject_kind     : u8(len) || utf8
+/// subject_id       : u16 BE(len) || utf8
+/// payload_json     : 0x00                        — None
+///                  | 0x01 || u32 BE(len) || utf8 — Some(s)
+/// created_at_ms    : i64 BE  (8 bytes)
+/// prev_hash        : 32 bytes verbatim
+/// ```
+///
+/// Option fields use a **1-byte existence flag** (0x00 = absent, 0x01 = present)
+/// followed by the length prefix and payload when present.  This eliminates the
+/// former sentinel values (0xFFFF / 0xFFFF_FFFF) which could theoretically
+/// collide with legitimate length values, making the encoding unambiguous.
 #[allow(clippy::too_many_arguments)]
 fn canonical_bytes(
     seq: i64,
@@ -53,13 +63,14 @@ fn canonical_bytes(
     // seq (i64 BE, 8 bytes)
     buf.extend_from_slice(&seq.to_be_bytes());
 
-    // device_id (u16 BE len + utf8; 0xFFFF for None)
+    // device_id: 0x00 for None | 0x01 || u16 BE(len) || utf8 for Some
     match device_id {
-        None => buf.extend_from_slice(&0xFFFFu16.to_be_bytes()),
+        None => buf.push(0x00),
         Some(s) => {
             let bytes = s.as_bytes();
             let len = u16::try_from(bytes.len())
                 .expect("device_id exceeds u16::MAX bytes");
+            buf.push(0x01);
             buf.extend_from_slice(&len.to_be_bytes());
             buf.extend_from_slice(bytes);
         }
@@ -93,13 +104,14 @@ fn canonical_bytes(
     buf.extend_from_slice(&si_len.to_be_bytes());
     buf.extend_from_slice(si_bytes);
 
-    // payload_json (u32 BE len + utf8; 0xFFFFFFFF for None)
+    // payload_json: 0x00 for None | 0x01 || u32 BE(len) || utf8 for Some
     match payload_json {
-        None => buf.extend_from_slice(&0xFFFF_FFFFu32.to_be_bytes()),
+        None => buf.push(0x00),
         Some(s) => {
             let bytes = s.as_bytes();
             let len = u32::try_from(bytes.len())
                 .expect("payload_json exceeds u32::MAX bytes");
+            buf.push(0x01);
             buf.extend_from_slice(&len.to_be_bytes());
             buf.extend_from_slice(bytes);
         }
@@ -414,6 +426,51 @@ mod tests {
             matches!(result, Err(AuditError::SeqOverflow)),
             "expected SeqOverflow when prev.seq == i64::MAX, got: {result:?}"
         );
+    }
+
+    /// Regression test: a device_id whose byte length is exactly 65535 (the old
+    /// sentinel value for None) must not collide with a None device_id entry
+    /// in the same chain.  Under the new existence-flag encoding both cases
+    /// produce unambiguous byte sequences and the chain must verify cleanly.
+    #[test]
+    fn device_id_len_65535_does_not_collide_with_none() {
+        let sk = test_signing_key();
+        let vk = sk.verifying_key();
+
+        // Build a device_id whose UTF-8 length is exactly 65535 bytes (all ASCII 'x').
+        let long_device_id = "x".repeat(65535);
+
+        let with_long_id = AuditInput {
+            device_id: Some(long_device_id.clone()),
+            actor: AuditActor::LocalUser,
+            action: "sentinel.test".to_string(),
+            subject_kind: "test".to_string(),
+            subject_id: "s1".to_string(),
+            payload_json: None,
+        };
+        let with_none_id = AuditInput {
+            device_id: None,
+            actor: AuditActor::LocalUser,
+            action: "sentinel.test".to_string(),
+            subject_kind: "test".to_string(),
+            subject_id: "s2".to_string(),
+            payload_json: None,
+        };
+
+        let e0 = append(with_long_id, None, &sk, fixed_now(0)).expect("e0");
+        let e1 = append(with_none_id, Some(&e0), &sk, fixed_now(1)).expect("e1");
+
+        // entry_hash values must differ — the two encodings are distinct.
+        assert_ne!(
+            e0.entry_hash, e1.entry_hash,
+            "entries with device_id=65535-byte and device_id=None must hash differently"
+        );
+
+        // The full chain must verify without errors.
+        let chain = vec![e0, e1];
+        let result = verify(&chain, &vk);
+        assert_eq!(result.valid_count, 2, "chain must be fully valid");
+        assert_eq!(result.first_invalid_seq, None);
     }
 
     #[test]

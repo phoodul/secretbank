@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { AuditEntry } from "./types";
 import { actionFamily, ACTION_FAMILY_CLASS } from "./action-family";
+import { useSubjectLabels, resolveSubjectLabel } from "./use-subject-labels";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -127,6 +128,7 @@ interface AuditTimelineProps {
 
 export function AuditTimeline({ entries, loading, error, onRetry }: AuditTimelineProps) {
   const { t } = useTranslation("common");
+  const subjectLabels = useSubjectLabels();
 
   if (error !== null) {
     return (
@@ -240,9 +242,9 @@ export function AuditTimeline({ entries, loading, error, onRetry }: AuditTimelin
                   {/* Action */}
                   <ActionBadge action={entry.action} familyLabel={familyLabel(entry.action)} />
 
-                  {/* Subject */}
-                  <span className="font-mono text-muted-foreground">
-                    {entry.subject_kind}:{shortId(entry.subject_id)}
+                  {/* Subject — resolved to name when available, ID otherwise */}
+                  <span className="font-mono text-muted-foreground truncate" title={entry.subject_id}>
+                    {resolveSubjectLabel(entry.subject_kind, entry.subject_id, subjectLabels)}
                   </span>
 
                   {/* Device */}

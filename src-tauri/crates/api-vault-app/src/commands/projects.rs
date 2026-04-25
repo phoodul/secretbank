@@ -41,7 +41,7 @@ pub async fn project_create(
             "project.create",
             "project",
             id.to_string(),
-            Some(serde_json::json!({"name": input.name}).to_string()),
+            None,
         )
         .await;
 
@@ -74,6 +74,18 @@ pub async fn project_update(
     let repo = ProjectRepo::new(&state.pool);
     repo.update(id, &patch).await?;
 
+    let mut updated_fields: Vec<&str> = Vec::new();
+    if patch.name.is_some() { updated_fields.push("name"); }
+    if patch.repo_url.is_some() { updated_fields.push("repo_url"); }
+    if patch.framework.is_some() { updated_fields.push("framework"); }
+    if patch.runtime.is_some() { updated_fields.push("runtime"); }
+    if patch.local_path.is_some() { updated_fields.push("local_path"); }
+    let payload = if updated_fields.is_empty() {
+        None
+    } else {
+        Some(serde_json::json!({ "updated_fields": updated_fields }).to_string())
+    };
+
     state
         .audit
         .record(
@@ -81,7 +93,7 @@ pub async fn project_update(
             "project.update",
             "project",
             id.to_string(),
-            None,
+            payload,
         )
         .await;
 

@@ -34,6 +34,11 @@ pub async fn deployment_create(
     let repo = DeploymentRepo::new(&state.pool);
     let id = repo.insert(&input).await?;
 
+    // url is a PII-adjacent label; keep only the environment tier for audit value.
+    let env_str = serde_json::to_value(input.env)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_owned))
+        .unwrap_or_default();
     state
         .audit
         .record(
@@ -41,7 +46,7 @@ pub async fn deployment_create(
             "deployment.create",
             "deployment",
             id.to_string(),
-            Some(serde_json::json!({"url": input.url}).to_string()),
+            Some(serde_json::json!({"environment": env_str}).to_string()),
         )
         .await;
 
@@ -66,6 +71,16 @@ pub async fn deployment_update(
     let repo = DeploymentRepo::new(&state.pool);
     repo.update(id, &patch).await?;
 
+    let mut updated_fields: Vec<&str> = Vec::new();
+    if patch.url.is_some() { updated_fields.push("url"); }
+    if patch.platform.is_some() { updated_fields.push("platform"); }
+    if patch.env.is_some() { updated_fields.push("env"); }
+    let payload = if updated_fields.is_empty() {
+        None
+    } else {
+        Some(serde_json::json!({ "updated_fields": updated_fields }).to_string())
+    };
+
     state
         .audit
         .record(
@@ -73,7 +88,7 @@ pub async fn deployment_update(
             "deployment.update",
             "deployment",
             id.to_string(),
-            None,
+            payload,
         )
         .await;
 

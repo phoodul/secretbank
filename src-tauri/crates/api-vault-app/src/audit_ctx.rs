@@ -209,7 +209,7 @@ mod tests {
                 "credential.create",
                 "credential",
                 "cred-01",
-                Some(r#"{"name":"My Key"}"#.to_string()),
+                Some(r#"{"issuer_id":"01HX1234567890ABCDEF012345"}"#.to_string()),
             )
             .await;
 

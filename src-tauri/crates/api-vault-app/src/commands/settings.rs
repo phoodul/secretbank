@@ -49,6 +49,7 @@ pub async fn settings_set(
         .set(&key, value.as_deref())
         .await?;
 
+    // subject_id already carries the key name; no extra payload needed.
     state
         .audit
         .record(
@@ -56,7 +57,7 @@ pub async fn settings_set(
             "settings.set",
             "settings",
             key.clone(),
-            Some(serde_json::json!({"key": key}).to_string()),
+            None,
         )
         .await;
 

@@ -236,6 +236,7 @@ pub async fn vault_setting_set(
             message: e.to_string(),
         })?;
 
+    // subject_id already carries the key name; no extra payload needed.
     state
         .audit
         .record(
@@ -243,7 +244,7 @@ pub async fn vault_setting_set(
             "vault_setting.set",
             "vault_setting",
             key.clone(),
-            Some(serde_json::json!({"key": key}).to_string()),
+            None,
         )
         .await;
 

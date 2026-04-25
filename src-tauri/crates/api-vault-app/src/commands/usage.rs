@@ -31,14 +31,16 @@ pub async fn usage_create(
     let repo = UsageRepo::new(&state.pool);
     let id = repo.insert(&input).await?;
 
+    // subject_id = credential that gains a new usage; project_id links the two.
+    // Both are opaque IDs — no label leakage.
     state
         .audit
         .record(
             AuditActor::LocalUser,
             "usage.create",
-            "usage",
-            id.to_string(),
-            None,
+            "credential",
+            input.credential_id.to_string(),
+            Some(serde_json::json!({ "project_id": input.project_id.to_string() }).to_string()),
         )
         .await;
 

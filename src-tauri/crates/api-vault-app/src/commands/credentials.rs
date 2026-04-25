@@ -115,7 +115,6 @@ pub async fn credential_create(
     }
 
     let payload = serde_json::json!({
-        "name": args.input.name,
         "issuer_id": args.input.issuer_id.to_string()
     })
     .to_string();
@@ -175,6 +174,23 @@ pub async fn credential_update(
     let repo = CredentialRepo::new(&state.pool);
     repo.update(id, &patch).await?;
 
+    // Record which fields were touched — values are never logged.
+    let mut updated_fields: Vec<&str> = Vec::new();
+    if patch.name.is_some() { updated_fields.push("name"); }
+    if patch.env.is_some() { updated_fields.push("env"); }
+    if patch.scope.is_some() { updated_fields.push("scope"); }
+    if patch.rotation_policy_days.is_some() { updated_fields.push("rotation_policy_days"); }
+    if patch.rotation_runbook_id.is_some() { updated_fields.push("rotation_runbook_id"); }
+    if patch.expires_at.is_some() { updated_fields.push("expires_at"); }
+    if patch.owner.is_some() { updated_fields.push("owner"); }
+    if patch.status.is_some() { updated_fields.push("status"); }
+    if patch.hash_hint.is_some() { updated_fields.push("hash_hint"); }
+    let payload = if updated_fields.is_empty() {
+        None
+    } else {
+        Some(serde_json::json!({ "updated_fields": updated_fields }).to_string())
+    };
+
     state
         .audit
         .record(
@@ -182,7 +198,7 @@ pub async fn credential_update(
             "credential.update",
             "credential",
             id.to_string(),
-            None,
+            payload,
         )
         .await;
 

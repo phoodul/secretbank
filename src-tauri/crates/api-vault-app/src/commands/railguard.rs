@@ -6,6 +6,7 @@
 use api_vault_audit::AuditActor;
 use api_vault_railguard::{render, ContextError, RenderContext, RuleKind};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
 use tauri::State;
 use thiserror::Error;
@@ -83,6 +84,19 @@ impl From<ContextError> for RailguardError {
             message: e.to_string(),
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/// Returns the first 16 hex characters of `SHA-256(path)` as the audit
+/// subject_id for a railguard application.  This keeps repeated applications
+/// to the same project linkable without exposing the raw file-system path in
+/// the audit log.
+pub(crate) fn project_path_fingerprint(path: &str) -> String {
+    let hash = Sha256::digest(path.as_bytes());
+    hex::encode(&hash[..8]) // 8 bytes → 16 hex chars
 }
 
 // ---------------------------------------------------------------------------
@@ -334,8 +348,10 @@ pub async fn railguard_apply(
             message: e.to_string(),
         })??;
 
-    // Truncate path to 255 chars for subject_id
-    let subject_id: String = project_path.chars().take(255).collect();
+    // subject_id = first 16 hex chars of SHA-256(project_path).
+    // This identifies repeated applications to the same project without
+    // exposing the raw file system path in the audit log.
+    let path_fingerprint = project_path_fingerprint(&project_path);
     let files_written = applied.iter().filter(|a| a.wrote_bytes > 0).count();
     state
         .audit
@@ -343,7 +359,7 @@ pub async fn railguard_apply(
             AuditActor::LocalUser,
             "railguard.apply",
             "railguard",
-            subject_id,
+            path_fingerprint,
             Some(serde_json::json!({"files_written": files_written}).to_string()),
         )
         .await;
