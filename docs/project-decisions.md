@@ -799,3 +799,20 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   4. Security Score 에 `NoUsages` factor 추가 (CredentialFull 전용).
 
 ---
+
+## [2026-04-25] M15 CI/CD Integration 진입 순서 결정
+
+- **결정:** M15 의 두 갈래(Product / Internal) 중 **Internal infra (T132, T133) 를 먼저 구현**하고, Product feature (T126~T131) 는 후속 세션에서 진행한다.
+- **이유:** Internal infra 가 안정화되어야 Product feature 의 배포 파이프라인이 작동한다. GitHub Actions Secrets 를 관리하는 코드(T126~T128) 자체도 ci.yml + deploy-relay.yml 을 통해 검증/배포되기 때문에 인프라 선행이 필수.
+- **T132 세부 결정:**
+  - `deploy-relay.yml` — `paths` 필터로 `ee/api-vault-relay/**` 변경 시만 트리거 (불필요한 배포 방지)
+  - `concurrency.cancel-in-progress: false` — 배포 중단은 절대 불가 (wrangler 배포 원자성 보장)
+  - `cloudflare/wrangler-action@v3` 사용 (`account_id` 는 `wrangler.toml` 에서 읽음)
+  - pnpm 9, Node 20 고정 (현재 lockfile 기준)
+- **T133 세부 결정:**
+  - 기존 `ci.yml` 에 `ee-relay` job 추가 (별도 파일 아님)
+  - CI 단계에서는 시크릿 불필요 — typecheck + vitest 만 실행
+  - fork PR 에서도 `ee-relay` job 동작 (시크릿 없이)
+- **영향:** `.github/workflows/deploy-relay.yml` 신규, `.github/workflows/ci.yml` `ee-relay` job 추가, `docs/runbooks/cloudflare-api-token.md` 신규, `ee/README.md` CI/CD 섹션 갱신.
+
+---

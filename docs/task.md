@@ -43,7 +43,7 @@
 | M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기             |
 | M13 | i18n + Updater + Release        | T114~T118   | 5         | ⏳ 대기             |
 | M14 | Auto Rotation                   | T119~T125   | 7         | ⏳ 대기 (M9 완료 후 진입) |
-| M15 | CI/CD Integration               | TBD         | TBD       | ⏳ placeholder (M5 완료 후 신설 — GitHub Actions / GitLab CI / Vercel preview / Netlify build hook) |
+| M15 | CI/CD Integration               | T126~T133   | 5M+3S     | 🔄 진입 (T132/T133 부터) |
 | M16 | Anonymous Telemetry (opt-in)    | TBD         | TBD       | ⏳ placeholder (M9 완료 후 신설 — 익명 집계로 데이터 해자 회복) |
 | M17 | SDK Ecosystem                   | TBD         | TBD       | ⏳ placeholder (M5 + M9 완료 후 신설 — npm / pip / cargo) |
 
@@ -2027,6 +2027,129 @@ M13 (Release) — depends on all prior milestones
 - M2 & M4 (Inventory UI + Incident Feed) — T049~T054 는 T025~T028 과 독립
 - M6 & M7 (Audit + Kill Switch) — 같은 시점에 진행 가능
 - M8 스캐폴드 (T079~T082) 는 M1~M7 과 완전 병렬
+
+---
+
+## M15 — CI/CD Integration
+
+api-vault 의 두 갈래 통합:
+
+- **Product** (사용자 시크릿 → CI 환경변수): T126~T131
+- **Internal** (api-vault 자체 deploy/test): T132~T133
+
+### T126. GitHub Actions Secrets API 클라이언트 (read/write/list)
+
+- **Milestone**: M15
+- **Priority**: Must
+- **Depends on**: T062
+- **Goal**: GitHub REST API v3 를 통해 저장소의 Actions Secrets 를 조회·생성·갱신·삭제한다.
+- **DoD**:
+  - `crates/api-vault-connectors/src/github/actions_secrets.rs`
+  - `list_secrets(owner, repo, token) -> Vec<SecretMeta>` (이름·updated_at 만, 값은 API 가 반환 안 함)
+  - `upsert_secret(owner, repo, token, name, value)` — Sodium sealed box 암호화 (GitHub public key 로)
+  - `delete_secret(owner, repo, token, name)`
+  - `libsodium-sys` 또는 `crypto_box` crate 사용 (`sealed_box` 구현)
+  - HTTP 클라이언트: `reqwest` (기존 패턴)
+- **Files Touched**: `crates/api-vault-connectors/src/github/actions_secrets.rs`, `Cargo.toml`
+- **Tests**: Rust — `mockito` 로 GitHub API mock, upsert → sealed box 검증
+
+### T127. Secrets sync 커맨드 (인벤토리 credential ↔ Actions Secret)
+
+- **Milestone**: M15
+- **Priority**: Must
+- **Depends on**: T126, T022
+- **Goal**: 인벤토리의 credential 을 선택한 저장소의 GitHub Actions Secret 에 푸시(sync)한다.
+- **DoD**:
+  - Tauri 커맨드 `sync_to_actions(credential_id, owner, repo, secret_name) -> Result<(), Error>`
+  - credential reveal → Actions Secrets upsert 원자적 처리
+  - 감사 로그 기록 (`AuditEvent::SyncToActions { credential_id, repo, timestamp }`)
+  - 에러 시 사용자 친화적 메시지 (403 → "GitHub token 권한 부족", 404 → "저장소 없음")
+- **Files Touched**: `crates/api-vault-app/src/commands/ci_sync.rs`, `crates/api-vault-app/src/commands/mod.rs`
+- **Tests**: Rust — mock GitHub API, audit log 기록 확인
+
+### T128. GitHub Actions Secrets UI (Settings > GitHub > "Sync to Actions")
+
+- **Milestone**: M15
+- **Priority**: Must
+- **Depends on**: T127
+- **Goal**: 크레덴셜 상세 화면에서 "Sync to Actions" 버튼으로 원클릭 동기화.
+- **DoD**:
+  - `src/features/ci/SyncToActionsButton.tsx` — 저장소 선택 Popover + 시크릿 이름 입력 + 확인
+  - 동기화 상태 (idle / pending / success / error) badge 표시
+  - Settings > Integrations > GitHub Actions 탭에서 연결된 저장소 목록 + 마지막 sync 시각
+  - 에러 toast
+- **Files Touched**: `src/features/ci/SyncToActionsButton.tsx`, `src/features/settings/IntegrationsPage.tsx`
+- **Tests**: Vitest — 버튼 클릭 → invoke mock, 상태 전환
+
+### T129. Vercel API 통합 (placeholder)
+
+- **Milestone**: M15
+- **Priority**: Should
+- **Depends on**: T127
+- **Goal**: Vercel 프로젝트 환경변수에 credential 을 동기화하는 기반 구조를 정의한다.
+- **DoD**:
+  - `crates/api-vault-connectors/src/vercel/mod.rs` — `VercelClient` struct skeleton
+  - `list_env_vars`, `upsert_env_var`, `delete_env_var` trait 정의 (미구현, `todo!()`)
+  - 문서: `docs/integrations/vercel.md` — API 토큰 발급 방법, 권한 범위
+- **Files Touched**: `crates/api-vault-connectors/src/vercel/mod.rs`, `docs/integrations/vercel.md`
+- **Tests**: 없음 (placeholder — 구현 시 추가)
+
+### T130. GitLab CI / CircleCI 통합 (placeholder)
+
+- **Milestone**: M15
+- **Priority**: Should
+- **Depends on**: T127
+- **Goal**: GitLab CI Variables 와 CircleCI Context Secrets 를 위한 클라이언트 skeleton 정의.
+- **DoD**:
+  - `crates/api-vault-connectors/src/gitlab/mod.rs` — skeleton
+  - `crates/api-vault-connectors/src/circleci/mod.rs` — skeleton
+  - 각각 `list_variables / upsert_variable / delete_variable` trait stub
+- **Files Touched**: `crates/api-vault-connectors/src/gitlab/mod.rs`, `crates/api-vault-connectors/src/circleci/mod.rs`
+- **Tests**: 없음 (placeholder)
+
+### T131. Pre-commit hook generator (RAILGUARD 연계)
+
+- **Milestone**: M15
+- **Priority**: Should
+- **Depends on**: T068
+- **Goal**: RAILGUARD 패널에서 `.pre-commit-config.yaml` (gitleaks / trufflehog) 자동 생성.
+- **DoD**:
+  - Tauri 커맨드 `generate_precommit_config(project_path) -> Result<String, Error>`
+  - gitleaks + trufflehog hooks 포함 YAML 생성
+  - 기존 `.pre-commit-config.yaml` 있으면 merge (중복 hook 방지)
+  - RAILGUARD UI 에 "Pre-commit hooks" 섹션 추가 (복사/저장 버튼)
+- **Files Touched**: `crates/api-vault-app/src/commands/railguard.rs`, `src/features/railguard/PreCommitSection.tsx`
+- **Tests**: Rust — 생성된 YAML 파싱 검증 (serde_yaml)
+
+### T132. deploy-relay.yml — wrangler deploy 자동화
+
+- **Milestone**: M15
+- **Priority**: Must
+- **Depends on**: -
+- **Goal**: `ee/api-vault-relay/` 변경이 main 에 push 될 때 Cloudflare Workers 자동 배포.
+- **DoD**:
+  - `.github/workflows/deploy-relay.yml` 신규 생성
+  - `paths` 필터: `ee/api-vault-relay/**` + 워크플로우 파일 자체
+  - `test` job (pnpm typecheck + vitest) → `deploy` job (wrangler-action@v3, `CLOUDFLARE_API_TOKEN` secret)
+  - `concurrency: cancel-in-progress: false` (배포 중단 방지)
+  - `workflow_dispatch` 수동 트리거 지원
+  - Runbook: `docs/runbooks/cloudflare-api-token.md`
+- **Files Touched**: `.github/workflows/deploy-relay.yml`, `docs/runbooks/cloudflare-api-token.md`
+- **Tests**: workflow_dispatch 수동 실행으로 검증
+
+### T133. ci.yml 보강 — ee-relay job 추가
+
+- **Milestone**: M15
+- **Priority**: Must
+- **Depends on**: -
+- **Goal**: 기존 CI 파이프라인에 `ee/api-vault-relay/` typecheck + test step 추가.
+- **DoD**:
+  - `.github/workflows/ci.yml` 에 `ee-relay` job 추가
+  - `pnpm typecheck` + `pnpm test` (vitest run)
+  - `pnpm-lock.yaml` 경로: `ee/api-vault-relay/pnpm-lock.yaml`
+  - 기존 `rust` + `frontend` job 회귀 없음
+- **Files Touched**: `.github/workflows/ci.yml`
+- **Tests**: PR 생성 → Actions 통과 확인
 
 ---
 

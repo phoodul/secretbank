@@ -50,8 +50,17 @@ ee/
 
 OSS 코어와 EE 코드는 다음과 같이 빌드 파이프라인을 분리한다:
 
-- **OSS** (`/src`, `/src-tauri`): GitHub Actions 의 일반 빌드 워크플로우. 누구나 빌드 가능.
-- **EE** (`/ee/**`): 별도 워크플로우 (`.github/workflows/deploy-relay.yml` 예정). Cloudflare API token, GitHub App private key 등의 시크릿이 필요. 외부 contributor 의 fork 빌드에선 동작 안 함.
+- **OSS** (`/src`, `/src-tauri`): `.github/workflows/ci.yml` — frontend + rust job. 누구나 빌드 가능.
+- **EE** (`/ee/**`): 두 개의 워크플로우로 관리
+  - `.github/workflows/ci.yml` 의 `ee-relay` job — PR 마다 typecheck + vitest (시크릿 불필요)
+  - `.github/workflows/deploy-relay.yml` — main push 또는 수동 트리거 시 Cloudflare Workers 자동 배포 (`CLOUDFLARE_API_TOKEN` 시크릿 필요)
+
+### GitHub Actions Secret 등록
+
+자동 배포를 활성화하려면 `CLOUDFLARE_API_TOKEN` 을 GitHub Repository Secret 에 등록해야 한다.
+→ 발급 및 등록 절차: [`docs/runbooks/cloudflare-api-token.md`](../docs/runbooks/cloudflare-api-token.md)
+
+외부 contributor 의 fork 에서는 `deploy` job 이 시크릿 없이 실패하지만, `test` job 은 정상 동작한다.
 
 ## 시크릿 관리
 
