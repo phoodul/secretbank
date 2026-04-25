@@ -71,6 +71,11 @@ function routeInvokes(responses: {
         return Promise.resolve(responses.audit_list ?? []);
       case "audit_verify_chain":
         return Promise.resolve(responses.audit_verify_chain ?? makeReport(true));
+      case "vault_status":
+        return Promise.resolve({ state: "unlocked" });
+      case "credential_list":
+      case "project_list":
+        return Promise.resolve([]);
       default:
         return Promise.resolve(undefined);
     }

@@ -117,8 +117,10 @@ fn canonical_bytes(
         }
     }
 
-    // created_at_unix_ms (i64 BE, 8 bytes)
-    let unix_ms = (created_at.unix_timestamp_nanos() / 1_000_000) as i64;
+    // created_at_unix_ms (i64 BE, 8 bytes) — `unix_timestamp()` 는 이미 i64 (초) 이므로
+    // `nanos / 1_000_000` 의 i128→i64 캐스팅 없이 직접 곱한다.
+    let unix_ms = created_at.unix_timestamp() * 1_000
+        + i64::from(created_at.nanosecond() / 1_000_000);
     buf.extend_from_slice(&unix_ms.to_be_bytes());
 
     // prev_hash (32 bytes)
