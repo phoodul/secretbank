@@ -362,7 +362,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - **영향:**
   - GitHub Organization 생성(사용자 수동 작업, M0 직전 또는 병행). 결제 없음(무료 org).
   - CLA Assistant 설정 시 org 이름 필요.
-  - 도메인(Q4)도 `apivault.app` 또는 `api-vault.dev` 로 통일 고려.
+  - 도메인(Q4)도 `api-vault.app` 으로 통일 (2026-04-25 확정).
 
 ### Q3 — Free tier 디바이스 수 → **A (2대)**
 
@@ -373,11 +373,15 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - UI: "현재 2/2 디바이스 사용 중 — 3번째 디바이스를 추가하려면 Pro로 업그레이드" 업셀 메시지.
   - 기존 project-decisions.md의 "Freemium" 설명을 갱신 (단일 기기 사용 → 2대까지 무료 동기화).
 
-### Q4 — 도메인 → **해당 마일스톤(M12/M13) 직전 확보**
+### Q4 — 도메인 → **`api-vault.app` 확정 (2026-04-25 갱신)**
 
-- **결정:** 지금 당장은 확보하지 않음. M12(웹 읽기 뷰어)와 M13(Release) 직전에 가용성 확인 후 결정.
-- **후보 우선순위:** `apivault.app` > `api-vault.dev` > `keyvault.dev` > `apivault.io`
-- **영향:** 지금 단계의 코드에는 도메인 하드코딩 없이 `VITE_APP_DOMAIN` 환경변수로 주입.
+- **결정:** **`api-vault.app`** 단일 도메인 등록 확정. M5 릴레이 진입과 함께 즉시 등록 (당초 M12/M13 직전 확보 계획에서 앞당김).
+- **갱신 사유:** `apivault.app` 후보 1순위는 이미 사용 중 (제3자 보유). `api-vault.app` 가능 → 즉시 확보. `.app` TLD 는 HSTS preload 강제 (HTTPS 필수) — 보안 도구가 보안 TLD 사용하는 메시지 일관성. M5 릴레이 도메인 + 마케팅 사이트 + product 진입점 통합.
+- **`.com` 추가 등록은 M10 (Payments) 시점으로 defer:** 1인 운영 비용 최소화 우선. 이메일 (`support@api-vault.com`) + SEO 안전망은 SaaS 정식 출시 직전에 추가.
+- **영향:**
+  - 코드의 도메인 표기를 `api-vault.app` 으로 통일. `ee/LICENSE`, `ee/README.md`, README 한국어 요약 등 placeholder 갱신.
+  - 비즈니스 이메일 임시: `licensing@api-vault.app` / `support@api-vault.app` (Cloudflare Email Routing 으로 forward 설정 후 사용).
+  - 환경변수: 클라이언트는 `VITE_APP_DOMAIN=api-vault.app` (또는 절대 URL 빌드 타임 주입). 릴레이는 `wrangler.toml` 의 `routes` 또는 `custom_domains` 에 `relay.api-vault.app` (서브도메인) 또는 `api-vault.app/api/*` 패턴 사용 — M5 스캐폴드 시 결정.
 
 ### Q5 — 계정 등록/결제 타이밍 → **마일스톤별 Just-in-Time**
 
