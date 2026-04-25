@@ -4,6 +4,8 @@
 //! Private key 는 릴레이에만 보관되며, 클라이언트는 릴레이가 발급한 short-lived
 //! installation_token 만 사용한다. 실제 API 호출 구현은 T061/T062 에서.
 
+pub mod auth;
+
 use crate::{Auth, Connector, ConnectorError, RemoteKey, RotationCap};
 use api_vault_core::Incident;
 use async_trait::async_trait;

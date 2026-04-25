@@ -12,7 +12,7 @@
 
 자세한 경계는 [`/LICENSE_FAQ.md`](../LICENSE_FAQ.md) 참조.
 
-## 디렉토리 구조 (예정)
+## 디렉토리 구조
 
 ```
 ee/
@@ -22,21 +22,28 @@ ee/
     ├── package.json
     ├── wrangler.toml             # Cloudflare 배포 설정
     ├── tsconfig.json
+    ├── vitest.config.ts
+    ├── .dev.vars.example         # 시크릿 샘플 (.dev.vars 는 .gitignore 됨)
+    ├── README.md                 # 로컬 개발 가이드
     ├── src/
     │   ├── index.ts              # Hono 엔트리포인트
+    │   ├── env.ts                # D1/KV/secrets 바인딩 타입
     │   ├── routes/
-    │   │   ├── health.ts         # GET /health
-    │   │   ├── auth.ts           # Passkey + OAuth (M8)
-    │   │   ├── sync.ts           # CRDT delta relay (M9)
+    │   │   ├── health.ts         # GET /health (T079)
     │   │   └── integrations/
-    │   │       └── github.ts     # POST /integrations/github/installation-token
+    │   │       └── github.ts     # POST /integrations/github/installation-token (T061)
+    │   │   (auth.ts — M8 T086, sync.ts — M9 T087+ 예정)
     │   ├── lib/
+    │   │   ├── auth.ts           # Bearer 미들웨어 stub (T086 M8 에서 JWT 검증)
     │   │   ├── github-app.ts     # GitHub App JWT 서명, installation token 발급
-    │   │   ├── kv-cache.ts       # KV 기반 토큰 캐시 (55분 TTL)
-    │   │   └── push.ts           # FCM/APNs 푸시 (M11)
+    │   │   └── kv-cache.ts       # KV 기반 토큰 캐시 (55분 TTL)
     │   └── db/
     │       └── schema.ts         # D1 스키마 (Drizzle)
-    └── migrations/               # D1 마이그레이션
+    ├── migrations/
+    │   └── 0001_init.sql         # D1 첫 마이그레이션
+    └── test/
+        ├── health.test.ts
+        └── github.test.ts
 ```
 
 ## 빌드/배포 분리

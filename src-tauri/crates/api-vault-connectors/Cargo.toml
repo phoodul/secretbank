@@ -8,6 +8,7 @@ testing = []
 
 [dependencies]
 serde = { workspace = true }
+serde_json = { workspace = true }
 regex = { workspace = true }
 ignore = { workspace = true }
 once_cell = { workspace = true }
@@ -15,8 +16,10 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 async-trait = { workspace = true }
 time = { workspace = true }
+reqwest = { workspace = true }
 api-vault-core = { path = "../api-vault-core" }
 
 [dev-dependencies]
 tempfile = "3"
 tokio = { workspace = true, features = ["rt", "macros"] }
+wiremock = "0.6"

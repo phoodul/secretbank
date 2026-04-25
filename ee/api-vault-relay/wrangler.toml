@@ -1,0 +1,29 @@
+name = "api-vault-relay"
+main = "src/index.ts"
+compatibility_date = "2026-04-25"
+compatibility_flags = ["nodejs_compat"]
+account_id = "PLACEHOLDER_USER_FILLS_THIS"  # docs/runbooks/relay-deployment.md 참조
+
+# 운영 도메인 — 사용자가 wrangler 콘솔에서 custom domain 연결 후 활성화
+# routes = [
+#   { pattern = "relay.api-vault.app/*", custom_domain = true }
+# ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "api-vault-relay"
+database_id = "PLACEHOLDER_USER_FILLS_AFTER_d1_create"
+migrations_dir = "migrations"
+
+[[kv_namespaces]]
+binding = "TOKEN_CACHE"
+id = "PLACEHOLDER_USER_FILLS_AFTER_kv_create"
+
+[vars]
+# public — 시크릿 아님. GitHub App 등록 후 여기에 직접 입력.
+GITHUB_APP_ID = ""
+LOG_LEVEL = "info"
+
+# secrets (wrangler secret put 으로 주입)
+# GITHUB_APP_PRIVATE_KEY     RS256 PEM
+# GITHUB_WEBHOOK_SECRET      webhook 서명 검증용
