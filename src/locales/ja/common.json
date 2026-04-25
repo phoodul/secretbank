@@ -257,6 +257,14 @@
     "nextStep": "次へ",
     "skipOnboarding": "あとで",
     "openInventory": "インベントリを開く",
+    "rotatedBadge": "交換済み?",
+    "rotatedExplain": "同じ変数ですが値が変わっています — ローテーションされた可能性があります。",
+    "replaceMode": "既存のキーを置換",
+    "addAsNewMode": "新しい認証情報として追加",
+    "importMixed": "{{total}} 個のキーをインポート ({{replace}} 個置換、{{new}} 個新規)",
+    "toast": {
+      "replacedSummary": "{{count}} 個のキーを更新しました (ローテーション)"
+    },
     "railguardCta": {
       "title": "AI ガードレールルールを追加しますか?",
       "body": "AI エディタが API キーをハードコードしないようにします。",

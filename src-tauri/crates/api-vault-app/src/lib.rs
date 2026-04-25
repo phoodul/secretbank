@@ -9,7 +9,7 @@ pub mod setup;
 use commands::audit::{audit_list, audit_verify_chain};
 use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
-    credential_update,
+    credential_rotate_value, credential_update,
 };
 use commands::graph::{blast_radius_for_credential, graph_fetch};
 use commands::incidents::{
@@ -109,6 +109,7 @@ pub fn run(context: tauri::Context) {
             credential_update,
             credential_delete,
             credential_reveal,
+            credential_rotate_value,
             credential_copy_to_clipboard,
             issuer_list,
             issuer_get,
@@ -161,6 +162,7 @@ pub fn run(context: tauri::Context) {
             credential_update,
             credential_delete,
             credential_reveal,
+            credential_rotate_value,
             issuer_list,
             issuer_get,
             project_create,

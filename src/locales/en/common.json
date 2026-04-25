@@ -257,6 +257,14 @@
     "nextStep": "Next",
     "skipOnboarding": "Skip for now",
     "openInventory": "Open Inventory",
+    "rotatedBadge": "Rotated?",
+    "rotatedExplain": "Same variable in this project, different value — likely rotated.",
+    "replaceMode": "Replace existing",
+    "addAsNewMode": "Add as new credential",
+    "importMixed": "Import {{total}} keys ({{replace}} replace, {{new}} new)",
+    "toast": {
+      "replacedSummary": "Updated {{count}} key(s) (rotated)"
+    },
     "railguardCta": {
       "title": "Add AI guardrail rules?",
       "body": "Keep your AI editor from hardcoding API keys.",

@@ -3,9 +3,15 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type { DetectedKey } from "./types";
 
+/** Per-row import decision. */
+export type ImportDecision =
+  | "new"
+  | { kind: "replace"; credentialId: string };
+
 export interface ImportArgs {
   detected: DetectedKey[];
-  selectedIndices: Set<number>;
+  /** Map of detected-array index → decision (new or replace). */
+  selectedDecisions: Map<number, ImportDecision>;
   projectName: string;
   projectLocalPath: string;
   /** Maps issuer slug → issuer id (ULID). Built from issuer_list. */
@@ -13,9 +19,10 @@ export interface ImportArgs {
 }
 
 export interface ImportResult {
-  projectId: string;
+  projectId: string | null;
   projectName: string;
   credentialsCreated: number;
+  credentialsReplaced: number;
   usagesCreated: number;
   failures: number;
 }
@@ -40,27 +47,54 @@ export function useImportDetected(): UseImportDetectedResult {
       setState({ phase: "importing" });
 
       try {
-        const projectId = await invoke<string>("project_create", {
-          input: {
-            name: args.projectName,
-            repo_url: null,
-            framework: null,
-            runtime: null,
-            local_path: args.projectLocalPath,
-          },
-        });
+        // Determine if any "new" decisions exist (need a project).
+        const hasNew = [...args.selectedDecisions.values()].some(
+          (d) => d === "new",
+        );
+
+        let projectId: string | null = null;
+        if (hasNew) {
+          projectId = await invoke<string>("project_create", {
+            input: {
+              name: args.projectName,
+              repo_url: null,
+              framework: null,
+              runtime: null,
+              local_path: args.projectLocalPath,
+            },
+          });
+        }
 
         let credentialsCreated = 0;
+        let credentialsReplaced = 0;
         let usagesCreated = 0;
         let failures = 0;
 
-        for (const idx of args.selectedIndices) {
+        for (const [idx, decision] of args.selectedDecisions.entries()) {
           const dk = args.detected[idx];
           if (!dk) continue;
 
+          if (decision !== "new" && decision.kind === "replace") {
+            // Replace mode: update the vault secret via credential_rotate_value.
+            try {
+              await invoke("credential_rotate_value", {
+                input: {
+                  id: decision.credentialId,
+                  value: "scanned:unknown",
+                  hash_hint: dk.value_hint,
+                },
+              });
+              credentialsReplaced += 1;
+            } catch (e) {
+              console.warn("credential_rotate_value failed", e);
+              failures += 1;
+            }
+            continue;
+          }
+
+          // "new" path — identical to previous behavior.
           const issuerId = dk.issuer_slug ? args.issuerBySlug.get(dk.issuer_slug) : undefined;
           if (!issuerId) {
-            // Entropy-only or unknown issuer: cannot register without an issuer FK.
             failures += 1;
             continue;
           }
@@ -76,27 +110,27 @@ export function useImportDetected(): UseImportDetectedResult {
                 scope: null,
                 expires_at: null,
                 hash_hint: dk.value_hint,
-                // Scanned values are not captured — store a placeholder. The
-                // real rotation flow will replace this when the user verifies.
                 value: "scanned:unknown",
               },
             });
             credentialsCreated += 1;
 
-            try {
-              await invoke("usage_create", {
-                input: {
-                  credential_id: credentialId,
-                  project_id: projectId,
-                  deployment_id: null,
-                  where_kind: "env_var",
-                  where_value: dk.env_var_name ?? dk.file_path,
-                },
-              });
-              usagesCreated += 1;
-            } catch (e) {
-              console.warn("usage_create failed", e);
-              failures += 1;
+            if (projectId) {
+              try {
+                await invoke("usage_create", {
+                  input: {
+                    credential_id: credentialId,
+                    project_id: projectId,
+                    deployment_id: null,
+                    where_kind: "env_var",
+                    where_value: dk.env_var_name ?? dk.file_path,
+                  },
+                });
+                usagesCreated += 1;
+              } catch (e) {
+                console.warn("usage_create failed", e);
+                failures += 1;
+              }
             }
           } catch (e) {
             console.warn("credential_create failed", e);
@@ -108,6 +142,7 @@ export function useImportDetected(): UseImportDetectedResult {
           projectId,
           projectName: args.projectName,
           credentialsCreated,
+          credentialsReplaced,
           usagesCreated,
           failures,
         };

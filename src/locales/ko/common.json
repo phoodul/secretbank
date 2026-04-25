@@ -257,6 +257,14 @@
     "nextStep": "다음",
     "skipOnboarding": "나중에 하기",
     "openInventory": "인벤토리 열기",
+    "rotatedBadge": "교체됨?",
+    "rotatedExplain": "같은 변수인데 값이 달라졌습니다 — rotate 된 것 같습니다.",
+    "replaceMode": "기존 키 교체",
+    "addAsNewMode": "새 자격증명으로 추가",
+    "importMixed": "키 {{total}}개 가져오기 ({{replace}}개 교체, {{new}}개 신규)",
+    "toast": {
+      "replacedSummary": "{{count}}개 키 갱신됨 (rotate)"
+    },
     "railguardCta": {
       "title": "AI 가드레일 규칙 추가?",
       "body": "AI 에디터가 API 키를 하드코딩하지 못하게 방지합니다.",

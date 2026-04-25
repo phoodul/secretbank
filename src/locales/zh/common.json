@@ -257,6 +257,14 @@
     "nextStep": "下一步",
     "skipOnboarding": "稍后再说",
     "openInventory": "打开清单",
+    "rotatedBadge": "已轮换?",
+    "rotatedExplain": "同一变量，但值已更改 — 可能已轮换。",
+    "replaceMode": "替换现有密钥",
+    "addAsNewMode": "添加为新凭证",
+    "importMixed": "导入 {{total}} 个密钥（{{replace}} 个替换，{{new}} 个新增）",
+    "toast": {
+      "replacedSummary": "已更新 {{count}} 个密钥（轮换）"
+    },
     "railguardCta": {
       "title": "添加 AI 安全规则?",
       "body": "防止 AI 编辑器硬编码 API 密钥。",

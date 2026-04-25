@@ -9,11 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useIssuers } from "@/features/inventory/use-issuers";
 import { findPreset } from "@/features/inventory/issuer-presets";
-import type { CredentialSummary } from "@/features/inventory/types";
+import type { CredentialSummary, Usage } from "@/features/inventory/types";
+import type { Project } from "@/features/projects/types";
 import { ALL_RULE_KINDS } from "@/features/railguard/types";
 import type { RuleFilePreview } from "@/features/railguard/types";
 
 import type { DetectedKey } from "./types";
+import type { ImportDecision } from "./use-import-detected";
 import { useImportDetected } from "./use-import-detected";
 
 export interface DetectedKeysReviewProps {
@@ -22,7 +24,7 @@ export interface DetectedKeysReviewProps {
   scannedPath: string;
   /** Existing credentials, for duplicate detection via hash_hint. */
   existingCredentials: CredentialSummary[];
-  onImportComplete?: (summary: { projectId: string; projectName: string; count: number }) => void;
+  onImportComplete?: (summary: { projectId: string | null; projectName: string; count: number }) => void;
 }
 
 function folderNameFromPath(p: string): string {
@@ -36,6 +38,12 @@ function confidenceTone(c: number): "default" | "warning" | "info" {
   if (c >= 0.6) return "info";
   return "warning";
 }
+
+/** Per-detected-key classification for the rotation scan. */
+type RowStatus =
+  | "new"
+  | "already_tracked"
+  | { kind: "rotated"; credentialId: string; credentialName: string };
 
 export function DetectedKeysReview({
   detected,
@@ -64,40 +72,148 @@ export function DetectedKeysReview({
     return s;
   }, [existingCredentials]);
 
-  // Per-row "already tracked" flag.
-  const isTracked = (dk: DetectedKey) => trackedHints.has(dk.value_hint);
+  // ---------------------------------------------------------------------------
+  // Rotation detection: fetch project + usages for scannedPath
+  // ---------------------------------------------------------------------------
+  // Maps env_var_name → { credentialId, credentialName, hashHint } for the
+  // matching project.
+  const [existingByEnvVar, setExistingByEnvVar] = useState<
+    Map<string, { credentialId: string; credentialName: string; hashHint: string | null }>
+  >(new Map());
 
-  // Default selection: everything not tracked AND with a known issuer.
-  const initialSelected = useMemo(() => {
-    const s = new Set<number>();
-    detected.forEach((dk, idx) => {
-      if (!isTracked(dk) && dk.issuer_slug) s.add(idx);
+  useEffect(() => {
+    if (!scannedPath) return;
+    let cancelled = false;
+
+    async function fetchProjectUsages() {
+      try {
+        const projects = await invoke<Project[]>("project_list");
+        const matchingProject = projects.find((p) => p.local_path === scannedPath);
+        if (!matchingProject) return;
+
+        const usages = await invoke<Usage[]>("usage_list_for_project", {
+          projectId: matchingProject.id,
+        });
+
+        // Build a lookup: env_var_name → { credentialId, credentialName, hashHint }
+        // We need hash_hint from existingCredentials (already available as prop).
+        const byEnvVar = new Map<
+          string,
+          { credentialId: string; credentialName: string; hashHint: string | null }
+        >();
+        for (const usage of usages) {
+          if (usage.where_kind !== "env_var") continue;
+          const envVarName = usage.where_value;
+          const cred = existingCredentials.find((c) => c.id === usage.credential_id);
+          if (!cred) continue;
+          byEnvVar.set(envVarName, {
+            credentialId: cred.id,
+            credentialName: cred.name,
+            hashHint: cred.hash_hint,
+          });
+        }
+        if (!cancelled) {
+          setExistingByEnvVar(byEnvVar);
+        }
+      } catch {
+        // Graceful skip: vault may be locked or project not found — keep defaults.
+      }
+    }
+
+    void fetchProjectUsages();
+    return () => {
+      cancelled = true;
+    };
+  }, [scannedPath, existingCredentials]);
+
+  // ---------------------------------------------------------------------------
+  // Per-row status classification
+  // ---------------------------------------------------------------------------
+  const rowStatuses = useMemo((): RowStatus[] => {
+    return detected.map((dk) => {
+      if (trackedHints.has(dk.value_hint)) {
+        return "already_tracked";
+      }
+      if (dk.env_var_name) {
+        const existing = existingByEnvVar.get(dk.env_var_name);
+        if (existing && existing.hashHint !== dk.value_hint) {
+          return {
+            kind: "rotated",
+            credentialId: existing.credentialId,
+            credentialName: existing.credentialName,
+          };
+        }
+      }
+      return "new";
     });
-    return s;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [detected, trackedHints]);
+  }, [detected, trackedHints, existingByEnvVar]);
 
-  const [selected, setSelected] = useState<Set<number>>(initialSelected);
+  // User-driven overrides: tracks which rows are deselected (false) or have
+  // their mode explicitly overridden ("new" for a rotated row).
+  // Shape: Map<idx, false | "new">
+  //   - false  → user deselected the row
+  //   - "new"  → user chose "Add as new" for a rotated row
+  //   - absent → default behaviour (selected, mode = status-driven)
+  const [userOverrides, setUserOverrides] = useState<Map<number, false | "new">>(new Map());
 
-  function toggle(idx: number) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) {
-        next.delete(idx);
+  // Effective decisions derived from rowStatuses + userOverrides.
+  const decisions = useMemo((): Map<number, ImportDecision> => {
+    const m = new Map<number, ImportDecision>();
+    detected.forEach((dk, idx) => {
+      const status = rowStatuses[idx];
+      if (status === "already_tracked" || !dk.issuer_slug) return;
+      const override = userOverrides.get(idx);
+      if (override === false) return; // user deselected
+      if (status === "new") {
+        m.set(idx, "new");
       } else {
-        next.add(idx);
+        // rotated — default replace unless user explicitly chose "new"
+        if (override === "new") {
+          m.set(idx, "new");
+        } else {
+          m.set(idx, { kind: "replace", credentialId: status.credentialId });
+        }
+      }
+    });
+    return m;
+  }, [detected, rowStatuses, userOverrides]);
+
+  function toggleSelected(idx: number) {
+    setUserOverrides((prev) => {
+      const next = new Map(prev);
+      if (decisions.has(idx)) {
+        // Currently selected → deselect.
+        next.set(idx, false);
+      } else {
+        // Currently deselected → re-select (remove override).
+        next.delete(idx);
+      }
+      return next;
+    });
+  }
+
+  function setRowMode(idx: number, mode: "replace" | "new") {
+    setUserOverrides((prev) => {
+      const next = new Map(prev);
+      if (mode === "new") {
+        next.set(idx, "new");
+      } else {
+        // Replace: remove the "new" override so status-driven default takes over.
+        next.delete(idx);
       }
       return next;
     });
   }
 
   const projectName = folderNameFromPath(scannedPath);
-  const selectedCount = selected.size;
+  const selectedCount = decisions.size;
+  const replaceCount = [...decisions.values()].filter(
+    (d) => d !== "new",
+  ).length;
+  const newCount = selectedCount - replaceCount;
   const isImporting = state.phase === "importing";
 
   // T068: probe the project folder for existing RAILGUARD rule files.
-  // Hide the CTA only when all 4 files already exist; otherwise show it
-  // (including when the probe fails — fail open so users can still discover the feature).
   const [railguardMissing, setRailguardMissing] = useState<boolean>(true);
   useEffect(() => {
     if (!scannedPath) return;
@@ -112,7 +228,7 @@ export function DetectedKeysReview({
         setRailguardMissing(previews.some((p) => !p.exists));
       })
       .catch(() => {
-        // Probe failed (e.g. path invalid) — keep CTA visible (default state).
+        // Probe failed — keep CTA visible.
       });
     return () => {
       cancelled = true;
@@ -123,26 +239,53 @@ export function DetectedKeysReview({
     if (selectedCount === 0) return;
     const result = await importSelected({
       detected,
-      selectedIndices: selected,
+      selectedDecisions: decisions,
       projectName,
       projectLocalPath: scannedPath,
       issuerBySlug,
     });
     if (result) {
-      toast.success(
-        t("onboarding.importSuccess", {
-          count: result.credentialsCreated,
-          project: result.projectName,
-        }),
-      );
+      if (result.credentialsReplaced > 0 && result.credentialsCreated === 0) {
+        toast.success(
+          t("onboarding.toast.replacedSummary", { count: result.credentialsReplaced }),
+        );
+      } else if (result.credentialsReplaced > 0) {
+        toast.success(
+          t("onboarding.importMixed", {
+            total: result.credentialsCreated + result.credentialsReplaced,
+            replace: result.credentialsReplaced,
+            new: result.credentialsCreated,
+          }),
+        );
+      } else {
+        toast.success(
+          t("onboarding.importSuccess", {
+            count: result.credentialsCreated,
+            project: result.projectName,
+          }),
+        );
+      }
       onImportComplete?.({
         projectId: result.projectId,
         projectName: result.projectName,
-        count: result.credentialsCreated,
+        count: result.credentialsCreated + result.credentialsReplaced,
       });
     } else if (state.phase === "error") {
       toast.error(t("onboarding.importFailed"));
     }
+  }
+
+  // Import button label.
+  function importButtonLabel() {
+    if (isImporting) return t("onboarding.importing");
+    if (replaceCount > 0 && newCount > 0) {
+      return t("onboarding.importMixed", {
+        total: selectedCount,
+        replace: replaceCount,
+        new: newCount,
+      });
+    }
+    return t("onboarding.importCount", { count: selectedCount });
   }
 
   if (detected.length === 0) {
@@ -166,9 +309,7 @@ export function DetectedKeysReview({
           </p>
         </div>
         <Button onClick={handleImport} disabled={selectedCount === 0 || isImporting}>
-          {isImporting
-            ? t("onboarding.importing")
-            : t("onboarding.importCount", { count: selectedCount })}
+          {importButtonLabel()}
         </Button>
       </header>
 
@@ -179,7 +320,7 @@ export function DetectedKeysReview({
       >
         <div
           role="row"
-          className="grid grid-cols-[auto_auto_1.2fr_2fr_auto_auto] items-center gap-3 border-b bg-muted/50 px-4 py-2 text-xs font-medium uppercase text-muted-foreground"
+          className="grid grid-cols-[auto_auto_1.2fr_2fr_auto_auto_auto] items-center gap-3 border-b bg-muted/50 px-4 py-2 text-xs font-medium uppercase text-muted-foreground"
         >
           <span role="columnheader" aria-label={t("onboarding.colSelect")} />
           <span role="columnheader">{t("onboarding.colIssuer")}</span>
@@ -187,27 +328,35 @@ export function DetectedKeysReview({
           <span role="columnheader">{t("onboarding.colFile")}</span>
           <span role="columnheader">{t("onboarding.colLast4")}</span>
           <span role="columnheader">{t("onboarding.colConfidence")}</span>
+          <span role="columnheader" />
         </div>
 
         {detected.map((dk, idx) => {
-          const tracked = isTracked(dk);
+          const status = rowStatuses[idx];
+          const isAlreadyTracked = status === "already_tracked";
+          const isRotated = status !== "already_tracked" && status !== "new";
           const preset = dk.issuer_slug ? findPreset(dk.issuer_slug) : undefined;
           const Icon = preset?.icon ?? KeyRound;
-          const checked = selected.has(idx);
-          const disabled = tracked || !dk.issuer_slug;
+          const checked = decisions.has(idx);
+          const disabled = isAlreadyTracked || !dk.issuer_slug;
+          const currentDecision = decisions.get(idx);
+          const isReplaceMode =
+            currentDecision !== undefined &&
+            currentDecision !== "new" &&
+            currentDecision.kind === "replace";
 
           return (
             <div
               key={`${dk.file_path}:${dk.line}:${dk.value_hint}:${idx}`}
               role="row"
               data-testid={`detected-row-${idx}`}
-              className="grid grid-cols-[auto_auto_1.2fr_2fr_auto_auto] items-center gap-3 border-b px-4 py-2 text-sm last:border-b-0 hover:bg-muted/30"
+              className="grid grid-cols-[auto_auto_1.2fr_2fr_auto_auto_auto] items-center gap-3 border-b px-4 py-2 text-sm last:border-b-0 hover:bg-muted/30"
             >
               <input
                 type="checkbox"
                 checked={checked}
                 disabled={disabled}
-                onChange={() => toggle(idx)}
+                onChange={() => toggleSelected(idx)}
                 aria-label={t("onboarding.selectRow", { name: dk.env_var_name ?? dk.file_path })}
                 className="size-4 cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-40"
               />
@@ -232,10 +381,56 @@ export function DetectedKeysReview({
                 <Badge variant={confidenceTone(dk.confidence)} className="tabular-nums">
                   {Math.round(dk.confidence * 100)}%
                 </Badge>
-                {tracked ? (
+                {isAlreadyTracked ? (
                   <Badge variant="outline" className="text-[10px]">
                     {t("onboarding.alreadyTracked")}
                   </Badge>
+                ) : null}
+                {isRotated ? (
+                  <Badge
+                    variant="warning"
+                    className="text-[10px]"
+                    title={t("onboarding.rotatedExplain")}
+                    data-testid={`rotated-badge-${idx}`}
+                  >
+                    {t("onboarding.rotatedBadge")}
+                  </Badge>
+                ) : null}
+              </div>
+              {/* Replace / Add-as-new radio — only shown for rotated rows that are selected */}
+              <div role="cell" className="flex items-center gap-2">
+                {isRotated && checked ? (
+                  <div
+                    className="flex gap-2 text-[10px]"
+                    data-testid={`rotation-mode-${idx}`}
+                  >
+                    <label className="flex cursor-pointer items-center gap-1">
+                      <input
+                        type="radio"
+                        name={`rotation-mode-${idx}`}
+                        value="replace"
+                        checked={isReplaceMode}
+                        onChange={() => setRowMode(idx, "replace")}
+                        className="size-3 accent-primary"
+                        aria-label={t("onboarding.replaceMode")}
+                        data-testid={`replace-radio-${idx}`}
+                      />
+                      {t("onboarding.replaceMode")}
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-1">
+                      <input
+                        type="radio"
+                        name={`rotation-mode-${idx}`}
+                        value="new"
+                        checked={!isReplaceMode}
+                        onChange={() => setRowMode(idx, "new")}
+                        className="size-3 accent-primary"
+                        aria-label={t("onboarding.addAsNewMode")}
+                        data-testid={`add-as-new-radio-${idx}`}
+                      />
+                      {t("onboarding.addAsNewMode")}
+                    </label>
+                  </div>
                 ) : null}
               </div>
             </div>
