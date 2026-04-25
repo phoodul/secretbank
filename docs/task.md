@@ -33,7 +33,7 @@
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ✅ 10/10 완료       |
-| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | 🔄 6/10 완료 (릴레이 의존 4건 defer)|
+| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | 🔄 6/10 (T061~T064 진행 시작 2026-04-25) |
 | M6  | Audit Log                       | T069~T074   | 6         | ✅ 6/6 완료         |
 | M7  | Kill Switch                     | T075~T078   | 4         | ✅ 4/4 완료             |
 | M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ⏳ 대기             |
@@ -42,7 +42,10 @@
 | M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기             |
 | M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기             |
 | M13 | i18n + Updater + Release        | T114~T118   | 5         | ⏳ 대기             |
-| M14 | Auto Rotation                   | T119~T125   | 7         | ⏳ 대기             |
+| M14 | Auto Rotation                   | T119~T125   | 7         | ⏳ 대기 (M9 완료 후 진입) |
+| M15 | CI/CD Integration               | TBD         | TBD       | ⏳ placeholder (M5 완료 후 신설 — GitHub Actions / GitLab CI / Vercel preview / Netlify build hook) |
+| M16 | Anonymous Telemetry (opt-in)    | TBD         | TBD       | ⏳ placeholder (M9 완료 후 신설 — 익명 집계로 데이터 해자 회복) |
+| M17 | SDK Ecosystem                   | TBD         | TBD       | ⏳ placeholder (M5 + M9 완료 후 신설 — npm / pip / cargo) |
 
 ---
 

@@ -171,8 +171,9 @@
     - **커넥터 팩** (AWS, OpenAI, Stripe, Vercel, Supabase, Google Cloud 등)
     - **Kill Switch**
     - **Audit Log Export**
-  - **Team (Phase 2)** — $10/seat/월
+  - **Team (Phase 2)** — **$5/seat/월** _(2026-04-25 인하: 기존 $10/seat → $5/seat)_
     - 팀 공유 볼트, SSO, RBAC, SCIM
+    - Pro($1) 와 함께 동일한 가격 인하 정책: "API 키 관리" 신규 카테고리 침투 가격대로 정렬. 1Password Teams ($7.99/user) 보다 저렴.
 - **이유:** 5000만 사용자 목표에 도달하려면 무료 진입 장벽 제거가 필수 (Bitwarden 모델). 2026-04-25 인하 후 $1/월 = Bitwarden Premium 과 동률, 1Password Individual ($3~5) 보다 한참 저렴한 **신규 카테고리 침투 가격**.
 - **영향:**
   - 무료 tier의 기능이 충분히 쓸만해야 한다 ("유인 광고형 무료"는 바이브 코더 페르소나에게 역효과).
@@ -722,14 +723,31 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 
 ---
 
-## [2026-04-25] 백로그 — 시장 전략 부합 권장 조치 (즉시 결정 보류, 다음 세션 검토)
+## [2026-04-25] 백로그 — 시장 전략 부합 권장 조치 (사용자 결정 갱신)
 
 `user_research/apivault_strategy.md` 점검 결과 도출된 후속 안건. 즉시 구현 아님, 향후 마일스톤 검토 시 우선 고려.
 
-1. **팀 플랜 가격 결정**: 사용자당 $10/seat/월 (현재 placeholder) 유지 vs 인하 ($5~8/seat/월) 검토. 결정 타이밍 = M9 동기화 인프라 완료 후, Team 플랜 첫 출시 전.
-2. **익명 집계 통계 옵트인**: zero-knowledge 가 네트워크 효과 약화 → 사용자가 명시 옵트인 시 "어떤 issuer 가 가장 많이 노출되는가" 같은 익명 집계 채널 도입. 데이터 해자 회복 경로. M9 이후 실험.
-3. **SDK 로드맵**: npm (`@apivault/sdk`), pip (`apivault`), cargo (`apivault-sdk`) 패키지로 코드 안에서 import → 락인 강화. M5 connector 완료 + M9 동기화 안정화 후 신설 마일스톤 (M15) 검토.
-4. **CI/CD 통합 마일스톤**: GitHub Actions / GitLab CI / Vercel preview / Netlify build hook 통합으로 키 누출 차단 자동화. M5 GitHub connector (T060+) 완료 후 진입.
+1. **팀 플랜 가격 결정**: ✅ **$5/seat/월** 확정 (위 가격 인하 결정에 반영). 1Password Teams ($7.99) 보다 저렴, API 키 관리 신규 카테고리 침투 가격대 정렬.
+2. **익명 집계 통계 옵트인**: zero-knowledge 가 네트워크 효과 약화 → 사용자가 명시 옵트인 시 "어떤 issuer 가 가장 많이 노출되는가" 같은 익명 집계 채널 도입. 데이터 해자 회복 경로. **M9 동기화 안정화 이후 신설 마일스톤 (M16)** 으로 진행.
+3. **SDK 로드맵**: npm (`@apivault/sdk`), pip (`apivault`), cargo (`apivault-sdk`) 패키지로 코드 안에서 import → 락인 강화. **M5 connector 완료 + M9 동기화 안정화 후 신설 마일스톤 (M17)** 으로 진행.
+4. **CI/CD 통합 마일스톤**: GitHub Actions / GitLab CI / Vercel preview / Netlify build hook 통합으로 키 누출 차단 자동화. **M5 GitHub connector (T060+) 완료 후 신설 마일스톤 (M15)** 으로 진행. 새 마일스톤 placeholder 는 task.md 에 동시 추가.
+
+마일스톤 신설 순서 (확정):
+- **M14** Auto Rotation (T119~T125) — M9 완료 후
+- **M15** CI/CD Integration — M5 완료 후
+- **M16** Anonymous Telemetry (옵트인) — M9 완료 후
+- **M17** SDK Ecosystem (npm/pip/cargo) — M5 + M9 완료 후
+
+---
+
+## [2026-04-25] M5 릴레이 진입 결정 — Cloudflare Workers 스캐폴드 시작
+
+- **결정:** M5 T061 ~ T064 (Cloudflare Workers 릴레이 + GitHub installation token + Secret Scanning + Connector UI) 진입.
+- **이유:** "릴레이가 락인의 입구" — `apivault_strategy.md` 분석에서 도출된 우선순위 1번. 자동 rotation, OAuth 인증, 동기화 인프라 모두 릴레이 의존이라 빨리 시작할수록 후속 마일스톤이 풀린다.
+- **영향:**
+  - T079 (M8 Cloudflare Workers 스캐폴드) 가 사실상 T061 의 선행 작업 — M5 진입 시 자동으로 함께 진행.
+  - 외부 인프라 의존 (사용자 수동 처리 필요): Cloudflare 계정, wrangler CLI, D1 데이터베이스, KV namespace, GitHub App 등록 (T060 runbook).
+  - 모노레포 vs 별도 repo 결정 필요 (사용자 결정 대기).
 
 ---
 
