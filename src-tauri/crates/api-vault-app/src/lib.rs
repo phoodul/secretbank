@@ -33,6 +33,10 @@ use commands::kill_switch::{
     kill_switch_request_confirm, kill_switch_revoke,
     kill_switch_request_confirm_issuer, kill_switch_revoke_issuer,
 };
+use commands::github::{
+    github_install_url, github_list_installations, github_remove_installation,
+    github_save_installation, github_scan_repo,
+};
 use commands::railguard::{railguard_apply, railguard_preview};
 use context::AppContext;
 use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
@@ -143,6 +147,11 @@ pub fn run(context: tauri::Context) {
             kill_switch_revoke,
             kill_switch_request_confirm_issuer,
             kill_switch_revoke_issuer,
+            github_install_url,
+            github_save_installation,
+            github_list_installations,
+            github_remove_installation,
+            github_scan_repo,
         ]);
     }
 
@@ -195,6 +204,11 @@ pub fn run(context: tauri::Context) {
             kill_switch_revoke,
             kill_switch_request_confirm_issuer,
             kill_switch_revoke_issuer,
+            github_install_url,
+            github_save_installation,
+            github_list_installations,
+            github_remove_installation,
+            github_scan_repo,
         ]);
     }
 

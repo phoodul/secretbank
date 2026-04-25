@@ -562,5 +562,46 @@
     "themeLight": "라이트 테마로 전환",
     "themeDark": "다크 테마로 전환",
     "themeSystem": "시스템 테마 사용"
+  },
+  "githubIntegration": {
+    "sectionTitle": "GitHub 통합",
+    "sectionDescription": "GitHub App을 연결하여 저장소에서 노출된 시크릿을 스캔합니다.",
+    "connected": "연결됨",
+    "notConnected": "연결 안 됨",
+    "connectGithub": "GitHub 연결",
+    "connecting": "브라우저 열는 중…",
+    "installationCard": {
+      "id": "설치 ID: {{id}}",
+      "installedAt": "{{time}} 연결됨",
+      "repoCount_one": "저장소 {{count}}개",
+      "repoCount_other": "저장소 {{count}}개",
+      "noRepos": "선택된 저장소 없음",
+      "manage": "저장소 관리",
+      "manageDisabled": "저장소 관리는 향후 릴리스에서 제공됩니다",
+      "remove": "제거"
+    },
+    "scan": {
+      "heading": "저장소 스캔",
+      "ownerPlaceholder": "소유자",
+      "repoPlaceholder": "저장소",
+      "action": "스캔",
+      "scanning": "스캔 중…",
+      "empty": "시크릿 스캔 알림이 없습니다.",
+      "error": "스캔 실패",
+      "alertCard": {
+        "secretType": "유형: {{type}}",
+        "firstDetected": "최초 감지: {{time}}",
+        "locations": "{{count}}개 위치",
+        "viewOnGithub": "GitHub에서 보기"
+      }
+    },
+    "removeConfirm": {
+      "title": "설치 제거?",
+      "body": "설치 {{id}}를 API Vault에서 제거합니다. GitHub의 앱 설치는 그대로 유지되므로 필요하면 GitHub에서 별도로 제거하세요.",
+      "confirm": "제거",
+      "cancel": "취소"
+    },
+    "connectError": "GitHub를 열지 못했습니다. 브라우저 설정을 확인하세요.",
+    "removeError": "설치 제거에 실패했습니다"
   }
 }

@@ -20,11 +20,23 @@ use crate::services::feed_scheduler::{FeedSchedulerConfig, TauriEmitter};
 // ---------------------------------------------------------------------------
 
 /// 허용된 vault settings 키 목록.
-const ALLOWED_KEYS: &[&str] = &["nvd_api_key", "ghsa_token"];
+const ALLOWED_KEYS: &[&str] = &["nvd_api_key", "ghsa_token", "github_installations"];
 
-/// Maximum byte length for any vault setting value.
-/// API keys are rarely longer than 64 chars; 256 provides a safe margin.
-const MAX_VALUE_LEN: usize = 256;
+/// 일반 설정 최대 바이트 길이 (API 키 등).
+const DEFAULT_MAX_VALUE_LEN: usize = 256;
+
+/// `github_installations` 키의 최대 바이트 길이.
+/// installation 메타데이터가 길어질 수 있으므로 16 KB 로 상향.
+const GITHUB_INSTALLATIONS_MAX_LEN: usize = 16384;
+
+/// 키별 최대 값 길이를 반환한다.
+fn max_value_len_for(key: &str) -> usize {
+    if key == "github_installations" {
+        GITHUB_INSTALLATIONS_MAX_LEN
+    } else {
+        DEFAULT_MAX_VALUE_LEN
+    }
+}
 
 fn validate_key(key: &str) -> Result<(), VaultSettingError> {
     if ALLOWED_KEYS.contains(&key) {
@@ -36,9 +48,10 @@ fn validate_key(key: &str) -> Result<(), VaultSettingError> {
     }
 }
 
-fn validate_value(value: &str) -> Result<(), VaultSettingError> {
-    if value.len() > MAX_VALUE_LEN {
-        Err(VaultSettingError::ValueTooLong { max: MAX_VALUE_LEN })
+fn validate_value(key: &str, value: &str) -> Result<(), VaultSettingError> {
+    let max = max_value_len_for(key);
+    if value.len() > max {
+        Err(VaultSettingError::ValueTooLong { max })
     } else {
         Ok(())
     }
@@ -200,7 +213,7 @@ pub async fn vault_setting_set(
 ) -> Result<(), VaultSettingError> {
     validate_key(&key)?;
     if let Some(ref v) = value {
-        validate_value(v)?;
+        validate_value(&key, v)?;
     }
 
     let vault_path = format!("settings/{key}");
@@ -323,8 +336,8 @@ mod tests {
     // -----------------------------------------------------------------------
     #[test]
     fn validate_value_too_long_returns_error() {
-        let long_value = "x".repeat(MAX_VALUE_LEN + 1);
-        let err = validate_value(&long_value).unwrap_err();
+        let long_value = "x".repeat(DEFAULT_MAX_VALUE_LEN + 1);
+        let err = validate_value("nvd_api_key", &long_value).unwrap_err();
         assert!(
             matches!(err, VaultSettingError::ValueTooLong { max: 256 }),
             "257-byte value must return ValueTooLong, got: {err:?}"
@@ -332,14 +345,32 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // 7. validate_value: exactly MAX_VALUE_LEN bytes → Ok
+    // 7. validate_value: exactly DEFAULT_MAX_VALUE_LEN bytes → Ok
     // -----------------------------------------------------------------------
     #[test]
     fn validate_value_at_max_len_passes() {
-        let max_value = "x".repeat(MAX_VALUE_LEN);
+        let max_value = "x".repeat(DEFAULT_MAX_VALUE_LEN);
         assert!(
-            validate_value(&max_value).is_ok(),
-            "value at exactly MAX_VALUE_LEN must be accepted"
+            validate_value("nvd_api_key", &max_value).is_ok(),
+            "value at exactly DEFAULT_MAX_VALUE_LEN must be accepted"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // 8. validate_value: github_installations 는 16384 바이트 허용
+    // -----------------------------------------------------------------------
+    #[test]
+    fn validate_value_github_installations_allows_large_value() {
+        let large_value = "x".repeat(GITHUB_INSTALLATIONS_MAX_LEN);
+        assert!(
+            validate_value("github_installations", &large_value).is_ok(),
+            "16384-byte github_installations value must pass"
+        );
+        let too_large = "x".repeat(GITHUB_INSTALLATIONS_MAX_LEN + 1);
+        let err = validate_value("github_installations", &too_large).unwrap_err();
+        assert!(
+            matches!(err, VaultSettingError::ValueTooLong { max: 16384 }),
+            "got: {err:?}"
         );
     }
 

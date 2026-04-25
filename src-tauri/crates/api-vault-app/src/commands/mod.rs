@@ -1,5 +1,6 @@
 pub mod audit;
 pub mod credentials;
+pub mod github;
 pub mod kill_switch;
 pub mod deployments;
 pub mod graph;

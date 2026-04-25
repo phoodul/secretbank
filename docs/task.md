@@ -33,7 +33,7 @@
 | M2  | Inventory UI + 드롭&스캔        | T025~T040   | 13+3S     | ✅ 16/16 완료       |
 | M3  | Dependency Graph & Blast Radius | T041~T048   | 7+1S      | ✅ 8/8 완료         |
 | M4  | Incident Feed                   | T049~T058   | 8+2S      | ✅ 10/10 완료       |
-| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | 🔄 9/10 (T062 완료 2026-04-25; T063~T064 대기) |
+| M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ✅ 10/10 완료 (T063 완료 2026-04-25; T064 defer) |
 | M6  | Audit Log                       | T069~T074   | 6         | ✅ 6/6 완료         |
 | M7  | Kill Switch                     | T075~T078   | 4         | ✅ 4/4 완료             |
 | M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | 🔄 1/8 (T079 릴레이 /health 완료 2026-04-25) |
@@ -135,8 +135,9 @@
 | T079    | Cloudflare Workers 릴레이 스캐폴드 (Hono + GET /health + D1/KV + vitest 7 tests) | 2026-04-25 | (미커밋) |
 | T061    | GitHub installation-token 엔드포인트 (POST + KV캐시 55분 + Rust fetch_installation_token + wiremock 3 tests) | 2026-04-25 | (미커밋) |
 | T062    | GitHub Secret Scanning alerts API (list_alerts_with_base + RepoRef + with_repos 빌더 + list_keys 통합 + 9 tests) | 2026-04-25 | (미커밋) |
+| T063    | GitHub Connector UI (Settings 통합) — github.rs commands 5종 + vault_settings 확장 + GithubIntegrationSection + use-github-integration 훅 + i18n 4 로케일 + 테스트 9종 | 2026-04-25 | (미커밋) |
 
-**완료 합계**: 77/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 9/10 + M6 ✅ 6/6 + **M7 ✅ 4/4** + M8 🔄 1/8)
+**완료 합계**: 78/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 10/10 + M6 ✅ 6/6 + **M7 ✅ 4/4** + M8 🔄 1/8)
 
 ### Audit 무결성 hotfix + payload 점검 (2026-04-25, 태스크 진행 표에는 별도 항목 아님)
 

@@ -54,11 +54,13 @@ function renderPage() {
 describe("SettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // 기본: 모든 invoke 호출 → null
-    // IntegrationsSection 이 vault_status, vault_setting_get 을 호출하므로
-    // 기본값으로 locked 상태 반환하도록 설정한다.
+    // 기본: 모든 invoke 호출 → null / 빈 배열
+    // IntegrationsSection 이 vault_status, vault_setting_get 을 호출하고,
+    // GithubIntegrationSection 이 github_list_installations 를 호출하므로
+    // 각각 안전한 기본값을 반환하도록 설정한다.
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "vault_status") return Promise.resolve({ state: "locked" });
+      if (cmd === "github_list_installations") return Promise.resolve([]);
       return Promise.resolve(null);
     });
   });
@@ -129,6 +131,7 @@ describe("SettingsPage", () => {
     // IntegrationsSection → vault_status 먼저 호출됨
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "vault_status") return Promise.resolve({ state: "locked" });
+      if (cmd === "github_list_installations") return Promise.resolve([]);
       if (cmd === "settings_get") return Promise.resolve("30");
       return Promise.resolve(null);
     });
@@ -143,8 +146,13 @@ describe("SettingsPage", () => {
   // 7. Auto-lock Select 변경 → settings_set invoke 호출
   it("Auto-lock Select 변경 시 settings_set invoke 를 호출한다", async () => {
     const user = userEvent.setup();
-    mockInvoke.mockResolvedValueOnce(null); // settings_get → null (기본값 5)
-    mockInvoke.mockResolvedValueOnce(undefined); // settings_set
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "vault_status") return Promise.resolve({ state: "locked" });
+      if (cmd === "github_list_installations") return Promise.resolve([]);
+      if (cmd === "settings_get") return Promise.resolve(null);
+      if (cmd === "settings_set") return Promise.resolve(undefined);
+      return Promise.resolve(null);
+    });
 
     renderPage();
 
@@ -174,6 +182,7 @@ describe("SettingsPage", () => {
     // vault_status (IntegrationsSection), settings_get, settings_set 순서
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "vault_status") return Promise.resolve({ state: "locked" });
+      if (cmd === "github_list_installations") return Promise.resolve([]);
       if (cmd === "settings_get") return Promise.resolve(null);
       if (cmd === "settings_set") return Promise.reject(new Error("db error"));
       return Promise.resolve(null);

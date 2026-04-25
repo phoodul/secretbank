@@ -562,5 +562,46 @@
     "themeLight": "切换到浅色主题",
     "themeDark": "切换到深色主题",
     "themeSystem": "使用系统主题"
+  },
+  "githubIntegration": {
+    "sectionTitle": "GitHub 集成",
+    "sectionDescription": "连接您的 GitHub App 以扫描存储库中的泄露密钥。",
+    "connected": "已连接",
+    "notConnected": "未连接",
+    "connectGithub": "连接 GitHub",
+    "connecting": "正在打开浏览器…",
+    "installationCard": {
+      "id": "安装 ID：{{id}}",
+      "installedAt": "于 {{time}} 连接",
+      "repoCount_one": "{{count}} 个仓库",
+      "repoCount_other": "{{count}} 个仓库",
+      "noRepos": "未选择仓库",
+      "manage": "管理仓库",
+      "manageDisabled": "仓库管理将在未来版本中提供",
+      "remove": "移除"
+    },
+    "scan": {
+      "heading": "扫描存储库",
+      "ownerPlaceholder": "所有者",
+      "repoPlaceholder": "存储库",
+      "action": "扫描",
+      "scanning": "扫描中…",
+      "empty": "未发现秘密扫描警报。",
+      "error": "扫描失败",
+      "alertCard": {
+        "secretType": "类型：{{type}}",
+        "firstDetected": "首次检测：{{time}}",
+        "locations": "{{count}} 处",
+        "viewOnGithub": "在 GitHub 查看"
+      }
+    },
+    "removeConfirm": {
+      "title": "移除安装？",
+      "body": "这将从 API Vault 中移除安装 {{id}}。GitHub 上的应用安装将保留，如需请在 GitHub 上单独删除。",
+      "confirm": "移除",
+      "cancel": "取消"
+    },
+    "connectError": "无法打开 GitHub，请检查浏览器设置。",
+    "removeError": "移除安装失败"
   }
 }

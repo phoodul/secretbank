@@ -562,5 +562,46 @@
     "themeLight": "Switch to light theme",
     "themeDark": "Switch to dark theme",
     "themeSystem": "Use system theme"
+  },
+  "githubIntegration": {
+    "sectionTitle": "GitHub Integration",
+    "sectionDescription": "Connect your GitHub App installation to scan repositories for exposed secrets.",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "connectGithub": "Connect GitHub",
+    "connecting": "Opening browser…",
+    "installationCard": {
+      "id": "Installation ID: {{id}}",
+      "installedAt": "Connected {{time}}",
+      "repoCount_one": "{{count}} repo",
+      "repoCount_other": "{{count}} repos",
+      "noRepos": "No repos selected",
+      "manage": "Manage repos",
+      "manageDisabled": "Repo management coming in a future release",
+      "remove": "Remove"
+    },
+    "scan": {
+      "heading": "Scan a repository",
+      "ownerPlaceholder": "owner",
+      "repoPlaceholder": "repo",
+      "action": "Scan",
+      "scanning": "Scanning…",
+      "empty": "No secret scanning alerts found.",
+      "error": "Scan failed",
+      "alertCard": {
+        "secretType": "Type: {{type}}",
+        "firstDetected": "First detected: {{time}}",
+        "locations": "{{count}} location(s)",
+        "viewOnGithub": "View on GitHub"
+      }
+    },
+    "removeConfirm": {
+      "title": "Remove installation?",
+      "body": "This will remove installation {{id}} from API Vault. The GitHub App will remain installed on GitHub — remove it there separately if needed.",
+      "confirm": "Remove",
+      "cancel": "Cancel"
+    },
+    "connectError": "Failed to open GitHub. Check your browser settings.",
+    "removeError": "Failed to remove installation"
   }
 }

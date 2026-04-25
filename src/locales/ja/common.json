@@ -562,5 +562,46 @@
     "themeLight": "ライトテーマに切り替え",
     "themeDark": "ダークテーマに切り替え",
     "themeSystem": "システムテーマを使用"
+  },
+  "githubIntegration": {
+    "sectionTitle": "GitHub 統合",
+    "sectionDescription": "GitHub App を接続してリポジトリのシークレットをスキャンします。",
+    "connected": "接続済み",
+    "notConnected": "未接続",
+    "connectGithub": "GitHub に接続",
+    "connecting": "ブラウザを開いています…",
+    "installationCard": {
+      "id": "インストール ID: {{id}}",
+      "installedAt": "{{time}} に接続",
+      "repoCount_one": "{{count}} リポジトリ",
+      "repoCount_other": "{{count}} リポジトリ",
+      "noRepos": "リポジトリ未選択",
+      "manage": "リポジトリ管理",
+      "manageDisabled": "リポジトリ管理は将来のリリースで提供予定",
+      "remove": "削除"
+    },
+    "scan": {
+      "heading": "リポジトリをスキャン",
+      "ownerPlaceholder": "オーナー",
+      "repoPlaceholder": "リポジトリ",
+      "action": "スキャン",
+      "scanning": "スキャン中…",
+      "empty": "シークレットスキャンのアラートが見つかりません。",
+      "error": "スキャン失敗",
+      "alertCard": {
+        "secretType": "タイプ: {{type}}",
+        "firstDetected": "初回検出: {{time}}",
+        "locations": "{{count}} 箇所",
+        "viewOnGithub": "GitHub で表示"
+      }
+    },
+    "removeConfirm": {
+      "title": "インストールを削除しますか？",
+      "body": "インストール {{id}} を API Vault から削除します。GitHub のアプリインストールはそのまま残るため、必要に応じて GitHub 側でも削除してください。",
+      "confirm": "削除",
+      "cancel": "キャンセル"
+    },
+    "connectError": "GitHub を開けませんでした。ブラウザの設定を確認してください。",
+    "removeError": "インストールの削除に失敗しました"
   }
 }
