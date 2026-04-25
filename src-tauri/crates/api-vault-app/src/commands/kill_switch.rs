@@ -38,6 +38,7 @@ use thiserror::Error;
 use tokio::sync::Mutex;
 
 use crate::context::AppContext;
+use crate::entitlement::EntitlementError;
 
 // ---------------------------------------------------------------------------
 // Token store
@@ -218,6 +219,21 @@ pub enum KillSwitchError {
 
     #[error("internal: {message}")]
     Internal { message: String },
+
+    #[error("pro feature — bulk revoke requires Pro subscription")]
+    NotPro,
+}
+
+impl From<EntitlementError> for KillSwitchError {
+    fn from(e: EntitlementError) -> Self {
+        match e {
+            EntitlementError::VaultLocked => Self::VaultLocked,
+            EntitlementError::NotPro => Self::NotPro,
+            other => Self::Internal {
+                message: other.to_string(),
+            },
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -436,12 +452,17 @@ pub struct KillSwitchRevokeIssuerInput {
 ///
 /// Emits `kill-switch:progress` events after each credential revocation.
 /// Returns `KillSwitchBulkResult` with revoked count and any per-credential failures.
+///
+/// **Pro gate**: bulk revoke is a Pro-only feature.
 #[tauri::command]
 pub async fn kill_switch_revoke_issuer(
     input: KillSwitchRevokeIssuerInput,
     state: State<'_, AppContext>,
     app_handle: tauri::AppHandle,
 ) -> Result<KillSwitchBulkResult, KillSwitchError> {
+    // Pro gate: bulk revoke requires Pro subscription.
+    crate::entitlement::require_pro(&state).await.map_err(KillSwitchError::from)?;
+
     let issuer_id = parse_issuer_id(&input.issuer_id)?;
 
     // 1. Consume issuer token.

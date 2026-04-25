@@ -25,6 +25,10 @@ vi.mock("@tauri-apps/api/event", () => ({
   listen: vi.fn().mockResolvedValue(() => undefined),
 }));
 
+// entitlement_current — Pro by default so existing scan tests pass unchanged
+const PRO_ENTITLEMENT = { tier: "pro", pro_until: Date.now() + 86_400_000, from_cache: false };
+const FREE_ENTITLEMENT = { tier: "free", pro_until: null, from_cache: false };
+
 // ---------------------------------------------------------------------------
 // Imports after mocks
 // ---------------------------------------------------------------------------
@@ -51,6 +55,11 @@ function renderSection() {
 describe("GithubIntegrationSection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // entitlement_current — Pro by default so scan tests work
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "entitlement_current") return Promise.resolve(PRO_ENTITLEMENT);
+      return Promise.resolve([]);
+    });
   });
 
   afterEach(() => {
@@ -59,7 +68,11 @@ describe("GithubIntegrationSection", () => {
 
   // (a) Not connected 상태 — installations 빈 배열
   it("installations 가 없을 때 Not connected 배지와 Connect 버튼이 렌더된다", async () => {
-    mockInvoke.mockResolvedValueOnce([]); // github_list_installations
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "entitlement_current") return Promise.resolve(PRO_ENTITLEMENT);
+      if (cmd === "github_list_installations") return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
 
     renderSection();
 
@@ -72,9 +85,13 @@ describe("GithubIntegrationSection", () => {
 
   // (b) Connect 버튼 클릭 → invoke github_install_url + shell.open 호출
   it("Connect 버튼 클릭 시 github_install_url invoke 후 shell.open 으로 브라우저를 연다", async () => {
-    mockInvoke
-      .mockResolvedValueOnce([]) // github_list_installations (initial load)
-      .mockResolvedValueOnce("https://github.com/apps/api-vault/installations/new"); // github_install_url
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "entitlement_current") return Promise.resolve(PRO_ENTITLEMENT);
+      if (cmd === "github_list_installations") return Promise.resolve([]);
+      if (cmd === "github_install_url")
+        return Promise.resolve("https://github.com/apps/api-vault/installations/new");
+      return Promise.resolve([]);
+    });
 
     const user = userEvent.setup();
     renderSection();
@@ -105,9 +122,12 @@ describe("GithubIntegrationSection", () => {
       repos: [],
     };
 
-    mockInvoke
-      .mockResolvedValueOnce([mockInstallation]) // github_list_installations (initial)
-      .mockResolvedValueOnce([]); // github_scan_repo
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "entitlement_current") return Promise.resolve(PRO_ENTITLEMENT);
+      if (cmd === "github_list_installations") return Promise.resolve([mockInstallation]);
+      if (cmd === "github_scan_repo") return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
 
     const user = userEvent.setup();
     renderSection();
@@ -149,10 +169,17 @@ describe("GithubIntegrationSection", () => {
       repos: [],
     };
 
-    mockInvoke
-      .mockResolvedValueOnce([mockInstallation]) // github_list_installations (initial)
-      .mockResolvedValueOnce(undefined) // github_remove_installation
-      .mockResolvedValueOnce([]); // github_list_installations (refresh after remove)
+    let removed = false;
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "entitlement_current") return Promise.resolve(PRO_ENTITLEMENT);
+      if (cmd === "github_list_installations")
+        return Promise.resolve(removed ? [] : [mockInstallation]);
+      if (cmd === "github_remove_installation") {
+        removed = true;
+        return Promise.resolve(undefined);
+      }
+      return Promise.resolve([]);
+    });
 
     const user = userEvent.setup();
     renderSection();
@@ -188,8 +215,11 @@ describe("GithubIntegrationSection", () => {
 
   // (e) 기존 IntegrationsSection (NVD key) 테스트 회귀 없음 — invoke mock 이 github_* 에 반응하지 않음
   it("다른 invoke 커맨드(vault_status)는 github_ 커맨드와 독립적으로 동작한다", async () => {
-    // github_list_installations 만 mock — vault_status 없어도 에러 없음
-    mockInvoke.mockResolvedValueOnce([]);
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "entitlement_current") return Promise.resolve(PRO_ENTITLEMENT);
+      if (cmd === "github_list_installations") return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
     renderSection();
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("github_list_installations");
@@ -197,5 +227,33 @@ describe("GithubIntegrationSection", () => {
     // vault_status 는 호출 안 됨
     const allCalls = mockInvoke.mock.calls.map((c) => c[0]);
     expect(allCalls).not.toContain("vault_status");
+  });
+
+  // (f) Free 사용자: Scan 버튼 disabled + Pro badge
+  it("Free 상태에서 Scan 버튼은 disabled 이고 Pro 배지가 표시된다", async () => {
+    const mockInstallation = {
+      installation_id: 55556666,
+      installed_at: Date.now() - 60_000,
+      repos: [],
+    };
+
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "entitlement_current") return Promise.resolve(FREE_ENTITLEMENT);
+      if (cmd === "github_list_installations") return Promise.resolve([mockInstallation]);
+      return Promise.resolve([]);
+    });
+
+    renderSection();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Connected/i)).toBeInTheDocument();
+    });
+
+    // Scan 버튼 disabled
+    const scanBtn = screen.getByRole("button", { name: /^scan$/i });
+    expect(scanBtn).toBeDisabled();
+
+    // Pro 배지 존재
+    expect(screen.getByText("Pro")).toBeInTheDocument();
   });
 });

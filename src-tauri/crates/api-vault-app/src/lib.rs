@@ -3,6 +3,7 @@
 pub mod audit_ctx;
 pub mod commands;
 pub mod context;
+pub mod entitlement;
 pub mod services;
 pub mod setup;
 
@@ -37,6 +38,7 @@ use commands::github::{
     github_install_url, github_list_installations, github_remove_installation,
     github_save_installation, github_scan_repo,
 };
+use commands::entitlement::{entitlement_current, entitlement_set_dev};
 use commands::railguard::{railguard_apply, railguard_preview};
 use context::AppContext;
 use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
@@ -152,6 +154,8 @@ pub fn run(context: tauri::Context) {
             github_list_installations,
             github_remove_installation,
             github_scan_repo,
+            entitlement_current,
+            entitlement_set_dev,
         ]);
     }
 
@@ -209,6 +213,8 @@ pub fn run(context: tauri::Context) {
             github_list_installations,
             github_remove_installation,
             github_scan_repo,
+            entitlement_current,
+            entitlement_set_dev,
         ]);
     }
 

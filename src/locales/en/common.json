@@ -603,5 +603,38 @@
     },
     "connectError": "Failed to open GitHub. Check your browser settings.",
     "removeError": "Failed to remove installation"
+  },
+  "subscription": {
+    "title": "Subscription",
+    "currentTier": "Current plan",
+    "tierFree": "Free",
+    "tierPro": "Pro",
+    "proUntil": "until {{date}}",
+    "whatsInPro": {
+      "title": "What's in Pro?",
+      "feature1": "Multi-device E2EE sync",
+      "feature2": "Auto rotation",
+      "feature3": "GitHub Actions Secrets write",
+      "feature4": "Premium connectors"
+    },
+    "upgrade": "Upgrade to Pro",
+    "upgradeDisabled": "Coming in M10 Payments",
+    "dev": {
+      "title": "Developer Tools",
+      "warning": "These controls let you simulate a Pro subscription without a payment flow.",
+      "simulatePro": "Simulate Pro until",
+      "set": "Set",
+      "reset": "Reset to Free",
+      "notice": "These controls are for testing only. They will be superseded by M10 payments.",
+      "setSuccess": "Pro entitlement set",
+      "resetSuccess": "Reset to Free"
+    }
+  },
+  "pro": {
+    "lock": {
+      "badge": "Pro",
+      "tooltip": "This feature requires a Pro subscription",
+      "upgradeCta": "Upgrade to Pro"
+    }
   }
 }

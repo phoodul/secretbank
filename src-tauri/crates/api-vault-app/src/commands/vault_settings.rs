@@ -20,7 +20,7 @@ use crate::services::feed_scheduler::{FeedSchedulerConfig, TauriEmitter};
 // ---------------------------------------------------------------------------
 
 /// 허용된 vault settings 키 목록.
-const ALLOWED_KEYS: &[&str] = &["nvd_api_key", "ghsa_token", "github_installations"];
+const ALLOWED_KEYS: &[&str] = &["nvd_api_key", "ghsa_token", "github_installations", "pro_until"];
 
 /// 일반 설정 최대 바이트 길이 (API 키 등).
 const DEFAULT_MAX_VALUE_LEN: usize = 256;
@@ -29,12 +29,16 @@ const DEFAULT_MAX_VALUE_LEN: usize = 256;
 /// installation 메타데이터가 길어질 수 있으므로 16 KB 로 상향.
 const GITHUB_INSTALLATIONS_MAX_LEN: usize = 16384;
 
+/// `pro_until` 키의 최대 바이트 길이.
+/// 13자리 Unix ms timestamp 십진수 문자열 — 64B 이면 충분하다.
+const PRO_UNTIL_MAX_LEN: usize = 64;
+
 /// 키별 최대 값 길이를 반환한다.
 fn max_value_len_for(key: &str) -> usize {
-    if key == "github_installations" {
-        GITHUB_INSTALLATIONS_MAX_LEN
-    } else {
-        DEFAULT_MAX_VALUE_LEN
+    match key {
+        "github_installations" => GITHUB_INSTALLATIONS_MAX_LEN,
+        "pro_until" => PRO_UNTIL_MAX_LEN,
+        _ => DEFAULT_MAX_VALUE_LEN,
     }
 }
 

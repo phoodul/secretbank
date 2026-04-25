@@ -603,5 +603,38 @@
     },
     "connectError": "无法打开 GitHub，请检查浏览器设置。",
     "removeError": "移除安装失败"
+  },
+  "subscription": {
+    "title": "订阅",
+    "currentTier": "当前计划",
+    "tierFree": "免费版",
+    "tierPro": "Pro 版",
+    "proUntil": "有效至 {{date}}",
+    "whatsInPro": {
+      "title": "Pro 版包含的功能",
+      "feature1": "多设备 E2EE 同步",
+      "feature2": "自动轮换",
+      "feature3": "GitHub Actions Secrets 写入",
+      "feature4": "高级连接器"
+    },
+    "upgrade": "升级至 Pro",
+    "upgradeDisabled": "M10 支付集成后开放",
+    "dev": {
+      "title": "开发者工具",
+      "warning": "以下控件可在无需付款的情况下模拟 Pro 订阅。",
+      "simulatePro": "Pro 模拟截止日期",
+      "set": "设置",
+      "reset": "重置为免费版",
+      "notice": "这些控件仅用于测试，M10 支付集成后将被移除。",
+      "setSuccess": "已设置 Pro 权益",
+      "resetSuccess": "已重置为免费版"
+    }
+  },
+  "pro": {
+    "lock": {
+      "badge": "Pro",
+      "tooltip": "此功能需要 Pro 订阅",
+      "upgradeCta": "升级至 Pro"
+    }
   }
 }

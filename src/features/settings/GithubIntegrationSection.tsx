@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { GitBranch, RefreshCw, Trash2 } from "lucide-react";
+import { GitBranch, Lock, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { useEntitlement } from "@/features/billing/use-entitlement";
 import {
   type GithubInstallation,
   type RemoteKey,
@@ -145,9 +146,10 @@ function AlertCard({ alert }: AlertCardProps) {
 interface ScanPanelProps {
   installations: GithubInstallation[];
   scan: (installationId: number, owner: string, repo: string) => Promise<RemoteKey[]>;
+  isPro: boolean;
 }
 
-function ScanPanel({ installations, scan }: ScanPanelProps) {
+function ScanPanel({ installations, scan, isPro }: ScanPanelProps) {
   const { t } = useTranslation();
   const [selectedInstallationId, setSelectedInstallationId] = useState<number>(
     installations[0]?.installation_id ?? 0,
@@ -203,6 +205,7 @@ function ScanPanel({ installations, scan }: ScanPanelProps) {
           value={owner}
           onChange={(e) => setOwner(e.target.value)}
           className="w-32"
+          disabled={!isPro}
         />
         <span className="text-muted-foreground">/</span>
         <Input
@@ -211,21 +214,39 @@ function ScanPanel({ installations, scan }: ScanPanelProps) {
           value={repo}
           onChange={(e) => setRepo(e.target.value)}
           className="w-40"
+          disabled={!isPro}
         />
-        <Button
-          size="sm"
-          disabled={scanning || !owner.trim() || !repo.trim()}
-          onClick={() => void handleScan()}
-        >
-          {scanning ? (
-            <>
-              <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
-              {t("githubIntegration.scan.scanning")}
-            </>
-          ) : (
-            t("githubIntegration.scan.action")
-          )}
-        </Button>
+        {isPro ? (
+          <Button
+            size="sm"
+            disabled={scanning || !owner.trim() || !repo.trim()}
+            onClick={() => void handleScan()}
+          >
+            {scanning ? (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
+                {t("githubIntegration.scan.scanning")}
+              </>
+            ) : (
+              t("githubIntegration.scan.action")
+            )}
+          </Button>
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center gap-1">
+                  <Button size="sm" disabled aria-label={t("githubIntegration.scan.action")}>
+                    <Lock className="h-3.5 w-3.5 mr-1" aria-hidden />
+                    {t("githubIntegration.scan.action")}
+                  </Button>
+                  <Badge variant="secondary" className="text-xs">{t("pro.lock.badge")}</Badge>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{t("pro.lock.tooltip")}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
       {scanError && <p className="text-sm text-destructive">{scanError}</p>}
@@ -251,6 +272,8 @@ export function GithubIntegrationSection() {
   const { t } = useTranslation();
   const { installations, loading, error, connecting, connect, refresh, remove, scan } =
     useGithubIntegration();
+  const { entitlement } = useEntitlement();
+  const isPro = entitlement?.tier === "pro";
 
   const [removeDialog, setRemoveDialog] = useState<RemoveDialogState>({
     open: false,
@@ -348,7 +371,7 @@ export function GithubIntegrationSection() {
       )}
 
       {/* Scan panel */}
-      {isConnected && <ScanPanel installations={installations} scan={scan} />}
+      {isConnected && <ScanPanel installations={installations} scan={scan} isPro={isPro} />}
 
       {/* Remove confirmation dialog */}
       <Dialog

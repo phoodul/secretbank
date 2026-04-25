@@ -603,5 +603,38 @@
     },
     "connectError": "GitHub を開けませんでした。ブラウザの設定を確認してください。",
     "removeError": "インストールの削除に失敗しました"
+  },
+  "subscription": {
+    "title": "サブスクリプション",
+    "currentTier": "現在のプラン",
+    "tierFree": "無料",
+    "tierPro": "Pro",
+    "proUntil": "{{date}}まで",
+    "whatsInPro": {
+      "title": "Proに含まれる機能",
+      "feature1": "マルチデバイスE2EE同期",
+      "feature2": "自動ローテーション",
+      "feature3": "GitHub Actions Secrets書き込み",
+      "feature4": "プレミアムコネクター"
+    },
+    "upgrade": "Proにアップグレード",
+    "upgradeDisabled": "M10 お支払い統合後に提供",
+    "dev": {
+      "title": "開発者ツール",
+      "warning": "以下のコントロールで、支払いなしにProサブスクリプションをシミュレートできます。",
+      "simulatePro": "Pro シミュレーション終了日",
+      "set": "設定",
+      "reset": "無料にリセット",
+      "notice": "このコントロールはテスト専用です。M10 お支払い統合後に削除されます。",
+      "setSuccess": "Proエンタイトルメントを設定しました",
+      "resetSuccess": "無料にリセットしました"
+    }
+  },
+  "pro": {
+    "lock": {
+      "badge": "Pro",
+      "tooltip": "この機能にはProサブスクリプションが必要です",
+      "upgradeCta": "Proにアップグレード"
+    }
   }
 }

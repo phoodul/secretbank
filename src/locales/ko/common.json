@@ -603,5 +603,38 @@
     },
     "connectError": "GitHub를 열지 못했습니다. 브라우저 설정을 확인하세요.",
     "removeError": "설치 제거에 실패했습니다"
+  },
+  "subscription": {
+    "title": "구독",
+    "currentTier": "현재 플랜",
+    "tierFree": "무료",
+    "tierPro": "Pro",
+    "proUntil": "{{date}}까지",
+    "whatsInPro": {
+      "title": "Pro에 포함된 기능",
+      "feature1": "멀티 디바이스 E2EE 동기화",
+      "feature2": "자동 rotation",
+      "feature3": "GitHub Actions Secrets 쓰기",
+      "feature4": "프리미엄 커넥터"
+    },
+    "upgrade": "Pro로 업그레이드",
+    "upgradeDisabled": "M10 결제 통합 후 제공",
+    "dev": {
+      "title": "개발자 도구",
+      "warning": "아래 컨트롤로 결제 없이 Pro 구독을 시뮬레이션할 수 있습니다.",
+      "simulatePro": "Pro 시뮬레이션 종료일",
+      "set": "설정",
+      "reset": "무료로 초기화",
+      "notice": "이 컨트롤은 테스트 전용입니다. M10 결제 통합 후 제거됩니다.",
+      "setSuccess": "Pro 엔타이틀먼트 설정됨",
+      "resetSuccess": "무료로 초기화됨"
+    }
+  },
+  "pro": {
+    "lock": {
+      "badge": "Pro",
+      "tooltip": "이 기능은 Pro 구독이 필요합니다",
+      "upgradeCta": "Pro로 업그레이드"
+    }
   }
 }

@@ -58,6 +58,9 @@ describe("InventoryPage", () => {
       // bulk revoke commands — no-op in Inventory tests
       if (cmd === "kill_switch_request_confirm_issuer") return Promise.resolve("mock-token");
       if (cmd === "kill_switch_revoke_issuer") return Promise.resolve({ revoked: 0, failed: [] });
+      // entitlement — Pro by default so bulk revoke tests work
+      if (cmd === "entitlement_current")
+        return Promise.resolve({ tier: "pro", pro_until: Date.now() + 86_400_000, from_cache: false });
       return Promise.resolve(MOCK_CREDENTIALS);
     });
   });
@@ -359,6 +362,56 @@ describe("InventoryPage", () => {
     // credential_get 호출 확인
     expect(mockInvoke).toHaveBeenCalledWith("credential_get", {
       id: MOCK_CREDENTIALS[0].id,
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Entitlement gate tests (T064)
+  // ---------------------------------------------------------------------------
+
+  it("[T064] Free 사용자: Bulk Revoke 버튼이 disabled 상태이다", async () => {
+    // Override: Free entitlement + issuer 필터 적용
+    const mockIssuer = { id: "issuer-1", display_name: "OpenAI", category: "ai" };
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "entitlement_current")
+        return Promise.resolve({ tier: "free", pro_until: null, from_cache: false });
+      if (cmd === "issuer_list") return Promise.resolve([mockIssuer]);
+      if (cmd === "credential_list")
+        return Promise.resolve([
+          {
+            ...MOCK_CREDENTIALS[0],
+            issuer_id: "issuer-1",
+            status: "active",
+          },
+        ]);
+      if (cmd === "credential_get") return Promise.resolve(MOCK_CREDENTIAL_FULL);
+      if (cmd === "incident_matches_for_credential") return Promise.resolve([]);
+      if (cmd === "audit_list") return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
+    });
+
+    // Issuer 필터를 "OpenAI" 로 설정
+    const issuerSelect = screen.getByRole("combobox", { name: /issuer/i });
+    await user.click(issuerSelect);
+
+    await waitFor(() => {
+      const option = screen.getByRole("option", { name: /openai/i });
+      expect(option).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("option", { name: /openai/i }));
+
+    // bulk-revoke 버튼이 나타나고 disabled 여야 함
+    await waitFor(() => {
+      const btn = screen.getByTestId("bulk-revoke-action-btn");
+      expect(btn).toBeInTheDocument();
+      expect(btn).toBeDisabled();
     });
   });
 });

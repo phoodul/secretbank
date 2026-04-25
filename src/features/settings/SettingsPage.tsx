@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGraphNodesDraggable } from "@/features/graph/use-graph-nodes-draggable";
 
+import { SubscriptionSection } from "@/features/billing/SubscriptionSection";
 import { GithubIntegrationSection } from "./GithubIntegrationSection";
 import { IntegrationsSection } from "./IntegrationsSection";
 import { type AutoLockMinutes, useAutoLockMinutes } from "./use-settings";
@@ -68,6 +69,11 @@ export function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-8 p-6">
       <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Subscription                                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <SubscriptionSection />
 
       {/* ------------------------------------------------------------------ */}
       {/* Appearance                                                           */}

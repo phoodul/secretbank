@@ -19,6 +19,7 @@ use thiserror::Error;
 use time::OffsetDateTime;
 
 use crate::context::AppContext;
+use crate::entitlement::EntitlementError;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -66,6 +67,20 @@ pub enum GithubCommandError {
     Connector { message: String },
     #[error("internal: {message}")]
     Internal { message: String },
+    #[error("pro feature — upgrade to Pro to use GitHub Secret Scanning")]
+    NotPro,
+}
+
+impl From<EntitlementError> for GithubCommandError {
+    fn from(e: EntitlementError) -> Self {
+        match e {
+            EntitlementError::VaultLocked => Self::VaultLocked,
+            EntitlementError::NotPro => Self::NotPro,
+            other => Self::Internal {
+                message: other.to_string(),
+            },
+        }
+    }
 }
 
 impl From<VaultError> for GithubCommandError {
@@ -246,6 +261,9 @@ pub async fn github_scan_repo(
     input: ScanInput,
     state: State<'_, AppContext>,
 ) -> Result<Vec<RemoteKey>, GithubCommandError> {
+    // Pro gate: Secret Scanning is a Pro-only feature.
+    crate::entitlement::require_pro(&state).await.map_err(GithubCommandError::from)?;
+
     // Verify the installation exists.
     let list = read_installations(&state).await?;
     if !list.iter().any(|e| e.installation_id == input.installation_id) {

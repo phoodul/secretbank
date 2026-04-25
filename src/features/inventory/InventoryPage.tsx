@@ -19,6 +19,8 @@ import { useInventory } from "./use-inventory";
 import { useIssuers } from "./use-issuers";
 import { CreateCredentialDialog } from "./CreateCredentialDialog";
 import { BulkRevokeDialog } from "@/features/kill-switch/BulkRevokeDialog";
+import { useEntitlement } from "@/features/billing/use-entitlement";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CredentialFilter, CredentialStatus, Env } from "./types";
 
 const HIDE_REVOKED_KEY = "apivault:inventory:hideRevoked";
@@ -45,6 +47,8 @@ export function InventoryPage() {
   const { t } = useTranslation("common");
   const { items: rawItems, loading, error, filter, setFilter, search, setSearch, refresh } = useInventory();
   const { issuers } = useIssuers();
+  const { entitlement } = useEntitlement();
+  const isPro = entitlement?.tier === "pro";
   const [searchParams, setSearchParams] = useSearchParams();
   const [hideRevoked, setHideRevoked] = useState<boolean>(readHideRevoked);
   const [bulkRevokeOpen, setBulkRevokeOpen] = useState(false);
@@ -180,19 +184,45 @@ export function InventoryPage() {
 
         {/* Bulk revoke 버튼 — issuer 필터 선택 + non-revoked 존재 시에만 */}
         {showBulkRevoke && selectedIssuer && (
-          <Button
-            variant="destructive"
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => setBulkRevokeOpen(true)}
-            data-testid="bulk-revoke-action-btn"
-          >
-            <ShieldOff className="h-3.5 w-3.5" aria-hidden />
-            {t("killSwitch.bulk.action", {
-              issuer: selectedIssuer.display_name,
-              count: nonRevokedCount,
-            })}
-          </Button>
+          isPro ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => setBulkRevokeOpen(true)}
+              data-testid="bulk-revoke-action-btn"
+            >
+              <ShieldOff className="h-3.5 w-3.5" aria-hidden />
+              {t("killSwitch.bulk.action", {
+                issuer: selectedIssuer.display_name,
+                count: nonRevokedCount,
+              })}
+            </Button>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-8 gap-1.5"
+                      disabled
+                      data-testid="bulk-revoke-action-btn"
+                      aria-label={t("pro.lock.tooltip")}
+                    >
+                      <ShieldOff className="h-3.5 w-3.5" aria-hidden />
+                      {t("killSwitch.bulk.action", {
+                        issuer: selectedIssuer.display_name,
+                        count: nonRevokedCount,
+                      })}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{t("pro.lock.tooltip")}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )
         )}
       </div>
 
