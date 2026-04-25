@@ -86,9 +86,17 @@ Architecture and task details: [`docs/architecture.md`](./docs/architecture.md) 
 
 ## License
 
-This project is licensed under the **GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)**.
-See [LICENSE](./LICENSE) and [LICENSE_FAQ.md](./LICENSE_FAQ.md) for details, including the boundary
-between the open-source core and the Enterprise Edition.
+This repository follows an **Open Core** model with two licenses, separated by directory:
+
+| Path        | License                                  | Scope                                                                          |
+| :---------- | :--------------------------------------- | :----------------------------------------------------------------------------- |
+| `/` (root)  | **AGPL-3.0-or-later** ([LICENSE](./LICENSE)) | OSS core: desktop app, local vault, dependency graph, audit log, RAILGUARD, etc. |
+| `/ee/`      | **API Vault Enterprise License v1.0** ([ee/LICENSE](./ee/LICENSE)) | Cloudflare Workers relay, premium connectors, auto rotation, sync backend.     |
+
+See [LICENSE_FAQ.md](./LICENSE_FAQ.md) and [`ee/README.md`](./ee/README.md) for the boundary
+between the open-source core and the Enterprise Edition. Production use of `/ee/` code requires
+either an active subscription to the official API Vault hosted service or a written enterprise
+license agreement.
 
 ## Contributing
 

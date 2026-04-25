@@ -747,7 +747,24 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - **영향:**
   - T079 (M8 Cloudflare Workers 스캐폴드) 가 사실상 T061 의 선행 작업 — M5 진입 시 자동으로 함께 진행.
   - 외부 인프라 의존 (사용자 수동 처리 필요): Cloudflare 계정, wrangler CLI, D1 데이터베이스, KV namespace, GitHub App 등록 (T060 runbook).
-  - 모노레포 vs 별도 repo 결정 필요 (사용자 결정 대기).
+  - 모노레포 vs 별도 repo 결정 — **옵션 C 확정** (다음 결정 참조).
+
+---
+
+## [2026-04-25] OSS / EE 디렉토리 분리 — 옵션 C (실용적 분리) 확정
+
+- **결정:** OSS 코어는 루트에 그대로 두고, EE 코드는 `ee/` 서브트리로 격리한다. `ee/LICENSE` 에 별도 라이선스 (API Vault Enterprise License v1.0) 파일 + `ee/README.md` 명시.
+- **이유:**
+  - 1인 개발 + 빠른 진입 + 회귀 위험 최소화.
+  - "엄격 분리" 의 본질 (라이선스 파일 + 디렉토리 + 안내) 충족 — 옵션 D (모든 OSS 까지 `oss/` 로 이동) 의 import 경로 / Cargo workspace / Tauri config 대규모 이동 비용 회피.
+  - Bitwarden 모델과 정렬 — 한 repo 안에 디렉토리별 라이선스 분리.
+- **영향:**
+  - `ee/api-vault-relay/` 가 Cloudflare Workers 릴레이의 위치. `ee/` 는 향후 다른 EE 모듈 (premium connectors 등) 도 수용.
+  - 빌드 파이프라인 분리: OSS 는 기존 GitHub Actions, EE 는 별도 워크플로우 (`.github/workflows/deploy-relay.yml` 예정 — Cloudflare API token 시크릿 의존).
+  - LICENSE 텍스트는 placeholder (Bitwarden License v1.0 변형). 정식 라이선스는 변호사 1회 리뷰 후 (project-decisions Open Issue 항목).
+- **커밋:** ee/ 골격 — 다음 커밋에 포함.
+
+---
 
 ---
 

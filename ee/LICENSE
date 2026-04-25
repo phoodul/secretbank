@@ -1,0 +1,61 @@
+API Vault Enterprise License v1.0
+=================================
+
+Copyright (c) 2026 phoodul (api-vault.app)
+
+This source code is made available for **read access and internal evaluation
+only**. It is **not** open source and is **not** released under the AGPL-3.0
+license that governs the rest of this repository (see the root `LICENSE`
+file).
+
+PERMITTED USES
+--------------
+
+You may:
+
+1. Read the source code in this `ee/` directory.
+2. Run the code locally for non-production evaluation, security review, or
+   contribution to the API Vault project.
+3. Submit pull requests that improve the code, subject to the project's
+   Contributor License Agreement (`/.github/CLA.md`).
+
+PROHIBITED USES
+---------------
+
+You may **not**, without a separate written agreement with the copyright
+holder:
+
+1. Run this code in production, including (but not limited to) hosting it as
+   a service for any third party, end-user, customer, or yourself in any
+   commercial or revenue-generating capacity.
+2. Distribute, sublicense, sell, or otherwise transfer this code or any
+   derivative work, in source or binary form.
+3. Remove or modify any copyright, license, or attribution notice.
+4. Use this code to compete with the official API Vault hosted service.
+
+PRODUCTION USE
+--------------
+
+Production use is permitted **only** through the official API Vault hosted
+service (subscribe at https://apivault.app) or via a written enterprise
+license agreement with the copyright holder.
+
+NO WARRANTY
+-----------
+
+This code is provided "as is" without warranty of any kind. The copyright
+holder is not liable for any damages arising from its use.
+
+CONTACT
+-------
+
+For licensing inquiries: licensing@apivault.app (placeholder until domain
+registered).
+
+NOTE
+----
+
+This license is a **placeholder** drafted by the project author and has not
+yet undergone professional legal review. It is modeled after the Bitwarden
+License v1.0 and similar source-available enterprise licenses. A revised
+version will be substituted before public launch.

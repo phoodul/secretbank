@@ -54,3 +54,10 @@ work-log/
 # tauri generated schemas
 src-tauri/gen/
 .claude/state/
+
+# ee/ — Enterprise Edition (Cloudflare Workers 릴레이 등)
+ee/**/node_modules/
+ee/**/dist/
+ee/**/.wrangler/
+ee/**/.dev.vars
+ee/**/wrangler.toml.local
