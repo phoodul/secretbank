@@ -132,13 +132,15 @@
 | T077    | Revoked 시각화 + Hide revoked 필터 (CredentialCard/List 상태 뱃지 + HideRevoked 체크박스 + Vitest +3) | 2026-04-25 | `0a26ff1` |
 | T078    | Bulk Revoke Issuer 단위 (IssuerConfirmTokenStore + kill_switch_request_confirm_issuer + kill_switch_revoke_issuer + progress 이벤트 + BulkRevokeDialog + useBulkKillSwitch + Inventory 통합 + i18n 4개 + Rust 9→9+2 tests + Vitest 5 tests + InventoryPage +2 tests; DoD 편차: IssuerDetail 페이지 대신 InventoryPage issuer 필터 통합) | 2026-04-25 | `59c3ac8` |
 
-| T079    | Cloudflare Workers 릴레이 스캐폴드 (Hono + GET /health + D1/KV + vitest 7 tests) | 2026-04-25 | (미커밋) |
-| T061    | GitHub installation-token 엔드포인트 (POST + KV캐시 55분 + Rust fetch_installation_token + wiremock 3 tests) | 2026-04-25 | (미커밋) |
-| T062    | GitHub Secret Scanning alerts API (list_alerts_with_base + RepoRef + with_repos 빌더 + list_keys 통합 + 9 tests) | 2026-04-25 | (미커밋) |
-| T063    | GitHub Connector UI (Settings 통합) — github.rs commands 5종 + vault_settings 확장 + GithubIntegrationSection + use-github-integration 훅 + i18n 4 로케일 + 테스트 9종 | 2026-04-25 | (미커밋) |
-| T064    | Pro 엔타이틀먼트 게이트 — entitlement.rs + commands/entitlement.rs + github/kill_switch NotPro 게이트 + SubscriptionSection + use-entitlement + GithubIntegration/InventoryPage Pro lock + i18n 4 로케일 + Rust 6 + Vitest +7 | 2026-04-25 | `8ef4ebb` |
+| T079    | Cloudflare Workers 릴레이 스캐폴드 (Hono + GET /health + D1/KV + vitest 7 tests)                                                                                                | 2026-04-26 | `4ec6248` |
+| T061    | GitHub installation-token 엔드포인트 (POST + KV캐시 55분 + Rust fetch_installation_token + wiremock 3 tests)                                                                    | 2026-04-26 | `4ec6248` |
+| T062    | GitHub Secret Scanning alerts API (list_alerts_with_base + RepoRef + with_repos 빌더 + list_keys 통합 + 9 tests)                                                                | 2026-04-26 | `6ddce61` |
+| T063    | GitHub Connector UI (Settings 통합) — github.rs commands 5종 + vault_settings 확장 + GithubIntegrationSection + use-github-integration 훅 + i18n 4 로케일 + 테스트 9종           | 2026-04-26 | `0c517ba` |
+| T064    | Pro 엔타이틀먼트 게이트 — entitlement.rs + commands/entitlement.rs + github/kill_switch NotPro 게이트 + SubscriptionSection + use-entitlement + GithubIntegration/InventoryPage Pro lock + i18n 4 로케일 + Rust 6 + Vitest +7 | 2026-04-26 | `8ef4ebb` |
+| T132    | M15 internal — deploy-relay.yml 워크플로우 (cloudflare/wrangler-action@v3 + CLOUDFLARE_API_TOKEN + concurrency 원자성)                                                          | 2026-04-26 | `bf06db7` |
+| T133    | M15 internal — ci.yml ee-relay job 추가 (typecheck + test, 시크릿 없어 fork PR 통과)                                                                                            | 2026-04-26 | `bf06db7` |
 
-**완료 합계**: 78/118 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ + M5 🔄 10/10 + M6 ✅ 6/6 + **M7 ✅ 4/4** + M8 🔄 1/8)
+**완료 합계**: 100/132 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ 10/10 + **M5 ✅ 10/10** + M6 ✅ 6/6 + M7 ✅ 4/4 + M8 🔄 1/8 + M15 🔄 2/8)
 
 ### Audit 무결성 hotfix + payload 점검 (2026-04-25, 태스크 진행 표에는 별도 항목 아님)
 
