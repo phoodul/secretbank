@@ -2,7 +2,7 @@ name = "api-vault-relay"
 main = "src/index.ts"
 compatibility_date = "2026-04-25"
 compatibility_flags = ["nodejs_compat"]
-account_id = "PLACEHOLDER_USER_FILLS_THIS"  # docs/runbooks/relay-deployment.md 참조
+account_id = "6f04212fcad5f073ed4e36af9b723eea"  # docs/runbooks/relay-deployment.md 참조
 
 # 운영 도메인 — 사용자가 wrangler 콘솔에서 custom domain 연결 후 활성화
 # routes = [
@@ -12,12 +12,12 @@ account_id = "PLACEHOLDER_USER_FILLS_THIS"  # docs/runbooks/relay-deployment.md 
 [[d1_databases]]
 binding = "DB"
 database_name = "api-vault-relay"
-database_id = "PLACEHOLDER_USER_FILLS_AFTER_d1_create"
+database_id = "5884cbdd-dd49-4472-80ae-0e0ae2996105"
 migrations_dir = "migrations"
 
 [[kv_namespaces]]
 binding = "TOKEN_CACHE"
-id = "PLACEHOLDER_USER_FILLS_AFTER_kv_create"
+id = "fc136f6dcd6344e5819ce536a2ec70db"
 
 [vars]
 # public — 시크릿 아님. GitHub App 등록 후 여기에 직접 입력.
