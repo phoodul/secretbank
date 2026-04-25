@@ -58,6 +58,13 @@ pub async fn deployment_list_for_project(
     project_id: ProjectId,
     state: State<'_, AppContext>,
 ) -> Result<Vec<Deployment>, DeploymentCommandError> {
+    // Defense-in-depth: vault locked → return empty list (label leakage guard).
+    {
+        let vault = state.vault.read().await;
+        if !vault.is_unlocked().await {
+            return Ok(vec![]);
+        }
+    }
     let repo = DeploymentRepo::new(&state.pool);
     Ok(repo.list_for_project(project_id).await?)
 }

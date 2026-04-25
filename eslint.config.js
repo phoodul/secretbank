@@ -7,7 +7,17 @@ import prettier from "eslint-config-prettier";
 import globals from "globals";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "src-tauri/target", "src-tauri/gen"] },
+  {
+    ignores: [
+      "dist",
+      "node_modules",
+      "src-tauri/target",
+      "src-tauri/gen",
+      // EE (api-vault-relay) 는 별도 lint 환경 (Cloudflare Workers + 자체 tsconfig).
+      // 루트 ESLint 는 OSS frontend (src/) 만 다룸.
+      "ee/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   react.configs.flat.recommended,

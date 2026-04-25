@@ -52,6 +52,13 @@ pub async fn usage_list_for_credential(
     credential_id: CredentialId,
     state: State<'_, AppContext>,
 ) -> Result<Vec<Usage>, UsageCommandError> {
+    // Defense-in-depth: vault locked → return empty list (label leakage guard).
+    {
+        let vault = state.vault.read().await;
+        if !vault.is_unlocked().await {
+            return Ok(vec![]);
+        }
+    }
     let repo = UsageRepo::new(&state.pool);
     Ok(repo.list_for_credential(credential_id).await?)
 }
@@ -61,6 +68,13 @@ pub async fn usage_list_for_project(
     project_id: ProjectId,
     state: State<'_, AppContext>,
 ) -> Result<Vec<Usage>, UsageCommandError> {
+    // Defense-in-depth: vault locked → return empty list (label leakage guard).
+    {
+        let vault = state.vault.read().await;
+        if !vault.is_unlocked().await {
+            return Ok(vec![]);
+        }
+    }
     let repo = UsageRepo::new(&state.pool);
     Ok(repo.list_for_project(project_id).await?)
 }

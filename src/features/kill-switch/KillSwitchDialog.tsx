@@ -65,7 +65,7 @@ export function KillSwitchDialog({
     [reset, onOpenChange],
   );
 
-  // Auto-close after done
+  // Auto-close after done; show specific toast on error
   useEffect(() => {
     if (phase === "done") {
       toast.success(t("killSwitch.toast.success"));
@@ -73,6 +73,16 @@ export function KillSwitchDialog({
       autoCloseTimerRef.current = setTimeout(() => {
         handleOpenChange(false);
       }, 1500);
+    } else if (phase === "error" && error) {
+      // Map known error codes/patterns to user-friendly i18n messages.
+      const isFlushError = /vault flush failed/i.test(error);
+      const isNotFoundError = /not found/i.test(error);
+      const toastMsg = isFlushError
+        ? t("killSwitch.toast.flushError")
+        : isNotFoundError
+          ? t("killSwitch.toast.notFoundError")
+          : t("killSwitch.toast.error");
+      toast.error(toastMsg);
     }
     return () => {
       if (autoCloseTimerRef.current) {
@@ -80,7 +90,7 @@ export function KillSwitchDialog({
         autoCloseTimerRef.current = null;
       }
     };
-  }, [phase, t, onRevoked, handleOpenChange]);
+  }, [phase, error, t, onRevoked, handleOpenChange]);
 
   const nameMatches = typedName === credentialName;
   const isStep1 = phase === "idle" || phase === "requesting";

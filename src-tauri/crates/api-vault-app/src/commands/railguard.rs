@@ -173,6 +173,25 @@ pub(crate) fn build_preview(
 
 /// `.bak-{ts}` 파일을 최대 `keep` 개만 유지하고 초과분은 삭제한다.
 /// `rel` 은 프로젝트 루트 기준 상대 경로 (예: ".cursorrules").
+///
+/// # Ordering assumption
+///
+/// Backup filenames follow the pattern `<rel>.bak-<unix_timestamp_seconds>`.
+/// The sort is lexicographic; because the timestamp suffix is zero-padded by
+/// the Unix epoch (always 10 decimal digits for dates after 2001-09-09), the
+/// lexicographic order is identical to chronological order.  The oldest
+/// backups therefore sort first and are the ones deleted when the count
+/// exceeds `keep`.
+///
+/// # Same-second collision
+///
+/// If `railguard_apply` is called six or more times within the same UTC
+/// second, all backups generated in that second share the same filename
+/// (e.g. `.cursorrules.bak-1714000000`).  Because `std::fs::rename` is used
+/// to create each backup, each new call overwrites the previous same-second
+/// backup — effectively collapsing them into one file.  In practice this
+/// means "at most 1 backup per second" rather than "exactly 1 per apply",
+/// but the `keep` limit is still honoured correctly.
 fn prune_rule_backups(project_path: &Path, rel: &str, keep: usize) {
     let prefix = format!("{}.bak-", rel);
     let dir = if let Some(parent) = project_path.join(rel).parent() {

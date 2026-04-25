@@ -548,7 +548,9 @@
     },
     "toast": {
       "success": "Credential revoked",
-      "error": "Failed to revoke credential"
+      "error": "Failed to revoke credential",
+      "flushError": "Key was changed but failed to save to disk. Unlock and try again.",
+      "notFoundError": "Credential not found — it may have already been deleted."
     }
   },
   "commandPalette": {

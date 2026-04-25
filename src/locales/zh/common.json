@@ -548,7 +548,9 @@
     },
     "toast": {
       "success": "凭证已吊销",
-      "error": "吊销凭证失败"
+      "error": "吊销凭证失败",
+      "flushError": "密钥已更改，但保存到磁盘失败。解锁后请重试。",
+      "notFoundError": "未找到凭证 — 它可能已被删除。"
     }
   },
   "commandPalette": {

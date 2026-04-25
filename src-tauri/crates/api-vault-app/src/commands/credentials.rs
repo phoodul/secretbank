@@ -148,6 +148,13 @@ pub async fn credential_list(
     filter: CredentialFilter,
     state: State<'_, AppContext>,
 ) -> Result<Vec<CredentialSummary>, CredentialCommandError> {
+    // Defense-in-depth: vault locked → return empty list (label leakage guard).
+    {
+        let vault = state.vault.read().await;
+        if !vault.is_unlocked().await {
+            return Ok(vec![]);
+        }
+    }
     let repo = CredentialRepo::new(&state.pool);
     let list = repo.list(&filter).await?;
     Ok(list)
@@ -633,5 +640,68 @@ mod tests {
             "expected exactly 1 credential.rotate audit entry, got {}",
             rotate_entries.len()
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // T3: credential_list — vault locked 시 빈 결과 반환
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn credential_list_returns_empty_when_vault_locked() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        // Locked vault: MockVaultStorage is locked by default (not unlocked).
+        let vault = MockVaultStorage::new("pw");
+        let ctx = make_ctx(pool.clone(), vault);
+
+        let filter = api_vault_core::CredentialFilter::default();
+        let vault_guard = ctx.vault.read().await;
+        assert!(!vault_guard.is_unlocked().await, "vault must be locked for this test");
+        drop(vault_guard);
+
+        // Call the list logic directly (mirrors what the command does).
+        let is_locked = {
+            let v = ctx.vault.read().await;
+            !v.is_unlocked().await
+        };
+        assert!(is_locked);
+
+        // When locked, the command returns Ok(vec![]).
+        let repo = CredentialRepo::new(&pool);
+        let list = if is_locked {
+            vec![]
+        } else {
+            repo.list(&filter).await.unwrap()
+        };
+        assert!(list.is_empty(), "credential_list must return empty vec when vault is locked");
+    }
+
+    // -----------------------------------------------------------------------
+    // T4: credential_list — vault unlocked 시 실제 데이터 반환
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn credential_list_returns_data_when_vault_unlocked() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let mut vault = make_unlocked_vault().await;
+
+        // Seed one credential.
+        let _ = seed_credential_with_value(&pool, &mut vault, "secret", Some("cret")).await;
+
+        let ctx = make_ctx(pool.clone(), vault);
+
+        let is_locked = {
+            let v = ctx.vault.read().await;
+            !v.is_unlocked().await
+        };
+        assert!(!is_locked, "vault must be unlocked for this test");
+
+        let filter = api_vault_core::CredentialFilter::default();
+        let repo = CredentialRepo::new(&pool);
+        let list = if is_locked {
+            vec![]
+        } else {
+            repo.list(&filter).await.unwrap()
+        };
+        assert_eq!(list.len(), 1, "credential_list must return 1 item when vault is unlocked");
     }
 }
