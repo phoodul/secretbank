@@ -14,7 +14,7 @@ use api_vault_audit::{append, AuditActor, AuditInput, AuditLog};
 use api_vault_storage::AuditRepo;
 use sqlx::SqlitePool;
 use time::OffsetDateTime;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use tracing::warn;
 
 use crate::services::device_identity::DeviceIdentity;
@@ -22,6 +22,8 @@ use crate::services::device_identity::DeviceIdentity;
 pub struct AuditCtx {
     pool: Arc<SqlitePool>,
     device_identity: Arc<RwLock<Option<DeviceIdentity>>>,
+    /// `last_for_device → append → insert` 3단계를 단일 프로세스 내에서 직렬화한다.
+    record_lock: Mutex<()>,
 }
 
 impl AuditCtx {
@@ -32,11 +34,15 @@ impl AuditCtx {
         Self {
             pool,
             device_identity,
+            record_lock: Mutex::new(()),
         }
     }
 
     /// Best-effort audit append. Never fails the caller — on error logs a warning.
     /// Returns the appended entry if the write succeeded (useful for tests).
+    ///
+    /// `record_lock` 을 통해 `last_for_device → append → insert` 3단계를 직렬화한다.
+    /// 단일 프로세스 내 동시 호출 시 같은 seq 로 chain 이 분기되는 TOCTOU 를 방지한다.
     pub async fn record(
         &self,
         actor: AuditActor,
@@ -45,6 +51,8 @@ impl AuditCtx {
         subject_id: impl Into<String>,
         payload_json: Option<String>,
     ) -> Option<AuditLog> {
+        let _guard = self.record_lock.lock().await;
+
         let action = action.into();
         let subject_kind = subject_kind.into();
         let subject_id = subject_id.into();
@@ -238,7 +246,35 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // T4: three records → fetch all, verify chain
+    // T4: concurrent record calls → each gets a distinct seq (no TOCTOU)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn record_serializes_concurrent_calls() {
+        let vault = unlocked_vault().await;
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let identity = make_identity(vault, pool.as_ref()).await;
+
+        let ctx = Arc::new(make_ctx(pool.clone(), Some(identity)));
+
+        let (r0, r1, r2) = tokio::join!(
+            ctx.record(AuditActor::LocalUser, "concurrent.a", "test", "id0", None),
+            ctx.record(AuditActor::LocalUser, "concurrent.b", "test", "id1", None),
+            ctx.record(AuditActor::LocalUser, "concurrent.c", "test", "id2", None),
+        );
+
+        let e0 = r0.expect("record 0 must succeed");
+        let e1 = r1.expect("record 1 must succeed");
+        let e2 = r2.expect("record 2 must succeed");
+
+        // seq 는 0, 1, 2 여야 하며 모두 달라야 한다.
+        let mut seqs = [e0.seq, e1.seq, e2.seq];
+        seqs.sort();
+        assert_eq!(seqs, [0, 1, 2], "concurrent records must have distinct seqs: {:?}", seqs);
+    }
+
+    // -----------------------------------------------------------------------
+    // T5: three records → fetch all, verify chain
     // -----------------------------------------------------------------------
     #[tokio::test]
     async fn record_verifies_against_chain() {

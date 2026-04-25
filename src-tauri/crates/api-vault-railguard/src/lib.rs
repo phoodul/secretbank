@@ -60,6 +60,22 @@ pub struct RenderContext {
     pub issuers: Vec<String>,
 }
 
+const CTRL_CHARS: &[char] = &['\0', '\n', '\r', '\t'];
+
+fn has_control_chars(s: &str) -> bool {
+    s.chars().any(|c| CTRL_CHARS.contains(&c))
+}
+
+#[derive(Debug, Error)]
+pub enum ContextError {
+    #[error("project_name exceeds 128 characters or contains control characters")]
+    InvalidProjectName,
+    #[error("frameworks list exceeds 32 items or an item exceeds 64 characters / contains control characters")]
+    InvalidFrameworks,
+    #[error("issuers list exceeds 64 items or an item exceeds 64 characters / contains control characters")]
+    InvalidIssuers,
+}
+
 impl RenderContext {
     pub fn new(project_name: impl Into<String>) -> Self {
         Self {
@@ -67,6 +83,30 @@ impl RenderContext {
             frameworks: Vec::new(),
             issuers: Vec::new(),
         }
+    }
+
+    /// 입력 길이 및 제어문자 제한을 검사한다.
+    pub fn validate(&self) -> Result<(), ContextError> {
+        if self.project_name.len() > 128 || has_control_chars(&self.project_name) {
+            return Err(ContextError::InvalidProjectName);
+        }
+        if self.frameworks.len() > 32
+            || self
+                .frameworks
+                .iter()
+                .any(|f| f.len() > 64 || has_control_chars(f))
+        {
+            return Err(ContextError::InvalidFrameworks);
+        }
+        if self.issuers.len() > 64
+            || self
+                .issuers
+                .iter()
+                .any(|i| i.len() > 64 || has_control_chars(i))
+        {
+            return Err(ContextError::InvalidIssuers);
+        }
+        Ok(())
     }
 }
 

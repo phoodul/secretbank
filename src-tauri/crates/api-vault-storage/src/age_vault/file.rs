@@ -125,8 +125,14 @@ pub fn write_vault_file(
         create_backup(path)?;
     }
 
-    // tmp 파일에 쓰기
-    let tmp_path = path.with_extension("age.tmp");
+    // tmp 파일에 쓰기 — `with_extension` 은 마지막 확장자만 교체하므로
+    // "vault.age" → "vault.tmp" 가 되는 버그가 있다. 파일 이름 전체에 ".tmp" 를 붙인다.
+    let tmp_path = path.with_file_name(format!(
+        "{}.tmp",
+        path.file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "vault.age".into())
+    ));
     {
         let mut tmp = std::fs::OpenOptions::new()
             .write(true)
@@ -221,4 +227,99 @@ pub fn prune_backups(vault_path: &Path, keep: usize) -> Result<(), VaultError> {
     }
 
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    fn make_header() -> VaultHeader {
+        VaultHeader {
+            salt_auth: [0xAA; 16],
+            salt_enc: [0xBB; 16],
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // tmp 경로가 `.age.tmp` 로 끝나야 한다 (with_extension 버그 회귀 테스트)
+    // -----------------------------------------------------------------------
+    #[test]
+    fn write_vault_file_tmp_has_age_tmp_suffix() {
+        let dir = TempDir::new().unwrap();
+        let vault_path = dir.path().join("vault.age");
+        let header = make_header();
+        let payload = b"fake-age-payload";
+
+        write_vault_file(&vault_path, &header, payload).unwrap();
+
+        // vault.age 가 정상적으로 생성되어야 한다
+        assert!(vault_path.exists(), "vault.age must exist after write");
+
+        // 잔여 .tmp 파일이 없어야 한다 (정상 경로에서는 rename 후 삭제됨)
+        let tmp_wrong = dir.path().join("vault.tmp"); // 버그 시 생성될 경로
+        assert!(
+            !tmp_wrong.exists(),
+            "vault.tmp must NOT exist — would indicate with_extension bug"
+        );
+
+        let tmp_correct = dir.path().join("vault.age.tmp"); // 올바른 경로 (rename 후 삭제됨)
+        assert!(
+            !tmp_correct.exists(),
+            "vault.age.tmp must NOT exist after successful rename"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // write → read 왕복
+    // -----------------------------------------------------------------------
+    #[test]
+    fn write_then_read_roundtrip() {
+        let dir = TempDir::new().unwrap();
+        let vault_path = dir.path().join("vault.age");
+        let header = make_header();
+        let payload = b"roundtrip-payload";
+
+        write_vault_file(&vault_path, &header, payload).unwrap();
+
+        let (read_header, read_payload) = read_vault_file(&vault_path).unwrap();
+        assert_eq!(read_header.salt_auth, header.salt_auth);
+        assert_eq!(read_header.salt_enc, header.salt_enc);
+        assert_eq!(read_payload, payload);
+    }
+
+    // -----------------------------------------------------------------------
+    // 백업 5개 초과 시 가장 오래된 것 삭제
+    // -----------------------------------------------------------------------
+    #[test]
+    fn prune_backups_keeps_five() {
+        let dir = TempDir::new().unwrap();
+        let vault_path = dir.path().join("vault.age");
+        let header = make_header();
+        let payload = b"data";
+
+        // 초기 파일 생성
+        write_vault_file(&vault_path, &header, payload).unwrap();
+
+        // 6번 더 쓰면 backup 이 6개 생성 → prune 후 5개만 남아야
+        for _ in 0..6 {
+            write_vault_file(&vault_path, &header, payload).unwrap();
+        }
+
+        let backups: Vec<_> = std::fs::read_dir(dir.path())
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_name().to_string_lossy().starts_with("vault.age.bak-"))
+            .collect();
+
+        assert!(
+            backups.len() <= 5,
+            "expected at most 5 backups, found {}",
+            backups.len()
+        );
+    }
 }

@@ -7,29 +7,27 @@ import { Toaster } from "@/components/ui/sonner";
 import "./lib/i18n";
 import "./styles/globals.css";
 
-// Dev-only: expose Tauri APIs on window for DevTools-driven manual testing.
+// Dev-only: expose Tauri IPC helpers on window for DevTools-driven manual testing.
 // Stripped out of production builds by Vite's dead-code elimination.
+// Note: Database is intentionally excluded — direct SQL access requires sql:allow-execute
+// capability which is not granted to the frontend in any build.
 if (import.meta.env.DEV) {
   void Promise.all([
     import("@tauri-apps/api/core"),
     import("@tauri-apps/api/event"),
-    import("@tauri-apps/plugin-sql"),
-  ]).then(([core, event, sql]) => {
+  ]).then(([core, event]) => {
     (
       window as unknown as {
         __dev: {
           invoke: typeof core.invoke;
           listen: typeof event.listen;
-          Database: typeof sql.default;
         };
       }
     ).__dev = {
       invoke: core.invoke,
       listen: event.listen,
-      Database: sql.default,
     };
-    // eslint-disable-next-line no-console
-    console.info("[dev] window.__dev = { invoke, listen, Database } is ready");
+    console.info("[dev] window.__dev = { invoke, listen } is ready");
   });
 }
 

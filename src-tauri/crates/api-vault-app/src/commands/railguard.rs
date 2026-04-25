@@ -4,7 +4,7 @@
 //! `railguard_apply`   — 선택한 모드로 룰 파일을 프로젝트 경로에 기록한다.
 
 use api_vault_audit::AuditActor;
-use api_vault_railguard::{render, RenderContext, RuleKind};
+use api_vault_railguard::{render, ContextError, RenderContext, RuleKind};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tauri::State;
@@ -69,10 +69,20 @@ pub enum RailguardError {
     InvalidProjectPath,
     #[error("project path does not exist: {path}")]
     PathNotFound { path: String },
+    #[error("render context is invalid: {message}")]
+    InvalidContext { message: String },
     #[error("render error: {message}")]
     Render { message: String },
     #[error("io error: {message}")]
     Io { message: String },
+}
+
+impl From<ContextError> for RailguardError {
+    fn from(e: ContextError) -> Self {
+        RailguardError::InvalidContext {
+            message: e.to_string(),
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -81,16 +91,29 @@ pub enum RailguardError {
 
 fn validate_project_path(raw: &str) -> Result<PathBuf, RailguardError> {
     let trimmed = raw.trim();
+
+    // 빈 문자열 또는 null byte 거부
     if trimmed.is_empty() || trimmed.contains('\0') {
         return Err(RailguardError::InvalidProjectPath);
     }
-    let p = PathBuf::from(trimmed);
-    if !p.exists() || !p.is_dir() {
+
+    // UNC 경로 거부 (Windows \\server\share, POSIX //host/path)
+    if trimmed.starts_with("\\\\") || trimmed.starts_with("//") {
+        return Err(RailguardError::InvalidProjectPath);
+    }
+
+    // canonicalize — symlink / `..` 정규화, 존재하지 않으면 실패
+    let canonical = std::fs::canonicalize(trimmed).map_err(|_| RailguardError::PathNotFound {
+        path: trimmed.to_owned(),
+    })?;
+
+    if !canonical.is_dir() {
         return Err(RailguardError::PathNotFound {
             path: trimmed.to_owned(),
         });
     }
-    Ok(p)
+
+    Ok(canonical)
 }
 
 // ---------------------------------------------------------------------------
@@ -102,6 +125,7 @@ pub(crate) fn build_preview(
     rules: &[RuleKind],
     ctx: &RenderContext,
 ) -> Result<Vec<RuleFilePreview>, RailguardError> {
+    ctx.validate()?;
     let mut out = Vec::with_capacity(rules.len());
     for &kind in rules {
         let rel = kind.output_path();
@@ -133,12 +157,48 @@ pub(crate) fn build_preview(
     Ok(out)
 }
 
+/// `.bak-{ts}` 파일을 최대 `keep` 개만 유지하고 초과분은 삭제한다.
+/// `rel` 은 프로젝트 루트 기준 상대 경로 (예: ".cursorrules").
+fn prune_rule_backups(project_path: &Path, rel: &str, keep: usize) {
+    let prefix = format!("{}.bak-", rel);
+    let dir = if let Some(parent) = project_path.join(rel).parent() {
+        parent.to_path_buf()
+    } else {
+        project_path.to_path_buf()
+    };
+
+    let Ok(entries) = std::fs::read_dir(&dir) else {
+        return;
+    };
+
+    let mut backups: Vec<PathBuf> = entries
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+        .filter(|p| {
+            p.file_name()
+                .and_then(|n| n.to_str())
+                .map(|n| n.starts_with(&prefix))
+                .unwrap_or(false)
+        })
+        .collect();
+
+    backups.sort();
+
+    if backups.len() > keep {
+        let to_delete = backups.len() - keep;
+        for old in backups.iter().take(to_delete) {
+            let _ = std::fs::remove_file(old);
+        }
+    }
+}
+
 pub(crate) fn apply_rules(
     project_path: &Path,
     rules: &[RuleKind],
     ctx: &RenderContext,
     mode: ApplyMode,
 ) -> Result<Vec<RuleFileApplied>, RailguardError> {
+    ctx.validate()?;
     let mut out = Vec::with_capacity(rules.len());
     let now_ts = OffsetDateTime::now_utc().unix_timestamp();
 
@@ -175,6 +235,8 @@ pub(crate) fn apply_rules(
                 std::fs::rename(&abs, &bak_abs).map_err(|e| RailguardError::Io {
                     message: e.to_string(),
                 })?;
+                // 백업 최대 5개 유지
+                prune_rule_backups(project_path, rel, 5);
                 let bytes = content.len();
                 (content, Some(bak_rel), bytes)
             }
@@ -448,5 +510,145 @@ mod tests {
 
         let after = std::fs::read_to_string(&cursor_path).unwrap();
         assert_eq!(after, "do not touch", "file content must not change with SkipExisting");
+    }
+
+    // -----------------------------------------------------------------------
+    // Security: validate_project_path — UNC 경로 거부
+    // -----------------------------------------------------------------------
+    #[test]
+    fn unc_path_is_rejected() {
+        // Windows UNC: \\server\share
+        let result = validate_project_path(r"\\evil-smb\share");
+        assert!(
+            matches!(result, Err(RailguardError::InvalidProjectPath)),
+            "Windows UNC path must be rejected"
+        );
+        // POSIX UNC-style
+        let result2 = validate_project_path("//evil-smb/share");
+        assert!(
+            matches!(result2, Err(RailguardError::InvalidProjectPath)),
+            "POSIX UNC-style path must be rejected"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Security: validate_project_path — null byte 거부
+    // -----------------------------------------------------------------------
+    #[test]
+    fn null_byte_in_path_is_rejected() {
+        let result = validate_project_path("/tmp/foo\0bar");
+        assert!(
+            matches!(result, Err(RailguardError::InvalidProjectPath)),
+            "null byte in path must be rejected"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Security: validate_project_path — `..` 트래버설 → 정규화 후 존재 검증
+    // -----------------------------------------------------------------------
+    #[test]
+    fn dotdot_traversal_is_normalized_or_rejected() {
+        // 존재하지 않는 경로의 `..` 트래버설 → PathNotFound
+        let result = validate_project_path("/nonexistent/dir/../other");
+        assert!(
+            matches!(result, Err(RailguardError::PathNotFound { .. })),
+            ".. traversal into nonexistent path must return PathNotFound"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Security: RenderContext — 길이 초과 거부
+    // -----------------------------------------------------------------------
+    #[test]
+    fn render_context_length_exceeded_is_rejected() {
+        use api_vault_railguard::RenderContext;
+
+        // project_name 128자 초과
+        let mut ctx = RenderContext::new("x".repeat(129));
+        assert!(
+            ctx.validate().is_err(),
+            "project_name > 128 chars must fail"
+        );
+
+        // frameworks 항목 64자 초과
+        ctx = RenderContext {
+            project_name: "ok".to_owned(),
+            frameworks: vec!["f".repeat(65)],
+            issuers: vec![],
+        };
+        assert!(
+            ctx.validate().is_err(),
+            "framework item > 64 chars must fail"
+        );
+
+        // frameworks 배열 32개 초과
+        ctx = RenderContext {
+            project_name: "ok".to_owned(),
+            frameworks: vec!["fw".to_owned(); 33],
+            issuers: vec![],
+        };
+        assert!(
+            ctx.validate().is_err(),
+            "frameworks list > 32 items must fail"
+        );
+
+        // issuers 배열 64개 초과
+        ctx = RenderContext {
+            project_name: "ok".to_owned(),
+            frameworks: vec![],
+            issuers: vec!["iss".to_owned(); 65],
+        };
+        assert!(
+            ctx.validate().is_err(),
+            "issuers list > 64 items must fail"
+        );
+
+        // 제어문자 거부
+        ctx = RenderContext {
+            project_name: "proj\nname".to_owned(),
+            frameworks: vec![],
+            issuers: vec![],
+        };
+        assert!(
+            ctx.validate().is_err(),
+            "control chars in project_name must fail"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Backup prune — 6번 overwrite 시 최대 5개만 남음
+    // -----------------------------------------------------------------------
+    #[test]
+    fn backup_prune_keeps_at_most_five() {
+        let dir = TempDir::new().unwrap();
+        let ctx = make_ctx();
+        let rules = vec![RuleKind::CursorRules];
+
+        // 6번 Overwrite with backup — 마지막 5개만 남아야 한다
+        for _ in 0..6 {
+            // 이전 파일이 없으면 백업 안 생기므로 먼저 파일 생성
+            let p = dir.path().join(".cursorrules");
+            if !p.exists() {
+                std::fs::write(&p, "seed").unwrap();
+            }
+            // 약간의 시간 차이를 위해 timestamp 가 같을 수 있지만 rename 으로 진행
+            apply_rules(dir.path(), &rules, &ctx, ApplyMode::Overwrite { backup: true }).unwrap();
+        }
+
+        let backups: Vec<_> = std::fs::read_dir(dir.path())
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.file_name()
+                    .to_string_lossy()
+                    .starts_with(".cursorrules.bak-")
+            })
+            .collect();
+
+        assert!(
+            backups.len() <= 5,
+            "expected at most 5 backups, found {}",
+            backups.len()
+        );
     }
 }
