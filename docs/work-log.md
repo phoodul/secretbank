@@ -1,5 +1,166 @@
 # Work Log
 
+## 2026-04-25~26 (Pro 가격 인하 + M5 완료 + M15 CI/CD 진입 + 릴레이 스캐폴드, 100/132 태스크 달성)
+
+### 세션 개요
+
+- **시간**: 2026-04-25 AM~PM + 2026-04-26 PM (사용자 인터랙션 + Night mode 2 자율)
+- **누적 커밋**: 약 129개 (본 세션 신규 ~17개)
+- **마일스톤 진행**:
+  - 이전: M4~M7 ✅ 완료 (74/118)
+  - 신규 완료: **M5 10/10 ✅** (T061~T064 추가 완성)
+  - 신규 진입: **M15 CI/CD Integration 🔄** (T132~T133)
+  - 신규 신설: M14 Auto Rotation, M16 Anonymous Telemetry, M17 SDK Ecosystem (placeholder)
+  - 누적: 14 마일스톤 → **18 마일스톤**, 118 태스크 → **132 태스크** (100/132 = 75.8%)
+- **테스트**: Rust workspace 전 통과 (audit 9 + kill_switch 8 + railguard 8 + connectors 57 + 기타 다수) / **Vitest 305개** 전부 통과 / typecheck 0 에러 / clippy clean / lint 0 에러
+
+### Pro 가격 결정 인하 (2026-04-25 AM)
+
+- 기존: Pro $2/월·$15/년, Team $10/seat/월
+- **신규: Pro $1/월·$10/년, Team $5/seat/월**
+- 근거: Bitwarden Premium 동률 ($1/월), 1Password Individual 보다 한참 저렴 ($3.99/월)
+- 시장 전략 분석: `user_research/apivault_strategy.md` 검토 후 최종 확정
+- 자동 rotation (Pro) → M14 신설, Phase R1~R4 로드맵 확정
+- 커밋: `58eacd2` (가격 인하 + M14 마일스톤 신설)
+
+### 도메인 + Cloudflare 인프라 확정 (2026-04-25)
+
+- **도메인**: `api-vault.app` 등록 (Cloudflare Registrar, $14/년, WHOIS Privacy 자동)
+- **Cloudflare 계정**: 생성 완료
+- **wrangler**: 설치 + login + Account ID / D1 / KV 채움
+- **첫 로컬 검증**: `pnpm dev` 성공 + `curl http://localhost:8787/health` → 200 OK
+- 커밋: `766a3d4` (도메인 확정), `4ec6248` (T061+T079 릴레이 스캐폴드)
+
+### OSS / EE 디렉토리 분리 (옵션 C 확정)
+
+- **루트**: `LICENSE` (AGPL-3.0-or-later)
+- **ee 디렉토리**: `ee/LICENSE` (Enterprise License v1.0), 별도 라이선스 + 별도 빌드
+- **디렉토리 매트릭스**: README 에 명시 (feature grid / license column)
+- **빌드 파이프라인**: ee/ 는 별도 워크플로우 (M15 T132/T133 구현)
+- 커밋: `840370c` (ee 골격 + 라이선스 파일)
+
+### M5 GitHub Connector + RAILGUARD — 10/10 완료 ✅
+
+**T061 Cloudflare Workers 릴레이 (커밋 `4ec6248` + `e8f5e45` Cargo.lock + `f109812` wrangler ID)**
+
+- `wrangler.toml` 스캐폴드 (account_id, database_id, kv_namespaces 채움)
+- `/health` endpoint 로컬 동작 검증 (200 OK)
+- 사용자가 D1 + KV 테이블 먼저 생성 후 진행 (스텝 가이드 제공)
+- 첫 Cloudflare Workers 배포 준비 완료
+
+**T062 GitHub Secret Scanning (커밋 `6ddce61`)**
+
+- `GitHubSecretScanner` trait 정의
+- GitHub API 통합 (릴레이 `/github/scan-secrets` endpoint)
+- 저장소 스캔 + 결과 캐싱
+- Tauri 커맨드: `github_scan_secrets(repo_owner, repo_name)`
+- 5 unit test
+
+**T063 GitHub Connector UI (커밋 `0c517ba`)**
+
+- `GithubIntegrationSection` 컴포넌트 신규
+- UI flow: Connect (deep link) → installations 목록 → Scan (Pro gated) → 결과
+- "Bulk Revoke" + "GitHub Scan" 버튼 Free 사용자에게 disabled (Pro 배지)
+- 4 Vitest 테스트
+
+**T064 Pro 엔타이틀먼트 + Entitlement Gate (커밋 `8ef4ebb` + `0194829` docs)**
+
+- `entitlement.rs`: Tier enum (Free / Pro), `require_pro()` 게이트 함수
+- `vault.settings.pro_until` stub (M10 결제 전까지 임시)
+- `entitlement_set_dev` Tauri 커맨드 (M10 before 테스트 용)
+- GithubIntegrationSection "Scan" 버튼 + Bulk Revoke Pro gated
+- Pro 없으면 disabled + tooltip "Upgrade to Pro"
+- 6 unit test + docs
+
+**M5 신규 마일스톤 진입 가능 구조**:
+- T065~T068 기존 완료 (RAILGUARD 템플릿/preview/apply/UI/auto-suggestion)
+- T061~T064 이제 완성 (릴레이 + GitHub 통합)
+- 향후 T079~T080 (추가 커넥터) 자유
+
+### M15 CI/CD Integration 진입 (Night mode 2)
+
+**T132 Relay CD 워크플로우 (커밋 `bf06db7`)**
+
+- `.github/workflows/deploy-relay.yml` 신규
+- Cloudflare wrangler-action (account_id + api_token)
+- `ee/ deploy` 분기 별도 (ee-relay job)
+- Secret 관리: `CLOUDFLARE_API_TOKEN` (사용자 제공, runbook 안내)
+
+**T133 CI Pipeline ee-relay job (커밋 `bf06db7`)**
+
+- `.github/workflows/ci.yml` ee-relay 추가
+- `wrangler publish` dry-run (PR 에서 권한 검증)
+- 문법 체크 + typecheck
+- 배포 권한: main 브랜치 push only
+
+**M15 task 리스트 정의**:
+- T126: GitHub Actions Secrets API (클라이언트)
+- T127: `sync` 커맨드 (멀티 디바이스 CRDT)
+- T128: Sync UI (settings)
+- T129: Sync over relay (e2ee)
+- T130: Offline queue + retry
+- T131: Conflict resolution UI
+- T132: **deploy-relay.yml** ✅
+- T133: **ci.yml ee-relay** ✅
+
+### M5 마무리 + 백로그 hotfix 5건 (Night mode 2)
+
+**완료된 커밋** (`6ddce61` T062 ~ `0194829` T064 docs):
+- M5 전체 10/10 마크 확정
+- Vitest 305개 유지 (신규 테스트 수렴)
+
+**백로그 hotfix 5건** (커밋 `dd63f97`):
+1. `withGlobalTauri: true → false` — XSS 시 IPC 노출 차단
+2. `list` 커맨드 vault locked 시 빈 vec 반환 — credential/project/deployment/usage 모두
+3. KillSwitchDialog 에러 메시지 i18n — VaultFlushFailed / NotFound 사용자 친화
+4. `prune_rule_backups` doc-comment (무의미 로그 제거)
+5. ESLint config `ee/**` ignore 추가 (wrangler 빌드 tmp 파일 차단)
+
+### 커밋 목록 (이번 세션 신규, ~17개)
+
+**인터랙션 단계**:
+- `58eacd2`: feat: Pro 가격 $2→$1/월, $15→$10/년 + M14 Auto Rotation 신설
+- `512b2fc`: docs: Team $10→$5/seat + M15/M16/M17 placeholder + M5 진입 공지
+- `840370c`: feat(ee): AGPL-3.0 + Enterprise License v1.0 디렉토리 분리
+- `766a3d4`: docs: api-vault.app 도메인 확정
+
+**릴레이 스캐폴드**:
+- `4ec6248`: feat(relay): Cloudflare Workers 스캐폴드 + T061/T079
+- `e8f5e45`: chore(relay): Cargo.lock 추가
+- `f109812`: chore(relay): wrangler.toml account_id/database_id 채움
+
+**M5 마무리**:
+- `6ddce61`: feat(connectors): T062 GitHub Secret Scanning 읽기
+- `0c517ba`: feat(ui): T063 GitHub Connector UI + GithubIntegrationSection
+- `8ef4ebb`: feat(entitlement): T064 Pro tier + require_pro() gate
+- `0194829`: docs: T064 entitlement 설명 추가
+
+**Night mode 자율**:
+- `dd63f97`: fix: 5 backlog hotfix (XSS / list locked / i18n / docstring / eslint)
+- `bf06db7`: feat(ci): T132/T133 deploy-relay.yml + ci.yml ee-relay job
+
+**추가 예상 커밋** (세부 기록 대기):
+- docs 업데이트 (strategy / price / relay runbook)
+- GitHub App 클라이언트/릴레이 분리 runbook
+
+### 다음 마일스톤 후보
+
+1. **M15 product feature (T126~T128)** — GitHub Actions Secrets API + sync 커맨드 + Sync UI
+   - 외부 인프라 불필요, 자율 가능
+   - M9 Sync 기초 위에 구축
+
+2. **사용자 수동 검증 (선택)** — M4~M7 + M5 + 릴레이 로컬 end-to-end
+   - Incident feed poll + refresh + UI filter
+   - RAILGUARD project auto-generate
+   - Audit chain verify
+   - Kill Switch revoke flow
+   - Relay /health + GitHub Connector deep link
+
+3. **M8 Authentication** — Passkey + OAuth (릴레이 의존, 이제 가능)
+   - 웹 릴레이 기초 활용
+
+---
+
 ## 2026-04-25 (Night mode 자율 연속 실행 세션 종료 — M4~M7 완료, 74/118 태스크 달성)
 
 ### 세션 개요
