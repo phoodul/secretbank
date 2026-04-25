@@ -22,6 +22,10 @@ use crate::services::feed_scheduler::{FeedSchedulerConfig, TauriEmitter};
 /// 허용된 vault settings 키 목록.
 const ALLOWED_KEYS: &[&str] = &["nvd_api_key", "ghsa_token"];
 
+/// Maximum byte length for any vault setting value.
+/// API keys are rarely longer than 64 chars; 256 provides a safe margin.
+const MAX_VALUE_LEN: usize = 256;
+
 fn validate_key(key: &str) -> Result<(), VaultSettingError> {
     if ALLOWED_KEYS.contains(&key) {
         Ok(())
@@ -29,6 +33,14 @@ fn validate_key(key: &str) -> Result<(), VaultSettingError> {
         Err(VaultSettingError::UnknownKey {
             key: key.to_owned(),
         })
+    }
+}
+
+fn validate_value(value: &str) -> Result<(), VaultSettingError> {
+    if value.len() > MAX_VALUE_LEN {
+        Err(VaultSettingError::ValueTooLong { max: MAX_VALUE_LEN })
+    } else {
+        Ok(())
     }
 }
 
@@ -50,6 +62,10 @@ pub enum VaultSettingError {
     /// 내부 오류.
     #[error("internal error: {message}")]
     Internal { message: String },
+
+    /// 값이 허용 최대 길이를 초과한다.
+    #[error("value exceeds maximum length of {max} bytes")]
+    ValueTooLong { max: usize },
 
     /// 스케줄러 재시작 오류.
     #[error("scheduler restart failed: {message}")]
@@ -183,6 +199,9 @@ pub async fn vault_setting_set(
     app_handle: AppHandle,
 ) -> Result<(), VaultSettingError> {
     validate_key(&key)?;
+    if let Some(ref v) = value {
+        validate_value(v)?;
+    }
 
     let vault_path = format!("settings/{key}");
 
@@ -296,6 +315,31 @@ mod tests {
         // get_secret → 값 확인
         let retrieved = mock.get_secret("settings/nvd_api_key").await.unwrap();
         assert_eq!(retrieved.expose_secret(), b"test-nvd-key-value");
+    }
+
+    // -----------------------------------------------------------------------
+    // 6. validate_value: 257 byte value → ValueTooLong
+    // -----------------------------------------------------------------------
+    #[test]
+    fn validate_value_too_long_returns_error() {
+        let long_value = "x".repeat(MAX_VALUE_LEN + 1);
+        let err = validate_value(&long_value).unwrap_err();
+        assert!(
+            matches!(err, VaultSettingError::ValueTooLong { max: 256 }),
+            "257-byte value must return ValueTooLong, got: {err:?}"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // 7. validate_value: exactly MAX_VALUE_LEN bytes → Ok
+    // -----------------------------------------------------------------------
+    #[test]
+    fn validate_value_at_max_len_passes() {
+        let max_value = "x".repeat(MAX_VALUE_LEN);
+        assert!(
+            validate_value(&max_value).is_ok(),
+            "value at exactly MAX_VALUE_LEN must be accepted"
+        );
     }
 
     // -----------------------------------------------------------------------

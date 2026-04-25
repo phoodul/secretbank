@@ -57,17 +57,23 @@ impl AuditCtx {
         let subject_kind = subject_kind.into();
         let subject_id = subject_id.into();
 
-        let identity_guard = self.device_identity.read().await;
-        let Some(identity) = identity_guard.as_ref() else {
-            warn!(
-                action = %action,
-                "audit skipped: device identity not available (vault locked?)"
-            );
-            return None;
-        };
+        // Extract device_id and signing_key under the read lock, then release
+        // the lock immediately so vault write-lock operations (unlock/lock) are
+        // not blocked for the duration of the SQLite I/O below.
+        let (device_id, signing_key) = {
+            let identity_guard = self.device_identity.read().await;
+            let Some(identity) = identity_guard.as_ref() else {
+                warn!(
+                    action = %action,
+                    "audit skipped: device identity not available (vault locked?)"
+                );
+                return None;
+            };
+            (identity.device_id, identity.signing_key.clone())
+        }; // read lock released here
 
         let repo = AuditRepo::new(&self.pool);
-        let prev = match repo.last_for_device(&identity.device_id.to_string()).await {
+        let prev = match repo.last_for_device(&device_id.to_string()).await {
             Ok(p) => p,
             Err(e) => {
                 warn!(error = %e, "audit: failed to read last entry");
@@ -76,7 +82,7 @@ impl AuditCtx {
         };
 
         let input = AuditInput {
-            device_id: Some(identity.device_id.to_string()),
+            device_id: Some(device_id.to_string()),
             actor,
             action,
             subject_kind,
@@ -84,7 +90,7 @@ impl AuditCtx {
             payload_json,
         };
 
-        let entry = match append(input, prev.as_ref(), &identity.signing_key, OffsetDateTime::now_utc()) {
+        let entry = match append(input, prev.as_ref(), &signing_key, OffsetDateTime::now_utc()) {
             Ok(e) => e,
             Err(e) => {
                 warn!(error = %e, "audit: append failed");

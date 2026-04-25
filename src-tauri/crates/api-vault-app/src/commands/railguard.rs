@@ -192,6 +192,18 @@ fn prune_rule_backups(project_path: &Path, rel: &str, keep: usize) {
     }
 }
 
+/// Returns a short ASCII discriminator for a `RuleKind` — used in tmp file names
+/// to ensure that two rules sharing the same parent directory don't clobber each
+/// other's tmp file when written within the same second.
+fn kind_short(kind: RuleKind) -> &'static str {
+    match kind {
+        RuleKind::CursorRules => "cursor",
+        RuleKind::WindsurfRules => "windsurf",
+        RuleKind::ClaudeMd => "claude",
+        RuleKind::CopilotInstructions => "copilot",
+    }
+}
+
 pub(crate) fn apply_rules(
     project_path: &Path,
     rules: &[RuleKind],
@@ -260,8 +272,10 @@ pub(crate) fn apply_rules(
         };
 
         // 원자적 쓰기: temp 파일 → rename
+        // kind_short discriminator prevents tmp-path collision when multiple
+        // rules share the same parent directory within the same second.
         let parent = abs.parent().unwrap_or(project_path);
-        let tmp_path = parent.join(format!(".railguard_tmp_{}", now_ts));
+        let tmp_path = parent.join(format!(".railguard_tmp_{}_{}", now_ts, kind_short(kind)));
         std::fs::write(&tmp_path, &final_content).map_err(|e| RailguardError::Io {
             message: e.to_string(),
         })?;
@@ -510,6 +524,45 @@ mod tests {
 
         let after = std::fs::read_to_string(&cursor_path).unwrap();
         assert_eq!(after, "do not touch", "file content must not change with SkipExisting");
+    }
+
+    // -----------------------------------------------------------------------
+    // M3: tmp 경로 충돌 방지 — 4 룰 모두 같은 부모에서 고유 tmp 사용
+    // -----------------------------------------------------------------------
+    #[test]
+    fn all_four_rules_produce_distinct_tmp_paths() {
+        let dir = TempDir::new().unwrap();
+        let ctx = make_ctx();
+        let rules = all_rules();
+
+        // apply 후 결과 파일 4개 존재 확인 (기존 테스트와 동일하지만
+        // 이 테스트는 "동일 부모 디렉토리에 4 룰 동시에" 케이스를 명시함)
+        let applied = apply_rules(dir.path(), &rules, &ctx, ApplyMode::Overwrite { backup: false })
+            .unwrap();
+        assert_eq!(applied.len(), 4, "4 rules must all be applied");
+
+        // 각 파일이 실제로 존재하는지 + 서로 다른 경로인지 확인
+        let mut paths: Vec<_> = applied.iter().map(|a| a.path.clone()).collect();
+        paths.sort();
+        paths.dedup();
+        assert_eq!(paths.len(), 4, "all 4 output paths must be distinct");
+
+        for a in &applied {
+            assert!(
+                dir.path().join(&a.path).exists(),
+                "file {} must exist after apply",
+                a.path
+            );
+            assert!(a.wrote_bytes > 0);
+        }
+
+        // tmp 파일이 남아있지 않아야 한다
+        let tmp_count = std::fs::read_dir(dir.path())
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_name().to_string_lossy().starts_with(".railguard_tmp_"))
+            .count();
+        assert_eq!(tmp_count, 0, "no tmp files should remain after apply");
     }
 
     // -----------------------------------------------------------------------

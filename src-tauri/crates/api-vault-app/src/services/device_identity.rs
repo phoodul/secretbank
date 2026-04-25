@@ -180,6 +180,15 @@ pub async fn ensure_device_keys(
             // Best-effort cleanup; ignore NotFound errors on delete.
             let _ = vault_guard.delete_secret(VAULT_PATH_SIGNING_KEY).await;
             let _ = vault_guard.delete_secret(VAULT_PATH_DEVICE_ID).await;
+            // Flush immediately so the wipe is persisted before we regenerate.
+            // This is best-effort: if flush fails we log a warning and continue —
+            // the partial-state wipe is idempotent and will be retried on next start.
+            if let Err(e) = vault_guard.flush().await {
+                tracing::warn!(
+                    error = %e,
+                    "device identity: partial-state wipe flush failed (will retry on next start)"
+                );
+            }
             // Fall through to first-run path below.
         }
 

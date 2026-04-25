@@ -12,6 +12,8 @@ pub enum AuditError {
     Sign,
     #[error("serialization failed: {0}")]
     Serialize(String),
+    #[error("audit sequence number overflow (i64::MAX reached)")]
+    SeqOverflow,
 }
 
 /// Result of verifying a chain.
@@ -130,7 +132,10 @@ pub fn append(
     signing_key: &SigningKey,
     now: OffsetDateTime,
 ) -> Result<AuditLog, AuditError> {
-    let seq = prev.map(|p| p.seq + 1).unwrap_or(0);
+    let seq = prev
+        .map(|p| p.seq.checked_add(1).ok_or(AuditError::SeqOverflow))
+        .transpose()?
+        .unwrap_or(0);
     let prev_hash = prev.map(|p| p.entry_hash).unwrap_or(GENESIS_PREV_HASH);
 
     let canonical = canonical_bytes(
@@ -382,6 +387,33 @@ mod tests {
         let result = verify(&chain, &vk);
         assert_eq!(result.valid_count, 2);
         assert_eq!(result.first_invalid_seq, Some(2));
+    }
+
+    #[test]
+    fn append_seq_overflow_returns_error() {
+        let sk = test_signing_key();
+
+        // Construct a fake prev entry at seq = i64::MAX
+        let fake_prev = AuditLog {
+            id: ulid::Ulid::new().to_string(),
+            seq: i64::MAX,
+            device_id: Some("dev".to_string()),
+            actor: AuditActor::LocalUser,
+            action: "test".to_string(),
+            subject_kind: "test".to_string(),
+            subject_id: "test-id".to_string(),
+            payload_json: None,
+            prev_hash: GENESIS_PREV_HASH,
+            entry_hash: [0u8; 32],
+            signature: [0u8; 64],
+            created_at: fixed_now(0),
+        };
+
+        let result = append(make_input("overflow.test", None), Some(&fake_prev), &sk, fixed_now(1));
+        assert!(
+            matches!(result, Err(AuditError::SeqOverflow)),
+            "expected SeqOverflow when prev.seq == i64::MAX, got: {result:?}"
+        );
     }
 
     #[test]

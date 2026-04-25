@@ -213,6 +213,9 @@ pub enum KillSwitchError {
     #[error("storage error: {message}")]
     Storage { message: String },
 
+    #[error("vault flush failed: {message}")]
+    VaultFlushFailed { message: String },
+
     #[error("internal: {message}")]
     Internal { message: String },
 }
@@ -286,15 +289,22 @@ pub async fn do_revoke_internal(
     cred_id: CredentialId,
     also_delete_value: bool,
 ) -> Result<(), KillSwitchError> {
-    // 1. Update credential status → Revoked.
+    // 1. Verify the credential still exists (guard against race where the
+    //    credential is deleted between request_confirm and do_revoke).
     let repo = CredentialRepo::new(&ctx.pool);
+    repo.get_by_id(cred_id)
+        .await
+        .map_err(KillSwitchError::from)?
+        .ok_or(KillSwitchError::NotFound)?;
+
+    // 2. Update credential status → Revoked.
     let patch = CredentialPatch {
         status: Some(CredentialStatus::Revoked),
         ..Default::default()
     };
     repo.update(cred_id, &patch).await?;
 
-    // 2. Optionally delete vault secret.
+    // 3. Optionally delete vault secret.
     if also_delete_value {
         let vault_ref = format!("credentials/{cred_id}");
         let mut vault = ctx.vault.write().await;
@@ -315,12 +325,12 @@ pub async fn do_revoke_internal(
             }
         }
 
-        vault.flush().await.map_err(|e| KillSwitchError::Storage {
+        vault.flush().await.map_err(|e| KillSwitchError::VaultFlushFailed {
             message: e.to_string(),
         })?;
     }
 
-    // 3. Audit.
+    // 4. Audit.
     let payload = serde_json::json!({ "also_delete_value": also_delete_value }).to_string();
     ctx.audit
         .record(
@@ -883,6 +893,133 @@ mod tests {
                 cred_id
             );
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // T9: also_delete_value=true + vault flush fails → VaultFlushFailed
+    // -----------------------------------------------------------------------
+
+    /// Vault that always fails flush.
+    struct FailingFlushVault {
+        inner: MockVaultStorage,
+    }
+
+    impl FailingFlushVault {
+        async fn new_unlocked() -> Self {
+            let mut inner = MockVaultStorage::new("pw");
+            inner
+                .unlock(SecretString::from("pw".to_owned()))
+                .await
+                .unwrap();
+            Self { inner }
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl api_vault_storage::vault::VaultStorage for FailingFlushVault {
+        async fn unlock(&mut self, pw: secrecy::SecretString) -> Result<(), api_vault_storage::vault::VaultError> {
+            self.inner.unlock(pw).await
+        }
+        async fn is_unlocked(&self) -> bool {
+            self.inner.is_unlocked().await
+        }
+        async fn lock(&mut self) -> Result<(), api_vault_storage::vault::VaultError> {
+            self.inner.lock().await
+        }
+        async fn put_secret(
+            &mut self,
+            path: &str,
+            value: api_vault_storage::vault::SecretBytes,
+        ) -> Result<(), api_vault_storage::vault::VaultError> {
+            self.inner.put_secret(path, value).await
+        }
+        async fn get_secret(
+            &self,
+            path: &str,
+        ) -> Result<api_vault_storage::vault::SecretBytes, api_vault_storage::vault::VaultError> {
+            self.inner.get_secret(path).await
+        }
+        async fn delete_secret(
+            &mut self,
+            path: &str,
+        ) -> Result<(), api_vault_storage::vault::VaultError> {
+            self.inner.delete_secret(path).await
+        }
+        async fn list_secrets(
+            &self,
+            prefix: &str,
+        ) -> Result<Vec<String>, api_vault_storage::vault::VaultError> {
+            self.inner.list_secrets(prefix).await
+        }
+        async fn flush(&mut self) -> Result<(), api_vault_storage::vault::VaultError> {
+            Err(api_vault_storage::vault::VaultError::Io(
+                std::io::Error::new(std::io::ErrorKind::Other, "simulated flush failure"),
+            ))
+        }
+    }
+
+    #[tokio::test]
+    async fn revoke_with_also_delete_flush_failure_returns_vault_flush_failed() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+
+        let failing_vault = FailingFlushVault::new_unlocked().await;
+        let vault_box: Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync> =
+            Box::new(failing_vault);
+        let vault_arc = Arc::new(RwLock::new(vault_box));
+        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
+        let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));
+
+        let issuer_id = seed_issuer(&pool).await;
+        let cred_id = {
+            let repo = CredentialRepo::new(&pool);
+            let c = CredentialId::new();
+            let input = CredentialInput {
+                issuer_id,
+                name: "FlushFail Key".to_string(),
+                env: Env::Prod,
+                scope: None,
+                owner: None,
+                rotation_policy_days: None,
+                rotation_runbook_id: None,
+                expires_at: None,
+                hash_hint: None,
+            };
+            repo.insert_with_id(Some(c), &input, format!("credentials/{c}"))
+                .await
+                .expect("insert");
+            // Pre-seed the secret in vault so delete_secret succeeds
+            {
+                let mut vg = vault_arc.write().await;
+                vg.put_secret(&format!("credentials/{c}"), SecretBytes::new(b"secret".to_vec()))
+                    .await
+                    .unwrap();
+            }
+            c
+        };
+
+        let ctx = AppContext {
+            vault: vault_arc,
+            pool,
+            data_dir: std::path::PathBuf::from("/tmp/test"),
+            user_id: "test".to_string(),
+            clipboard_controller: Arc::new(Mutex::new(None)),
+            feed_scheduler: Arc::new(Mutex::new(None)),
+            device_identity,
+            audit,
+            kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
+            issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
+        };
+
+        let err = do_revoke_internal(&ctx, cred_id, true)
+            .await
+            .expect_err("should fail due to vault flush error");
+
+        assert!(
+            matches!(err, KillSwitchError::VaultFlushFailed { .. }),
+            "expected VaultFlushFailed, got {:?}",
+            err
+        );
     }
 
     // -----------------------------------------------------------------------
