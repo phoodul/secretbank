@@ -1,5 +1,70 @@
 # Work Log
 
+## 2026-04-26 PM (수동 검증 라운드 + 결함 5건 hotfix)
+
+### 세션 개요
+
+- **시간**: 2026-04-26 PM (사용자 step-by-step 수동 검증 + 즉시 hotfix)
+- **모드**: 인터랙티브 manual verification (한 단계씩 사용자 실행 후 결과 보고). 발견 결함은 큐(H1~H5)에 적어두고 검증 종료 후 일괄 처리.
+- **검증 통과 8 / 결함 발견 5 / hotfix 4 커밋 (H3+H5 묶음)**
+
+### 검증 시퀀스 (사용자 실행)
+
+| # | 항목 | 결과 |
+|:-:|:----|:----|
+| ① | Relay `/health` 200 OK | ✅ |
+| ② | 앱 부팅 + Lock Screen | ✅ |
+| ③ | 볼트 언락 + Inventory | ✅ |
+| ④ | `/incidents` 페이지 + Refresh + 4 탭 + Affecting my keys 필터 | ✅ + ⚠️ H1 |
+| ⑤ | Audit `/audit` Verify integrity + entry 목록 | ✅ + ⚠️ H2 |
+| ⑥ | RAILGUARD `/railguard` Preview (✅) → Apply (❌ H3) | ✅ Preview / ❌ Apply |
+| ⑦ | GitHub Integration UI + Connect 404 (App ID 미등록 정상) | ✅ |
+| ⑧ | Pro 모의 활성화 (Settings → Developer Tools) | ✅ |
+| ⑨ | Kill Switch 단일 revoke 다이얼로그 → Continue (❌ H5) + UX 의문 H4 | ❌ + ⚠️ H4 |
+
+### Hotfix 5건 → 4 커밋
+
+- **H3 + H5 묶음** (`19afd3d` fix(ipc)): IPC 직렬화 계약 정렬.
+  - H5: `KillSwitchRevokeInput`/`...IssuerInput` 에 `#[serde(rename_all = "camelCase")]` 부착. Tauri 의 자동 변환은 top-level 인자 한정, nested struct 필드에는 적용 안 됨.
+  - H3: 단일 ApplyMode 기대인 Rust 에 FE 가 `Vec<{tag, kind, ...}>` 송신. FE 타입 재정의 + 단일 객체 송신.
+  - 회귀: kill_switch camelCase JSON deserialize 2 + railguard ApplyMode variant 3 + array 거부 1.
+- **H1** (`b74d71d` fix(matcher)): `incident_match` 멱등화. 매 refresh 마다 dupe row 누적 → 27 badge / "2465 incidents".
+  - 마이그레이션 0004 — dismissed_at propagate → dedup → UNIQUE INDEX (incident_id, credential_id, reason).
+  - `insert_match` INSERT OR IGNORE + 캐노니컬 id 반환.
+  - 회귀: same triple 3회 insert → 1행 + 같은 id / 다른 reason → 2행 공존.
+- **H2** (`c2d45f9` fix(audit)): `vault:efault` 표시. `slice(-6)` 가 `"default"` (7자) 에 잘못 적용.
+  - ULID 패턴 (`/^[0-9A-HJKMNP-TV-Z]{26}$/i`) 정확 매칭일 때만 truncate.
+  - 회귀: 신규 `use-subject-labels.test.ts` — literal verbatim, ULID 마지막 6, 25/27 경계, name lookup hit (총 7건).
+- **H4** (`f350cad` fix(inventory)): Drawer 상단 Revoke 가 `outline` neutral 로 보여 INCIDENTS 의 filled-destructive 와 시각적 위계 모순.
+  - 상단을 `outline + border-destructive + text-destructive` 로 정렬. 두 진입점은 의미적으로 다르므로 (위 = 항상 사용 가능 / 아래 = incident 주도 긴급) 둘 다 살리되 위계만 분리.
+
+### 테스트 결과
+
+| 카테고리 | 이전 | 신규 | 비고 |
+|:--|:-:|:-:|:--|
+| Rust app lib | ~89 | **101** | wire-format kill_switch 2 + railguard 4 |
+| Rust storage incident | 15 | **17** | H1 멱등성 회귀 2 |
+| Rust storage migration | 5 | 5 | idx_incident_match_unique 검증 추가 |
+| Vitest | 305 | **312** | use-subject-labels 7 |
+| typecheck | 0 | 0 | clean |
+| lint | 0 errors | 0 errors | 5 pre-existing shadcn warnings |
+
+### 보류 / 후속
+
+- **재검증 (사용자 앱 재기동 후)**: 마이그레이션 0004 자동 적용 → 27 → 1 배지 / Apply / Revoke 실제 동작.
+- **Playwright 회귀 (tester 에이전트)**: H3/H5 IPC 계약, H1 멱등성, H2 라벨 — 이 라운드의 hotfix 들을 E2E 로 lock-in.
+- **Pre-existing clippy regressions** (Rust 1.95): `feed_normalize.rs` cloned-ref-to-slice-refs 등. 이번 hotfix 와 무관, 별도 cleanup 큐.
+- **Bulk Revoke 검증**: H5 fix 가 `KillSwitchRevokeIssuerInput` 도 함께 처리 — 다음 검증 라운드에서.
+- **Pro + Connected Scan 버튼 노출**: M8 Authentication 진입 후 GitHub App 등록 끝나면 검증.
+
+### 핵심 인사이트
+
+- **자동 테스트의 빈 영역 = IPC 계약 / 데이터 무결성 / 시각적 위계**. 단위 테스트만으로는 잡지 못한다. 이번 라운드에서 wire-format regression 패턴 도입.
+- **두 P0 결함 (H3/H5) 이 같은 카테고리**. invoke 호출부의 nested struct 필드 case 협약을 한 번 정리하니 둘 다 풀림. 비슷한 패턴이 어디 또 있을지 (ToolSearch / generated bindings) 추후 점검.
+- **마이그레이션은 schema 만 바꾸지 않는다**. 누적 결함 데이터 cleanup 까지 책임지면 사용자는 앱 재기동만으로 수동 작업 없이 정상 상태로 복귀.
+
+---
+
 ## 2026-04-25~26 (Pro 가격 인하 + M5 완료 + M15 CI/CD 진입 + 릴레이 스캐폴드, 100/132 태스크 달성)
 
 ### 세션 개요

@@ -2,29 +2,53 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-26 (Night mode 2 + 사용자 인터랙션 종료)
-- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M15 🔄 진입**, 100/132 태스크 달성 (75.8%)
-- **Commits:** 약 129개 누적. 본 세션 신규 ~17개:
-  - 인터랙션 (사용자 결정): `58eacd2` 가격 인하 + M14 / `512b2fc` Team $5 + M15~17 placeholder / `840370c` ee 골격 / `766a3d4` 도메인 확정
-  - 릴레이: `4ec6248` T061+T079 / `e8f5e45` Cargo.lock / `f109812` wrangler ID
-  - M5 마무리: `6ddce61` T062 / `0c517ba` T063 / `8ef4ebb` T064 / `0194829` docs
-  - Night mode 자율: `dd63f97` hotfix 5 / `bf06db7` M15 T132+T133
+- **Time:** 2026-04-26 (수동 검증 + 결함 5건 hotfix 종료)
+- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M15 🔄 진입**, 100/132 태스크 (75.8%) + 결함 5건 후속 처리 완료
+- **Commits (이번 hotfix 라운드 신규 4개):**
+  - `19afd3d` fix(ipc) — H3 + H5 (FE↔Rust 인자 직렬화 계약)
+  - `b74d71d` fix(matcher) — H1 (incident_match 멱등화 + migration 0004)
+  - `c2d45f9` fix(audit) — H2 (`vault:efault` 표시 결함)
+  - `f350cad` fix(inventory) — H4 (Drawer 상단 Revoke destructive 정렬)
 - **Tests:**
-  - Rust workspace 전체 통과 (audit 9 + kill_switch 8 + railguard 8 + connectors 57 + github 7 + secret_scanning 6 + entitlement 6 + 기타 다수)
-  - Vitest **305개** 전부 통과 (M5 신규 6 added, M4 기존 288 + M5 추가 신규 4 통합)
-  - `pnpm typecheck` **0 에러**
-  - `cargo clippy --workspace -- -D warnings` clean
-  - `pnpm lint` 0 에러 (6 warnings: pre-existing shadcn)
-- **Blocker:** 없음
-- **Mode:** 세션 종료 (사용자 인터랙션 + Night mode 2 완료)
-- **Milestones:** 14 → **18 마일스톤** (M14 Auto Rotation / M15 CI/CD / M16 Telemetry / M17 SDK 신설), 118 → **132 태스크** (100/132 = 75.8%)
-- **Price update:** Pro $2→$1/월, $15→$10/년 | Team $10→$5/seat/월
-- **Domain:** api-vault.app (Cloudflare)
-- **Relay:** Local `/health` 200 OK 검증 완료
-- **Next (사용자 결정):**
-  1. **M15 Product Feature (T126~T128)** — GitHub Actions Secrets API + sync 커맨드 + Sync UI (외부 인프라 불필요, 자율 가능)
-  2. **Manual Verification (선택)** — M4~M7 + M5 + Relay end-to-end (feed poll + RAILGUARD + audit + kill switch + relay /health + GitHub deep link)
-  3. **M8 Authentication** — Passkey + OAuth (relay 의존, 이제 가능)
+  - Rust app lib: 101 passed (신규 wire-format 회귀 6 — kill_switch 2 + railguard 4)
+  - Rust storage incident: 17 passed (신규 H1 멱등성 회귀 2)
+  - Rust storage migration_test: 5 passed (idx_incident_match_unique 검증 추가)
+  - Vitest: **312 passed** (305 → 312, neutral subject-label 7 추가)
+  - typecheck 0 에러 / lint 0 에러
+- **Blocker:** pre-existing clippy warnings (Rust 1.95 새 lint, feed_normalize.rs 등) — 이번 hotfix 와 무관, 후속 정리 큐
+- **Mode:** 수동 검증 결과 종합 + 즉시 hotfix 일괄
+- **Verification 발견 사항 (5건):**
+  - **H1** P1 ✅ — incident_match 비-멱등 (badge 27회, "2465 incidents")
+  - **H2** P3 ✅ — audit Subject `vault:efault` (slice(-6) 가 "default" 7자에 잘못 적용)
+  - **H3** P0 ✅ — railguard_apply mode 직렬화 (Vec → 단일 ApplyMode)
+  - **H4** P2 ✅ — Drawer 상단 Revoke 가 outline neutral 로 보여 INCIDENTS 의 destructive 와 모순
+  - **H5** P0 ✅ — kill_switch_revoke `missing field 'cred_id'` (camelCase ↔ snake_case 미스매치)
+- **Verification 통과 항목 (8건):** Relay /health / 앱 부팅 + 언락 / Incidents 페이지 + Refresh + 4 탭 + Affecting my keys / Audit chain verify / RAILGUARD Preview / GitHub Integration UI 렌더 + Connect deep link / Pro 모의 활성화
+- **Verification 보류 (M8 이후):** Pro + GitHub Connected 상태 Scan 버튼 노출, Connect 풀 플로우, Bulk Revoke (H5 fix 후 재검증)
+- **Next (재검증 후 결정):**
+  1. 사용자 앱 재기동 → 마이그레이션 0004 자동 적용 → 27 → 1 배지 정정 확인 + Apply/Revoke 플로우 실 동작
+  2. tester 에이전트로 H3/H5 IPC 계약 + H1 멱등성 + H2 라벨 Playwright 회귀 추가
+  3. M15 Product Feature (T126~T128) 또는 M8 Authentication 진입
+
+---
+
+## 2026-04-26 수동 검증 라운드 + 5건 hotfix
+
+세션 흐름: 사용자가 manual verification 을 요청 → step-by-step 9 단계 진행 (Relay /health → 앱 부팅 → 언락 → Incidents → Audit → RAILGUARD → GitHub Integration → Pro 토글 → Kill Switch). 단계마다 발견되는 결함을 큐(H1~H5)에 적어두고 검증 끝난 뒤 일괄 fix.
+
+### Hotfix 상세
+
+- **H1** `fix(matcher): b74d71d` — `IncidentRepo::insert_match` 가 plain INSERT 였던 탓에 매 `incident_feed_refresh` 마다 동일한 (incident, credential, reason) 행이 새 ULID 로 누적. 마이그레이션 0004 가 (1) 기존 dupe 를 dedup 하면서 dismissed_at 플래그를 surviving 행으로 propagate, (2) UNIQUE INDEX `idx_incident_match_unique` 생성. repo 함수는 INSERT OR IGNORE + 캐노니컬 id 반환으로 멱등화. 회귀 2 (same triple 3회 insert → 1행, 다른 reason → 2행 공존).
+- **H2** `fix(audit): c2d45f9` — `resolveSubjectLabel` 의 `subjectId.slice(-6)` 이 ULID(26자) 만 가정. `state.user_id="default"` (7자) 에 적용되며 `"efault"` 가 잘려나옴. ULID 패턴 정규식 (`/^[0-9A-HJKMNP-TV-Z]{26}$/i`) 체크 후만 truncate. 회귀 7 (literal verbatim, ULID 마지막 6, 25/27 경계, name lookup hit).
+- **H3** `fix(ipc): 19afd3d` (H5 와 묶음) — `railguard_apply` 의 `mode` 인자를 FE 가 `Vec<{tag, kind, ...}>` 로 보내는데 Rust 는 단일 `ApplyMode` 기대. `tag` 필드는 의미 없음 (apply_rules 는 룰 전체에 단일 mode 사용). FE `ApplyMode` 타입 재정의 + `apply()` 단일 객체 송신. RailguardPage 테스트의 array-shape 기대값도 정정. 회귀 4 (3 variant + array 거부).
+- **H4** `fix(inventory): f350cad` — Drawer 상단 Revoke (`variant="outline"` neutral) 와 INCIDENTS 의 Revoke (`variant="destructive"` filled) 가 같은 `handleRevokeRequested` 를 부르지만 시각적으로 다른 액션처럼 보임. 상단을 outline-destructive (border-red + text-red) 로 정렬하여 파괴성을 표현하되 INCIDENTS 의 filled CTA 와 위계 분리.
+- **H5** `fix(ipc): 19afd3d` — `KillSwitchRevokeInput` 필드가 `cred_id` (snake_case) 인데 FE 가 `credId` (camelCase) 송신. Tauri 의 자동 case 변환은 top-level 인자에만 적용, nested struct 필드에는 안 됨. Rust struct 에 `#[serde(rename_all = "camelCase")]` 부착 (Issuer 변형 동일). 회귀 2 (camelCase JSON deserialize 검증).
+
+### 핵심 인사이트
+
+- **자동 테스트의 빈 영역 = IPC 계약**. Rust unit 305+ / Vitest 305 모두 그린이었지만 H3/H5 같은 FE↔Rust 와이어 미스매치는 단위 테스트가 잡지 못했다. 이번 라운드에서 **wire-format regression 패턴** 도입 (kill_switch + railguard + use-subject-labels): 임의 JSON shape 을 직접 deserialize 해 와이어 호환을 고정.
+- **마이그레이션은 누적 결함의 cleanup 도 책임진다.** 0004 는 단순히 UNIQUE INDEX 만 추가하지 않고 dismissed_at 의 의미를 보존하면서 dupe 를 제거. 사용자 앱 재기동 시 이전 누적 27행이 자동 정리됨.
+- **두 진입점이 같은 핸들러를 부르더라도 시각적 위계가 다르면 사용자가 다른 액션으로 인지한다.** outline-destructive vs filled-destructive 분리로 위계 정리.
 
 ---
 
