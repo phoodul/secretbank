@@ -367,7 +367,12 @@ export function CredentialDetail({
                   <TooltipContent>{t("inventory.m7ComingSoon")}</TooltipContent>
                 </Tooltip>
 
-                {/* Revoke — active if not already revoked */}
+                {/* Revoke — outline-styled destructive so the action reads
+                    as dangerous (red border + text) without competing with
+                    the filled red CTA in the INCIDENTS section below.  Both
+                    entries dispatch the same handler — top button is the
+                    always-available intent; the INCIDENTS one fires when an
+                    active incident makes revocation urgent. */}
                 {cred?.status === "revoked" ? (
                   <Button size="sm" variant="outline" disabled>
                     {t("killSwitch.revoked")}
@@ -376,6 +381,8 @@ export function CredentialDetail({
                   <Button
                     size="sm"
                     variant="outline"
+                    className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:ring-destructive/40"
+                    data-testid="credential-detail-revoke-btn"
                     onClick={handleRevokeRequested}
                   >
                     {t("killSwitch.revoke")}
