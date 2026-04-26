@@ -157,6 +157,13 @@
 | Migration 0002 — incident (source, source_id) UNIQUE + INSERT OR IGNORE | `00e8bde` |
 | RunEvent::Exit 전환 (scheduler shutdown 완료 보장)            | `6acbf64` |
 
+### 재검증 라운드 hotfix (2026-04-27, 태스크 진행 표에는 별도 항목 아님)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **I4** Revoke 후 Radix compose-refs 무한 루프 — KillSwitchDialog/BulkRevokeDialog 부모 콜백 microtask defer | `6dda3e8` |
+| **I5** Bulk revoke filter 에 `status=Active` 추가 — `ExpectedCountMismatch` 해결 + 회귀 테스트 1 | `cc1785b` |
+
 ---
 
 ## M0 — Foundation

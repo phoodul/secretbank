@@ -1,5 +1,67 @@
 # Work Log
 
+## 2026-04-27 (재검증 라운드 — 라운드 A/B/C 통과 + I4/I5 P0 hotfix 2건)
+
+### 세션 개요
+
+- **시간**: 2026-04-27 (interactive manual verification — 사용자가 단계별로 화면 검증, 결함 발견 시 즉시 진단 → hotfix → 재검증)
+- **모드**: 라운드 A (마이그레이션 0004 + H1/H2/H4) → 라운드 B (H3 RAILGUARD) → 라운드 C (Pro/GitHub/Single+Bulk Revoke). 검증 도중 발견된 P0 2건 (I4, I5) 은 라운드 흐름 안에서 즉시 hotfix + 재검증.
+- **검증 통과 10 / C2 deferred 1 / 새 결함 발견 5 (I1~I5) / hotfix commit 2 (I4, I5)**
+
+### 검증 시퀀스 (사용자 실행)
+
+| # | 항목 | 결과 |
+|:-:|:----|:----|
+| A1 | 앱 재기동 → 마이그레이션 0004 자동 적용 (DB 검사 — `_sqlx_migrations(4, 'incident match unique', success=1)`, `idx_incident_match_unique` 존재) | ✅ |
+| A2 | H1 — Affecting my keys 한 incident 의 같은 credential 27회 → **1회** | ✅ |
+| A3 | H2 — Audit Subject 컬럼 `vault:default` 정상 표시 | ✅ |
+| A4 | H4 — Drawer 상단 Revoke 가 빨간 border + 빨간 텍스트 (outline-destructive) | ✅ |
+| B1 | H3 — `C:\tmp\railguard-test` 에 `Overwrite { backup: true }` 로 4 파일 생성 (.cursorrules / .windsurfrules / CLAUDE.md / .github/copilot-instructions.md) | ✅ |
+| C1 | Pro 모의 활성화 (Developer Tools "Simulate Pro until" set) | ✅ |
+| C2 | GitHub Connect 풀 플로우 | ⏸ deferred (I3) |
+| C3 | Pro + Connected 시뮬 (devtools dynamic import 로 fake installation 저장) → Scan 버튼 자물쇠 없이 활성 | ✅ |
+| C4 | H5 — Single Revoke (Test API Key) — IPC 통과 + DB status='revoked' + audit chain seq=16. 단 React 화이트 스크린 발생 (I4) → I4 hotfix → 새 credential 로 재검증 | ✅ |
+| C5 | H5 IssuerInput — Bulk Revoke. 1차 시도 "Failed to revoke issuer credentials" (I5) → I5 hotfix → 재검증 progress 1/2 → 2/2 + 화면 정상 | ✅ |
+
+### 새로 발견된 결함 5건
+
+| ID | 우선순위 | 상태 | 한 줄 요약 |
+|:--|:--|:--|:--|
+| **I1** | P3 | pending | Subscription 헤더 "Current plan" 라벨 ↔ Pro 뱃지 줄 분리 (의미 연결 약함) |
+| **I2** | P2 | pending | Pro 활성 시에도 disabled "Upgrade to Pro" 버튼 노출 (Free 에서도 dead) |
+| **I3** | Architectural | M8 의존 backlog | GitHub Connect 풀 플로우 4 사전 조건: (a) GitHub App 등록 (b) deep-link custom scheme + plist/registry (c) listener 이벤트 표준화 (d) M8 Auth user JWT |
+| **I4** | **P0** | ✅ fix | Single/Bulk Revoke 후 화이트 스크린 — Radix Dialog ref composition 무한 setRef ("Maximum update depth exceeded") |
+| **I5** | **P0** | ✅ fix | Bulk Revoke `ExpectedCountMismatch` — Rust filter status 미지정으로 revoked 행 포함, FE active-only count 와 mismatch |
+
+### Hotfix 2 commits
+
+- **I4** (`6dda3e8` fix(kill-switch)): KillSwitchDialog/BulkRevokeDialog 의 phase=done 이펙트가 onRevoked/onCompleted 를 동기 호출하면 부모(InventoryPage)가 같은 batch 안에서 자식 다이얼로그를 unmount → Radix compose-refs unmount-during-update race → 무한 setRef 루프 → React tree crash. 부모 콜백을 setTimeout 안 + queueMicrotask 로 defer 하여 close 전환이 시작된 다음 unmount 가 일어나도록 순서 보장. 회귀: KillSwitchDialog test (d) 의 onRevoked 단언을 setTimeout 후로 분리.
+- **I5** (`cc1785b` fix(kill-switch)): `kill_switch_revoke_issuer` 의 CredentialFilter 에 `status: Some(Active)` 추가. 부수효과 — (1) FE expected_count(=active 만) 와 backend actual 의미 일치, (2) 이미 revoked 인 credential 의 do_revoke_internal 재호출 제거 (audit 중복 방지), (3) emit progress total 이 사용자 인지(2/2)와 일치. 회귀 `bulk_revoke_filter_excludes_already_revoked_credentials` 추가 — 1 revoked + 2 active 시드 후 Active 필터 list 시 정확히 2개.
+
+### 테스트 결과
+
+| 카테고리 | 이전 | 신규 | 비고 |
+|:--|:-:|:-:|:--|
+| Rust kill_switch unit | 12 | **13** | I5 회귀 1 |
+| Vitest 전체 | 312 | 312 | I4 fix 후 KillSwitchDialog test (d) timeout 조정으로 같은 312 유지 |
+| typecheck | 0 | 0 | clean |
+| Rust app lib 전체 | 101 | **102** | I5 추가 |
+
+### 보류 / 후속
+
+- **I1 / I2 hotfix** (P2/P3) — Subscription 섹션 UX. 다음 라운드.
+- **I3 GitHub Connect 풀 플로우** — M8 Auth (T080~T086) 진입 시 같이 정리.
+- **C2 정식 검증** — I3 4건 사전 조건 끝난 후 한 번에.
+- **Pre-existing clippy regressions** — 별도 cleanup 큐 유지 (이번 라운드 무관).
+
+### 핵심 인사이트
+
+- **수동 검증의 가치**. 단위 테스트 312 + Rust 101 모두 그린이었지만 I4 (Radix unmount race) / I5 (filter 누락) 모두 단위 테스트가 잡지 못했다. 화면에서 사용자가 한 번 누르는 것이 기존 테스트 전체보다 더 많은 신호를 만든다.
+- **부모-자식 unmount race 패턴**. phase=done → 부모 콜백 → 자식 unmount 흐름이 Radix Portal/compose-refs 와 만나면 무한 루프. queueMicrotask 한 줄 defer 가 해결 — 같은 패턴이 다른 다이얼로그 (`KillSwitchDialog`, `BulkRevokeDialog`) 에 일관되게 있다는 것은 향후 동일 위험 다이얼로그 (예: Delete confirmation) 도 같은 검토 필요.
+- **expected_count 같은 invariant 는 양 끝에서 의미 일치 검증을 강제할 방법이 없으면 깨진다**. 이번엔 FE active-only ↔ backend status-무관. 다음에는 Rust input struct 가 status filter 를 명시 의무화하거나 (e.g. typed `BulkRevokeInput { status_filter: CredentialStatus }`), 또는 FE 가 expected_count 를 안 보내고 backend 가 raw count 만 반환하게 단순화.
+
+---
+
 ## 2026-04-26 PM (수동 검증 라운드 + 결함 5건 hotfix)
 
 ### 세션 개요

@@ -2,33 +2,38 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-26 (수동 검증 + 결함 5건 hotfix 종료)
-- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M15 🔄 진입**, 100/132 태스크 (75.8%) + 결함 5건 후속 처리 완료
-- **Commits (이번 hotfix 라운드 신규 4개):**
-  - `19afd3d` fix(ipc) — H3 + H5 (FE↔Rust 인자 직렬화 계약)
-  - `b74d71d` fix(matcher) — H1 (incident_match 멱등화 + migration 0004)
-  - `c2d45f9` fix(audit) — H2 (`vault:efault` 표시 결함)
-  - `f350cad` fix(inventory) — H4 (Drawer 상단 Revoke destructive 정렬)
-- **Tests:**
-  - Rust app lib: 101 passed (신규 wire-format 회귀 6 — kill_switch 2 + railguard 4)
-  - Rust storage incident: 17 passed (신규 H1 멱등성 회귀 2)
-  - Rust storage migration_test: 5 passed (idx_incident_match_unique 검증 추가)
-  - Vitest: **312 passed** (305 → 312, neutral subject-label 7 추가)
+- **Time:** 2026-04-27 (재검증 라운드 — 라운드 A/B/C 통과 + I4/I5 P0 hotfix 종료)
+- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M15 🔄**, 100/132 태스크 (75.8%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 ✅, I1/I2/I3 backlog)
+- **Commits (이번 세션 신규 2개):**
+  - `6dda3e8` fix(kill-switch) — I4 (Radix compose-refs 무한 루프 — KillSwitchDialog/BulkRevokeDialog 부모 콜백 microtask defer)
+  - `cc1785b` fix(kill-switch) — I5 (Bulk revoke filter 에 status=Active 추가, ExpectedCountMismatch 해결)
+- **Tests (4-27):**
+  - Rust kill_switch unit: **13 passed** (신규 회귀 1 — `bulk_revoke_filter_excludes_already_revoked_credentials`)
+  - Vitest: **312 passed** (변동 없음; KillSwitchDialog test (d) 의 onRevoked 단언만 setTimeout 후로 분리)
   - typecheck 0 에러 / lint 0 에러
-- **Blocker:** pre-existing clippy warnings (Rust 1.95 새 lint, feed_normalize.rs 등) — 이번 hotfix 와 무관, 후속 정리 큐
-- **Mode:** 수동 검증 결과 종합 + 즉시 hotfix 일괄
-- **Verification 발견 사항 (5건):**
-  - **H1** P1 ✅ — incident_match 비-멱등 (badge 27회, "2465 incidents")
-  - **H2** P3 ✅ — audit Subject `vault:efault` (slice(-6) 가 "default" 7자에 잘못 적용)
-  - **H3** P0 ✅ — railguard_apply mode 직렬화 (Vec → 단일 ApplyMode)
-  - **H4** P2 ✅ — Drawer 상단 Revoke 가 outline neutral 로 보여 INCIDENTS 의 destructive 와 모순
-  - **H5** P0 ✅ — kill_switch_revoke `missing field 'cred_id'` (camelCase ↔ snake_case 미스매치)
-- **Verification 통과 항목 (8건):** Relay /health / 앱 부팅 + 언락 / Incidents 페이지 + Refresh + 4 탭 + Affecting my keys / Audit chain verify / RAILGUARD Preview / GitHub Integration UI 렌더 + Connect deep link / Pro 모의 활성화
-- **Verification 보류 (M8 이후):** Pro + GitHub Connected 상태 Scan 버튼 노출, Connect 풀 플로우, Bulk Revoke (H5 fix 후 재검증)
-- **Next (재검증 후 결정):**
-  1. 사용자 앱 재기동 → 마이그레이션 0004 자동 적용 → 27 → 1 배지 정정 확인 + Apply/Revoke 플로우 실 동작
-  2. tester 에이전트로 H3/H5 IPC 계약 + H1 멱등성 + H2 라벨 Playwright 회귀 추가
-  3. M15 Product Feature (T126~T128) 또는 M8 Authentication 진입
+- **Blocker:** pre-existing clippy warnings (Rust 1.95 새 lint) — 이번 hotfix 와 무관, 후속 정리 큐
+- **Mode:** Interactive manual verification — 라운드 A → B → C 단계별 사용자 실행, 결함 발견 시 즉시 진단 → hotfix → 재검증.
+- **Verification 통과 (10/10 + C2 deferred):**
+  1. **A1** 마이그레이션 0004 자동 적용 (DB 검사: `_sqlx_migrations(4)` + `idx_incident_match_unique` 존재)
+  2. **A2** H1 멱등성 — 같은 (incident, credential) 27회 → 1회
+  3. **A3** H2 — Audit Subject `vault:default` 정상 표기
+  4. **A4** H4 — Drawer 상단 Revoke outline-destructive (빨간 border + 빨간 텍스트)
+  5. **B1** H3 — RAILGUARD Apply (`Overwrite { backup: true }`) 4 파일 디스크 생성
+  6. **C1** Pro 모의 활성화 (Developer Tools)
+  7. **C2** GitHub Connect 풀 플로우 — **deferred (I3 의존, M8 후)**
+  8. **C3** Pro + Connected 시뮬 (devtools dynamic import) → Scan 버튼 자물쇠 없이 활성
+  9. **C4** H5 Single Revoke — IPC 통과 + DB status='revoked' + audit chain 정상 (I4 화이트 스크린은 같은 라운드 안에서 hotfix 후 재검증)
+  10. **C5** H5 Bulk Revoke — progress 1/2 → 2/2 + 화면 정상 (I5 ExpectedCountMismatch 도 같은 라운드 안에서 hotfix 후 재검증)
+- **새로 발견된 결함 5건:**
+  - **I4** P0 ✅ — Single/Bulk Revoke 후 화이트 스크린 (Radix compose-refs 무한 setRef)
+  - **I5** P0 ✅ — Bulk Revoke `ExpectedCountMismatch` (Rust filter 에 status 누락)
+  - **I1** P3 backlog — Subscription 헤더 "Current plan" 라벨 ↔ Pro 뱃지 인접 배치
+  - **I2** P2 backlog — Pro 활성 시에도 disabled "Upgrade to Pro" 버튼 노출
+  - **I3** Architectural backlog — GitHub Connect 풀 플로우 4 사전 조건 (App 등록 / deep-link scheme / listener 표준화 / M8 Auth user JWT)
+- **Next (사용자 결정 대기):**
+  1. **I1/I2 hotfix** (P2/P3) — Subscription 섹션 UX 정리
+  2. **M8 Auth 진입** (T080~T086) — Relay 가동 완료로 잠금 해제, I3 도 같이 정리됨
+  3. **Playwright E2E 회귀** (tester 에이전트) — H1/H2/H3/H5 + I4/I5 lock-in
 
 ---
 
