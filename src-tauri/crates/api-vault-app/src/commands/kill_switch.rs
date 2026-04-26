@@ -482,10 +482,19 @@ pub async fn kill_switch_revoke_issuer(
         .await
         .map_err(|_| KillSwitchError::InvalidToken)?;
 
-    // 2. Fetch all credentials for this issuer.
+    // 2. Fetch all *active* credentials for this issuer.
+    //
+    // I5 hotfix: previously this filter omitted `status`, so already-revoked
+    // credentials were returned and counted alongside active ones.  When the
+    // frontend passed `expected_count = active_count`, this always tripped
+    // `ExpectedCountMismatch` once the issuer had any revoked credential in
+    // its history.  Restricting to Active also avoids re-revoking the same
+    // credential (which would emit duplicate audit entries) and makes the
+    // emitted progress total match the user's mental model.
     let cred_repo = CredentialRepo::new(&state.pool);
     let filter = CredentialFilter {
         issuer_id: Some(issuer_id),
+        status: Some(CredentialStatus::Active),
         ..Default::default()
     };
     let credentials = cred_repo
@@ -966,6 +975,85 @@ mod tests {
                 cred_id
             );
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // I5 regression: bulk revoke must filter to Active only.
+    //
+    // Without `status=Active`, the issuer-scoped filter returns revoked rows
+    // alongside active ones, breaking the FE's `expected_count` invariant
+    // (FE counts active only, backend counted everything → ExpectedCountMismatch).
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn bulk_revoke_filter_excludes_already_revoked_credentials() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+
+        let issuer_repo = api_vault_storage::sqlite::repositories::issuer::IssuerRepo::new(&pool);
+        let issuer_id = issuer_repo
+            .insert(&IssuerInput {
+                slug: "mixed".to_string(),
+                display_name: "Mixed Issuer".to_string(),
+                docs_url: None,
+                issue_url: None,
+                status_url: None,
+                security_feed_url: None,
+                connector_id: None,
+                icon_key: None,
+            })
+            .await
+            .expect("issuer insert");
+
+        let cred_repo = CredentialRepo::new(&pool);
+
+        // Seed 3 credentials: 1 revoked, 2 active
+        let mut cred_ids = Vec::new();
+        for i in 0..3 {
+            let cred_id = CredentialId::new();
+            cred_repo
+                .insert_with_id(
+                    Some(cred_id),
+                    &CredentialInput {
+                        issuer_id,
+                        name: format!("Cred {i}"),
+                        env: Env::Dev,
+                        scope: None,
+                        owner: None,
+                        rotation_policy_days: None,
+                        rotation_runbook_id: None,
+                        expires_at: None,
+                        hash_hint: None,
+                    },
+                    format!("credentials/{cred_id}"),
+                )
+                .await
+                .expect("insert cred");
+            cred_ids.push(cred_id);
+        }
+        // Mark first as revoked
+        let revoked_patch = CredentialPatch {
+            status: Some(CredentialStatus::Revoked),
+            ..Default::default()
+        };
+        cred_repo
+            .update(cred_ids[0], &revoked_patch)
+            .await
+            .expect("revoke first");
+
+        // The post-fix filter (issuer + status=Active) must return only the
+        // remaining 2 active credentials — this is what `expected_count`
+        // from the FE relies on.
+        let filter = CredentialFilter {
+            issuer_id: Some(issuer_id),
+            status: Some(CredentialStatus::Active),
+            ..Default::default()
+        };
+        let listed = cred_repo.list(&filter).await.expect("list active");
+        assert_eq!(listed.len(), 2, "filter must exclude already-revoked rows");
+        assert!(
+            listed.iter().all(|c| c.status == CredentialStatus::Active),
+            "all returned rows must be Active"
+        );
     }
 
     // -----------------------------------------------------------------------
