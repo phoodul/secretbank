@@ -298,15 +298,6 @@ mod tests {
 
     use super::*;
 
-    /// 잠금 해제된 MockVaultStorage 로 AppContext 를 간단히 모사하는 헬퍼.
-    ///
-    /// 실제 AppContext 생성에는 파일 시스템이 필요하므로 내부 로직만 직접 테스트한다.
-    async fn unlocked_vault() -> Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync> {
-        let mut v = MockVaultStorage::new("pw");
-        v.unlock(SecretString::from("pw".to_owned())).await.unwrap();
-        Box::new(v)
-    }
-
     /// Vault 에 직접 installation list 를 읽고 쓰는 헬퍼 (command layer 우회).
     async fn raw_read(
         vault: &(dyn api_vault_storage::vault::VaultStorage + Send + Sync),

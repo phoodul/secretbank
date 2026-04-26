@@ -173,7 +173,7 @@ mod tests {
         use crate::audit_ctx::AuditCtx;
         use crate::commands::kill_switch::{ConfirmTokenStore, IssuerConfirmTokenStore};
         use crate::services::device_identity::DeviceIdentity;
-        use api_vault_storage::sqlite::{init_pool, SqlitePool};
+        use api_vault_storage::sqlite::init_pool;
 
         // Use an in-memory SQLite database for tests.
         let pool = init_pool(&PathBuf::from(":memory:")).await.expect("in-memory pool");

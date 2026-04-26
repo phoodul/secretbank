@@ -1114,7 +1114,7 @@ mod tests {
         }
         async fn flush(&mut self) -> Result<(), api_vault_storage::vault::VaultError> {
             Err(api_vault_storage::vault::VaultError::Io(
-                std::io::Error::new(std::io::ErrorKind::Other, "simulated flush failure"),
+                std::io::Error::other("simulated flush failure"),
             ))
         }
     }

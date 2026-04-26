@@ -283,7 +283,7 @@ mod tests {
     #[test]
     fn test_normalize_rss_resolves_issuer_via_index() {
         let openai = make_issuer("openai", "OpenAI");
-        let index = build_issuer_index(&[openai.clone()]);
+        let index = build_issuer_index(std::slice::from_ref(&openai));
 
         let entry = make_rss_entry("openai", "entry-001");
         let incident = normalize_rss(&entry, &index, fixed_now());
@@ -298,7 +298,7 @@ mod tests {
     #[test]
     fn test_normalize_rss_canonical_slug_gcp_to_google() {
         let google = make_issuer("google", "Google Cloud");
-        let index = build_issuer_index(&[google.clone()]);
+        let index = build_issuer_index(std::slice::from_ref(&google));
 
         let entry = make_rss_entry("gcp", "gcp-entry-001");
         let incident = normalize_rss(&entry, &index, fixed_now());
@@ -356,7 +356,7 @@ mod tests {
             created_at: fixed_now(),
             updated_at: fixed_now(),
         };
-        let index = build_issuer_index(&[issuer.clone()]);
+        let index = build_issuer_index(std::slice::from_ref(&issuer));
 
         // lowercase 키로 조회 가능
         assert!(index.contains_key("openai"));

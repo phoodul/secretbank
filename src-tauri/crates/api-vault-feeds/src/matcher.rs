@@ -254,7 +254,7 @@ mod tests {
             IncidentSource::Rss,
         );
 
-        let matches = match_incident_at(&incident, &[cred.clone()], &[github], fixed_now());
+        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[github], fixed_now());
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].credential_id, cred.id);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
@@ -274,7 +274,7 @@ mod tests {
             IncidentSource::Ghsa,
         );
 
-        let matches = match_incident_at(&incident, &[cred.clone()], &[stripe], fixed_now());
+        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[stripe], fixed_now());
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].credential_id, cred.id);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
@@ -289,7 +289,7 @@ mod tests {
         let cred = make_credential(&openai, "OpenAI Key");
         let incident = make_incident(None, "OPENAI DOWN", None, IncidentSource::Rss);
 
-        let matches = match_incident_at(&incident, &[cred.clone()], &[openai], fixed_now());
+        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[openai], fixed_now());
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
     }
@@ -309,7 +309,7 @@ mod tests {
             IncidentSource::Ghsa,
         );
 
-        let matches = match_incident_at(&incident, &[cred.clone()], &[github], fixed_now());
+        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[github], fixed_now());
         assert_eq!(matches.len(), 1, "credential 이 중복 없이 1개여야 한다");
         assert_eq!(matches[0].reason, MatchReason::IssuerMatch, "IssuerMatch 가 우선해야 한다");
     }
@@ -328,7 +328,7 @@ mod tests {
             IncidentSource::Rss,
         );
 
-        let matches = match_incident_at(&incident, &[cred.clone()], &[vercel], fixed_now());
+        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[vercel], fixed_now());
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].credential_id, cred.id);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
@@ -447,7 +447,7 @@ mod tests {
             IncidentSource::Nvd,
         );
 
-        let matches = match_incident_at(&incident, &[cred.clone()], &[aws], fixed_now());
+        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[aws], fixed_now());
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
     }
