@@ -18,6 +18,12 @@ export default defineWorkersConfig(async () => {
           miniflare: {
             bindings: {
               TEST_MIGRATIONS: migrations,
+              // M8 Auth — fixture values override wrangler.toml [vars] 의 빈 값
+              JWT_SIGNING_KEY: "test-jwt-signing-key-at-least-32-chars-long",
+              GITHUB_OAUTH_CLIENT_ID: "test-github-client-id",
+              GITHUB_OAUTH_CLIENT_SECRET: "test-github-client-secret",
+              GOOGLE_OAUTH_CLIENT_ID: "test-google-client-id",
+              GOOGLE_OAUTH_CLIENT_SECRET: "test-google-client-secret",
             },
           },
         },
