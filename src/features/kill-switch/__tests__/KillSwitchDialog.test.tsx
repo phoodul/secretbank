@@ -172,12 +172,14 @@ describe("KillSwitchDialog", () => {
     });
     await user.click(screen.getByTestId("kill-switch-confirm"));
 
+    // toast 는 즉시 호출되지만, onRevoked 는 I4 hotfix 로 1500ms 후 setTimeout
+    // + microtask 안에서 호출된다 (Radix compose-refs 무한 루프 방지).
     await waitFor(() => {
       expect(mockToast.success).toHaveBeenCalledWith(
         expect.stringMatching(/revoked/i),
       );
-      expect(onRevoked).toHaveBeenCalled();
     });
+    await waitFor(() => expect(onRevoked).toHaveBeenCalled(), { timeout: 3000 });
   });
 
   // ------------------------------------------------------------------

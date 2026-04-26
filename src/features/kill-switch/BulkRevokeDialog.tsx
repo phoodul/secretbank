@@ -72,9 +72,13 @@ export function BulkRevokeDialog({
   // Notify parent and auto-close on completion.
   useEffect(() => {
     if (phase === "done" && result) {
-      onCompleted?.(result);
       autoCloseTimerRef.current = setTimeout(() => {
         handleOpenChange(false);
+        // Defer parent notification one microtask so this dialog starts its
+        // close transition before the parent unmounts our subtree. Otherwise
+        // Radix Dialog's compose-refs enters an infinite setRef loop
+        // (Maximum update depth exceeded). See I4 hotfix.
+        queueMicrotask(() => onCompleted?.(result));
       }, 2500);
     }
     return () => {

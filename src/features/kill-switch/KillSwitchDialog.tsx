@@ -69,9 +69,13 @@ export function KillSwitchDialog({
   useEffect(() => {
     if (phase === "done") {
       toast.success(t("killSwitch.toast.success"));
-      onRevoked?.();
       autoCloseTimerRef.current = setTimeout(() => {
         handleOpenChange(false);
+        // Defer parent notification one microtask so this dialog starts its
+        // close transition before the parent unmounts our subtree. Otherwise
+        // Radix Dialog's compose-refs enters an infinite setRef loop
+        // (Maximum update depth exceeded). See I4 hotfix.
+        queueMicrotask(() => onRevoked?.());
       }, 1500);
     } else if (phase === "error" && error) {
       // Map known error codes/patterns to user-friendly i18n messages.
