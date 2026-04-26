@@ -128,6 +128,52 @@ describe("SubscriptionSection", () => {
     });
   });
 
+  // (f) I1 회귀 — "Current plan" 라벨이 Badge 와 같은 컨테이너에 인접 배치된다
+  it("I1: 'Current plan' 라벨과 tier 배지가 같은 그룹 안에 인접 렌더된다", async () => {
+    mockInvoke.mockResolvedValue({
+      tier: "pro",
+      pro_until: Date.now() + 86400000,
+      from_cache: false,
+    });
+    renderSection();
+
+    const group = await screen.findByTestId("current-plan-group");
+    // Label and badge must both live inside the same group element
+    expect(group.textContent ?? "").toMatch(/Current plan/i);
+    expect(group.textContent ?? "").toMatch(/Pro/i);
+    // The aria-labelled badge must be a descendant of the group (adjacency proof)
+    const badge = screen.getByRole("generic", { name: /current plan/i });
+    expect(group.contains(badge)).toBe(true);
+  });
+
+  // (g) I2 회귀 — Pro 활성 시 disabled "Upgrade to Pro" 버튼은 노출되지 않는다
+  it("I2: Pro 활성 시 'Upgrade to Pro' 버튼이 렌더되지 않는다", async () => {
+    mockInvoke.mockResolvedValue({
+      tier: "pro",
+      pro_until: Date.now() + 86400000,
+      from_cache: false,
+    });
+    renderSection();
+
+    // Wait for the Pro badge to confirm tier resolution finished
+    await waitFor(() => {
+      const badge = screen.getByRole("generic", { name: /current plan/i });
+      expect(badge.textContent).toMatch(/Pro/i);
+    });
+
+    // Upgrade button must be absent
+    expect(screen.queryByRole("button", { name: /upgrade to pro/i })).toBeNull();
+  });
+
+  // (h) I2 회귀 — Free 일 때는 disabled "Upgrade to Pro" 버튼이 여전히 노출된다
+  it("I2: Free 상태에서는 'Upgrade to Pro' disabled 버튼이 노출된다", async () => {
+    mockInvoke.mockResolvedValue({ tier: "free", pro_until: null, from_cache: false });
+    renderSection();
+
+    const upgradeBtn = await screen.findByRole("button", { name: /upgrade to pro/i });
+    expect(upgradeBtn).toBeDisabled();
+  });
+
   // (e) 5분 자동 refresh 동작 (fake timer)
   it("5분 후 자동으로 entitlement_current 가 재호출된다", async () => {
     vi.useFakeTimers();

@@ -4,9 +4,9 @@
  * Placed at the top of SettingsPage so users see it first.
  *
  * # Sections
- * 1. Current tier badge (Free / Pro until <date>)
+ * 1. Header: title + "Current plan: <Badge>" group (label and badge adjacent — I1)
  * 2. What's in Pro? feature list
- * 3. Upgrade placeholder (disabled — Coming in M10)
+ * 3. Upgrade placeholder (Free users only — hidden when isPro — I2; disabled stub for M10)
  * 4. Developer Tools — simulate Pro / reset to Free
  */
 
@@ -157,47 +157,48 @@ export function SubscriptionSection() {
 
   return (
     <section aria-labelledby="subscription-heading" className="space-y-5">
-      {/* Header */}
+      {/* Header — title left, "Current plan: <Badge>" right (label and badge adjacent for clarity) */}
       <div className="flex items-center justify-between gap-2">
-        <div className="space-y-1">
-          <h2 id="subscription-heading" className="text-base font-medium">
-            {t("subscription.title")}
-          </h2>
-          <p className="text-muted-foreground text-xs">{t("subscription.currentTier")}</p>
-        </div>
+        <h2 id="subscription-heading" className="text-base font-medium">
+          {t("subscription.title")}
+        </h2>
 
         {!loading && (
-          <Badge
-            variant={isPro ? "default" : "outline"}
-            className="shrink-0"
-            aria-label={t("subscription.currentTier")}
-          >
-            {isPro
-              ? proUntilDate
-                ? t("subscription.tierPro") + " · " + t("subscription.proUntil", { date: proUntilDate })
-                : t("subscription.tierPro")
-              : t("subscription.tierFree")}
-          </Badge>
+          <div className="flex shrink-0 items-center gap-2" data-testid="current-plan-group">
+            <span className="text-muted-foreground text-xs">{t("subscription.currentTier")}</span>
+            <Badge
+              variant={isPro ? "default" : "outline"}
+              aria-label={t("subscription.currentTier")}
+            >
+              {isPro
+                ? proUntilDate
+                  ? t("subscription.tierPro") + " · " + t("subscription.proUntil", { date: proUntilDate })
+                  : t("subscription.tierPro")
+                : t("subscription.tierFree")}
+            </Badge>
+          </div>
         )}
       </div>
 
       {/* What's in Pro */}
       <ProFeatureList />
 
-      {/* Upgrade CTA placeholder */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-block">
-              <Button variant="outline" size="sm" disabled>
-                <Lock className="h-3.5 w-3.5 mr-1.5" aria-hidden />
-                {t("subscription.upgrade")}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{t("subscription.upgradeDisabled")}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {/* Upgrade CTA placeholder — only shown to Free users (Pro users don't need to upgrade) */}
+      {!isPro && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-block">
+                <Button variant="outline" size="sm" disabled>
+                  <Lock className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+                  {t("subscription.upgrade")}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{t("subscription.upgradeDisabled")}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
 
       <Separator />
 
