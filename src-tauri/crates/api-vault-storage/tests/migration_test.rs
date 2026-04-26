@@ -67,6 +67,7 @@ async fn indexes_created(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
         "idx_credential_issuer",
         "idx_credential_status",
         "idx_incident_issuer_detected",
+        "idx_incident_match_unique",
         "idx_match_credential",
         "idx_usage_credential",
         "idx_usage_project",

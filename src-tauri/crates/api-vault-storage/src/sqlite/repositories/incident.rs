@@ -114,24 +114,32 @@ impl<'a> IncidentRepo<'a> {
 
     // --- incident_match ---
 
+    /// Idempotent match insert keyed by `(incident_id, credential_id, reason)`.
+    ///
+    /// Migration 0004 added a UNIQUE INDEX on that triple, so this function
+    /// uses `INSERT OR IGNORE` and returns the canonical row id — either the
+    /// freshly-inserted ULID or the pre-existing one when the row was already
+    /// present.  Callers can therefore re-run the matcher on every feed
+    /// refresh without inflating the table (hotfix H1).
     pub async fn insert_match(
         &self,
         incident_id: IncidentId,
         credential_id: CredentialId,
         reason: MatchReason,
     ) -> Result<IncidentMatchId, StorageError> {
-        let id = IncidentMatchId::new();
-        let id_str = id.to_string();
+        let new_id = IncidentMatchId::new();
+        let new_id_str = new_id.to_string();
         let inc_id_str = incident_id.to_string();
         let cred_id_str = credential_id.to_string();
         let reason_str = reason_to_str(reason);
         let matched_ms = dt_to_ms(OffsetDateTime::now_utc());
 
         sqlx::query(
-            r#"INSERT INTO incident_match (id, incident_id, credential_id, reason, matched_at)
+            r#"INSERT OR IGNORE INTO incident_match
+                   (id, incident_id, credential_id, reason, matched_at)
                VALUES (?, ?, ?, ?, ?)"#,
         )
-        .bind(&id_str)
+        .bind(&new_id_str)
         .bind(&inc_id_str)
         .bind(&cred_id_str)
         .bind(reason_str)
@@ -139,7 +147,21 @@ impl<'a> IncidentRepo<'a> {
         .execute(self.pool)
         .await?;
 
-        Ok(id)
+        // Either the new row exists (we just inserted it) or an older row with
+        // the same key is still present.  Return whichever id is canonical.
+        let canonical_id_str: String = sqlx::query_scalar(
+            r#"SELECT id FROM incident_match
+               WHERE incident_id = ? AND credential_id = ? AND reason = ?"#,
+        )
+        .bind(&inc_id_str)
+        .bind(&cred_id_str)
+        .bind(reason_str)
+        .fetch_one(self.pool)
+        .await?;
+
+        canonical_id_str
+            .parse()
+            .map_err(|e: ulid::DecodeError| StorageError::Parse(e.to_string()))
     }
 
     pub async fn get_match_by_id(
@@ -1213,5 +1235,87 @@ mod tests {
         let filter_all = IncidentFilter { include_dismissed: true, ..Default::default() };
         let entries_all = repo.list_with_matches(&filter_all).await.unwrap();
         assert_eq!(entries_all.len(), 2);
+    }
+
+    // -----------------------------------------------------------------------
+    // H1 regression: insert_match is idempotent on (incident, cred, reason).
+    //
+    // Before migration 0004 + INSERT OR IGNORE, every feed refresh appended
+    // a fresh row with a new ULID for the same triple.  The 27× duplicated
+    // badge that surfaced in manual verification is exactly this drift.
+    // These tests pin the new contract: same triple → same row, no growth.
+    // -----------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn insert_match_same_triple_returns_existing_id() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "openai").await;
+        let cred_id = insert_credential(&pool, issuer_id, "key-1").await;
+        let inc = make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_id), "H1");
+        repo.insert(&inc).await.unwrap();
+
+        let id1 = repo
+            .insert_match(inc.id, cred_id, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
+        let id2 = repo
+            .insert_match(inc.id, cred_id, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
+        let id3 = repo
+            .insert_match(inc.id, cred_id, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
+
+        assert_eq!(id1, id2, "second insert must reuse the existing id");
+        assert_eq!(id1, id3, "subsequent inserts must keep returning the same id");
+
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM incident_match WHERE incident_id = ? AND credential_id = ?",
+        )
+        .bind(inc.id.to_string())
+        .bind(cred_id.to_string())
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(count, 1, "exactly one row must survive after repeated inserts");
+    }
+
+    #[tokio::test]
+    async fn insert_match_different_reasons_remain_distinct() {
+        let (_dir, pool) = make_pool().await;
+        let repo = IncidentRepo::new(&pool);
+
+        let issuer_id = insert_issuer(&pool, "openai").await;
+        let cred_id = insert_credential(&pool, issuer_id, "key-1").await;
+        let inc = make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_id), "H1b");
+        repo.insert(&inc).await.unwrap();
+
+        // The matcher in api-vault-feeds dedupes by credential, but the
+        // storage layer must still allow distinct reasons for the same pair
+        // — older tests rely on this shape and a future Explicit-reason
+        // workflow will too.
+        let id_issuer = repo
+            .insert_match(inc.id, cred_id, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
+        let id_keyword = repo
+            .insert_match(inc.id, cred_id, MatchReason::Keyword)
+            .await
+            .unwrap();
+
+        assert_ne!(id_issuer, id_keyword, "different reason must allocate a new row");
+
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM incident_match WHERE incident_id = ? AND credential_id = ?",
+        )
+        .bind(inc.id.to_string())
+        .bind(cred_id.to_string())
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(count, 2, "both reason rows must coexist");
     }
 }
