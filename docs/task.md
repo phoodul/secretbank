@@ -36,7 +36,7 @@
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ✅ 10/10 완료 (T063 완료 2026-04-25; T064 완료 2026-04-25) |
 | M6  | Audit Log                       | T069~T074   | 6         | ✅ 6/6 완료         |
 | M7  | Kill Switch                     | T075~T078   | 4         | ✅ 4/4 완료             |
-| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | 🔄 1/8 (T079 릴레이 /health 완료 2026-04-25) |
+| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | 🔄 5/8 (서버 측 완료: T079 /health · T080 D1 auth schema · T081 Passkey · T082 OAuth · T086 Refresh — 클라이언트 측 T083/T084/T085 backlog) |
 | M9  | Sync Infrastructure             | T087~T096   | 10        | ⏳ 대기             |
 | M10 | Payments                        | T097~T103   | 7         | ⏳ 대기             |
 | M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기             |
@@ -139,8 +139,12 @@
 | T064    | Pro 엔타이틀먼트 게이트 — entitlement.rs + commands/entitlement.rs + github/kill_switch NotPro 게이트 + SubscriptionSection + use-entitlement + GithubIntegration/InventoryPage Pro lock + i18n 4 로케일 + Rust 6 + Vitest +7 | 2026-04-26 | `8ef4ebb` |
 | T132    | M15 internal — deploy-relay.yml 워크플로우 (cloudflare/wrangler-action@v3 + CLOUDFLARE_API_TOKEN + concurrency 원자성)                                                          | 2026-04-26 | `bf06db7` |
 | T133    | M15 internal — ci.yml ee-relay job 추가 (typecheck + test, 시크릿 없어 fork PR 통과)                                                                                            | 2026-04-26 | `bf06db7` |
+| T080    | D1 auth 스키마 마이그레이션 0002_auth.sql (user 컬럼 6 + device/passkey/oauth_account 3 신규) + Drizzle schema 동기화 + readD1Migrations TEST_MIGRATIONS 주입 + db.test.ts 4건 | 2026-04-27 | `6929c91` |
+| T081    | Passkey (WebAuthn) 4 엔드포인트 (register/start, register/verify, assert/start, assert/verify) + JWT pair (HS256 access 1h / refresh 30d) + KV challenge (5분 TTL, consume-once) + salt_auth/salt_enc base64url 응답 | 2026-04-27 | `c60e023` |
+| T082    | OAuth 2.0 (GitHub + Google) start/callback — buildAuthorizeUrl + exchangeCode + (provider, provider_id) UNIQUE 매핑 + email-private 폴백(/user/emails) + 9 회귀 테스트                    | 2026-04-27 | `11eeeea` |
+| T086    | POST /auth/refresh — refresh token rotation (use=refresh 검증, access 거부, 새 페어 발급으로 leak 윈도우 30일 제한) + 4 회귀 테스트                                                       | 2026-04-27 | `03a0480` |
 
-**완료 합계**: 100/132 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ 10/10 + **M5 ✅ 10/10** + M6 ✅ 6/6 + M7 ✅ 4/4 + M8 🔄 1/8 + M15 🔄 2/8)
+**완료 합계**: 104/132 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ 10/10 + **M5 ✅ 10/10** + M6 ✅ 6/6 + M7 ✅ 4/4 + **M8 🔄 5/8 — 서버 완료, 클라이언트 backlog** + M15 🔄 2/8)
 
 ### Audit 무결성 hotfix + payload 점검 (2026-04-25, 태스크 진행 표에는 별도 항목 아님)
 
@@ -163,6 +167,14 @@
 | :--- | :-------- |
 | **I4** Revoke 후 Radix compose-refs 무한 루프 — KillSwitchDialog/BulkRevokeDialog 부모 콜백 microtask defer | `6dda3e8` |
 | **I5** Bulk revoke filter 에 `status=Active` 추가 — `ExpectedCountMismatch` 해결 + 회귀 테스트 1 | `cc1785b` |
+| **I1/I2** Subscription 헤더 "Current plan: <Badge>" 그룹화 + Pro 활성 시 Upgrade 버튼 숨김 + 회귀 3 | `fea5562` |
+
+### Night mode 정리 작업 (2026-04-27, 태스크 진행 표에는 별도 항목 아님)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| Rust 1.95 새 clippy lint 14건 정리 (cloned_ref_to_slice_refs 9 + io_other_error 1 + unused_imports 1 + dead_code 1) | `a6b0a94` |
+| KDF salt 시그니처 일반화 `&[u8; 16]` → `&[u8]` (T085 사전작업, M8 32바이트 salt 호환) | `d3a345f` |
 
 ---
 

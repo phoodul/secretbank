@@ -2,8 +2,8 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-27 (재검증 라운드 — 라운드 A/B/C 통과 + I4/I5 P0 hotfix 종료)
-- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M15 🔄**, 100/132 태스크 (75.8%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 ✅, I1/I2/I3 backlog)
+- **Time:** 2026-04-27 PM (Night mode 1 — I1/I2 hotfix + clippy 정리 + M8 서버 측 5/8 완료)
+- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M8 🔄 5/8 (서버 완료) + M15 🔄**, 104/132 태스크 (78.8%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog)
 - **Commits (이번 세션 신규 2개):**
   - `6dda3e8` fix(kill-switch) — I4 (Radix compose-refs 무한 루프 — KillSwitchDialog/BulkRevokeDialog 부모 콜백 microtask defer)
   - `cc1785b` fix(kill-switch) — I5 (Bulk revoke filter 에 status=Active 추가, ExpectedCountMismatch 해결)
@@ -30,10 +30,24 @@
   - **I1** P3 backlog — Subscription 헤더 "Current plan" 라벨 ↔ Pro 뱃지 인접 배치
   - **I2** P2 backlog — Pro 활성 시에도 disabled "Upgrade to Pro" 버튼 노출
   - **I3** Architectural backlog — GitHub Connect 풀 플로우 4 사전 조건 (App 등록 / deep-link scheme / listener 표준화 / M8 Auth user JWT)
-- **Next (사용자 결정 대기):**
-  1. **I1/I2 hotfix** (P2/P3) — Subscription 섹션 UX 정리
-  2. **M8 Auth 진입** (T080~T086) — Relay 가동 완료로 잠금 해제, I3 도 같이 정리됨
-  3. **Playwright E2E 회귀** (tester 에이전트) — H1/H2/H3/H5 + I4/I5 lock-in
+- **이번 Night mode 처리 완료:**
+  1. ✅ **I1/I2 hotfix** — `fea5562` (Subscription 헤더 "Current plan" 그룹 + Pro 시 Upgrade 버튼 숨김 + 회귀 3)
+  2. ✅ **Rust 1.95 clippy lint 14건** — `a6b0a94` (cloned_ref_to_slice_refs 9 + io_other_error 1 + unused 2; -D warnings 통과)
+  3. ✅ **T080 D1 auth schema** — `6929c91` (0002_auth.sql + Drizzle schema 동기화 + readD1Migrations + db.test.ts 4)
+  4. ✅ **T081 Passkey 4 엔드포인트 + JWT** — `c60e023` (HS256 access 1h / refresh 30d, KV challenge 5분 consume-once, salt base64url 응답)
+  5. ✅ **T082 OAuth 2.0 (GitHub + Google)** — `11eeeea` (start/callback + provider_id UNIQUE 매핑 + email-private 폴백 + 9 회귀)
+  6. ✅ **KDF salt 시그니처 일반화** — `d3a345f` (`&[u8; 16]` → `&[u8]`, M8 32바이트 salt 호환, 기존 호출자 자동 coerce)
+  7. ✅ **T086 /auth/refresh** — `03a0480` (refresh token rotation, leak window 30일 제한, 4 회귀)
+
+  - 릴레이 vitest 35/35 / Rust crypto 5/5 / storage 39/39 / clippy -D warnings 0 / typecheck 0 / Vitest (frontend) 315/315.
+
+- **남은 큐 (Night mode 2 또는 사용자 결정 후):**
+  1. **T083** — Rust auth_* 커맨드 (RelayClient + reqwest + auth.rs 6 commands + AppContext) **— 큰 작업**
+  2. **T084** — SignIn 페이지 UI (PasskeyButton + OAuthButton + /auth/sign-in) **— 큰 frontend**
+  3. **T085** — 클라이언트 측 Session 저장 + key 파생 통합 (services/session.rs)
+  4. **I3** — GitHub Connect 풀 플로우 (deep-link scheme + listener 표준화 + Auth user JWT) — T083 와 연동
+  5. **Playwright Tauri E2E** — tauri-driver/WebView2 인프라 셋업 (사용자 결정 필요 — 인프라 결정 큰 작업)
+  6. **M9 Sync** — T085 의 enc_key 파생이 이 곳에서 active 화 됨
 
 ---
 

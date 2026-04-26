@@ -1,5 +1,48 @@
 # Work Log
 
+## 2026-04-27 PM (Night mode 1 — I1/I2 hotfix + clippy 정리 + M8 서버 측 5/8)
+
+### 세션 개요
+
+- **시간**: 2026-04-27 PM (Night mode 1, 사용자 승인 없이 연속 실행)
+- **트리거**: 사용자 — "Night mode 진입. 내가 승인하지 않고 네가 할 수 있는 일들은 모두 다 해줘."
+- **결과**: 7 커밋, M8 서버 측 5/8 완료 (Passkey + OAuth + Refresh 풀 스택), I1/I2 P2/P3 backlog 청산, Rust 1.95 clippy lint 14건 정리.
+
+### 처리한 큐 (모두 ✅)
+
+| Q | 주제 | 커밋 | 산출 |
+|:-:|:----|:----|:----|
+| Q1/Q2 | I1/I2 Subscription 헤더 정리 + Pro 시 Upgrade 버튼 숨김 | `fea5562` | 헤더 우측 "Current plan: <Badge>" 그룹화 + isPro 분기 + 회귀 3 (f/g/h) — vitest 315/315 |
+| Q3 | Rust 1.95 clippy lint 14건 정리 | `a6b0a94` | cloned_ref_to_slice_refs 9 (matcher.rs 6 + feed_normalize 3) + io_other_error 1 + unused 2; -D warnings 0 |
+| Q5a (T080) | D1 auth schema 마이그레이션 0002_auth.sql | `6929c91` | user 컬럼 6 (auth_hash/salt_auth/salt_enc/plan/plan_source/plan_expires_at) + device/passkey/oauth_account 3 신규 + Drizzle schema 동기화 + readD1Migrations 인프라 + db.test.ts 4 |
+| Q5b (T081) | Passkey (WebAuthn) 4 엔드포인트 + JWT 발급 | `c60e023` | register/start, register/verify, assert/start, assert/verify + lib/jwt.ts (HS256, access 1h / refresh 30d) + lib/webauthn.ts (@simplewebauthn/server 13.3 wrapper) + lib/kv-challenge.ts (consume-once) + 8 회귀 |
+| Q5c (T082) | OAuth 2.0 (GitHub + Google) start/callback | `11eeeea` | lib/oauth.ts (provider 분기, exchangeCode, email-private 폴백) + routes/auth/oauth.ts + (provider, provider_id) UNIQUE 매핑 + 9 회귀 |
+| Q5d (KDF) | salt 시그니처 일반화 `&[u8; 16]` → `&[u8]` | `d3a345f` | M8 32바이트 salt 호환, 기존 호출자 자동 coerce, 5/5 + 39/39 통과 |
+| Q5e (T086) | POST /auth/refresh — refresh rotation | `03a0480` | use=refresh 검증, access 거부, 새 페어 발급 (leak window 30일 제한) + 4 회귀 |
+
+### M8 진행 상태
+
+- **서버 측 (5/8 ✅)** — T079 /health · T080 D1 schema · T081 Passkey · T082 OAuth · T086 Refresh
+- **클라이언트 측 backlog (3/8)** — T083 (Rust auth_* 커맨드 + RelayClient) · T084 (SignIn UI) · T085 (Session 저장 + key 파생 통합)
+
+### 핵심 인사이트
+
+- **Cloudflare vitest-pool-workers 의 D1 마이그레이션 자동 적용 안됨**: wrangler.toml 의 `migrations_dir` 은 `wrangler dev/deploy` 만 인식. vitest 환경에서는 `readD1Migrations` + `applyD1Migrations(env.DB, env.TEST_MIGRATIONS)` 로 명시적 적용 필요. 한 번 인프라가 갖춰지면 후속 마이그레이션은 자동 picked up.
+- **Zero-Knowledge salt 디자인 분리**: `salt_auth` (서버 검증용) 와 `salt_enc` (클라이언트 enc_key 파생용) 를 같은 user 행에 함께 저장. 서버는 salt_enc 를 보관하지만 enc_key 는 절대 모름 (다른 디바이스 로그인 시 동일 enc_key 가 deterministic 하게 파생됨).
+- **JWT HS256 vs ES256 결정**: 단일 발급/검증 워커에서는 HMAC 으로 충분. ES256 + PKCS#8 PEM 은 multi-region key distribution 이 생기는 시점(M9+)에 전환.
+- **Refresh rotation**: 매 refresh 마다 새 pair 발급 → leak 된 refresh token 의 윈도우를 30일로 제한. 명시적 revocation 리스트 (KV jti) 는 후속 작업.
+- **TS 5.6+ 의 nominal Uint8Array 분리**: `Uint8Array<ArrayBufferLike>` vs `Uint8Array<ArrayBuffer>` — TextEncoder 의 결과는 ArrayBufferLike, simplewebauthn 은 ArrayBuffer 요구. cast 한 번으로 해결.
+
+### 다음 큐 (사용자 결정 후)
+
+- T083 — Rust 클라이언트 auth_* 커맨드 (큰 작업, RelayClient + reqwest + AppContext)
+- T084 — SignIn 페이지 UI (PasskeyButton + OAuthButton)
+- T085 클라이언트 측 — Session 저장 + key 파생 통합
+- I3 — GitHub Connect 풀 플로우 (deep-link scheme + listener + Auth user JWT — T083 와 함께 정리됨)
+- Playwright Tauri E2E 인프라 — tauri-driver/WebView2 셋업 결정 필요
+
+---
+
 ## 2026-04-27 (재검증 라운드 — 라운드 A/B/C 통과 + I4/I5 P0 hotfix 2건)
 
 ### 세션 개요
