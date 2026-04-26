@@ -14,29 +14,32 @@ fn argon2_instance() -> Result<Argon2<'static>, KdfError> {
 }
 
 /// Argon2id 기반 authentication hash (32 bytes).
-/// 같은 password + salt_auth 조합은 항상 동일한 값을 반환한다.
+/// 같은 password + salt 조합은 항상 동일한 값을 반환한다.
+///
+/// Salt 길이는 호출자가 결정한다 (예: 로컬 vault 16바이트, 릴레이 발급 salt 16~32바이트).
+/// argon2 crate 는 8~2^32-1 byte salt 를 허용한다.
 pub fn derive_auth_hash(
     password: &SecretString,
-    salt_auth: &[u8; 16],
+    salt: &[u8],
 ) -> Result<[u8; 32], KdfError> {
     let argon2 = argon2_instance()?;
     let mut output = [0u8; 32];
     argon2
-        .hash_password_into(password.expose_secret().as_bytes(), salt_auth, &mut output)
+        .hash_password_into(password.expose_secret().as_bytes(), salt, &mut output)
         .map_err(|e| KdfError::Argon2(e.to_string()))?;
     Ok(output)
 }
 
 /// Argon2id 기반 encryption root key (32 bytes), SecretBox 로 보호.
-/// salt_enc 는 salt_auth 와 별도의 랜덤 값을 사용해야 한다.
+/// salt 는 derive_auth_hash 와 반드시 다른 랜덤 값을 사용해야 한다.
 pub fn derive_enc_key(
     password: &SecretString,
-    salt_enc: &[u8; 16],
+    salt: &[u8],
 ) -> Result<SecretBox<[u8; 32]>, KdfError> {
     let argon2 = argon2_instance()?;
     let mut raw = [0u8; 32];
     argon2
-        .hash_password_into(password.expose_secret().as_bytes(), salt_enc, &mut raw)
+        .hash_password_into(password.expose_secret().as_bytes(), salt, &mut raw)
         .map_err(|e| KdfError::Argon2(e.to_string()))?;
     // raw 를 SecretBox 로 이전한 뒤 원본 버퍼를 즉시 zeroize 한다.
     let secret = SecretBox::new(Box::new(raw));
