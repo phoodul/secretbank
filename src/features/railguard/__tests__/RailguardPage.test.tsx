@@ -164,9 +164,7 @@ describe("RailguardPage", () => {
         projectPath: "/home/user/proj",
         rules: ALL_RULE_KINDS,
         context: expect.objectContaining({ project_name: "proj" }),
-        mode: expect.arrayContaining([
-          expect.objectContaining({ kind: "overwrite", backup: true }),
-        ]),
+        mode: { kind: "overwrite", backup: true },
       });
     });
 

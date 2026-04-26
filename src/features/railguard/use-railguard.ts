@@ -2,13 +2,11 @@ import { useCallback, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type {
   ApplyMode,
-  BatchApplyMode,
   RenderContext,
   RuleFileApplied,
   RuleFilePreview,
   RuleKind,
 } from "./types";
-import { ALL_RULE_KINDS } from "./types";
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -59,7 +57,7 @@ export interface UseRailguardResult {
     projectPath: string,
     rules: RuleKind[],
     context: RenderContext,
-    mode: BatchApplyMode,
+    mode: ApplyMode,
   ) => Promise<RuleFileApplied[]>;
   reset: () => void;
 }
@@ -100,19 +98,8 @@ export function useRailguard(): UseRailguardResult {
       projectPath: string,
       rules: RuleKind[],
       context: RenderContext,
-      batchMode: BatchApplyMode,
+      mode: ApplyMode,
     ): Promise<RuleFileApplied[]> => {
-      // Build per-kind ApplyMode array expected by Rust.
-      const modeList: ApplyMode[] = (rules.length > 0 ? rules : ALL_RULE_KINDS).map((kind) => {
-        if (batchMode.kind === "overwrite") {
-          return { tag: kind, kind: "overwrite", backup: batchMode.backup };
-        }
-        if (batchMode.kind === "append") {
-          return { tag: kind, kind: "append" };
-        }
-        return { tag: kind, kind: "skip_existing" };
-      });
-
       setState((prev) => ({
         phase: "applying",
         previews: prev.phase === "previewed" ? prev.previews : [],
@@ -123,7 +110,7 @@ export function useRailguard(): UseRailguardResult {
           projectPath,
           rules,
           context,
-          mode: modeList,
+          mode,
         });
         setState((prev) => ({
           phase: "applied",

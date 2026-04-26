@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import type { BatchApplyMode, RenderContext, RuleKind } from "./types";
+import type { ApplyMode, RenderContext, RuleKind } from "./types";
 import { ALL_RULE_KINDS, RULE_KIND_LABELS } from "./types";
 import { useRailguard } from "./use-railguard";
 import { RuleFilesPreview } from "./RuleFilesPreview";
@@ -41,7 +41,7 @@ function saveLastPath(p: string) {
 
 type ApplyModeKey = "overwrite_backup" | "overwrite_no_backup" | "append" | "skip_existing";
 
-function applyModeKeyToBatch(key: ApplyModeKey): BatchApplyMode {
+function applyModeKeyToMode(key: ApplyModeKey): ApplyMode {
   switch (key) {
     case "overwrite_backup":
       return { kind: "overwrite", backup: true };
@@ -113,7 +113,7 @@ export function RailguardPage() {
   async function handleApply() {
     if (!projectPath.trim()) return;
     const rules = [...selectedRules];
-    const mode = applyModeKeyToBatch(applyModeKey);
+    const mode = applyModeKeyToMode(applyModeKey);
     try {
       const applied = await apply(projectPath.trim(), rules, buildContext(), mode);
       const backupPaths = applied

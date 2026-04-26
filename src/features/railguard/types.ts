@@ -22,13 +22,15 @@ export interface RuleFileApplied {
   backup_path: string | null;
 }
 
+/**
+ * Mirror of Rust `ApplyMode` — a single mode applied uniformly to all selected
+ * rules during one `railguard_apply` call.
+ *
+ * Rust uses `#[serde(tag = "kind", rename_all = "snake_case")]`, so the wire
+ * shape is internally tagged: `{kind: "overwrite", backup: true}`,
+ * `{kind: "append"}`, `{kind: "skip_existing"}`.
+ */
 export type ApplyMode =
-  | { tag: RuleKind; kind: "overwrite"; backup: boolean }
-  | { tag: RuleKind; kind: "append" }
-  | { tag: RuleKind; kind: "skip_existing" };
-
-/** All rules use the same mode — one ApplyMode for the whole batch. */
-export type BatchApplyMode =
   | { kind: "overwrite"; backup: boolean }
   | { kind: "append" }
   | { kind: "skip_existing" };

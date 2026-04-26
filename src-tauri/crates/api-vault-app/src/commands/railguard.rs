@@ -395,6 +395,48 @@ mod tests {
     use super::*;
     use tempfile::TempDir;
 
+    // -----------------------------------------------------------------------
+    // Wire-format regression tests for ApplyMode.
+    //
+    // The frontend (`use-railguard.ts`) sends `mode` as a single internally-
+    // tagged object, NOT an array.  These tests pin the wire shape so a
+    // future refactor cannot silently revert to a per-rule array (which used
+    // to fail at runtime with: "invalid type: map, expected variant
+    // identifier" — see hotfix H3).
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn apply_mode_deserializes_overwrite_with_backup() {
+        let json = serde_json::json!({"kind": "overwrite", "backup": true});
+        let parsed: ApplyMode = serde_json::from_value(json).expect("must deserialize");
+        assert!(matches!(parsed, ApplyMode::Overwrite { backup: true }));
+    }
+
+    #[test]
+    fn apply_mode_deserializes_append() {
+        let json = serde_json::json!({"kind": "append"});
+        let parsed: ApplyMode = serde_json::from_value(json).expect("must deserialize");
+        assert!(matches!(parsed, ApplyMode::Append));
+    }
+
+    #[test]
+    fn apply_mode_deserializes_skip_existing() {
+        let json = serde_json::json!({"kind": "skip_existing"});
+        let parsed: ApplyMode = serde_json::from_value(json).expect("must deserialize");
+        assert!(matches!(parsed, ApplyMode::SkipExisting));
+    }
+
+    #[test]
+    fn apply_mode_rejects_array_input() {
+        // FE used to wrap the mode in a Vec<{tag, kind, ...}> per rule.
+        // The current Rust API expects a single ApplyMode — confirm that an
+        // array fails so a regression is caught at the test layer instead
+        // of at runtime.
+        let json = serde_json::json!([{"kind": "overwrite", "backup": true}]);
+        let parsed = serde_json::from_value::<ApplyMode>(json);
+        assert!(parsed.is_err(), "array shape must not deserialize as ApplyMode");
+    }
+
     fn make_ctx() -> RenderContext {
         RenderContext {
             project_name: "TestApp".to_owned(),

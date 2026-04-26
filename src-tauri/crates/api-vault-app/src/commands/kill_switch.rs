@@ -392,7 +392,14 @@ pub async fn kill_switch_request_confirm(
 }
 
 /// Input payload for `kill_switch_revoke`.
+///
+/// Tauri auto-converts top-level command arguments between camelCase (JS) and
+/// snake_case (Rust), but **nested struct fields are deserialized by serde
+/// using the field names as written**. The frontend sends camelCase keys
+/// (`credId`, `alsoDeleteValue`), so this struct must opt into camelCase
+/// deserialization to match.
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct KillSwitchRevokeInput {
     pub cred_id: String,
     pub token: String,
@@ -440,7 +447,10 @@ pub async fn kill_switch_request_confirm_issuer(
 }
 
 /// Input payload for `kill_switch_revoke_issuer`.
+///
+/// See `KillSwitchRevokeInput` for the rationale behind `rename_all = "camelCase"`.
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct KillSwitchRevokeIssuerInput {
     pub issuer_id: String,
     pub token: String,
@@ -538,6 +548,48 @@ mod tests {
     use crate::services::device_identity::DeviceIdentity;
 
     use super::*;
+
+    // -----------------------------------------------------------------------
+    // Wire-format regression tests — locks the FE↔Rust contract.
+    //
+    // Tauri auto-converts top-level command args between camelCase (JS) and
+    // snake_case (Rust), but **does not touch nested struct fields**.  The
+    // frontend (`use-kill-switch.ts`) sends camelCase keys, so these inputs
+    // must opt in via `#[serde(rename_all = "camelCase")]`.  These tests
+    // assert the wire shape so that a future field rename or a missing
+    // serde attribute is caught immediately rather than at runtime in the
+    // UI.
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn revoke_input_deserializes_from_camel_case_json() {
+        let json = serde_json::json!({
+            "credId": "01HXXX0000000000000000000A",
+            "token": "deadbeefdeadbeefdeadbeefdeadbeef",
+            "alsoDeleteValue": true,
+        });
+        let parsed: KillSwitchRevokeInput =
+            serde_json::from_value(json).expect("camelCase JSON must deserialize");
+        assert_eq!(parsed.cred_id, "01HXXX0000000000000000000A");
+        assert_eq!(parsed.token, "deadbeefdeadbeefdeadbeefdeadbeef");
+        assert!(parsed.also_delete_value);
+    }
+
+    #[test]
+    fn revoke_issuer_input_deserializes_from_camel_case_json() {
+        let json = serde_json::json!({
+            "issuerId": "01HYYY0000000000000000000B",
+            "token": "cafebabecafebabecafebabecafebabe",
+            "alsoDeleteValues": false,
+            "expectedCount": 3,
+        });
+        let parsed: KillSwitchRevokeIssuerInput =
+            serde_json::from_value(json).expect("camelCase JSON must deserialize");
+        assert_eq!(parsed.issuer_id, "01HYYY0000000000000000000B");
+        assert_eq!(parsed.token, "cafebabecafebabecafebabecafebabe");
+        assert!(!parsed.also_delete_values);
+        assert_eq!(parsed.expected_count, Some(3));
+    }
 
     // -----------------------------------------------------------------------
     // Test helpers
