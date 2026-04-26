@@ -24,6 +24,19 @@ id = "fc136f6dcd6344e5819ce536a2ec70db"
 GITHUB_APP_ID = ""
 LOG_LEVEL = "info"
 
-# secrets (wrangler secret put 으로 주입)
-# GITHUB_APP_PRIVATE_KEY     RS256 PEM
-# GITHUB_WEBHOOK_SECRET      webhook 서명 검증용
+# WebAuthn / Auth — production 배포 시 사용자 도메인으로 교체
+RP_ID = "localhost"
+RP_NAME = "API Vault"
+# 콤마 구분. Tauri prod webview 는 tauri://localhost, vite dev 는 http://localhost:1420.
+RP_ORIGINS = "tauri://localhost,http://localhost:1420,http://localhost:8787"
+
+# OAuth public 메타 — client_id 는 시크릿 아님 (검색해도 OK)
+GITHUB_OAUTH_CLIENT_ID = ""
+GOOGLE_OAUTH_CLIENT_ID = ""
+
+# secrets (wrangler secret put 으로 주입) — production
+# GITHUB_APP_PRIVATE_KEY        RS256 PEM
+# GITHUB_WEBHOOK_SECRET         webhook 서명 검증용
+# JWT_SIGNING_KEY               HMAC HS256 secret (32+ chars)
+# GITHUB_OAUTH_CLIENT_SECRET    OAuth code → access_token 교환용
+# GOOGLE_OAUTH_CLIENT_SECRET    OAuth code → access_token 교환용
