@@ -101,13 +101,25 @@ export function useSubjectLabels(): SubjectLabelMaps {
  *
  * Returns `"name (…id)"` when found, or `"kind:shortId"` for unknown/deleted
  * subjects and non-lookup kinds (issuer, deployment, settings, etc.).
+ *
+ * Tail-truncation is only applied to ULID-shaped ids (26 chars in Crockford
+ * base32).  For literal short ids — e.g. the single-user `"default"` user id
+ * used by `vault.unlock`/`vault.lock` records, or any future numeric/short
+ * key — slicing the last 6 characters produces nonsense like `"efault"`
+ * (hotfix H2), so we render the value verbatim in that case.
  */
+const ULID_SHAPE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
+function shortenSubjectId(subjectId: string): string {
+  return ULID_SHAPE.test(subjectId) ? subjectId.slice(-6) : subjectId;
+}
+
 export function resolveSubjectLabel(
   subjectKind: string,
   subjectId: string,
   maps: Pick<SubjectLabelMaps, "credentials" | "projects">,
 ): string {
-  const shortId = subjectId.slice(-6);
+  const shortId = shortenSubjectId(subjectId);
 
   if (subjectKind === "credential") {
     const name = maps.credentials.get(subjectId);
