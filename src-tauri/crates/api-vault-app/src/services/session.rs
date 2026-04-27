@@ -26,8 +26,10 @@
 //! sees the access JWT it issued, but it never sees the refresh token at
 //! rest — only when the desktop client explicitly POSTs `/auth/refresh`).
 
+use api_vault_crypto::{kdf, KdfError};
 use api_vault_storage::vault::{ExposeSecret, SecretBytes, VaultError, VaultStorage};
-use secrecy::SecretString;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use secrecy::{SecretBox, SecretString};
 use serde::Deserialize;
 
 /// Vault key prefix for authenticated session material.
@@ -194,6 +196,90 @@ async fn read_string(
 }
 
 // ---------------------------------------------------------------------------
+// T085 — Zero-Knowledge KDF: 릴레이 발급 salt + 사용자 master passphrase
+//        로 (auth_hash, enc_key) 한 쌍을 결정론적으로 파생한다.
+// ---------------------------------------------------------------------------
+
+/// Errors emitted by [`derive_session_keys`].
+#[derive(Debug, thiserror::Error)]
+pub enum SessionKdfError {
+    /// 릴레이가 보낸 base64url salt 가 깨졌다.
+    #[error("invalid base64url salt ({field}): {message}")]
+    InvalidSalt {
+        field: &'static str,
+        message: String,
+    },
+
+    /// `salt_auth` 와 `salt_enc` 가 같다 — 릴레이 측 결함이거나 위조 가능성.
+    /// 같은 salt 면 두 키가 동일해져 zero-knowledge invariant 가 깨진다.
+    #[error("salt_auth and salt_enc must differ — refusing to derive identical keys")]
+    SaltsIdentical,
+
+    /// Argon2 / KDF 자체가 실패했다.
+    #[error("kdf error: {0}")]
+    Kdf(#[from] KdfError),
+}
+
+/// Output of [`derive_session_keys`].
+///
+/// - `auth_hash` is sent to the relay (`auth_hash` field on register/sign-in)
+///   so the server can verify the password without ever seeing it. Safe to
+///   transmit — it is HMAC-grade output of Argon2id.
+/// - `enc_key` **never leaves the device**. It is the root key for the local
+///   age vault re-encryption and downstream HKDF (CRDT, sync) — leaking it
+///   defeats Zero-Knowledge.
+pub struct DerivedSessionKeys {
+    pub auth_hash: [u8; 32],
+    pub enc_key: SecretBox<[u8; 32]>,
+}
+
+/// Derive a `(auth_hash, enc_key)` pair from a vault master passphrase and
+/// the relay-issued `salt_auth` / `salt_enc` (both base64url-encoded as
+/// returned by the Passkey/OAuth endpoints).
+///
+/// # Determinism
+/// For a fixed `(passphrase, salt_auth, salt_enc)` triple this returns the
+/// same pair every call — that is the property M9 sync depends on so the
+/// same enc_key is reproducible across devices the user signs into.
+///
+/// # Why two salts?
+/// Zero-Knowledge: the server stores `salt_auth` and the password's
+/// `auth_hash`, never the password or `enc_key`. If only one salt existed,
+/// any leak of `auth_hash` (e.g. via the wire) would reveal the input to
+/// `enc_key`. Splitting the salts ensures the two derivations are
+/// cryptographically independent even though they share the passphrase.
+pub fn derive_session_keys(
+    passphrase: &SecretString,
+    salt_auth_b64: &str,
+    salt_enc_b64: &str,
+) -> Result<DerivedSessionKeys, SessionKdfError> {
+    let salt_auth = URL_SAFE_NO_PAD
+        .decode(salt_auth_b64)
+        .map_err(|e| SessionKdfError::InvalidSalt {
+            field: "salt_auth",
+            message: e.to_string(),
+        })?;
+    let salt_enc = URL_SAFE_NO_PAD
+        .decode(salt_enc_b64)
+        .map_err(|e| SessionKdfError::InvalidSalt {
+            field: "salt_enc",
+            message: e.to_string(),
+        })?;
+
+    if salt_auth == salt_enc {
+        return Err(SessionKdfError::SaltsIdentical);
+    }
+
+    let auth_hash = kdf::derive_auth_hash(passphrase, &salt_auth)?;
+    let enc_key = kdf::derive_enc_key(passphrase, &salt_enc)?;
+
+    Ok(DerivedSessionKeys {
+        auth_hash,
+        enc_key,
+    })
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -292,6 +378,76 @@ mod tests {
         assert!(load_session(vault.as_ref()).await.unwrap().is_none());
         let remaining = vault.list_secrets(VAULT_PREFIX).await.unwrap();
         assert!(remaining.is_empty(), "expected no auth/* keys, got {remaining:?}");
+    }
+
+    // -----------------------------------------------------------------------
+    // T085: derive_session_keys — 결정론 + zero-knowledge invariants
+    // -----------------------------------------------------------------------
+
+    fn b64url(bytes: &[u8]) -> String {
+        URL_SAFE_NO_PAD.encode(bytes)
+    }
+
+    /// 같은 (passphrase, salt_auth, salt_enc) 는 같은 (auth_hash, enc_key) 를
+    /// 두 번 부르면 그대로 재현해야 한다 — 이게 깨지면 다른 디바이스 sign-in
+    /// 에서 enc_key 가 달라져 sync 가 망가진다.
+    #[test]
+    fn derive_session_keys_is_deterministic() {
+        use secrecy::ExposeSecret as _;
+        let pw = SecretString::from("correct horse battery staple".to_owned());
+        let salt_a = b64url(&[1u8; 32]);
+        let salt_e = b64url(&[2u8; 32]);
+
+        let k1 = derive_session_keys(&pw, &salt_a, &salt_e).unwrap();
+        let k2 = derive_session_keys(&pw, &salt_a, &salt_e).unwrap();
+        assert_eq!(k1.auth_hash, k2.auth_hash);
+        assert_eq!(
+            k1.enc_key.expose_secret(),
+            k2.enc_key.expose_secret(),
+        );
+    }
+
+    /// salt_auth 와 salt_enc 가 다르면 auth_hash 와 enc_key 도 달라야 한다.
+    /// (같은 salt 면 두 출력이 동일해져 auth_hash 가 곧 enc_key 가 되어
+    /// Zero-Knowledge 가 깨진다.)
+    #[test]
+    fn derive_session_keys_with_different_salts_yields_different_keys() {
+        use secrecy::ExposeSecret as _;
+        let pw = SecretString::from("pw".to_owned());
+        let keys = derive_session_keys(&pw, &b64url(&[1u8; 32]), &b64url(&[2u8; 32])).unwrap();
+        assert_ne!(
+            &keys.auth_hash[..],
+            keys.enc_key.expose_secret().as_slice(),
+            "auth_hash must not equal enc_key when salts differ"
+        );
+    }
+
+    /// salt_auth == salt_enc 인 경우는 명시적으로 거부한다 — 위조된 릴레이
+    /// 응답 또는 서버 결함을 잡는 가드.
+    #[test]
+    fn derive_session_keys_rejects_identical_salts() {
+        let pw = SecretString::from("pw".to_owned());
+        let same = b64url(&[7u8; 32]);
+        let result = derive_session_keys(&pw, &same, &same);
+        assert!(result.is_err());
+        match result {
+            Err(SessionKdfError::SaltsIdentical) => {}
+            Err(other) => panic!("expected SaltsIdentical, got {other:?}"),
+            Ok(_) => panic!("expected SaltsIdentical, got Ok(_)"),
+        }
+    }
+
+    /// 깨진 base64url 은 InvalidSalt 로 매핑되어야 한다 — Argon2 단계에 도달하지
+    /// 않고 일찍 실패해야 한다.
+    #[test]
+    fn derive_session_keys_rejects_malformed_base64() {
+        let pw = SecretString::from("pw".to_owned());
+        let result = derive_session_keys(&pw, "***not-base64***", &b64url(&[2u8; 32]));
+        match result {
+            Err(SessionKdfError::InvalidSalt { field, .. }) => assert_eq!(field, "salt_auth"),
+            Err(other) => panic!("expected InvalidSalt(salt_auth), got {other:?}"),
+            Ok(_) => panic!("expected error, got Ok(_)"),
+        }
     }
 
     // -----------------------------------------------------------------------

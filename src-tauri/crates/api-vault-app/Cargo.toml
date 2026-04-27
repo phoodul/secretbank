@@ -55,6 +55,9 @@ sha2 = { workspace = true }
 reqwest = { workspace = true }
 url = "2"
 
+# Relay salt (base64url) → KDF (T085)
+base64 = { workspace = true }
+
 # Tauri plugins (optional — disabled in test builds to skip problematic build scripts)
 tauri-plugin-sql      = { version = "2", features = ["sqlite"], optional = true }
 tauri-plugin-clipboard-manager = { version = "2", optional = true }

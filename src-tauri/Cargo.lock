@@ -162,6 +162,7 @@ dependencies = [
  "api-vault-railguard",
  "api-vault-storage",
  "async-trait",
+ "base64 0.22.1",
  "ed25519-dalek",
  "hex",
  "rand 0.8.6",
