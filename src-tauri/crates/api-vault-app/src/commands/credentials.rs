@@ -478,6 +478,13 @@ mod tests {
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
+            relay_client: Arc::new(
+                crate::services::relay_client::RelayClient::new(
+                    url::Url::parse("http://localhost").unwrap(),
+                )
+                .unwrap(),
+            ),
+            auth_session: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -594,6 +601,13 @@ mod tests {
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
+            relay_client: Arc::new(
+                crate::services::relay_client::RelayClient::new(
+                    url::Url::parse("http://localhost").unwrap(),
+                )
+                .unwrap(),
+            ),
+            auth_session: Arc::new(RwLock::new(None)),
         };
 
         // Perform the rotate (abbreviated — vault + SQLite update then audit).

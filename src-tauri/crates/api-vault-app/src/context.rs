@@ -15,6 +15,8 @@ use crate::audit_ctx::AuditCtx;
 use crate::commands::kill_switch::{ConfirmTokenStore, IssuerConfirmTokenStore};
 use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
+use crate::services::relay_client::RelayClient;
+use crate::services::session::AuthSession;
 
 /// Application-wide shared state, managed by Tauri.
 ///
@@ -70,6 +72,21 @@ pub struct AppContext {
     /// `kill_switch_request_confirm_issuer` 가 발급하고
     /// `kill_switch_revoke_issuer` 가 소비(one-shot)한다.
     pub issuer_kill_switch_tokens: Arc<IssuerConfirmTokenStore>,
+
+    /// Cloudflare Workers 릴레이 HTTP 클라이언트 (M8 Auth · M9 Sync 공유).
+    ///
+    /// 앱 시작 시 SQLite settings 의 `relay_url` override 또는 빌드 프로필
+    /// 기본값(dev=localhost:8787, release=https://api-vault.app)으로 1회 초기화.
+    /// `reqwest::Client` 가 내부적으로 connection pool 을 가지므로 재생성하지
+    /// 않고 모든 `auth_*` / `sync_*` 커맨드가 같은 인스턴스를 공유한다.
+    pub relay_client: Arc<RelayClient>,
+
+    /// 인증된 사용자 세션 (M8 Auth — T083).
+    ///
+    /// `auth_passkey_*` / `auth_oauth_*` 성공 시 채워지고,
+    /// `auth_signout` 또는 `vault_lock` 시 `None` 으로 초기화된다.
+    /// 영속 사본은 age 볼트의 `auth/*` 키 (services/session.rs 참조).
+    pub auth_session: Arc<RwLock<Option<AuthSession>>>,
 }
 
 impl AppContext {
@@ -98,6 +115,10 @@ impl AppContext {
         // Audit context — shares pool and device_identity.
         let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));
 
+        // Relay HTTP client — resolved from SQLite settings + build-profile default.
+        // Treat lookup failure as fatal: without a relay we can't sign in or sync.
+        let relay_client = Arc::new(RelayClient::from_settings(&pool).await?);
+
         Ok(Self {
             vault: Arc::new(RwLock::new(vault)),
             pool,
@@ -109,6 +130,8 @@ impl AppContext {
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
+            relay_client,
+            auth_session: Arc::new(RwLock::new(None)),
         })
     }
 
