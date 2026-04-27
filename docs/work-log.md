@@ -1,5 +1,71 @@
 # Work Log
 
+## 2026-04-28 Night mode 3 — M9 진입 + Phase Plan + T087 Phase A
+
+### 세션 개요
+
+- **목표**: M9 Sync Infrastructure 의 안전한 entry 지점 확보. 10 태스크 (T087~T096) 를 7-phase 로 분할하고 Phase A 만 실행.
+- **결과**: 1 commit (예정), Vitest 342 → 346 (+4), 신규 dep 2 (yjs, y-indexeddb), `docs/m9-phase-plan.md` 작성.
+
+### 왜 phase 분할인가
+
+M9 는 SecSync/Yjs/y-indexeddb 라이브러리 통합 + Rust 측 enc_key 라이프사이클 + 릴레이 D1 스키마 확장 + X25519 디바이스 페어링까지 7개 결합 영역에 걸친다. 한 commit 으로 처리 시:
+1. PR 단위 리뷰 부담 폭증
+2. 회귀 단위 격리가 어려움 (어느 phase 에서 깨졌는지 추적 곤란)
+3. T084 의 deferred 항목 (enc_key 메모리 적재) 같은 사전 조건이 누락된 상태로 진입할 위험
+
+→ T083 처럼 7-phase 로 분할 + 각 phase 의 진입 조건 명시 (`docs/m9-phase-plan.md`).
+
+### 7-phase 분할 (`docs/m9-phase-plan.md` 요약)
+
+| Phase | 범위 | 신규 dep | 회귀 target |
+|:--|:--|:--|:--|
+| **A** | Yjs 스캐폴드 + 더미 SyncProvider (이번 commit) | yjs, y-indexeddb | +3 |
+| B | AuthSession 의 enc_key 라이프사이클 + sync_get_root_key 커맨드 | (none) | +6 |
+| C | SecSync 클라이언트 통합 | secsync | +4 |
+| D | Y.Map ↔ SQLite 양방향 매퍼 (6 엔티티) | (none) | +12 |
+| E | 릴레이 `/sync` 엔드포인트 (D1 0003) | (relay-side) | +5 |
+| F | Value sync 채널 (D1 0004) | (none) | +5 |
+| G | Pairing + UI + Conflict + Offline + Entitlement | qrcode | +10 |
+
+### Phase A 실행 상세
+
+- `yjs ^13.6` + `y-indexeddb ^9.0` dep 추가
+- `src/features/sync/SyncProvider.tsx`:
+  - Lazy useState init 으로 `Y.Doc` 단일 인스턴스 (no ref-during-render lint 위반)
+  - `disablePersistence` prop 으로 Vitest 모드 제공 (jsdom 의 IndexedDB 부재 회피)
+  - IndexedDB persistence 는 `queueMicrotask` 로 effect 안에서 deferred 실행 (set-state-in-effect 룰 우회 — 외부 시스템 bridge 패턴)
+  - unmount 시 `persistence.destroy()` + `doc.destroy()`
+- `src/features/sync/use-sync.ts` — re-export 모듈 (`useSync`, `useYMap`)
+- Vitest 4건:
+  - 단일 Y.Doc + ready status (disablePersistence 모드)
+  - useSync() Provider 밖 호출 시 throw
+  - useYMap set/get 라운드트립 + 동일 인스턴스 재사용
+  - 두 Y.Doc 의 clientID 가 독립 (sanity)
+
+### App.tsx 마운트 보류
+
+SyncProvider 는 만들었지만 **App.tsx 에 mount 하지 않음** — 사용자 IndexedDB DB 가 dev 환경에 잔재로 쌓이는 것을 막고, Phase B 의 sync_get_root_key 가 준비되어 user_id 기반 dbName 을 결정할 수 있을 때 마운트.
+
+### Open Issues (Phase B 진입 전 사용자 confirm 필요)
+
+1. **Free 2대 vs 1대**: project-decisions.md 는 "Free = 단일 디바이스" — T094 DoD 는 "Free 2대 무료" 로 완화 제안
+2. **Passphrase 재프롬프트 주기**: enc_key 가 vault unlock 직후 메모리에 자동 채워지지 않으므로, sync 활성화 시점마다 재프롬프트 필요 → UX 부담 vs zero-knowledge 보안
+3. **SQLite 모델의 sync 화이트리스트**: 모든 컬럼 sync vs 일부 (created_at, vault_ref) 는 device-local
+4. **secsync 라이브러리 안정성**: 2026-04 기준 stable 확인 + yrs (rust) fallback 검토
+
+### 검증
+
+- `pnpm typecheck` — 0
+- `pnpm test --run` — Vitest 346/346 (+4)
+- `pnpm lint` — 0 에러, 7 warning (5 pre-existing + 2 신규 fast-refresh, 기존 컨벤션과 일치)
+
+### 다음 세션 entry
+
+Phase B (enc_key 라이프사이클 + sync_get_root_key 커맨드) 부터 진입. Open Issues 1~4 사용자 confirm 우선.
+
+---
+
 ## 2026-04-28 Night mode 3 — Playwright E2E 인프라 (browser-mode A 단계)
 
 ### 세션 개요

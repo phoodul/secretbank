@@ -2,8 +2,8 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-28 Night mode 3 (T084 + I3 + Playwright browser-mode E2E 인프라 완료, 다음 M9 Sync 진입)
-- **Phase:** Phase 3 — Implementation, **M4~M8 ✅ + M5 10/10 ✅ + M8 8/8 ✅ + M15 🔄**, 110/132 태스크 (83.3%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, **4-28 I3 ✅ listener 표준화** + J2 ✅ + J1 docs ✅)
+- **Time:** 2026-04-28 Night mode 3 (T084 + I3 + Playwright + M9 Phase A 4 작업 연속 완료, 다음 세션은 M9 Open Issues confirm + Phase B 진입)
+- **Phase:** Phase 3 — Implementation, **M4~M8 ✅ + M5 10/10 ✅ + M8 8/8 ✅ + M9 🔄 Phase A 1/7 + M15 🔄**, 110/132 태스크 (83.3%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, **4-28 I3 ✅ listener 표준화 + Playwright E2E 인프라 ✅ + M9 Phase Plan ✅** + J2 ✅ + J1 docs ✅)
 - **Commits (T083 Phase A~D + 검증 hotfix 신규 6개):**
   - `1ec7a15` feat(auth) — T083 Phase A · RelayClient + AuthSession 서비스 골격 + AppContext 확장 (회귀 12)
   - `2f17917` feat(auth) — T083 Phase B · Passkey 4 커맨드 (register/assert × start/verify) + AuthCommandError + complete_session 헬퍼 (회귀 6)
@@ -63,9 +63,17 @@
   1. ✅ **T084** — `/auth/sign-in` 풀 페이지 + PasskeyButton (assert→register fallback 단일 버튼 UX) + OAuthButton (github/google) + deep-link `apivault://auth/callback` listener + Settings CloudSyncSection 진입점 + `@simplewebauthn/browser` dep + i18n 4 로케일 + Vitest +19. M8 마지막 1건 클로즈, **M8 8/8 ✅ 풀 완료**.
   2. ✅ **I3** — `useGithubIntegration` 의 deep-link listener 표준화. `deep-link://github-callback` (lib.rs 가 emit 안 함, dead path) → `deep-link` 이벤트 + `apivault://github/callback` URL prefix 매칭. `parseGithubCallbackUrl` 헬퍼 + Vitest +8 + Setup URL 운영 가이드 강화. 4 사전 조건 모두 ✅, 풀 플로우 unblocked (실 GitHub App 등록 + 릴레이 배포는 사용자 액션 필요).
   3. ✅ **Playwright browser-mode E2E** — `e2e/` 디렉토리, `tauri-mock.ts` invoke polyfill, smoke 3 case (LockScreen / 라우팅 / SignInPage). CI `e2e` 잡 + frontend 잡에 Vitest 통합 (이전 누락). Desktop binary E2E (tauri-driver) 는 deferred — 진입 트리거 3가지 명시 (Sync 회귀 누적 / M11 / M13).
+  4. ✅ **M9 Phase Plan + T087 Phase A** — 10 태스크를 7-phase 로 분할 (`docs/m9-phase-plan.md`), Phase A 만 안전 실행 (yjs + y-indexeddb dep, 더미 SyncProvider, Vitest +4). App.tsx 마운트 보류, Phase B 의 enc_key 라이프사이클 작업이 준비된 후 마운트.
 
-- **다음 Night mode 큐 (사용자 승인 없이 연속 실행):**
-  1. **M9 Sync** — T085 의 enc_key 파생이 활성화되는 시점, M8 완성 후 진입 가능. T087~T096 (10 태스크) 시작.
+- **Pending decisions (다음 세션 Gate 1 전에 사용자 confirm 필요):**
+  1. **Free 디바이스 수**: project-decisions.md "Free = 단일 디바이스" vs T094 DoD "Free 2대" — 어느 쪽?
+  2. **Sync 활성화 시 passphrase 재프롬프트 정책**: vault unlock 직후 자동 vs sync 활성화 시점 사용자 입력 — UX vs zero-knowledge
+  3. **SQLite sync 화이트리스트**: 모든 컬럼 sync vs 일부 device-local (created_at, vault_ref 등)
+  4. **secsync 라이브러리 채택**: 2026-04 stable 확인 후 결정. 깨졌으면 yrs 기반 자체 구현 검토
+
+- **다음 Night mode 큐:**
+  1. **M9 Phase B** — AuthSession enc_key 메모리 적재 + `sync_get_root_key` 커맨드 (Open Issues 2 결정 후)
+  2. **M9 Phase C~G** — `docs/m9-phase-plan.md` 순차 실행
 
 - **T084 의 deferred 항목 (M9 진입 시점에 처리):**
   - 성공 후 redirect 경로를 `/settings/sync` 로 변경 (현재 `/settings`)
