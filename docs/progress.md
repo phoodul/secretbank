@@ -2,8 +2,8 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-28 (T083 수동 검증 라운드 — A/B/C/D/E 18 통과 + J1/J2 결함 fix + 2 deferred)
-- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M8 🔄 7/8 (서버 완료 + T083 클라 완료 + T086 클라 완료 — T084 UI / T085 KDF 통합 backlog) + M15 🔄**, 108/132 태스크 (81.8%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog, **4-28 J2 ✅ + J1 docs ✅**)
+- **Time:** 2026-04-28 (T085 KDF 통합 완료 → M8 백엔드 8/8 ✅ — 다음 세션 Night mode 진입 준비)
+- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M8 백엔드 8/8 ✅ (T084 SignIn UI 만 남음) + M15 🔄**, 109/132 태스크 (82.6%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog, **4-28 J2 ✅ + J1 docs ✅**)
 - **Commits (T083 Phase A~D + 검증 hotfix 신규 6개):**
   - `1ec7a15` feat(auth) — T083 Phase A · RelayClient + AuthSession 서비스 골격 + AppContext 확장 (회귀 12)
   - `2f17917` feat(auth) — T083 Phase B · Passkey 4 커맨드 (register/assert × start/verify) + AuthCommandError + complete_session 헬퍼 (회귀 6)
@@ -11,8 +11,10 @@
   - `7df5888` feat(auth) — T083 Phase D · auth_refresh / auth_signout / auth_status + hydrate_session_from_vault 자동 통합 (T086 클라이언트 측 완성, 회귀 5)
   - `a63133c` docs — T083 5-Phase 종료 · task.md / progress.md / work-log.md 갱신
   - `5a556d4` fix(auth) — J2 · register/assert start 에 vault unlocked 가드 (OS↔DB 분리 회복불가 패턴 차단, 회귀 2)
-- **Tests (4-28 J2 hotfix 후):**
-  - Rust api-vault-app lib: **132 passed** (102 → 132, T083 Phase A 12 + B 6 + C 5 + D 5 + J2 2 = +30)
+  - `f7b6c9e` docs — J1 + T083 수동 검증 라운드 종합 기록 (README/relay-deployment runbook 경고 + work-log 인사이트)
+  - `17da027` feat(auth) — T085 · Zero-Knowledge KDF (salt_auth/salt_enc → auth_hash/enc_key) 결정론 통합 + 회귀 4. **M8 백엔드 8/8 완료**
+- **Tests (4-28 T085 종료 시점):**
+  - Rust api-vault-app lib: **136 passed** (102 → 136, T083 Phase A 12 + B 6 + C 5 + D 5 + J2 2 + T085 4 = +34)
   - relay vitest 35 / Rust crypto 5 / storage 39 / 전체 워크스페이스 모두 그린
   - clippy --workspace --all-targets -D warnings: **0 에러**
   - typecheck / Vitest(frontend): 영향 없음 (FE 변경 없음)
@@ -47,19 +49,21 @@
 
   - 릴레이 vitest 35/35 / Rust crypto 5/5 / storage 39/39 / clippy -D warnings 0 / typecheck 0 / Vitest (frontend) 315/315.
 
-- **이번 라운드 처리 완료 (T083 5 Phase 중 4 commit):**
-  1. ✅ **Phase A** services/relay_client.rs + services/session.rs + AppContext 확장 — `1ec7a15`
-  2. ✅ **Phase B** Passkey 4 커맨드 + complete_session — `2f17917`
-  3. ✅ **Phase C** OAuth 2 커맨드 + deep link 인프라 — `e159415`
-  4. ✅ **Phase D** refresh / signout / status + hydrate (T086 클라 마무리) — `7df5888`
-  5. 🔄 **Phase E** 통합 + 문서 (이번 커밋)
+- **이번 세션 처리 완료 (M8 백엔드 8/8):**
+  1. ✅ T083 Phase A — services 골격 (`1ec7a15`)
+  2. ✅ T083 Phase B — Passkey 4 커맨드 (`2f17917`)
+  3. ✅ T083 Phase C — OAuth + deep link (`e159415`)
+  4. ✅ T083 Phase D — refresh/signout/status + hydrate (`7df5888`)
+  5. ✅ docs — Phase E 갱신 (`a63133c`)
+  6. ✅ J2 hotfix — register/assert start vault 가드 (`5a556d4`)
+  7. ✅ docs — J1 + 검증 종합 기록 (`f7b6c9e`)
+  8. ✅ T085 — Zero-Knowledge KDF (`17da027`)
 
-- **남은 큐:**
-  1. **T084** — SignIn 페이지 UI (PasskeyButton + OAuthButton + /auth/sign-in + deep-link 이벤트 listener)
-  2. **T085** — 클라이언트 측 KDF 통합 (passkey verify 응답의 salt_auth/salt_enc 로 enc_key 파생 + auth_hash)
-  3. **I3** — GitHub Connect 풀 플로우 (Auth user JWT 가 이제 가능, T083 클라 백엔드 완성으로 unblocked)
-  4. **Playwright Tauri E2E** — tauri-driver/WebView2 인프라 셋업 (사용자 결정 필요)
-  5. **M9 Sync** — T085 의 enc_key 파생이 활성화되는 시점
+- **다음 세션 Night mode 큐 (사용자 승인 없이 연속 실행):**
+  1. **T084** — SignIn 페이지 UI (PasskeyButton + OAuthButton + /auth/sign-in + deep-link listener) → derive_session_keys 호출 통합 → 회원가입 풀 플로우 완성. **D2/D3 deep-link 검증도 여기서 자연스럽게 끝남**
+  2. **I3** — GitHub Connect 풀 플로우 (T083 클라 + Auth user JWT 로 이제 unblocked)
+  3. **Playwright Tauri E2E 인프라** — tauri-driver/WebView2 셋업 (큰 인프라 결정, Night mode 큐에 두되 설치 단계는 사용자 액션 필요할 수 있음)
+  4. **M9 Sync** — T085 의 enc_key 파생이 활성화되는 시점, M8 SignIn UI 완성 후 진입 가능
 
 ---
 

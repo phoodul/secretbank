@@ -1,5 +1,61 @@
 # Work Log
 
+## 2026-04-28 (T085 KDF 통합 + 세션 마무리 — M8 백엔드 8/8 ✅)
+
+### 세션 개요
+
+- **시간**: 2026-04-28 (interactive — T083 수동 검증 종료 후 짧은 마무리 작업)
+- **목표**: M8 백엔드 클로즈. 다음 세션은 T084 부터 Night mode 진입.
+- **결과**: 1 commit (`17da027`), api-vault-app lib 132 → 136 (+4), M8 7/8 → 8/8 ✅
+
+### T085 — Zero-Knowledge KDF 통합
+
+**왜 thin wrapper 였는가**:
+- KDF 코어 (`derive_auth_hash` / `derive_enc_key` / `derive_subkey`) 는 이미 T017 에서 완성
+- KDF salt 시그니처 `&[u8]` 일반화 (`d3a345f`) 가 사전작업으로 끝나 32바이트 릴레이 salt 도 그대로 호환
+- 서버 측 salt 발급 (`salt_auth`, `salt_enc`) 도 T081/T082 에서 응답에 포함되어 있음
+- → T085 의 실작업은 base64url 디코드 + Zero-Knowledge 가드만
+
+**API**: `derive_session_keys(passphrase, salt_auth_b64, salt_enc_b64) → DerivedSessionKeys{auth_hash: [u8;32], enc_key: SecretBox<[u8;32]>}`
+
+**핵심 디자인**:
+- `DerivedSessionKeys` 는 Debug 안 derive — 시크릿 마스킹. `enc_key` 는 절대 디바이스 떠나지 않음, `auth_hash` 만 릴레이로 전송
+- `SaltsIdentical` 가드 — `salt_auth == salt_enc` 면 두 출력이 동일해져 Zero-Knowledge 가 깨지므로 명시적 거부 (릴레이 결함/위조 감지)
+- `InvalidSalt{field}` 가드 — 깨진 base64url 은 Argon2 단계 도달 전 일찍 실패
+- `SessionKdfError::Kdf(KdfError)` — 기존 KdfError 자동 래핑
+
+**회귀 4건**:
+- 결정론 — 같은 (passphrase, salts) → 같은 (auth_hash, enc_key)
+- 다른 salt → 다른 키 (auth_hash != enc_key)
+- 같은 salt 거부 → SaltsIdentical
+- malformed base64url → InvalidSalt(salt_auth)
+
+### M8 마무리 상태
+
+| 항목 | 상태 |
+|:--|:--|
+| 서버 5/5 | ✅ T079 health · T080 D1 schema · T081 Passkey · T082 OAuth · T086 Refresh |
+| 클라이언트 백엔드 3/3 | ✅ T083 9 커맨드 · T085 KDF · T086 클라 refresh/signout/status |
+| 남은 것 | T084 SignIn 페이지 UI (FE 작업) |
+
+### 다음 세션 Night mode 큐
+
+사용자 승인 없이 연속 실행할 작업:
+
+1. **T084** SignIn 페이지 UI — 핵심. PasskeyButton + OAuthButton + /auth/sign-in 라우트 + tauri event listen('deep-link') 으로 OAuth callback 처리 + master passphrase prompt → derive_session_keys → register_verify 통합. **D2/D3 의 deep-link 콘솔 검증도 여기서 자연스럽게 끝남** (UI 가 listen 을 useEffect 에서 등록).
+2. **I3** GitHub Connect 풀 플로우 — T083 클라 백엔드와 Auth user JWT 로 이제 unblocked. 4개 사전조건 (App 등록 / deep-link scheme / listener 표준화 / Auth user JWT) 중 deep-link scheme + listener 는 Phase C 에서 끝남.
+3. **Playwright Tauri E2E 인프라** — tauri-driver/WebView2 셋업. 인프라 결정이 큰 작업이지만 Night mode 큐에 두되 설치 단계는 사용자 액션이 필요할 수 있음 (admin 권한 등).
+4. **M9 Sync 진입 준비** — T085 enc_key 파생이 활성화되는 시점. T084 완성 후.
+
+### 인사이트 (다음 세션을 위한 메모)
+
+- **Tauri 콘솔 디버깅 시 "All levels" 필터 활성화** — `console.log` 가 default 뷰에서 숨겨짐. 검증 가이드 첫 줄에 명시.
+- **WebAuthn register flow 의 사이드이펙트 가드 원칙** — PIN/biometric 인증 같은 회복 불가능한 사이드이펙트가 일어나는 단계 **전에** 모든 가드(vault unlocked, session 상태, etc.) 통과 필요. J2 hotfix 가 이 패턴 lock-in. T084 의 회원가입 흐름에서도 같은 원칙 유지.
+- **Zero-Knowledge invariant 검증 패턴** — `salt_auth != salt_enc` 같은 invariant 는 라이브러리 단에서 명시적으로 거부. 위조된 릴레이 응답을 클라이언트에서 잡을 수 있음.
+- **wrangler dev 마이그레이션 미적용** — README/runbook 갱신 후로는 재발 방지. `git pull` 직후 항상 `pnpm db:migrate:local` 재실행.
+
+---
+
 ## 2026-04-27 → 2026-04-28 (T083 수동 검증 라운드 — 18 통과 + J1/J2 fix)
 
 ### 세션 개요
