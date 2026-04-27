@@ -148,7 +148,7 @@
 | T083-C  | OAuth(GitHub/Google) 2 커맨드 + tauri-plugin-deep-link `apivault://` scheme 등록 + on_open_url emit + tauri-plugin-opener 전환 + CSP 확장 + wiremock 5 회귀                                | 2026-04-27 | `e159415` |
 | T083-D  | auth_refresh / auth_signout / auth_status + hydrate_session_from_vault 자동 통합 (vault_unlock 후 hydrate, vault_lock 시 메모리 캐시 None) + wiremock 5 회귀 = T086 클라이언트 측 완성    | 2026-04-27 | `7df5888` |
 | T085    | Zero-Knowledge KDF — services/session.rs::derive_session_keys(passphrase, salt_auth_b64, salt_enc_b64) → DerivedSessionKeys{auth_hash, enc_key}. base64url 디코드 + SaltsIdentical/InvalidSalt 가드 + 회귀 4 (결정론 / 다른 salt → 다른 키 / 같은 salt 거부 / malformed base64) | 2026-04-28 | `17da027` |
-| T084    | SignIn UI — `/auth/sign-in` (PasskeyButton + OAuthButton GitHub/Google + Keep offline) + use-deep-link-callback `apivault://auth/callback` 파서 + use-auth-session 훅 + Settings → CloudSyncSection 진입점 + i18n 4 로케일 + Vitest +19 (parser 4 / PasskeyButton 5 / OAuthButton 3 / SignInPage 4 / CloudSyncSection 3) — **M8 8/8 완료** | 2026-04-28 | `<pending>` |
+| T084    | SignIn UI — `/auth/sign-in` (PasskeyButton + OAuthButton GitHub/Google + Keep offline) + use-deep-link-callback `apivault://auth/callback` 파서 + use-auth-session 훅 + Settings → CloudSyncSection 진입점 + i18n 4 로케일 + Vitest +19 (parser 4 / PasskeyButton 5 / OAuthButton 3 / SignInPage 4 / CloudSyncSection 3) — **M8 8/8 완료** | 2026-04-28 | `d619566` |
 
 **완료 합계**: 110/132 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ 10/10 + **M5 ✅ 10/10** + M6 ✅ 6/6 + M7 ✅ 4/4 + **M8 ✅ 8/8 완료** + M15 🔄 2/8)
 
