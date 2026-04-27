@@ -72,6 +72,14 @@ pub enum AuthCommandError {
     #[error("email is required")]
     EmptyEmail,
 
+    /// Caller supplied a provider that is not in the OAuth allow-list.
+    #[error("unsupported oauth provider: {provider}")]
+    UnsupportedProvider { provider: String },
+
+    /// Caller supplied an empty `code` / `state` / `redirect_uri`.
+    #[error("missing required field: {field}")]
+    MissingField { field: String },
+
     /// Relay returned a non-2xx status. `body` is the verbatim JSON returned
     /// by the relay (`{ error, detail? }`) so the renderer can map error
     /// codes to localised messages.
@@ -126,6 +134,33 @@ impl From<VaultError> for AuthCommandError {
 fn ensure_nonempty_email(email: &str) -> Result<(), AuthCommandError> {
     if email.trim().is_empty() {
         Err(AuthCommandError::EmptyEmail)
+    } else {
+        Ok(())
+    }
+}
+
+/// Allow-list of OAuth providers the desktop client knows how to handle.
+///
+/// Must stay aligned with the relay's `lib/oauth.ts:isProvider` predicate.
+const ALLOWED_OAUTH_PROVIDERS: &[&str] = &["github", "google"];
+
+/// Return the canonical (trimmed) provider slug if it is in the allow-list.
+fn sanitise_provider(provider: &str) -> Result<&str, AuthCommandError> {
+    let trimmed = provider.trim();
+    if ALLOWED_OAUTH_PROVIDERS.contains(&trimmed) {
+        Ok(trimmed)
+    } else {
+        Err(AuthCommandError::UnsupportedProvider {
+            provider: trimmed.to_owned(),
+        })
+    }
+}
+
+fn ensure_nonblank(field: &str, value: &str) -> Result<(), AuthCommandError> {
+    if value.trim().is_empty() {
+        Err(AuthCommandError::MissingField {
+            field: field.to_owned(),
+        })
     } else {
         Ok(())
     }
@@ -253,6 +288,111 @@ pub async fn auth_passkey_assert_verify(
         .post_json("/auth/passkey/assert/verify", &body)
         .await?;
     complete_session(&state, tokens).await
+}
+
+// ---------------------------------------------------------------------------
+// Tauri commands — OAuth (GitHub + Google)
+// ---------------------------------------------------------------------------
+
+/// Result of `auth_oauth_start`.
+///
+/// `state` must round-trip back into [`auth_oauth_callback`] so the relay can
+/// verify the redirect originates from the same desktop session that started
+/// it. The browser is opened side-effectfully via `tauri-plugin-shell` —
+/// the FE only needs `state` for the round-trip.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OAuthStartResponse {
+    pub state: String,
+    pub authorize_url: String,
+}
+
+/// Pure (no AppHandle) helper that performs the relay round-trip for
+/// `auth_oauth_start`. Separated so unit tests can exercise the network path
+/// without needing a Tauri runtime.
+async fn fetch_oauth_authorize(
+    state: &AppContext,
+    provider: &str,
+    redirect_uri: &str,
+) -> Result<OAuthStartResponse, AuthCommandError> {
+    let body = serde_json::json!({ "redirect_uri": redirect_uri });
+    let resp: OAuthStartResponse = state
+        .relay_client
+        .post_json(&format!("/auth/oauth/{provider}/start"), &body)
+        .await?;
+    Ok(resp)
+}
+
+/// Pure helper for `auth_oauth_callback` — relay POST + persistence.
+async fn exchange_oauth_callback(
+    state: &AppContext,
+    provider: &str,
+    code: &str,
+    oauth_state: &str,
+) -> Result<AuthSessionDto, AuthCommandError> {
+    let body = serde_json::json!({ "code": code, "state": oauth_state });
+    let tokens: AuthTokensResponse = state
+        .relay_client
+        .post_json(&format!("/auth/oauth/{provider}/callback"), &body)
+        .await?;
+    complete_session(state, tokens).await
+}
+
+/// `POST /auth/oauth/:provider/start` + open the OS browser.
+///
+/// `redirect_uri` should be the desktop app's deep-link URL (e.g.
+/// `apivault://auth/callback`). The relay echoes it inside the OAuth
+/// `redirect_uri` query parameter so the provider redirects back to it after
+/// the user consents.
+#[tauri::command]
+pub async fn auth_oauth_start(
+    provider: String,
+    redirect_uri: String,
+    state: State<'_, AppContext>,
+    app_handle: tauri::AppHandle,
+) -> Result<OAuthStartResponse, AuthCommandError> {
+    let provider = sanitise_provider(&provider)?.to_owned();
+    ensure_nonblank("redirect_uri", &redirect_uri)?;
+
+    let resp = fetch_oauth_authorize(&state, &provider, &redirect_uri).await?;
+
+    // Open the browser only after the relay accepted the request — failing
+    // earlier avoids spawning a browser tab the user cannot complete.
+    open_external_url(&app_handle, &resp.authorize_url)?;
+
+    Ok(resp)
+}
+
+/// `POST /auth/oauth/:provider/callback` — exchange `code` + `state` for a
+/// JWT pair, then persist the session via [`complete_session`].
+///
+/// `oauth_state` is named separately to avoid colliding with Tauri's
+/// `State<'_, AppContext>` injection.
+#[tauri::command]
+pub async fn auth_oauth_callback(
+    provider: String,
+    code: String,
+    oauth_state: String,
+    state: State<'_, AppContext>,
+) -> Result<AuthSessionDto, AuthCommandError> {
+    let provider = sanitise_provider(&provider)?.to_owned();
+    require_vault_unlocked(&state).await?;
+    ensure_nonblank("code", &code)?;
+    ensure_nonblank("state", &oauth_state)?;
+
+    exchange_oauth_callback(&state, &provider, &code, &oauth_state).await
+}
+
+/// Open `url` in the user's default browser via tauri-plugin-opener.
+///
+/// `tauri-plugin-shell::Shell::open` is deprecated in favour of the dedicated
+/// opener plugin — both ship with this app, so we use the recommended path.
+fn open_external_url(app: &tauri::AppHandle, url: &str) -> Result<(), AuthCommandError> {
+    use tauri_plugin_opener::OpenerExt;
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| AuthCommandError::Internal {
+            message: format!("opener open_url: {e}"),
+        })
 }
 
 // ---------------------------------------------------------------------------
@@ -532,5 +672,124 @@ mod tests {
         .await
         .unwrap_err();
         assert!(matches!(err, AuthCommandError::VaultLocked));
+    }
+
+    // -----------------------------------------------------------------------
+    // 7. sanitise_provider: github / google → Ok, others → UnsupportedProvider
+    // -----------------------------------------------------------------------
+    #[test]
+    fn sanitise_provider_allows_github_and_google() {
+        assert_eq!(sanitise_provider("github").unwrap(), "github");
+        assert_eq!(sanitise_provider(" google ").unwrap(), "google");
+        let err = sanitise_provider("apple").unwrap_err();
+        assert!(matches!(
+            err,
+            AuthCommandError::UnsupportedProvider { ref provider } if provider == "apple"
+        ));
+    }
+
+    // -----------------------------------------------------------------------
+    // 8. fetch_oauth_authorize: 200 → state + authorize_url 통과
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn fetch_oauth_authorize_returns_state_and_url() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/auth/oauth/github/start"))
+            .and(body_json(
+                serde_json::json!({"redirect_uri": "apivault://auth/callback"}),
+            ))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "state": "deadbeef",
+                    "authorize_url": "https://github.com/login/oauth/authorize?client_id=x",
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx(&server).await;
+        let resp = fetch_oauth_authorize(&ctx, "github", "apivault://auth/callback")
+            .await
+            .unwrap();
+        assert_eq!(resp.state, "deadbeef");
+        assert!(resp.authorize_url.starts_with("https://github.com/"));
+    }
+
+    // -----------------------------------------------------------------------
+    // 9. exchange_oauth_callback: 200 → AuthSession 저장 + DTO + 메모리 갱신
+    //    (relay 가 함께 보내는 salt_auth/salt_enc 는 무시되어야 한다 — Phase B
+    //    는 KDF 통합을 안 하므로 unknown field 가 deserialize 를 깨면 안 됨)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn exchange_oauth_callback_persists_session_and_ignores_salts() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/auth/oauth/github/callback"))
+            .and(body_json(
+                serde_json::json!({"code": "the-code", "state": "deadbeef"}),
+            ))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_carol",
+                    "access_token": "ax",
+                    "refresh_token": "rx",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                    "salt_auth": "AAAA",
+                    "salt_enc": "BBBB",
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx(&server).await;
+        let dto = exchange_oauth_callback(&ctx, "github", "the-code", "deadbeef")
+            .await
+            .unwrap();
+        assert_eq!(dto.user_id, "usr_carol");
+
+        let in_mem = ctx.auth_session.read().await;
+        assert_eq!(in_mem.as_ref().unwrap().user_id, "usr_carol");
+    }
+
+    // -----------------------------------------------------------------------
+    // 10. exchange_oauth_callback: relay 410 (state_expired) → Relay error
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn exchange_oauth_callback_state_expired_returns_relay_error() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/auth/oauth/google/callback"))
+            .respond_with(
+                ResponseTemplate::new(410)
+                    .set_body_json(serde_json::json!({"error": "state_expired"})),
+            )
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx(&server).await;
+        let err = exchange_oauth_callback(&ctx, "google", "code", "state")
+            .await
+            .unwrap_err();
+        match err {
+            AuthCommandError::Relay { status, body } => {
+                assert_eq!(status, 410);
+                assert!(body.contains("state_expired"));
+            }
+            other => panic!("expected Relay, got {other:?}"),
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // 11. ensure_nonblank: empty redirect_uri → MissingField
+    // -----------------------------------------------------------------------
+    #[test]
+    fn ensure_nonblank_rejects_blank_string() {
+        let err = ensure_nonblank("redirect_uri", "   ").unwrap_err();
+        assert!(matches!(
+            err,
+            AuthCommandError::MissingField { ref field } if field == "redirect_uri"
+        ));
     }
 }

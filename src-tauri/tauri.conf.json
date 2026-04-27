@@ -19,10 +19,15 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://services.nvd.nist.gov https://api.github.com https://haveibeenpwned.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost http://localhost:8787 https://api-vault.app https://services.nvd.nist.gov https://api.github.com https://haveibeenpwned.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
     }
   },
   "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["apivault"]
+      }
+    },
     "updater": {
       "pubkey": "",
       "endpoints": []

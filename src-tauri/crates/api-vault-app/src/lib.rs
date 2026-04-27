@@ -9,8 +9,8 @@ pub mod setup;
 
 use commands::audit::{audit_list, audit_verify_chain};
 use commands::auth::{
-    auth_passkey_assert_start, auth_passkey_assert_verify, auth_passkey_register_start,
-    auth_passkey_register_verify,
+    auth_oauth_callback, auth_oauth_start, auth_passkey_assert_start, auth_passkey_assert_verify,
+    auth_passkey_register_start, auth_passkey_register_verify,
 };
 use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
@@ -46,7 +46,7 @@ use commands::entitlement::{entitlement_current, entitlement_set_dev};
 use commands::railguard::{railguard_apply, railguard_preview};
 use context::AppContext;
 use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 #[cfg(feature = "tauri-plugins")]
 use commands::clipboard::credential_copy_to_clipboard;
@@ -86,6 +86,35 @@ pub fn run(context: tauri::Context) {
             });
 
             app.manage(ctx);
+
+            // M8 Auth — listen for `apivault://auth/callback?code=...&state=...`
+            // OS-level deep links and forward them to the renderer.
+            //
+            // - `register_all` ensures dev builds receive deep links too;
+            //   production builds rely on the bundle's OS registration.
+            // - The callback fires on a Tauri-managed thread, so we capture an
+            //   `AppHandle` clone and use `Manager::emit` to broadcast a
+            //   `deep-link` event carrying the matched URLs.
+            #[cfg(all(
+                feature = "tauri-plugins",
+                not(any(target_os = "android", target_os = "ios"))
+            ))]
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                if let Err(e) = app.deep_link().register_all() {
+                    tracing::warn!("deep_link.register_all failed: {e}");
+                }
+                let handle = app.handle().clone();
+                app.deep_link().on_open_url(move |event| {
+                    let urls: Vec<String> =
+                        event.urls().iter().map(|u| u.to_string()).collect();
+                    tracing::info!("deep-link received: {:?}", urls);
+                    if let Err(e) = handle.emit("deep-link", urls) {
+                        tracing::warn!("deep-link emit failed: {e}");
+                    }
+                });
+            }
+
             Ok(())
         });
 
@@ -164,6 +193,8 @@ pub fn run(context: tauri::Context) {
             auth_passkey_register_verify,
             auth_passkey_assert_start,
             auth_passkey_assert_verify,
+            auth_oauth_start,
+            auth_oauth_callback,
         ]);
     }
 
@@ -227,6 +258,8 @@ pub fn run(context: tauri::Context) {
             auth_passkey_register_verify,
             auth_passkey_assert_start,
             auth_passkey_assert_verify,
+            auth_oauth_start,
+            auth_oauth_callback,
         ]);
     }
 
