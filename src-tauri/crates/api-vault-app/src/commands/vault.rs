@@ -178,6 +178,12 @@ pub async fn vault_unlock(
         }
     }
 
+    // M8: 볼트가 열렸으니 영속된 인증 세션을 메모리로 끌어올린다.
+    // 실패는 세션 없음으로 처리(사용자가 다시 sign-in 하도록).
+    if let Err(e) = crate::commands::auth::hydrate_session_from_vault(&state).await {
+        tracing::warn!(error = %e, "auth session hydrate 실패 (비치명적)");
+    }
+
     state
         .audit
         .record(
@@ -216,6 +222,12 @@ pub async fn vault_lock(state: State<'_, AppContext>) -> Result<(), VaultCommand
     // 디바이스 identity 클리어 (서명 키를 메모리에서 제거)
     {
         let mut guard = state.device_identity.write().await;
+        *guard = None;
+    }
+    // M8: auth_session 메모리 캐시도 비운다 (영속본은 보존 — 다음 unlock 시
+    // hydrate_session_from_vault 가 다시 끌어올린다).
+    {
+        let mut guard = state.auth_session.write().await;
         *guard = None;
     }
     let mut vault = state.vault.write().await;

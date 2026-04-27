@@ -10,7 +10,8 @@ pub mod setup;
 use commands::audit::{audit_list, audit_verify_chain};
 use commands::auth::{
     auth_oauth_callback, auth_oauth_start, auth_passkey_assert_start, auth_passkey_assert_verify,
-    auth_passkey_register_start, auth_passkey_register_verify,
+    auth_passkey_register_start, auth_passkey_register_verify, auth_refresh, auth_signout,
+    auth_status,
 };
 use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
@@ -195,6 +196,9 @@ pub fn run(context: tauri::Context) {
             auth_passkey_assert_verify,
             auth_oauth_start,
             auth_oauth_callback,
+            auth_refresh,
+            auth_signout,
+            auth_status,
         ]);
     }
 
@@ -260,6 +264,9 @@ pub fn run(context: tauri::Context) {
             auth_passkey_assert_verify,
             auth_oauth_start,
             auth_oauth_callback,
+            auth_refresh,
+            auth_signout,
+            auth_status,
         ]);
     }
 

@@ -80,6 +80,10 @@ pub enum AuthCommandError {
     #[error("missing required field: {field}")]
     MissingField { field: String },
 
+    /// `auth_refresh` was called with no signed-in session.
+    #[error("no signed-in session — sign in again")]
+    NoSession,
+
     /// Relay returned a non-2xx status. `body` is the verbatim JSON returned
     /// by the relay (`{ error, detail? }`) so the renderer can map error
     /// codes to localised messages.
@@ -393,6 +397,96 @@ fn open_external_url(app: &tauri::AppHandle, url: &str) -> Result<(), AuthComman
         .map_err(|e| AuthCommandError::Internal {
             message: format!("opener open_url: {e}"),
         })
+}
+
+// ---------------------------------------------------------------------------
+// Tauri commands — Refresh + session management (T086 client-side, T083)
+// ---------------------------------------------------------------------------
+
+/// `POST /auth/refresh` — exchange the stored refresh token for a brand-new
+/// JWT pair (refresh rotation: every successful refresh invalidates the
+/// previous refresh token by issuing a new one).
+///
+/// Idempotency: callers may invoke this whenever they observe a 401 from a
+/// downstream relay endpoint; the stored session is replaced atomically and
+/// the new pair is persisted to the vault before returning.
+#[tauri::command]
+pub async fn auth_refresh(
+    state: State<'_, AppContext>,
+) -> Result<AuthSessionDto, AuthCommandError> {
+    use secrecy::ExposeSecret as _;
+    require_vault_unlocked(&state).await?;
+
+    // Read the refresh token without holding the auth_session lock during the
+    // network call — the relay round-trip can take seconds and other commands
+    // may want to read `user_id` from the session in the meantime.
+    let refresh_token = {
+        let guard = state.auth_session.read().await;
+        match guard.as_ref() {
+            Some(s) => s.refresh_token.expose_secret().to_owned(),
+            None => return Err(AuthCommandError::NoSession),
+        }
+    };
+
+    let body = serde_json::json!({ "refresh_token": refresh_token });
+    let tokens: AuthTokensResponse = state
+        .relay_client
+        .post_json("/auth/refresh", &body)
+        .await?;
+    complete_session(&state, tokens).await
+}
+
+/// Clear the persisted session and the in-memory cache.
+///
+/// Returns `Ok(())` even when no session exists — sign-out is idempotent so
+/// the renderer can call it during boot without first checking status.
+#[tauri::command]
+pub async fn auth_signout(state: State<'_, AppContext>) -> Result<(), AuthCommandError> {
+    use crate::services::session::clear_session;
+
+    require_vault_unlocked(&state).await?;
+
+    {
+        let mut vault = state.vault.write().await;
+        clear_session(&mut vault).await?;
+    }
+    {
+        let mut auth = state.auth_session.write().await;
+        *auth = None;
+    }
+    Ok(())
+}
+
+/// Return a sanitised view of the current session, or `None` when signed out.
+///
+/// Reads from the in-memory cache only — assumes [`hydrate_session_from_vault`]
+/// (called immediately after `vault_unlock`) has already populated it.
+#[tauri::command]
+pub async fn auth_status(
+    state: State<'_, AppContext>,
+) -> Result<Option<AuthSessionDto>, AuthCommandError> {
+    let guard = state.auth_session.read().await;
+    Ok(guard.as_ref().map(|s| AuthSessionDto {
+        user_id: s.user_id.clone(),
+        expires_at: s.expires_at,
+    }))
+}
+
+/// Populate `AppContext.auth_session` from the vault — invoked once after
+/// `vault_unlock` so the renderer's first `auth_status` call returns the
+/// persisted session without a network hop.
+///
+/// Treats a missing or malformed on-disk session as no-session (the user will
+/// be prompted to sign in again).
+pub async fn hydrate_session_from_vault(state: &AppContext) -> Result<(), AuthCommandError> {
+    use crate::services::session::load_session;
+    let loaded = {
+        let vault = state.vault.read().await;
+        load_session(vault.as_ref()).await.ok().flatten()
+    };
+    let mut auth = state.auth_session.write().await;
+    *auth = loaded;
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -791,5 +885,221 @@ mod tests {
             err,
             AuthCommandError::MissingField { ref field } if field == "redirect_uri"
         ));
+    }
+
+    // -----------------------------------------------------------------------
+    // Phase D — Refresh + Session 관리 테스트
+    // -----------------------------------------------------------------------
+
+    /// Direct variant of `auth_refresh` (no Tauri State extractor).
+    async fn direct_refresh(ctx: &AppContext) -> Result<AuthSessionDto, AuthCommandError> {
+        use secrecy::ExposeSecret as _;
+        require_vault_unlocked(ctx).await?;
+        let refresh_token = {
+            let guard = ctx.auth_session.read().await;
+            match guard.as_ref() {
+                Some(s) => s.refresh_token.expose_secret().to_owned(),
+                None => return Err(AuthCommandError::NoSession),
+            }
+        };
+        let body = serde_json::json!({ "refresh_token": refresh_token });
+        let tokens: AuthTokensResponse = ctx
+            .relay_client
+            .post_json("/auth/refresh", &body)
+            .await?;
+        complete_session(ctx, tokens).await
+    }
+
+    async fn direct_signout(ctx: &AppContext) -> Result<(), AuthCommandError> {
+        use crate::services::session::clear_session;
+        require_vault_unlocked(ctx).await?;
+        {
+            let mut vault = ctx.vault.write().await;
+            clear_session(&mut vault).await?;
+        }
+        {
+            let mut auth = ctx.auth_session.write().await;
+            *auth = None;
+        }
+        Ok(())
+    }
+
+    // -----------------------------------------------------------------------
+    // 12. auth_refresh: no session → NoSession (네트워크 호출 안 함)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn refresh_without_session_returns_no_session() {
+        let server = MockServer::start().await;
+        // No mocks — direct_refresh must not reach the network.
+        let (ctx, _dir) = make_ctx(&server).await;
+        let err = direct_refresh(&ctx).await.unwrap_err();
+        assert!(matches!(err, AuthCommandError::NoSession));
+    }
+
+    // -----------------------------------------------------------------------
+    // 13. auth_refresh: stored refresh → 새 페어로 교체 (rotation)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn refresh_replaces_session_with_new_pair() {
+        let server = MockServer::start().await;
+        // 1) seed a session via assert_verify
+        Mock::given(method("POST"))
+            .and(path("/auth/passkey/assert/verify"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_dave",
+                    "access_token": "old-access",
+                    "refresh_token": "old-refresh",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        // 2) refresh: relay returns a brand-new pair
+        Mock::given(method("POST"))
+            .and(path("/auth/refresh"))
+            .and(body_json(serde_json::json!({"refresh_token": "old-refresh"})))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_dave",
+                    "access_token": "NEW-access",
+                    "refresh_token": "NEW-refresh",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx(&server).await;
+        direct_assert_verify(
+            &ctx,
+            "dave@example.com".into(),
+            serde_json::json!({ "id": "raw" }),
+        )
+        .await
+        .unwrap();
+
+        let dto = direct_refresh(&ctx).await.unwrap();
+        assert_eq!(dto.user_id, "usr_dave");
+
+        // In-memory session must hold the rotated tokens.
+        use secrecy::ExposeSecret as _;
+        let in_mem = ctx.auth_session.read().await;
+        let session = in_mem.as_ref().unwrap();
+        assert_eq!(session.access_token.expose_secret(), "NEW-access");
+        assert_eq!(session.refresh_token.expose_secret(), "NEW-refresh");
+    }
+
+    // -----------------------------------------------------------------------
+    // 14. auth_refresh: relay 401 (invalid_refresh_token) → Relay error
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn refresh_with_invalid_token_returns_relay_error() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/auth/refresh"))
+            .respond_with(ResponseTemplate::new(401).set_body_json(
+                serde_json::json!({"error": "invalid_refresh_token", "detail": "expired"}),
+            ))
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx(&server).await;
+        // Inject a session manually so direct_refresh has something to send.
+        {
+            let mut auth = ctx.auth_session.write().await;
+            *auth = Some(AuthSession {
+                user_id: "usr_x".into(),
+                access_token: SecretString::from("ax"),
+                refresh_token: SecretString::from("expired-refresh"),
+                expires_at: 0,
+            });
+        }
+        let err = direct_refresh(&ctx).await.unwrap_err();
+        match err {
+            AuthCommandError::Relay { status, body } => {
+                assert_eq!(status, 401);
+                assert!(body.contains("invalid_refresh_token"));
+            }
+            other => panic!("expected Relay, got {other:?}"),
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // 15. auth_signout: 메모리 + 볼트 모두 정리, 두 번 호출도 idempotent
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn signout_clears_memory_and_vault_idempotent() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/auth/passkey/assert/verify"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_eve",
+                    "access_token": "ax",
+                    "refresh_token": "rx",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx(&server).await;
+        direct_assert_verify(
+            &ctx,
+            "eve@example.com".into(),
+            serde_json::json!({ "id": "raw" }),
+        )
+        .await
+        .unwrap();
+
+        // First sign-out.
+        direct_signout(&ctx).await.unwrap();
+        assert!(ctx.auth_session.read().await.is_none());
+        let vault_guard = ctx.vault.read().await;
+        let loaded = crate::services::session::load_session(vault_guard.as_ref())
+            .await
+            .unwrap();
+        assert!(loaded.is_none());
+        drop(vault_guard);
+
+        // Second sign-out (no session) must succeed too.
+        direct_signout(&ctx).await.unwrap();
+    }
+
+    // -----------------------------------------------------------------------
+    // 16. hydrate_session_from_vault: 볼트에 있던 세션을 메모리로 복원
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn hydrate_loads_persisted_session_into_memory() {
+        let server = MockServer::start().await;
+        let (ctx, _dir) = make_ctx(&server).await;
+
+        // Persist a session directly into the vault, leaving the in-memory
+        // cache empty (simulating a fresh boot after vault_unlock).
+        {
+            let mut vault = ctx.vault.write().await;
+            crate::services::session::save_session(
+                &mut vault,
+                &AuthSession {
+                    user_id: "usr_frank".into(),
+                    access_token: SecretString::from("ax"),
+                    refresh_token: SecretString::from("rx"),
+                    expires_at: 1_700_000_000,
+                },
+            )
+            .await
+            .unwrap();
+        }
+        assert!(ctx.auth_session.read().await.is_none());
+
+        hydrate_session_from_vault(&ctx).await.unwrap();
+
+        let in_mem = ctx.auth_session.read().await;
+        assert_eq!(in_mem.as_ref().unwrap().user_id, "usr_frank");
     }
 }
