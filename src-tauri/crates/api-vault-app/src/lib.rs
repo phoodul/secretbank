@@ -8,6 +8,10 @@ pub mod services;
 pub mod setup;
 
 use commands::audit::{audit_list, audit_verify_chain};
+use commands::auth::{
+    auth_passkey_assert_start, auth_passkey_assert_verify, auth_passkey_register_start,
+    auth_passkey_register_verify,
+};
 use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
     credential_rotate_value, credential_update,
@@ -156,6 +160,10 @@ pub fn run(context: tauri::Context) {
             github_scan_repo,
             entitlement_current,
             entitlement_set_dev,
+            auth_passkey_register_start,
+            auth_passkey_register_verify,
+            auth_passkey_assert_start,
+            auth_passkey_assert_verify,
         ]);
     }
 
@@ -215,6 +223,10 @@ pub fn run(context: tauri::Context) {
             github_scan_repo,
             entitlement_current,
             entitlement_set_dev,
+            auth_passkey_register_start,
+            auth_passkey_register_verify,
+            auth_passkey_assert_start,
+            auth_passkey_assert_verify,
         ]);
     }
 

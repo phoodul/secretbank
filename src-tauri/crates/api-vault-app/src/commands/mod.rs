@@ -1,4 +1,5 @@
 pub mod audit;
+pub mod auth;
 pub mod credentials;
 pub mod entitlement;
 pub mod github;
