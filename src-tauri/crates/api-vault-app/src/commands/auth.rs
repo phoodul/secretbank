@@ -220,12 +220,22 @@ async fn require_vault_unlocked(state: &AppContext) -> Result<(), AuthCommandErr
 /// challenge for `email` (creates the user row on first call).
 ///
 /// The returned `options` is passed verbatim to `navigator.credentials.create`.
+///
+/// Requires the local vault to be unlocked even though `start` itself does
+/// not write the session — otherwise the user could complete the OS-level
+/// PIN/biometric prompt (which registers the credential in the OS passkey
+/// store) only to have `register/verify` reject the result with VaultLocked,
+/// leaving the OS store and the server DB out of sync. The desync is
+/// effectively unrecoverable from inside the app because the WebAuthn
+/// privacy spec returns NotAllowedError instead of InvalidStateError on the
+/// next attempt. (Discovered 2026-04-27 J2.)
 #[tauri::command]
 pub async fn auth_passkey_register_start(
     email: String,
     state: State<'_, AppContext>,
 ) -> Result<PasskeyChallenge, AuthCommandError> {
     ensure_nonempty_email(&email)?;
+    require_vault_unlocked(&state).await?;
     let body = serde_json::json!({ "email": email });
     let resp: PasskeyChallenge = state
         .relay_client
@@ -261,12 +271,17 @@ pub async fn auth_passkey_register_verify(
 // ---------------------------------------------------------------------------
 
 /// `POST /auth/passkey/assert/start` — request an authentication challenge.
+///
+/// Same vault-unlock precheck as `register_start`: prevents asking the user
+/// for biometric input that would be wasted by a `VaultLocked` failure at
+/// the verify step.
 #[tauri::command]
 pub async fn auth_passkey_assert_start(
     email: String,
     state: State<'_, AppContext>,
 ) -> Result<PasskeyChallenge, AuthCommandError> {
     ensure_nonempty_email(&email)?;
+    require_vault_unlocked(&state).await?;
     let body = serde_json::json!({ "email": email });
     let resp: PasskeyChallenge = state
         .relay_client
@@ -558,10 +573,24 @@ mod tests {
         email: String,
     ) -> Result<PasskeyChallenge, AuthCommandError> {
         ensure_nonempty_email(&email)?;
+        require_vault_unlocked(ctx).await?;
         let body = serde_json::json!({ "email": email });
         Ok(ctx
             .relay_client
             .post_json("/auth/passkey/register/start", &body)
+            .await?)
+    }
+
+    async fn direct_assert_start(
+        ctx: &AppContext,
+        email: String,
+    ) -> Result<PasskeyChallenge, AuthCommandError> {
+        ensure_nonempty_email(&email)?;
+        require_vault_unlocked(ctx).await?;
+        let body = serde_json::json!({ "email": email });
+        Ok(ctx
+            .relay_client
+            .post_json("/auth/passkey/assert/start", &body)
             .await?)
     }
 
@@ -1069,6 +1098,38 @@ mod tests {
 
         // Second sign-out (no session) must succeed too.
         direct_signout(&ctx).await.unwrap();
+    }
+
+    // -----------------------------------------------------------------------
+    // J2 hotfix: register_start 가드 — locked vault 일 때 즉시 거부 (PIN 인증
+    // 후 verify 실패로 인한 OS↔DB 분리 방지)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn register_start_with_locked_vault_returns_vault_locked() {
+        let server = MockServer::start().await;
+        // No mock — guard must short-circuit before the network call.
+        let (ctx, _dir) = make_ctx(&server).await;
+        ctx.vault.write().await.lock().await.unwrap();
+
+        let err = direct_register_start(&ctx, "alice@example.com".into())
+            .await
+            .unwrap_err();
+        assert!(matches!(err, AuthCommandError::VaultLocked));
+    }
+
+    // -----------------------------------------------------------------------
+    // J2 hotfix: assert_start 가드 — 같은 이유로 locked vault 즉시 거부
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn assert_start_with_locked_vault_returns_vault_locked() {
+        let server = MockServer::start().await;
+        let (ctx, _dir) = make_ctx(&server).await;
+        ctx.vault.write().await.lock().await.unwrap();
+
+        let err = direct_assert_start(&ctx, "alice@example.com".into())
+            .await
+            .unwrap_err();
+        assert!(matches!(err, AuthCommandError::VaultLocked));
     }
 
     // -----------------------------------------------------------------------
