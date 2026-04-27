@@ -2,7 +2,7 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-28 Night mode 3 (T084 + I3 listener 표준화 완료, 다음 Playwright Tauri E2E 인프라 진입)
+- **Time:** 2026-04-28 Night mode 3 (T084 + I3 + Playwright browser-mode E2E 인프라 완료, 다음 M9 Sync 진입)
 - **Phase:** Phase 3 — Implementation, **M4~M8 ✅ + M5 10/10 ✅ + M8 8/8 ✅ + M15 🔄**, 110/132 태스크 (83.3%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, **4-28 I3 ✅ listener 표준화** + J2 ✅ + J1 docs ✅)
 - **Commits (T083 Phase A~D + 검증 hotfix 신규 6개):**
   - `1ec7a15` feat(auth) — T083 Phase A · RelayClient + AuthSession 서비스 골격 + AppContext 확장 (회귀 12)
@@ -62,10 +62,10 @@
 - **이번 Night mode 3 처리 완료:**
   1. ✅ **T084** — `/auth/sign-in` 풀 페이지 + PasskeyButton (assert→register fallback 단일 버튼 UX) + OAuthButton (github/google) + deep-link `apivault://auth/callback` listener + Settings CloudSyncSection 진입점 + `@simplewebauthn/browser` dep + i18n 4 로케일 + Vitest +19. M8 마지막 1건 클로즈, **M8 8/8 ✅ 풀 완료**.
   2. ✅ **I3** — `useGithubIntegration` 의 deep-link listener 표준화. `deep-link://github-callback` (lib.rs 가 emit 안 함, dead path) → `deep-link` 이벤트 + `apivault://github/callback` URL prefix 매칭. `parseGithubCallbackUrl` 헬퍼 + Vitest +8 + Setup URL 운영 가이드 강화. 4 사전 조건 모두 ✅, 풀 플로우 unblocked (실 GitHub App 등록 + 릴레이 배포는 사용자 액션 필요).
+  3. ✅ **Playwright browser-mode E2E** — `e2e/` 디렉토리, `tauri-mock.ts` invoke polyfill, smoke 3 case (LockScreen / 라우팅 / SignInPage). CI `e2e` 잡 + frontend 잡에 Vitest 통합 (이전 누락). Desktop binary E2E (tauri-driver) 는 deferred — 진입 트리거 3가지 명시 (Sync 회귀 누적 / M11 / M13).
 
 - **다음 Night mode 큐 (사용자 승인 없이 연속 실행):**
-  1. **Playwright Tauri E2E 인프라** — tauri-driver/WebView2 셋업 (큰 인프라 결정, Night mode 큐에 두되 설치 단계는 사용자 액션 필요할 수 있음)
-  2. **M9 Sync** — T085 의 enc_key 파생이 활성화되는 시점, M8 완성 후 진입 가능
+  1. **M9 Sync** — T085 의 enc_key 파생이 활성화되는 시점, M8 완성 후 진입 가능. T087~T096 (10 태스크) 시작.
 
 - **T084 의 deferred 항목 (M9 진입 시점에 처리):**
   - 성공 후 redirect 경로를 `/settings/sync` 로 변경 (현재 `/settings`)

@@ -26,6 +26,12 @@ pnpm-debug.log*
 # testing
 coverage/
 
+# playwright e2e
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # IDE
 .vscode/
 .idea/

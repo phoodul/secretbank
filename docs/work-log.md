@@ -1,5 +1,45 @@
 # Work Log
 
+## 2026-04-28 Night mode 3 — Playwright E2E 인프라 (browser-mode A 단계)
+
+### 세션 개요
+
+- **목표**: 회귀 안전망 1단계 — Vite dev server 대상 Playwright smoke. tauri-driver 통한 실 데스크톱 바이너리 E2E (단계 B) 는 deferred
+- **결과**: 1 commit (예정), 3 smoke spec 통과, CI `e2e` 잡 신설 (frontend → e2e dependency)
+
+### 셋업
+
+- `@playwright/test ^1.59` devDep
+- `e2e/` 디렉토리:
+  - `playwright.config.ts` — REPO_ROOT cwd + `node ./node_modules/vite/bin/vite.js` 로 webServer 직접 실행 (Windows PATH 회피)
+  - `lib/tauri-mock.ts` — `addInitScript` 로 `window.__TAURI_INTERNALS__.invoke` polyfill, `buildInitScript(map, settings?)` 빌더 (settings_get 키별 응답 분리)
+  - `smoke.spec.ts` — 3 case (locked vault → LockScreen / unlocked → /settings 라우트 / /auth/sign-in 헤딩+버튼)
+- npm scripts: `e2e` / `e2e:install` / `e2e:ui`
+- `.gitignore` — test-results, playwright-report, blob-report, playwright/.cache
+
+### CI 통합
+
+- `frontend` 잡에 **Vitest 추가** (이전엔 typecheck/lint/format-check 만 돌고 있었음 — 회귀 누락 위험 있어 메우기)
+- 신규 `e2e` 잡 — frontend 통과 후 ubuntu-latest 에서 chromium-only 실행, 실패 시 playwright-report artifact 업로드 (7일 보관), Playwright 브라우저는 `~/.cache/ms-playwright` 캐시
+
+### 단계 B (desktop binary E2E) 미루는 이유
+
+1. tauri-driver + OS-specific WebDriver shim (msedgedriver / WKWebView / WebKitGTK) 매트릭스 빌드 시간 ≥ 10분/OS
+2. M11 Mobile Port 시점에 어차피 mobile E2E 인프라 도입 → 그때 묶음이 자원 효율적
+3. 진입 트리거 3가지를 runbook 에 명시 (Sync 회귀 누적 / M11 진입 / M13 안정성 라운드)
+
+### 사용자 액션 (필요 시)
+
+`pnpm e2e:install` 1회 실행으로 Chromium 다운로드 (~150MB). CI 는 자동으로 처리.
+
+### 검증
+
+- `pnpm typecheck` — 0 (e2e 는 별도 tsconfig 없이도 Playwright 자체 타입 체커가 돌림)
+- `pnpm test --run` — Vitest 342/342
+- `pnpm e2e` — Playwright 3/3 (locked/unlocked/sign-in)
+
+---
+
 ## 2026-04-28 Night mode 3 — I3 GitHub Connect 표준화
 
 ### 세션 개요
