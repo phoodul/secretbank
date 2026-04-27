@@ -2,15 +2,18 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-27 PM (Night mode 1 — I1/I2 hotfix + clippy 정리 + M8 서버 측 5/8 완료)
-- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M8 🔄 5/8 (서버 완료) + M15 🔄**, 104/132 태스크 (78.8%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog)
-- **Commits (이번 세션 신규 2개):**
-  - `6dda3e8` fix(kill-switch) — I4 (Radix compose-refs 무한 루프 — KillSwitchDialog/BulkRevokeDialog 부모 콜백 microtask defer)
-  - `cc1785b` fix(kill-switch) — I5 (Bulk revoke filter 에 status=Active 추가, ExpectedCountMismatch 해결)
-- **Tests (4-27):**
-  - Rust kill_switch unit: **13 passed** (신규 회귀 1 — `bulk_revoke_filter_excludes_already_revoked_credentials`)
-  - Vitest: **312 passed** (변동 없음; KillSwitchDialog test (d) 의 onRevoked 단언만 setTimeout 후로 분리)
-  - typecheck 0 에러 / lint 0 에러
+- **Time:** 2026-04-27 PM (T083 Phase A~D — 클라이언트 측 9 커맨드 완성, M8 7/8 진입)
+- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M8 🔄 7/8 (서버 완료 + T083 클라 완료 + T086 클라 완료 — T084 UI / T085 KDF 통합 backlog) + M15 🔄**, 108/132 태스크 (81.8%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog)
+- **Commits (T083 Phase A~D 신규 4개):**
+  - `1ec7a15` feat(auth) — T083 Phase A · RelayClient + AuthSession 서비스 골격 + AppContext 확장 (회귀 12)
+  - `2f17917` feat(auth) — T083 Phase B · Passkey 4 커맨드 (register/assert × start/verify) + AuthCommandError + complete_session 헬퍼 (회귀 6)
+  - `e159415` feat(auth) — T083 Phase C · OAuth(GitHub/Google) + apivault:// deep link scheme + on_open_url emit + tauri-plugin-opener 전환 (회귀 5)
+  - `7df5888` feat(auth) — T083 Phase D · auth_refresh / auth_signout / auth_status + hydrate_session_from_vault 자동 통합 (T086 클라이언트 측 완성, 회귀 5)
+- **Tests (4-27 T083 종료 시점):**
+  - Rust api-vault-app lib: **130 passed** (102 → 130, T083 Phase A 12 + B 6 + C 5 + D 5 = +28)
+  - relay vitest 35 / Rust crypto 5 / storage 39 / 전체 워크스페이스 모두 그린
+  - clippy --workspace --all-targets -D warnings: **0 에러**
+  - typecheck / Vitest(frontend): 영향 없음 (FE 변경 없음)
 - **Blocker:** pre-existing clippy warnings (Rust 1.95 새 lint) — 이번 hotfix 와 무관, 후속 정리 큐
 - **Mode:** Interactive manual verification — 라운드 A → B → C 단계별 사용자 실행, 결함 발견 시 즉시 진단 → hotfix → 재검증.
 - **Verification 통과 (10/10 + C2 deferred):**
@@ -41,13 +44,19 @@
 
   - 릴레이 vitest 35/35 / Rust crypto 5/5 / storage 39/39 / clippy -D warnings 0 / typecheck 0 / Vitest (frontend) 315/315.
 
-- **남은 큐 (Night mode 2 또는 사용자 결정 후):**
-  1. **T083** — Rust auth_* 커맨드 (RelayClient + reqwest + auth.rs 6 commands + AppContext) **— 큰 작업**
-  2. **T084** — SignIn 페이지 UI (PasskeyButton + OAuthButton + /auth/sign-in) **— 큰 frontend**
-  3. **T085** — 클라이언트 측 Session 저장 + key 파생 통합 (services/session.rs)
-  4. **I3** — GitHub Connect 풀 플로우 (deep-link scheme + listener 표준화 + Auth user JWT) — T083 와 연동
-  5. **Playwright Tauri E2E** — tauri-driver/WebView2 인프라 셋업 (사용자 결정 필요 — 인프라 결정 큰 작업)
-  6. **M9 Sync** — T085 의 enc_key 파생이 이 곳에서 active 화 됨
+- **이번 라운드 처리 완료 (T083 5 Phase 중 4 commit):**
+  1. ✅ **Phase A** services/relay_client.rs + services/session.rs + AppContext 확장 — `1ec7a15`
+  2. ✅ **Phase B** Passkey 4 커맨드 + complete_session — `2f17917`
+  3. ✅ **Phase C** OAuth 2 커맨드 + deep link 인프라 — `e159415`
+  4. ✅ **Phase D** refresh / signout / status + hydrate (T086 클라 마무리) — `7df5888`
+  5. 🔄 **Phase E** 통합 + 문서 (이번 커밋)
+
+- **남은 큐:**
+  1. **T084** — SignIn 페이지 UI (PasskeyButton + OAuthButton + /auth/sign-in + deep-link 이벤트 listener)
+  2. **T085** — 클라이언트 측 KDF 통합 (passkey verify 응답의 salt_auth/salt_enc 로 enc_key 파생 + auth_hash)
+  3. **I3** — GitHub Connect 풀 플로우 (Auth user JWT 가 이제 가능, T083 클라 백엔드 완성으로 unblocked)
+  4. **Playwright Tauri E2E** — tauri-driver/WebView2 인프라 셋업 (사용자 결정 필요)
+  5. **M9 Sync** — T085 의 enc_key 파생이 활성화되는 시점
 
 ---
 

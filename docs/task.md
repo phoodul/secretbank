@@ -36,7 +36,7 @@
 | M5  | GitHub Connector + RAILGUARD    | T059~T068   | 10        | ✅ 10/10 완료 (T063 완료 2026-04-25; T064 완료 2026-04-25) |
 | M6  | Audit Log                       | T069~T074   | 6         | ✅ 6/6 완료         |
 | M7  | Kill Switch                     | T075~T078   | 4         | ✅ 4/4 완료             |
-| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | 🔄 5/8 (서버 측 완료: T079 /health · T080 D1 auth schema · T081 Passkey · T082 OAuth · T086 Refresh — 클라이언트 측 T083/T084/T085 backlog) |
+| M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | 🔄 7/8 (서버 + 클라이언트 백엔드 완료: T079 · T080 · T081 · T082 · **T083 클라이언트 커맨드 9개** · T086 클라이언트 refresh — UI 측 T084 · KDF 통합 T085 backlog) |
 | M9  | Sync Infrastructure             | T087~T096   | 10        | ⏳ 대기             |
 | M10 | Payments                        | T097~T103   | 7         | ⏳ 대기             |
 | M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기             |
@@ -143,8 +143,12 @@
 | T081    | Passkey (WebAuthn) 4 엔드포인트 (register/start, register/verify, assert/start, assert/verify) + JWT pair (HS256 access 1h / refresh 30d) + KV challenge (5분 TTL, consume-once) + salt_auth/salt_enc base64url 응답 | 2026-04-27 | `c60e023` |
 | T082    | OAuth 2.0 (GitHub + Google) start/callback — buildAuthorizeUrl + exchangeCode + (provider, provider_id) UNIQUE 매핑 + email-private 폴백(/user/emails) + 9 회귀 테스트                    | 2026-04-27 | `11eeeea` |
 | T086    | POST /auth/refresh — refresh token rotation (use=refresh 검증, access 거부, 새 페어 발급으로 leak 윈도우 30일 제한) + 4 회귀 테스트                                                       | 2026-04-27 | `03a0480` |
+| T083-A  | RelayClient + AuthSession 서비스 골격 (services/relay_client.rs + services/session.rs + AppContext 확장 — relay_client 6 + session 6 회귀 = 12)                                          | 2026-04-27 | `1ec7a15` |
+| T083-B  | Passkey 4 커맨드 (auth_passkey_register/assert × start/verify) + complete_session 헬퍼 + AuthCommandError + wiremock 6 회귀                                                              | 2026-04-27 | `2f17917` |
+| T083-C  | OAuth(GitHub/Google) 2 커맨드 + tauri-plugin-deep-link `apivault://` scheme 등록 + on_open_url emit + tauri-plugin-opener 전환 + CSP 확장 + wiremock 5 회귀                                | 2026-04-27 | `e159415` |
+| T083-D  | auth_refresh / auth_signout / auth_status + hydrate_session_from_vault 자동 통합 (vault_unlock 후 hydrate, vault_lock 시 메모리 캐시 None) + wiremock 5 회귀 = T086 클라이언트 측 완성    | 2026-04-27 | `7df5888` |
 
-**완료 합계**: 104/132 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ 10/10 + **M5 ✅ 10/10** + M6 ✅ 6/6 + M7 ✅ 4/4 + **M8 🔄 5/8 — 서버 완료, 클라이언트 backlog** + M15 🔄 2/8)
+**완료 합계**: 108/132 (M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ 10/10 + **M5 ✅ 10/10** + M6 ✅ 6/6 + M7 ✅ 4/4 + **M8 🔄 7/8 — T084 SignIn UI / T085 KDF 통합 backlog** + M15 🔄 2/8)
 
 ### Audit 무결성 hotfix + payload 점검 (2026-04-25, 태스크 진행 표에는 별도 항목 아님)
 

@@ -1,5 +1,40 @@
 # Work Log
 
+## 2026-04-27 (T083 5-Phase 진행 — M8 클라이언트 백엔드 완성, 7/8 진입)
+
+### 세션 개요
+
+- **시간**: 2026-04-27 (interactive 단일 집중 모드 — Phase 단위로 사용자 검증/승인 후 commit)
+- **결과**: T083 의 5-Phase 분해 중 4 phase commit 완료. M8 5/8 → **7/8** 도달. T086 의 클라이언트 측까지 같이 마무리됨.
+
+### 처리한 큐
+
+| Phase | 주제 | 커밋 | 산출 |
+|:-:|:----|:----|:----|
+| A | RelayClient + AuthSession 서비스 골격 + AppContext 확장 | `1ec7a15` | services/relay_client.rs (RelayClient + RelayError + from_settings(cfg+SQLite override)) + services/session.rs (AuthSession + save/load/clear via auth/* 4 키) + AppContext.relay_client/auth_session + 6 사이트 fixture 패치 + 회귀 12 |
+| B | Passkey 4 커맨드 (register/assert × start/verify) | `2f17917` | commands/auth.rs 신규 549줄, AuthCommandError(VaultLocked/EmptyEmail/Relay/Network/Internal), complete_session 헬퍼(now+expires_in 결정론), require_vault_unlocked 가드(challenge 낭비 방지), wiremock 6 회귀 |
+| C | OAuth(GitHub/Google) + apivault:// deep link | `e159415` | auth_oauth_start/callback + UnsupportedProvider/MissingField error variant + tauri.conf.json plugins.deep-link.desktop.schemes + CSP connect-src 확장 + lib.rs setup register_all() + on_open_url emit "deep-link" + tauri-plugin-shell::open → tauri-plugin-opener 전환 + wiremock 5 회귀 |
+| D | auth_refresh / signout / status + hydrate | `7df5888` | refresh rotation(short-lock pattern), signout idempotent, status 메모리 캐시만 읽기, hydrate_session_from_vault(vault_unlock 직후 자동), vault_lock 시 메모리 캐시 None(영속본 보존), AuthCommandError::NoSession, wiremock 5 회귀 = T086 클라 완성 |
+
+### 핵심 인사이트
+
+- **테스트 가능성을 위한 헬퍼 추출 패턴**: Tauri AppHandle 의존을 떼어내야 wiremock 으로 단위 테스트 가능. fetch_oauth_authorize / exchange_oauth_callback 같이 "순수 비즈니스 로직" 만 추출하고, browser open 같은 사이드이펙트는 thin wrapper 로 격리. → register/assert/oauth 모두 동일 패턴.
+- **Lock 보유 시간 최소화**: auth_refresh 가 refresh_token 을 read 한 직후 lock 해제, 그 다음 네트워크 호출. 30초 reqwest timeout 동안 다른 커맨드의 user_id 읽기를 차단하지 않게 함. async lock 디자인의 모범 사례.
+- **Lock(잠금) ≠ Sign-out**: vault_lock 에서 메모리 auth_session 만 None 으로 비우고 영속본은 그대로 둠. 다음 unlock 에서 hydrate 가 자동 복원. 사용자 의도와 일치 (하루의 끝에 잠그고 다음 날 다시 unlock 하는 케이스).
+- **Unknown 응답 필드 무시**: OAuth callback 응답이 토큰 + salt_auth/salt_enc 같이 오는데 AuthTokensResponse 가 salt_* 무시 (serde 기본 동작). T085 가 같은 응답에서 salt 만 따로 빼면 추가 라운드트립 없음.
+- **Deep link emit-only 패턴**: Rust 는 OS deep link 받아 "deep-link" 이벤트만 emit. URL 파싱과 callback 호출은 FE 가. 백엔드와 프론트엔드의 책임 분리 명확. → I3 의 listener 표준화 사전작업.
+- **Rust 1.95 `tauri::Emitter` trait 분리**: AppHandle::emit 이 별도 trait 로 옮겨감. `use tauri::Emitter;` 명시 import 필요.
+- **`tauri-plugin-shell::Shell::open` deprecated**: Tauri 권장 경로는 dedicated `tauri-plugin-opener::OpenerExt::open_url`. 이미 두 plugin 모두 깔려 있어 단순 전환만으로 해결.
+
+### 다음 큐
+
+- **T084** — SignIn 페이지 UI (큰 frontend)
+- **T085** — 클라이언트 KDF 통합 (passkey verify 응답의 salt 로 enc_key 파생)
+- **I3** — GitHub Connect 풀 플로우 (Auth user JWT 가 이제 가능)
+- **Playwright Tauri E2E** — 인프라 결정 필요
+
+---
+
 ## 2026-04-27 PM (Night mode 1 — I1/I2 hotfix + clippy 정리 + M8 서버 측 5/8)
 
 ### 세션 개요
