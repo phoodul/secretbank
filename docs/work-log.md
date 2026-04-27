@@ -1,5 +1,55 @@
 # Work Log
 
+## 2026-04-27 → 2026-04-28 (T083 수동 검증 라운드 — 18 통과 + J1/J2 fix)
+
+### 세션 개요
+
+- **시간**: 2026-04-27 PM ~ 2026-04-28 (interactive 단계별 검증, mode 1)
+- **모드**: 한 단계씩 사용자가 화면/콘솔에서 실행 → 결과 보고 → 결함 발견 시 즉시 진단 → hotfix → 재검증
+- **결과**: 5 라운드 (A/B/C/D/E) 20 항목 중 **18 통과 + 2 deferred + 결함 2건 (J1 docs / J2 코드 hotfix)**
+
+### 검증 시퀀스
+
+| Round | 항목 | 통과 | 비고 |
+|:--|:--|:-:|:--|
+| **A** 인프라 (4) | A1 릴레이 / A2 health / A3 Tauri dev / A4 unlock | 4/4 ✅ | — |
+| **B** 단축회로 (5) | B1 status / B2 signout idempotent / B3 NoSession / B4 EmptyEmail (relay 호출 X) / B5 UnsupportedProvider | 5/5 ✅ | 릴레이 로그로 단축회로 확정 |
+| **C** Passkey 풀 플로우 (6) | C1 register_start / C2 verify (Windows Hello) / C3 status DTO / C4 refresh rotation / C5 재기동 hydrate / C6 signout | 6/6 ✅ | C2 첫 시도에서 J1 + J2 발견 — 두 hotfix 후 통과 |
+| **D** OAuth + Deep link (3) | D1 provider_disabled 503 / D2 콘솔 listener 등록 / D3 OS deep link 트리거 | 1/3 ✅ | D2/D3 deferred — DevTools 콘솔의 `@tauri-apps/api/event` bare specifier resolve 안 됨 + raw IPC 우회 시도도 콘솔 필터 이슈로 막힘. T084 SignIn UI 시점에 자연 검증 |
+| **E** 에러 매핑 (2) | E1 network 다운 / E2 invalid email | 2/2 ✅ | — |
+
+### 발견된 결함 2건
+
+#### J1 — 로컬 D1 마이그레이션 미적용 (P2, docs hotfix)
+
+- **증상**: C1 첫 시도 → `D1_ERROR: no such column: salt_auth at offset 18: SQLITE_ERROR` 500 응답
+- **원인**: `wrangler dev` 가 D1 마이그레이션을 자동 적용하지 않음. T080 의 vitest 환경(`readD1Migrations` + `applyD1Migrations`)은 인프라가 갖춰졌지만 dev 환경은 별도 명령 (`pnpm db:migrate:local`) 필요
+- **해결 (이 세션)**: `pnpm wrangler d1 migrations apply api-vault-relay --local` 로 0002_auth.sql 적용
+- **재발 방지**: README.md + docs/runbooks/relay-deployment.md 두 곳에 "신규 마이그레이션 시 재적용 + 미적용 시 D1_ERROR 500" 경고 명시 (이번 docs commit)
+
+#### J2 — register_start/assert_start 에 vault unlocked 가드 누락 (P0, 코드 hotfix `5a556d4`)
+
+- **증상**: C2 첫 시도 → vault_locked 가 register_verify 만 거부 → navigator.credentials.create 의 PIN 인증은 통과 → OS Passkey 저장소에 등록되지만 서버 DB 에는 INSERT 안 됨 → 다음 register 시도 시 `NotAllowedError` (W3C 명세상 InvalidStateError 가 NotAllowedError 로 통합 반환). Windows Passkey GUI 에서 삭제 후에도 잔재 가능 → 사실상 회복 불가능
+- **원인**: `auth_passkey_register_start` / `auth_passkey_assert_start` 가 require_vault_unlocked 가드 없이 네트워크만 호출. PIN 인증 같은 회복 불가능한 사이드이펙트 단계 전에 모든 가드를 통과 못함
+- **수정**: 두 start 커맨드에 require_vault_unlocked 가드 추가. start 단계에서 일찍 거부하면 navigator.credentials.* 가 호출되지 않으므로 OS 에 잔재 안 남음. direct_assert_start 헬퍼 + 회귀 2 (register_start_with_locked_vault, assert_start_with_locked_vault)
+
+### 핵심 인사이트
+
+- **OS↔서버 분리 회복 불가능 패턴**: WebAuthn 의 InvalidStateError → NotAllowedError 통합 반환 정책 + OS Passkey 저장소의 자체 캐시. 한 번 분리되면 사용자가 GUI 에서 삭제해도 잔재가 남는 경우 있음. → 모든 PIN/biometric 사이드이펙트 발생 가능 단계 **전에** 모든 가드를 통과해야 한다. 같은 패턴이 OAuth (browser open 후 callback 거부) 에도 잠재적으로 있지만 PIN/biometric 이 아니라서 OS 레벨 잔재 영향은 작음.
+- **`wrangler dev` 의 마이그레이션 미적용**: vitest pool-workers 환경 (자동 readD1Migrations + applyD1Migrations) 과 dev 환경 (수동 `pnpm db:migrate:local`) 이 다름. T080 commit 메시지에도 인사이트로 적었지만 결국 사용자 환경의 함정으로 노출. README 와 runbook 두 곳에 명시한 후로는 재발 방지.
+- **DevTools 콘솔 필터의 함정**: `console.log` 가 "info" 레벨로 분류되는데 default 뷰는 info 를 숨김. 사용자가 1시간동안 "출력 없음" 으로 오해. → 향후 검증 가이드에 "콘솔 좌상단 'All levels' 체크" 첫 줄에 명시 필요. 이번 세션에서 해결한 후로는 STEP 진행이 즉각 가시화됨.
+- **`__TAURI__` namespace 와 withGlobalTauri: false 호환**: `withGlobalTauri: false` 라도 `__TAURI_INTERNALS__.invoke` / `transformCallback` 은 노출됨. 콘솔 디버깅에 충분. ES module dynamic import (`import('@tauri-apps/api/event')`) 는 bare specifier resolve 안 되어 fail.
+- **모든 mode 1 인터랙티브 검증의 hotfix 패턴**: H1~H5, I1~I5, J1~J2 모두 검증 라운드 도중 발견 → 라운드 흐름 안에서 즉시 진단 → 분리된 commit 으로 hotfix → 재검증. **이게 단위 테스트로는 잡을 수 없는 IPC/UX/플랫폼 통합 결함을 잡는 가장 효율적인 방법**으로 일관됨.
+
+### 다음 큐
+
+- **T084** — SignIn 페이지 UI (D2/D3 deep link listener 도 여기서 자연 검증)
+- **T085** — KDF 통합 (passkey verify 응답의 salt_auth/salt_enc 로 enc_key 파생)
+- **I3** — GitHub Connect 풀 플로우 (Auth user JWT 가능)
+- **Playwright Tauri E2E** — 인프라 결정 필요
+
+---
+
 ## 2026-04-27 (T083 5-Phase 진행 — M8 클라이언트 백엔드 완성, 7/8 진입)
 
 ### 세션 개요

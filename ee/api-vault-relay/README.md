@@ -20,11 +20,15 @@ cp .dev.vars.example .dev.vars
 #    → docs/runbooks/relay-deployment.md 참조
 
 # 4. 로컬 D1 마이그레이션 적용
+#    (★ 신규 마이그레이션 파일이 추가될 때마다 다시 실행해야 한다.
+#     wrangler dev 는 마이그레이션을 자동 적용하지 않는다.)
 pnpm db:migrate:local
 
 # 5. 개발 서버 시작
 pnpm dev
 ```
+
+> ⚠️ **주의**: `git pull` 등으로 새 마이그레이션 파일이 들어오면 `pnpm dev` 를 재시작하기 전에 `pnpm db:migrate:local` 을 다시 돌려야 한다. 그렇지 않으면 새 컬럼/테이블을 참조하는 엔드포인트가 `D1_ERROR: no such column: ... SQLITE_ERROR` 와 함께 500 으로 떨어진다 (2026-04-27 J1 결함 참조).
 
 ## 테스트
 

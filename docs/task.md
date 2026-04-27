@@ -173,6 +173,13 @@
 | **I5** Bulk revoke filter 에 `status=Active` 추가 — `ExpectedCountMismatch` 해결 + 회귀 테스트 1 | `cc1785b` |
 | **I1/I2** Subscription 헤더 "Current plan: <Badge>" 그룹화 + Pro 활성 시 Upgrade 버튼 숨김 + 회귀 3 | `fea5562` |
 
+### T083 수동 검증 라운드 hotfix (2026-04-27 → 2026-04-28, 태스크 진행 표에는 별도 항목 아님)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **J2** P0 — Passkey register_start/assert_start 에 vault unlocked 가드 누락 → OS Passkey 저장소와 서버 DB 비동기화 (NotAllowedError 회복 불가). 가드 추가 + direct_assert_start 헬퍼 + 회귀 2 | `5a556d4` |
+| **J1** P2 — 로컬 D1 마이그레이션 미적용 (wrangler dev 자동 적용 안 함) → README + relay-deployment runbook 에 "신규 마이그레이션 시 재적용 필수 + 미적용 시 D1_ERROR no such column 발생" 경고 명시 | (이번 docs commit) |
+
 ### Night mode 정리 작업 (2026-04-27, 태스크 진행 표에는 별도 항목 아님)
 
 | 주제 | 커밋 해시 |

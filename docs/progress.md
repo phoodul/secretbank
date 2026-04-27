@@ -2,18 +2,21 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-27 PM (T083 Phase A~D — 클라이언트 측 9 커맨드 완성, M8 7/8 진입)
-- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M8 🔄 7/8 (서버 완료 + T083 클라 완료 + T086 클라 완료 — T084 UI / T085 KDF 통합 backlog) + M15 🔄**, 108/132 태스크 (81.8%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog)
-- **Commits (T083 Phase A~D 신규 4개):**
+- **Time:** 2026-04-28 (T083 수동 검증 라운드 — A/B/C/D/E 18 통과 + J1/J2 결함 fix + 2 deferred)
+- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M8 🔄 7/8 (서버 완료 + T083 클라 완료 + T086 클라 완료 — T084 UI / T085 KDF 통합 backlog) + M15 🔄**, 108/132 태스크 (81.8%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog, **4-28 J2 ✅ + J1 docs ✅**)
+- **Commits (T083 Phase A~D + 검증 hotfix 신규 6개):**
   - `1ec7a15` feat(auth) — T083 Phase A · RelayClient + AuthSession 서비스 골격 + AppContext 확장 (회귀 12)
   - `2f17917` feat(auth) — T083 Phase B · Passkey 4 커맨드 (register/assert × start/verify) + AuthCommandError + complete_session 헬퍼 (회귀 6)
   - `e159415` feat(auth) — T083 Phase C · OAuth(GitHub/Google) + apivault:// deep link scheme + on_open_url emit + tauri-plugin-opener 전환 (회귀 5)
   - `7df5888` feat(auth) — T083 Phase D · auth_refresh / auth_signout / auth_status + hydrate_session_from_vault 자동 통합 (T086 클라이언트 측 완성, 회귀 5)
-- **Tests (4-27 T083 종료 시점):**
-  - Rust api-vault-app lib: **130 passed** (102 → 130, T083 Phase A 12 + B 6 + C 5 + D 5 = +28)
+  - `a63133c` docs — T083 5-Phase 종료 · task.md / progress.md / work-log.md 갱신
+  - `5a556d4` fix(auth) — J2 · register/assert start 에 vault unlocked 가드 (OS↔DB 분리 회복불가 패턴 차단, 회귀 2)
+- **Tests (4-28 J2 hotfix 후):**
+  - Rust api-vault-app lib: **132 passed** (102 → 132, T083 Phase A 12 + B 6 + C 5 + D 5 + J2 2 = +30)
   - relay vitest 35 / Rust crypto 5 / storage 39 / 전체 워크스페이스 모두 그린
   - clippy --workspace --all-targets -D warnings: **0 에러**
   - typecheck / Vitest(frontend): 영향 없음 (FE 변경 없음)
+  - 수동 검증: 18 통과 / 2 deferred (D2/D3 — T084 SignIn UI 시점에 자연 검증)
 - **Blocker:** pre-existing clippy warnings (Rust 1.95 새 lint) — 이번 hotfix 와 무관, 후속 정리 큐
 - **Mode:** Interactive manual verification — 라운드 A → B → C 단계별 사용자 실행, 결함 발견 시 즉시 진단 → hotfix → 재검증.
 - **Verification 통과 (10/10 + C2 deferred):**

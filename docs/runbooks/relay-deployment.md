@@ -101,6 +101,10 @@ pnpm db:migrate:local
 pnpm db:migrate:remote
 ```
 
+> ⚠️ **`wrangler dev` 는 D1 마이그레이션을 자동 적용하지 않는다.** 새 마이그레이션 파일이 추가될 때마다 (`git pull` 직후 등) `pnpm db:migrate:local` 을 다시 돌려야 한다. 그렇지 않으면 새 컬럼/테이블을 참조하는 엔드포인트가 `D1_ERROR: no such column: ... SQLITE_ERROR` 와 함께 500 응답으로 떨어진다.
+>
+> CI/CD 배포 (`pnpm db:migrate:remote`) 도 운영 D1 에 별도 적용해야 한다 — `pnpm deploy` 는 코드만 배포하고 마이그레이션은 건드리지 않는다.
+
 ---
 
 ## 6. GitHub App 시크릿 주입
