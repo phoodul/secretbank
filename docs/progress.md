@@ -2,8 +2,8 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-28 (T085 KDF 통합 완료 → M8 백엔드 8/8 ✅ — 다음 세션 Night mode 진입 준비)
-- **Phase:** Phase 3 — Implementation, **M4~M7 ✅ + M5 10/10 ✅ + M8 백엔드 8/8 ✅ (T084 SignIn UI 만 남음) + M15 🔄**, 109/132 태스크 (82.6%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog, **4-28 J2 ✅ + J1 docs ✅**)
+- **Time:** 2026-04-28 Night mode 3 (T084 SignIn UI 완료 → M8 8/8 ✅ 풀 클로즈, 다음 I3 GitHub Connect 풀 플로우 진입)
+- **Phase:** Phase 3 — Implementation, **M4~M8 ✅ + M5 10/10 ✅ + M8 8/8 ✅ + M15 🔄**, 110/132 태스크 (83.3%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, I3 backlog, 4-28 J2 ✅ + J1 docs ✅)
 - **Commits (T083 Phase A~D + 검증 hotfix 신규 6개):**
   - `1ec7a15` feat(auth) — T083 Phase A · RelayClient + AuthSession 서비스 골격 + AppContext 확장 (회귀 12)
   - `2f17917` feat(auth) — T083 Phase B · Passkey 4 커맨드 (register/assert × start/verify) + AuthCommandError + complete_session 헬퍼 (회귀 6)
@@ -59,11 +59,17 @@
   7. ✅ docs — J1 + 검증 종합 기록 (`f7b6c9e`)
   8. ✅ T085 — Zero-Knowledge KDF (`17da027`)
 
-- **다음 세션 Night mode 큐 (사용자 승인 없이 연속 실행):**
-  1. **T084** — SignIn 페이지 UI (PasskeyButton + OAuthButton + /auth/sign-in + deep-link listener) → derive_session_keys 호출 통합 → 회원가입 풀 플로우 완성. **D2/D3 deep-link 검증도 여기서 자연스럽게 끝남**
-  2. **I3** — GitHub Connect 풀 플로우 (T083 클라 + Auth user JWT 로 이제 unblocked)
-  3. **Playwright Tauri E2E 인프라** — tauri-driver/WebView2 셋업 (큰 인프라 결정, Night mode 큐에 두되 설치 단계는 사용자 액션 필요할 수 있음)
-  4. **M9 Sync** — T085 의 enc_key 파생이 활성화되는 시점, M8 SignIn UI 완성 후 진입 가능
+- **이번 Night mode 3 처리 완료 (T084 SignIn UI):**
+  1. ✅ **T084** — `/auth/sign-in` 풀 페이지 + PasskeyButton (assert→register fallback 단일 버튼 UX) + OAuthButton (github/google) + deep-link `apivault://auth/callback` listener + Settings CloudSyncSection 진입점 + `@simplewebauthn/browser` dep + i18n 4 로케일 + Vitest +19. M8 마지막 1건 클로즈, **M8 8/8 ✅ 풀 완료**.
+
+- **다음 Night mode 큐 (사용자 승인 없이 연속 실행):**
+  1. **I3** — GitHub Connect 풀 플로우 (T083 클라 + Auth user JWT 로 이제 unblocked, T084 의 deep-link 인프라 재활용 가능)
+  2. **Playwright Tauri E2E 인프라** — tauri-driver/WebView2 셋업 (큰 인프라 결정, Night mode 큐에 두되 설치 단계는 사용자 액션 필요할 수 있음)
+  3. **M9 Sync** — T085 의 enc_key 파생이 활성화되는 시점, M8 완성 후 진입 가능
+
+- **T084 의 deferred 항목 (M9 진입 시점에 처리):**
+  - 성공 후 redirect 경로를 `/settings/sync` 로 변경 (현재 `/settings`)
+  - `derive_session_keys` 호출 통합 — verify 응답의 salt 로 enc_key 파생 → vault 저장 (M9 sync 가 활성화될 때)
 
 ---
 

@@ -1,0 +1,74 @@
+/**
+ * useDeepLinkCallback — OS 가 `apivault://auth/callback?...` URL 을 열면 단일 콜백
+ * 으로 dispatch 한다.
+ *
+ * lib.rs (Phase C) 에서 deep_link.on_open_url 이 `deep-link` 이벤트로 `Vec<String>`
+ * (URL 목록) 을 emit 한다. 본 훅은 그 이벤트를 listen, `apivault://auth/callback`
+ * prefix 일치하는 URL 만 파싱해 `provider`/`code`/`state` 를 콜백으로 넘긴다.
+ *
+ * 한 번에 하나의 OAuth 흐름만 진행한다고 가정한다 (UI 상 동시 클릭 방지).
+ */
+
+import { useEffect } from "react";
+
+export interface OAuthCallbackPayload {
+  provider: string;
+  code: string;
+  state: string;
+}
+
+export type OAuthCallbackHandler = (payload: OAuthCallbackPayload) => void;
+
+const CALLBACK_PREFIX = "apivault://auth/callback";
+
+/**
+ * `apivault://auth/callback?provider=github&code=...&state=...` URL 을
+ * 파싱해 OAuthCallbackPayload 로 변환한다. 실패 시 null.
+ */
+export function parseOAuthCallbackUrl(raw: string): OAuthCallbackPayload | null {
+  if (!raw.startsWith(CALLBACK_PREFIX)) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  const provider = parsed.searchParams.get("provider");
+  const code = parsed.searchParams.get("code");
+  const state = parsed.searchParams.get("state");
+  if (!provider || !code || !state) return null;
+  return { provider, code, state };
+}
+
+export function useDeepLinkCallback(handler: OAuthCallbackHandler | null): void {
+  useEffect(() => {
+    if (!handler) return;
+    let cancelled = false;
+    let unlisten: (() => void) | null = null;
+
+    void (async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      const stop = await listen<string[]>("deep-link", (event) => {
+        const urls = event.payload;
+        if (!Array.isArray(urls)) return;
+        for (const url of urls) {
+          const payload = parseOAuthCallbackUrl(url);
+          if (payload) {
+            handler(payload);
+            return;
+          }
+        }
+      });
+      if (cancelled) {
+        stop();
+      } else {
+        unlisten = stop;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (unlisten) unlisten();
+    };
+  }, [handler]);
+}

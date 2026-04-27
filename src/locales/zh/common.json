@@ -218,6 +218,37 @@
     "loading": "正在检查保险库状态…",
     "lockedToast": "保险库已锁定"
   },
+  "auth": {
+    "signIn": {
+      "title": "连接 API Vault",
+      "subtitle": "登录以启用云同步、事件匹配和部署共享。保险库始终在本机加密保存。",
+      "emailLabel": "邮箱",
+      "or": "或",
+      "keepOffline": "保持此设备离线",
+      "keepOfflineHint": "你仍可使用本地保险库。可随时在设置中登录。"
+    },
+    "passkey": {
+      "continue": "使用通行密钥继续",
+      "working": "等待通行密钥…"
+    },
+    "oauth": {
+      "github": "使用 GitHub 继续",
+      "google": "使用 Google 继续",
+      "providerMismatch": "回调中的 provider 不匹配，请重试。",
+      "stateMismatch": "OAuth state 不匹配，请重新开始登录。"
+    },
+    "signedInAs": "已登录为 {{email}}",
+    "signOutSuccess": "已退出登录",
+    "cloudSync": {
+      "heading": "云同步",
+      "description": "登录后即可使用多端同步、事件匹配和部署共享。保险库始终在本机加密保存。",
+      "connected": "已登录",
+      "notConnected": "未登录",
+      "signIn": "登录",
+      "signOut": "退出登录",
+      "userId": "用户: {{id}}"
+    }
+  },
   "onboarding": {
     "dropToScan": "拖入文件以扫描 API 密钥",
     "dropHint": "拖入文件夹以扫描 .env 与配置文件，或拖入单个文件进行快速检查。",

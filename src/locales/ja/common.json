@@ -218,6 +218,37 @@
     "loading": "ボールトの状態を確認中…",
     "lockedToast": "ボールトをロックしました"
   },
+  "auth": {
+    "signIn": {
+      "title": "API Vault に接続",
+      "subtitle": "サインインするとクラウド同期、インシデントマッチング、デプロイ共有が有効になります。ボールトはこの端末に暗号化されたまま保管されます。",
+      "emailLabel": "メール",
+      "or": "または",
+      "keepOffline": "この端末をオフラインのままにする",
+      "keepOfflineHint": "ローカルボールトはそのまま使えます。設定からいつでもサインインできます。"
+    },
+    "passkey": {
+      "continue": "パスキーで続行",
+      "working": "パスキーを待機中…"
+    },
+    "oauth": {
+      "github": "GitHub で続行",
+      "google": "Google で続行",
+      "providerMismatch": "コールバックの provider が一致しません。もう一度お試しください。",
+      "stateMismatch": "OAuth state が一致しません。サインインをやり直してください。"
+    },
+    "signedInAs": "{{email}} としてサインイン中",
+    "signOutSuccess": "サインアウトしました",
+    "cloudSync": {
+      "heading": "クラウド同期",
+      "description": "サインインするとマルチデバイス同期、インシデントマッチング、デプロイ共有が有効になります。ボールトはこの端末に暗号化されたまま保管されます。",
+      "connected": "サインイン中",
+      "notConnected": "未サインイン",
+      "signIn": "サインイン",
+      "signOut": "サインアウト",
+      "userId": "ユーザー: {{id}}"
+    }
+  },
   "onboarding": {
     "dropToScan": "APIキーをスキャンするにはドロップしてください",
     "dropHint": ".envや設定ファイルをスキャンするにはフォルダを、クイックチェックには単一ファイルをドロップしてください。",

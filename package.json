@@ -21,6 +21,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-slot": "^1.2.4",
+    "@simplewebauthn/browser": "^13.3.0",
     "@tailwindcss/vite": "^4.2.4",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-biometric": "^2.3.2",

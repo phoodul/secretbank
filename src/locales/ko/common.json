@@ -218,6 +218,37 @@
     "loading": "볼트 상태 확인 중…",
     "lockedToast": "볼트 잠금됨"
   },
+  "auth": {
+    "signIn": {
+      "title": "API Vault 연결",
+      "subtitle": "로그인하면 클라우드 동기화, 인시던트 매칭, 배포 공유가 활성화됩니다. 볼트는 이 디바이스에 암호화된 상태로 남습니다.",
+      "emailLabel": "이메일",
+      "or": "또는",
+      "keepOffline": "이 디바이스를 오프라인으로 유지",
+      "keepOfflineHint": "로컬 볼트는 그대로 사용할 수 있습니다. 설정에서 언제든 로그인하세요."
+    },
+    "passkey": {
+      "continue": "패스키로 계속",
+      "working": "패스키 대기 중…"
+    },
+    "oauth": {
+      "github": "GitHub 으로 계속",
+      "google": "Google 로 계속",
+      "providerMismatch": "콜백 provider 가 일치하지 않습니다. 다시 시도하세요.",
+      "stateMismatch": "OAuth state 가 맞지 않습니다. 로그인 흐름을 다시 시작하세요."
+    },
+    "signedInAs": "{{email}} 로 로그인됨",
+    "signOutSuccess": "로그아웃됨",
+    "cloudSync": {
+      "heading": "클라우드 동기화",
+      "description": "로그인하면 멀티 디바이스 동기화, 인시던트 매칭, 배포 공유가 활성화됩니다. 볼트는 이 디바이스에 암호화된 상태로 남습니다.",
+      "connected": "로그인됨",
+      "notConnected": "비로그인",
+      "signIn": "로그인",
+      "signOut": "로그아웃",
+      "userId": "사용자: {{id}}"
+    }
+  },
   "onboarding": {
     "dropToScan": "API 키 스캔을 위해 파일을 드롭하세요",
     "dropHint": ".env 및 설정 파일을 스캔하려면 폴더를, 빠른 검사를 위해서는 단일 파일을 드롭하세요.",

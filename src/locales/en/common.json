@@ -218,6 +218,37 @@
     "loading": "Checking vault status…",
     "lockedToast": "Vault locked"
   },
+  "auth": {
+    "signIn": {
+      "title": "Connect to API Vault",
+      "subtitle": "Sign in to enable cloud sync, incident matching, and shared deployments. Your vault stays encrypted on this device.",
+      "emailLabel": "Email",
+      "or": "or",
+      "keepOffline": "Keep this device offline",
+      "keepOfflineHint": "You can still use the local vault. Sign in any time from Settings."
+    },
+    "passkey": {
+      "continue": "Continue with passkey",
+      "working": "Waiting for passkey…"
+    },
+    "oauth": {
+      "github": "Continue with GitHub",
+      "google": "Continue with Google",
+      "providerMismatch": "Unexpected provider in callback. Try again.",
+      "stateMismatch": "OAuth state mismatch. Restart the sign-in flow."
+    },
+    "signedInAs": "Signed in as {{email}}",
+    "signOutSuccess": "Signed out",
+    "cloudSync": {
+      "heading": "Cloud sync",
+      "description": "Sign in to enable multi-device sync, incident matching, and shared deployments. Your vault stays encrypted on this device.",
+      "connected": "Signed in",
+      "notConnected": "Not signed in",
+      "signIn": "Sign in",
+      "signOut": "Sign out",
+      "userId": "User: {{id}}"
+    }
+  },
   "onboarding": {
     "dropToScan": "Drop to scan for API keys",
     "dropHint": "Drop a folder to scan .env and config files, or a single file for quick check.",

@@ -10,6 +10,7 @@ import { OnboardingScanPage } from "@/pages/OnboardingScanPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
 import { RailguardPage } from "@/pages/RailguardPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { SignInPage } from "@/features/auth/SignInPage";
 import { AutoLockGuard } from "@/features/vault/AutoLockGuard";
 import { DropZone } from "@/features/onboarding/DropZone";
 import { WelcomePage } from "@/features/onboarding/WelcomePage";
@@ -56,6 +57,7 @@ function VaultGate() {
         <Routes>
           <Route path="welcome" element={<WelcomePage />} />
           <Route path="onboarding/scan" element={<OnboardingScanPage />} />
+          <Route path="auth/sign-in" element={<SignInPage />} />
           <Route
             element={
               <RequireOnboarding>

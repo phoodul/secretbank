@@ -1,5 +1,59 @@
 # Work Log
 
+## 2026-04-28 Night mode 3 — T084 SignIn UI (M8 8/8 ✅ 완료)
+
+### 세션 개요
+
+- **시간**: 2026-04-28 Night mode 3 (사용자 승인 없이 연속 실행, T085 종료 직후 이어서)
+- **목표**: M8 마지막 1건 — SignIn 페이지 UI + deep-link listener
+- **결과**: 1 commit (예정), Vitest 315 → 334 (+19), pnpm dep `@simplewebauthn/browser` 추가, M8 7/8 → **8/8 ✅**
+
+### T084 — SignIn 페이지 UI
+
+**스코프**:
+- `/auth/sign-in` 라우트 (App.tsx VaultGate 안, RequireOnboarding 가드 밖)
+- 신규 파일 7개:
+  - `features/auth/PasskeyButton.tsx` — assert 시도 → 404 면 register 폴백 (단일 버튼 UX)
+  - `features/auth/OAuthButton.tsx` — github/google variant, `auth_oauth_start` 호출 후 부모에 expectedState 전달
+  - `features/auth/SignInPage.tsx` — 이메일 입력 + Passkey + OAuth 2개 + Keep offline. deep-link 콜백 dispatch.
+  - `features/auth/CloudSyncSection.tsx` — Settings 진입점 (비로그인 → Sign in / 로그인 → user_id + Sign out)
+  - `features/auth/use-auth-session.ts` — `auth_status` / `auth_signout` 래퍼
+  - `features/auth/use-deep-link-callback.ts` — `deep-link` 이벤트 listener + `apivault://auth/callback` 파서
+- i18n 4 로케일 (en/ko/ja/zh) — `auth.signIn.*`, `auth.passkey.*`, `auth.oauth.*`, `auth.cloudSync.*`
+- SettingsPage — Subscription 위에 CloudSyncSection 마운트
+
+**WebAuthn JSON ↔ navigator.credentials**:
+- `@simplewebauthn/browser` 의 `startRegistration` / `startAuthentication` 사용
+- 릴레이가 보내는 `PublicKeyCredentialCreation/RequestOptionsJSON` 을 그대로 통과
+- 응답도 그대로 `verify` 엔드포인트에 forward — 와이어 형식은 릴레이 source-of-truth
+
+**OAuth 흐름**:
+1. Click → `auth_oauth_start(provider, redirectUri="apivault://auth/callback")` → 릴레이가 state + authorize_url 반환
+2. Rust 가 `tauri-plugin-opener` 로 OS 브라우저 open
+3. Provider → relay callback → 릴레이가 `apivault://auth/callback?provider=...&code=...&state=...` 으로 redirect
+4. lib.rs `on_open_url` → `deep-link` 이벤트 emit (`Vec<String>`)
+5. `useDeepLinkCallback` 이 SignInPage 의 핸들러로 dispatch — expectedState 일치 검증 후 `auth_oauth_callback` 호출
+6. 성공 → toast + `/settings` 리디렉션
+
+**테스트 회귀 +19**:
+- `parseOAuthCallbackUrl` 4 — happy / scheme mismatch / missing param / malformed
+- `PasskeyButton` 5 — empty email disable / assert happy / register fallback / non-404 error / busy single-flight
+- `OAuthButton` 3 — start invoke / error 전파 / busy disable
+- `SignInPage` 4 — render / Keep offline → /settings / OAuth happy path / state mismatch 거부
+- `CloudSyncSection` 3 — not signed in / signed in 표시 / sign-out 클릭
+
+**검증**:
+- `pnpm typecheck` — 0 에러
+- `pnpm test --run` — **334/334 통과** (이전 315 +19 신규)
+- `pnpm lint` — 0 에러 (기존 5 warning 변동 없음)
+- `cargo check --workspace --tests --all-features` — 클린
+
+**Pending (M9 진입 시점에 처리)**:
+- 성공 후 redirect 경로를 `/settings/sync` 로 변경 (현재는 `/settings`)
+- `derive_session_keys` 호출 통합 — verify 응답의 salt 로 enc_key 파생 → vault 저장 (M9 sync 가 활성화될 때)
+
+---
+
 ## 2026-04-28 (T085 KDF 통합 + 세션 마무리 — M8 백엔드 8/8 ✅)
 
 ### 세션 개요
