@@ -1,5 +1,47 @@
 # Work Log
 
+## 2026-04-28 Night mode 3 — I3 GitHub Connect 표준화
+
+### 세션 개요
+
+- **목표**: `useGithubIntegration` 의 deep-link 리스너가 lib.rs 의 표준 `deep-link` 이벤트 형식과 맞지 않던 결함 정리 + Setup URL 문서화
+- **결과**: 1 commit (예정), Vitest 334 → 342 (+8)
+
+### 결함 진단
+
+`useGithubIntegration.ts` 가 `listen("deep-link://github-callback", ...)` 형식의 이벤트를 받으려 했으나, lib.rs Phase C 에서 표준화된 emit 은 `emit("deep-link", urls: Vec<String>)` 단일 채널 → 기존 코드는 사실상 dead path. 사용자가 GitHub App 을 설치해도 deep-link redirect 가 들어와도 listener 가 발화되지 않아 installation_id 가 자동 저장되지 않았다.
+
+### 수정
+
+- `parseGithubCallbackUrl(raw)` 헬퍼 — `apivault://github/callback?installation_id=N` URL 만 매칭, 양수 정수 검증
+- `connect()` 의 listener 가 이제 `listen<string[]>("deep-link", ...)` 로 등록되고 payload 의 각 URL 을 prefix 매칭
+- `apivault://auth/callback` 등 무관한 deep-link 는 무시 (다른 feature 가 같은 채널을 공유)
+- 한 번 발화하면 unlisten + connecting=false → single-flight
+
+### Runbook 보강
+
+`docs/runbooks/github-app-registration.md`:
+- "Setup URL" 행 신설 — `apivault://github/callback` 이 OAuth callback 이 아니라 install 후 redirect 용임을 명시
+- ✅ "Redirect on update" 체크 항목 추가
+- 트러블슈팅: deep-link 이 발화 안 되는 3가지 원인 (Setup URL 오타 / OS scheme 등록 / 사용자 prompt 거부)
+
+### 테스트 +8
+
+- `parse-github-callback.test.ts` 6 — happy / 무관 쿼리 무시 / prefix mismatch / installation_id 없음 / 음수·소수·문자열 거부 / malformed URL
+- `use-github-integration.test.ts` 2 — deep-link 매치 시 save 발화 / 무관 deep-link 는 무시
+
+### M8 Auth user JWT (사전 조건 4) — 별도 작업 없음
+
+T086 + T083-D 에서 이미 완성. I3 의 4 사전 조건 중:
+- App 등록 ✅ (T060 runbook 존재, 이번에 Setup URL 명시화)
+- deep-link scheme ✅ (T083 Phase C)
+- listener 표준화 ✅ (이번 commit)
+- M8 Auth user JWT ✅ (T086)
+
+→ I3 풀 플로우 unblocked. 실제 GitHub App 등록 + Cloudflare Workers 배포는 사용자 액션 필요.
+
+---
+
 ## 2026-04-28 Night mode 3 — T084 SignIn UI (M8 8/8 ✅ 완료)
 
 ### 세션 개요

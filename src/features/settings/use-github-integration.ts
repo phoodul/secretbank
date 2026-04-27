@@ -26,6 +26,34 @@ export interface RemoteKey {
 }
 
 // ---------------------------------------------------------------------------
+// Deep-link callback parser
+// ---------------------------------------------------------------------------
+
+const GITHUB_CALLBACK_PREFIX = "apivault://github/callback";
+
+/**
+ * `apivault://github/callback?installation_id=N[&setup_action=install]` URL 을
+ * 파싱해 installation_id 를 추출한다. 매칭 실패 시 null.
+ *
+ * GitHub App 의 "Setup URL" 이 이 deep-link 로 설정되어 있어야 동작한다 —
+ * `docs/runbooks/github-app-registration.md` 참조.
+ */
+export function parseGithubCallbackUrl(raw: string): number | null {
+  if (!raw.startsWith(GITHUB_CALLBACK_PREFIX)) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  const installationParam = parsed.searchParams.get("installation_id");
+  if (!installationParam) return null;
+  const id = Number(installationParam);
+  if (!Number.isFinite(id) || id <= 0 || !Number.isInteger(id)) return null;
+  return id;
+}
+
+// ---------------------------------------------------------------------------
 // IPC wrappers
 // ---------------------------------------------------------------------------
 
@@ -128,37 +156,29 @@ export function useGithubIntegration(): UseGithubIntegrationReturn {
       const { open } = await import("@tauri-apps/plugin-shell");
       await open(url);
 
-      // Register a one-time deep link listener for the callback.
+      // Register a one-time deep-link listener. lib.rs emits `deep-link` with
+      // a `Vec<String>` payload containing the matched URLs — we filter for
+      // ones starting with `apivault://github/callback`.
       if (!deepLinkRegistered.current) {
         deepLinkRegistered.current = true;
         const { listen } = await import("@tauri-apps/api/event");
-        const unlisten = await listen<string>("deep-link://github-callback", async (event) => {
-          // Payload may be the raw URL string or just the installation_id.
+        const unlisten = await listen<string[]>("deep-link", async (event) => {
+          const urls = Array.isArray(event.payload) ? event.payload : [];
           let installationId: number | null = null;
-          try {
-            const raw = event.payload;
-            // Try parsing as plain number first.
-            const asNum = Number(raw);
-            if (!Number.isNaN(asNum)) {
-              installationId = asNum;
-            } else {
-              // Fallback: try URL search param ?installation_id=...
-              const parsedUrl = new URL(raw);
-              const param = parsedUrl.searchParams.get("installation_id");
-              if (param) installationId = Number(param);
+          for (const u of urls) {
+            const parsed = parseGithubCallbackUrl(u);
+            if (parsed !== null) {
+              installationId = parsed;
+              break;
             }
-          } catch {
-            // Unable to parse — ignore
           }
-
-          if (installationId !== null && installationId > 0) {
-            try {
-              await ipcSaveInstallation(installationId);
-              setFetchState({ phase: "loading" });
-              setTick((n) => n + 1);
-            } catch {
-              // save error surfaced via next refresh
-            }
+          if (installationId === null) return; // ignore unrelated deep-links
+          try {
+            await ipcSaveInstallation(installationId);
+            setFetchState({ phase: "loading" });
+            setTick((n) => n + 1);
+          } catch {
+            // save error surfaced via next refresh
           }
           unlisten();
           deepLinkRegistered.current = false;
