@@ -72,3 +72,11 @@ ee/**/wrangler.toml.local
 vscode-extension/node_modules/
 vscode-extension/out/
 vscode-extension/*.vsix
+
+# jetbrains-plugin (M22)
+jetbrains-plugin/.gradle/
+jetbrains-plugin/build/
+jetbrains-plugin/.idea/
+jetbrains-plugin/gradle/
+jetbrains-plugin/gradlew
+jetbrains-plugin/gradlew.bat

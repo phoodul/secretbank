@@ -1,0 +1,82 @@
+<idea-plugin>
+    <id>app.api-vault.jetbrains</id>
+    <name>API Vault</name>
+    <vendor email="support@api-vault.app" url="https://api-vault.app">API Vault contributors</vendor>
+
+    <description><![CDATA[
+        <h2>API Vault — secrets manager that understands your dependency graph</h2>
+        <p>
+            Read and reveal credentials from your local API Vault directly inside
+            IntelliJ IDEA / WebStorm / GoLand / PyCharm / Rider / RubyMine, and
+            scan your project's dependencies for known secret-leak / supply-chain
+            advisories from OSV.dev.
+        </p>
+        <ul>
+            <li><b>Tools → API Vault → List credentials</b> — quick view, no values.</li>
+            <li><b>Tools → API Vault → Reveal credential</b> — passphrase prompt → clipboard, auto-cleared in 30s.</li>
+            <li><b>Tools → API Vault → Scan supply-chain risk</b> — flags risky deps in package.json / Cargo.toml as inspection warnings.</li>
+            <li>Status bar shield icon for at-a-glance access.</li>
+        </ul>
+        <p>
+            Requires the <code>apivault</code> CLI on your PATH. Get it at
+            <a href="https://api-vault.app/download">api-vault.app/download</a>.
+            Plugin is AGPL-3.0; the desktop app is too.
+        </p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <h3>0.1.0</h3>
+        <ul>
+            <li>Initial release — list / reveal credentials, supply-chain scan, status-bar widget, manifest inspection.</li>
+        </ul>
+    ]]></change-notes>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <statusBarWidgetFactory
+            id="app.api-vault.jetbrains.statusBar"
+            implementation="app.apivault.jetbrains.ApiVaultStatusBarWidgetFactory"
+            order="last"/>
+        <localInspection
+            language="JSON"
+            displayName="API Vault — risky dependency"
+            groupName="API Vault"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="app.apivault.jetbrains.PackageJsonAdvisoryInspection"/>
+        <localInspection
+            language="TOML"
+            displayName="API Vault — risky dependency"
+            groupName="API Vault"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="app.apivault.jetbrains.CargoTomlAdvisoryInspection"/>
+        <projectService
+            serviceImplementation="app.apivault.jetbrains.ApiVaultService"/>
+        <notificationGroup
+            id="app.api-vault.jetbrains.notifications"
+            displayType="BALLOON"
+            isLogByDefault="true"/>
+    </extensions>
+
+    <actions>
+        <group id="app.api-vault.jetbrains.toolsMenu"
+               text="API Vault"
+               popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="app.api-vault.jetbrains.list"
+                    class="app.apivault.jetbrains.ListCredentialsAction"
+                    text="List credentials"
+                    description="Show vault credentials (no values)."/>
+            <action id="app.api-vault.jetbrains.reveal"
+                    class="app.apivault.jetbrains.RevealCredentialAction"
+                    text="Reveal credential…"
+                    description="Reveal a credential value to the clipboard."/>
+            <action id="app.api-vault.jetbrains.scan"
+                    class="app.apivault.jetbrains.ScanSupplyChainAction"
+                    text="Scan supply-chain risk"
+                    description="Run a supply-chain scan on the current project."/>
+        </group>
+    </actions>
+</idea-plugin>
