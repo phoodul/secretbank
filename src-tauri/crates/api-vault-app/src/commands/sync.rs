@@ -10,12 +10,15 @@
 
 use api_vault_crypto::{kdf, KdfError};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
-use secrecy::ExposeSecret as _;
+use secrecy::{ExposeSecret as _, SecretString};
 use serde::Serialize;
 use tauri::State;
 use thiserror::Error;
 
 use crate::context::AppContext;
+use crate::services::value_sync::{
+    pull_values_since, push_value, PulledValueRecord, ValuePushResponse, ValueSyncError,
+};
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -42,11 +45,57 @@ pub enum SyncCommandError {
     /// for completeness.
     #[error("kdf error: {0}")]
     Kdf(String),
+
+    /// Empty / blank input from caller (credential_id, plaintext, etc.).
+    #[error("missing required field: {field}")]
+    MissingField { field: String },
+
+    /// Relay HTTP error.
+    #[error("relay rejected request (HTTP {status}): {body}")]
+    Relay { status: u16, body: String },
+
+    /// Transport-level failure (DNS, TLS, timeout).
+    #[error("relay network error: {message}")]
+    Network { message: String },
+
+    /// AEAD / vault / decode etc.
+    #[error("internal: {message}")]
+    Internal { message: String },
 }
 
 impl From<KdfError> for SyncCommandError {
     fn from(e: KdfError) -> Self {
         Self::Kdf(e.to_string())
+    }
+}
+
+impl From<ValueSyncError> for SyncCommandError {
+    fn from(e: ValueSyncError) -> Self {
+        match e {
+            ValueSyncError::NoSyncSession => Self::NoSyncSession,
+            ValueSyncError::Kdf(k) => Self::Kdf(k.to_string()),
+            ValueSyncError::Relay(r) => match r {
+                crate::services::relay_client::RelayError::BadStatus { status, body } => {
+                    Self::Relay {
+                        status: status.as_u16(),
+                        body,
+                    }
+                }
+                crate::services::relay_client::RelayError::Network(m) => {
+                    Self::Network { message: m }
+                }
+                other => Self::Internal {
+                    message: other.to_string(),
+                },
+            },
+            ValueSyncError::Aead(a) => Self::Internal {
+                message: a.to_string(),
+            },
+            ValueSyncError::Vault(v) => Self::Internal {
+                message: v.to_string(),
+            },
+            ValueSyncError::Decode(m) | ValueSyncError::Internal(m) => Self::Internal { message: m },
+        }
     }
 }
 
@@ -61,6 +110,52 @@ impl From<KdfError> for SyncCommandError {
 #[tauri::command]
 pub async fn sync_get_relay_url(state: State<'_, AppContext>) -> Result<String, SyncCommandError> {
     Ok(state.relay_client.base_url().to_string())
+}
+
+// ---------------------------------------------------------------------------
+// Tauri commands — value sync (Phase F-2)
+// ---------------------------------------------------------------------------
+
+/// Push a credential's plaintext value to the relay's value channel.
+///
+/// 호출자는 이미 plaintext 를 가지고 있어야 한다 (예: credential_create /
+/// credential_rotate_value 직후). 이 커맨드 안에서는 vault 에 추가로 쓰지
+/// 않는다 — 호출자가 본 명령 호출 직후 vault.put_secret 도 한다.
+#[tauri::command]
+pub async fn sync_value_push(
+    credential_id: String,
+    value: String,
+    state: State<'_, AppContext>,
+) -> Result<ValuePushResponse, SyncCommandError> {
+    if credential_id.trim().is_empty() {
+        return Err(SyncCommandError::MissingField {
+            field: "credential_id".into(),
+        });
+    }
+    if value.is_empty() {
+        return Err(SyncCommandError::MissingField {
+            field: "value".into(),
+        });
+    }
+    let plaintext = SecretString::from(value);
+    let resp = push_value(&state, &credential_id, &plaintext).await?;
+    Ok(resp)
+}
+
+/// Pull values updated after `since_ms` and apply them to the local vault.
+/// Returns metadata of every successfully applied row.
+#[tauri::command]
+pub async fn sync_value_pull_since(
+    since_ms: i64,
+    state: State<'_, AppContext>,
+) -> Result<Vec<PulledValueRecord>, SyncCommandError> {
+    if since_ms < 0 {
+        return Err(SyncCommandError::MissingField {
+            field: "since_ms (must be >= 0)".into(),
+        });
+    }
+    let applied = pull_values_since(&state, since_ms).await?;
+    Ok(applied)
 }
 
 // ---------------------------------------------------------------------------

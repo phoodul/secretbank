@@ -30,7 +30,9 @@ use commands::projects::{
 };
 use commands::scanner::env_scan_folder;
 use commands::settings::{settings_get, settings_set};
-use commands::sync::{sync_get_relay_url, sync_get_root_key};
+use commands::sync::{
+    sync_get_relay_url, sync_get_root_key, sync_value_pull_since, sync_value_push,
+};
 use commands::usage::{
     usage_create, usage_delete, usage_list_for_credential, usage_list_for_project,
 };
@@ -213,6 +215,8 @@ pub fn run(context: tauri::Context) {
             auth_get_access_token,
             sync_get_root_key,
             sync_get_relay_url,
+            sync_value_push,
+            sync_value_pull_since,
         ]);
     }
 
@@ -284,6 +288,8 @@ pub fn run(context: tauri::Context) {
             auth_get_access_token,
             sync_get_root_key,
             sync_get_relay_url,
+            sync_value_push,
+            sync_value_pull_since,
         ]);
     }
 

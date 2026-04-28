@@ -1,3 +1,4 @@
+pub mod aead;
 pub mod kdf;
 pub mod os_keyring;
 
@@ -11,6 +12,22 @@ pub enum KdfError {
 
     #[error("HKDF subkey derivation failed: {0}")]
     Hkdf(String),
+}
+
+/// AEAD 연산 오류 (M9 sync).
+#[derive(Debug, Error)]
+pub enum AeadError {
+    /// 키 길이 가드 실패.
+    #[error("AEAD key must be {expected} bytes, got {actual}")]
+    InvalidKeyLength { expected: usize, actual: usize },
+
+    /// envelope 가 nonce + tag 최소 길이 미달.
+    #[error("AEAD envelope shorter than nonce + tag minimum")]
+    EnvelopeTooShort,
+
+    /// Poly1305 검증 실패 (잘못된 키 / tamper / cross-AAD).
+    #[error("AEAD verify failed: {0}")]
+    VerifyFailed(String),
 }
 
 /// OS Keyring 연산 오류.

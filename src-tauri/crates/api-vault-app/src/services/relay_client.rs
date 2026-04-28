@@ -141,6 +141,104 @@ impl RelayClient {
 
         serde_json::from_str::<O>(&text).map_err(|e| RelayError::Decode(e.to_string()))
     }
+
+    /// GET `path` and decode the JSON response. Bearer token / authorization
+    /// is **not** attached here — callers that need it construct the URL with
+    /// query parameters and rely on the relay to authenticate via cookies or
+    /// future header injection. M9 Phase F-2 의 value pull 흐름에선
+    /// authorization 이 필요한데, 현재 relay_client 는 stateless. 이 메서드는
+    /// auth 부담을 호출자에게 넘기지 않으려 `post_json` 처럼 단순 wrapper.
+    ///
+    pub async fn get_json<O>(&self, path: &str) -> Result<O, RelayError>
+    where
+        O: DeserializeOwned,
+    {
+        let url = self
+            .base_url
+            .join(path)
+            .map_err(|e| RelayError::InvalidBaseUrl(format!("{path:?}: {e}")))?;
+
+        let resp = self
+            .http
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| RelayError::Network(e.to_string()))?;
+
+        let status = resp.status();
+        let text = resp
+            .text()
+            .await
+            .map_err(|e| RelayError::Network(e.to_string()))?;
+
+        if !status.is_success() {
+            return Err(RelayError::BadStatus { status, body: text });
+        }
+
+        serde_json::from_str::<O>(&text).map_err(|e| RelayError::Decode(e.to_string()))
+    }
+
+    /// POST + Bearer access token. M9 Phase F-2 의 sync_value_push 등 인증된
+    /// endpoint 호출용.
+    pub async fn post_json_authed<I, O>(
+        &self,
+        path: &str,
+        bearer: &str,
+        body: &I,
+    ) -> Result<O, RelayError>
+    where
+        I: Serialize + ?Sized,
+        O: DeserializeOwned,
+    {
+        let url = self
+            .base_url
+            .join(path)
+            .map_err(|e| RelayError::InvalidBaseUrl(format!("{path:?}: {e}")))?;
+        let resp = self
+            .http
+            .post(url)
+            .bearer_auth(bearer)
+            .json(body)
+            .send()
+            .await
+            .map_err(|e| RelayError::Network(e.to_string()))?;
+        let status = resp.status();
+        let text = resp
+            .text()
+            .await
+            .map_err(|e| RelayError::Network(e.to_string()))?;
+        if !status.is_success() {
+            return Err(RelayError::BadStatus { status, body: text });
+        }
+        serde_json::from_str::<O>(&text).map_err(|e| RelayError::Decode(e.to_string()))
+    }
+
+    /// GET + Bearer access token.
+    pub async fn get_json_authed<O>(&self, path: &str, bearer: &str) -> Result<O, RelayError>
+    where
+        O: DeserializeOwned,
+    {
+        let url = self
+            .base_url
+            .join(path)
+            .map_err(|e| RelayError::InvalidBaseUrl(format!("{path:?}: {e}")))?;
+        let resp = self
+            .http
+            .get(url)
+            .bearer_auth(bearer)
+            .send()
+            .await
+            .map_err(|e| RelayError::Network(e.to_string()))?;
+        let status = resp.status();
+        let text = resp
+            .text()
+            .await
+            .map_err(|e| RelayError::Network(e.to_string()))?;
+        if !status.is_success() {
+            return Err(RelayError::BadStatus { status, body: text });
+        }
+        serde_json::from_str::<O>(&text).map_err(|e| RelayError::Decode(e.to_string()))
+    }
 }
 
 // ---------------------------------------------------------------------------
