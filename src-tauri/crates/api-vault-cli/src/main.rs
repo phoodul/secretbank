@@ -23,7 +23,7 @@ use anyhow::{anyhow, Context as _, Result};
 use clap::{Parser, Subcommand};
 use secrecy::SecretString;
 
-use api_vault_core::{CredentialFilter, CredentialStatus};
+use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus};
 use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::init_pool;
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
@@ -63,6 +63,20 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+
+    /// Reveal a credential's secret value (default: copy to clipboard,
+    /// auto-clear after 30s). Use `--print` to write to stdout instead
+    /// (handy for `$(apivault reveal ... --print)` shell expansion).
+    Reveal {
+        /// Credential ID (ULID, 26 chars).
+        id: String,
+        /// Print the value to stdout instead of copying to clipboard.
+        #[arg(long)]
+        print: bool,
+        /// Seconds before clearing the clipboard (default 30).
+        #[arg(long, default_value_t = 30)]
+        clear_after: u64,
+    },
 }
 
 #[tokio::main]
@@ -81,6 +95,9 @@ async fn run(cli: Cli) -> Result<()> {
     match cli.command {
         Command::List { env, issuer, json } => {
             cmd_list(cli.data_dir.as_deref(), env.as_deref(), issuer.as_deref(), json).await
+        }
+        Command::Reveal { id, print, clear_after } => {
+            cmd_reveal(cli.data_dir.as_deref(), &id, print, clear_after).await
         }
     }
 }
@@ -255,11 +272,84 @@ fn truncate(s: &str, n: usize) -> String {
     }
 }
 
-// open_vault is wired up here so M18-cli-1b/1c can use it without further
-// imports — they will call into it once `reveal` / `run` land.
-#[allow(dead_code)]
-fn _ensure_open_vault_is_in_scope() {
-    let _ = open_vault;
+// ---------------------------------------------------------------------------
+// `apivault reveal <id>`
+// ---------------------------------------------------------------------------
+
+async fn cmd_reveal(
+    data_dir_override: Option<&std::path::Path>,
+    id_str: &str,
+    print: bool,
+    clear_after_secs: u64,
+) -> Result<()> {
+    use secrecy::ExposeSecret as _;
+
+    let data_dir = match data_dir_override {
+        Some(d) => d.to_path_buf(),
+        None => default_data_dir()?,
+    };
+
+    let cred_id: CredentialId = id_str
+        .parse()
+        .map_err(|e| anyhow!("invalid credential id {id_str:?}: {e}"))?;
+
+    // SQLite 에서 vault_ref 조회 — secret 자체는 vault 에 있음.
+    let db_path = data_dir.join("vault.db");
+    if !db_path.exists() {
+        return Err(anyhow!("no SQLite store at {}", db_path.display()));
+    }
+    let pool = init_pool(&db_path).await.context("opening SQLite pool")?;
+    let cred_repo = CredentialRepo::new(&pool);
+    let credential = cred_repo
+        .get_by_id(cred_id)
+        .await
+        .context("looking up credential")?
+        .ok_or_else(|| anyhow!("no credential with id {id_str}"))?;
+
+    // Vault unlock + reveal.
+    let vault = open_vault(&data_dir).await?;
+    let secret = vault
+        .get_secret(&credential.vault_ref)
+        .await
+        .context("vault.get_secret — vault may be corrupted")?;
+    let plaintext = std::str::from_utf8(secret.expose_secret())
+        .context("credential value is not UTF-8")?
+        .to_owned();
+
+    if print {
+        // 줄바꿈 없이 출력 — `$(apivault reveal ... --print)` 호환.
+        print!("{plaintext}");
+        return Ok(());
+    }
+
+    // Clipboard + auto-clear.
+    copy_to_clipboard_with_clear(&plaintext, clear_after_secs).await?;
+    println!(
+        "value copied to clipboard — clearing in {clear_after_secs}s",
+    );
+    Ok(())
+}
+
+/// Set clipboard, then sleep `clear_after_secs` and overwrite with empty
+/// string. Returns once the clear is done so the binary's exit guarantees
+/// the clipboard no longer holds the secret.
+async fn copy_to_clipboard_with_clear(plaintext: &str, clear_after_secs: u64) -> Result<()> {
+    let mut cb = arboard::Clipboard::new()
+        .context("clipboard unavailable — try `--print` instead")?;
+    cb.set_text(plaintext.to_owned())
+        .context("setting clipboard contents")?;
+    if clear_after_secs == 0 {
+        return Ok(());
+    }
+    tokio::time::sleep(std::time::Duration::from_secs(clear_after_secs)).await;
+    // Best-effort — if the user has copied something else in the meantime
+    // we don't want to clobber it. Read current contents first.
+    if let Ok(current) = cb.get_text() {
+        if current == plaintext {
+            let _ = cb.set_text(String::new());
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
