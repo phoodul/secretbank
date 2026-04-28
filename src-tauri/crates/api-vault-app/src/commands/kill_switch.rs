@@ -693,6 +693,7 @@ mod tests {
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
             db_change_emitter: crate::services::sync_emit::noop_emitter(),
+            pairing_session: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -1198,6 +1199,7 @@ mod tests {
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
             db_change_emitter: crate::services::sync_emit::noop_emitter(),
+            pairing_session: Arc::new(RwLock::new(None)),
         };
 
         let err = do_revoke_internal(&ctx, cred_id, true)

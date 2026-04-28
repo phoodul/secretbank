@@ -30,6 +30,11 @@ use commands::projects::{
 };
 use commands::scanner::env_scan_folder;
 use commands::settings::{settings_get, settings_set};
+use commands::pairing::{
+    sync_pair_cancel, sync_pair_initiator_finalize, sync_pair_initiator_poll,
+    sync_pair_initiator_start, sync_pair_joiner_apply, sync_pair_joiner_join,
+    sync_pair_joiner_poll,
+};
 use commands::sync::{
     sync_get_relay_url, sync_get_root_key, sync_value_pull_since, sync_value_push,
 };
@@ -217,6 +222,13 @@ pub fn run(context: tauri::Context) {
             sync_get_relay_url,
             sync_value_push,
             sync_value_pull_since,
+            sync_pair_initiator_start,
+            sync_pair_initiator_poll,
+            sync_pair_initiator_finalize,
+            sync_pair_joiner_join,
+            sync_pair_joiner_poll,
+            sync_pair_joiner_apply,
+            sync_pair_cancel,
         ]);
     }
 
@@ -290,6 +302,13 @@ pub fn run(context: tauri::Context) {
             sync_get_relay_url,
             sync_value_push,
             sync_value_pull_since,
+            sync_pair_initiator_start,
+            sync_pair_initiator_poll,
+            sync_pair_initiator_finalize,
+            sync_pair_joiner_join,
+            sync_pair_joiner_poll,
+            sync_pair_joiner_apply,
+            sync_pair_cancel,
         ]);
     }
 

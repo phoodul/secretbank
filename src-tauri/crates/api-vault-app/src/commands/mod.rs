@@ -8,6 +8,7 @@ pub mod deployments;
 pub mod graph;
 pub mod incidents;
 pub mod issuer;
+pub mod pairing;
 pub mod projects;
 pub mod railguard;
 pub mod scanner;

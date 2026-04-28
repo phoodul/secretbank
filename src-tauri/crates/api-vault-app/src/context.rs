@@ -17,6 +17,7 @@ use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
 use crate::services::relay_client::RelayClient;
 use crate::services::session::AuthSession;
+use crate::services::pairing::PairingSessionLock;
 use crate::services::sync_emit::SharedDbChangeEmitter;
 
 /// Application-wide shared state, managed by Tauri.
@@ -115,6 +116,14 @@ pub struct AppContext {
     /// Production lib.rs setup 은 `app.handle()` 로 만든 `TauriDbChangeEmitter`
     /// 를 [`AppContext::new`] 에 주입한다.
     pub db_change_emitter: SharedDbChangeEmitter,
+
+    /// M9 Phase G T092 — in-flight device pairing state.
+    ///
+    /// 한 시점에 한 페어링만 허용 (initiator 또는 joiner 역할 둘 중 하나).
+    /// 새 start/join 호출 시 이전 state 는 덮어써짐. 5분 TTL 은 relay 측 KV
+    /// 에서 enforce — 클라이언트 메모리 자체는 명시 cancel 또는 finalize/apply
+    /// 까지 유지.
+    pub pairing_session: Arc<PairingSessionLock>,
 }
 
 impl AppContext {
@@ -165,6 +174,7 @@ impl AppContext {
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
             db_change_emitter,
+            pairing_session: Arc::new(RwLock::new(None)),
         })
     }
 

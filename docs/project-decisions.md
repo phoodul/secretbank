@@ -928,3 +928,61 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - **영향:** `.github/workflows/deploy-relay.yml` 신규, `.github/workflows/ci.yml` `ee-relay` job 추가, `docs/runbooks/cloudflare-api-token.md` 신규, `ee/README.md` CI/CD 섹션 갱신.
 
 ---
+
+## [2026-04-28] 비전 정렬 점검 — Option A (sync 풀 완료 후 CLI/MCP 진입)
+
+### 배경
+
+자율 모드 Night mode 8/9 진행 중 사용자가 비전 점검 요구. "단순히 MVP 가 아니라 글로벌 SaaS 로 성장할 비전" — 1Password / Bitwarden / Doppler / Infisical 같은 글로벌 경쟁자를 능가할 차별화가 필요.
+
+### 진단 (2026-04-28 시점)
+
+**현재 강점 (실재 차별화):**
+- M3 dependency graph + blast radius (1Password/Doppler 가 못 함)
+- M4 incident feed auto-match (Bitwarden Watchtower 보다 정확)
+- M5 RAILGUARD (.cursorrules / CLAUDE.md / Copilot — AI 에디터 시대의 신선한 카테고리)
+- M6 audit hash chain (1Password 도 안 함)
+
+**비전 대비 부족 (글로벌 경쟁 관점):**
+- CLI 부재 — Doppler 의 `doppler run -- npm start` 같은 dev tool 일급 시민 표면 부재
+- MCP server 부재 — Claude / Cursor 가 vault 와 직접 대화하는 새 카테고리 (아직 어떤 경쟁사도 안 만듦, **우리 선점 가능**)
+- Team / RBAC / SSO 부재 — B2B 진입 비용 0
+- Auto rotation (M14) 미구현
+- Supply chain risk graph (npm package → secret leak 자동 감지) 미구현 — 우리 dependency graph + breach feed 의 시너지 자산
+
+### 결정 — Option A
+
+- **M9 풀 완료 후 신설 M18 (CLI + MCP server) 즉시 진입.** 시간 더 걸려도 좋은 프로그램 우선.
+- M9 의 잔여 sub-phase (G-pair-2.5/3/4 + UI + conflict + offline + entitlement) 모두 충실히 마무리. sync 가 흔들리면 다른 차별화도 무의미.
+- M14 (auto rotation) 은 M18 (CLI/MCP) 직후 진입. **차별화 = (graph + RAILGUARD) × (CLI/MCP 표면) × (rotation 자동화)** 의 곱셈 효과.
+
+### 신설 마일스톤 (placeholder)
+
+- **M18** — CLI + MCP server (`apivault run -- cmd` + Claude/Cursor MCP 통합)
+  - **왜 핵심인가**: dependency graph + RAILGUARD 가 GUI 안에 갇혀있으면 dev tool 시장 진입 못 함. CLI/MCP 가 그 자산을 모든 dev surface 에 노출하는 분배 채널.
+- **M19** — Team / org / shared vault (B2B 진입)
+- **M20** — Supply chain risk graph (npm/PyPI package → secret leak 자동 감지 + dependency graph 와 결합)
+- **M21** — VS Code + JetBrains plugin (M18 이후, MCP server 가 plugin layer 도 cover 가능)
+
+### 우선순위 재배열 (2026-04-28 → 2026-05-end)
+
+```
+현재 → M9 잔여 (G-pair-3/4 + UI + conflict + offline + entitlement) 풀 완료
+→ M14 (auto rotation) 또는 M18 (CLI/MCP) 중 결정
+→ 둘 다 차례로 (M18 우선 추천 — moat 효과 즉각)
+→ M19 (team)
+→ M11 (mobile)
+→ M12 (web viewer)
+→ M13 (i18n + updater + release)
+→ M20 (supply chain)
+→ M21 (IDE plugins)
+→ Beta launch + post-deploy review
+```
+
+### 자율 모드 운영 원칙 (강화)
+
+- 자율 모드는 sub-phase 작업에만 적용 — **비전 정렬 점검은 사용자 trigger 가 필요**.
+- 매 마일스톤 클로즈 시 (M9, M14, M18 ...) "다음 어디로?" 의 비전 점검 1회 의무.
+- 단순 MVP 채우기 ≠ 글로벌 SaaS. 차별화 우선.
+
+---
