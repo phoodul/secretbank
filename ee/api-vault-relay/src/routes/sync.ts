@@ -18,8 +18,16 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import type { Env } from "../env";
 import { verifyToken } from "../lib/jwt";
+import { checkRateLimit } from "../lib/rate-limit";
 
 export const sync = new Hono<{ Bindings: Env }>();
+
+/**
+ * Per-user 분당 요청 한도. Sync 자체가 하트비트성 polling 보다 event-driven
+ * 인 디자인이지만 (db:changed 후 push), 악성 클라이언트의 폭주에 대비해
+ * 100 req/min 으로 보호. 일반 사용자는 한 자릿수.
+ */
+const SYNC_RATE_LIMIT = { bucket: "sync", limit: 100, windowMs: 60_000 };
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -78,6 +86,15 @@ sync.get("/snapshot", async (c) => {
   const auth = await requireAuth(c);
   if (!auth.ok) return auth.res;
 
+  const rl = await checkRateLimit(c.env.TOKEN_CACHE, auth.userId, SYNC_RATE_LIMIT);
+  if (!rl.ok) {
+    return c.json(
+      { error: "rate_limited", reset_ms: rl.resetMs },
+      429,
+      { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
+    );
+  }
+
   const sinceRaw = c.req.query("since");
   const since = sinceRaw != null ? Number.parseInt(sinceRaw, 10) : 0;
   if (!Number.isFinite(since) || since < 0) {
@@ -110,6 +127,15 @@ sync.get("/snapshot", async (c) => {
 sync.post("/snapshot", async (c) => {
   const auth = await requireAuth(c);
   if (!auth.ok) return auth.res;
+
+  const rl = await checkRateLimit(c.env.TOKEN_CACHE, auth.userId, SYNC_RATE_LIMIT);
+  if (!rl.ok) {
+    return c.json(
+      { error: "rate_limited", reset_ms: rl.resetMs },
+      429,
+      { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
+    );
+  }
 
   const body = (await c.req.json().catch(() => null)) as
     | { ciphertext_b64?: unknown }
