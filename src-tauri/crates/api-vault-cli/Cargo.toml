@@ -1,0 +1,31 @@
+[package]
+name = "api-vault-cli"
+version = "0.1.0"
+edition = "2021"
+description = "API Vault CLI — apivault list/reveal/run for terminal use"
+
+[[bin]]
+name = "apivault"
+path = "src/main.rs"
+
+[dependencies]
+# Workspace runtime
+tokio = { workspace = true }
+serde_json = { workspace = true }
+secrecy = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Domain
+api-vault-storage = { path = "../api-vault-storage" }
+api-vault-core = { path = "../api-vault-core" }
+api-vault-crypto = { path = "../api-vault-crypto" }
+
+# CLI tooling
+clap = { workspace = true }
+rpassword = { workspace = true }
+directories = { workspace = true }
+arboard = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
