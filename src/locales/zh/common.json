@@ -196,6 +196,7 @@
     "passphraseLabel": "密码短语",
     "passphrasePlaceholder": "输入密码短语",
     "createVaultLink": "第一次使用？创建新保险库",
+    "pairWithDeviceLink": "已有其他设备？进行配对",
     "wrongPassword": "密码短语不正确。请重试。",
     "tooManyAttempts": "尝试次数过多。请在 {{count}} 秒后重试…",
     "createVaultTitle": "创建新保险库",
@@ -251,6 +252,19 @@
     }
   },
   "sync": {
+    "pairJoin": {
+      "title": "与其他设备配对",
+      "description": "粘贴来自现有 API Vault 设备的配对链接。两台设备将通过端到端加密交换密钥,主密码不会以明文形式离开源设备。",
+      "linkLabel": "配对链接",
+      "invalidLink": "无效的配对链接。需要 apivault://pair?pin=…&pub=… 格式",
+      "joining": "正在连接源设备…",
+      "waiting": "正在等待源设备发送凭据…",
+      "applying": "解密并保存保险库…",
+      "completed": "配对成功 — 正在打开您的保险库。",
+      "completedToast": "设备已配对",
+      "continue": "继续",
+      "retry": "重试"
+    },
     "pair": {
       "title": "添加新设备",
       "description": "在新设备上打开 API Vault,粘贴下方链接,两台设备将通过端到端加密交换密钥。明文绝不会离开任何设备。",

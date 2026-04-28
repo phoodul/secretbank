@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PairJoinerDialog } from "@/features/sync/PairJoinerDialog";
 import { CreateVaultDialog } from "./CreateVaultDialog";
 
 /** 연속 실패 횟수가 이 값에 도달하면 쿨다운을 시작한다 */
@@ -41,6 +42,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
   const failCountRef = useRef(0);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [pairOpen, setPairOpen] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -164,15 +166,25 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
                 {t("vault.unlockButton")}
               </Button>
 
-              {/* uninitialized 상태일 때만 CreateVault 링크 표시 */}
+              {/* uninitialized 상태일 때만 CreateVault + Pair 링크 표시 */}
               {showCreate && (
-                <button
-                  type="button"
-                  className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-                  onClick={() => setCreateOpen(true)}
-                >
-                  {t("vault.createVaultLink")}
-                </button>
+                <div className="flex flex-col gap-2 items-start">
+                  <button
+                    type="button"
+                    className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                    onClick={() => setCreateOpen(true)}
+                  >
+                    {t("vault.createVaultLink")}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                    onClick={() => setPairOpen(true)}
+                    data-testid="lockscreen-pair-link"
+                  >
+                    {t("vault.pairWithDeviceLink")}
+                  </button>
+                </div>
               )}
             </div>
           </form>
@@ -180,7 +192,10 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
       </Card>
 
       {showCreate && (
-        <CreateVaultDialog open={createOpen} onOpenChange={setCreateOpen} onSuccess={onSuccess} />
+        <>
+          <CreateVaultDialog open={createOpen} onOpenChange={setCreateOpen} onSuccess={onSuccess} />
+          <PairJoinerDialog open={pairOpen} onOpenChange={setPairOpen} onSuccess={onSuccess} />
+        </>
       )}
     </div>
   );

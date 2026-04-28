@@ -196,6 +196,7 @@
     "passphraseLabel": "패스프레이즈",
     "passphrasePlaceholder": "패스프레이즈 입력",
     "createVaultLink": "처음 사용하시나요? 새 볼트 만들기",
+    "pairWithDeviceLink": "이미 사용 중인 디바이스가 있나요? 페어링하기",
     "wrongPassword": "패스프레이즈가 올바르지 않습니다. 다시 시도하세요.",
     "tooManyAttempts": "시도 횟수 초과. {{count}}초 후 재시도하세요…",
     "createVaultTitle": "새 볼트 만들기",
@@ -251,6 +252,19 @@
     }
   },
   "sync": {
+    "pairJoin": {
+      "title": "다른 디바이스와 페어링",
+      "description": "기존 API Vault 디바이스에서 받은 페어링 링크를 붙여넣으세요. 두 디바이스가 종단간 암호화로 키를 교환하며, 마스터 비밀번호는 평문으로 외부에 나가지 않습니다.",
+      "linkLabel": "페어링 링크",
+      "invalidLink": "유효하지 않은 페어링 링크입니다. apivault://pair?pin=…&pub=… 형식이어야 합니다",
+      "joining": "원본 디바이스에 연결 중…",
+      "waiting": "원본 디바이스가 자격 정보를 전송하기를 기다리는 중…",
+      "applying": "복호화하고 볼트를 저장 중…",
+      "completed": "페어링 성공 — 볼트를 여는 중입니다.",
+      "completedToast": "디바이스 페어링 완료",
+      "continue": "계속",
+      "retry": "다시 시도"
+    },
     "pair": {
       "title": "새 디바이스 추가",
       "description": "새 디바이스에서 API Vault를 열고 아래 링크를 붙여넣으면 두 디바이스가 종단간 암호화로 키를 교환합니다. 어느 쪽에서도 평문이 외부로 나가지 않습니다.",

@@ -196,6 +196,7 @@
     "passphraseLabel": "パスフレーズ",
     "passphrasePlaceholder": "パスフレーズを入力",
     "createVaultLink": "初めての方はこちら：新しいボールトを作成",
+    "pairWithDeviceLink": "他のデバイスをお持ちの方：ペアリング",
     "wrongPassword": "パスフレーズが正しくありません。再度お試しください。",
     "tooManyAttempts": "試行回数が多すぎます。{{count}}秒後に再試行してください…",
     "createVaultTitle": "新しいボールトを作成",
@@ -251,6 +252,19 @@
     }
   },
   "sync": {
+    "pairJoin": {
+      "title": "他のデバイスとペアリング",
+      "description": "既存のAPI Vaultデバイスからペアリングリンクを貼り付けてください。両端末がエンドツーエンド暗号化で鍵を交換し、マスターパスフレーズは平文で外部に出ません。",
+      "linkLabel": "ペアリングリンク",
+      "invalidLink": "有効なペアリングリンクではありません。apivault://pair?pin=…&pub=… の形式が必要です",
+      "joining": "ソースデバイスに接続中…",
+      "waiting": "ソースデバイスからの認証情報送信を待機中…",
+      "applying": "復号してボールトに保存中…",
+      "completed": "ペアリング成功 — ボールトを開いています。",
+      "completedToast": "デバイスのペアリング完了",
+      "continue": "続行",
+      "retry": "再試行"
+    },
     "pair": {
       "title": "新しいデバイスを追加",
       "description": "新しいデバイスでAPI Vaultを開き、下のリンクを貼り付けると、両端末がエンドツーエンド暗号化で鍵を交換します。平文は外部に出ません。",

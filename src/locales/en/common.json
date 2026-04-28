@@ -196,6 +196,7 @@
     "passphraseLabel": "Passphrase",
     "passphrasePlaceholder": "Enter passphrase",
     "createVaultLink": "First time? Create a new vault",
+    "pairWithDeviceLink": "Have an existing device? Pair with it",
     "wrongPassword": "Incorrect passphrase. Please try again.",
     "tooManyAttempts": "Too many attempts. Retry in {{count}}s…",
     "createVaultTitle": "Create new vault",
@@ -251,6 +252,19 @@
     }
   },
   "sync": {
+    "pairJoin": {
+      "title": "Pair with another device",
+      "description": "Paste the pairing link from your existing API Vault device. Both devices will exchange keys end-to-end — your master passphrase never leaves the source device unencrypted.",
+      "linkLabel": "Pairing link",
+      "invalidLink": "Not a valid pairing link. Expected apivault://pair?pin=…&pub=…",
+      "joining": "Connecting to the source device…",
+      "waiting": "Waiting for the source device to send your credentials…",
+      "applying": "Decrypting and saving your vault…",
+      "completed": "Paired successfully — opening your vault.",
+      "completedToast": "Device paired",
+      "continue": "Continue",
+      "retry": "Retry"
+    },
     "pair": {
       "title": "Add a new device",
       "description": "Open API Vault on the new device, paste the link below, and the two devices will exchange keys end-to-end. Nothing private leaves either device unencrypted.",
