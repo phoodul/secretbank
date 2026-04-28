@@ -23,11 +23,12 @@ use anyhow::{anyhow, Context as _, Result};
 use clap::{Parser, Subcommand};
 use secrecy::SecretString;
 
-use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus};
+use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus, ProjectId, UsageWhereKind};
 use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::init_pool;
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
 use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
+use api_vault_storage::sqlite::repositories::usage::UsageRepo;
 use api_vault_storage::vault::VaultStorage;
 
 #[derive(Debug, Parser)]
@@ -77,6 +78,20 @@ enum Command {
         #[arg(long, default_value_t = 30)]
         clear_after: u64,
     },
+
+    /// Run a command with the given project's credentials injected as env
+    /// vars. Resembles `doppler run -- npm start` but uses our dependency
+    /// graph (Project → Usage(env_var) → Credential) so each var maps to
+    /// exactly one secret — no manual config file.
+    Run {
+        /// Project ID (ULID). All env-var usages of that project are
+        /// injected.
+        #[arg(long)]
+        project: String,
+        /// Command + arguments (everything after `--`).
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, required = true)]
+        cmd: Vec<String>,
+    },
 }
 
 #[tokio::main]
@@ -98,6 +113,9 @@ async fn run(cli: Cli) -> Result<()> {
         }
         Command::Reveal { id, print, clear_after } => {
             cmd_reveal(cli.data_dir.as_deref(), &id, print, clear_after).await
+        }
+        Command::Run { project, cmd } => {
+            cmd_run(cli.data_dir.as_deref(), &project, cmd).await
         }
     }
 }
@@ -327,6 +345,128 @@ async fn cmd_reveal(
     println!(
         "value copied to clipboard — clearing in {clear_after_secs}s",
     );
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// `apivault run --project=<id> -- <cmd>`
+// ---------------------------------------------------------------------------
+
+async fn cmd_run(
+    data_dir_override: Option<&std::path::Path>,
+    project_id_str: &str,
+    cmd: Vec<String>,
+) -> Result<()> {
+    use secrecy::ExposeSecret as _;
+
+    if cmd.is_empty() {
+        return Err(anyhow!("missing command after `--`"));
+    }
+
+    let data_dir = match data_dir_override {
+        Some(d) => d.to_path_buf(),
+        None => default_data_dir()?,
+    };
+
+    let project_id: ProjectId = project_id_str
+        .parse()
+        .map_err(|e| anyhow!("invalid project id {project_id_str:?}: {e}"))?;
+
+    let db_path = data_dir.join("vault.db");
+    if !db_path.exists() {
+        return Err(anyhow!("no SQLite store at {}", db_path.display()));
+    }
+    let pool = init_pool(&db_path).await.context("opening SQLite pool")?;
+    let usage_repo = UsageRepo::new(&pool);
+    let cred_repo = CredentialRepo::new(&pool);
+
+    let usages = usage_repo
+        .list_for_project(project_id)
+        .await
+        .context("listing usages")?;
+    let env_var_usages: Vec<_> = usages
+        .into_iter()
+        .filter(|u| matches!(u.where_kind, UsageWhereKind::EnvVar))
+        .collect();
+
+    if env_var_usages.is_empty() {
+        eprintln!(
+            "warning: project {project_id_str} has no env-var usages — \
+             running command with the unmodified environment",
+        );
+    }
+
+    // Resolve credential vault_refs first (without unlocking yet) so the
+    // user only sees one passphrase prompt for many secrets.
+    let mut to_reveal: Vec<(String, String)> = Vec::with_capacity(env_var_usages.len()); // (env_name, vault_ref)
+    for u in &env_var_usages {
+        let cred = cred_repo
+            .get_by_id(u.credential_id)
+            .await
+            .context("looking up credential for usage")?
+            .ok_or_else(|| {
+                anyhow!(
+                    "usage {} references missing credential {}",
+                    u.id,
+                    u.credential_id
+                )
+            })?;
+        // Skip revoked / compromised — refuse to inject a known-bad secret
+        // into a child process. User must explicitly rotate first.
+        if !matches!(cred.status, CredentialStatus::Active) {
+            return Err(anyhow!(
+                "credential {} (env {}) is {} — rotate it before running",
+                cred.id,
+                u.where_value,
+                status_label(cred.status),
+            ));
+        }
+        to_reveal.push((u.where_value.clone(), cred.vault_ref.clone()));
+    }
+
+    // Single unlock for the whole run.
+    let vault = open_vault(&data_dir).await?;
+    let mut envs: Vec<(String, String)> = Vec::with_capacity(to_reveal.len());
+    for (name, vault_ref) in &to_reveal {
+        let secret = vault
+            .get_secret(vault_ref)
+            .await
+            .with_context(|| format!("reading secret for env {name}"))?;
+        let value = std::str::from_utf8(secret.expose_secret())
+            .with_context(|| format!("env {name}: secret is not UTF-8"))?
+            .to_owned();
+        envs.push((name.clone(), value));
+    }
+    drop(vault); // wipe age identity asap.
+
+    // Spawn child. Use std (sync) — Tokio child is overkill; we just wait.
+    let program = &cmd[0];
+    let args = &cmd[1..];
+    let mut command = std::process::Command::new(program);
+    command.args(args);
+    for (name, value) in &envs {
+        command.env(name, value);
+    }
+
+    eprintln!(
+        "apivault: running `{} {}` with {} injected env var(s)",
+        program,
+        args.join(" "),
+        envs.len()
+    );
+
+    let status = command
+        .status()
+        .with_context(|| format!("spawning {program:?}"))?;
+
+    // Forward exit code. On Unix, use the underlying signal/code; on Windows
+    // just the code.
+    if !status.success() {
+        match status.code() {
+            Some(c) => std::process::exit(c),
+            None => std::process::exit(1),
+        }
+    }
     Ok(())
 }
 
