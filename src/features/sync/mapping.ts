@@ -15,11 +15,18 @@
  * 가 별도 path 로 보충).
  */
 
+import type { Issuer } from "../inventory/use-issuers";
 import type {
   CredentialFull,
   CredentialStatus,
   Env,
+  Usage,
 } from "../inventory/types";
+import type {
+  Deployment,
+  DeploymentPlatform,
+  Project,
+} from "../projects/types";
 
 // ---------------------------------------------------------------------------
 // Whitelist of sync-eligible entities
@@ -117,8 +124,234 @@ export const credentialMapper: EntityMapper<CredentialFull, CredentialYValue> = 
       rotation_runbook_id: value.rotation_runbook_id,
       status: value.status,
       hash_hint: null, // device-local
-      usages: [], // separate mapper (Phase D-2)
+      usages: [], // separate mapper (usageMapper)
       score: { total: 0, level: "safe", factors: [] }, // recomputed locally
     };
   },
 };
+
+// ---------------------------------------------------------------------------
+// IssuerMapper — 모든 필드 sync (device-local 없음)
+// ---------------------------------------------------------------------------
+
+export interface IssuerYValue extends Record<string, unknown> {
+  slug: string;
+  display_name: string;
+  docs_url: string | null;
+  issue_url: string | null;
+  status_url: string | null;
+  security_feed_url: string | null;
+  connector_id: string | null;
+  icon_key: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export const issuerMapper: EntityMapper<Issuer, IssuerYValue> = {
+  entity: "issuer",
+  toYMap(row) {
+    return {
+      slug: row.slug,
+      display_name: row.display_name,
+      docs_url: row.docs_url,
+      issue_url: row.issue_url,
+      status_url: row.status_url,
+      security_feed_url: row.security_feed_url,
+      connector_id: row.connector_id,
+      icon_key: row.icon_key,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    };
+  },
+  fromYMap(value, id) {
+    return {
+      id,
+      slug: value.slug,
+      display_name: value.display_name,
+      docs_url: value.docs_url,
+      issue_url: value.issue_url,
+      status_url: value.status_url,
+      security_feed_url: value.security_feed_url,
+      connector_id: value.connector_id,
+      icon_key: value.icon_key,
+      created_at: value.created_at,
+      updated_at: value.updated_at,
+    };
+  },
+};
+
+// ---------------------------------------------------------------------------
+// ProjectMapper — local_path 는 device-local (디바이스마다 path 다름)
+// ---------------------------------------------------------------------------
+
+export interface ProjectYValue extends Record<string, unknown> {
+  name: string;
+  repo_url: string | null;
+  framework: string | null;
+  runtime: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export const projectMapper: EntityMapper<Project, ProjectYValue> = {
+  entity: "project",
+  toYMap(row) {
+    return {
+      name: row.name,
+      repo_url: row.repo_url,
+      framework: row.framework,
+      runtime: row.runtime,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    };
+  },
+  fromYMap(value, id) {
+    return {
+      id,
+      name: value.name,
+      repo_url: value.repo_url,
+      framework: value.framework,
+      runtime: value.runtime,
+      local_path: null, // device-local — 사용자가 디바이스별로 따로 지정
+      created_at: value.created_at,
+      updated_at: value.updated_at,
+    };
+  },
+};
+
+// ---------------------------------------------------------------------------
+// DeploymentMapper — 모든 필드 sync
+// ---------------------------------------------------------------------------
+
+export interface DeploymentYValue extends Record<string, unknown> {
+  project_id: string;
+  url: string;
+  platform: DeploymentPlatform;
+  env: "dev" | "staging" | "prod";
+  created_at: number;
+}
+
+export const deploymentMapper: EntityMapper<Deployment, DeploymentYValue> = {
+  entity: "deployment",
+  toYMap(row) {
+    return {
+      project_id: row.project_id,
+      url: row.url,
+      platform: row.platform,
+      env: row.env,
+      created_at: row.created_at,
+    };
+  },
+  fromYMap(value, id) {
+    return {
+      id,
+      project_id: value.project_id,
+      url: value.url,
+      platform: value.platform,
+      env: value.env,
+      created_at: value.created_at,
+    };
+  },
+};
+
+// ---------------------------------------------------------------------------
+// UsageMapper — Credential ↔ Project 관계, 모든 필드 sync
+// ---------------------------------------------------------------------------
+
+export interface UsageYValue extends Record<string, unknown> {
+  credential_id: string;
+  project_id: string;
+  deployment_id: string | null;
+  where_kind: "env_var" | "file_path" | "code_ref";
+  where_value: string;
+  verified_at: number | null;
+  verified_by: "scan" | "manual" | "runtime" | null;
+}
+
+export const usageMapper: EntityMapper<Usage, UsageYValue> = {
+  entity: "usage",
+  toYMap(row) {
+    return {
+      credential_id: row.credential_id,
+      project_id: row.project_id,
+      deployment_id: row.deployment_id,
+      where_kind: row.where_kind,
+      where_value: row.where_value,
+      verified_at: row.verified_at,
+      verified_by: row.verified_by,
+    };
+  },
+  fromYMap(value, id) {
+    return {
+      id,
+      credential_id: value.credential_id,
+      project_id: value.project_id,
+      deployment_id: value.deployment_id,
+      where_kind: value.where_kind,
+      where_value: value.where_value,
+      verified_at: value.verified_at,
+      verified_by: value.verified_by,
+    };
+  },
+};
+
+// ---------------------------------------------------------------------------
+// SettingMapper — 키-값 스토어 (project-decisions C 의 화이트리스트 정책)
+// ---------------------------------------------------------------------------
+
+/**
+ * Sync 대상 setting key 의 명시 화이트리스트.
+ *
+ * 새 setting 을 추가할 때 sync 여부를 **명시적으로 opt-in** 해야 한다.
+ * 누락된 setting 은 device-local 로 취급 (안전 기본값).
+ *
+ * 정책 (project-decisions.md [2026-04-28] C):
+ *   - vault-level shared settings (auto-lock 시간, NVD API key 등) → sync
+ *   - 디바이스별 UX preference (테마, language, sidebar 너비 등) → device-local
+ */
+export const SYNC_SETTING_KEYS: ReadonlySet<string> = new Set([
+  "apivault.settings.security.auto_lock_minutes",
+  "apivault.settings.integrations.nvd_api_key",
+]);
+
+export interface SettingRow {
+  /** Setting key — 화이트리스트 검증 대상. */
+  key: string;
+  /** Stringified value (settings_get/set 와 동일 wire shape). */
+  value: string;
+}
+
+export interface SettingYValue extends Record<string, unknown> {
+  value: string;
+}
+
+export const settingMapper: EntityMapper<SettingRow, SettingYValue> = {
+  entity: "settings",
+  toYMap(row) {
+    return { value: row.value };
+  },
+  fromYMap(value, id) {
+    return { key: id, value: value.value };
+  },
+};
+
+/**
+ * 단순 헬퍼 — observe handler 가 들어오는 setting 변경이 sync 화이트리스트
+ * 에 포함되는지 빠르게 검증할 때 사용.
+ */
+export function isSyncableSettingKey(key: string): boolean {
+  return SYNC_SETTING_KEYS.has(key);
+}
+
+// ---------------------------------------------------------------------------
+// Mapper registry — entity name → mapper (Phase D-2b 의 dispatch 용)
+// ---------------------------------------------------------------------------
+
+export const ENTITY_MAPPERS = {
+  credential: credentialMapper,
+  issuer: issuerMapper,
+  project: projectMapper,
+  deployment: deploymentMapper,
+  usage: usageMapper,
+  settings: settingMapper,
+} as const satisfies Record<SyncEntity, EntityMapper<unknown, Record<string, unknown>>>;

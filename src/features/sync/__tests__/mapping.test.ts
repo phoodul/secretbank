@@ -13,7 +13,20 @@ import { describe, expect, it } from "vitest";
 import * as Y from "yjs";
 
 import type { CredentialFull } from "../../inventory/types";
-import { credentialMapper, SYNC_ENTITIES } from "../mapping";
+import type { Issuer } from "../../inventory/use-issuers";
+import type { Deployment, Project } from "../../projects/types";
+import {
+  credentialMapper,
+  deploymentMapper,
+  ENTITY_MAPPERS,
+  isSyncableSettingKey,
+  issuerMapper,
+  projectMapper,
+  settingMapper,
+  SYNC_ENTITIES,
+  SYNC_SETTING_KEYS,
+  usageMapper,
+} from "../mapping";
 import { ORIGIN_LOCAL_DB, ORIGIN_REMOTE, isSyncOrigin, runWithOrigin } from "../origin";
 
 function fixture(): CredentialFull {
@@ -133,5 +146,149 @@ describe("credentialMapper (Phase D-1)", () => {
   it("entity name matches the whitelist key", () => {
     expect(credentialMapper.entity).toBe("credential");
     expect(SYNC_ENTITIES).toContain(credentialMapper.entity);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase D-2a — 5 추가 엔티티 매퍼
+// ---------------------------------------------------------------------------
+
+describe("issuerMapper (Phase D-2a)", () => {
+  function fx(): Issuer {
+    return {
+      id: "iss_01",
+      slug: "openai",
+      display_name: "OpenAI",
+      docs_url: "https://platform.openai.com/docs",
+      issue_url: "https://platform.openai.com/api-keys",
+      status_url: "https://status.openai.com",
+      security_feed_url: null,
+      connector_id: null,
+      icon_key: "openai",
+      created_at: 1_700_000_000_000,
+      updated_at: 1_710_000_000_000,
+    };
+  }
+
+  it("toYMap → fromYMap round-trips all fields (no device-local fields)", () => {
+    const original = fx();
+    const restored = issuerMapper.fromYMap(issuerMapper.toYMap(original), original.id);
+    expect(restored).toEqual(original);
+  });
+
+  it("entity name matches the whitelist key", () => {
+    expect(issuerMapper.entity).toBe("issuer");
+  });
+});
+
+describe("projectMapper (Phase D-2a)", () => {
+  function fx(): Project {
+    return {
+      id: "prj_01",
+      name: "Acme web",
+      repo_url: "https://github.com/acme/web",
+      framework: "next",
+      runtime: "node",
+      local_path: "/Users/alice/code/acme-web",
+      created_at: 1_700_000_000_000,
+      updated_at: 1_710_000_000_000,
+    };
+  }
+
+  it("toYMap omits local_path (device-local)", () => {
+    const ymap = projectMapper.toYMap(fx());
+    expect(ymap).not.toHaveProperty("local_path");
+  });
+
+  it("fromYMap defaults local_path to null (caller supplies from local SQLite)", () => {
+    const ymap = projectMapper.toYMap(fx());
+    const restored = projectMapper.fromYMap(ymap, "prj_01");
+    expect(restored.local_path).toBeNull();
+  });
+
+  it("round-trips sync-relevant fields", () => {
+    const original = fx();
+    const restored = projectMapper.fromYMap(projectMapper.toYMap(original), original.id);
+    expect(restored).toEqual({ ...original, local_path: null });
+  });
+});
+
+describe("deploymentMapper (Phase D-2a)", () => {
+  function fx(): Deployment {
+    return {
+      id: "dep_01",
+      project_id: "prj_01",
+      url: "https://app.acme.com",
+      platform: "vercel",
+      env: "prod",
+      created_at: 1_700_000_000_000,
+    };
+  }
+
+  it("round-trips all fields", () => {
+    const original = fx();
+    const restored = deploymentMapper.fromYMap(deploymentMapper.toYMap(original), original.id);
+    expect(restored).toEqual(original);
+  });
+});
+
+describe("usageMapper (Phase D-2a)", () => {
+  it("round-trips all fields", () => {
+    const original = {
+      id: "usg_01",
+      credential_id: "crd_01",
+      project_id: "prj_01",
+      deployment_id: "dep_01",
+      where_kind: "env_var" as const,
+      where_value: "OPENAI_API_KEY",
+      verified_at: 1_700_000_000_000,
+      verified_by: "scan" as const,
+    };
+    const restored = usageMapper.fromYMap(usageMapper.toYMap(original), original.id);
+    expect(restored).toEqual(original);
+  });
+});
+
+describe("settingMapper + SYNC_SETTING_KEYS (Phase D-2a)", () => {
+  it("isSyncableSettingKey is true for whitelisted keys, false otherwise", () => {
+    expect(isSyncableSettingKey("apivault.settings.security.auto_lock_minutes")).toBe(true);
+    expect(isSyncableSettingKey("apivault.settings.integrations.nvd_api_key")).toBe(true);
+    expect(isSyncableSettingKey("apivault.settings.ui.theme")).toBe(false);
+    expect(isSyncableSettingKey("apivault.settings.ui.language")).toBe(false);
+    expect(isSyncableSettingKey("")).toBe(false);
+  });
+
+  it("toYMap → fromYMap round-trips key-value pair", () => {
+    const original = {
+      key: "apivault.settings.security.auto_lock_minutes",
+      value: "15",
+    };
+    const restored = settingMapper.fromYMap(settingMapper.toYMap(original), original.key);
+    expect(restored).toEqual(original);
+  });
+
+  it("entity is 'settings' (matches the whitelist)", () => {
+    expect(settingMapper.entity).toBe("settings");
+    expect(SYNC_ENTITIES).toContain(settingMapper.entity);
+  });
+
+  it("SYNC_SETTING_KEYS contains policy-required entries", () => {
+    expect(SYNC_SETTING_KEYS.size).toBeGreaterThanOrEqual(2);
+    expect(SYNC_SETTING_KEYS.has("apivault.settings.security.auto_lock_minutes")).toBe(true);
+  });
+});
+
+describe("ENTITY_MAPPERS registry (Phase D-2a)", () => {
+  it("covers every entity in the SYNC_ENTITIES whitelist", () => {
+    for (const entity of SYNC_ENTITIES) {
+      expect(ENTITY_MAPPERS).toHaveProperty(entity);
+      expect(ENTITY_MAPPERS[entity].entity).toBe(entity);
+    }
+  });
+
+  it("has exactly 6 entries (no leakage of unrelated keys)", () => {
+    expect(Object.keys(ENTITY_MAPPERS).sort()).toEqual(
+      [...SYNC_ENTITIES].sort(),
+    );
   });
 });
