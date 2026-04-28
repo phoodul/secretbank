@@ -6,4 +6,5 @@ pub mod incident;
 pub mod issuer;
 pub mod project;
 pub mod settings;
+pub mod supply;
 pub mod usage;

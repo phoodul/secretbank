@@ -211,6 +211,7 @@ dependencies = [
  "api-vault-feeds",
  "api-vault-railguard",
  "api-vault-storage",
+ "api-vault-supply",
  "async-trait",
  "base64 0.22.1",
  "ed25519-dalek",

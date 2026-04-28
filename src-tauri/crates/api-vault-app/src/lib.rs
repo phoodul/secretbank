@@ -35,6 +35,7 @@ use commands::pairing::{
     sync_pair_initiator_start, sync_pair_joiner_apply, sync_pair_joiner_join,
     sync_pair_joiner_poll,
 };
+use commands::supply::supply_scan_project;
 use commands::sync::{
     sync_get_relay_url, sync_get_root_key, sync_value_pull_since, sync_value_push,
 };
@@ -229,6 +230,7 @@ pub fn run(context: tauri::Context) {
             sync_pair_joiner_poll,
             sync_pair_joiner_apply,
             sync_pair_cancel,
+            supply_scan_project,
         ]);
     }
 
@@ -309,6 +311,7 @@ pub fn run(context: tauri::Context) {
             sync_pair_joiner_poll,
             sync_pair_joiner_apply,
             sync_pair_cancel,
+            supply_scan_project,
         ]);
     }
 
