@@ -2,6 +2,60 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-29 Night mode 16 (자율 모드 — **M20 v1 풀 완료**. supply chain risk graph: schema + manifest parsers + OSV client + matcher + storage repos + Tauri 커맨드 + MCP tool. 4 commits.)
+- **Phase:** Phase 3 — Implementation. M9 ✅ + M18 v1 ✅ + **M20 v1 ✅**. 113/132 태스크 + M18/M20 신설 4개. 다음 → M19 (Team) 또는 M14 (Auto rotation).
+- **이번 Night mode 16 신규 commits (3개 + docs):**
+  - `22373c7` feat(supply) — M20-1+2: api-vault-supply crate + 0005_supply.sql migration + ecosystem.rs + advisory.rs (OSV.dev client + AdvisoryCategory text-signal classifier) + matcher.rs + manifest.rs (package.json + Cargo.toml)
+  - `0b55bcc` feat(supply) — M20-3: storage repos (PackageRepo / PackageAdvisoryRepo / PackageUsageRepo) + commands/supply.rs (`supply_scan_project`) + lib.rs invoke_handler 등록
+  - `0af0c46` feat(mcp) — M20-4: MCP tool `check_supply_chain_risk` (manifest 파싱 + OSV query + category filter, read-only — DB 무관)
+- **Tests (Night mode 16 종료 시점):**
+  - api-vault-supply: **21 회귀** (ecosystem 4 + advisory 7 + matcher 5 + manifest 4 + osv wiremock 1)
+  - api-vault-storage: +3 supply repo (전체 +3)
+  - api-vault-app lib: +3 commands::supply (전체 173 → 176)
+  - api-vault-mcp: 5 → 7 (전체 +2 — supply tool + tools_list 갱신)
+  - 워크스페이스 clippy --all-targets --all-features -D warnings: 0
+- **차별화 평가 — M20 v1 종료 시점:**
+  - **Supply chain risk graph** = dependency graph 의 외부 확장. Project → Package → Advisory.
+  - **AI agent 통합**: Claude / Cursor 가 새 코드 작성 전 `check_supply_chain_risk` 자동 호출 → secret-exfil history 패키지 발견 시 사용자 경고.
+  - **차별화 강도**: 1Password / Bitwarden / Doppler / Infisical / HashiCorp Vault 모두 못 함. graph + breach feed + AI agent 의 결합은 우리만 가능.
+- **이전 Night mode 15 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## M20 v1 클로즈 — 비전 점검 (2026-04-29)
+
+운영 원칙: 매 마일스톤 클로즈 시 비전 정렬 점검 1회 의무.
+
+### 회고
+
+M9 = 입장권 (sync), M18 = 첫 차별화 (CLI/MCP), **M20 = 두 번째 차별화** (supply chain × AI agent). 세 마일스톤 연속으로 글로벌 SaaS 의 진입 비용 + moat 구축 동시 진행.
+
+### M20 v2 백로그
+
+- **lockfile 통합**: pnpm-lock.yaml / package-lock.json / Cargo.lock → resolved version 정확화 (현재는 매니페스트 range 그대로).
+- **semver range 평가**: advisory 의 affected_range 와 package 의 resolved version 정확 매칭 (false-positive 감소).
+- **continuous scan**: feed scheduler 에 supply scan 통합 (1d 주기로 user 의 이전 scan 결과 OSV 재조회).
+- **incident 통합**: 매칭된 advisory 를 incident 로 자동 등록 → blast_radius UI 에 supply chain 노드 표시.
+
+### 다음 마일스톤 — 선택지
+
+| # | 마일스톤 | 차별화 | 비용 |
+|:--|:--|:--|:--|
+| 1 | M19 Team / RBAC / SSO | 중 (B2B 진입 비용) | 큰 (auth 재설계) |
+| 2 | M14 Auto rotation | 중 (provider 별) | 큰 |
+| 3 | M11 Mobile (Android/iOS) | 중 (모바일 시장 진입) | 큰 (Tauri Mobile) |
+| 4 | M21 VS Code / JetBrains plugin | 큰 (MCP 위에 IDE) | 중 |
+
+### 자율 추천 (Night mode 17+)
+
+**M21 VS Code plugin 우선** — MCP server 가 이미 있으니 plugin 은 thin wrapper. dev tool 시장에서 즉시 가시화 (VS Code marketplace). 비용 대비 효과 가장 높음.
+
+다음 turn 에 사용자 명시 없으면 M21 자율 진입.
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 15)
+
 - **Time:** 2026-04-28 Night mode 15 (자율 모드 — **M18 v1 풀 완료**. mcp-1 + mcp-2 종료. CLI + MCP 둘 다 동작.)
 - **Phase:** Phase 3 — Implementation, M9 ✅ + **M18 v1 ✅** (CLI 3 subcommand + MCP 4 tools). 다음 → M19 (Team / RBAC) 또는 M20 (Supply chain) 또는 M14 (Auto rotation).
 - **이번 Night mode 15 신규 commits (2개):**
