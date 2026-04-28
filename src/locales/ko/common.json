@@ -246,7 +246,26 @@
       "notConnected": "비로그인",
       "signIn": "로그인",
       "signOut": "로그아웃",
+      "addDevice": "디바이스 추가",
       "userId": "사용자: {{id}}"
+    }
+  },
+  "sync": {
+    "pair": {
+      "title": "새 디바이스 추가",
+      "description": "새 디바이스에서 API Vault를 열고 아래 링크를 붙여넣으면 두 디바이스가 종단간 암호화로 키를 교환합니다. 어느 쪽에서도 평문이 외부로 나가지 않습니다.",
+      "starting": "보안 채널을 만드는 중…",
+      "pinLabel": "페어링 PIN",
+      "deepLinkLabel": "페어링 링크",
+      "copyAria": "링크 복사",
+      "copiedToast": "링크가 복사되었습니다",
+      "copyFailed": "복사에 실패했습니다 — 직접 복사해주세요",
+      "waiting": "새 디바이스가 참여하기를 기다리는 중…",
+      "finalizing": "보안 채널을 마무리하는 중…",
+      "completed": "디바이스가 페어링되었습니다 — 새 디바이스에서 동기화를 사용할 수 있습니다.",
+      "completedToast": "디바이스 페어링 완료",
+      "retry": "다시 시도",
+      "genericError": "페어링에 실패했습니다 — 다시 시도해주세요."
     }
   },
   "onboarding": {

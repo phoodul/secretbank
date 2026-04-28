@@ -246,7 +246,26 @@
       "notConnected": "未サインイン",
       "signIn": "サインイン",
       "signOut": "サインアウト",
+      "addDevice": "デバイスを追加",
       "userId": "ユーザー: {{id}}"
+    }
+  },
+  "sync": {
+    "pair": {
+      "title": "新しいデバイスを追加",
+      "description": "新しいデバイスでAPI Vaultを開き、下のリンクを貼り付けると、両端末がエンドツーエンド暗号化で鍵を交換します。平文は外部に出ません。",
+      "starting": "セキュアチャネルを準備中…",
+      "pinLabel": "ペアリングPIN",
+      "deepLinkLabel": "ペアリングリンク",
+      "copyAria": "リンクをコピー",
+      "copiedToast": "リンクをコピーしました",
+      "copyFailed": "コピーに失敗しました — 手動でコピーしてください",
+      "waiting": "新しいデバイスの参加を待機中…",
+      "finalizing": "セキュアチャネルを確立中…",
+      "completed": "デバイスがペアリングされました — 新しいデバイスで同期を使えます。",
+      "completedToast": "デバイスのペアリング完了",
+      "retry": "再試行",
+      "genericError": "ペアリングに失敗しました — もう一度お試しください。"
     }
   },
   "onboarding": {

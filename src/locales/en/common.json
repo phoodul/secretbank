@@ -246,7 +246,26 @@
       "notConnected": "Not signed in",
       "signIn": "Sign in",
       "signOut": "Sign out",
+      "addDevice": "Add device",
       "userId": "User: {{id}}"
+    }
+  },
+  "sync": {
+    "pair": {
+      "title": "Add a new device",
+      "description": "Open API Vault on the new device, paste the link below, and the two devices will exchange keys end-to-end. Nothing private leaves either device unencrypted.",
+      "starting": "Setting up secure channel…",
+      "pinLabel": "Pairing PIN",
+      "deepLinkLabel": "Pairing link",
+      "copyAria": "Copy link",
+      "copiedToast": "Link copied to clipboard",
+      "copyFailed": "Couldn't copy — please copy manually",
+      "waiting": "Waiting for the new device to join…",
+      "finalizing": "Finalising secure channel…",
+      "completed": "Device paired successfully — you can now use sync from the new device.",
+      "completedToast": "Device paired",
+      "retry": "Retry",
+      "genericError": "Pairing failed — please retry."
     }
   },
   "onboarding": {

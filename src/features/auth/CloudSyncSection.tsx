@@ -7,13 +7,15 @@
  * 실제 동기화(M9 Sync) UI 는 향후 별도 SyncStatusSection 으로 분리한다.
  */
 
-import { Cloud, LogOut } from "lucide-react";
+import { Cloud, LogOut, MonitorSmartphone } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PairInitiatorDialog } from "@/features/sync/PairInitiatorDialog";
 
 import { useAuthSession } from "./use-auth-session";
 
@@ -21,6 +23,7 @@ export function CloudSyncSection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { session, loading, signOut } = useAuthSession();
+  const [pairOpen, setPairOpen] = useState(false);
 
   async function handleSignOut() {
     try {
@@ -61,15 +64,26 @@ export function CloudSyncSection() {
                   : session.user_id,
               })}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-              onClick={() => void handleSignOut()}
-            >
-              <LogOut className="h-3.5 w-3.5 mr-1" />
-              {t("auth.cloudSync.signOut")}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setPairOpen(true)}
+              >
+                <MonitorSmartphone className="h-3.5 w-3.5 mr-1" />
+                {t("auth.cloudSync.addDevice")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                onClick={() => void handleSignOut()}
+              >
+                <LogOut className="h-3.5 w-3.5 mr-1" />
+                {t("auth.cloudSync.signOut")}
+              </Button>
+            </div>
           </div>
         </div>
       ) : (
@@ -82,6 +96,8 @@ export function CloudSyncSection() {
           {t("auth.cloudSync.signIn")}
         </Button>
       )}
+
+      <PairInitiatorDialog open={pairOpen} onOpenChange={setPairOpen} />
     </section>
   );
 }
