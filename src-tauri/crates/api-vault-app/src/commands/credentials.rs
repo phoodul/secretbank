@@ -147,6 +147,23 @@ pub async fn credential_create(
             id.to_string(),
         ));
 
+    // M9 Phase F-3 — best-effort value push to relay. Sync 가 비활성 (enc_key
+    // 없음 / network 실패) 이어도 credential 생성 자체는 성공으로 간주 — 다음
+    // pull 또는 명시적 retry 에서 따라잡는다.
+    {
+        let plaintext = secrecy::SecretString::from(args.value.clone());
+        let cred_id_str = id.to_string();
+        if let Err(e) =
+            crate::services::value_sync::push_value(&state, &cred_id_str, &plaintext).await
+        {
+            tracing::debug!(
+                credential_id = %cred_id_str,
+                error = %e,
+                "value sync push (create) skipped — best-effort"
+            );
+        }
+    }
+
     Ok(id)
 }
 
@@ -390,6 +407,21 @@ pub async fn credential_rotate_value(
             crate::services::sync_emit::DbChangeEntity::Credential,
             input.id.to_string(),
         ));
+
+    // M9 Phase F-3 — best-effort value push (rotated value) to relay.
+    {
+        let plaintext = secrecy::SecretString::from(input.value.clone());
+        let cred_id_str = input.id.to_string();
+        if let Err(e) =
+            crate::services::value_sync::push_value(&state, &cred_id_str, &plaintext).await
+        {
+            tracing::debug!(
+                credential_id = %cred_id_str,
+                error = %e,
+                "value sync push (rotate) skipped — best-effort"
+            );
+        }
+    }
 
     Ok(())
 }
