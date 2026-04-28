@@ -24,6 +24,7 @@ use clap::{Parser, Subcommand};
 use secrecy::SecretString;
 
 use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus, ProjectId, UsageWhereKind};
+use api_vault_core::graph::{DependencyGraph, EdgeKind, NodeRef};
 use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::init_pool;
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
@@ -100,6 +101,15 @@ enum Command {
         #[command(subcommand)]
         kind: ScanKind,
     },
+
+    /// Emit the dependency graph (Issuer → Credential → Project → Deployment)
+    /// as JSON. Read by the JetBrains plugin's Graph view (M22 v3) and any
+    /// external visualization tool. Reads SQLite directly — no vault unlock.
+    Graph {
+        /// Output as JSON (default true; reserved for future text formats).
+        #[arg(long, default_value_t = true)]
+        json: bool,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -143,6 +153,7 @@ async fn run(cli: Cli) -> Result<()> {
                 cmd_scan_supply_chain(project.as_deref(), json).await
             }
         },
+        Command::Graph { json: _ } => cmd_graph(cli.data_dir.as_deref()).await,
     }
 }
 
@@ -669,6 +680,123 @@ fn category_label_supply(c: api_vault_supply::AdvisoryCategory) -> &'static str 
         C::CryptoWeak => "crypto_weak",
         C::SupplyChain => "supply_chain",
         C::Other => "other",
+    }
+}
+
+// ---------------------------------------------------------------------------
+// `apivault graph` — JSON dump of dependency graph
+// ---------------------------------------------------------------------------
+
+async fn cmd_graph(data_dir_override: Option<&std::path::Path>) -> Result<()> {
+    use api_vault_storage::sqlite::repositories::{
+        deployment::DeploymentRepo, project::ProjectRepo,
+    };
+
+    let data_dir = match data_dir_override {
+        Some(d) => d.to_path_buf(),
+        None => default_data_dir()?,
+    };
+    let db_path = data_dir.join("vault.db");
+    if !db_path.exists() {
+        return Err(anyhow!(
+            "no SQLite store at {} — has the desktop app booted yet?",
+            db_path.display()
+        ));
+    }
+    let pool = init_pool(&db_path).await.context("opening SQLite pool")?;
+
+    let issuers = IssuerRepo::new(&pool).list().await.context("listing issuers")?;
+    let credentials = CredentialRepo::new(&pool).list_all().await.context("listing credentials")?;
+    let usages = UsageRepo::new(&pool).list_all().await.context("listing usages")?;
+    let projects = ProjectRepo::new(&pool).list().await.context("listing projects")?;
+    let deployments = DeploymentRepo::new(&pool).list_all().await.context("listing deployments")?;
+
+    let graph = DependencyGraph::build(&issuers, &credentials, &usages, &projects, &deployments);
+
+    let issuer_map: std::collections::HashMap<String, &api_vault_core::Issuer> =
+        issuers.iter().map(|i| (i.id.to_string(), i)).collect();
+    let cred_map: std::collections::HashMap<String, &api_vault_core::Credential> =
+        credentials.iter().map(|c| (c.id.to_string(), c)).collect();
+    let project_map: std::collections::HashMap<String, &api_vault_core::Project> =
+        projects.iter().map(|p| (p.id.to_string(), p)).collect();
+    let dep_map: std::collections::HashMap<String, &api_vault_core::Deployment> =
+        deployments.iter().map(|d| (d.id.to_string(), d)).collect();
+
+    let nodes: Vec<serde_json::Value> = graph
+        .nodes()
+        .map(|nr| {
+            let id = node_id_string(nr);
+            let (kind, label) = match nr {
+                NodeRef::Issuer(_) => (
+                    "issuer",
+                    issuer_map
+                        .get(&id)
+                        .map(|i| i.display_name.clone())
+                        .unwrap_or_else(|| "<missing>".into()),
+                ),
+                NodeRef::Credential(_) => (
+                    "credential",
+                    cred_map
+                        .get(&id)
+                        .map(|c| c.name.clone())
+                        .unwrap_or_else(|| "<missing>".into()),
+                ),
+                NodeRef::Project(_) => (
+                    "project",
+                    project_map
+                        .get(&id)
+                        .map(|p| p.name.clone())
+                        .unwrap_or_else(|| "<missing>".into()),
+                ),
+                NodeRef::Deployment(_) => (
+                    "deployment",
+                    dep_map
+                        .get(&id)
+                        .map(|d| format!("{} @ {:?}", d.url, d.env).to_lowercase())
+                        .unwrap_or_else(|| "<missing>".into()),
+                ),
+            };
+            serde_json::json!({
+                "id": id,
+                "kind": kind,
+                "label": label,
+            })
+        })
+        .collect();
+
+    let edges: Vec<serde_json::Value> = graph
+        .edges()
+        .map(|(src, dst, kind)| {
+            let src_id = node_id_string(src);
+            let dst_id = node_id_string(dst);
+            let kind_str = match kind {
+                EdgeKind::Issues => "issues",
+                EdgeKind::UsedBy => "used_by",
+                EdgeKind::DeployedAs => "deployed_as",
+            };
+            serde_json::json!({
+                "id": format!("{src_id}->{dst_id}:{kind_str}"),
+                "source": src_id,
+                "target": dst_id,
+                "kind": kind_str,
+            })
+        })
+        .collect();
+
+    let payload = serde_json::json!({
+        "nodes": nodes,
+        "edges": edges,
+    });
+    println!("{}", serde_json::to_string_pretty(&payload)?);
+    Ok(())
+}
+
+fn node_id_string(nr: NodeRef) -> String {
+    match nr {
+        NodeRef::Issuer(id) => id.to_string(),
+        NodeRef::Credential(id) => id.to_string(),
+        NodeRef::Project(id) => id.to_string(),
+        NodeRef::Deployment(id) => id.to_string(),
     }
 }
 

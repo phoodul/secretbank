@@ -13,6 +13,38 @@ radius before you rotate or revoke a key.
 
 ### Added
 
+#### M22 — JetBrains plugin (v3)
+
+- **Graph tab** in the Tool Window: dependency graph rendered inside JCEF
+  via a self-contained force-directed layout. Pan (drag), zoom (wheel),
+  and click-to-highlight neighbors. No external CDN — bundled HTML+JS
+  ships with the plugin, works offline. Falls back to a notice on IDE
+  builds without JCEF.
+- New `apivault graph` CLI subcommand outputs the dependency graph as
+  JSON (nodes: Issuer / Credential / Project / Deployment, edges:
+  issues / used_by / deployed_as). Reads SQLite directly — no vault
+  unlock required.
+- `ApiVaultService.fetchGraph()` parses the CLI's output into typed
+  Kotlin records.
+
+#### M22 — JetBrains plugin (v2)
+
+- Tool Window (right side, secondary): Credentials / Supply chain /
+  Settings tabs.
+- `CredentialsPanel` — JBList with text filter, refresh, and reveal
+  (passphrase prompt → clipboard, auto-clear in 30s).
+- `SupplyChainPanel` — JBTable sorted by severity descending.
+  Severity-coloured cell renderer. Double-click a row to open the
+  matching manifest in the editor.
+- `SettingsPanel` — per-project CLI path and "scan on project open"
+  toggle.
+- `ProjectStartup` (`postStartupActivity`) auto-runs a supply-chain
+  scan when a project opens if the toggle is on, caching the result
+  for the Supply chain tab.
+- Inspection line parser extended to `requirements.txt` (`==`, `>=`,
+  `<=`, `~=`, `!=`) and `go.mod` (single-line `require` and block-line
+  `\tmodule v1.2.3`). Comment lines (`#`, `//`) excluded.
+
 #### M22 — JetBrains plugin (v1)
 
 - Gradle Kotlin DSL plugin module at `jetbrains-plugin/` targeting IntelliJ

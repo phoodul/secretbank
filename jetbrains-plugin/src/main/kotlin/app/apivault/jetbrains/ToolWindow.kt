@@ -15,6 +15,9 @@ class ApiVaultToolWindowFactory : ToolWindowFactory {
             factory.createContent(SupplyChainPanel(project), "Supply chain", false)
         )
         toolWindow.contentManager.addContent(
+            factory.createContent(GraphPanel(project), "Graph", false)
+        )
+        toolWindow.contentManager.addContent(
             factory.createContent(SettingsPanel(project), "Settings", false)
         )
     }

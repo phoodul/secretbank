@@ -7,13 +7,17 @@
 
 ### Tool Window (`View → Tool Windows → API Vault`)
 
-Three tabs on the right side of the IDE:
+Four tabs on the right side of the IDE:
 
 - **Credentials** — live list with filter, refresh, and one-click reveal
   (passphrase prompt → clipboard, auto-clear in 30s).
 - **Supply chain** — sortable advisory table with severity-coloured rows.
   Double-click a row to jump to the manifest line. Cached scan persists
   between Tool Window opens.
+- **Graph** — dependency graph rendered inside JCEF (Issuer → Credential →
+  Project → Deployment). Self-contained force-directed layout: drag to
+  pan, scroll to zoom, click a node to highlight neighbors. No external
+  CDN, works offline. Falls back to a notice on IDE builds without JCEF.
 - **Settings** — per-project CLI path and "scan on project open" toggle.
 
 ### Tools menu (`Tools → API Vault`)

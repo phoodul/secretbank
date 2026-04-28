@@ -59,6 +59,14 @@ class ApiVaultService(private val project: Project) {
             .getOrNull()
     }
 
+    /** 그래프 데이터 (M22 v3 — 'apivault graph' CLI). 실패 시 빈 graph. */
+    fun fetchGraph(): GraphPayload {
+        val out = run("graph") ?: return GraphPayload()
+        return runCatching { mapper.readValue(out, GraphPayload::class.java) }
+            .onFailure { log.warn("apivault graph parse: ${it.message}") }
+            .getOrDefault(GraphPayload())
+    }
+
     /** Convenience for inspections — package_name -> highest-severity advisory in the cached scan. */
     fun advisoryFor(packageName: String): MatchedAdvisory? {
         val scan = lastScan ?: return null
@@ -126,5 +134,26 @@ class ApiVaultService(private val project: Project) {
         val severity: String,
         val category: String,
         val summary: String,
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class GraphPayload(
+        val nodes: List<GraphNode> = emptyList(),
+        val edges: List<GraphEdge> = emptyList(),
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class GraphNode(
+        val id: String,
+        val kind: String,
+        val label: String,
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class GraphEdge(
+        val id: String,
+        val source: String,
+        val target: String,
+        val kind: String,
     )
 }

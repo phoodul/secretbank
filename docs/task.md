@@ -50,7 +50,7 @@
 | M19 | Team / org / shared vault       | TBD         | TBD       | ⏳ placeholder (B2B 진입, M18+M21 후 베타 사용자 피드백 기반) |
 | M20 | Supply chain risk graph         | TBD         | TBD       | ✅ M20 v2 완료 (v1 manifest+OSV+매칭+Tauri+MCP / **v2 lockfile parsers (npm v3+/pnpm v6/Cargo) + semver range eval — false positive 제거**) |
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / v3 Cargo.toml hover + ManifestCodeLens — risky deps inline) |
-| M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ M22 v2 완료 (v1 스켈레톤 + Tools/상태바/inspection / **v2 Tool Window 3-tab (Credentials JBList + filter/refresh/reveal · Supply chain JBTable + severity 색상 + 매니페스트 점프 · Settings cliPath/scanOnOpen) + ProjectStartup auto-scan + requirements.txt/go.mod 라인 파서 + 테스트 12 케이스**) |
+| M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ M22 v3 완료 (v1 스켈레톤+Tools/상태바/inspection / v2 Tool Window 3-tab+ProjectStartup+manifest 확장 / **v3 Graph 탭: JCEF 임베디드 브라우저 + self-contained force-directed graph (pan/zoom/click highlight) + apivault graph CLI subcommand 신설 — 외부 CDN 없음, 오프라인 동작**) |
 
 ---
 

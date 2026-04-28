@@ -27,10 +27,11 @@
     <change-notes><![CDATA[
         <h3>0.1.0</h3>
         <ul>
-            <li>Tool Window (right side) with Credentials / Supply Chain / Settings tabs.</li>
+            <li>Tool Window (right side) with Credentials / Supply chain / Graph / Settings tabs.</li>
+            <li><b>Graph tab</b> renders the dependency graph (Issuer → Credential → Project → Deployment) inside JCEF using a self-contained force-directed layout — pan, zoom, click to highlight neighbors, no external CDN.</li>
             <li>Auto-scan on project open (opt-in via Settings tab).</li>
-            <li>Status-bar widget, Tools menu actions, manifest inspections.</li>
-            <li>List / reveal / scan via the local <code>apivault</code> CLI.</li>
+            <li>Status-bar widget, Tools menu actions, manifest inspections (package.json / Cargo.toml / requirements.txt / go.mod patterns).</li>
+            <li>Backed by the local <code>apivault</code> CLI — list / reveal / scan / graph subcommands.</li>
         </ul>
     ]]></change-notes>
 

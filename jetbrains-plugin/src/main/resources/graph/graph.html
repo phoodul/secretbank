@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>API Vault — graph</title>
+<style>
+:root {
+  color-scheme: dark light;
+  --bg: #1e1f22;
+  --fg: #e7e7ea;
+  --muted: #9a9aa1;
+  --node-issuer: #92b7ff;
+  --node-credential: #5cffa6;
+  --node-project: #ffb86b;
+  --node-deployment: #d49bff;
+  --edge: rgba(180, 180, 190, 0.35);
+  --edge-active: #ffd457;
+  --selected: #ffd457;
+}
+@media (prefers-color-scheme: light) {
+  :root { --bg: #ffffff; --fg: #1e1f22; --muted: #555; --edge: rgba(0,0,0,0.18); }
+}
+html, body { margin:0; padding:0; height:100%; background:var(--bg); color:var(--fg);
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif; overflow:hidden; }
+#legend { position:absolute; top:8px; left:8px; font-size:11px; color:var(--muted);
+  background: rgba(0,0,0,0.18); padding:6px 8px; border-radius:6px; pointer-events:none; }
+.legend-row { display:flex; align-items:center; gap:6px; }
+.legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+#tooltip { position:absolute; pointer-events:none; background: rgba(0,0,0,0.85);
+  color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;
+  display:none; max-width:300px; }
+#empty { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  color:var(--muted); font-size:13px; text-align:center; display:none; }
+svg { width:100%; height:100%; cursor:grab; }
+svg:active { cursor:grabbing; }
+.node circle { stroke: var(--bg); stroke-width: 1.5; cursor:pointer; }
+.node.selected circle { stroke: var(--selected); stroke-width: 3; }
+.node text { font-size: 11px; fill: var(--fg); pointer-events: none;
+  paint-order: stroke; stroke: var(--bg); stroke-width: 3; stroke-linejoin: round; }
+line.edge { stroke: var(--edge); stroke-width: 1.2; }
+line.edge.active { stroke: var(--edge-active); stroke-width: 2.5; }
+</style>
+</head>
+<body>
+<div id="legend">
+  <div class="legend-row"><span class="legend-dot" style="background:var(--node-issuer)"></span> Issuer</div>
+  <div class="legend-row"><span class="legend-dot" style="background:var(--node-credential)"></span> Credential</div>
+  <div class="legend-row"><span class="legend-dot" style="background:var(--node-project)"></span> Project</div>
+  <div class="legend-row"><span class="legend-dot" style="background:var(--node-deployment)"></span> Deployment</div>
+</div>
+<div id="empty">No graph data. Add credentials and projects in the desktop app.</div>
+<div id="tooltip"></div>
+<svg id="g"><g id="root"></g></svg>
+
+<script>
+// Self-contained force-directed layout. No external libraries (works offline,
+// no CSP issues inside JCEF). Approximation: Fruchterman–Reingold-ish.
+
+const KIND_COLOR = {
+  issuer: "var(--node-issuer)",
+  credential: "var(--node-credential)",
+  project: "var(--node-project)",
+  deployment: "var(--node-deployment)",
+};
+const KIND_RADIUS = { issuer: 9, credential: 8, project: 8, deployment: 7 };
+
+let nodes = [], edges = [];
+let svg = document.getElementById("g");
+let root = document.getElementById("root");
+let empty = document.getElementById("empty");
+let tooltip = document.getElementById("tooltip");
+
+let viewX = 0, viewY = 0, viewK = 1;
+
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+}
+window.addEventListener("resize", resize);
+resize();
+
+function applyTransform() {
+  root.setAttribute("transform", `translate(${viewX},${viewY}) scale(${viewK})`);
+}
+
+// Pan / zoom
+let panning = false, panStart = null;
+svg.addEventListener("mousedown", (e) => {
+  if (e.target === svg || e.target === root) {
+    panning = true;
+    panStart = { x: e.clientX - viewX, y: e.clientY - viewY };
+  }
+});
+window.addEventListener("mousemove", (e) => {
+  if (!panning) return;
+  viewX = e.clientX - panStart.x;
+  viewY = e.clientY - panStart.y;
+  applyTransform();
+});
+window.addEventListener("mouseup", () => { panning = false; });
+svg.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+  const cx = e.clientX, cy = e.clientY;
+  // zoom about cursor
+  viewK *= factor;
+  viewX = cx - (cx - viewX) * factor;
+  viewY = cy - (cy - viewY) * factor;
+  applyTransform();
+}, { passive: false });
+
+function showTooltip(node, ev) {
+  tooltip.innerHTML = `<b>${node.kind}</b><br>${node.label || node.id}`;
+  tooltip.style.left = ev.clientX + 12 + "px";
+  tooltip.style.top = ev.clientY + 12 + "px";
+  tooltip.style.display = "block";
+}
+function hideTooltip() { tooltip.style.display = "none"; }
+
+let selectedId = null;
+
+function neighbors(id) {
+  const set = new Set();
+  for (const e of edges) {
+    if (e.source === id) set.add(e.target);
+    if (e.target === id) set.add(e.source);
+  }
+  return set;
+}
+
+function selectNode(id) {
+  selectedId = (selectedId === id) ? null : id;
+  const adj = selectedId ? neighbors(selectedId) : new Set();
+  for (const el of root.querySelectorAll(".node")) {
+    if (el.dataset.id === selectedId) el.classList.add("selected");
+    else el.classList.remove("selected");
+  }
+  for (const el of root.querySelectorAll("line.edge")) {
+    const s = el.dataset.source, t = el.dataset.target;
+    const active = selectedId && (s === selectedId || t === selectedId);
+    el.classList.toggle("active", !!active);
+  }
+}
+
+function render() {
+  while (root.firstChild) root.removeChild(root.firstChild);
+  empty.style.display = nodes.length === 0 ? "block" : "none";
+
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+  // Edges first (so nodes draw on top)
+  for (const e of edges) {
+    const s = nodeMap.get(e.source), t = nodeMap.get(e.target);
+    if (!s || !t) continue;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.classList.add("edge");
+    line.dataset.source = e.source;
+    line.dataset.target = e.target;
+    line.setAttribute("x1", s.x); line.setAttribute("y1", s.y);
+    line.setAttribute("x2", t.x); line.setAttribute("y2", t.y);
+    e._el = line;
+    root.appendChild(line);
+  }
+  for (const n of nodes) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.classList.add("node");
+    g.dataset.id = n.id;
+    g.setAttribute("transform", `translate(${n.x},${n.y})`);
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    const r = KIND_RADIUS[n.kind] ?? 7;
+    c.setAttribute("r", r);
+    c.setAttribute("fill", KIND_COLOR[n.kind] ?? "#888");
+    g.appendChild(c);
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", r + 4);
+    t.setAttribute("y", 4);
+    t.textContent = n.label || n.id;
+    g.appendChild(t);
+    g.addEventListener("mouseenter", (ev) => showTooltip(n, ev));
+    g.addEventListener("mousemove", (ev) => showTooltip(n, ev));
+    g.addEventListener("mouseleave", hideTooltip);
+    g.addEventListener("click", (ev) => { ev.stopPropagation(); selectNode(n.id); });
+    n._el = g;
+    root.appendChild(g);
+  }
+  applyTransform();
+}
+
+function step() {
+  if (nodes.length === 0) return;
+  const w = window.innerWidth, h = window.innerHeight;
+  const cx = w / 2, cy = h / 2;
+  // Repulsion
+  const REPULSE = 1800;
+  for (let i = 0; i < nodes.length; i++) {
+    const a = nodes[i];
+    let fx = 0, fy = 0;
+    for (let j = 0; j < nodes.length; j++) {
+      if (i === j) continue;
+      const b = nodes[j];
+      let dx = a.x - b.x, dy = a.y - b.y;
+      let d2 = dx*dx + dy*dy + 0.1;
+      const f = REPULSE / d2;
+      fx += dx * f; fy += dy * f;
+    }
+    a.fx = fx; a.fy = fy;
+  }
+  // Attraction along edges
+  const SPRING = 0.018, REST = 90;
+  for (const e of edges) {
+    const a = nodes.find(n => n.id === e.source);
+    const b = nodes.find(n => n.id === e.target);
+    if (!a || !b) continue;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
+    const force = SPRING * (d - REST);
+    const fxc = (dx / d) * force, fyc = (dy / d) * force;
+    a.fx += fxc; a.fy += fyc;
+    b.fx -= fxc; b.fy -= fyc;
+  }
+  // Gravity to center + integrate
+  const DAMP = 0.85;
+  for (const n of nodes) {
+    n.fx += (cx - n.x) * 0.0025;
+    n.fy += (cy - n.y) * 0.0025;
+    n.vx = ((n.vx || 0) + n.fx) * DAMP;
+    n.vy = ((n.vy || 0) + n.fy) * DAMP;
+    // clamp velocity
+    const v = Math.sqrt(n.vx*n.vx + n.vy*n.vy);
+    if (v > 12) { n.vx *= 12/v; n.vy *= 12/v; }
+    n.x += n.vx; n.y += n.vy;
+    if (n._el) n._el.setAttribute("transform", `translate(${n.x},${n.y})`);
+  }
+  for (const e of edges) {
+    const a = nodes.find(n => n.id === e.source);
+    const b = nodes.find(n => n.id === e.target);
+    if (!a || !b || !e._el) continue;
+    e._el.setAttribute("x1", a.x); e._el.setAttribute("y1", a.y);
+    e._el.setAttribute("x2", b.x); e._el.setAttribute("y2", b.y);
+  }
+}
+
+let animId = null;
+function loop() { step(); animId = requestAnimationFrame(loop); }
+
+// JCEF bridge: the Kotlin side calls `window.apivaultLoad(json)` with the
+// payload. We accept it as an object or a JSON string.
+window.apivaultLoad = function(payload) {
+  try {
+    const data = (typeof payload === "string") ? JSON.parse(payload) : payload;
+    const w = window.innerWidth, h = window.innerHeight;
+    nodes = (data.nodes || []).map((n, i) => ({
+      id: n.id, kind: n.kind, label: n.label,
+      x: w/2 + Math.cos(i * 0.7) * 80 + (Math.random() - 0.5) * 40,
+      y: h/2 + Math.sin(i * 0.7) * 80 + (Math.random() - 0.5) * 40,
+      vx: 0, vy: 0,
+    }));
+    edges = (data.edges || []).map(e => ({ source: e.source, target: e.target, kind: e.kind }));
+    selectedId = null;
+    render();
+    if (animId) cancelAnimationFrame(animId);
+    loop();
+    // run faster initial settle
+    for (let k = 0; k < 80; k++) step();
+  } catch (e) {
+    console.error("apivaultLoad failed", e);
+  }
+};
+
+// Empty initial state
+window.apivaultLoad({ nodes: [], edges: [] });
+</script>
+</body>
+</html>
