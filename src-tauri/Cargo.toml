@@ -71,6 +71,9 @@ regex = "1"
 ignore = "0.4"
 once_cell = "1"
 
+# Manifest parsing (M20)
+toml = "0.8"
+
 # CLI (M18)
 clap = { version = "4", features = ["derive"] }
 rpassword = "7"

@@ -405,6 +405,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "api-vault-supply"
+version = "0.1.0"
+dependencies = [
+ "api-vault-core",
+ "async-trait",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tempfile",
+ "thiserror 2.0.18",
+ "time",
+ "tokio",
+ "toml 0.8.2",
+ "tracing",
+ "ulid",
+ "wiremock",
+]
+
+[[package]]
 name = "api-vault-sync"
 version = "0.1.0"
 
