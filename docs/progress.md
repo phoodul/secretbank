@@ -4,21 +4,24 @@
 
 - **Time:** 2026-04-28 Night mode 3 (T084 + I3 + Playwright + M9 Phase A + B-1 5건 연속 완료, 다음 세션은 M9 Phase B-2 부터)
 - **Phase:** Phase 3 — Implementation, **M4~M8 ✅ + M5 10/10 ✅ + M8 8/8 ✅ + M9 🔄 Phase A+B-1 / 7 phases (Phase B 4 sub-phase 분할) + M15 🔄**, 110/132 태스크 (83.3%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, **4-28 I3 ✅ listener 표준화 + Playwright E2E 인프라 ✅ + M9 Phase Plan ✅ + 5건 결정 ✅ + Phase B-1 ✅** + J2 ✅ + J1 docs ✅)
-- **Commits (T083 Phase A~D + 검증 hotfix 신규 6개):**
-  - `1ec7a15` feat(auth) — T083 Phase A · RelayClient + AuthSession 서비스 골격 + AppContext 확장 (회귀 12)
-  - `2f17917` feat(auth) — T083 Phase B · Passkey 4 커맨드 (register/assert × start/verify) + AuthCommandError + complete_session 헬퍼 (회귀 6)
-  - `e159415` feat(auth) — T083 Phase C · OAuth(GitHub/Google) + apivault:// deep link scheme + on_open_url emit + tauri-plugin-opener 전환 (회귀 5)
-  - `7df5888` feat(auth) — T083 Phase D · auth_refresh / auth_signout / auth_status + hydrate_session_from_vault 자동 통합 (T086 클라이언트 측 완성, 회귀 5)
-  - `a63133c` docs — T083 5-Phase 종료 · task.md / progress.md / work-log.md 갱신
-  - `5a556d4` fix(auth) — J2 · register/assert start 에 vault unlocked 가드 (OS↔DB 분리 회복불가 패턴 차단, 회귀 2)
-  - `f7b6c9e` docs — J1 + T083 수동 검증 라운드 종합 기록 (README/relay-deployment runbook 경고 + work-log 인사이트)
-  - `17da027` feat(auth) — T085 · Zero-Knowledge KDF (salt_auth/salt_enc → auth_hash/enc_key) 결정론 통합 + 회귀 4. **M8 백엔드 8/8 완료**
-- **Tests (4-28 T085 종료 시점):**
-  - Rust api-vault-app lib: **136 passed** (102 → 136, T083 Phase A 12 + B 6 + C 5 + D 5 + J2 2 + T085 4 = +34)
+- **이번 Night mode 3 신규 commits (10개):**
+  - `d619566` feat(auth) — T084 SignIn UI + deep-link callback (M8 8/8 ✅)
+  - `22a05ed` docs — T084 커밋 해시 매핑
+  - `340e72c` fix(github) — I3 deep-link listener 표준화 (apivault://github/callback)
+  - `8672555` test(e2e) — Playwright browser-mode smoke 인프라
+  - `40e630b` feat(sync) — M9 Phase A: Yjs 스캐폴드 + 7-phase plan
+  - `bcecdab` docs — T087-A 커밋 해시 매핑
+  - `0593cc7` docs — M9 Open Issues 5건 사용자 결정 + Phased Expansion
+  - `ead6834` feat(sync) — M9 Phase B-1: AuthSession enc_key 라이프사이클 토대
+  - `fe3f522` feat(sync) — M9 Phase B-2: verify 흐름에 derive 통합
+  - `dcc01e2` feat(sync) — M9 Phase B-3: sync_get_root_key 커맨드 (Phase B 종료)
+- **Tests (4-28 Night mode 3 종료 시점):**
+  - Rust api-vault-app lib: **152 passed** (이전 136 + 16 — Phase B-1 +5, B-2 +6, B-3 +5)
+  - Frontend Vitest: **346 passed** (이전 315 + 31 — T084 +19, I3 +8, Phase A +4)
+  - Playwright smoke: **3/3** 통과 (LockScreen / 라우팅 / SignInPage)
   - relay vitest 35 / Rust crypto 5 / storage 39 / 전체 워크스페이스 모두 그린
-  - clippy --workspace --all-targets -D warnings: **0 에러**
-  - typecheck / Vitest(frontend): 영향 없음 (FE 변경 없음)
-  - 수동 검증: 18 통과 / 2 deferred (D2/D3 — T084 SignIn UI 시점에 자연 검증)
+  - clippy --workspace --all-targets --all-features -D warnings: **0 에러**
+  - typecheck: 0 에러
 - **Blocker:** pre-existing clippy warnings (Rust 1.95 새 lint) — 이번 hotfix 와 무관, 후속 정리 큐
 - **Mode:** Interactive manual verification — 라운드 A → B → C 단계별 사용자 실행, 결함 발견 시 즉시 진단 → hotfix → 재검증.
 - **Verification 통과 (10/10 + C2 deferred):**

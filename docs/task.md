@@ -37,7 +37,7 @@
 | M6  | Audit Log                       | T069~T074   | 6         | ✅ 6/6 완료         |
 | M7  | Kill Switch                     | T075~T078   | 4         | ✅ 4/4 완료             |
 | M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ✅ 8/8 완료 (T079 · T080 · T081 · T082 · T083 클라 9 커맨드 · **T084 SignIn UI** · T085 KDF · T086 refresh) |
-| M9  | Sync Infrastructure             | T087~T096   | 10        | 🔄 진입 (Phase A 1/7 — Yjs 스캐폴드 완료) |
+| M9  | Sync Infrastructure             | T087~T096   | 10        | 🔄 진입 (Phase A + B 종료, 4/7 phases — B-4 옵션, C/D/E/F/G 남음) |
 | M10 | Payments                        | T097~T103   | 7         | ⏳ 대기             |
 | M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기             |
 | M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기             |
@@ -150,8 +150,9 @@
 | T085    | Zero-Knowledge KDF — services/session.rs::derive_session_keys(passphrase, salt_auth_b64, salt_enc_b64) → DerivedSessionKeys{auth_hash, enc_key}. base64url 디코드 + SaltsIdentical/InvalidSalt 가드 + 회귀 4 (결정론 / 다른 salt → 다른 키 / 같은 salt 거부 / malformed base64) | 2026-04-28 | `17da027` |
 | T084    | SignIn UI — `/auth/sign-in` (PasskeyButton + OAuthButton GitHub/Google + Keep offline) + use-deep-link-callback `apivault://auth/callback` 파서 + use-auth-session 훅 + Settings → CloudSyncSection 진입점 + i18n 4 로케일 + Vitest +19 (parser 4 / PasskeyButton 5 / OAuthButton 3 / SignInPage 4 / CloudSyncSection 3) — **M8 8/8 완료** | 2026-04-28 | `d619566` |
 | T087-A  | M9 Phase A — Yjs + y-indexeddb dep + SyncProvider 골격 (Y.Doc 인스턴스 + IndexedDB persistence + useSync/useYMap 훅, App.tsx 마운트는 Phase B 까지 보류) + Vitest +4 + `docs/m9-phase-plan.md` (7-phase 분할 계획서, Open Issues 4건 명시) | 2026-04-28 | `40e630b` |
+| T087-B  | M9 Phase B — AuthSession enc_key 라이프사이클 + verify 흐름 derive 통합 + sync_get_root_key 커맨드. 3 sub-phase 분할 (B-1 메모리 구조 + master_passphrase / B-2 verify+hydrate 자동 derive / B-3 sync_get_root_key). Rust lib 회귀 +16 (B-1 +5, B-2 +6, B-3 +5). project-decisions [2026-04-28] B 의 Auto-derive on unlock 디자인 구체화 | 2026-04-28 | `ead6834` (B-1), `fe3f522` (B-2), `dcc01e2` (B-3) |
 
-**완료 합계**: 110/132 (T087-A 는 phase 단위, T087 전체는 Phase C 완료 시 클로즈) — M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ 10/10 + **M5 ✅ 10/10** + M6 ✅ 6/6 + M7 ✅ 4/4 + **M8 ✅ 8/8 완료** + **M9 🔄 Phase A 1/7** + M15 🔄 2/8
+**완료 합계**: 110/132 (T087-A/B 는 phase 단위, T087 전체는 Phase C 완료 시 클로즈) — M0 완료 + M1 완료 + M2 완료 ✅ + M3 완료 ✅ + M4 ✅ 10/10 + **M5 ✅ 10/10** + M6 ✅ 6/6 + M7 ✅ 4/4 + **M8 ✅ 8/8 완료** + **M9 🔄 Phase A + B 종료 (4/7 phases)** + M15 🔄 2/8
 
 ### Audit 무결성 hotfix + payload 점검 (2026-04-25, 태스크 진행 표에는 별도 항목 아님)
 
@@ -189,6 +190,14 @@
 | :--- | :-------- |
 | Rust 1.95 새 clippy lint 14건 정리 (cloned_ref_to_slice_refs 9 + io_other_error 1 + unused_imports 1 + dead_code 1) | `a6b0a94` |
 | KDF salt 시그니처 일반화 `&[u8; 16]` → `&[u8]` (T085 사전작업, M8 32바이트 salt 호환) | `d3a345f` |
+
+### Night mode 3 인프라 작업 (2026-04-28, 태스크 진행 표에는 별도 항목 아님)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **I3 hotfix** — `useGithubIntegration` deep-link listener 표준화. `deep-link://github-callback` (lib.rs 가 emit 안 함, dead path) → `deep-link` 이벤트 + `apivault://github/callback` URL prefix 매칭. parseGithubCallbackUrl 헬퍼 + Vitest +8 + Setup URL 운영 가이드 강화 | `340e72c` |
+| **Playwright browser-mode E2E 인프라** — `e2e/` 디렉토리 + `tauri-mock.ts` invoke polyfill + smoke 3 case (LockScreen / 라우팅 / SignInPage) + CI `e2e` 잡 + frontend 잡에 Vitest 통합 (이전 누락). Desktop binary E2E (tauri-driver) 는 진입 트리거 3가지 명시 후 deferred | `8672555` |
+| **5건 결정 + Phased Expansion 기록** — Free 종류 무관 2대 / Auto-derive on unlock / SQLite 화이트리스트 / SecSync 잠정 / MVP API 특화 + v1.1 General Secrets + v1.2 자동입력. project-decisions.md + m9-phase-plan.md Open Issues Resolved 갱신 | `0593cc7` |
 
 ---
 
