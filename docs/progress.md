@@ -2,6 +2,39 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 7 (E-4b / E-5 / F-1 3건 연속 완료, 다음 세션은 M9 Phase F-2 부터)
+- **Phase:** Phase 3 — Implementation, M4~M8 ✅ + M9 🔄 Phase A+B+C+D 풀+**E 풀**+**F-1** 종료 (16/19 sub-phases) + M15 🔄, 111/132 태스크 (84.1%)
+- **이번 Night mode 7 신규 commits (3개):**
+  - `113065c` feat(sync) — M9 Phase E-4b: SyncProvider 가 RelayTransport 자동 생성 (auth_get_access_token + sync_get_relay_url)
+  - `61a1db3` feat(sync) — M9 Phase E-5: 통합 round-trip (A push → mock relay → B pull)
+  - `6d47f94` feat(sync) — M9 Phase F-1: value sync 채널 (D1 0004 + /sync/values endpoints)
+- **Tests (4-28 Night mode 7 종료 시점):**
+  - Rust api-vault-app lib: **162 passed** (이전 158 + 4: auth_get_access_token 3 + sync_get_relay_url 1)
+  - Frontend Vitest: **416 passed** (이전 409 + 7: SyncProvider default-transport +2 + round-trip +5)
+  - Relay vitest: **54 passed** (이전 46 + 8: db schema 1 + sync values 7)
+  - clippy 0 -D warnings / typecheck 0 / lint 0 errors
+- **이번 Night mode 7 처리 완료:**
+  1. ✅ **E-4b** — auth_get_access_token + sync_get_relay_url 신규 Tauri 커맨드 + lib.rs 등록 + RelayTransport baseUrl trailing-slash normalize + SyncProvider 가 providedTransport 미공급 시 invoke 3건 fan-out 후 RelayTransport 자동 생성. auth_status null user_id 시 offline_only 폴백.
+  2. ✅ **E-5** — 통합 round-trip 회귀. MockRelay (in-memory Map) + 두 RelayTransport + 두 Y.Doc. A.set + push → B.poll → applyUpdate → state 동일. Zero-Knowledge 검증 (raw envelope 평문 누출 0). M9 Phase E 풀 완료.
+  3. ✅ **F-1** — encrypted_secret_value 테이블 (per-credential LWW) + Drizzle schema + POST /sync/values + GET /sync/values?since=<ms> + Miniflare 회귀 7. 64KB cap.
+
+- **다음 Night mode 8 큐:**
+  1. **F-2** — 클라이언트 services (Rust): `value-root` HKDF subkey of enc_key + `services/value_sync.rs` (push: AEAD encrypt + invoke /sync/values, poll: invoke + decrypt + age vault upsert). 신규 Tauri 커맨드 sync_value_push / sync_value_pull.
+  2. **F-3** — 통합: credential_create / _update / _rotate_value 가 value 변경 후 sync_value_push 자동 호출 (sync 활성 시). credential_get 이 latest pulled value 사용. 회귀 — Rust + Miniflare round-trip.
+  3. **Phase G** — pairing (X25519 deep-link) + UI (Sync section) + conflict resolver + offline 배지 + Free 2 device entitlement (T092~T096)
+
+- **이전 Night mode 6 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## Night mode 7 detail entry
+
+상세 처리 이력 + 테스트 카운트는 `docs/work-log.md` 의 "2026-04-28 Night mode 7" 섹션 참조.
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 6)
+
 - **Time:** 2026-04-28 Night mode 6 (E-2 / E-3 / E-4a 3건 연속 완료, 다음 세션은 M9 Phase E-4b 부터)
 - **Phase:** Phase 3 — Implementation, M4~M8 ✅ + M9 🔄 Phase A+B+C+**D 풀**+**E-1~E-4a** 종료 (13/16 sub-phases) + M15 🔄, 111/132 태스크 (84.1%)
 - **이번 Night mode 6 신규 commits (3개):**

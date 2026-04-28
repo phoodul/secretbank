@@ -1,5 +1,74 @@
 # Work Log
 
+## 2026-04-28 Night mode 7 — M9 Phase E-4b / E-5 / F-1 (3 commits)
+
+### 세션 개요
+
+- **목표**: SyncProvider 가 RelayTransport 자동 생성 (E-4b) → 통합 round-trip 회귀 (E-5) → Phase F 진입 (F-1).
+- **결과**: 3 commits (`113065c` E-4b / `61a1db3` E-5 / `6d47f94` F-1). Rust lib 158 → 162. Frontend Vitest 409 → 416. Relay vitest 46 → 54.
+
+### Phase E-4b — SyncProvider wiring (RelayTransport default)
+
+backend (Rust):
+- `commands/auth.rs::auth_get_access_token` — in-memory access JWT 반환. NoSession 에러. token rotation 직후에도 fresh 값 반환 (caching 없음).
+- `commands/sync.rs::sync_get_relay_url` — `relay_client.base_url()` 의 string 반환. backend / frontend 가 같은 endpoint 합의.
+- lib.rs invoke_handler 양쪽 (tauri-plugins / non-plugins) 등록.
+- 회귀 +4 (auth_get_access_token: in-memory / no-session / refresh rotation + sync_get_relay_url: relay_client URL 반환).
+
+frontend:
+- `relay-transport.ts` baseUrl trailing-slash normalize (Url::to_string() 의 trailing slash + concat 시 double slash 방지).
+- `SyncProvider.tsx` 의 sync boot 가 providedTransport 미공급 시 `Promise.all` 로 invoke 3건 fan-out (sync_get_root_key + auth_status + sync_get_relay_url) → RelayTransport 자동 생성 + setTransport → connect. auth_status 가 null user_id 면 offline_only 폴백 (sync 가 '활성 가능한 세션' 으로 인식 안 함).
+- 회귀 +2 (default-transport happy path / null user_id 시 offline_only).
+
+### Phase E-5 — 통합 round-trip (A push → mock relay → B pull)
+
+`__tests__/round-trip.test.ts`:
+- `MockRelay` 클래스 — Map<userId, snapshot> 으로 in-memory 저장. 실 relay (E-2/E-3) 의 wire-format 그대로: POST → version+1 + ciphertext 저장, GET → since 비교 후 200 (변경) / 204 (since == version) / fresh user 200 with null.
+- 두 `RelayTransport` (A, B) 가 같은 KEY + USER_ID + MockRelay.fetchImpl 공유.
+- B 의 `onRemoteUpdate` 콜백이 `Y.applyUpdate(docB, update, "remote")` 로 wiring (실제 SyncProvider 가 wire 할 부분).
+
+회귀 +5:
+- A.Map.set + push → B.poll → B.Map 에 같은 값 read
+- 두 번 A.push → B 가 1회 poll 로 latest snapshot 가져옴 (multi-write)
+- Zero-Knowledge: rawEnvelope 안 평문 누출 0 + 잘못된 키 decrypt throw
+- poll twice with same lastVersion → 두 번째 204 (echo loop 없음)
+- AEAD adapter sanity (round-trip 의 의미 보장)
+
+**M9 Phase E 풀 완료** (E-1 ~ E-5).
+
+### Phase F-1 — value sync 채널 (D1 + relay endpoint)
+
+`migrations/0004_sync_values.sql`:
+- `encrypted_secret_value` 테이블 (PK (user_id, credential_id) + version + ciphertext BLOB + updated_at + ON DELETE CASCADE FK)
+- LWW 디자인 — credential 1개 value 변경이 다른 credential 과 merge 될 일 없으므로 CRDT 의 merge 의미 불필요
+- `(user_id, updated_at)` 인덱스로 since 쿼리 효율화
+
+`src/db/schema.ts`: Drizzle `encryptedSecretValue` 추가.
+
+`src/routes/sync.ts`:
+- POST /sync/values { credential_id, ciphertext_b64 } — 200 { version, updated_at } / 401 / 400 (missing/oversized credential_id) / 413 (64KB value cap)
+- GET /sync/values?since=<ms> — 200 { values: [{ credential_id, version, ciphertext_b64, updated_at }] } / 401 / 400
+- 두 엔드포인트 모두 SYNC_RATE_LIMIT (100/min) 공통 적용
+
+회귀 +8:
+- db.test +1: PK 충돌 + cascade
+- sync.test +7: missing credential_id / oversized credential_id / 413 / round-trip / version monotonic + GET latest only / since cutoff / 401 missing Bearer
+
+### 검증
+
+- Rust api-vault-app lib: 158 → 162 (+4)
+- Frontend Vitest: 409 → 416 (+7)
+- Relay vitest: 46 → 54 (+8)
+- clippy / typecheck / lint 모두 0
+
+### 다음 (Night mode 8 큐)
+
+1. **F-2** — 클라이언트 측 Rust: `value-root` HKDF subkey of enc_key + `services/value_sync.rs` (push: AEAD encrypt + relay POST, poll: pull + decrypt + age vault upsert). 신규 Tauri 커맨드 `sync_value_push` / `sync_value_pull`.
+2. **F-3** — credential_create / _update / _rotate_value 통합 hook → sync_value_push 자동 호출 (sync 활성 시 — auth_session.enc_key 존재). credential_get 이 latest pulled value 우선 사용. Rust + Miniflare round-trip.
+3. **Phase G** — pairing (X25519 deep-link) + UI (Sync section) + conflict resolver + offline 배지 + Free 2 device entitlement (T092~T096)
+
+---
+
 ## 2026-04-28 Night mode 6 — M9 Phase E-2 / E-3 / E-4a (3 commits)
 
 ### 세션 개요
