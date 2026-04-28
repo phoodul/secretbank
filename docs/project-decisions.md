@@ -5,6 +5,95 @@
 
 ---
 
+## [2026-04-28] M9 Sync 진입 — 5건 결정 (Free 2대 / Auto-derive / 화이트리스트 / SecSync / Phased Expansion)
+
+### A. Free 디바이스 정책 — 종류 무관 2대 (Open Issue 1 결정)
+
+- **결정:** Free 사용자는 OS instance **2대까지 무료** (종류 무관 — 데스크탑+폰 / 데스크탑 2대 / 폰 2대 모두 가능). 3대 이상은 Pro 필요.
+- **이유:**
+  - 1대만 정책 (Dashlane / NordPass) 은 모바일 시대에 너무 빡빡 → 사용자 이탈
+  - 무제한 (Bitwarden / 1Password Personal) 은 우리 가격대 ($2/mo) 에서 Pro 가치 깎음
+  - "회사 PC + 집 PC + 폰" 3대 조합이 흔함 → 자연스런 Pro 전환 트리거
+  - 종류 분류 (데스크탑 1 + 모바일 1 강제) 는 D1 schema 와 페어링 프로토콜에 device_kind 메타데이터 추가로 ~30% 복잡도 증가 — 단순 카운트가 운영 단순
+- **갱신:** 기존 project-decisions 의 "Free = 단일 디바이스" 항목은 **본 결정으로 대체** — 향후 갱신 시 본 항목 참조.
+- **영향:**
+  - T094 entitlement 게이트: 디바이스 카운트 ≥ 3 + tier=free → 거부 + "Upgrade to add more devices" 업셀
+  - 릴레이 D1: device 테이블에 `kind` 컬럼은 추가하지만 entitlement 검증에는 안 씀 (UX 표시용 — "이 디바이스: MacBook Pro" 같은 라벨)
+
+### B. Passphrase 재프롬프트 정책 — Auto-derive on unlock (Open Issue 2 결정)
+
+- **결정:** `vault_unlock(passphrase)` 시점에 vault decrypt 와 동시에 `derive_session_keys` 자동 호출, `enc_key` 메모리 적재, **passphrase 즉시 zeroize**. Sync 활성화 시 사용자에게 passphrase 재입력 요구하지 않음.
+- **이유:**
+  - **보안 등가성:** vault unlocked 동안 vault file decryption key 가 어차피 메모리에 있다. attacker 가 process memory 접근 권한이 있으면 양쪽 다 노출 — enc_key 추가가 attack surface 안 늘림
+  - **Zero-Knowledge 정의:** 서버가 enc_key 를 못 본다는 의미 — 디바이스 메모리 보관 여부와 무관
+  - **UX 일관성:** 1Password / Bitwarden / Dashlane 모두 master pw 한 번 = 모든 기능 활성. 우리만 다르면 사용자 이탈
+  - **passphrase 자체는 즉시 wipe:** `secrecy::SecretString` 의 `zeroize` 로 derive 직후 메모리에서 삭제, `enc_key: SecretBox<[u8;32]>` 만 보관
+- **구현 디자인:**
+  - `VaultStorage` trait 에 `derive_external_keys(salt_auth, salt_enc) -> (auth_hash, enc_key)` 메서드 추가
+  - vault 가 자체 보관한 passphrase 로 derive (외부 노출 없음 — 결과만 반환)
+  - `AuthSession.enc_key: Option<SecretBox<[u8;32]>>` 필드 (Debug skip, **Serialize skip — vault file 영속 안 함**)
+  - `vault_lock` 시 `auth_session.enc_key = None` (zeroize)
+
+### C. SQLite Sync 화이트리스트 (Open Issue 3 결정)
+
+- **결정:** Sync 대상은 **명시 화이트리스트** 로 관리. 새 entity 추가 시 sync 여부 명시적 opt-in.
+- **이유:**
+  - **보안 사고 방지:** 새 entity (예: 미래 webhook log) 가 의도치 않게 server 로 sync 되어 Zero-Knowledge 깨짐 방지
+  - **보안 audit 단순화:** "어떤 데이터가 sync 되는가?" 한 곳 문서화
+  - **CRDT 구조와 일치:** SecSync 의 변경 추적은 `Y.Map.observe` — observe 안 하는 entity 자동 device-local
+- **Sync 대상 (CRDT)**:
+  - `credential` — issuer_id / name / kind / status / last_rotated_at *(value 자체는 별도 채널 T091)*
+  - `issuer` — 사용자 정의 issuer 메타
+  - `project` / `deployment` — 모든 메타
+  - `usage` — credential ↔ project 관계
+  - `settings` 의 `apivault.settings.shared.*` prefix — auto-lock 시간, NVD API key 등 vault-level
+- **Device-local (sync 안 함)**:
+  - `audit_entry` — 디바이스별 hash chain + Ed25519 서명 (sync 시 verify 깨짐)
+  - `github_installations` — 디바이스별 OAuth state
+  - `settings` 의 `apivault.settings.local.*` prefix — UI 테마, language
+  - `vault_ref` 같은 디바이스 로컬 reference
+  - `onboarding.done` 플래그
+
+### D. SecSync 라이브러리 채택 (잠정 — Phase C 진입 시 stable 검증) (Open Issue 4 결정)
+
+- **결정:** `secsync` (Serenity Kit, MIT) 를 Yjs E2EE sync layer 로 채택. 단 **Phase C 진입 시점에 stable 여부 1차 검증** 후 확정.
+- **이유:**
+  - 자체 구현 = +1주 + 보안 사고 위험. SecSync 의 "snapshot encryption + delta encryption + ephemeral message + key rotation" 디자인은 그냥 Yjs+AEAD 보다 훨씬 정교
+  - MIT 라이선스 — AGPL-3.0 코어와 호환
+  - TypeScript 기반 — React 19 + TS 5.x 와 자연 통합
+- **Phase C 진입 직전 검증 체크리스트** (5개 중 ≥ 3 fail 시 fallback D = Yjs + 자체 transport):
+  - [ ] 최근 6개월 release/commit 활동 (GitHub serenity-kit/secsync)
+  - [ ] Yjs 13.6.x 호환
+  - [ ] React 19 + TypeScript 5.x 충돌 없음
+  - [ ] 알려진 보안 이슈 (CVE / advisory) 없음
+  - [ ] Cloudflare Workers (D1 + KV + Hono) transport 통합 사례
+- **Fallback (D):** Yjs + 자체 AEAD transport — snapshot/delta 분리 우리가 직접 설계 (+1주 추가 일정)
+
+### E. 시장 포지셔닝 — Phased Expansion (MVP API 특화, v1.1 General Secrets)
+
+- **결정:** MVP (M0~M13) 는 "DevOps/풀스택 개발자의 API key 의존성 관리" 슬로건으로 **API 특화** 출시. 일반 ID/PW 관리 + Watchtower-like 기능은 **v1.1 (M18 신설)** 에서 도입. 자동입력 (브라우저 익스텐션 + 모바일 자동입력) 은 v1.2 (M19/M20).
+- **이유:**
+  - **MVP 일정 보호:** 비번 기능 MVP 포함 시 +6~12개월 지연. 초기 타겟 (개발자) 은 비번 관리 이미 1Password/Bitwarden 사용 중 — 우리 MVP 에 없어도 진입 가능
+  - **포지셔닝 우선:** "그래프 + blast radius" 차별점이 시장에 각인된 후 영역 확장 → "그래프 가진 비번 매니저" 라는 강력한 차별 (1Password 가 못 따라옴)
+  - **사용자 피드백 검증:** 베타 사용자에게 "비번도 통합 원하는지?" 데이터 기반 결정
+  - **점진적 보안 audit:** 비번 매니저 audit 은 API key 매니저보다 훨씬 까다로움 — 단계적 확장이 비용 분산
+- **시너지 — 향후 v1.1 진입 시:**
+  - 비번 → 사용 사이트 → "breach 발생 시 영향" 그래프 표시 (1Password Watchtower 가 못 함)
+  - Incident feed 매처가 비번 사이트도 매칭 → blast radius 시뮬
+  - "비번 5개 사이트 재사용 + Site A breach → B/C/D/E 도 즉시 위험" 그래프
+- **Architectural seeds — MVP 시점에 미리 깔아둘 것 (v1.1 확장 비용 0~1시간):**
+  1. **`credential.kind` enum 확장 가능 schema** — 현재 `api_key`/`oauth_token` 외에 `login`/`totp`/`secure_note`/`wifi`/`ssh_key`/`license_key` 받을 수 있게 (kind 는 이미 string, 마이그레이션 0건)
+  2. **`issuer` 모델 일반화** — "Issuer" 를 "Site" 로 일반화 명명 (예: github.com 도 issuer 이지만 일반 비번 사이트도 issuer). T028 issuer 시드 확장만
+  3. **HIBP password breach prep** — 우리 incident matcher (T053) 가 이미 issuer 패턴 매칭. HIBP password client (T052 와 같은 패턴) 를 v1.1 에서 추가 시 매처 그대로 재사용
+  4. **zxcvbn weak password detector** — 이미 있음 (T024 LockScreen). 비번 등록 흐름에 동일 미터 적용만
+- **v1.1 신설 마일스톤 (placeholder):**
+  - **M18 General Secrets** — login / totp / secure_note kind 추가 + Watchtower-like (재사용 / weak / HIBP password / 오래된 비번)
+  - **M19 Browser Extensions** — Chrome / Firefox / Edge / Safari (4 manifest, 4 release process)
+  - **M20 Mobile Autofill** — iOS Credential Provider + Android Autofill Service (M11 Mobile 완료 후)
+- **MVP 베타 메시징:** "API key + 의존성 그래프 + Incident 자동 매칭" — 비번 통합은 **v1.1 로드맵** 에 명시 (사용자 기대치 관리)
+
+---
+
 ## [2026-04-22] 문서 갱신 정책 — task.md 태스크 상태 추적 의무화
 
 - **배경:** 지금까지 태스크(T001~T022) 구현이 완료됐으나 `docs/task.md` 에 완료 상태나 커밋 해시 매핑이 전혀 없는 채로 세션이 종료될 뻔했다. 사용자가 다른 프로젝트에서도 동일한 누락을 겪었음을 지적.

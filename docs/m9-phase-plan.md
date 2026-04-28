@@ -149,15 +149,39 @@
 
 ---
 
-## Open Issues (실행 전 결정 필요)
+## Open Issues — ✅ Resolved (2026-04-28)
 
-1. **Free 2대 vs 1대**: project-decisions.md 는 "Free = 단일 디바이스" 명시. T094 DoD 는 "Free 2대 무료" 로 완화 제안. → **사용자 confirm 필요**.
-2. **Passphrase 재프롬프트 주기**: enc_key 가 vault unlock 직후 메모리에 자동 채워지지 않으므로, sync 활성화 시점마다 사용자에게 passphrase 를 다시 묻는다. UX 부담 vs zero-knowledge 보안 트레이드오프 — 결정 필요.
-3. **SQLite 모델의 sync 대상 필드 화이트리스트**: 모든 컬럼을 sync 할지, 일부 (created_at, updated_at, deleted_at, vault_ref 등) 는 device-local 로 둘지. → 결정 필요.
-4. **secsync 라이브러리 업스트림 안정성**: 2026 년 4월 기준 최신 stable 확인. 깨졌으면 자체 구현 또는 yrs(rust) 기반 대안.
+전체 4건이 사용자 결정 완료. 자세한 사항은 `docs/project-decisions.md` 의 [2026-04-28] 항목 참조.
+
+| # | Issue | 결정 | 영향 phase |
+|:--|:--|:--|:--|
+| 1 | Free 디바이스 수 | **종류 무관 2대** (데스크탑+폰 / 데스크탑 2 / 폰 2 모두 OK) | G (T094 entitlement) |
+| 2 | Passphrase 재프롬프트 정책 | **Auto-derive on unlock** — `vault_unlock` 시점에 vault decrypt + `derive_session_keys` 동시 호출, passphrase 즉시 zeroize, `enc_key` 메모리 유지. `vault.derive_external_keys(salt_auth, salt_enc)` 메서드 추가 (passphrase 외부 노출 없음) | **B (즉시)** |
+| 3 | SQLite sync 화이트리스트 | **명시 화이트리스트** (credential / issuer / project / deployment / usage / settings.shared.*) — 나머지 device-local | D |
+| 4 | secsync 라이브러리 채택 | **잠정 채택** — Phase C 진입 시 5개 stable 체크리스트로 1차 검증, ≥ 3 fail 시 fallback D (Yjs + 자체 transport) | C |
+
+### 추가 결정 — Phased Market Expansion
+
+MVP (M0~M13) 는 API 특화로 출시, **v1.1 (M18 신설) 에서 General Secrets** (일반 비번 + Watchtower-like) 도입, **v1.2 (M19/M20) 에서 자동입력**. 자세한 사항은 `docs/project-decisions.md` E 섹션.
+
+**Architectural seeds — MVP 시점에 미리 깔아둘 것 (v1.1 확장 비용 ↓)**:
+1. `credential.kind` enum 확장 가능 (`api_key`/`oauth_token` 외에 `login`/`totp`/... 추가 가능한 string)
+2. `issuer` → "Site" 명명 일반화 검토 (T028 issuer 시드 확장으로 흡수)
+3. HIBP password breach client prep — 기존 T052 HIBP client 와 같은 패턴, v1.1 에서 매처 (T053) 그대로 재사용
+4. zxcvbn weak password detector — 이미 T024 LockScreen 에 있음, 비번 등록 흐름에 동일 미터 적용만
+
+위 4개는 본 Phase Plan 의 phase 들과 직교 (M9 Sync 일정 영향 없음). 별도 ad-hoc 커밋으로 처리.
 
 ---
 
 ## 다음 세션 entry
 
-다음 Night mode 또는 사용자 세션은 **Phase A 부터** 진입한다. 위 Open Issues 1~4 를 사용자 confirm 후 (Gate 1 형식) 진행. Confirm 없이는 Phase A 만 안전하게 처리 가능 (라이브러리 설치 + 더미 Provider).
+Phase B 부터 진입. 핵심 작업:
+
+1. **VaultStorage trait 확장**: `derive_external_keys(salt_auth: &[u8], salt_enc: &[u8]) -> Result<DerivedSessionKeys, _>` 메서드 — vault 가 자체 보관한 passphrase 로 derive_session_keys 호출, passphrase 외부 노출 없음
+2. **AuthSession 구조체 확장**: `enc_key: Option<SecretBox<[u8;32]>>` (Debug skip + **Serialize skip — vault file 영속 금지**), `salt_auth: Option<String>` + `salt_enc: Option<String>` (영속 — base64url)
+3. **verify 커맨드 4개 수정**: register/assert × start/verify 가 받은 salts 를 AuthSession 에 저장, verify 성공 시 vault.derive_external_keys 자동 호출 → enc_key 메모리에
+4. **`hydrate_session_from_vault` 수정**: 영속된 AuthSession 의 salts 로 vault.derive_external_keys 자동 호출 → enc_key 메모리 적재
+5. **`vault_lock` 수정**: auth_session.enc_key zeroize
+6. **신규 Tauri 커맨드 `sync_get_root_key()`**: `derive_subkey(enc_key, "crdt-root")` → 32바이트 base64url 반환. enc_key 없으면 NoSession 에러
+7. **회귀 ≥ 6**: derive 결정론 / 다른 salt → 다른 키 / Serialize skip 검증 / hydrate 자동 적재 / vault_lock zeroize / sync_get_root_key happy path / NoSession 에러
