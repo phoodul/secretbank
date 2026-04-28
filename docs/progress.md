@@ -2,6 +2,24 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 14 (자율 모드 — **M18 CLI 진입**. apivault binary scaffold + list + reveal + run 3 commits.)
+- **Phase:** Phase 3 — Implementation, M9 ✅ 풀 완료. **M18 🔄 진입** (CLI part 완료, MCP part 다음). 113/132 태스크.
+- **이번 Night mode 14 신규 commits (3개 + docs):**
+  - cli-1a: `apivault-cli` crate scaffold + `apivault list` (issuer / env / status / json 출력)
+  - cli-1b (`dc56e09`): `apivault reveal <id>` + clipboard auto-clear (30s default, --print, --clear-after)
+  - cli-1c (`f4bfde9`): `apivault run --project=<id> -- <cmd>` env 자동 주입 (dependency graph 의 Usage(env_var) 매핑 자동, revoked/compromised 거부)
+- **Tests:**
+  - api-vault-cli: 3 단위 (truncate / status_label)
+  - 전체 회귀 (frontend / relay / Rust workspace) 변동 없음 (Night mode 14 는 신규 binary)
+  - clippy --workspace --all-targets --all-features -D warnings 0
+- **차별화 진전 (Option A 비전 정렬):**
+  - **CLI 표면 확보** — Doppler / Infisical 의 핵심 무기 (`run -- cmd` env 주입) 구현 완료. **단** 우리는 dependency graph (Project → Usage(env_var) → Credential) 가 매핑까지 **자동** — manual config 파일 (Doppler 의 `doppler.yaml`) 불필요. 이게 진짜 차별화.
+  - 다음 Night mode 15: **MCP server** — Claude / Cursor 가 vault 와 직접 대화하는 새 카테고리. 글로벌 차별화의 두 번째 표면.
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 13)
+
 - **Time:** 2026-04-28 Night mode 13 (자율 모드 — **M9 풀 완료**. G-conflict + G-offline + G-entitlement + G-pair-2.5 연속 종료. 다음 마일스톤 = M18 CLI + MCP server.)
 - **Phase:** Phase 3 — Implementation, **M9 ✅ 풀 완료** (28/28 sub-phases). 113/132 태스크 (85.6%). 다음 → M18 (CLI + MCP server, 글로벌 SaaS 차별화의 첫 표면 — Option A 결정).
 - **이번 Night mode 13 신규 commits (3개):**

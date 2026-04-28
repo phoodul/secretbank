@@ -46,7 +46,7 @@
 | M15 | CI/CD Integration               | T126~T133   | 5M+3S     | 🔄 진입 (T132/T133 부터) |
 | M16 | Anonymous Telemetry (opt-in)    | TBD         | TBD       | ⏳ placeholder (M9 완료 후 신설 — 익명 집계로 데이터 해자 회복) |
 | M17 | SDK Ecosystem                   | TBD         | TBD       | ⏳ placeholder (M5 + M9 완료 후 신설 — npm / pip / cargo) |
-| M18 | **CLI + MCP server**            | TBD         | TBD       | 🔄 진입 (M18-cli-1a 종료 — apivault binary scaffold + `list` 명령 + clap subcommand parsing) |
+| M18 | **CLI + MCP server**            | TBD         | TBD       | 🔄 진입 (cli-1a/1b/1c 완료 — list / reveal / run 3 subcommand. MCP server 는 다음 night mode) |
 | M19 | Team / org / shared vault       | TBD         | TBD       | ⏳ placeholder (M18 후 — B2B 진입) |
 | M20 | Supply chain risk graph         | TBD         | TBD       | ⏳ placeholder (M18 + M4 의 결합 — npm/PyPI package → secret leak 자동 매핑, 우리 dependency graph 자산의 진짜 큰 응용) |
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ⏳ placeholder (M18 후 — MCP server 위에 IDE 통합) |
