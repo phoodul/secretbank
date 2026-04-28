@@ -2,6 +2,20 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 12 (자율 모드 — G-pair-4b Joiner UI + G-pair-4c deep-link auto-route 연속 완료.)
+- **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+F+G-pair-1/2/3+G-pair-4a/b/c 종료, 24/26 sub-phases). M9 잔여: G-pair-2.5 (poll 확장, 환경복구 후) / G-conflict / G-offline / G-entitlement.
+- **이번 Night mode 12 신규 commits (2개):**
+  - `4529519` feat(sync) — M9 Phase G-pair-4b: Joiner UI (use-pair-joiner + PairJoinerDialog + LockScreen 통합) + i18n 4 로케일 + Vitest +9
+  - `64bac85` feat(sync) — M9 Phase G-pair-4c: pair deep-link auto-route (use-pair-deep-link + LockScreen prefillUrl wire)
+- **Tests (4-28 Night mode 12 종료 시점):**
+  - api-vault-crypto: 15 / api-vault-app lib: 173 / Frontend Vitest: **431 passed** (이전 422 + 9) / Relay vitest: 67
+  - typecheck / lint / clippy 모두 0
+- **이전 Night mode 11 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 11)
+
 - **Time:** 2026-04-28 Night mode 11 (자율 모드 — G-pair-4a Initiator UI 완료. 다음 G-pair-4b joiner side 진입 예정.)
 - **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+F+G-pair-1/2/3 + **G-pair-4a** 종료, 22/24 sub-phases). M9 잔여: G-pair-2.5 (poll 확장, 환경복구 후) / G-pair-4b (joiner + deep-link) / G-conflict / G-offline / G-entitlement.
 - **이번 Night mode 11 신규 commits (1개):**
