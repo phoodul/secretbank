@@ -17,6 +17,7 @@
 
 import type * as Y from "yjs";
 
+import { reconcileCredentialRow } from "./conflict";
 import {
   ENTITY_MAPPERS,
   isSyncableSettingKey,
@@ -109,6 +110,17 @@ export function applyDbChangeToYMap<T extends Record<string, unknown>>(
   let applied = false;
   runWithOrigin(doc, ORIGIN_LOCAL_DB, () => {
     if (payload.op === "delete") {
+      // Phase G-conflict: credential 의 status='revoked' 는 delete 에 우선.
+      // 다른 디바이스가 revoke 한 row 를 또 다른 디바이스가 delete 하려 해도
+      // 우리 측 DB 가 status='revoked' 라면 보안상 row 자체는 보존
+      // (audit 추적성). delete 거부.
+      if (payload.entity === "credential" && map.has(payload.id)) {
+        const cur = map.get(payload.id) as Record<string, unknown> | undefined;
+        if (cur && (cur as { status?: string }).status === "revoked") {
+          // skip delete — keep tombstone for audit
+          return;
+        }
+      }
       if (map.has(payload.id)) {
         map.delete(payload.id);
         applied = true;
@@ -118,7 +130,12 @@ export function applyDbChangeToYMap<T extends Record<string, unknown>>(
       // sibling device sees "this id changed" before the next hydration tick.
       // observer is intentionally fired even on placeholder writes — Phase E
       // 에서 hydration 으로 실제 row 가 채워질 때 다시 한 번 set 된다.
-      const next = (upsertValue ?? ({} as T)) as T;
+      let next = (upsertValue ?? ({} as T)) as T;
+      // Phase G-conflict: credential 의 status downgrade 차단.
+      if (payload.entity === "credential" && upsertValue) {
+        const cur = map.get(payload.id) as Record<string, unknown> | undefined;
+        next = reconcileCredentialRow(cur, upsertValue) as T;
+      }
       map.set(payload.id, next);
       applied = true;
     }

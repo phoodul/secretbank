@@ -184,6 +184,39 @@ describe("origin loop integration (Phase D-3)", () => {
     doc.destroy();
   });
 
+  it("Phase G-conflict: credential delete is rejected when current status='revoked' (tombstone)", () => {
+    const doc = new Y.Doc();
+    const map = doc.getMap<Record<string, unknown>>("credential");
+    map.set("crd_revoked", { status: "revoked", name: "old" });
+
+    const applied = applyDbChangeToYMap(doc, {
+      entity: "credential",
+      op: "delete",
+      id: "crd_revoked",
+    });
+    expect(applied).toBe(false);
+    // tombstone 유지
+    expect(map.has("crd_revoked")).toBe(true);
+    expect(map.get("crd_revoked")?.status).toBe("revoked");
+    doc.destroy();
+  });
+
+  it("Phase G-conflict: credential upsert with active status cannot downgrade revoked", () => {
+    const doc = new Y.Doc();
+    const map = doc.getMap<Record<string, unknown>>("credential");
+    map.set("crd_1", { status: "revoked", name: "v1" });
+
+    applyDbChangeToYMap<Record<string, unknown>>(
+      doc,
+      { entity: "credential", op: "upsert", id: "crd_1" },
+      { status: "active", name: "v2" },
+    );
+    const after = map.get("crd_1");
+    expect(after?.status).toBe("revoked"); // 유지
+    expect(after?.name).toBe("v2"); // 다른 필드는 incoming 채택
+    doc.destroy();
+  });
+
   it("user edit fires observer; subsequent db:changed echo does not", () => {
     const doc = new Y.Doc();
     const map = doc.getMap<unknown>("credential");
