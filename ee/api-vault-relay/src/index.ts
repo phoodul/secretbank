@@ -7,6 +7,7 @@ import { refreshAuth } from "./routes/auth/refresh";
 import { health } from "./routes/health";
 import { githubIntegrations } from "./routes/integrations/github";
 import { sync } from "./routes/sync";
+import { pair } from "./routes/pair";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -17,5 +18,6 @@ app.route("/auth/oauth", oauthAuth);
 app.route("/auth/refresh", refreshAuth);
 app.route("/integrations/github", githubIntegrations);
 app.route("/sync", sync);
+app.route("/pair", pair);
 
 export default app;
