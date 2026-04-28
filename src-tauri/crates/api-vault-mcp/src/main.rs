@@ -54,6 +54,7 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::Mutex;
 
 use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus};
+use api_vault_railguard::{render, RenderContext, RuleKind};
 use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::init_pool;
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
@@ -244,6 +245,47 @@ fn handle_tools_list() -> Result<Value, RpcError> {
                     },
                     "required": ["id"]
                 }
+            },
+            {
+                "name": "check_railguard_status",
+                "description":
+                    "Check whether the given project directory has API Vault's RAILGUARD rule files in place. Returns the presence (true/false) of .cursorrules, .windsurfrules, CLAUDE.md, and .github/copilot-instructions.md. Use this BEFORE writing code that touches secrets — if RAILGUARD is missing, suggest the user run `apivault railguard apply` so AI editors stop emitting risky patterns.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "project_path": {
+                            "type": "string",
+                            "description": "Absolute path to the project root."
+                        }
+                    },
+                    "required": ["project_path"]
+                }
+            },
+            {
+                "name": "suggest_railguard_template",
+                "description":
+                    "Render an API Vault RAILGUARD template (one of cursor_rules / windsurf_rules / claude_md / copilot_instructions) for a project. Returns the file content as text — caller can show it to the user before writing. Useful when AI editor lacks RAILGUARD and the user wants a preview before committing.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "kind": {
+                            "type": "string",
+                            "enum": ["cursor_rules", "windsurf_rules", "claude_md", "copilot_instructions"]
+                        },
+                        "project_name": { "type": "string" },
+                        "frameworks": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "Detected frameworks (e.g. ['Next.js', 'Tailwind'])"
+                        },
+                        "issuers": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "Issuer display names (e.g. ['OpenAI', 'Stripe'])"
+                        }
+                    },
+                    "required": ["kind", "project_name"]
+                }
             }
         ]
     }))
@@ -259,8 +301,91 @@ async fn handle_tool_call(state: &ServerState, params: &Value) -> Result<Value, 
     match name {
         "list_credentials" => tool_list_credentials(state, &arguments).await,
         "reveal_credential" => tool_reveal_credential(state, &arguments).await,
+        "check_railguard_status" => tool_check_railguard_status(&arguments).await,
+        "suggest_railguard_template" => tool_suggest_railguard_template(&arguments),
         other => Err(RpcError::method_not_found(other)),
     }
+}
+
+async fn tool_check_railguard_status(args: &Value) -> Result<Value, RpcError> {
+    let path_str = args
+        .get("project_path")
+        .and_then(Value::as_str)
+        .ok_or_else(|| RpcError::invalid_params("missing 'project_path'"))?;
+    let project_root = std::path::PathBuf::from(path_str);
+    if !project_root.exists() {
+        return Err(RpcError::invalid_params(format!(
+            "project_path does not exist: {path_str}"
+        )));
+    }
+
+    let mut rows: Vec<Value> = Vec::with_capacity(4);
+    let mut all_present = true;
+    for kind in RuleKind::all() {
+        let p = project_root.join(kind.output_path());
+        let present = p.exists();
+        if !present {
+            all_present = false;
+        }
+        rows.push(json!({
+            "kind": format!("{kind:?}").to_lowercase(),
+            "path": kind.output_path(),
+            "present": present,
+        }));
+    }
+    let summary = if all_present {
+        "RAILGUARD: all 4 rule files present.".to_string()
+    } else {
+        "RAILGUARD: missing files — recommend `apivault railguard apply` or use suggest_railguard_template to preview.".to_string()
+    };
+    let json_text = serde_json::to_string_pretty(&json!({ "files": rows, "all_present": all_present }))
+        .map_err(|e| RpcError::internal(e.to_string()))?;
+    Ok(json!({
+        "content": [{ "type": "text", "text": format!("{summary}\n\n{json_text}") }]
+    }))
+}
+
+fn tool_suggest_railguard_template(args: &Value) -> Result<Value, RpcError> {
+    let kind_str = args
+        .get("kind")
+        .and_then(Value::as_str)
+        .ok_or_else(|| RpcError::invalid_params("missing 'kind'"))?;
+    let kind = match kind_str {
+        "cursor_rules" => RuleKind::CursorRules,
+        "windsurf_rules" => RuleKind::WindsurfRules,
+        "claude_md" => RuleKind::ClaudeMd,
+        "copilot_instructions" => RuleKind::CopilotInstructions,
+        other => {
+            return Err(RpcError::invalid_params(format!("unknown kind {other:?}")));
+        }
+    };
+    let project_name = args
+        .get("project_name")
+        .and_then(Value::as_str)
+        .ok_or_else(|| RpcError::invalid_params("missing 'project_name'"))?;
+    let frameworks: Vec<String> = args
+        .get("frameworks")
+        .and_then(Value::as_array)
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .unwrap_or_default();
+    let issuers: Vec<String> = args
+        .get("issuers")
+        .and_then(Value::as_array)
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .unwrap_or_default();
+    let mut ctx = RenderContext::new(project_name);
+    ctx.frameworks = frameworks;
+    ctx.issuers = issuers;
+    let rendered = render(kind, &ctx)
+        .map_err(|e| RpcError::invalid_params(format!("render failed: {e}")))?;
+    Ok(json!({
+        "content": [
+            {
+                "type": "text",
+                "text": format!("Suggested {} contents (write to project root):\n\n{rendered}", kind.output_path()),
+            }
+        ]
+    }))
 }
 
 async fn tool_list_credentials(state: &ServerState, args: &Value) -> Result<Value, RpcError> {
@@ -523,16 +648,39 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn tools_list_includes_both_tools() {
+    async fn tools_list_includes_all_four_tools() {
         let v = handle_tools_list().unwrap();
         let tools = v["tools"].as_array().unwrap();
         let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
         assert!(names.contains(&"list_credentials"));
         assert!(names.contains(&"reveal_credential"));
+        assert!(names.contains(&"check_railguard_status"));
+        assert!(names.contains(&"suggest_railguard_template"));
         // 모든 tool 이 inputSchema 가짐.
         for t in tools {
             assert!(t["inputSchema"]["type"] == "object");
         }
+    }
+
+    #[tokio::test]
+    async fn suggest_railguard_template_renders_cursor_rules() {
+        let args = json!({
+            "kind": "cursor_rules",
+            "project_name": "demo",
+            "frameworks": ["Next.js"],
+            "issuers": ["OpenAI"]
+        });
+        let v = tool_suggest_railguard_template(&args).unwrap();
+        let text = v["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains(".cursorrules"));
+        assert!(text.contains("demo") || !text.is_empty());
+    }
+
+    #[tokio::test]
+    async fn check_railguard_status_returns_404_for_missing_path() {
+        let args = json!({ "project_path": "/__no_such_path_for_test__" });
+        let err = tool_check_railguard_status(&args).await.unwrap_err();
+        assert_eq!(err.code, -32602);
     }
 
     #[test]

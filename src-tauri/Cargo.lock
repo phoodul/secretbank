@@ -355,6 +355,7 @@ dependencies = [
  "anyhow",
  "api-vault-core",
  "api-vault-crypto",
+ "api-vault-railguard",
  "api-vault-storage",
  "clap",
  "directories",
