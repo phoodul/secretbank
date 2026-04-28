@@ -1,5 +1,86 @@
 # Work Log
 
+## 2026-04-28 Night mode 3 — M9 Phase B-1 (AuthSession enc_key 라이프사이클 토대)
+
+### 세션 개요
+
+- **목표**: M9 Phase B 의 4 sub-phase 중 첫 단계 — AuthSession 메모리 구조 + master_passphrase AppContext 라이프사이클. sync 활성화 자체는 B-2 부터.
+- **결과**: 1 commit (예정), api-vault-app lib **136 → 141 (+5)**, clippy 0, workspace tests 모두 그린.
+
+### Phase B 분할
+
+원래 단일 Phase B 였으나 변경 면적이 너무 크다 (verify 시그니처 / OAuth 흐름 / vault 라이프사이클 / 신규 sync 커맨드 + frontend 수정) → 4 sub-phase 로 재분할:
+
+| Sub-Phase | 범위 | 회귀 target |
+|:--|:--|:--|
+| **B-1 (이번 commit)** | AuthSession enc_key/salts 메모리 구조 + save/load 확장 + AppContext.master_passphrase 라이프사이클 | +5 |
+| B-2 | verify 4 커맨드 + frontend salts 송신 + hydrate 자동 derive | +3 |
+| B-3 | sync_get_root_key 커맨드 + Phase B 종료 | +3 |
+| B-4 (옵션) | OAuth callback 응답 salts (relay 측) | Miniflare +2 |
+
+### 디자인 정정 — vault 가 password 를 보관하지 않는다
+
+`AgeVaultStorage::unlock` 후 password 는 drop 되고 X25519 Identity 만 남는다. 따라서 `VaultStorage::derive_external_keys` 메서드 추가는 불가능. 대신:
+
+- **AppContext.master_passphrase: Arc<RwLock<Option<SecretString>>>** 필드 추가
+- `vault_unlock` 시 password clone 후 SecretString 으로 보관
+- `vault_lock` 시 None (Drop 자동 zeroize)
+- 모든 후속 derive 호출이 이걸 사용
+
+**보안 등가성**: vault unlocked 동안 Identity (StaticSecret) 가 어차피 메모리에 있다. attacker 가 process memory 접근 권한 얻으면 양쪽 모두 노출 — passphrase 추가가 attack surface 안 늘림. 결정: project-decisions.md [2026-04-28] B 항목.
+
+### AuthSession 구조 확장
+
+```rust
+pub struct AuthSession {
+    pub user_id: String,
+    pub access_token: SecretString,
+    pub refresh_token: SecretString,
+    pub expires_at: i64,
+    // M9 Phase B-1 신규:
+    pub salt_auth: Option<String>,        // 영속 (vault file 의 auth/salt_auth)
+    pub salt_enc: Option<String>,         // 영속 (vault file 의 auth/salt_enc)
+    pub enc_key: Option<SecretBox<[u8;32]>>, // 메모리 only — 절대 영속 안 함
+}
+```
+
+**Debug 자체 구현**: 모든 secret 필드 (`salt_*`, `enc_key`) 를 `***` 로 마스킹. `tracing::warn!("{session:?}")` 같은 호출이 실수로 secret 을 로그로 보내지 않도록 차단.
+
+### save_session/load_session 확장
+
+- `salt_auth` / `salt_enc`: 값이 있으면 vault file 에 write, 없으면 (과거 값 있을 수 있는) 키를 delete 처리 → idempotent reset
+- `enc_key`: **절대 vault file 에 안 씀**. load 시 항상 None (caller 가 다음 unlock 사이클에서 재파생)
+- pre-M9 vault (salt 키 없음) 도 자연스럽게 load — `salt_*` = None 으로 채워져 사용자 재인증 유도
+
+### vault_unlock / vault_lock 라이프사이클
+
+- `vault_unlock(password)`: vault.unlock 직후 master_passphrase 채움
+- `vault_lock`: master_passphrase = None + auth_session = None (enc_key 는 AuthSession 내부 필드라 같이 zeroize)
+
+### 회귀 +5
+
+1. **save_then_load_preserves_salts** — base64url salts round-trip
+2. **enc_key_never_persists_to_vault** — enc_key 를 Some 로 set 후 save → vault 에 enc_key 키 없음 + load 시 None
+3. **save_with_none_salts_clears_previous_salts** — None 으로 save 시 이전 값 삭제 (idempotent reset)
+4. **load_pre_m9_vault_yields_none_salts** — pre-M9 vault (salt 키 없음) backward-compat
+5. **debug_masks_secret_fields** — Debug 가 salts/enc_key 값을 노출하지 않음
+
+### 영향 받은 테스트 컨텍스트 7곳
+
+`AppContext` 직접 생성하는 테스트 헬퍼 7곳에 `master_passphrase: Arc::new(RwLock::new(None))` 추가 (entitlement.rs / projects.rs / kill_switch.rs ×2 / auth.rs / credentials.rs ×2).
+
+### 검증
+
+- `cargo test --workspace --manifest-path src-tauri/Cargo.toml` — 모두 그린
+- `cargo clippy --workspace --all-targets --all-features -D warnings` — 0
+- api-vault-app lib **141 통과** (이전 136 +5)
+
+### 다음 sub-phase
+
+**B-2** (다음 세션) — verify 4 커맨드 시그니처에 `salt_auth`/`salt_enc` 추가, frontend (PasskeyButton.tsx) 가 start 응답의 salts 를 보관 후 verify 호출 시 송신, complete_session 헬퍼가 derive_session_keys 호출 → AuthSession.enc_key 채움, hydrate_session_from_vault 가 vault_unlock 직후 master_passphrase + 영속된 salts 로 자동 derive.
+
+---
+
 ## 2026-04-28 Night mode 3 — M9 진입 + Phase Plan + T087 Phase A
 
 ### 세션 개요

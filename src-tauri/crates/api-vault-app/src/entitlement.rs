@@ -199,6 +199,7 @@ mod tests {
                 .unwrap(),
             ),
             auth_session: Arc::new(RwLock::new(None)),
+            master_passphrase: Arc::new(RwLock::new(None)),
         }
     }
 

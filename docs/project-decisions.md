@@ -29,10 +29,14 @@
   - **UX 일관성:** 1Password / Bitwarden / Dashlane 모두 master pw 한 번 = 모든 기능 활성. 우리만 다르면 사용자 이탈
   - **passphrase 자체는 즉시 wipe:** `secrecy::SecretString` 의 `zeroize` 로 derive 직후 메모리에서 삭제, `enc_key: SecretBox<[u8;32]>` 만 보관
 - **구현 디자인:**
-  - `VaultStorage` trait 에 `derive_external_keys(salt_auth, salt_enc) -> (auth_hash, enc_key)` 메서드 추가
-  - vault 가 자체 보관한 passphrase 로 derive (외부 노출 없음 — 결과만 반환)
-  - `AuthSession.enc_key: Option<SecretBox<[u8;32]>>` 필드 (Debug skip, **Serialize skip — vault file 영속 안 함**)
-  - `vault_lock` 시 `auth_session.enc_key = None` (zeroize)
+  - `AgeVaultStorage` 는 unlock 후 password 를 보관하지 않으므로 (Identity 만 보관), vault 내부 derive 메서드 추가는 불가
+  - 대신 `commands/vault.rs::vault_unlock` 커맨드가 password 를 받아 `vault.unlock(password.clone())` 호출 직후 **그 자리에서** `derive_session_keys` 호출, AuthSession.enc_key 적재 후 password drop (`SecretString` 의 자동 zeroize)
+  - `AuthSession` 에 신규 필드:
+    - `salt_auth: Option<String>` (base64url, 영속)
+    - `salt_enc: Option<String>` (base64url, 영속)
+    - `enc_key: Option<SecretBox<[u8;32]>>` (Debug/Serialize skip, **메모리만**)
+  - verify 커맨드들이 salts 를 frontend 로부터 받아 AuthSession 에 저장 (start 응답의 salts 를 frontend 가 verify 호출 시 다시 송신 — round-trip 단순화)
+  - `vault_lock` 시 `auth_session.enc_key = None` 강제 (Drop 자동 zeroize)
 
 ### C. SQLite Sync 화이트리스트 (Open Issue 3 결정)
 

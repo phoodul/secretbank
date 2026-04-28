@@ -87,6 +87,22 @@ pub struct AppContext {
     /// `auth_signout` 또는 `vault_lock` 시 `None` 으로 초기화된다.
     /// 영속 사본은 age 볼트의 `auth/*` 키 (services/session.rs 참조).
     pub auth_session: Arc<RwLock<Option<AuthSession>>>,
+
+    /// 사용자의 마스터 passphrase — `vault_unlock` 시점에 채워지고,
+    /// `vault_lock` 시 `None` 으로 초기화된다 (M9 Phase B-1).
+    ///
+    /// **왜 메모리에 보관하는가**: M8 Auth verify 흐름 + M9 Sync 가 enc_key 파생을 위해
+    /// passphrase + 릴레이 발급 salts 를 함께 필요로 한다. AgeVaultStorage 는 unlock 후
+    /// passphrase 를 보관하지 않고 Identity 만 보관하므로, AppContext 가 별도로 보유한다.
+    ///
+    /// **보안 등가성**: vault unlocked 동안 Identity (StaticSecret) 가 어차피 메모리에
+    /// 있으므로, attacker 가 process memory 접근 권한을 얻으면 양쪽 모두 노출된다.
+    /// passphrase 추가가 attack surface 를 늘리지 않는다.
+    /// `SecretString` 의 자동 zeroize 가 lock 시 즉시 메모리에서 wipe.
+    ///
+    /// **Zero-Knowledge 준수**: 본 필드는 절대 영속(vault file) 또는 외부(릴레이) 에
+    /// 노출하지 않는다 — 메모리에서 derive 결과만 외부로 나간다 (auth_hash 만 송신).
+    pub master_passphrase: Arc<RwLock<Option<SecretString>>>,
 }
 
 impl AppContext {
@@ -132,6 +148,7 @@ impl AppContext {
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
             relay_client,
             auth_session: Arc::new(RwLock::new(None)),
+            master_passphrase: Arc::new(RwLock::new(None)),
         })
     }
 

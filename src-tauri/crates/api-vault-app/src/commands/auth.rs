@@ -561,6 +561,7 @@ mod tests {
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
             relay_client,
             auth_session: Arc::new(RwLock::new(None)),
+            master_passphrase: Arc::new(RwLock::new(None)),
         };
         (ctx, dir)
     }
@@ -1045,6 +1046,9 @@ mod tests {
                 access_token: SecretString::from("ax"),
                 refresh_token: SecretString::from("expired-refresh"),
                 expires_at: 0,
+                salt_auth: None,
+                salt_enc: None,
+                enc_key: None,
             });
         }
         let err = direct_refresh(&ctx).await.unwrap_err();
@@ -1151,6 +1155,9 @@ mod tests {
                     access_token: SecretString::from("ax"),
                     refresh_token: SecretString::from("rx"),
                     expires_at: 1_700_000_000,
+                    salt_auth: None,
+                    salt_enc: None,
+                    enc_key: None,
                 },
             )
             .await

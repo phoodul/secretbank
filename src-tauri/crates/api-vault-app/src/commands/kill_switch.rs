@@ -681,6 +681,7 @@ mod tests {
                 .unwrap(),
             ),
             auth_session: Arc::new(RwLock::new(None)),
+            master_passphrase: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -1184,6 +1185,7 @@ mod tests {
                 .unwrap(),
             ),
             auth_session: Arc::new(RwLock::new(None)),
+            master_passphrase: Arc::new(RwLock::new(None)),
         };
 
         let err = do_revoke_internal(&ctx, cred_id, true)

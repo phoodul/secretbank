@@ -178,10 +178,15 @@ MVP (M0~M13) 는 API 특화로 출시, **v1.1 (M18 신설) 에서 General Secret
 
 Phase B 부터 진입. 핵심 작업:
 
-1. **VaultStorage trait 확장**: `derive_external_keys(salt_auth: &[u8], salt_enc: &[u8]) -> Result<DerivedSessionKeys, _>` 메서드 — vault 가 자체 보관한 passphrase 로 derive_session_keys 호출, passphrase 외부 노출 없음
-2. **AuthSession 구조체 확장**: `enc_key: Option<SecretBox<[u8;32]>>` (Debug skip + **Serialize skip — vault file 영속 금지**), `salt_auth: Option<String>` + `salt_enc: Option<String>` (영속 — base64url)
-3. **verify 커맨드 4개 수정**: register/assert × start/verify 가 받은 salts 를 AuthSession 에 저장, verify 성공 시 vault.derive_external_keys 자동 호출 → enc_key 메모리에
-4. **`hydrate_session_from_vault` 수정**: 영속된 AuthSession 의 salts 로 vault.derive_external_keys 자동 호출 → enc_key 메모리 적재
-5. **`vault_lock` 수정**: auth_session.enc_key zeroize
+> **디자인 정정**: AgeVaultStorage 는 unlock 후 password 를 보관하지 않으므로 (Identity 만 보관) vault trait 에 derive_external_keys 추가는 불가. 대신 `vault_unlock` 커맨드가 password 받아 그 자리에서 derive_session_keys 호출.
+
+1. **AuthSession 확장** (services/session.rs):
+   - `salt_auth: Option<String>` + `salt_enc: Option<String>` — base64url, **영속** (vault file 의 `auth/salt_auth`/`auth/salt_enc` 키)
+   - `enc_key: Option<SecretBox<[u8;32]>>` — **메모리만** (save_session/load_session 에서 제외)
+2. **save_session / load_session 확장**: 신규 salt 키 2개 read/write, enc_key 는 매번 None (영속 안 함)
+3. **verify 커맨드 4개 시그니처 변경**: `auth_passkey_*_verify(email, response, salt_auth, salt_enc)` — frontend 가 start 응답의 salts 를 verify 호출 시 다시 송신. backend 가 받아 AuthSession 에 저장
+4. **vault_unlock 커맨드 수정**: `vault.unlock(password.clone())` 직후 영속된 AuthSession 의 salts 가 있으면 `derive_session_keys(password, salt_auth, salt_enc)` 호출, AuthSession.enc_key 적재. password drop
+5. **vault_lock 커맨드 수정**: auth_session.enc_key = None (Drop 자동 zeroize)
 6. **신규 Tauri 커맨드 `sync_get_root_key()`**: `derive_subkey(enc_key, "crdt-root")` → 32바이트 base64url 반환. enc_key 없으면 NoSession 에러
-7. **회귀 ≥ 6**: derive 결정론 / 다른 salt → 다른 키 / Serialize skip 검증 / hydrate 자동 적재 / vault_lock zeroize / sync_get_root_key happy path / NoSession 에러
+7. **PasskeyButton.tsx 수정**: start 응답의 salts 를 보관 → verify 호출 시 함께 송신
+8. **회귀 ≥ 6**: salts save/load round-trip / enc_key Serialize skip 검증 / vault_unlock 후 enc_key 자동 적재 / vault_lock 시 enc_key None / sync_get_root_key happy path / NoSession 에러 / 결정론 (같은 unlock → 같은 root_key)

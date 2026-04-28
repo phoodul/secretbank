@@ -38,14 +38,23 @@ const KEY_USER_ID: &str = "auth/user_id";
 const KEY_ACCESS_TOKEN: &str = "auth/session_token";
 const KEY_REFRESH_TOKEN: &str = "auth/refresh_token";
 const KEY_EXPIRES_AT: &str = "auth/expires_at";
+/// Base64url-encoded server-issued salt for `auth_hash` derivation (M9 Phase B-1).
+/// Persisted so the next `vault_unlock` cycle can derive `enc_key` automatically.
+const KEY_SALT_AUTH: &str = "auth/salt_auth";
+/// Base64url-encoded server-issued salt for `enc_key` derivation (M9 Phase B-1).
+const KEY_SALT_ENC: &str = "auth/salt_enc";
 
 /// In-memory representation of the authenticated session returned by the
 /// relay's Passkey / OAuth / Refresh endpoints.
 ///
 /// `Serialize` is intentionally **not** derived — emitting the secrets through
-/// `serde_json` would defeat the [`SecretString`] wrapper. Use the explicit
-/// [`save_session`] persistence helpers instead.
-#[derive(Debug)]
+/// `serde_json` would defeat the [`SecretString`] / [`SecretBox`] wrappers.
+/// Use the explicit [`save_session`] persistence helpers instead.
+///
+/// **M9 Phase B-1**: `salt_auth`/`salt_enc` are persisted so that on subsequent
+/// `vault_unlock` the master passphrase + salts deterministically reproduce
+/// `enc_key`. `enc_key` itself is **memory-only** and never written to the
+/// vault file — leaking it would defeat Zero-Knowledge.
 pub struct AuthSession {
     pub user_id: String,
     pub access_token: SecretString,
@@ -53,6 +62,34 @@ pub struct AuthSession {
     /// UNIX seconds at which `access_token` stops being valid.
     /// Computed from the relay's `expires_in` (seconds-from-now) at issue time.
     pub expires_at: i64,
+    /// Base64url-encoded server-issued salts (M9 Phase B-1).
+    ///
+    /// `None` until the first successful sign-in completes — old vault files
+    /// (pre-M9) load with both fields set to `None`. Once written, persisted.
+    pub salt_auth: Option<String>,
+    pub salt_enc: Option<String>,
+    /// 32-byte `enc_key` derived from `(passphrase, salt_enc)` via Argon2id.
+    ///
+    /// **Memory-only** — explicitly excluded from persistence so the vault
+    /// file never contains it. Populated by `vault_unlock` (when salts are
+    /// present) or by a successful verify command. Cleared on `vault_lock`
+    /// or `auth_signout`.
+    ///
+    /// Used by M9 Sync to derive the `crdt-root` and `value-root` HKDF
+    /// subkeys via `derive_subkey(enc_key, label)`.
+    pub enc_key: Option<SecretBox<[u8; 32]>>,
+}
+
+impl std::fmt::Debug for AuthSession {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AuthSession")
+            .field("user_id", &self.user_id)
+            .field("expires_at", &self.expires_at)
+            .field("salt_auth", &self.salt_auth.as_ref().map(|_| "***"))
+            .field("salt_enc", &self.salt_enc.as_ref().map(|_| "***"))
+            .field("enc_key", &self.enc_key.as_ref().map(|_| "***"))
+            .finish_non_exhaustive()
+    }
 }
 
 /// Wire-shape of the relay's `/auth/*` mint responses.
@@ -76,21 +113,36 @@ impl AuthSession {
     ///
     /// Taking `now` as a parameter (instead of calling `SystemTime::now()`
     /// internally) keeps unit tests deterministic.
+    ///
+    /// **Salts/enc_key default to `None`** — Phase B-2 verify commands populate
+    /// them post-construction. This keeps `from_response` Phase A-compatible
+    /// for callers that don't yet supply salts (e.g. /auth/refresh which only
+    /// rotates tokens).
     pub fn from_response(resp: AuthTokensResponse, now: i64) -> Self {
         Self {
             user_id: resp.user_id,
             access_token: SecretString::from(resp.access_token),
             refresh_token: SecretString::from(resp.refresh_token),
             expires_at: now.saturating_add(resp.expires_in),
+            salt_auth: None,
+            salt_enc: None,
+            enc_key: None,
         }
     }
 }
 
 /// Persist `session` into the age vault.
 ///
-/// Writes all four `auth/*` keys and triggers a single [`flush`](VaultStorage::flush)
-/// at the end so the new session survives a crash. Returns
-/// [`VaultError::NotUnlocked`] if the vault is locked.
+/// Writes the four core `auth/*` keys plus salt keys when present, and triggers
+/// a single [`flush`](VaultStorage::flush) at the end so the new session
+/// survives a crash.
+///
+/// **enc_key is intentionally NOT persisted** — it is regenerated from
+/// `(passphrase, salt_enc)` on the next `vault_unlock`. Persisting it would
+/// defeat Zero-Knowledge: an attacker with disk access would not need the
+/// passphrase to decrypt sync ciphertext.
+///
+/// Returns [`VaultError::NotUnlocked`] if the vault is locked.
 pub async fn save_session(
     vault: &mut Box<dyn VaultStorage + Send + Sync>,
     session: &AuthSession,
@@ -119,6 +171,31 @@ pub async fn save_session(
             SecretBytes::new(session.expires_at.to_string().into_bytes()),
         )
         .await?;
+    // Salts (M9 Phase B-1): write only when present so old vaults stay clean.
+    // Absence (None) is persisted by deleting the key, in case a previous save
+    // wrote a value that the caller now wants to clear.
+    match &session.salt_auth {
+        Some(salt) => {
+            vault
+                .put_secret(KEY_SALT_AUTH, SecretBytes::new(salt.as_bytes().to_vec()))
+                .await?;
+        }
+        None => match vault.delete_secret(KEY_SALT_AUTH).await {
+            Ok(()) | Err(VaultError::NotFound { .. }) => {}
+            Err(e) => return Err(e),
+        },
+    }
+    match &session.salt_enc {
+        Some(salt) => {
+            vault
+                .put_secret(KEY_SALT_ENC, SecretBytes::new(salt.as_bytes().to_vec()))
+                .await?;
+        }
+        None => match vault.delete_secret(KEY_SALT_ENC).await {
+            Ok(()) | Err(VaultError::NotFound { .. }) => {}
+            Err(e) => return Err(e),
+        },
+    }
     vault.flush().await?;
     Ok(())
 }
@@ -151,11 +228,20 @@ pub async fn load_session(
         .parse::<i64>()
         .map_err(|e| VaultError::Serialization(format!("auth/expires_at parse: {e}")))?;
 
+    // Salts (M9 Phase B-1): tolerate absence — pre-M9 vaults won't have these.
+    let salt_auth = read_string(vault, KEY_SALT_AUTH).await?;
+    let salt_enc = read_string(vault, KEY_SALT_ENC).await?;
+
     Ok(Some(AuthSession {
         user_id,
         access_token: SecretString::from(access_token),
         refresh_token: SecretString::from(refresh_token),
         expires_at,
+        salt_auth,
+        salt_enc,
+        // enc_key is never loaded from disk — caller must derive it from the
+        // master passphrase + salts on each unlock.
+        enc_key: None,
     }))
 }
 
@@ -296,6 +382,26 @@ mod tests {
             access_token: SecretString::from("access-jwt-payload"),
             refresh_token: SecretString::from("refresh-jwt-payload"),
             expires_at,
+            salt_auth: None,
+            salt_enc: None,
+            enc_key: None,
+        }
+    }
+
+    fn sample_session_with_salts(
+        user_id: &str,
+        expires_at: i64,
+        salt_auth: &str,
+        salt_enc: &str,
+    ) -> AuthSession {
+        AuthSession {
+            user_id: user_id.to_owned(),
+            access_token: SecretString::from("access-jwt-payload"),
+            refresh_token: SecretString::from("refresh-jwt-payload"),
+            expires_at,
+            salt_auth: Some(salt_auth.to_owned()),
+            salt_enc: Some(salt_enc.to_owned()),
+            enc_key: None,
         }
     }
 
@@ -448,6 +554,133 @@ mod tests {
             Err(other) => panic!("expected InvalidSalt(salt_auth), got {other:?}"),
             Ok(_) => panic!("expected error, got Ok(_)"),
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // M9 Phase B-1 — salts persistence + enc_key memory-only invariants
+    // -----------------------------------------------------------------------
+
+    /// salts (base64url) round-trip through save → load.
+    #[tokio::test]
+    async fn save_then_load_preserves_salts() {
+        let mut vault = unlocked_vault().await;
+        let session = sample_session_with_salts(
+            "usr_42",
+            1_700_003_600,
+            "AAAA-salt-auth",
+            "BBBB-salt-enc",
+        );
+        save_session(&mut vault, &session).await.unwrap();
+
+        let loaded = load_session(vault.as_ref()).await.unwrap().unwrap();
+        assert_eq!(loaded.salt_auth.as_deref(), Some("AAAA-salt-auth"));
+        assert_eq!(loaded.salt_enc.as_deref(), Some("BBBB-salt-enc"));
+    }
+
+    /// enc_key is memory-only — even if a session has it set, save_session
+    /// must not write it to the vault, and load_session always returns None.
+    #[tokio::test]
+    async fn enc_key_never_persists_to_vault() {
+        let mut vault = unlocked_vault().await;
+        let mut session =
+            sample_session_with_salts("usr_42", 1_700_003_600, "salt-a", "salt-e");
+        // Inject a fake enc_key (memory only).
+        session.enc_key = Some(SecretBox::new(Box::new([0xAB; 32])));
+        save_session(&mut vault, &session).await.unwrap();
+
+        // No `auth/enc_key` key should exist anywhere under the auth/ prefix.
+        let paths = vault.list_secrets(VAULT_PREFIX).await.unwrap();
+        assert!(
+            !paths.iter().any(|p| p.contains("enc_key")),
+            "enc_key must not be persisted, got paths={paths:?}"
+        );
+
+        let loaded = load_session(vault.as_ref()).await.unwrap().unwrap();
+        assert!(
+            loaded.enc_key.is_none(),
+            "load_session must always return enc_key=None"
+        );
+    }
+
+    /// Saving a session with `salt_*` = None must remove any pre-existing
+    /// salt entries from a previous save (idempotent reset).
+    #[tokio::test]
+    async fn save_with_none_salts_clears_previous_salts() {
+        let mut vault = unlocked_vault().await;
+
+        // First save: with salts.
+        let with_salts =
+            sample_session_with_salts("usr_42", 1_700_003_600, "old-a", "old-e");
+        save_session(&mut vault, &with_salts).await.unwrap();
+        assert_eq!(
+            load_session(vault.as_ref())
+                .await
+                .unwrap()
+                .unwrap()
+                .salt_auth
+                .as_deref(),
+            Some("old-a"),
+        );
+
+        // Second save: salts = None.
+        let without_salts = sample_session("usr_42", 1_700_003_600);
+        save_session(&mut vault, &without_salts).await.unwrap();
+        let loaded = load_session(vault.as_ref()).await.unwrap().unwrap();
+        assert_eq!(loaded.salt_auth, None);
+        assert_eq!(loaded.salt_enc, None);
+    }
+
+    /// Pre-M9 vaults (no salt keys) load successfully with both salt fields = None.
+    /// This is the backward-compatibility path: existing users who signed in
+    /// before Phase B-1 must not be locked out — they re-authenticate naturally.
+    #[tokio::test]
+    async fn load_pre_m9_vault_yields_none_salts() {
+        let mut vault = unlocked_vault().await;
+        // Write only the four core keys (mimicking a pre-M9 save).
+        vault
+            .put_secret(KEY_USER_ID, SecretBytes::new(b"usr_legacy".to_vec()))
+            .await
+            .unwrap();
+        vault
+            .put_secret(KEY_ACCESS_TOKEN, SecretBytes::new(b"ax".to_vec()))
+            .await
+            .unwrap();
+        vault
+            .put_secret(KEY_REFRESH_TOKEN, SecretBytes::new(b"rx".to_vec()))
+            .await
+            .unwrap();
+        vault
+            .put_secret(
+                KEY_EXPIRES_AT,
+                SecretBytes::new(b"1700003600".to_vec()),
+            )
+            .await
+            .unwrap();
+
+        let loaded = load_session(vault.as_ref()).await.unwrap().unwrap();
+        assert_eq!(loaded.user_id, "usr_legacy");
+        assert!(loaded.salt_auth.is_none());
+        assert!(loaded.salt_enc.is_none());
+        assert!(loaded.enc_key.is_none());
+    }
+
+    /// AuthSession Debug must mask all secret fields — accidental tracing of
+    /// the struct in logs must not leak salts or enc_key bytes.
+    #[test]
+    fn debug_masks_secret_fields() {
+        let session =
+            sample_session_with_salts("usr_42", 1_700_003_600, "salt-a", "salt-e");
+        let debug_output = format!("{session:?}");
+        assert!(debug_output.contains("usr_42"));
+        assert!(debug_output.contains("***"));
+        assert!(
+            !debug_output.contains("salt-a"),
+            "Debug must not leak salt_auth value, got: {debug_output}"
+        );
+        assert!(
+            !debug_output.contains("salt-e"),
+            "Debug must not leak salt_enc value, got: {debug_output}"
+        );
     }
 
     // -----------------------------------------------------------------------

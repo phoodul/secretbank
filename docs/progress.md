@@ -2,8 +2,8 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-28 Night mode 3 (T084 + I3 + Playwright + M9 Phase A 4 작업 연속 완료, 다음 세션은 M9 Open Issues confirm + Phase B 진입)
-- **Phase:** Phase 3 — Implementation, **M4~M8 ✅ + M5 10/10 ✅ + M8 8/8 ✅ + M9 🔄 Phase A 1/7 + M15 🔄**, 110/132 태스크 (83.3%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, **4-28 I3 ✅ listener 표준화 + Playwright E2E 인프라 ✅ + M9 Phase Plan ✅** + J2 ✅ + J1 docs ✅)
+- **Time:** 2026-04-28 Night mode 3 (T084 + I3 + Playwright + M9 Phase A + B-1 5건 연속 완료, 다음 세션은 M9 Phase B-2 부터)
+- **Phase:** Phase 3 — Implementation, **M4~M8 ✅ + M5 10/10 ✅ + M8 8/8 ✅ + M9 🔄 Phase A+B-1 / 7 phases (Phase B 4 sub-phase 분할) + M15 🔄**, 110/132 태스크 (83.3%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, **4-28 I3 ✅ listener 표준화 + Playwright E2E 인프라 ✅ + M9 Phase Plan ✅ + 5건 결정 ✅ + Phase B-1 ✅** + J2 ✅ + J1 docs ✅)
 - **Commits (T083 Phase A~D + 검증 hotfix 신규 6개):**
   - `1ec7a15` feat(auth) — T083 Phase A · RelayClient + AuthSession 서비스 골격 + AppContext 확장 (회귀 12)
   - `2f17917` feat(auth) — T083 Phase B · Passkey 4 커맨드 (register/assert × start/verify) + AuthCommandError + complete_session 헬퍼 (회귀 6)
@@ -64,16 +64,15 @@
   2. ✅ **I3** — `useGithubIntegration` 의 deep-link listener 표준화. `deep-link://github-callback` (lib.rs 가 emit 안 함, dead path) → `deep-link` 이벤트 + `apivault://github/callback` URL prefix 매칭. `parseGithubCallbackUrl` 헬퍼 + Vitest +8 + Setup URL 운영 가이드 강화. 4 사전 조건 모두 ✅, 풀 플로우 unblocked (실 GitHub App 등록 + 릴레이 배포는 사용자 액션 필요).
   3. ✅ **Playwright browser-mode E2E** — `e2e/` 디렉토리, `tauri-mock.ts` invoke polyfill, smoke 3 case (LockScreen / 라우팅 / SignInPage). CI `e2e` 잡 + frontend 잡에 Vitest 통합 (이전 누락). Desktop binary E2E (tauri-driver) 는 deferred — 진입 트리거 3가지 명시 (Sync 회귀 누적 / M11 / M13).
   4. ✅ **M9 Phase Plan + T087 Phase A** — 10 태스크를 7-phase 로 분할 (`docs/m9-phase-plan.md`), Phase A 만 안전 실행 (yjs + y-indexeddb dep, 더미 SyncProvider, Vitest +4). App.tsx 마운트 보류, Phase B 의 enc_key 라이프사이클 작업이 준비된 후 마운트.
+  5. ✅ **5건 사용자 결정 + Phased Expansion** — Free 종류 무관 2대 / Auto-derive on unlock / SQLite 화이트리스트 / SecSync 잠정 (Phase C 검증) / MVP API 특화 + v1.1 General Secrets + v1.2 자동입력. project-decisions.md 5건 기록 + m9-phase-plan.md Open Issues Resolved 갱신.
+  6. ✅ **M9 Phase B-1** — AuthSession 에 `salt_auth`/`salt_enc`/`enc_key` 필드 + Debug 마스킹 + save/load_session 확장 (enc_key 영속 금지) + AppContext.master_passphrase 라이프사이클 (vault_unlock 시 채움 / vault_lock 시 zeroize) + 7 테스트 컨텍스트 갱신 + Rust lib 회귀 136 → 141 (+5).
 
-- **Pending decisions (다음 세션 Gate 1 전에 사용자 confirm 필요):**
-  1. **Free 디바이스 수**: project-decisions.md "Free = 단일 디바이스" vs T094 DoD "Free 2대" — 어느 쪽?
-  2. **Sync 활성화 시 passphrase 재프롬프트 정책**: vault unlock 직후 자동 vs sync 활성화 시점 사용자 입력 — UX vs zero-knowledge
-  3. **SQLite sync 화이트리스트**: 모든 컬럼 sync vs 일부 device-local (created_at, vault_ref 등)
-  4. **secsync 라이브러리 채택**: 2026-04 stable 확인 후 결정. 깨졌으면 yrs 기반 자체 구현 검토
-
-- **다음 Night mode 큐:**
-  1. **M9 Phase B** — AuthSession enc_key 메모리 적재 + `sync_get_root_key` 커맨드 (Open Issues 2 결정 후)
-  2. **M9 Phase C~G** — `docs/m9-phase-plan.md` 순차 실행
+- **다음 Night mode 큐 (B-2 ~ B-4):**
+  1. **B-2** — verify 4 커맨드 시그니처에 salts 추가, frontend PasskeyButton 갱신, complete_session 가 derive_session_keys 호출 → enc_key 적재, hydrate_session_from_vault 자동 derive
+  2. **B-3** — sync_get_root_key 커맨드 + Phase B 종료
+  3. **B-4 (옵션)** — OAuth callback 응답에 salts 포함 (relay 측 변경)
+  4. **Phase C** — SecSync stable 검증 + Yjs E2EE 통합
+  5. **Phase D~G** — `docs/m9-phase-plan.md` 순차 실행
 
 - **T084 의 deferred 항목 (M9 진입 시점에 처리):**
   - 성공 후 redirect 경로를 `/settings/sync` 로 변경 (현재 `/settings`)

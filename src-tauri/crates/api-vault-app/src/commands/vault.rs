@@ -150,6 +150,17 @@ pub async fn vault_unlock(
         let mut vault = state.vault.write().await;
         do_vault_unlock(vault.as_mut(), &password).await?;
     }
+    // M9 Phase B-1: stash the master passphrase so the M8 verify flow and
+    // M9 sync's `derive_session_keys` can reproduce `enc_key` without
+    // re-prompting the user. Cleared in `vault_lock` (Drop auto-zeroize).
+    //
+    // Security note: see `AppContext::master_passphrase` doc — vault unlocked
+    // already keeps the X25519 Identity in memory, so this does not widen the
+    // attack surface. Decision: project-decisions.md [2026-04-28] B.
+    {
+        let mut guard = state.master_passphrase.write().await;
+        *guard = Some(secrecy::SecretString::new(password.clone().into()));
+    }
     // 볼트가 열렸으므로 저장된 API 키로 스케줄러를 재구성한다.
     if let Err(e) =
         crate::commands::vault_settings::reconfigure_feed_scheduler(&state, &app_handle).await
@@ -225,9 +236,15 @@ pub async fn vault_lock(state: State<'_, AppContext>) -> Result<(), VaultCommand
         *guard = None;
     }
     // M8: auth_session 메모리 캐시도 비운다 (영속본은 보존 — 다음 unlock 시
-    // hydrate_session_from_vault 가 다시 끌어올린다).
+    // hydrate_session_from_vault 가 다시 끌어올린다). enc_key 는 AuthSession
+    // 내부 필드이므로 자동 zeroize 된다.
     {
         let mut guard = state.auth_session.write().await;
+        *guard = None;
+    }
+    // M9 Phase B-1: master_passphrase zeroize (SecretString Drop).
+    {
+        let mut guard = state.master_passphrase.write().await;
         *guard = None;
     }
     let mut vault = state.vault.write().await;
