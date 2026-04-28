@@ -78,11 +78,28 @@ export function activate(context: vscode.ExtensionContext): void {
     );
   }
 
-  // Hover provider — package.json deps show advisory tooltip from last scan.
+  // Hover provider — package.json + Cargo.toml deps show advisory tooltip
+  // from last scan.
   context.subscriptions.push(
     vscode.languages.registerHoverProvider(
       { language: "json", pattern: "**/package.json" },
       { provideHover: providePackageJsonHover },
+    ),
+    vscode.languages.registerHoverProvider(
+      { language: "toml", pattern: "**/Cargo.toml" },
+      { provideHover: provideCargoTomlHover },
+    ),
+  );
+
+  // Code-lens — show "🔑 N advisory" lens on the line above each risky
+  // dep in package.json / Cargo.toml. Click → opens the Problems panel.
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider(
+      [
+        { language: "json", pattern: "**/package.json" },
+        { language: "toml", pattern: "**/Cargo.toml" },
+      ],
+      new ManifestCodeLensProvider(),
     ),
   );
 
@@ -287,6 +304,72 @@ async function scanWorkspace(root: string): Promise<SupplyAdvisory[]> {
   } catch {
     // package.json missing or malformed — silent in MVP.
   }
+
+  const cargoPath = path.join(root, "Cargo.toml");
+  try {
+    const raw = await fs.readFile(cargoPath, "utf-8");
+    const deps = parseCargoDeps(raw);
+    for (const [name, version] of deps) {
+      if (
+        version === "workspace" ||
+        version === "path" ||
+        version === "git" ||
+        version === "*"
+      ) {
+        continue;
+      }
+      const advs = await queryOsv("cargo", name, normalizeVersion(version));
+      for (const a of advs) {
+        out.push({ ...a, manifest: "Cargo.toml" });
+      }
+    }
+  } catch {
+    // Cargo.toml missing — silent.
+  }
+  return out;
+}
+
+/**
+ * Tiny TOML-deps extractor. We avoid pulling a full TOML parser into the
+ * VS Code extension bundle and instead recognise the two common forms:
+ *   `name = "1.0"`
+ *   `name = { version = "1.0", ... }`
+ * Anything else (workspace, path, git, *) is mapped to a placeholder so
+ * scanWorkspace can skip it.
+ */
+function parseCargoDeps(toml: string): Array<[string, string]> {
+  const out: Array<[string, string]> = [];
+  const lines = toml.split(/\r?\n/);
+  let inDeps = false;
+  for (const raw of lines) {
+    const line = raw.replace(/#.*$/, "").trim();
+    const sectionMatch = /^\[([^\]]+)\]\s*$/.exec(line);
+    if (sectionMatch) {
+      const name = sectionMatch[1].trim();
+      inDeps =
+        name === "dependencies" ||
+        name === "dev-dependencies" ||
+        name === "build-dependencies" ||
+        name.endsWith(".dependencies");
+      continue;
+    }
+    if (!inDeps || line.length === 0) continue;
+    const m = /^([A-Za-z0-9_-]+)\s*=\s*(.+)$/.exec(line);
+    if (!m) continue;
+    const name = m[1];
+    const valueRaw = m[2].trim();
+    let version: string | null = null;
+    if (/^"[^"]+"$/.test(valueRaw)) {
+      version = valueRaw.slice(1, -1);
+    } else if (valueRaw.startsWith("{")) {
+      const v = /version\s*=\s*"([^"]+)"/.exec(valueRaw);
+      if (v) version = v[1];
+      else if (/workspace\s*=\s*true/.test(valueRaw)) version = "workspace";
+      else if (/path\s*=/.test(valueRaw)) version = "path";
+      else if (/git\s*=/.test(valueRaw)) version = "git";
+    }
+    if (version) out.push([name, version]);
+  }
   return out;
 }
 
@@ -382,24 +465,36 @@ function surfaceDiagnostics(advisories: SupplyAdvisory[]): void {
 }
 
 // ---------------------------------------------------------------------------
-// Hover provider — package.json deps
+// Hover providers — package.json + Cargo.toml
 // ---------------------------------------------------------------------------
 
 function providePackageJsonHover(
   document: vscode.TextDocument,
   position: vscode.Position,
 ): vscode.Hover | undefined {
-  // package.json 의 dependency 라인 형식: `    "axios": "^1.4.0",`
   const line = document.lineAt(position.line).text;
   const match = /"([^"]+)"\s*:\s*"[^"]+"/.exec(line);
   if (!match) return undefined;
-  const pkg = match[1].toLowerCase();
-  const advs = lastScan.get(pkg);
-  if (!advs || advs.length === 0) return undefined;
+  return advisoryHover(match[1]);
+}
 
+function provideCargoTomlHover(
+  document: vscode.TextDocument,
+  position: vscode.Position,
+): vscode.Hover | undefined {
+  // Cargo.toml dep lines: `serde = "1.0"` or `tokio = { version = "1" }`
+  const line = document.lineAt(position.line).text;
+  const match = /^\s*([A-Za-z0-9_-]+)\s*=/.exec(line);
+  if (!match) return undefined;
+  return advisoryHover(match[1]);
+}
+
+function advisoryHover(packageName: string): vscode.Hover | undefined {
+  const advs = lastScan.get(packageName.toLowerCase());
+  if (!advs || advs.length === 0) return undefined;
   const md = new vscode.MarkdownString();
   md.isTrusted = false;
-  md.appendMarkdown(`**API Vault — ${advs.length} advisory(ies) for \`${match[1]}\`**\n\n`);
+  md.appendMarkdown(`**API Vault — ${advs.length} advisory(ies) for \`${packageName}\`**\n\n`);
   for (const a of advs.slice(0, 5)) {
     const tag = a.category === "secret_leak" ? "🔑" : a.category === "supply_chain" ? "📦" : "⚠️";
     md.appendMarkdown(`- ${tag} **${a.severity}** [${a.source_id}] — ${a.summary}\n`);
@@ -408,6 +503,49 @@ function providePackageJsonHover(
     md.appendMarkdown(`\n_…and ${advs.length - 5} more — see Problems panel_`);
   }
   return new vscode.Hover(md);
+}
+
+// ---------------------------------------------------------------------------
+// Code-lens provider — risky dep lines
+// ---------------------------------------------------------------------------
+
+class ManifestCodeLensProvider implements vscode.CodeLensProvider {
+  provideCodeLenses(
+    document: vscode.TextDocument,
+    _token: vscode.CancellationToken,
+  ): vscode.CodeLens[] {
+    const lenses: vscode.CodeLens[] = [];
+    if (lastScan.size === 0) return lenses;
+
+    const isPackageJson = document.fileName.endsWith("package.json");
+    const isCargoToml = document.fileName.endsWith("Cargo.toml");
+    if (!isPackageJson && !isCargoToml) return lenses;
+
+    for (let i = 0; i < document.lineCount; i++) {
+      const text = document.lineAt(i).text;
+      let pkgName: string | null = null;
+      if (isPackageJson) {
+        const m = /"([^"]+)"\s*:\s*"[^"]+"/.exec(text);
+        if (m) pkgName = m[1];
+      } else if (isCargoToml) {
+        const m = /^\s*([A-Za-z0-9_-]+)\s*=/.exec(text);
+        if (m) pkgName = m[1];
+      }
+      if (!pkgName) continue;
+      const advs = lastScan.get(pkgName.toLowerCase());
+      if (!advs || advs.length === 0) continue;
+      const cat = advs[0].category;
+      const tag = cat === "secret_leak" ? "🔑" : cat === "supply_chain" ? "📦" : "⚠️";
+      const range = new vscode.Range(i, 0, i, 1);
+      lenses.push(
+        new vscode.CodeLens(range, {
+          title: `${tag} ${advs.length} advisor${advs.length === 1 ? "y" : "ies"} (${cat})`,
+          command: "workbench.actions.view.problems",
+        }),
+      );
+    }
+    return lenses;
+  }
 }
 
 // ---------------------------------------------------------------------------
