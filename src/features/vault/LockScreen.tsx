@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PairJoinerDialog } from "@/features/sync/PairJoinerDialog";
+import { usePairDeepLink } from "@/features/sync/use-pair-deep-link";
 import { CreateVaultDialog } from "./CreateVaultDialog";
 
 /** 연속 실패 횟수가 이 값에 도달하면 쿨다운을 시작한다 */
@@ -43,6 +44,18 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
   const [pairOpen, setPairOpen] = useState(false);
+  const [pairPrefillUrl, setPairPrefillUrl] = useState<string | undefined>(undefined);
+
+  // Deep-link auto-route — apivault://pair?... 로 진입하면 PairJoinerDialog
+  // 자동 open. uninitialized 상태에서만 (showCreate=true) listener 활성.
+  usePairDeepLink(
+    showCreate
+      ? (url) => {
+          setPairPrefillUrl(url);
+          setPairOpen(true);
+        }
+      : null,
+  );
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -194,7 +207,12 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
       {showCreate && (
         <>
           <CreateVaultDialog open={createOpen} onOpenChange={setCreateOpen} onSuccess={onSuccess} />
-          <PairJoinerDialog open={pairOpen} onOpenChange={setPairOpen} onSuccess={onSuccess} />
+          <PairJoinerDialog
+            open={pairOpen}
+            onOpenChange={setPairOpen}
+            onSuccess={onSuccess}
+            prefillUrl={pairPrefillUrl}
+          />
         </>
       )}
     </div>
