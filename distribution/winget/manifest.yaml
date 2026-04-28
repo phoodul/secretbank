@@ -1,0 +1,55 @@
+# winget manifest template — Microsoft Store / winget repo submission.
+# 실제 release 가 끝난 후 InstallerUrl/Sha256 을 채우고
+# microsoft/winget-pkgs 저장소에 PR 로 제출. version 별로 디렉토리:
+#   manifests/a/api-vault/api-vault/<version>/
+# 안에 세 파일(api-vault.api-vault.locale.en-US.yaml,
+# api-vault.api-vault.installer.yaml, api-vault.api-vault.yaml) 분리.
+# 본 파일은 통합 템플릿 — 제출 시 분리.
+
+PackageIdentifier: api-vault.api-vault
+PackageVersion: 0.1.0
+PackageLocale: en-US
+Publisher: API Vault
+PublisherUrl: https://api-vault.app
+PublisherSupportUrl: https://github.com/api-vault/api-vault/issues
+Author: API Vault contributors
+PackageName: API Vault
+PackageUrl: https://api-vault.app
+License: AGPL-3.0-or-later
+LicenseUrl: https://github.com/api-vault/api-vault/blob/main/LICENSE
+Copyright: Copyright (c) API Vault contributors
+ShortDescription: Dependency-graph-aware secrets manager with supply-chain risk detection.
+Description: |
+  API Vault stores API keys and secrets locally with Zero-Knowledge encryption,
+  but goes beyond storage by mapping how each key is used across your projects,
+  deployments, and URLs. It detects supply-chain risk in your npm/Cargo
+  dependencies via OSV.dev, auto-matches NVD/GHSA incidents to your vault, and
+  generates RAILGUARD rulesets that protect your AI editors (Cursor, Copilot,
+  Claude) from leaking keys.
+Moniker: api-vault
+Tags:
+  - secrets
+  - credentials
+  - vault
+  - api-keys
+  - supply-chain
+  - dependency-graph
+ReleaseNotesUrl: https://github.com/api-vault/api-vault/releases/tag/v0.1.0
+
+Installers:
+  - Architecture: x64
+    InstallerType: nullsoft
+    InstallerUrl: https://github.com/api-vault/api-vault/releases/download/v0.1.0/api-vault_0.1.0_x64-setup.exe
+    InstallerSha256: TBD-FILL-AFTER-RELEASE-BUILD
+    Scope: user
+    InstallerSwitches:
+      Silent: /S
+      SilentWithProgress: /S
+  - Architecture: x64
+    InstallerType: wix
+    InstallerUrl: https://github.com/api-vault/api-vault/releases/download/v0.1.0/api-vault_0.1.0_x64_en-US.msi
+    InstallerSha256: TBD-FILL-AFTER-RELEASE-BUILD
+    Scope: user
+
+ManifestType: singleton
+ManifestVersion: 1.5.0

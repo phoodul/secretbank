@@ -1,0 +1,70 @@
+# Snap package definition — `snap install api-vault`.
+# Run `snapcraft pack` after `pnpm tauri build` has produced the Linux
+# binary at src-tauri/target/release/api-vault.
+
+name: api-vault
+base: core22
+version: '0.1.0'
+summary: Dependency-graph-aware secrets manager with supply-chain risk
+description: |
+  API Vault is an open-core desktop secrets manager that goes beyond simple
+  key storage. It maps how each API key relates to your projects,
+  deployments, and URLs, so you always know the blast radius before you
+  rotate or revoke. When NVD or GHSA reports a breach, it auto-matches the
+  incident to credentials in your vault. The supply-chain scanner reads
+  package.json, Cargo.toml and their lockfiles, then queries OSV.dev for
+  any dep with secret-leak history.
+
+grade: stable
+confinement: strict
+license: AGPL-3.0-or-later
+website: https://api-vault.app
+contact: support@api-vault.app
+issues: https://github.com/api-vault/api-vault/issues
+
+apps:
+  api-vault:
+    command: bin/api-vault
+    desktop: usr/share/applications/api-vault.desktop
+    common-id: app.api-vault
+    extensions: [gnome]
+    plugs:
+      - home
+      - network
+      - desktop
+      - desktop-legacy
+      - x11
+      - wayland
+      - browser-support
+      - opengl
+      - audio-playback
+      - password-manager-service # for OS keyring
+  apivault:
+    command: bin/apivault
+    plugs:
+      - home
+      - network
+      - password-manager-service
+
+parts:
+  api-vault:
+    plugin: dump
+    source: ../../src-tauri/target/release
+    organize:
+      api-vault: bin/api-vault
+      apivault: bin/apivault
+    stage:
+      - bin/api-vault
+      - bin/apivault
+    stage-packages:
+      - libwebkit2gtk-4.1-0
+      - libgtk-3-0
+      - libayatana-appindicator3-1
+      - librsvg2-2
+      - libssl3
+  desktop-file:
+    plugin: dump
+    source: .
+    organize:
+      api-vault.desktop: usr/share/applications/api-vault.desktop
+      icon.png: usr/share/icons/hicolor/512x512/apps/api-vault.png
