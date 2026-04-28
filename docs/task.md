@@ -48,8 +48,8 @@
 | M17 | SDK Ecosystem                   | TBD         | TBD       | ⏳ placeholder (M5 + M9 완료 후 신설 — npm / pip / cargo) |
 | M18 | **CLI + MCP server**            | TBD         | TBD       | ✅ M18 v1 완료 (CLI 3 subcommand list/reveal/run + MCP 5 tools 포함 supply) |
 | M19 | Team / org / shared vault       | TBD         | TBD       | ⏳ placeholder (B2B 진입, M18+M21 후 베타 사용자 피드백 기반) |
-| M20 | Supply chain risk graph         | TBD         | TBD       | ✅ M20 v1 완료 (api-vault-supply crate + manifest parsers + OSV.dev + matcher + storage repos + Tauri 커맨드 + MCP tool) |
-| M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v1 완료 (M21-1 commands + status bar + diagnostic / M21-2 LanguageModel tools (apivault_list_credentials + apivault_scan_supply_chain) + package.json hover provider). 다음 → M22 JetBrains |
+| M20 | Supply chain risk graph         | TBD         | TBD       | ✅ M20 v2 완료 (v1 manifest+OSV+매칭+Tauri+MCP / **v2 lockfile parsers (npm v3+/pnpm v6/Cargo) + semver range eval — false positive 제거**) |
+| M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / **v3 Cargo.toml hover + ManifestCodeLens — risky deps inline**). 다음 → M22 JetBrains |
 
 ---
 
