@@ -205,6 +205,77 @@ describe("/pair/poll", () => {
   });
 });
 
+describe("/pair/start — Phase G-entitlement (free 2 device limit)", () => {
+  it("free user with 2 active devices → 403 device_limit_reached", async () => {
+    const userId = "usr_pair_ent_free";
+    await ensureUser(userId, "ent-free@example.com");
+    await typedEnv.DB.prepare("UPDATE user SET plan = 'free' WHERE id = ?")
+      .bind(userId)
+      .run();
+    // 두 active device 등록
+    const now = Date.now();
+    await typedEnv.DB.prepare(
+      `INSERT INTO device (id, user_id, name, platform, public_key, registered_at, status)
+       VALUES (?, ?, 'A', 'desktop', ?, ?, 'active')`,
+    )
+      .bind("dev_a", userId, new Uint8Array([1]), now)
+      .run();
+    await typedEnv.DB.prepare(
+      `INSERT INTO device (id, user_id, name, platform, public_key, registered_at, status)
+       VALUES (?, ?, 'B', 'desktop', ?, ?, 'active')`,
+    )
+      .bind("dev_b", userId, new Uint8Array([2]), now)
+      .run();
+
+    const token = await mintAccessToken(typedEnv, userId);
+    const r = await call("POST", "/pair/start", {
+      token,
+      body: { initiator_pub_b64: PUB_A_B64 },
+    });
+    expect(r.status).toBe(403);
+    const body = (await r.json()) as { error: string; limit: number };
+    expect(body.error).toBe("device_limit_reached");
+    expect(body.limit).toBe(2);
+  });
+
+  it("pro user with 5 active devices → start ok", async () => {
+    const userId = "usr_pair_ent_pro";
+    await ensureUser(userId, "ent-pro@example.com");
+    await typedEnv.DB.prepare("UPDATE user SET plan = 'pro' WHERE id = ?")
+      .bind(userId)
+      .run();
+    const now = Date.now();
+    for (let i = 0; i < 5; i++) {
+      await typedEnv.DB.prepare(
+        `INSERT INTO device (id, user_id, name, platform, public_key, registered_at, status)
+         VALUES (?, ?, 'D', 'desktop', ?, ?, 'active')`,
+      )
+        .bind(`dev_pro_${i}`, userId, new Uint8Array([i]), now)
+        .run();
+    }
+    const token = await mintAccessToken(typedEnv, userId);
+    const r = await call("POST", "/pair/start", {
+      token,
+      body: { initiator_pub_b64: PUB_A_B64 },
+    });
+    expect(r.status).toBe(200);
+  });
+
+  it("free user with 0 devices → start ok (no devices yet, common bootstrap case)", async () => {
+    const userId = "usr_pair_ent_zero";
+    await ensureUser(userId, "ent-zero@example.com");
+    await typedEnv.DB.prepare("UPDATE user SET plan = 'free' WHERE id = ?")
+      .bind(userId)
+      .run();
+    const token = await mintAccessToken(typedEnv, userId);
+    const r = await call("POST", "/pair/start", {
+      token,
+      body: { initiator_pub_b64: PUB_A_B64 },
+    });
+    expect(r.status).toBe(200);
+  });
+});
+
 describe("end-to-end pair round-trip", () => {
   it("start → join → payload → poll yields the same ciphertext", async () => {
     const userId = "usr_pair_e2e";
@@ -225,9 +296,15 @@ describe("end-to-end pair round-trip", () => {
     });
     expect(join.status).toBe(200);
 
-    // 3. joiner polls — 아직 payload 없음 → 204
+    // 3. joiner polls — joiner_pub 는 있지만 payload 는 아직 없음 → 200
     const pollEmpty = await call("GET", `/pair/poll?pin=${pin}`);
-    expect(pollEmpty.status).toBe(204);
+    expect(pollEmpty.status).toBe(200);
+    const pe = (await pollEmpty.json()) as {
+      joiner_pub_b64: string;
+      payload_ciphertext_b64: string | null;
+    };
+    expect(pe.joiner_pub_b64).toBe(PUB_B_B64);
+    expect(pe.payload_ciphertext_b64).toBeNull();
 
     // 4. initiator uploads payload
     const payload = await call("POST", "/pair/payload", {
@@ -241,5 +318,30 @@ describe("end-to-end pair round-trip", () => {
     expect(pollGot.status).toBe(200);
     const body = (await pollGot.json()) as { payload_ciphertext_b64: string };
     expect(body.payload_ciphertext_b64).toBe(CT_PAYLOAD);
+    expect(body.joiner_pub_b64).toBe(PUB_B_B64);
+  });
+
+  it("Phase G-pair-2.5: initiator can poll for joiner_pub before payload", async () => {
+    const userId = "usr_pair_init_poll";
+    await ensureUser(userId, "ipoll@example.com");
+    const token = await mintAccessToken(typedEnv, userId);
+    const start = await call("POST", "/pair/start", {
+      token,
+      body: { initiator_pub_b64: PUB_A_B64 },
+    });
+    const { pin } = (await start.json()) as { pin: string };
+    expect((await call("GET", `/pair/poll?pin=${pin}`)).status).toBe(204);
+
+    await call("POST", "/pair/join", {
+      body: { pin, joiner_pub_b64: PUB_B_B64 },
+    });
+    const r = await call("GET", `/pair/poll?pin=${pin}`);
+    expect(r.status).toBe(200);
+    const body = (await r.json()) as {
+      joiner_pub_b64: string;
+      payload_ciphertext_b64: string | null;
+    };
+    expect(body.joiner_pub_b64).toBe(PUB_B_B64);
+    expect(body.payload_ciphertext_b64).toBeNull();
   });
 });

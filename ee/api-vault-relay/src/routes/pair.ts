@@ -117,6 +117,45 @@ function isB64(s: unknown): s is string {
 }
 
 // ---------------------------------------------------------------------------
+// Free tier device limit (Phase G-entitlement / T094)
+// ---------------------------------------------------------------------------
+//
+// project-decisions [2026-04-28] A: Free 사용자 = 종류 무관 2 디바이스. Pro
+// = 무제한. /pair/start 호출 시 user.plan 과 active device count 검증.
+//
+// 현재 device row 자동 등록 흐름은 후속 작업 (M11 mobile 진입 시) — 그
+// 시점까지 device 테이블이 비어있는 사용자는 무제한 페어링 가능. 본 게이트
+// 는 device row 가 채워지는 시점 부터 본격 적용.
+const FREE_DEVICE_LIMIT = 2;
+
+async function checkDeviceLimit(
+  env: Env,
+  userId: string,
+): Promise<{ allowed: true } | { allowed: false; reason: string; limit: number }> {
+  const userRow = await env.DB.prepare("SELECT plan FROM user WHERE id = ?")
+    .bind(userId)
+    .first<{ plan: string }>();
+  const plan = userRow?.plan ?? "free";
+  if (plan !== "free") return { allowed: true };
+
+  const cnt = await env.DB.prepare(
+    "SELECT COUNT(*) as n FROM device WHERE user_id = ? AND status = 'active'",
+  )
+    .bind(userId)
+    .first<{ n: number }>();
+  const n = cnt?.n ?? 0;
+  // FREE_DEVICE_LIMIT 명 이상 (이미 한도) 이면 또 페어링 거부.
+  if (n >= FREE_DEVICE_LIMIT) {
+    return {
+      allowed: false,
+      reason: "device_limit_reached",
+      limit: FREE_DEVICE_LIMIT,
+    };
+  }
+  return { allowed: true };
+}
+
+// ---------------------------------------------------------------------------
 // POST /pair/start — initiator 가 채널 시작 (Bearer 필수)
 // ---------------------------------------------------------------------------
 pair.post("/start", async (c) => {
@@ -128,6 +167,12 @@ pair.post("/start", async (c) => {
     return c.json({ error: "rate_limited", reset_ms: rl.resetMs }, 429, {
       "Retry-After": String(Math.ceil(rl.resetMs / 1000)),
     });
+  }
+
+  // Phase G-entitlement: free tier device limit 검증.
+  const ent = await checkDeviceLimit(c.env, auth.userId);
+  if (!ent.allowed) {
+    return c.json({ error: ent.reason, limit: ent.limit }, 403);
   }
 
   const body = (await c.req.json().catch(() => null)) as
@@ -242,8 +287,19 @@ pair.post("/payload", async (c) => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /pair/poll?pin=... — joiner polling (auth 없음)
+// GET /pair/poll?pin=... — channel state inspection (anon, both sides poll)
 // ---------------------------------------------------------------------------
+//
+// 양쪽 side 가 polling 한다:
+//   - initiator: joiner_pub_b64 가 채워졌는지 확인 후 ECDH
+//   - joiner:    payload_ciphertext_b64 가 채워졌는지 확인 후 decrypt
+//
+// 응답 형태:
+//   200 { joiner_pub_b64?: string|null, payload_ciphertext_b64?: string|null }
+//   204 — 양쪽 다 null (아무것도 진행 안 됨)
+//   410 — channel 만료
+//
+// PIN 자체가 capability — anon OK.
 pair.get("/poll", async (c) => {
   const rl = await checkRateLimit(
     c.env.TOKEN_CACHE,
@@ -262,6 +318,11 @@ pair.get("/poll", async (c) => {
   }
   const ch = await getChannel(c.env, pin);
   if (!ch) return c.json({ error: "channel_expired" }, 410);
-  if (!ch.payload_ciphertext_b64) return new Response(null, { status: 204 });
-  return c.json({ payload_ciphertext_b64: ch.payload_ciphertext_b64 });
+  if (!ch.joiner_pub_b64 && !ch.payload_ciphertext_b64) {
+    return new Response(null, { status: 204 });
+  }
+  return c.json({
+    joiner_pub_b64: ch.joiner_pub_b64,
+    payload_ciphertext_b64: ch.payload_ciphertext_b64,
+  });
 });
