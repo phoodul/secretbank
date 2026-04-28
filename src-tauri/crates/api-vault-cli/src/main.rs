@@ -92,6 +92,27 @@ enum Command {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true, required = true)]
         cmd: Vec<String>,
     },
+
+    /// Run a supply-chain scan against the manifest + lockfile of a project
+    /// directory. Uses the same engine as the desktop app. JSON output is
+    /// stable and consumed by the VS Code / JetBrains plugins.
+    Scan {
+        #[command(subcommand)]
+        kind: ScanKind,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum ScanKind {
+    /// Scan npm / Cargo dependencies for known OSV.dev advisories.
+    SupplyChain {
+        /// Project root. Defaults to the current working directory.
+        #[arg(long, value_name = "DIR")]
+        project: Option<PathBuf>,
+        /// Always emit JSON (text mode is implicit when omitted).
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[tokio::main]
@@ -117,6 +138,11 @@ async fn run(cli: Cli) -> Result<()> {
         Command::Run { project, cmd } => {
             cmd_run(cli.data_dir.as_deref(), &project, cmd).await
         }
+        Command::Scan { kind } => match kind {
+            ScanKind::SupplyChain { project, json } => {
+                cmd_scan_supply_chain(project.as_deref(), json).await
+            }
+        },
     }
 }
 
@@ -490,6 +516,160 @@ async fn copy_to_clipboard_with_clear(plaintext: &str, clear_after_secs: u64) ->
         }
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// `apivault scan supply-chain --project <path> [--json]`
+// ---------------------------------------------------------------------------
+
+async fn cmd_scan_supply_chain(
+    project_path_override: Option<&std::path::Path>,
+    json: bool,
+) -> Result<()> {
+    use api_vault_supply::lockfile::{
+        apply_resolved, parse_cargo_lock, parse_package_lock_json, parse_pnpm_lock_yaml,
+        ResolvedVersions,
+    };
+    use api_vault_supply::manifest::{parse_cargo_toml, parse_package_json};
+    use api_vault_supply::matcher::match_advisories;
+    use api_vault_supply::{DependencyDeclaration, OsvClient, PackageAdvisory};
+
+    let root = match project_path_override {
+        Some(p) => p.to_path_buf(),
+        None => std::env::current_dir().context("getting current dir")?,
+    };
+    if !root.exists() {
+        return Err(anyhow!("project path does not exist: {}", root.display()));
+    }
+
+    // 1. Discover manifests + parse.
+    let mut deps: Vec<DependencyDeclaration> = Vec::new();
+    let pkg_json = root.join("package.json");
+    if pkg_json.exists() {
+        match parse_package_json(&pkg_json) {
+            Ok(d) => deps.extend(d),
+            Err(e) => eprintln!("warning: package.json: {e}"),
+        }
+    }
+    let cargo_toml = root.join("Cargo.toml");
+    if cargo_toml.exists() {
+        match parse_cargo_toml(&cargo_toml) {
+            Ok(d) => deps.extend(d),
+            Err(e) => eprintln!("warning: Cargo.toml: {e}"),
+        }
+    }
+
+    // 2. Lockfile resolve.
+    let mut resolved = ResolvedVersions::new();
+    if root.join("package-lock.json").exists() {
+        if let Ok(r) = parse_package_lock_json(&root.join("package-lock.json")) {
+            resolved.extend(r);
+        }
+    }
+    if root.join("pnpm-lock.yaml").exists() {
+        if let Ok(r) = parse_pnpm_lock_yaml(&root.join("pnpm-lock.yaml")) {
+            for (k, v) in r {
+                resolved.entry(k).or_insert(v);
+            }
+        }
+    }
+    if root.join("Cargo.lock").exists() {
+        if let Ok(r) = parse_cargo_lock(&root.join("Cargo.lock")) {
+            resolved.extend(r);
+        }
+    }
+    if !resolved.is_empty() {
+        apply_resolved(&mut deps, &resolved);
+    }
+
+    // 3. OSV query.
+    let osv = OsvClient::new();
+    let mut advisories: Vec<PackageAdvisory> = Vec::new();
+    let mut osv_failures: u32 = 0;
+    for d in &deps {
+        if matches!(d.version.as_str(), "workspace" | "path" | "git" | "*") {
+            continue;
+        }
+        match osv.query(d.ecosystem, &d.name, &d.version).await {
+            Ok(list) => advisories.extend(list),
+            Err(_) => osv_failures += 1,
+        }
+    }
+
+    // 4. Match.
+    let matches = match_advisories(&deps, &advisories);
+
+    if json {
+        let matched: Vec<serde_json::Value> = matches
+            .iter()
+            .map(|m| {
+                let d = &deps[m.dep_index];
+                let a = &advisories[m.advisory_index];
+                serde_json::json!({
+                    "packageName": d.name,
+                    "ecosystem": d.ecosystem.db_name(),
+                    "version": d.version,
+                    "manifestPath": d.manifest_path,
+                    "sourceId": a.source_id,
+                    "severity": severity_label_supply(a.severity),
+                    "category": category_label_supply(a.category),
+                    "summary": a.summary,
+                })
+            })
+            .collect();
+        let report = serde_json::json!({
+            "manifestsFound": (pkg_json.exists() as u32 + cargo_toml.exists() as u32),
+            "packagesSeen": deps.len() as u32,
+            "advisoriesMatched": matched.len() as u32,
+            "osvQueryFailures": osv_failures,
+            "matched": matched,
+        });
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        return Ok(());
+    }
+
+    // Human-readable.
+    println!(
+        "scanned {}: {} dep(s), {} advisor(ies) matched ({} OSV failures)",
+        root.display(),
+        deps.len(),
+        matches.len(),
+        osv_failures,
+    );
+    for m in &matches {
+        let d = &deps[m.dep_index];
+        let a = &advisories[m.advisory_index];
+        println!(
+            "  [{}] {} {} {} — {} ({})",
+            severity_label_supply(a.severity),
+            d.ecosystem.db_name(),
+            d.name,
+            d.version,
+            a.summary,
+            a.source_id,
+        );
+    }
+    Ok(())
+}
+
+fn severity_label_supply(s: api_vault_supply::AdvisorySeverity) -> &'static str {
+    use api_vault_supply::AdvisorySeverity as S;
+    match s {
+        S::Low => "low",
+        S::Medium => "medium",
+        S::High => "high",
+        S::Critical => "critical",
+    }
+}
+
+fn category_label_supply(c: api_vault_supply::AdvisoryCategory) -> &'static str {
+    use api_vault_supply::AdvisoryCategory as C;
+    match c {
+        C::SecretLeak => "secret_leak",
+        C::CryptoWeak => "crypto_weak",
+        C::SupplyChain => "supply_chain",
+        C::Other => "other",
+    }
 }
 
 #[cfg(test)]

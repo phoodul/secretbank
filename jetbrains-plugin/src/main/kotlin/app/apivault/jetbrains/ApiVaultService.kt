@@ -43,7 +43,10 @@ class ApiVaultService(private val project: Project) {
      * only carry a transient handle.
      */
     fun revealCredential(idOrName: String, passphrase: CharArray): String? {
-        return run("reveal", idOrName, "--stdin-passphrase", input = String(passphrase))
+        // CLI 의 `apivault reveal <id> --print` 는 rpassword 로 stdin 의
+        // passphrase 를 그대로 받음. JetBrains 가 piped stdin 을 흘려 보내면
+        // TTY 가 아니어도 동작.
+        return run("reveal", idOrName, "--print", input = String(passphrase) + "\n")
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
     }
