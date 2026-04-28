@@ -2,6 +2,48 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 13 (자율 모드 — **M9 풀 완료**. G-conflict + G-offline + G-entitlement + G-pair-2.5 연속 종료. 다음 마일스톤 = M18 CLI + MCP server.)
+- **Phase:** Phase 3 — Implementation, **M9 ✅ 풀 완료** (28/28 sub-phases). 113/132 태스크 (85.6%). 다음 → M18 (CLI + MCP server, 글로벌 SaaS 차별화의 첫 표면 — Option A 결정).
+- **이번 Night mode 13 신규 commits (3개):**
+  - `a7be401` feat(sync) — M9 Phase G-conflict: revoked > active 우선순위 정책 + observer 통합 + Vitest +11
+  - `d972752` feat(sync) — M9 Phase G-offline: navigator.onLine 배지 + Sidebar 통합 + i18n + Vitest +3
+  - `33bc6b2` feat(sync) — M9 Phase G-entitlement + G-pair-2.5: Free 2 device 한도 + /pair/poll joiner_pub 노출 + relay vitest +4
+- **Tests (4-28 Night mode 13 종료 시점, M9 클로즈):**
+  - api-vault-crypto: **15 passed** (aead 9 + pairing 6)
+  - api-vault-app lib: **173 passed**
+  - Frontend Vitest: **445 passed** (이전 431 + 14: conflict 9 + observer +2 + OfflineBadge 3)
+  - Relay vitest: **71 passed** (이전 67 + 4: entitlement 3 + pair-2.5 1)
+  - typecheck / lint / clippy 모두 0
+- **이전 Night mode 12 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## M9 클로즈 — 비전 정렬 점검 (2026-04-28)
+
+project-decisions [2026-04-28] 의 자율 모드 운영 원칙: **매 마일스톤 클로즈 시 비전 정렬 점검 1회 의무.**
+
+### M9 의 의의 (회고)
+
+M9 sync 는 글로벌 SaaS 의 **기본 요건** — 그 자체가 차별화는 아니지만, sync 가 흔들리면 다른 모든 차별화 (graph, RAILGUARD, audit) 가 무의미. 8 night modes (Night mode 6~13) + 28 sub-phases 에 걸쳐 단단히 마무리. Zero-Knowledge 정책 (relay 가 ciphertext 만 보관, AAD-bound envelope, 별도 value 채널, X25519 ECDH pairing) 모두 회귀로 검증.
+
+### 다음 — M18 진입 (Option A)
+
+project-decisions [2026-04-28] Option A 결정에 따라 **즉시 M18 (CLI + MCP server)** 진입. 이게 진짜 차별화의 시작:
+- **CLI**: `apivault run -- npm start` 같은 dev tool 일급 시민 표면. dependency graph + RAILGUARD 자산을 GUI 밖으로 노출하는 분배 채널.
+- **MCP server**: Claude / Cursor 가 vault 와 직접 대화 — 아무 경쟁사가 아직 안 만든 새 카테고리. "Claude, OPENAI_KEY 알려줘" 흐름의 안전 표면.
+- 글로벌 dev tool 시장 진입 비용 = 부재 (개발자가 매일 쓰는 도구로 자리잡음).
+
+### 다음 Night mode 14 자율 진입 큐
+
+1. **M18-cli-1** — `apivault-cli` Rust binary 신설 (api-vault-app 의 services / commands 재사용). `apivault list` / `apivault reveal <id>` / `apivault run -- <cmd>` (env 자동 주입 후 sub-process spawn).
+2. **M18-cli-2** — vault unlock 흐름 (passphrase prompt + auto-lock 옵션) + audit log 통합.
+3. **M18-mcp-1** — MCP server (stdio transport) — `mcp-vault-list-credentials` / `mcp-vault-reveal-credential` (with confirmation gate) tool 정의 + Claude/Cursor 프로토콜 호환성.
+4. **M18-mcp-2** — RAILGUARD 자동 트리거 (MCP 서버가 새 credential 사용 패턴 감지 → suggested .cursorrules update).
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 12)
+
 - **Time:** 2026-04-28 Night mode 12 (자율 모드 — G-pair-4b Joiner UI + G-pair-4c deep-link auto-route 연속 완료.)
 - **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+F+G-pair-1/2/3+G-pair-4a/b/c 종료, 24/26 sub-phases). M9 잔여: G-pair-2.5 (poll 확장, 환경복구 후) / G-conflict / G-offline / G-entitlement.
 - **이번 Night mode 12 신규 commits (2개):**

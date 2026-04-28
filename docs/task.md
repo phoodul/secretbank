@@ -37,7 +37,7 @@
 | M6  | Audit Log                       | T069~T074   | 6         | ✅ 6/6 완료         |
 | M7  | Kill Switch                     | T075~T078   | 4         | ✅ 4/4 완료             |
 | M8  | Auth (Passkey + OAuth)          | T079~T086   | 8         | ✅ 8/8 완료 (T079 · T080 · T081 · T082 · T083 클라 9 커맨드 · **T084 SignIn UI** · T085 KDF · T086 refresh) |
-| M9  | Sync Infrastructure             | T087~T096   | 10        | 🔄 진입 (Phase A + B + C + D + E + F + G-pair-1/2/3 + G-pair-4a/b/**c** 종료 — G 잔여 (G-pair-2.5 + G-conflict + G-offline + G-entitlement)) |
+| M9  | Sync Infrastructure             | T087~T096   | 10        | ✅ 풀 완료 (Phase A + B + C + D + E + F + G 모두 종료, 28/28 sub-phases). 다음 → M18 (CLI + MCP server) |
 | M10 | Payments                        | T097~T103   | 7         | ⏳ 대기             |
 | M11 | Mobile Port                     | T104~T109   | 6         | ⏳ 대기             |
 | M12 | Web Read-Only Viewer            | T110~T113   | 4         | ⏳ 대기             |
