@@ -2,6 +2,24 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 9 (자율 모드 — G-pair-2 완료. G-pair-2.5 (poll joiner_pub 확장) 시도했으나 Miniflare workerd ConnectEx #1225 환경 오류로 회귀 검증 불가 → 워킹 카피 revert, 다음 night mode 에서 환경 복구 후 재시도).
+- **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+F+G-pair-1+**G-pair-2** 종료, 20/22 sub-phases). M9 잔여: G-pair-2.5 / G-pair-3 (client) / G-pair-4 (UI) / G-conflict / G-offline / G-entitlement.
+- **이번 Night mode 9 신규 commits (1개):**
+  - `9911d77` feat(sync) — M9 Phase G-pair-2: relay /pair/* endpoints + KV channel
+- **Tests (4-28 Night mode 9 종료 시점):**
+  - api-vault-crypto: 15 (변동 없음)
+  - api-vault-app lib: 168 (변동 없음 — Night mode 9 은 relay 만)
+  - Frontend Vitest: 416 (변동 없음)
+  - Relay vitest: **67 passed** (이전 54 + 13 pair endpoints 회귀)
+- **이번 Night mode 9 의 Miniflare 진단**:
+  - workerd 의 fallback service 가 `ConnectEx #1225 원격 컴퓨터가 네트워크 연결을 거부` — Windows 시스템 레벨 문제 (방화벽 / VPN / port 충돌 추정)
+  - 해결: 다음 night mode 에서 환경 복구 후 G-pair-2.5 의 poll 응답 확장 (joiner_pub_b64 + payload_ciphertext_b64 동시 노출) 회귀 검증 + G-pair-3 client services 진입.
+- **이전 Night mode 8 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 8)
+
 - **Time:** 2026-04-28 Night mode 8 (자율 모드 — F-2 / F-3 / G-pair-1 연속 완료, 자동 진행으로 다음 sub-phase 큐로 무중단 이동)
 - **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+**F 풀**+**G-pair-1** 종료, 19/22 sub-phases). M9 의 잔여: G-pair-2 (relay endpoint) / G-pair-3 (client service) / G-pair-4 (UI) / G-conflict / G-offline / G-entitlement.
 - **이번 Night mode 8 신규 commits (3개):**
