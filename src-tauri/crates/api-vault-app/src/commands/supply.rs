@@ -25,6 +25,10 @@ use api_vault_storage::sqlite::repositories::supply::{
     PackageAdvisoryRepo, PackageRepo, PackageUsageRepo,
 };
 use api_vault_supply::advisory::{AdvisoryCategory, AdvisorySeverity, OsvClient};
+use api_vault_supply::lockfile::{
+    apply_resolved, parse_cargo_lock, parse_package_lock_json, parse_pnpm_lock_yaml,
+    ResolvedVersions,
+};
 use api_vault_supply::manifest::{parse_cargo_toml, parse_package_json};
 use api_vault_supply::matcher::match_advisories;
 use api_vault_supply::DependencyDeclaration;
@@ -87,6 +91,41 @@ fn discover_manifests(root: &Path) -> Vec<(PathBuf, &'static str)> {
     out
 }
 
+/// Best-effort lockfile resolution. 깨진 파일은 warning + 계속.
+fn collect_resolved_versions(root: &Path) -> ResolvedVersions {
+    let mut out = ResolvedVersions::new();
+
+    let pkg_lock = root.join("package-lock.json");
+    if pkg_lock.exists() {
+        match parse_package_lock_json(&pkg_lock) {
+            Ok(r) => out.extend(r),
+            Err(e) => tracing::warn!(error = %e, "package-lock.json parse failed"),
+        }
+    }
+
+    let pnpm_lock = root.join("pnpm-lock.yaml");
+    if pnpm_lock.exists() {
+        match parse_pnpm_lock_yaml(&pnpm_lock) {
+            Ok(r) => {
+                for (k, v) in r {
+                    out.entry(k).or_insert(v);
+                }
+            }
+            Err(e) => tracing::warn!(error = %e, "pnpm-lock.yaml parse failed"),
+        }
+    }
+
+    let cargo_lock = root.join("Cargo.lock");
+    if cargo_lock.exists() {
+        match parse_cargo_lock(&cargo_lock) {
+            Ok(r) => out.extend(r),
+            Err(e) => tracing::warn!(error = %e, "Cargo.lock parse failed"),
+        }
+    }
+
+    out
+}
+
 fn parse_manifest(
     path: &Path,
     kind: &str,
@@ -122,6 +161,12 @@ pub async fn supply_scan_project(
     for (path, kind) in &manifests {
         let mut ds = parse_manifest(path, kind)?;
         all_deps.append(&mut ds);
+    }
+
+    // M20 v2 — lockfile resolve: range string → 단일 version
+    let resolved = collect_resolved_versions(&root);
+    if !resolved.is_empty() {
+        apply_resolved(&mut all_deps, &resolved);
     }
 
     // upsert package + package_usage.

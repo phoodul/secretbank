@@ -21,6 +21,8 @@ time = { workspace = true }
 
 # Manifest parsers
 toml = { workspace = true }
+semver = { workspace = true }
+serde_yaml = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

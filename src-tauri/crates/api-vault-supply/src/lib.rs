@@ -15,14 +15,21 @@
 
 pub mod advisory;
 pub mod ecosystem;
+pub mod lockfile;
 pub mod manifest;
 pub mod matcher;
+pub mod range_eval;
 
 pub use advisory::{
     AdvisoryCategory, AdvisorySeverity, OsvClient, OsvClientError, PackageAdvisory,
 };
 pub use ecosystem::{Ecosystem, ParseEcosystemError};
+pub use lockfile::{
+    apply_resolved, parse_cargo_lock, parse_package_lock_json, parse_pnpm_lock_yaml,
+    ResolvedVersions,
+};
 pub use matcher::{match_advisories, MatchResult};
+pub use range_eval::version_in_range;
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
