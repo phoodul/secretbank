@@ -1,6 +1,7 @@
 [workspace]
 members = ["crates/*"]
 resolver = "2"
+exclude = []
 
 [workspace.dependencies]
 # Async runtime

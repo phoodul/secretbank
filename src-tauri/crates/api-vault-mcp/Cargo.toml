@@ -1,0 +1,33 @@
+[package]
+name = "api-vault-mcp"
+version = "0.1.0"
+edition = "2021"
+description = "API Vault MCP server — Model Context Protocol bridge for Claude / Cursor / Continue"
+
+[[bin]]
+name = "apivault-mcp"
+path = "src/main.rs"
+
+[dependencies]
+# Workspace runtime — need io-std for stdin/stdout async readers.
+tokio = { workspace = true, features = ["io-std"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+secrecy = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Domain
+api-vault-storage = { path = "../api-vault-storage" }
+api-vault-core = { path = "../api-vault-core" }
+api-vault-crypto = { path = "../api-vault-crypto" }
+
+# CLI tooling
+clap = { workspace = true }
+rpassword = { workspace = true }
+directories = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
