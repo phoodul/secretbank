@@ -20,6 +20,9 @@ rand = { workspace = true }
 # AEAD (M9 sync — XChaCha20-Poly1305 wire-호환 with @noble/ciphers)
 chacha20poly1305 = { workspace = true }
 
+# X25519 ECDH (M9 device pairing — Phase G T092)
+x25519-dalek = { workspace = true }
+
 # OS Keyring
 keyring = { workspace = true }
 hex = { workspace = true }

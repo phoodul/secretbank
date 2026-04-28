@@ -1,6 +1,7 @@
 pub mod aead;
 pub mod kdf;
 pub mod os_keyring;
+pub mod pairing;
 
 use thiserror::Error;
 

@@ -255,6 +255,7 @@ dependencies = [
  "secrecy",
  "sha2",
  "thiserror 2.0.18",
+ "x25519-dalek",
  "zeroize",
 ]
 
