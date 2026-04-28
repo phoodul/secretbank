@@ -93,6 +93,26 @@ export const encryptedDoc = sqliteTable(
 );
 
 // ───────────────────────────────────────────────────────────
+// encrypted_secret_value — M9 Sync Phase F (value channel, LWW)
+// per-credential row. ciphertext = AEAD(value-root, plaintext_secret).
+// ───────────────────────────────────────────────────────────
+export const encryptedSecretValue = sqliteTable(
+  "encrypted_secret_value",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    credentialId: text("credential_id").notNull(),
+    version: integer("version").notNull().default(0),
+    ciphertext: blob("ciphertext", { mode: "buffer" }).notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => ({
+    userUpdatedIdx: index("idx_encrypted_secret_value_user_updated").on(t.userId, t.updatedAt),
+  }),
+);
+
+// ───────────────────────────────────────────────────────────
 // oauth_account — GitHub / Google / future
 // ───────────────────────────────────────────────────────────
 export const oauthAccount = sqliteTable(

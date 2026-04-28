@@ -179,3 +179,116 @@ sync.post("/snapshot", async (c) => {
 
   return c.json({ version: row?.version ?? 1 });
 });
+
+// ---------------------------------------------------------------------------
+// POST /sync/values — push a single credential value (Phase F)
+//   body: { credential_id, ciphertext_b64 }
+//   resp: 200 { version, updated_at }
+// ---------------------------------------------------------------------------
+sync.post("/values", async (c) => {
+  const auth = await requireAuth(c);
+  if (!auth.ok) return auth.res;
+
+  const rl = await checkRateLimit(c.env.TOKEN_CACHE, auth.userId, SYNC_RATE_LIMIT);
+  if (!rl.ok) {
+    return c.json(
+      { error: "rate_limited", reset_ms: rl.resetMs },
+      429,
+      { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
+    );
+  }
+
+  const body = (await c.req.json().catch(() => null)) as
+    | { credential_id?: unknown; ciphertext_b64?: unknown }
+    | null;
+  if (!body) return c.json({ error: "invalid_payload" }, 400);
+  if (typeof body.credential_id !== "string" || body.credential_id.length === 0) {
+    return c.json({ error: "missing_credential_id" }, 400);
+  }
+  if (typeof body.ciphertext_b64 !== "string" || body.ciphertext_b64.length === 0) {
+    return c.json({ error: "missing_ciphertext" }, 400);
+  }
+  // credential_id 길이 가드 — 비정상적으로 큰 ID 는 의도하지 않은 사용 (ULID 26자 또는 UUID).
+  if (body.credential_id.length > 64) {
+    return c.json({ error: "invalid_credential_id" }, 400);
+  }
+
+  let ct: Uint8Array;
+  try {
+    ct = base64ToBytes(body.ciphertext_b64);
+  } catch {
+    return c.json({ error: "invalid_base64" }, 400);
+  }
+  const MAX_VALUE_BYTES = 64 * 1024; // 단일 secret value 는 64KB 면 충분 (실제는 수백 byte)
+  if (ct.byteLength > MAX_VALUE_BYTES) {
+    return c.json({ error: "payload_too_large" }, 413);
+  }
+
+  const now = Date.now();
+  await c.env.DB.prepare(
+    `INSERT INTO encrypted_secret_value (user_id, credential_id, version, ciphertext, updated_at)
+     VALUES (?, ?, 1, ?, ?)
+     ON CONFLICT (user_id, credential_id) DO UPDATE SET
+       version = version + 1,
+       ciphertext = excluded.ciphertext,
+       updated_at = excluded.updated_at`,
+  )
+    .bind(auth.userId, body.credential_id, ct, now)
+    .run();
+
+  const row = await c.env.DB.prepare(
+    "SELECT version, updated_at FROM encrypted_secret_value WHERE user_id = ? AND credential_id = ?",
+  )
+    .bind(auth.userId, body.credential_id)
+    .first<{ version: number; updated_at: number }>();
+
+  return c.json({ version: row?.version ?? 1, updated_at: row?.updated_at ?? now });
+});
+
+// ---------------------------------------------------------------------------
+// GET /sync/values?since=<ms>  (Phase F)
+//   resp: 200 { values: [{ credential_id, version, ciphertext_b64, updated_at }, ...] }
+//   `since` 는 ms timestamp. 0 또는 미지정 시 모든 row 반환.
+// ---------------------------------------------------------------------------
+sync.get("/values", async (c) => {
+  const auth = await requireAuth(c);
+  if (!auth.ok) return auth.res;
+
+  const rl = await checkRateLimit(c.env.TOKEN_CACHE, auth.userId, SYNC_RATE_LIMIT);
+  if (!rl.ok) {
+    return c.json(
+      { error: "rate_limited", reset_ms: rl.resetMs },
+      429,
+      { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
+    );
+  }
+
+  const sinceRaw = c.req.query("since");
+  const since = sinceRaw != null ? Number.parseInt(sinceRaw, 10) : 0;
+  if (!Number.isFinite(since) || since < 0) {
+    return c.json({ error: "invalid_since" }, 400);
+  }
+
+  const result = await c.env.DB.prepare(
+    `SELECT credential_id, version, ciphertext, updated_at
+     FROM encrypted_secret_value
+     WHERE user_id = ? AND updated_at > ?
+     ORDER BY updated_at ASC`,
+  )
+    .bind(auth.userId, since)
+    .all<{
+      credential_id: string;
+      version: number;
+      ciphertext: ArrayBuffer | null;
+      updated_at: number;
+    }>();
+
+  const values = (result.results ?? []).map((r) => ({
+    credential_id: r.credential_id,
+    version: r.version,
+    ciphertext_b64: r.ciphertext ? bufferToBase64(r.ciphertext) : "",
+    updated_at: r.updated_at,
+  }));
+
+  return c.json({ values });
+});

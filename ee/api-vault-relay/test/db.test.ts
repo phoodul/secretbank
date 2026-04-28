@@ -22,7 +22,7 @@ beforeAll(async () => {
   await applyD1Migrations(typedEnv.DB, typedEnv.TEST_MIGRATIONS);
 });
 
-describe("D1 schema (0001_init + 0002_auth + 0003_sync)", () => {
+describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () => {
   it("user 테이블에 auth/billing 컬럼이 모두 존재한다", async () => {
     const result = await typedEnv.DB.prepare(
       "SELECT name FROM pragma_table_info('user')",
@@ -59,9 +59,52 @@ describe("D1 schema (0001_init + 0002_auth + 0003_sync)", () => {
       "user",
       "github_installation",
       "encrypted_doc",
+      "encrypted_secret_value",
     ]) {
       expect(tables).toContain(t);
     }
+  });
+
+  it("encrypted_secret_value 의 (user_id, credential_id) PK + cascade 가 동작한다", async () => {
+    const userId = "user_secval_001";
+    const now = Date.now();
+
+    await typedEnv.DB.prepare(
+      `INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`,
+    )
+      .bind(userId, "secval1@example.com", now)
+      .run();
+
+    // 같은 (user, cred) 쌍에 두 번 insert 시 PK 충돌
+    await typedEnv.DB.prepare(
+      `INSERT INTO encrypted_secret_value (user_id, credential_id, version, ciphertext, updated_at)
+       VALUES (?, ?, 1, ?, ?)`,
+    )
+      .bind(userId, "crd_aaa", new Uint8Array([1, 2, 3]), now)
+      .run();
+
+    let threw = false;
+    try {
+      await typedEnv.DB.prepare(
+        `INSERT INTO encrypted_secret_value (user_id, credential_id, version, ciphertext, updated_at)
+         VALUES (?, ?, 1, ?, ?)`,
+      )
+        .bind(userId, "crd_aaa", new Uint8Array([4, 5, 6]), now)
+        .run();
+    } catch (e) {
+      threw = true;
+      expect(String((e as Error).message)).toMatch(/UNIQUE|constraint|PRIMARY/i);
+    }
+    expect(threw).toBe(true);
+
+    // user 삭제 시 cascade
+    await typedEnv.DB.prepare(`DELETE FROM user WHERE id = ?`).bind(userId).run();
+    const after = await typedEnv.DB.prepare(
+      `SELECT COUNT(*) as n FROM encrypted_secret_value WHERE user_id = ?`,
+    )
+      .bind(userId)
+      .first<{ n: number }>();
+    expect(after?.n).toBe(0);
   });
 
   it("encrypted_doc 의 user_id PK + ON DELETE CASCADE 제약이 동작한다", async () => {
