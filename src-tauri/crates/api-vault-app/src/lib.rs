@@ -30,6 +30,7 @@ use commands::projects::{
 };
 use commands::scanner::env_scan_folder;
 use commands::settings::{settings_get, settings_set};
+use commands::sync::sync_get_root_key;
 use commands::usage::{
     usage_create, usage_delete, usage_list_for_credential, usage_list_for_project,
 };
@@ -199,6 +200,7 @@ pub fn run(context: tauri::Context) {
             auth_refresh,
             auth_signout,
             auth_status,
+            sync_get_root_key,
         ]);
     }
 
@@ -267,6 +269,7 @@ pub fn run(context: tauri::Context) {
             auth_refresh,
             auth_signout,
             auth_status,
+            sync_get_root_key,
         ]);
     }
 

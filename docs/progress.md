@@ -67,12 +67,12 @@
   5. ✅ **5건 사용자 결정 + Phased Expansion** — Free 종류 무관 2대 / Auto-derive on unlock / SQLite 화이트리스트 / SecSync 잠정 (Phase C 검증) / MVP API 특화 + v1.1 General Secrets + v1.2 자동입력. project-decisions.md 5건 기록 + m9-phase-plan.md Open Issues Resolved 갱신.
   6. ✅ **M9 Phase B-1** — AuthSession 에 `salt_auth`/`salt_enc`/`enc_key` 필드 + Debug 마스킹 + save/load_session 확장 (enc_key 영속 금지) + AppContext.master_passphrase 라이프사이클 (vault_unlock 시 채움 / vault_lock 시 zeroize) + 7 테스트 컨텍스트 갱신 + Rust lib 회귀 136 → 141 (+5).
   7. ✅ **M9 Phase B-2** — complete_session 시그니처에 new_salts 추가 + verify 4 커맨드 시그니처에 salt_auth/salt_enc 추가 + hydrate_session_from_vault 가 vault_unlock 직후 자동 derive + PasskeyButton 이 verify 호출 시 salts 송신. Rust lib 141 → **147 (+6)**, Vitest 346 유지 (+1 expect).
+  8. ✅ **M9 Phase B-3** — commands/sync.rs 신설, sync_get_root_key 커맨드 (derive_subkey enc_key "crdt-root" → base64url 32바이트), NoSyncSession 에러. lib.rs handler 등록. Rust lib 147 → **152 (+5)**. **Phase B 종료** (B-4 OAuth는 옵션, Phase C 와 병행 가능).
 
 - **다음 Night mode 큐:**
-  1. **B-3** — sync_get_root_key 커맨드 (commands/sync.rs 신설, derive_subkey enc_key "crdt-root" → base64url 32바이트, NoSyncSession 에러)
-  2. **B-4 (옵션)** — OAuth callback 응답에 salts 포함 (relay 측 변경)
-  3. **Phase C** — SecSync stable 검증 + Yjs E2EE 통합
-  4. **Phase D~G** — `docs/m9-phase-plan.md` 순차 실행
+  1. **Phase C** — SecSync stable 5개 체크리스트 검증 → 채택 (또는 fallback D: Yjs + 자체 transport) → SyncProvider 에 SecSync 통합
+  2. **B-4 (옵션, Phase C 와 병행)** — OAuth callback 응답에 salts 포함 (relay 측 변경)
+  3. **Phase D~G** — `docs/m9-phase-plan.md` 순차 실행
 
 - **T084 의 deferred 항목 (M9 진입 시점에 처리):**
   - 성공 후 redirect 경로를 `/settings/sync` 로 변경 (현재 `/settings`)

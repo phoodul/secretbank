@@ -12,6 +12,7 @@ pub mod projects;
 pub mod railguard;
 pub mod scanner;
 pub mod settings;
+pub mod sync;
 pub mod usage;
 pub mod vault;
 pub mod vault_settings;

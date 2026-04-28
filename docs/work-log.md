@@ -1,5 +1,60 @@
 # Work Log
 
+## 2026-04-28 Night mode 3 — M9 Phase B-3 (sync_get_root_key) — Phase B 종료
+
+### 세션 개요
+
+- **목표**: M9 sync 가 enc_key 를 사용할 수 있는 인터페이스 노출. Phase B 의 마지막 sub-phase.
+- **결과**: 1 commit (예정), api-vault-app lib **147 → 152 (+5)**, clippy 0.
+
+### 구현
+
+**신규 파일** `crates/api-vault-app/src/commands/sync.rs`:
+- `SyncCommandError` enum — `NoSyncSession` / `Kdf` 두 variant
+- `sync_get_root_key(state) -> Result<String, SyncCommandError>` Tauri 커맨드
+  - `auth_session.enc_key` 가 `None` 이면 `NoSyncSession` 즉시 반환 (no-op, 안전)
+  - `kdf::derive_subkey(enc_key, "crdt-root")` → 32바이트 base64url 문자열 반환
+  - 결정론: 같은 enc_key 입력 → 같은 root key (sync correctness invariant)
+- HKDF info string `"crdt-root"` 는 **고정 라벨** — 변경 시 모든 디바이스의 Y.Doc 복호화가 깨짐. 향후 `value-root` 등은 별도 커맨드로 추가
+
+**lib.rs 등록**: tauri-plugins / non-plugins 양쪽 invoke_handler 에 `sync_get_root_key` 등록.
+
+### 회귀 +5
+
+1. **returns_base64url_root_key_when_enc_key_present** — happy path, 32바이트 길이 검증
+2. **root_key_is_deterministic** — 같은 enc_key 두 번 호출 → 같은 결과
+3. **root_key_differs_for_different_enc_keys** — 다른 enc_key → 다른 root key (Zero-Knowledge invariant)
+4. **no_session_returns_no_sync_session** — 세션 없을 때 NoSyncSession
+5. **session_without_enc_key_returns_no_sync_session** — 세션은 있지만 enc_key None (graceful degrade) → NoSyncSession
+
+### Phase B 종료 — 진행 현황
+
+- ✅ B-1 메모리 구조 + master_passphrase 라이프사이클
+- ✅ B-2 verify 흐름에 derive 통합 + hydrate 자동 적재
+- ✅ B-3 sync_get_root_key 커맨드
+- ⏳ B-4 (옵션) OAuth callback 응답 salts (relay 측 변경)
+
+**B-4 는 Phase C 진입 전에 처리하지 않아도 무방**. OAuth user 가 sync 활성화하려면 한 번 lock+unlock 사이클을 거쳐야 하지만, Passkey user 는 이번 commit 으로 즉시 활성화 가능. B-4 는 OAuth UX 개선 작업으로 Phase C 와 병행 가능.
+
+### 검증
+
+- `cargo test -p api-vault-app --lib` — **152 통과** (이전 147 +5)
+- `cargo clippy --workspace --all-targets --all-features -D warnings` — 0
+- 워크스페이스 전체 그린
+
+### 다음
+
+**Phase C** — SecSync 라이브러리 통합. 진입 전 5개 stable 체크리스트 검증 필요 (project-decisions.md [2026-04-28] D 항목):
+1. 최근 6개월 release/commit 활동
+2. Yjs 13.6.x 호환
+3. React 19 + TypeScript 5.x 충돌 없음
+4. CVE / 보안 issue 없음
+5. Cloudflare Workers transport 통합 사례
+
+≥ 3 fail 시 fallback D (Yjs + 자체 transport).
+
+---
+
 ## 2026-04-28 Night mode 3 — M9 Phase B-2 (verify 흐름에 derive 통합)
 
 ### 세션 개요
