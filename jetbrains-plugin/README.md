@@ -5,32 +5,41 @@
 
 ## Features
 
+### Tool Window (`View → Tool Windows → API Vault`)
+
+Three tabs on the right side of the IDE:
+
+- **Credentials** — live list with filter, refresh, and one-click reveal
+  (passphrase prompt → clipboard, auto-clear in 30s).
+- **Supply chain** — sortable advisory table with severity-coloured rows.
+  Double-click a row to jump to the manifest line. Cached scan persists
+  between Tool Window opens.
+- **Settings** — per-project CLI path and "scan on project open" toggle.
+
 ### Tools menu (`Tools → API Vault`)
 
-- **List credentials** — popup chooser with metadata only.
-- **Reveal credential…** — passphrase prompt → clipboard for 30 seconds.
-- **Scan supply-chain risk** — runs the OSV scan on the current project,
-  caches the result for inspections.
+- **List credentials** — popup chooser.
+- **Reveal credential…** — passphrase prompt → clipboard.
+- **Scan supply-chain risk** — runs the OSV scan, caches for inspections.
 
 ### Inspections
 
-- `package.json` and `Cargo.toml` lines whose package matches a
+- `package.json`, `Cargo.toml` (and via the line parser also
+  `requirements.txt` / `go.mod` patterns) whose package matches a
   cached supply-chain advisory show as **WARNING** with severity +
   category + advisory ID inline.
-- Run `Tools → API Vault → Scan supply-chain risk` first to populate
-  the cache.
 
 ### Status bar
 
-A small shield icon next to the IDE notifications area. Click to open
-the credential list.
+Shield icon next to the IDE notifications area. Click to open the
+credential list.
 
-### Settings
+### Auto-scan on open
 
-`Settings → Tools → API Vault`:
-
-- **CLI path** — defaults to `apivault` on PATH.
-- **Scan on project open** (off by default).
+If **Scan on project open** is enabled in the Settings tab, the
+plugin runs a supply-chain scan in the background when the project
+loads. Result is cached so the Tool Window's Supply chain tab
+populates immediately.
 
 ## Requires
 

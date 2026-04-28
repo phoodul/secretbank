@@ -49,5 +49,35 @@ class InspectionsTest {
         assertNull(parsePackageNameFromLine("# comment"))
         assertNull(parsePackageNameFromLine(""))
         assertNull(parsePackageNameFromLine("   "))
+        assertNull(parsePackageNameFromLine("// comment"))
+    }
+
+    @Test
+    fun `requirements txt pinned`() {
+        assertEquals("requests", parsePackageNameFromLine("requests==2.31.0"))
+        assertEquals("django", parsePackageNameFromLine("django>=4.2"))
+        assertEquals("black", parsePackageNameFromLine("black~=24.0"))
+    }
+
+    @Test
+    fun `go mod single-line require`() {
+        assertEquals(
+            "github.com/pkg/errors",
+            parsePackageNameFromLine("require github.com/pkg/errors v0.9.1")
+        )
+    }
+
+    @Test
+    fun `go mod block-line dependency`() {
+        assertEquals(
+            "github.com/spf13/cobra",
+            parsePackageNameFromLine("\tgithub.com/spf13/cobra v1.8.0")
+        )
+    }
+
+    @Test
+    fun `go mod meta keywords excluded`() {
+        assertNull(parsePackageNameFromLine("module github.com/foo/bar"))
+        assertNull(parsePackageNameFromLine("go 1.21"))
     }
 }

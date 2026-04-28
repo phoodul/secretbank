@@ -27,13 +27,22 @@
     <change-notes><![CDATA[
         <h3>0.1.0</h3>
         <ul>
-            <li>Initial release — list / reveal credentials, supply-chain scan, status-bar widget, manifest inspection.</li>
+            <li>Tool Window (right side) with Credentials / Supply Chain / Settings tabs.</li>
+            <li>Auto-scan on project open (opt-in via Settings tab).</li>
+            <li>Status-bar widget, Tools menu actions, manifest inspections.</li>
+            <li>List / reveal / scan via the local <code>apivault</code> CLI.</li>
         </ul>
     ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <toolWindow
+            id="API Vault"
+            anchor="right"
+            secondary="true"
+            icon="AllIcons.Actions.Show"
+            factoryClass="app.apivault.jetbrains.ApiVaultToolWindowFactory"/>
         <statusBarWidgetFactory
             id="app.api-vault.jetbrains.statusBar"
             implementation="app.apivault.jetbrains.ApiVaultStatusBarWidgetFactory"
@@ -54,6 +63,10 @@
             implementationClass="app.apivault.jetbrains.CargoTomlAdvisoryInspection"/>
         <projectService
             serviceImplementation="app.apivault.jetbrains.ApiVaultService"/>
+        <projectService
+            serviceImplementation="app.apivault.jetbrains.ApiVaultSettings"/>
+        <postStartupActivity
+            implementation="app.apivault.jetbrains.ProjectStartup"/>
         <notificationGroup
             id="app.api-vault.jetbrains.notifications"
             displayType="BALLOON"

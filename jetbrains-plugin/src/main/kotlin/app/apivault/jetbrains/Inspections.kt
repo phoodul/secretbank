@@ -64,15 +64,17 @@ private class ManifestAdvisoryVisitor(
 
 /**
  * 한 줄에서 패키지 이름을 추출. package.json 의 `"name": "1.2.3"` 또는
- * Cargo.toml 의 `name = "1.2"` / `name = { version = "1.2" }` 라인 모두 지원.
+ * Cargo.toml 의 `name = "1.2"` / `name = { version = "1.2" }`,
+ * requirements.txt 의 `requests==2.31.0`, go.mod 의 `require module/path v1.2.3`.
  */
 internal fun parsePackageNameFromLine(line: String): String? {
     val trimmed = line.trim()
+    if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("//")) return null
+
     // package.json: "@scope/foo": "..."
     val jsonMatch = Regex("""^"([^"]+)"\s*:\s*[\{"]""").find(trimmed)
     if (jsonMatch != null) {
         val name = jsonMatch.groupValues[1]
-        // 섹션 키 제외
         if (name in listOf(
                 "dependencies", "devDependencies", "peerDependencies",
                 "optionalDependencies", "scripts", "engines", "name", "version"
@@ -84,6 +86,23 @@ internal fun parsePackageNameFromLine(line: String): String? {
     if (cargoMatch != null) {
         val name = cargoMatch.groupValues[1]
         if (name in listOf("name", "version", "edition", "description", "license", "authors", "repository", "homepage")) return null
+        return name
+    }
+    // requirements.txt: requests==2.31.0  /  django>=4.2  /  black~=24.0
+    val pyMatch = Regex("""^([A-Za-z0-9_\-.]+)\s*(==|>=|<=|>|<|~=|!=)""").find(trimmed)
+    if (pyMatch != null) {
+        return pyMatch.groupValues[1]
+    }
+    // go.mod (single-line `require`): `require module/path v1.2.3`
+    val goReqMatch = Regex("""^require\s+([^\s]+)\s+v\d""").find(trimmed)
+    if (goReqMatch != null) {
+        return goReqMatch.groupValues[1]
+    }
+    // go.mod block: `module/path v1.2.3` (when inside `require ( ... )`)
+    val goLine = Regex("""^([a-zA-Z0-9_./\-]+)\s+v\d""").find(trimmed)
+    if (goLine != null) {
+        val name = goLine.groupValues[1]
+        if (name in listOf("require", "go", "module", "replace", "exclude")) return null
         return name
     }
     return null
