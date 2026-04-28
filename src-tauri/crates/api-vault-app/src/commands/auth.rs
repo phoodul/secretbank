@@ -23,7 +23,9 @@ use api_vault_storage::vault::VaultError;
 
 use crate::context::AppContext;
 use crate::services::relay_client::RelayError;
-use crate::services::session::{save_session, AuthSession, AuthTokensResponse};
+use crate::services::session::{
+    derive_session_keys, save_session, AuthSession, AuthTokensResponse,
+};
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -172,9 +174,24 @@ fn ensure_nonblank(field: &str, value: &str) -> Result<(), AuthCommandError> {
 
 /// Persist the relay's JWT pair into the vault and refresh the in-memory
 /// `auth_session` cache, then return a sanitised DTO (no tokens).
+///
+/// **M9 Phase B-2**: when `new_salts` is supplied (Passkey verify flow), they
+/// override the previously stored salts and `enc_key` is derived in place via
+/// `derive_session_keys(master_passphrase, ...)`. When `new_salts` is `None`
+/// (refresh / OAuth callback paths), pre-existing salts are preserved and
+/// `enc_key` is re-derived from the same passphrase + persisted salts —
+/// `derive_session_keys` is deterministic so the new enc_key matches the
+/// previous one byte-for-byte.
+///
+/// If `master_passphrase` is unavailable (vault locked, which shouldn't happen
+/// here because verify is gated behind `require_vault_unlocked`) or
+/// `derive_session_keys` errors, the session is still saved but `enc_key` is
+/// left as `None` — the user will sign in again or the next `vault_unlock`
+/// hydration will retry.
 async fn complete_session(
     state: &AppContext,
     tokens: AuthTokensResponse,
+    new_salts: Option<(&str, &str)>,
 ) -> Result<AuthSessionDto, AuthCommandError> {
     // SystemTime cannot fail here outside of clock-before-epoch scenarios that
     // would already have crashed the OS — treat as internal if it ever does.
@@ -185,7 +202,41 @@ async fn complete_session(
         })?
         .as_secs() as i64;
 
-    let session = AuthSession::from_response(tokens, now);
+    let mut session = AuthSession::from_response(tokens, now);
+
+    // Preserve previously persisted salts across refresh/OAuth paths so we
+    // don't lose enc_key derivation context. Verify paths overwrite below.
+    {
+        let prev = state.auth_session.read().await;
+        if let Some(p) = prev.as_ref() {
+            session.salt_auth = p.salt_auth.clone();
+            session.salt_enc = p.salt_enc.clone();
+        }
+    }
+
+    if let Some((sa, se)) = new_salts {
+        session.salt_auth = Some(sa.to_owned());
+        session.salt_enc = Some(se.to_owned());
+    }
+
+    // Derive enc_key from master_passphrase + salts when both are available.
+    // Failure is non-fatal — sync stays inactive until the user re-unlocks.
+    if let (Some(sa), Some(se)) = (session.salt_auth.as_ref(), session.salt_enc.as_ref()) {
+        let mp = state.master_passphrase.read().await;
+        if let Some(passphrase) = mp.as_ref() {
+            match derive_session_keys(passphrase, sa, se) {
+                Ok(derived) => {
+                    session.enc_key = Some(derived.enc_key);
+                }
+                Err(e) => {
+                    tracing::warn!(error = %e, "derive_session_keys failed during complete_session");
+                }
+            }
+        } else {
+            tracing::warn!("master_passphrase missing in complete_session — enc_key not derived");
+        }
+    }
+
     let dto = AuthSessionDto {
         user_id: session.user_id.clone(),
         expires_at: session.expires_at,
@@ -249,21 +300,30 @@ pub async fn auth_passkey_register_start(
 /// DTO.
 ///
 /// `response` is the raw `RegistrationResponseJSON` produced by the browser.
+///
+/// **M9 Phase B-2**: `salt_auth` / `salt_enc` are the values returned by
+/// the matching `register/start` call — the frontend stashes them between
+/// the start and verify steps and forwards them here so we can derive the
+/// device's `enc_key` while `master_passphrase` is still hot.
 #[tauri::command]
 pub async fn auth_passkey_register_verify(
     email: String,
     response: serde_json::Value,
+    salt_auth: String,
+    salt_enc: String,
     state: State<'_, AppContext>,
 ) -> Result<AuthSessionDto, AuthCommandError> {
     ensure_nonempty_email(&email)?;
     require_vault_unlocked(&state).await?;
+    ensure_nonblank("salt_auth", &salt_auth)?;
+    ensure_nonblank("salt_enc", &salt_enc)?;
 
     let body = serde_json::json!({ "email": email, "response": response });
     let tokens: AuthTokensResponse = state
         .relay_client
         .post_json("/auth/passkey/register/verify", &body)
         .await?;
-    complete_session(&state, tokens).await
+    complete_session(&state, tokens, Some((&salt_auth, &salt_enc))).await
 }
 
 // ---------------------------------------------------------------------------
@@ -292,21 +352,29 @@ pub async fn auth_passkey_assert_start(
 
 /// `POST /auth/passkey/assert/verify` — verify the WebAuthn assertion and
 /// activate the session.
+///
+/// **M9 Phase B-2**: like `register_verify`, `salt_auth` / `salt_enc` come
+/// from the matching `assert/start` response and are required for `enc_key`
+/// derivation.
 #[tauri::command]
 pub async fn auth_passkey_assert_verify(
     email: String,
     response: serde_json::Value,
+    salt_auth: String,
+    salt_enc: String,
     state: State<'_, AppContext>,
 ) -> Result<AuthSessionDto, AuthCommandError> {
     ensure_nonempty_email(&email)?;
     require_vault_unlocked(&state).await?;
+    ensure_nonblank("salt_auth", &salt_auth)?;
+    ensure_nonblank("salt_enc", &salt_enc)?;
 
     let body = serde_json::json!({ "email": email, "response": response });
     let tokens: AuthTokensResponse = state
         .relay_client
         .post_json("/auth/passkey/assert/verify", &body)
         .await?;
-    complete_session(&state, tokens).await
+    complete_session(&state, tokens, Some((&salt_auth, &salt_enc))).await
 }
 
 // ---------------------------------------------------------------------------
@@ -342,6 +410,11 @@ async fn fetch_oauth_authorize(
 }
 
 /// Pure helper for `auth_oauth_callback` — relay POST + persistence.
+///
+/// **M9 Phase B-2**: OAuth callback responses do not yet include
+/// `salt_auth` / `salt_enc` (Phase B-4 will extend the relay's OAuth callback
+/// payload). For now we pass `None` — the user's `enc_key` stays unset until
+/// they sign in again via Passkey or until Phase B-4 ships.
 async fn exchange_oauth_callback(
     state: &AppContext,
     provider: &str,
@@ -353,7 +426,7 @@ async fn exchange_oauth_callback(
         .relay_client
         .post_json(&format!("/auth/oauth/{provider}/callback"), &body)
         .await?;
-    complete_session(state, tokens).await
+    complete_session(state, tokens, None).await
 }
 
 /// `POST /auth/oauth/:provider/start` + open the OS browser.
@@ -448,7 +521,9 @@ pub async fn auth_refresh(
         .relay_client
         .post_json("/auth/refresh", &body)
         .await?;
-    complete_session(&state, tokens).await
+    // Refresh: rotate tokens but keep previously persisted salts. complete_session
+    // copies them from auth_session and re-derives enc_key deterministically.
+    complete_session(&state, tokens, None).await
 }
 
 /// Clear the persisted session and the in-memory cache.
@@ -491,16 +566,49 @@ pub async fn auth_status(
 /// `vault_unlock` so the renderer's first `auth_status` call returns the
 /// persisted session without a network hop.
 ///
+/// **M9 Phase B-2**: when the loaded session has both `salt_auth` and
+/// `salt_enc` persisted **and** `master_passphrase` is hot, we re-derive
+/// `enc_key` in place so M9 sync can immediately consume it via
+/// `sync_get_root_key`. `derive_session_keys` is deterministic, so the
+/// resulting `enc_key` matches every previous device-local sign-in by the
+/// same user.
+///
 /// Treats a missing or malformed on-disk session as no-session (the user will
-/// be prompted to sign in again).
+/// be prompted to sign in again). enc_key derivation failure is non-fatal —
+/// auth state is still hydrated, sync simply stays inactive.
 pub async fn hydrate_session_from_vault(state: &AppContext) -> Result<(), AuthCommandError> {
     use crate::services::session::load_session;
     let loaded = {
         let vault = state.vault.read().await;
         load_session(vault.as_ref()).await.ok().flatten()
     };
+
+    let mut session = match loaded {
+        Some(s) => s,
+        None => {
+            let mut auth = state.auth_session.write().await;
+            *auth = None;
+            return Ok(());
+        }
+    };
+
+    // Phase B-2: derive enc_key in place when prerequisites are met.
+    if let (Some(sa), Some(se)) = (session.salt_auth.as_ref(), session.salt_enc.as_ref()) {
+        let mp = state.master_passphrase.read().await;
+        if let Some(passphrase) = mp.as_ref() {
+            match derive_session_keys(passphrase, sa, se) {
+                Ok(derived) => {
+                    session.enc_key = Some(derived.enc_key);
+                }
+                Err(e) => {
+                    tracing::warn!(error = %e, "derive_session_keys failed during hydrate");
+                }
+            }
+        }
+    }
+
     let mut auth = state.auth_session.write().await;
-    *auth = loaded;
+    *auth = Some(session);
     Ok(())
 }
 
@@ -595,6 +703,18 @@ mod tests {
             .await?)
     }
 
+    /// Test salts — properly base64url-encoded 32-byte values derived from
+    /// `[1u8; 32]` and `[2u8; 32]`. Stored as constants so each test gets
+    /// reproducible derivations.
+    fn test_salt_auth() -> String {
+        use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+        URL_SAFE_NO_PAD.encode([1u8; 32])
+    }
+    fn test_salt_enc() -> String {
+        use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+        URL_SAFE_NO_PAD.encode([2u8; 32])
+    }
+
     async fn direct_register_verify(
         ctx: &AppContext,
         email: String,
@@ -607,7 +727,9 @@ mod tests {
             .relay_client
             .post_json("/auth/passkey/register/verify", &body)
             .await?;
-        complete_session(ctx, tokens).await
+        let sa = test_salt_auth();
+        let se = test_salt_enc();
+        complete_session(ctx, tokens, Some((&sa, &se))).await
     }
 
     async fn direct_assert_verify(
@@ -622,7 +744,9 @@ mod tests {
             .relay_client
             .post_json("/auth/passkey/assert/verify", &body)
             .await?;
-        complete_session(ctx, tokens).await
+        let sa = test_salt_auth();
+        let se = test_salt_enc();
+        complete_session(ctx, tokens, Some((&sa, &se))).await
     }
 
     // -----------------------------------------------------------------------
@@ -937,7 +1061,7 @@ mod tests {
             .relay_client
             .post_json("/auth/refresh", &body)
             .await?;
-        complete_session(ctx, tokens).await
+        complete_session(ctx, tokens, None).await
     }
 
     async fn direct_signout(ctx: &AppContext) -> Result<(), AuthCommandError> {
@@ -1169,5 +1293,268 @@ mod tests {
 
         let in_mem = ctx.auth_session.read().await;
         assert_eq!(in_mem.as_ref().unwrap().user_id, "usr_frank");
+    }
+
+    // -----------------------------------------------------------------------
+    // M9 Phase B-2 — complete_session derive + hydrate derive 회귀
+    // -----------------------------------------------------------------------
+
+    /// Helper: ctx with master_passphrase pre-populated for derive flows.
+    async fn make_ctx_with_passphrase(
+        server: &MockServer,
+        passphrase: &str,
+    ) -> (AppContext, tempfile::TempDir) {
+        let (ctx, dir) = make_ctx(server).await;
+        *ctx.master_passphrase.write().await =
+            Some(SecretString::from(passphrase.to_owned()));
+        (ctx, dir)
+    }
+
+    /// register/verify happy path now derives enc_key when salts + passphrase
+    /// are both available — sync immediately usable post-sign-in.
+    #[tokio::test]
+    async fn register_verify_with_passphrase_derives_enc_key() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/auth/passkey/register/verify"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_alice",
+                    "access_token": "ax",
+                    "refresh_token": "rx",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx_with_passphrase(&server, "correct horse battery").await;
+        direct_register_verify(
+            &ctx,
+            "alice@example.com".into(),
+            serde_json::json!({ "id": "raw" }),
+        )
+        .await
+        .unwrap();
+
+        let in_mem = ctx.auth_session.read().await;
+        let session = in_mem.as_ref().unwrap();
+        assert!(session.enc_key.is_some(), "enc_key must be derived");
+        assert_eq!(session.salt_auth, Some(test_salt_auth()));
+        assert_eq!(session.salt_enc, Some(test_salt_enc()));
+    }
+
+    /// When master_passphrase is missing (vault locked between unlock and
+    /// verify — pathological case), enc_key derivation is skipped but the
+    /// session still saves successfully so tokens are usable.
+    #[tokio::test]
+    async fn complete_session_without_passphrase_leaves_enc_key_none() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/auth/passkey/register/verify"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_alice",
+                    "access_token": "ax",
+                    "refresh_token": "rx",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        // make_ctx leaves master_passphrase = None.
+        let (ctx, _dir) = make_ctx(&server).await;
+        direct_register_verify(
+            &ctx,
+            "alice@example.com".into(),
+            serde_json::json!({ "id": "raw" }),
+        )
+        .await
+        .unwrap();
+
+        let in_mem = ctx.auth_session.read().await;
+        let session = in_mem.as_ref().unwrap();
+        assert!(
+            session.enc_key.is_none(),
+            "enc_key must be None when master_passphrase missing"
+        );
+        // salts still persisted so a future hydrate can finish the job.
+        assert_eq!(session.salt_auth, Some(test_salt_auth()));
+    }
+
+    /// hydrate_session_from_vault re-derives enc_key when salts are persisted
+    /// and master_passphrase is hot — this is the everyday path after the
+    /// user re-locks/unlocks their vault.
+    #[tokio::test]
+    async fn hydrate_with_salts_and_passphrase_derives_enc_key() {
+        let server = MockServer::start().await;
+        let (ctx, _dir) = make_ctx_with_passphrase(&server, "battery horse staple").await;
+
+        // Persist a session with salts but no enc_key (simulating disk state
+        // after a previous vault_lock).
+        {
+            let mut vault = ctx.vault.write().await;
+            save_session(
+                &mut vault,
+                &AuthSession {
+                    user_id: "usr_grace".into(),
+                    access_token: SecretString::from("ax"),
+                    refresh_token: SecretString::from("rx"),
+                    expires_at: 1_700_000_000,
+                    salt_auth: Some(test_salt_auth()),
+                    salt_enc: Some(test_salt_enc()),
+                    enc_key: None,
+                },
+            )
+            .await
+            .unwrap();
+        }
+        assert!(ctx.auth_session.read().await.is_none());
+
+        hydrate_session_from_vault(&ctx).await.unwrap();
+
+        let in_mem = ctx.auth_session.read().await;
+        let session = in_mem.as_ref().unwrap();
+        assert_eq!(session.user_id, "usr_grace");
+        assert!(session.enc_key.is_some(), "hydrate must derive enc_key");
+    }
+
+    /// hydrate without master_passphrase leaves enc_key None — the session is
+    /// still usable for token-only operations but sync stays inactive.
+    #[tokio::test]
+    async fn hydrate_without_passphrase_leaves_enc_key_none() {
+        let server = MockServer::start().await;
+        let (ctx, _dir) = make_ctx(&server).await;
+
+        {
+            let mut vault = ctx.vault.write().await;
+            save_session(
+                &mut vault,
+                &AuthSession {
+                    user_id: "usr_henry".into(),
+                    access_token: SecretString::from("ax"),
+                    refresh_token: SecretString::from("rx"),
+                    expires_at: 1_700_000_000,
+                    salt_auth: Some(test_salt_auth()),
+                    salt_enc: Some(test_salt_enc()),
+                    enc_key: None,
+                },
+            )
+            .await
+            .unwrap();
+        }
+
+        hydrate_session_from_vault(&ctx).await.unwrap();
+
+        let in_mem = ctx.auth_session.read().await;
+        let session = in_mem.as_ref().unwrap();
+        assert!(session.enc_key.is_none());
+        // salts preserved for next hydrate attempt.
+        assert!(session.salt_auth.is_some());
+    }
+
+    /// Refresh path: complete_session preserves previously persisted salts
+    /// when called with new_salts=None, so the rotated session keeps its
+    /// derive context.
+    #[tokio::test]
+    async fn refresh_preserves_persisted_salts() {
+        let server = MockServer::start().await;
+
+        // 1) seed a session with salts via assert_verify
+        Mock::given(method("POST"))
+            .and(path("/auth/passkey/assert/verify"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_irene",
+                    "access_token": "old-ax",
+                    "refresh_token": "old-rx",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        // 2) refresh: relay returns rotated tokens, no salts
+        Mock::given(method("POST"))
+            .and(path("/auth/refresh"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_irene",
+                    "access_token": "NEW-ax",
+                    "refresh_token": "NEW-rx",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx_with_passphrase(&server, "irene-passphrase").await;
+
+        direct_assert_verify(
+            &ctx,
+            "irene@example.com".into(),
+            serde_json::json!({ "id": "raw" }),
+        )
+        .await
+        .unwrap();
+        direct_refresh(&ctx).await.unwrap();
+
+        let in_mem = ctx.auth_session.read().await;
+        let session = in_mem.as_ref().unwrap();
+        assert_eq!(session.salt_auth, Some(test_salt_auth()));
+        assert_eq!(session.salt_enc, Some(test_salt_enc()));
+        assert!(
+            session.enc_key.is_some(),
+            "enc_key must be re-derived after refresh"
+        );
+    }
+
+    /// Verify commands now require non-blank salts — empty input → MissingField
+    /// before any network call, matching the existing email/redirect_uri guards.
+    #[tokio::test]
+    async fn verify_with_blank_salt_returns_missing_field() {
+        let server = MockServer::start().await;
+        let (ctx, _dir) = make_ctx_with_passphrase(&server, "x").await;
+
+        // Inline call so we can pass an empty salt without going through
+        // direct_register_verify (which uses TEST_SALT_*).
+        async fn direct_register_verify_with_salts(
+            ctx: &AppContext,
+            email: String,
+            response: serde_json::Value,
+            sa: &str,
+            se: &str,
+        ) -> Result<AuthSessionDto, AuthCommandError> {
+            ensure_nonempty_email(&email)?;
+            require_vault_unlocked(ctx).await?;
+            ensure_nonblank("salt_auth", sa)?;
+            ensure_nonblank("salt_enc", se)?;
+            let body = serde_json::json!({ "email": email, "response": response });
+            let tokens: AuthTokensResponse = ctx
+                .relay_client
+                .post_json("/auth/passkey/register/verify", &body)
+                .await?;
+            complete_session(ctx, tokens, Some((sa, se))).await
+        }
+
+        let se = test_salt_enc();
+        let err = direct_register_verify_with_salts(
+            &ctx,
+            "alice@example.com".into(),
+            serde_json::json!({}),
+            "   ",
+            &se,
+        )
+        .await
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            AuthCommandError::MissingField { ref field } if field == "salt_auth"
+        ));
     }
 }

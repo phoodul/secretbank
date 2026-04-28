@@ -109,12 +109,24 @@ async function runAssertOrRegister(email: string): Promise<AuthSessionDto> {
   if (assertChallenge) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await startAuthentication({ optionsJSON: assertChallenge.options as any });
-    return invoke<AuthSessionDto>("auth_passkey_assert_verify", { email, response });
+    // M9 Phase B-2: forward the start-response salts so the backend can
+    // derive enc_key while the master passphrase is still hot.
+    return invoke<AuthSessionDto>("auth_passkey_assert_verify", {
+      email,
+      response,
+      saltAuth: assertChallenge.salt_auth,
+      saltEnc: assertChallenge.salt_enc,
+    });
   }
 
   // Fall through to registration.
   const regChallenge = await invoke<PasskeyChallenge>("auth_passkey_register_start", { email });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await startRegistration({ optionsJSON: regChallenge.options as any });
-  return invoke<AuthSessionDto>("auth_passkey_register_verify", { email, response });
+  return invoke<AuthSessionDto>("auth_passkey_register_verify", {
+    email,
+    response,
+    saltAuth: regChallenge.salt_auth,
+    saltEnc: regChallenge.salt_enc,
+  });
 }

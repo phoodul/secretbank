@@ -1,5 +1,59 @@
 # Work Log
 
+## 2026-04-28 Night mode 3 — M9 Phase B-2 (verify 흐름에 derive 통합)
+
+### 세션 개요
+
+- **목표**: Phase B-1 의 토대 위에 verify 4 커맨드 + hydrate 가 자동으로 enc_key 를 derive 하도록 wiring. Passkey sign-in 이 끝나면 enc_key 가 메모리에 적재되어 sync 즉시 활성화 가능.
+- **결과**: 1 commit (예정), api-vault-app lib **141 → 147 (+6)**, Vitest 346 유지 (PasskeyButton 신규 expect +1), clippy 0.
+
+### 변경
+
+**Backend (commands/auth.rs)**:
+- `complete_session(state, tokens, new_salts: Option<(&str, &str)>)` 시그니처 변경 — verify 흐름은 Some, refresh/OAuth 는 None
+- 헬퍼가 prev session 의 salts 복원 → new_salts 가 Some 이면 overwrite → master_passphrase + salts 로 derive_session_keys → AuthSession.enc_key 적재
+- `auth_passkey_register_verify(email, response, salt_auth, salt_enc)` — frontend 에서 salts 송신 (인자 시그니처 변경)
+- `auth_passkey_assert_verify` 동일하게 시그니처 변경
+- `exchange_oauth_callback` 은 None 으로 호출 (OAuth callback 응답에 salts 없음 — Phase B-4 에서 relay 측 변경 필요)
+- `auth_refresh` 도 None — prev session 의 salts 복원 + 결정론적 재파생
+- `hydrate_session_from_vault` 에서 영속된 salts + master_passphrase 가 모두 있으면 자동 derive → vault_unlock 직후 enc_key 메모리 적재
+
+**Frontend (PasskeyButton.tsx)**:
+- start 응답의 `salt_auth`/`salt_enc` 를 verify 호출 시 `saltAuth`/`saltEnc` 로 송신 (Tauri camelCase)
+
+### 회귀 +6 (Rust)
+
+1. **register_verify_with_passphrase_derives_enc_key** — Passkey verify 시 enc_key 메모리 적재
+2. **complete_session_without_passphrase_leaves_enc_key_none** — master_passphrase 없으면 enc_key None (graceful degrade)
+3. **hydrate_with_salts_and_passphrase_derives_enc_key** — vault_unlock 직후 자동 derive
+4. **hydrate_without_passphrase_leaves_enc_key_none** — passphrase 없으면 enc_key None, salts 보존
+5. **refresh_preserves_persisted_salts** — refresh 후 salts 보존 + enc_key 결정론적 재파생
+6. **verify_with_blank_salt_returns_missing_field** — 빈 salt 거부 (네트워크 호출 전 차단)
+
+### 회귀 +1 (Frontend)
+
+PasskeyButton happy path 에 `mockInvoke.toHaveBeenCalledWith("auth_passkey_assert_verify", { saltAuth, saltEnc, ... })` 검증 추가 — wire-format regression.
+
+### Phase B 진행 현황
+
+- ✅ B-1 (메모리 구조 + master_passphrase 라이프사이클)
+- ✅ B-2 (verify + hydrate 자동 derive)
+- ⏳ B-3 (sync_get_root_key 커맨드)
+- ⏳ B-4 (OAuth callback 응답 salts — relay 측 변경)
+
+### 검증
+
+- `cargo test --workspace --manifest-path src-tauri/Cargo.toml -p api-vault-app --lib` — **147 통과**
+- `cargo clippy --workspace --all-targets --all-features -D warnings` — 0
+- `pnpm typecheck` — 0
+- `pnpm test --run` — Vitest 346/346
+
+### 다음
+
+**B-3** — `commands/sync.rs` 신설, `sync_get_root_key()` 커맨드 (`derive_subkey(enc_key, "crdt-root")` → base64url 32바이트). enc_key 없으면 NoSyncSession 에러. lib.rs invoke_handler 등록. 회귀 +3 (happy / NoSyncSession / 결정론).
+
+---
+
 ## 2026-04-28 Night mode 3 — M9 Phase B-1 (AuthSession enc_key 라이프사이클 토대)
 
 ### 세션 개요

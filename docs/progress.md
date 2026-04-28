@@ -66,13 +66,13 @@
   4. ✅ **M9 Phase Plan + T087 Phase A** — 10 태스크를 7-phase 로 분할 (`docs/m9-phase-plan.md`), Phase A 만 안전 실행 (yjs + y-indexeddb dep, 더미 SyncProvider, Vitest +4). App.tsx 마운트 보류, Phase B 의 enc_key 라이프사이클 작업이 준비된 후 마운트.
   5. ✅ **5건 사용자 결정 + Phased Expansion** — Free 종류 무관 2대 / Auto-derive on unlock / SQLite 화이트리스트 / SecSync 잠정 (Phase C 검증) / MVP API 특화 + v1.1 General Secrets + v1.2 자동입력. project-decisions.md 5건 기록 + m9-phase-plan.md Open Issues Resolved 갱신.
   6. ✅ **M9 Phase B-1** — AuthSession 에 `salt_auth`/`salt_enc`/`enc_key` 필드 + Debug 마스킹 + save/load_session 확장 (enc_key 영속 금지) + AppContext.master_passphrase 라이프사이클 (vault_unlock 시 채움 / vault_lock 시 zeroize) + 7 테스트 컨텍스트 갱신 + Rust lib 회귀 136 → 141 (+5).
+  7. ✅ **M9 Phase B-2** — complete_session 시그니처에 new_salts 추가 + verify 4 커맨드 시그니처에 salt_auth/salt_enc 추가 + hydrate_session_from_vault 가 vault_unlock 직후 자동 derive + PasskeyButton 이 verify 호출 시 salts 송신. Rust lib 141 → **147 (+6)**, Vitest 346 유지 (+1 expect).
 
-- **다음 Night mode 큐 (B-2 ~ B-4):**
-  1. **B-2** — verify 4 커맨드 시그니처에 salts 추가, frontend PasskeyButton 갱신, complete_session 가 derive_session_keys 호출 → enc_key 적재, hydrate_session_from_vault 자동 derive
-  2. **B-3** — sync_get_root_key 커맨드 + Phase B 종료
-  3. **B-4 (옵션)** — OAuth callback 응답에 salts 포함 (relay 측 변경)
-  4. **Phase C** — SecSync stable 검증 + Yjs E2EE 통합
-  5. **Phase D~G** — `docs/m9-phase-plan.md` 순차 실행
+- **다음 Night mode 큐:**
+  1. **B-3** — sync_get_root_key 커맨드 (commands/sync.rs 신설, derive_subkey enc_key "crdt-root" → base64url 32바이트, NoSyncSession 에러)
+  2. **B-4 (옵션)** — OAuth callback 응답에 salts 포함 (relay 측 변경)
+  3. **Phase C** — SecSync stable 검증 + Yjs E2EE 통합
+  4. **Phase D~G** — `docs/m9-phase-plan.md` 순차 실행
 
 - **T084 의 deferred 항목 (M9 진입 시점에 처리):**
   - 성공 후 redirect 경로를 `/settings/sync` 로 변경 (현재 `/settings`)

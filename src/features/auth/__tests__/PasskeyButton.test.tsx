@@ -48,7 +48,7 @@ describe("PasskeyButton", () => {
     expect(screen.getByRole("button")).toBeDisabled();
   });
 
-  it("happy path: existing user → assert flow → onSuccess", async () => {
+  it("happy path: existing user → assert flow → onSuccess + verify forwards salts", async () => {
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "auth_passkey_assert_start") {
         return Promise.resolve({
@@ -85,6 +85,14 @@ describe("PasskeyButton", () => {
     expect(mockStartAuth).toHaveBeenCalled();
     expect(mockStartReg).not.toHaveBeenCalled();
     expect(onError).not.toHaveBeenCalled();
+
+    // M9 Phase B-2: verify must receive the salts captured from start.
+    expect(mockInvoke).toHaveBeenCalledWith("auth_passkey_assert_verify", {
+      email: "alice@example.com",
+      response: { id: "raw-auth" },
+      saltAuth: "AAAA",
+      saltEnc: "BBBB",
+    });
   });
 
   it("first-time user: assert 404 → register fallback → onSuccess", async () => {
