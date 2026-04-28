@@ -252,6 +252,9 @@
     }
   },
   "sync": {
+    "offline": {
+      "badge": "Offline"
+    },
     "pairJoin": {
       "title": "Pair with another device",
       "description": "Paste the pairing link from your existing API Vault device. Both devices will exchange keys end-to-end — your master passphrase never leaves the source device unencrypted.",

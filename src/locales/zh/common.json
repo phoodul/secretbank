@@ -252,6 +252,9 @@
     }
   },
   "sync": {
+    "offline": {
+      "badge": "离线"
+    },
     "pairJoin": {
       "title": "与其他设备配对",
       "description": "粘贴来自现有 API Vault 设备的配对链接。两台设备将通过端到端加密交换密钥,主密码不会以明文形式离开源设备。",

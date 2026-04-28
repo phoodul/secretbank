@@ -11,6 +11,7 @@ import {
 
 import { useTranslation } from "react-i18next";
 
+import { OfflineBadge } from "@/features/sync/OfflineBadge";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -61,6 +62,11 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Offline indicator — shown only when navigator.onLine === false */}
+      <div className="px-3 py-2">
+        <OfflineBadge />
+      </div>
     </aside>
   );
 }
