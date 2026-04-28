@@ -95,8 +95,11 @@ impl std::fmt::Debug for AuthSession {
 /// Wire-shape of the relay's `/auth/*` mint responses.
 ///
 /// Matches both Passkey (`register/verify`, `assert/verify`) and OAuth
-/// (`callback`) responses — the relay also includes `salt_auth` / `salt_enc`
-/// fields, which are handled separately by T085 and ignored here.
+/// (`callback`) responses. Passkey verify carries `salt_auth` / `salt_enc` in
+/// the *start* response (frontend round-trips them back into the verify call),
+/// so this struct does not need them. OAuth has no separate start response, so
+/// [`OAuthCallbackResponse`] flattens these tokens with explicit salt fields —
+/// see Phase B-4.
 #[derive(Debug, Deserialize)]
 pub struct AuthTokensResponse {
     pub user_id: String,
@@ -105,6 +108,20 @@ pub struct AuthTokensResponse {
     pub token_type: String,
     /// Seconds until `access_token` expires (relay returns `3600`).
     pub expires_in: i64,
+}
+
+/// Wire-shape of `POST /auth/oauth/:provider/callback`.
+///
+/// **M9 Phase B-4**: the relay attaches `salt_auth` / `salt_enc` (base64url,
+/// 32 bytes each) so that OAuth sign-in can reach the same `enc_key` derivation
+/// state as Passkey sign-in. Without this, OAuth users could never enable sync
+/// — `derive_session_keys` requires both salts.
+#[derive(Debug, Deserialize)]
+pub struct OAuthCallbackResponse {
+    #[serde(flatten)]
+    pub tokens: AuthTokensResponse,
+    pub salt_auth: String,
+    pub salt_enc: String,
 }
 
 impl AuthSession {

@@ -24,7 +24,7 @@ use api_vault_storage::vault::VaultError;
 use crate::context::AppContext;
 use crate::services::relay_client::RelayError;
 use crate::services::session::{
-    derive_session_keys, save_session, AuthSession, AuthTokensResponse,
+    derive_session_keys, save_session, AuthSession, AuthTokensResponse, OAuthCallbackResponse,
 };
 
 // ---------------------------------------------------------------------------
@@ -411,10 +411,11 @@ async fn fetch_oauth_authorize(
 
 /// Pure helper for `auth_oauth_callback` — relay POST + persistence.
 ///
-/// **M9 Phase B-2**: OAuth callback responses do not yet include
-/// `salt_auth` / `salt_enc` (Phase B-4 will extend the relay's OAuth callback
-/// payload). For now we pass `None` — the user's `enc_key` stays unset until
-/// they sign in again via Passkey or until Phase B-4 ships.
+/// **M9 Phase B-4**: the relay's callback now ships `salt_auth` / `salt_enc`
+/// alongside the JWT pair (the user record on the relay is provisioned with
+/// these on first OAuth sign-in). Forward them to [`complete_session`] so
+/// that — when the local vault was unlocked just before sign-in — `enc_key`
+/// gets derived in the same flow as Passkey verify.
 async fn exchange_oauth_callback(
     state: &AppContext,
     provider: &str,
@@ -422,11 +423,12 @@ async fn exchange_oauth_callback(
     oauth_state: &str,
 ) -> Result<AuthSessionDto, AuthCommandError> {
     let body = serde_json::json!({ "code": code, "state": oauth_state });
-    let tokens: AuthTokensResponse = state
+    let resp: OAuthCallbackResponse = state
         .relay_client
         .post_json(&format!("/auth/oauth/{provider}/callback"), &body)
         .await?;
-    complete_session(state, tokens, None).await
+    let salts = (resp.salt_auth.clone(), resp.salt_enc.clone());
+    complete_session(state, resp.tokens, Some((&salts.0, &salts.1))).await
 }
 
 /// `POST /auth/oauth/:provider/start` + open the OS browser.
@@ -966,11 +968,12 @@ mod tests {
 
     // -----------------------------------------------------------------------
     // 9. exchange_oauth_callback: 200 → AuthSession 저장 + DTO + 메모리 갱신
-    //    (relay 가 함께 보내는 salt_auth/salt_enc 는 무시되어야 한다 — Phase B
-    //    는 KDF 통합을 안 하므로 unknown field 가 deserialize 를 깨면 안 됨)
+    //    M9 Phase B-4: relay 가 보내는 salt_auth/salt_enc 가 AuthSession 에
+    //    저장되어야 한다 (master_passphrase 가 None 이라 enc_key derive 는
+    //    skip — 별도 테스트에서 derive 검증).
     // -----------------------------------------------------------------------
     #[tokio::test]
-    async fn exchange_oauth_callback_persists_session_and_ignores_salts() {
+    async fn exchange_oauth_callback_persists_session_and_records_salts() {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/auth/oauth/github/callback"))
@@ -984,8 +987,8 @@ mod tests {
                     "refresh_token": "rx",
                     "token_type": "Bearer",
                     "expires_in": 3600,
-                    "salt_auth": "AAAA",
-                    "salt_enc": "BBBB",
+                    "salt_auth": test_salt_auth(),
+                    "salt_enc": test_salt_enc(),
                 })),
             )
             .mount(&server)
@@ -998,7 +1001,50 @@ mod tests {
         assert_eq!(dto.user_id, "usr_carol");
 
         let in_mem = ctx.auth_session.read().await;
-        assert_eq!(in_mem.as_ref().unwrap().user_id, "usr_carol");
+        let session = in_mem.as_ref().unwrap();
+        assert_eq!(session.user_id, "usr_carol");
+        assert_eq!(session.salt_auth, Some(test_salt_auth()));
+        assert_eq!(session.salt_enc, Some(test_salt_enc()));
+        // master_passphrase=None → enc_key 는 derive 안 됨
+        assert!(session.enc_key.is_none(), "enc_key skipped without passphrase");
+    }
+
+    // -----------------------------------------------------------------------
+    // 9b. M9 Phase B-4: OAuth callback + master_passphrase set →
+    //     enc_key 가 Passkey verify 와 동일하게 derive 된다.
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn exchange_oauth_callback_with_passphrase_derives_enc_key() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/auth/oauth/google/callback"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "user_id": "usr_dora",
+                    "access_token": "ax",
+                    "refresh_token": "rx",
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                    "salt_auth": test_salt_auth(),
+                    "salt_enc": test_salt_enc(),
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let (ctx, _dir) = make_ctx_with_passphrase(&server, "correct horse battery").await;
+        exchange_oauth_callback(&ctx, "google", "code", "state")
+            .await
+            .unwrap();
+
+        let in_mem = ctx.auth_session.read().await;
+        let session = in_mem.as_ref().unwrap();
+        assert!(
+            session.enc_key.is_some(),
+            "OAuth callback must derive enc_key when passphrase is available"
+        );
+        assert_eq!(session.salt_auth, Some(test_salt_auth()));
+        assert_eq!(session.salt_enc, Some(test_salt_enc()));
     }
 
     // -----------------------------------------------------------------------
