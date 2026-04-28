@@ -2,8 +2,55 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-28 Night mode 14 (자율 모드 — **M18 CLI 진입**. apivault binary scaffold + list + reveal + run 3 commits.)
-- **Phase:** Phase 3 — Implementation, M9 ✅ 풀 완료. **M18 🔄 진입** (CLI part 완료, MCP part 다음). 113/132 태스크.
+- **Time:** 2026-04-28 Night mode 15 (자율 모드 — **M18 v1 풀 완료**. mcp-1 + mcp-2 종료. CLI + MCP 둘 다 동작.)
+- **Phase:** Phase 3 — Implementation, M9 ✅ + **M18 v1 ✅** (CLI 3 subcommand + MCP 4 tools). 다음 → M19 (Team / RBAC) 또는 M20 (Supply chain) 또는 M14 (Auto rotation).
+- **이번 Night mode 15 신규 commits (2개):**
+  - `e893ccf` feat(mcp) — M18-mcp-1: stdio JSON-RPC MCP server scaffold + initialize / tools/list / tools/call (list_credentials, reveal_credential) + 30/hour reveal quota + audit-on-reveal stderr line
+  - `0f666bd` feat(mcp) — M18-mcp-2: RAILGUARD MCP tools (check_railguard_status / suggest_railguard_template) + api-vault-railguard 통합
+- **Tests (Night mode 15 종료):**
+  - api-vault-mcp: **5 회귀** (initialize / tools/list × 4 / RpcError 코드 / suggest 렌더 / check 미존재 path)
+  - api-vault-cli: 3 (변동 없음)
+  - Frontend Vitest 445 / Relay vitest 71 / api-vault-app lib 173 / api-vault-crypto 15 (모두 변동 없음)
+  - clippy --workspace --all-targets --all-features -D warnings: 0
+- **차별화 평가 — M18 v1 종료 시점:**
+  - **CLI**: dependency graph 매핑이 곧 config (Doppler/Infisical 의 manual yaml 없음)
+  - **MCP**: 어떤 경쟁사도 안 만든 새 카테고리. AI agent 가 vault metadata + RAILGUARD 상태 + 사용자 명시 reveal 까지 한 인터페이스로
+  - "그래프 + breach feed + RAILGUARD" 세 자산이 GUI 안에 갇혀있던 → 이제 dev surface 전체로 분배
+- **이전 Night mode 14 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## M18 v1 클로즈 — 비전 점검 (2026-04-28)
+
+운영 원칙: 매 마일스톤 클로즈 시 비전 정렬 점검 1회 의무.
+
+### M18 v1 의 의의
+
+M9 (sync) 가 입장권이었다면 M18 은 **첫 차별화 표면**. dependency graph + RAILGUARD 자산을 GUI 밖으로 노출 — Doppler/Infisical 의 핵심 (CLI) 을 우리도 갖추고, 그 위에 **AI agent 직접 통합** (MCP) 까지. 한 마일스톤에 두 단계 도약.
+
+### M18 v2 백로그 (현 클로즈 후 별도 마일스톤)
+
+- **M18 v2 — keyring cache + biometric unlock**: passphrase 매번 prompt 대신 OS keyring (Windows Hello / macOS keychain / Linux secret service) 통합. CLI/MCP 양쪽.
+- **M18 v3 — desktop confirmation IPC**: MCP reveal 호출 시 desktop app 의 별도 dialog 로 사용자 per-call 승인. 현 quota-only 보호 강화.
+- **M18 v4 — VS Code / JetBrains plugin** (M21 으로 별도 마일스톤): MCP 위에 IDE plugin layer.
+
+### 다음 마일스톤 — 사용자 결정 큐
+
+세 후보:
+1. **M19 — Team / RBAC / SSO** (B2B 진입). 글로벌 SaaS 의 가격 영역 ($10+/seat). 개인 사용자만이 아닌 팀 진입을 위해 필수.
+2. **M20 — Supply chain risk graph** (npm/PyPI package → secret leak 자동 매핑). 우리 dependency graph + breach feed 의 진짜 큰 응용 — supply chain 공격이 hot 한 시기.
+3. **M14 — Auto rotation** (AWS/Stripe/GCP key 자동 rotation). 매우 차별화되지만 provider API 마다 정교한 작업.
+
+### Night mode 16 자율 진입 — 어디로?
+
+자율 모드 운영 원칙: 마일스톤 클로즈 시 사용자 결정 trigger 필요. 현재 `loop_count.json` 의 phase 가 `M18-mcp-1-entry` 였고 종료. 다음 마일스톤은 사용자 명시 결정 후 진입.
+
+내 권장 (자율 추천):
+- **M20 (Supply chain risk graph) 우선** — dependency graph + breach feed 의 시너지가 가장 강함. supply chain 공격 (e.g., `noisycoder` npm 패키지 hack 같은 사례) 이 매년 늘어나는 시점. 우리만 가능한 차별화.
+- M19 (Team) 은 사용자 베타 후 (실제 B2B 사용자가 요청할 때) 진입.
+- M14 (Auto rotation) 은 사용자 베타 시 첫 사용자 피드백 기반.
+
+다음 turn 에 사용자가 마일스톤 지정하면 자율 진행.
 - **이번 Night mode 14 신규 commits (3개 + docs):**
   - cli-1a: `apivault-cli` crate scaffold + `apivault list` (issuer / env / status / json 출력)
   - cli-1b (`dc56e09`): `apivault reveal <id>` + clipboard auto-clear (30s default, --print, --clear-after)
