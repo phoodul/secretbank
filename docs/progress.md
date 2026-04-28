@@ -2,6 +2,55 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-29 Night mode 17 (자율 모드 — **M21 v1 풀 완료**. VS Code extension: 3 commands + status bar + diagnostics + LM tools + package.json hover provider).
+- **Phase:** Phase 3 — Implementation. M9 ✅ + M18 v1 ✅ + M20 v1 ✅ + **M21 v1 ✅**. 4 marquee 차별화 마일스톤 연속 완료.
+- **이번 Night mode 17 신규 commits (3개):**
+  - `755de93` feat(vscode) — M21-1: vscode-extension scaffold + 3 commands + status bar + 인라인 OSV 스캔 → Problems panel
+  - `89e8e9a` docs — M21-1 follow-up (.gitignore + task.md status)
+  - `f640927` feat(vscode) — M21-2: VS Code 1.96+ LanguageModel tools (apivault_list_credentials, apivault_scan_supply_chain) + package.json hover provider + 캐시. Copilot Chat / Claude / Cursor 모두 자동 인식.
+- **Tests (Night mode 17 종료 시점):**
+  - vscode-extension: TypeScript strict 컴파일 통과 (단위 회귀는 v3 에 추가 — VS Code API mock 인프라 도입 후)
+  - api-vault-supply / mcp / app / cli / crypto / storage / etc.: 변동 없음 (Night mode 16 종료 시점 그대로)
+  - 전체 워크스페이스 clippy 0
+- **차별화 평가 — M21 v1 종료 시점:**
+  - **VS Code marketplace 진입 가능 상태** (publisher "api-vault" 등록 + vsce package 시 .vsix 생성)
+  - **Copilot Chat / Cursor / Claude 모두 자동 호환** — 한 host 마다 별도 plugin 안 만들어도 LM tool API 한 번 등록으로 cover
+  - **graph + supply chain × AI agent × IDE** 의 4축 결합. 1Password / Doppler / Infisical / Snyk 어느 한 쪽도 못 함.
+
+---
+
+## M21 v1 클로즈 — 비전 점검 (2026-04-29)
+
+운영 원칙: 매 마일스톤 클로즈 시 비전 정렬 점검 1회 의무.
+
+### 회고
+
+연속 4 마일스톤 (M9 → M18 → M20 → M21) 자율 진행. 글로벌 SaaS 진입 비용 (M9 sync) + 차별화 (M18 CLI/MCP) + moat (M20 supply) + 분배 채널 (M21 IDE) = **글로벌 dev tool 의 first-class 자리잡음 골격 완성**.
+
+### 다음 단계 후보 (사용자 결정)
+
+| # | 마일스톤 | 차별화 | 비용 |
+|:--|:--|:--|:--|
+| 1 | M22 JetBrains plugin | 큰 (enterprise dev) | 큰 (Kotlin/Gradle) |
+| 2 | M19 Team / RBAC / SSO | 중 (B2B 진입) | 큰 (auth 재설계) |
+| 3 | M14 Auto rotation | 중 (provider 별) | 큰 |
+| 4 | M11 Mobile (iOS/Android) | 중 | 큰 (Tauri Mobile) |
+| 5 | M13 i18n + Updater + Beta release | **준비된 빠른 출시** | 중 |
+| 6 | M21 v3 (code-lens + Cargo hover) | 작 | 작 |
+| 7 | M20 v2 (lockfile + semver range) | 작 (정확도) | 중 |
+
+### 자율 추천
+
+**M13 (Beta release) 진입** — 4 마일스톤의 차별화가 누적된 시점에서 실 사용자 피드백 수집이 다음 lap 의 가장 큰 입력. M22/M19/M14 는 모두 사용자 피드백 후 우선순위 확정 가능. M13 자체도 i18n + auto-updater + GitHub releases 같은 출시 인프라.
+
+**또는 M21 v3 (small) + M20 v2 (small)** 으로 **현재 마일스톤들의 정확도 + 깊이** 끌어올려 출시 전 마무리.
+
+다음 turn 에 사용자 명시 없으면 **M21 v3 → M20 v2 → M13** 순서로 자율 진입.
+
+---
+
+## Previous checkpoint (2026-04-29 Night mode 16)
+
 - **Time:** 2026-04-29 Night mode 16 (자율 모드 — **M20 v1 풀 완료**. supply chain risk graph: schema + manifest parsers + OSV client + matcher + storage repos + Tauri 커맨드 + MCP tool. 4 commits.)
 - **Phase:** Phase 3 — Implementation. M9 ✅ + M18 v1 ✅ + **M20 v1 ✅**. 113/132 태스크 + M18/M20 신설 4개. 다음 → M19 (Team) 또는 M14 (Auto rotation).
 - **이번 Night mode 16 신규 commits (3개 + docs):**

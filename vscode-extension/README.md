@@ -2,8 +2,9 @@
 
 > Dependency-graph-aware secrets manager with supply-chain risk detection.
 
-## Features (M21-1)
+## Features
 
+### Commands (palette)
 - **List credentials** — `API Vault: List credentials` opens a Quick Pick.
 - **Reveal credential** — pick one, enter your vault passphrase, value lands
   on the clipboard.
@@ -11,6 +12,21 @@
   parses `package.json`, asks OSV.dev whether any of your deps have a known
   secret-leak / supply-chain advisory, and surfaces hits in the Problems
   panel.
+
+### Language Model tools (VS Code 1.96+)
+Copilot Chat, Claude, Cursor — any chat host that implements VS Code's
+language-model tool API picks these up automatically:
+- `apivault_list_credentials` — read-only metadata, no secret values.
+- `apivault_scan_supply_chain` — current workspace, optional
+  `category_filter` (`secret_leak` / `supply_chain` / `any`).
+
+Reference inline with `#apivault` and `#supplyrisk`.
+
+### Editor surface
+- Status bar item ($(shield) API Vault → opens list).
+- `package.json` hover — last scan's advisory tooltip on dep lines
+  (run scan first to populate the cache).
+- Problems panel diagnostics scoped to source `api-vault`.
 
 ## Requires
 
@@ -26,6 +42,5 @@ advisory" *before* you commit the dependency, not after the breach mail.
 
 ## Roadmap
 
-- v2 (M21-2): native MCP server registration so Claude / Copilot Chat /
-  Cursor can call the same tools without a separate config.
-- v3: package.json hover with advisory tooltips.
+- v3 (M21-3): code-lens on risky `package.json` lines, Cargo.toml hover.
+- M22: JetBrains plugin (IntelliJ / WebStorm / GoLand).
