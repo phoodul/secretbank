@@ -2,6 +2,40 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 6 (E-2 / E-3 / E-4a 3건 연속 완료, 다음 세션은 M9 Phase E-4b 부터)
+- **Phase:** Phase 3 — Implementation, M4~M8 ✅ + M9 🔄 Phase A+B+C+**D 풀**+**E-1~E-4a** 종료 (13/16 sub-phases) + M15 🔄, 111/132 태스크 (84.1%)
+- **이번 Night mode 6 신규 commits (3개):**
+  - `af307c5` feat(sync) — M9 Phase E-2: D1 0003_sync + /sync/snapshot 골격
+  - `97712e6` feat(sync) — M9 Phase E-3: KV rate limit + Miniflare 회귀 +10
+  - `155c1a4` feat(sync) — M9 Phase E-4a: RelayTransport (AEAD + HTTP wire) 골격
+- **Tests (4-28 Night mode 6 종료 시점):**
+  - Rust api-vault-app lib: **158 passed** (변동 없음 — Night mode 6 은 frontend + relay 만)
+  - Frontend Vitest: **409 passed** (이전 396 + 13 RelayTransport)
+  - relay vitest: **46 passed** (이전 35 + 1 schema D-2 + 10 sync E-3 = 46)
+  - clippy 0 -D warnings / typecheck 0 / lint 0 errors
+- **이번 Night mode 6 처리 완료:**
+  1. ✅ **E-2** — relay D1 0003_sync.sql (encrypted_doc 테이블 + cascade FK) + Drizzle schema + routes/sync.ts 골격 (GET/POST /sync/snapshot, JWT 검증, UPSERT version+1, 1MB cap). +1 schema 회귀
+  2. ✅ **E-3** — lib/rate-limit.ts (KV fixed-window per-user 100req/min) + sync.ts hookup + 429 + Retry-After. +10 Miniflare 회귀 (auth/validation/round-trip/rate limit)
+  3. ✅ **E-4a** — src/features/sync/relay-transport.ts (RelayTransport class). pushUpdate (encrypt + POST), pollOnce (GET + decrypt + emit), AAD = "user:<userId>" 로 cross-user replay 차단. manualPolling 옵션. +13 회귀 (mock fetch)
+
+- **다음 Night mode 7 큐:**
+  1. **E-4b** — SyncProvider 의 transport prop 을 RelayTransport 로 default 교체 + 인증 컨텍스트 연결 (relay url + getAccessToken from auth_session + getSessionKey from sync_get_root_key). App.tsx 마운트 결정.
+  2. **E-5** — 통합 round-trip 검증: db:changed → applyDbChangeToYMap → user-edit observer → encodeUpdate → encrypt → POST → 다른 디바이스의 GET → decrypt → applyUpdate. 두 SyncProvider 인스턴스로 시뮬레이션.
+  3. **Phase F** — value sync 채널 (encrypted_secret_values 테이블 + value-root key derive + value-only 채널)
+  4. **Phase G** — pairing + UI + conflict + offline + entitlement (T092~T096)
+
+- **이전 Night mode 5 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## Night mode 6 detail entry
+
+상세 처리 이력 + 테스트 카운트는 `docs/work-log.md` 의 "2026-04-28 Night mode 6" 섹션 참조.
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 5)
+
 - **Time:** 2026-04-28 Night mode 5 (D-2a / D-2b / D-3 / E-1 4건 연속 완료, 다음 세션은 M9 Phase E-2 부터)
 - **Phase:** Phase 3 — Implementation, M4~M8 ✅ + M9 🔄 Phase A+B+C+**D 풀**+**E-1** 종료 (10/16 sub-phases) + M15 🔄, 111/132 태스크 (84.1%)
 - **이번 Night mode 5 신규 commits (4개):**

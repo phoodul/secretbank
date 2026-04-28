@@ -1,5 +1,89 @@
 # Work Log
 
+## 2026-04-28 Night mode 6 — M9 Phase E-2 / E-3 / E-4a (3 commits)
+
+### 세션 개요
+
+- **목표**: Phase E 의 relay 측 (E-2 schema + E-3 endpoints + rate limit) 과 클라이언트 측 RelayTransport 골격 (E-4a) 까지.
+- **결과**: 3 commits (`af307c5` E-2 / `97712e6` E-3 / `155c1a4` E-4a). Frontend Vitest 396 → 409 (+13). Relay vitest 35 → 46 (+11).
+
+### Phase E-2 — D1 0003_sync + /sync/snapshot 골격
+
+`ee/api-vault-relay/migrations/0003_sync.sql`:
+- `encrypted_doc` (user_id PK + version + ciphertext BLOB + created_at/updated_at + ON DELETE CASCADE FK to user)
+- 1 user = 1 doc 모델 (Yjs 의 Y.encodeStateAsUpdate 가 통합 update — multi-doc 은 Phase F 이후 결정)
+- Zero-Knowledge: 릴레이는 AEAD envelope 만 보관, 평문 모름
+
+`src/db/schema.ts` Drizzle `encryptedDoc` 추가.
+
+`src/routes/sync.ts`:
+- GET /sync/snapshot?since=N — 200 (변경) / 204 (since == version) / 401 / 400
+- POST /sync/snapshot { ciphertext_b64 } — 200 { version } / 401 / 400 / 413 (1MB cap)
+- Bearer access JWT 검증 (verifyToken with use='access')
+- UPSERT 패턴: 첫 push insert (version=1) / 후속 push version+1
+
+`test/db.test.ts` +1: encrypted_doc PK + ciphertext 저장 + ON DELETE CASCADE.
+
+### Phase E-3 — KV rate limit + Miniflare 회귀
+
+`ee/api-vault-relay/src/lib/rate-limit.ts`:
+- `checkRateLimit(kv, subject, { bucket, limit, windowMs })`
+- KV fixed-window 패턴: key = `ratelimit:<bucket>:<subject>:<windowId>`
+- 한도 초과 시 카운터 증가 안 함 (악성 스팸의 KV 쓰기 비용 방지)
+- 반환: `{ ok, remaining, resetMs }`
+- Sliding window 보다 정확도 떨어지지만 (경계 burst) 보호 목적엔 충분
+
+routes/sync.ts: GET / POST 양쪽에 `SYNC_RATE_LIMIT = { bucket:"sync", limit:100, windowMs:60_000 }` 적용. 한도 초과 시 429 + `Retry-After` 헤더.
+
+`test/sync.test.ts` +10:
+- auth (2): GET 401 missing Bearer / POST 401 invalid token
+- validation (3): 400 negative since / 400 missing ciphertext / 413 1MB+
+- round-trip (3): POST → GET 200 with same b64 → GET (since=version) 204 / 두 번 POST → version 1, 2 / 신규 user GET → 200 { version:0, ciphertext_b64:null }
+- rate limit (2): 100 OK → 101번째 429 / per-user 격리
+
+### Phase E-4a — RelayTransport (AEAD + HTTP wire) 골격
+
+`src/features/sync/relay-transport.ts`:
+- `class RelayTransport implements SyncTransport`
+- `pushUpdate(update)`:
+  - getSessionKey() → { rootKey, userId } 가져오기 (null 이면 throw "no session key")
+  - `encrypt(rootKey, update, AAD = "user:<userId>")`
+  - POST /sync/snapshot { ciphertext_b64 } + Bearer access JWT
+  - 응답 version 을 lastVersion 에 보관
+- `pollOnce()`:
+  - GET /sync/snapshot?since=lastVersion + Bearer
+  - 200 → decrypt + onRemoteUpdate handlers fire
+  - 204 → no-op
+  - 401 → status='error'
+  - 429 → ignore (다음 poll 까지 대기, retry-after 단순화)
+  - non-2xx → status='error'
+  - decrypt 실패 → status='error' (cross-user replay / 변조 보호)
+- `connect / disconnect` lifecycle, `manualPolling=true` 옵션 (테스트 timer 의존성 회피)
+
+**AAD = "user:<userId>"** — 다른 사용자의 ciphertext 를 가져와 재생하려는 cross-user replay 를 AEAD 단위에서 차단.
+
+`__tests__/relay-transport.test.ts` +13 (mock fetch 기반):
+- pushUpdate: encrypt + Bearer 헤더 + 평문 누출 0 / no-session throw / 401 throw
+- pollOnce: decrypt + emit / 204 no-op / 401 error / 429 ignore / AEAD tamper error / cross-user AAD error / since 누적
+- lifecycle: idle → connected → disconnected, handler clear
+- Zero-Knowledge invariant: fetch body 에 평문 절대 노출 안 됨
+
+### 검증
+
+- Rust api-vault-app lib: 158 (변동 없음 — frontend + relay 만)
+- Frontend Vitest: 396 → 409 (+13)
+- Relay vitest: 35 → 46 (+11)
+- typecheck / lint / clippy 모두 0
+
+### 다음 (Night mode 7 큐)
+
+1. **E-4b** — SyncProvider 의 transport prop 을 RelayTransport 로 default 교체. relay base URL + getAccessToken (auth_session.access_token 또는 신규 Tauri 커맨드 `auth_get_access_token`) + getSessionKey (sync_get_root_key 결과 + auth_session.user_id). App.tsx 마운트 결정 (사용자 sign-in 후 자동 활성).
+2. **E-5** — 통합 round-trip 검증: 두 디바이스 시뮬레이션 (Y.Doc A + B). A 가 user-edit → encrypt → POST. B 가 poll → decrypt → applyUpdate → A 와 B Y.Doc state 동일.
+3. **Phase F** — value sync 채널 (`encrypted_secret_values` 테이블 + `value-root` 키 derive + value-only 별도 endpoint). credential value 는 CRDT 가 아니라 last-write-wins 단순 채널.
+4. **Phase G** — pairing (X25519 deep-link) + UI (Sync section) + conflict resolver + offline 배지 + Free 2 device entitlement.
+
+---
+
 ## 2026-04-28 Night mode 5 — M9 Phase D-2 / D-3 / E-1 (4 commits)
 
 ### 세션 개요
