@@ -22,6 +22,7 @@ api-vault-storage = { path = "../api-vault-storage" }
 api-vault-core = { path = "../api-vault-core" }
 api-vault-crypto = { path = "../api-vault-crypto" }
 api-vault-railguard = { path = "../api-vault-railguard" }
+api-vault-supply = { path = "../api-vault-supply" }
 
 # CLI tooling
 clap = { workspace = true }

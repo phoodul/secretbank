@@ -358,6 +358,7 @@ dependencies = [
  "api-vault-crypto",
  "api-vault-railguard",
  "api-vault-storage",
+ "api-vault-supply",
  "clap",
  "directories",
  "rpassword",

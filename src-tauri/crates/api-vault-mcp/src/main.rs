@@ -55,6 +55,10 @@ use tokio::sync::Mutex;
 
 use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus};
 use api_vault_railguard::{render, RenderContext, RuleKind};
+use api_vault_supply::advisory::{AdvisoryCategory, AdvisorySeverity, OsvClient};
+use api_vault_supply::manifest::{parse_cargo_toml, parse_package_json};
+use api_vault_supply::matcher::match_advisories;
+use api_vault_supply::DependencyDeclaration;
 use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::init_pool;
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
@@ -262,6 +266,26 @@ fn handle_tools_list() -> Result<Value, RpcError> {
                 }
             },
             {
+                "name": "check_supply_chain_risk",
+                "description":
+                    "Scan a project directory for npm / Cargo dependencies and return any OSV.dev advisories that match (especially secret_leak / supply_chain category). Use this BEFORE committing code that adds new dependencies — if a package has secret-exfiltration history, the user should know. Read-only: no DB writes.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "project_path": {
+                            "type": "string",
+                            "description": "Absolute path to the project root (must contain package.json or Cargo.toml)"
+                        },
+                        "category_filter": {
+                            "type": "string",
+                            "enum": ["secret_leak", "crypto_weak", "supply_chain", "any"],
+                            "description": "Only return advisories of this category. 'any' returns all (default)."
+                        }
+                    },
+                    "required": ["project_path"]
+                }
+            },
+            {
                 "name": "suggest_railguard_template",
                 "description":
                     "Render an API Vault RAILGUARD template (one of cursor_rules / windsurf_rules / claude_md / copilot_instructions) for a project. Returns the file content as text — caller can show it to the user before writing. Useful when AI editor lacks RAILGUARD and the user wants a preview before committing.",
@@ -303,7 +327,123 @@ async fn handle_tool_call(state: &ServerState, params: &Value) -> Result<Value, 
         "reveal_credential" => tool_reveal_credential(state, &arguments).await,
         "check_railguard_status" => tool_check_railguard_status(&arguments).await,
         "suggest_railguard_template" => tool_suggest_railguard_template(&arguments),
+        "check_supply_chain_risk" => tool_check_supply_chain_risk(&arguments).await,
         other => Err(RpcError::method_not_found(other)),
+    }
+}
+
+async fn tool_check_supply_chain_risk(args: &Value) -> Result<Value, RpcError> {
+    let path_str = args
+        .get("project_path")
+        .and_then(Value::as_str)
+        .ok_or_else(|| RpcError::invalid_params("missing 'project_path'"))?;
+    let category_filter = args
+        .get("category_filter")
+        .and_then(Value::as_str)
+        .unwrap_or("any");
+    let root = std::path::PathBuf::from(path_str);
+    if !root.exists() {
+        return Err(RpcError::invalid_params(format!("path does not exist: {path_str}")));
+    }
+
+    let mut deps: Vec<DependencyDeclaration> = Vec::new();
+    let pkg_json = root.join("package.json");
+    if pkg_json.exists() {
+        match parse_package_json(&pkg_json) {
+            Ok(mut d) => deps.append(&mut d),
+            Err(e) => return Err(RpcError::internal(format!("package.json: {e}"))),
+        }
+    }
+    let cargo_toml = root.join("Cargo.toml");
+    if cargo_toml.exists() {
+        match parse_cargo_toml(&cargo_toml) {
+            Ok(mut d) => deps.append(&mut d),
+            Err(e) => return Err(RpcError::internal(format!("Cargo.toml: {e}"))),
+        }
+    }
+    if deps.is_empty() {
+        return Ok(json!({
+            "content": [{
+                "type": "text",
+                "text": format!("No package.json or Cargo.toml found at {path_str} — nothing to scan.")
+            }]
+        }));
+    }
+
+    let osv = OsvClient::new();
+    let mut advisories: Vec<api_vault_supply::PackageAdvisory> = Vec::new();
+    let mut osv_failures = 0u32;
+    for d in &deps {
+        if matches!(d.version.as_str(), "workspace" | "path" | "git" | "*") {
+            continue;
+        }
+        match osv.query(d.ecosystem, &d.name, &d.version).await {
+            Ok(list) => advisories.extend(list),
+            Err(_) => osv_failures += 1,
+        }
+    }
+    let matches = match_advisories(&deps, &advisories);
+
+    let want = match category_filter {
+        "secret_leak" => Some(AdvisoryCategory::SecretLeak),
+        "crypto_weak" => Some(AdvisoryCategory::CryptoWeak),
+        "supply_chain" => Some(AdvisoryCategory::SupplyChain),
+        _ => None,
+    };
+
+    let mut rows: Vec<Value> = Vec::new();
+    for m in &matches {
+        let a = &advisories[m.advisory_index];
+        let d = &deps[m.dep_index];
+        if let Some(filter) = want {
+            if a.category != filter {
+                continue;
+            }
+        }
+        rows.push(json!({
+            "package": d.name,
+            "ecosystem": d.ecosystem.db_name(),
+            "version": d.version,
+            "manifest": d.manifest_path,
+            "source_id": a.source_id,
+            "severity": severity_str(a.severity),
+            "category": category_str(a.category),
+            "summary": a.summary,
+        }));
+    }
+    let summary = format!(
+        "scanned {} dep(s), {} OSV failure(s), matched {} advisory(ies){}",
+        deps.len(),
+        osv_failures,
+        rows.len(),
+        if want.is_some() {
+            format!(" (filter: {category_filter})")
+        } else {
+            String::new()
+        }
+    );
+    let json_text = serde_json::to_string_pretty(&json!({ "advisories": rows }))
+        .map_err(|e| RpcError::internal(e.to_string()))?;
+    Ok(json!({
+        "content": [{ "type": "text", "text": format!("{summary}\n\n{json_text}") }]
+    }))
+}
+
+fn severity_str(s: AdvisorySeverity) -> &'static str {
+    match s {
+        AdvisorySeverity::Low => "low",
+        AdvisorySeverity::Medium => "medium",
+        AdvisorySeverity::High => "high",
+        AdvisorySeverity::Critical => "critical",
+    }
+}
+
+fn category_str(c: AdvisoryCategory) -> &'static str {
+    match c {
+        AdvisoryCategory::SecretLeak => "secret_leak",
+        AdvisoryCategory::CryptoWeak => "crypto_weak",
+        AdvisoryCategory::SupplyChain => "supply_chain",
+        AdvisoryCategory::Other => "other",
     }
 }
 
@@ -648,18 +788,32 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn tools_list_includes_all_four_tools() {
+    async fn tools_list_includes_all_five_tools() {
         let v = handle_tools_list().unwrap();
         let tools = v["tools"].as_array().unwrap();
         let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
-        assert!(names.contains(&"list_credentials"));
-        assert!(names.contains(&"reveal_credential"));
-        assert!(names.contains(&"check_railguard_status"));
-        assert!(names.contains(&"suggest_railguard_template"));
-        // 모든 tool 이 inputSchema 가짐.
+        for required in [
+            "list_credentials",
+            "reveal_credential",
+            "check_railguard_status",
+            "suggest_railguard_template",
+            "check_supply_chain_risk",
+        ] {
+            assert!(names.contains(&required), "missing tool {required}");
+        }
         for t in tools {
             assert!(t["inputSchema"]["type"] == "object");
         }
+    }
+
+    #[tokio::test]
+    async fn check_supply_chain_risk_returns_text_for_empty_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("README.md"), "# nothing").unwrap();
+        let args = json!({ "project_path": dir.path().to_string_lossy() });
+        let v = tool_check_supply_chain_risk(&args).await.unwrap();
+        let text = v["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("nothing to scan"));
     }
 
     #[tokio::test]
