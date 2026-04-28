@@ -2,6 +2,19 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 11 (자율 모드 — G-pair-4a Initiator UI 완료. 다음 G-pair-4b joiner side 진입 예정.)
+- **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+F+G-pair-1/2/3 + **G-pair-4a** 종료, 22/24 sub-phases). M9 잔여: G-pair-2.5 (poll 확장, 환경복구 후) / G-pair-4b (joiner + deep-link) / G-conflict / G-offline / G-entitlement.
+- **이번 Night mode 11 신규 commits (1개):**
+  - `8acc47b` feat(sync) — M9 Phase G-pair-4a: Pair Initiator UI + use-pair-initiator hook (PIN + deep-link copy + polling + finalize) + 4 로케일 i18n + Vitest +6
+- **Tests (4-28 Night mode 11 종료 시점):**
+  - api-vault-crypto: 15 / api-vault-app lib: 173 / Frontend Vitest: **422 passed** (이전 416 + 6) / Relay vitest: 67
+  - typecheck / lint / clippy 모두 0
+- **이전 Night mode 10 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 10)
+
 - **Time:** 2026-04-28 Night mode 10 (자율 모드 — Option A 채택 후 G-pair-3 client services 풀 완료. 비전 정렬 점검 시 사용자 결정: M9 풀 마무리 → M18 (CLI + MCP server) 즉시 진입. M18~M21 placeholder 신설.)
 - **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+F+G-pair-1/2/**3** 종료, 21/22 sub-phases). M9 잔여: G-pair-2.5 (poll 확장, 환경복구 후) / G-pair-4 (UI) / G-conflict / G-offline / G-entitlement.
 - **이번 Night mode 10 신규 commits (1개):**
