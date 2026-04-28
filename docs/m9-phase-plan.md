@@ -57,18 +57,40 @@
 
 ---
 
-## Phase C — SecSync 클라이언트 통합
+## Phase C — Sync 클라이언트 통합 (✅ 2026-04-28 완료, fallback D 채택)
 
-**해당 태스크**: T087 의 SecSync 부분 + T088 의 KDF 주입
+**해당 태스크**: T087 의 클라이언트 통합 부분 + T088 의 KDF 주입
 
-**왜 세 번째인가**: enc_key 가 메모리에 있어야 SecSync.init 가 동작. Phase B 가 끝나면 sync_get_root_key 로 안전하게 가져올 수 있음.
+**왜 세 번째였나**: enc_key 가 메모리에 있어야 sync layer 가 init 가능. Phase B 가 끝나면 `sync_get_root_key` 로 안전하게 가져올 수 있음.
 
-**스코프**:
-- `secsync` dep 추가
-- SyncProvider 가 `sync_get_root_key()` 결과로 SecSync init
-- enc_key 부재 시 SecSync init skip (offline-only mode 처럼 동작)
-- SecSync 의 transport layer 는 stub (Phase E 에서 릴레이 endpoint 와 연결)
-- Vitest — SecSync mock 으로 init/teardown 회귀
+### 검증 결과: secsync 5개 stable 체크리스트 — 3 fail → fallback D 자동 채택
+
+| # | 체크 | 결과 |
+|:--|:--|:--|
+| 1 | 최근 6개월 release/commit 활동 | ❌ npm 마지막 publish `0.5.0` (2024-06-04, 22개월 정지), GitHub releases 0건 |
+| 2 | Yjs 13.6.x 호환 | ⚠️ 추정 호환 (검증 미실행) |
+| 3 | React 19 + TS 5.x 충돌 없음 | ⚠️ 추정 호환 (명시 표기 없음) |
+| 4 | 알려진 보안 이슈 없음 | ✅ pass |
+| 5 | Cloudflare Workers (D1+KV+Hono) 통합 사례 | ❌ WS 전용 transport, 사례 0건 |
+
+**= 3 fail (1, 5 + beta 명시) → fallback D**. 사용자 결정 4 의 사전 승인 (≥3 fail) 에 따름.
+
+### 실제 채택 스코프 (fallback D)
+
+- 신규 dep: **0개** (yjs, y-indexeddb 는 Phase A 에서 도입 완료)
+- `src/features/sync/transport.ts` — `SyncTransport` interface + `StubTransport` 클래스 (Phase E 의 `RelayTransport` 도입 전 placeholder)
+- `SyncProvider` 확장:
+  - `invoke('sync_get_root_key')` mount 시 호출 → `rootKey: Uint8Array(32)` Context 노출
+  - 성공 → `transport.connect()` + `status='ready'`
+  - `NoSyncSession` (`code='no_sync_session'`) → `status='offline_only'` (rootKey null, transport idle)
+  - 일반 invoke 에러 → `status='error'` + 메시지 보관
+  - unmount → `transport.disconnect()` 자동
+- 회귀 +10 (Phase A 4 + Phase C 4 + transport 6) — target +4 초과 달성. typecheck / lint 0 에러.
+
+### 후속 phase 의 의미 변화
+
+- **Phase E** 가 더 무거워짐 — `RelayTransport` 는 (1) HTTP wire, (2) AEAD (XChaCha20-Poly1305 후보), (3) snapshot/delta 분리 직접 설계가 필요. 다만 모두 Phase E~F 범위 안 — M9 전체 일정은 변동 없음.
+- transport interface 가 lifecycle-managed 라 Phase E 에서 `RelayTransport` 가 같은 interface 를 구현하면 SyncProvider 코드는 무변경 (props 로 주입만 교체).
 
 ---
 

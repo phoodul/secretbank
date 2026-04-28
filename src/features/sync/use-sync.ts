@@ -7,3 +7,5 @@
  */
 export { useSync, useYMap } from "./SyncProvider";
 export type { SyncContextValue, SyncStatus } from "./SyncProvider";
+export { StubTransport } from "./transport";
+export type { SyncTransport, TransportStatus } from "./transport";

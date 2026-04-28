@@ -1,41 +1,88 @@
 /**
- * SyncProvider — M9 Phase A scaffold (Yjs + y-indexeddb only).
+ * SyncProvider — M9 Phase C (Yjs + 자체 transport, fallback D 채택).
  *
- * 본 파일은 M9 진입의 첫 단계로, **SecSync 통합 이전** 의 안전한 골격이다:
- * - `Y.Doc` 인스턴스 1개를 Context 로 노출 (앱 전체 단일)
- * - `y-indexeddb` 가 도큐먼트를 IndexedDB 에 영속 (오프라인 지원의 기반)
- * - 외부 transport (relay /sync, SecSync) 는 아직 연결 안 함 — Phase C/E 에서 도입
+ * Phase A 의 골격에 두 축을 추가한다:
+ *   1. `sync_get_root_key` Tauri 커맨드를 mount 시 호출하여 Zero-Knowledge
+ *      enc_key 의 HKDF 서브키 (32바이트) 를 받아 메모리에 보관.
+ *   2. `SyncTransport` 추상화 (Phase C 는 `StubTransport`, Phase E 에서
+ *      `RelayTransport` 로 교체) 를 lifecycle-managed 로 connect/disconnect.
  *
- * 따라서 본 Provider 는 import 만 해두고 App.tsx 마운트는 **하지 않는다**:
- * 마운트하면 IndexedDB DB 가 생성되어 dev 환경에 잔재가 쌓일 수 있어 deferred.
+ * NoSyncSession (auth_session 또는 enc_key 없음) 시 status='offline_only' 로
+ * 떨어지고 IndexedDB persistence 만 동작 — 사용자가 sign-in + unlock 하기
+ * 전까지 안전한 정지 상태.
  *
- * 다음 phase 진입 조건은 `docs/m9-phase-plan.md` 참조.
+ * 본 Provider 는 여전히 App.tsx 마운트 보류 — Phase D 의 SQLite ↔ Y.Map
+ * 매퍼가 준비되어야 의미 있는 데이터가 동기화된다.
  */
 
+import { invoke } from "@tauri-apps/api/core";
 import { IndexeddbPersistence } from "y-indexeddb";
 import {
   createContext,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import * as Y from "yjs";
 
+import { StubTransport, type SyncTransport } from "./transport";
+
 // ---------------------------------------------------------------------------
 // Context shape
 // ---------------------------------------------------------------------------
 
-export type SyncStatus = "initializing" | "ready" | "error";
+export type SyncStatus =
+  | "initializing"
+  | "ready"
+  | "offline_only"
+  | "error";
 
 export interface SyncContextValue {
   doc: Y.Doc;
   status: SyncStatus;
   error: string | null;
+  /**
+   * `sync_get_root_key` 결과 (32바이트). `null` 이면 sync 비활성 모드 — UI
+   * 가 "Sign in / unlock to enable sync" 표시. AEAD 가 본격 적용되는 Phase
+   * E 에서 이 값으로 snapshot/delta 키를 derive.
+   */
+  rootKey: Uint8Array | null;
+  /** Lifecycle-managed transport. status='offline_only' 일 때는 idle 유지. */
+  transport: SyncTransport;
 }
 
 const SyncContext = createContext<SyncContextValue | null>(null);
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+interface SyncCommandError {
+  code: string;
+  message?: string;
+}
+
+function isNoSyncSession(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "code" in e &&
+    (e as SyncCommandError).code === "no_sync_session"
+  );
+}
+
+function decodeBase64Url(s: string): Uint8Array {
+  // base64url → base64 (padding 복원)
+  const pad = "=".repeat((4 - (s.length % 4)) % 4);
+  const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -43,43 +90,70 @@ const SyncContext = createContext<SyncContextValue | null>(null);
 
 export interface SyncProviderProps {
   /**
-   * IndexedDB 데이터베이스 이름. 사용자별로 고유해야 한다 — Phase B 에서
-   * `auth_session.user_id` 또는 hash 한 user_id 를 prefix 로 한다.
+   * IndexedDB 데이터베이스 이름. 사용자별로 고유해야 한다 — 사용자 변경 시
+   * Provider 를 새 dbName 으로 remount 하여 다른 IndexedDB 로 격리.
    */
   dbName: string;
-  /** 테스트 등에서 IndexedDB persistence 를 끄고 in-memory 만 쓸 때. */
+  /** Vitest jsdom 등 IndexedDB 부재 환경에서 persistence off. */
   disablePersistence?: boolean;
+  /**
+   * `sync_get_root_key` invoke 와 transport.connect() 를 둘 다 끔. 기본값
+   * 은 `disablePersistence` 와 동일 — Phase A 의 unit 테스트 호환을 위함.
+   * 명시적으로 `false` 를 주면 disablePersistence 모드에서도 invoke 호출.
+   */
+  disableSyncBoot?: boolean;
+  /** Phase E 에서 RelayTransport 로 교체. Phase C 기본은 StubTransport. */
+  transport?: SyncTransport;
   children: ReactNode;
 }
 
 export function SyncProvider({
   dbName,
   disablePersistence = false,
+  disableSyncBoot,
+  transport: providedTransport,
   children,
 }: SyncProviderProps) {
-  // Lazy initializer ensures the Y.Doc is constructed exactly once, before
-  // first render, without violating "no ref writes during render" lint rule.
+  // Y.Doc 은 mount 당 단일 인스턴스 (lazy initializer 로 first-render 직전 생성).
   const [doc] = useState<Y.Doc>(() => new Y.Doc());
 
-  const [status, setStatus] = useState<SyncStatus>(
-    disablePersistence ? "ready" : "initializing",
+  // Transport 는 props 로 주입되면 그걸 쓰고, 아니면 StubTransport (lazy).
+  const [transport] = useState<SyncTransport>(
+    () => providedTransport ?? new StubTransport(),
   );
-  const [error, setError] = useState<string | null>(null);
 
+  const [status, setStatus] = useState<SyncStatus>("initializing");
+  const [error, setError] = useState<string | null>(null);
+  const [rootKey, setRootKey] = useState<Uint8Array | null>(null);
+
+  // disableSyncBoot 의 기본값은 disablePersistence — Phase A 호환.
+  const skipBoot = disableSyncBoot ?? disablePersistence;
+
+  // disablePersistence 가 true 면 즉시 ready (테스트용 격리 모드).
+  const initialReadyRef = useRef(disablePersistence);
+  useEffect(() => {
+    if (initialReadyRef.current && skipBoot) {
+      setStatus("ready");
+    }
+  }, [skipBoot]);
+
+  // IndexedDB persistence
   useEffect(() => {
     if (disablePersistence) return;
     let cancelled = false;
     let persistence: IndexeddbPersistence | null = null;
 
-    // Wrap construction in a try/catch and defer setState into microtasks so
-    // the `react-hooks/set-state-in-effect` rule treats this as an external-
-    // system bridge rather than a synchronous cascade.
     queueMicrotask(() => {
       if (cancelled) return;
       try {
         persistence = new IndexeddbPersistence(dbName, doc);
+        // persistence 'synced' 는 status 전환의 한 입력. sync boot 결과와
+        // 합쳐 최종 status 를 결정 — 여기서는 일단 IndexedDB 가 ready 면
+        // skipBoot 일 때만 status='ready' 로 올리고, sync boot 모드에선
+        // boot effect 가 status 를 결정하도록 양보.
         persistence.once("synced", () => {
-          if (!cancelled) setStatus("ready");
+          if (cancelled) return;
+          if (skipBoot) setStatus("ready");
         });
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
@@ -94,18 +168,59 @@ export function SyncProvider({
       cancelled = true;
       persistence?.destroy();
     };
-  }, [dbName, doc, disablePersistence]);
+  }, [dbName, doc, disablePersistence, skipBoot]);
 
-  // doc destruction on unmount — frees Yjs internal observers.
+  // sync boot — invoke('sync_get_root_key') + transport.connect()
+  useEffect(() => {
+    if (skipBoot) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const b64 = await invoke<string>("sync_get_root_key");
+        if (cancelled) return;
+        const key = decodeBase64Url(b64);
+        setRootKey(key);
+        await transport.connect();
+        if (cancelled) {
+          await transport.disconnect();
+          return;
+        }
+        setStatus("ready");
+      } catch (e) {
+        if (cancelled) return;
+        if (isNoSyncSession(e)) {
+          setRootKey(null);
+          setStatus("offline_only");
+          return;
+        }
+        const message =
+          e instanceof Error
+            ? e.message
+            : typeof e === "object" && e !== null && "message" in e
+              ? String((e as { message: unknown }).message)
+              : String(e);
+        setError(message);
+        setStatus("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [skipBoot, transport]);
+
+  // unmount cleanup — transport.disconnect() + doc.destroy()
   useEffect(() => {
     return () => {
+      void transport.disconnect();
       doc.destroy();
     };
-  }, [doc]);
+  }, [doc, transport]);
 
   const value = useMemo<SyncContextValue>(
-    () => ({ doc, status, error }),
-    [doc, status, error],
+    () => ({ doc, status, error, rootKey, transport }),
+    [doc, status, error, rootKey, transport],
   );
 
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;
@@ -119,7 +234,7 @@ export function useSync(): SyncContextValue {
   const ctx = useContext(SyncContext);
   if (ctx === null) {
     throw new Error(
-      "useSync() must be called inside <SyncProvider>. (Phase A: not yet mounted in App.tsx — see docs/m9-phase-plan.md)",
+      "useSync() must be called inside <SyncProvider>. (M9 Phase C: provider not yet mounted in App.tsx — see docs/m9-phase-plan.md)",
     );
   }
   return ctx;

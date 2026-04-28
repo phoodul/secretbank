@@ -73,6 +73,25 @@
   - [ ] Cloudflare Workers (D1 + KV + Hono) transport 통합 사례
 - **Fallback (D):** Yjs + 자체 AEAD transport — snapshot/delta 분리 우리가 직접 설계 (+1주 추가 일정)
 
+#### D.1 [2026-04-28 Night mode 4 갱신] — secsync 검증 결과: **3/5 fail → fallback D 채택**
+
+Phase C 진입 시점에 위 5개 체크리스트로 1차 검증 (npm + GitHub + 공식 docs 조사). 결과:
+
+| # | 체크 | 결과 | 근거 |
+|:--|:--|:--|:--|
+| 1 | 최근 6개월 release/commit 활동 | ❌ FAIL | npm 마지막 publish `0.5.0` (**2024-06-04, 22개월 정지**). GitHub "No releases published" |
+| 2 | Yjs 13.6.x 호환 | ⚠️ 추정 호환 | 공식 docs `useYjsSync` 예제 — yjs major 호환 가능성 높음, 다만 검증 안 함 |
+| 3 | React 19 + TypeScript 5.x 충돌 없음 | ⚠️ 추정 호환 | 95.3% TypeScript, 다만 React 19 명시 호환 표기 없음 |
+| 4 | 알려진 보안 이슈 없음 | ✅ PASS | NLnet 펀딩, advisory 없음 |
+| 5 | Cloudflare Workers (D1 + KV + Hono) 통합 사례 | ❌ FAIL | WebSocket 전용 transport (`websocketEndpoint` URL 만 설정 가능, transport layer 추상화 없음). CF Workers 가 WS Upgrade 지원하지만 사례 0건. **stable 명시: "WARNING: This is beta software."** |
+
+**총 3 fail (1, 5 + beta 명시) → fallback D 자동 채택.** 사용자 결정 4 의 사전 승인에 따름 (≥ 3 fail).
+
+- **실제 채택 stack:** `yjs` 13.6.30 + `y-indexeddb` 9.0.12 (이미 Phase A 에서 도입) + **자체 transport** (`SyncTransport` interface + `StubTransport` Phase C, 실 `RelayTransport` Phase E 도입) + 자체 AEAD (Phase E 진입 시 결정 — `@noble/ciphers` 의 XChaCha20-Poly1305 후보).
+- **Phase C 의 신규 의존성: 0개** (secsync 미설치). Phase E 진입 시 AEAD 라이브러리 1개만 추가.
+- **+1주 일정 추가는 Phase E~F 에 흡수:** snapshot/delta 분리 우리가 설계. M9 전체 일정은 변동 없음 (m9-phase-plan.md "총 예상 +45 회귀" 유지).
+- **Why this is OK:** 자체 transport 의 코어 디자인은 단순 — `Y.encodeStateAsUpdate(doc)` 를 AEAD 로 감싸 `POST /sync/snapshot`, `Y.applyUpdate(doc, decrypted)` 로 수신. 키 회전/스냅샷 압축은 Phase F 이후 점진적 도입 가능 (MVP 충분).
+
 ### E. 시장 포지셔닝 — Phased Expansion (MVP API 특화, v1.1 General Secrets)
 
 - **결정:** MVP (M0~M13) 는 "DevOps/풀스택 개발자의 API key 의존성 관리" 슬로건으로 **API 특화** 출시. 일반 ID/PW 관리 + Watchtower-like 기능은 **v1.1 (M18 신설)** 에서 도입. 자동입력 (브라우저 익스텐션 + 모바일 자동입력) 은 v1.2 (M19/M20).
