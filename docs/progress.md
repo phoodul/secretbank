@@ -2,6 +2,24 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 8 (자율 모드 — F-2 / F-3 / G-pair-1 연속 완료, 자동 진행으로 다음 sub-phase 큐로 무중단 이동)
+- **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+**F 풀**+**G-pair-1** 종료, 19/22 sub-phases). M9 의 잔여: G-pair-2 (relay endpoint) / G-pair-3 (client service) / G-pair-4 (UI) / G-conflict / G-offline / G-entitlement.
+- **이번 Night mode 8 신규 commits (3개):**
+  - `833081e` feat(sync) — M9 Phase F-2: value_sync service + Tauri 커맨드 (chacha20poly1305 + AEAD adapter + sync_value_push/pull)
+  - `924d321` feat(sync) — M9 Phase F-3: credential mutating → 자동 value push (best-effort)
+  - `83bff31` feat(crypto) — M9 Phase G T092-pair-1: X25519 ECDH (pairing primitive)
+- **Tests (4-28 Night mode 8 종료 시점):**
+  - api-vault-crypto: **15 passed** (이전 0 — aead 9 + pairing 6 신규)
+  - api-vault-app lib: **168 passed** (이전 162, value_sync +6)
+  - Frontend Vitest: 416 (변동 없음 — Night mode 8 은 Rust 만)
+  - Relay vitest: 54 (변동 없음)
+  - clippy / typecheck 모두 0
+- **이전 Night mode 7 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 7)
+
 - **Time:** 2026-04-28 Night mode 7 (E-4b / E-5 / F-1 3건 연속 완료, 다음 세션은 M9 Phase F-2 부터)
 - **Phase:** Phase 3 — Implementation, M4~M8 ✅ + M9 🔄 Phase A+B+C+D 풀+**E 풀**+**F-1** 종료 (16/19 sub-phases) + M15 🔄, 111/132 태스크 (84.1%)
 - **이번 Night mode 7 신규 commits (3개):**
