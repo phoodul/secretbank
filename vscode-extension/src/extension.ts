@@ -1,15 +1,21 @@
 /**
  * API Vault — VS Code extension entry point.
  *
- * MVP (M21-1): three commands + status bar.
- *   - `apivault.list`              → Quick pick of credentials (`apivault list --json`)
- *   - `apivault.reveal`            → user picks a credential → clipboard
- *   - `apivault.scanSupplyChain`   → run supply scan on workspace root, surface
- *                                     advisories in the Problems panel.
+ * M21-1 (commands + status bar) + M21-2 (Language Model tools + hover provider).
  *
- * Talks to the desktop app via the `apivault` CLI binary (Rust). MCP server
- * native registration (M21-2) is deferred until VS Code's MCP API stabilises;
- * the CLI route works today on every VS Code 1.84+.
+ * Commands (palette):
+ *   - apivault.list           — Quick pick of credentials
+ *   - apivault.reveal         — pick → passphrase → clipboard
+ *   - apivault.scanSupplyChain — workspace scan → Problems panel
+ *
+ * Language model tools (Copilot Chat / Claude / Cursor / any 1.96+ host):
+ *   - apivault_list_credentials
+ *   - apivault_scan_supply_chain
+ *
+ * Editor surface:
+ *   - status bar item ($(shield))
+ *   - package.json hover provider — last scan's advisory tooltip on dep lines
+ *   - Problems panel diagnostics (scoped to "api-vault")
  */
 
 import * as vscode from "vscode";
@@ -36,6 +42,11 @@ interface SupplyAdvisory {
 
 let statusItem: vscode.StatusBarItem | undefined;
 let diagnostics: vscode.DiagnosticCollection | undefined;
+/**
+ * In-memory cache of the last successful supply scan. Hover provider reads
+ * this so users see the advisory tooltip without re-running the scan.
+ */
+const lastScan: Map<string, SupplyAdvisory[]> = new Map(); // key = package name (lowercase)
 
 export function activate(context: vscode.ExtensionContext): void {
   statusItem = vscode.window.createStatusBarItem(
@@ -55,6 +66,24 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("apivault.list", cmdList),
     vscode.commands.registerCommand("apivault.reveal", cmdReveal),
     vscode.commands.registerCommand("apivault.scanSupplyChain", cmdScanSupplyChain),
+  );
+
+  // Language Model tools — Copilot Chat / Claude / Cursor / any host that
+  // implements vscode.lm 1.96+. Tools are advertised in package.json and
+  // their `invoke` is wired here.
+  if (typeof vscode.lm?.registerTool === "function") {
+    context.subscriptions.push(
+      vscode.lm.registerTool("apivault_list_credentials", new ListCredentialsTool()),
+      vscode.lm.registerTool("apivault_scan_supply_chain", new ScanSupplyChainTool()),
+    );
+  }
+
+  // Hover provider — package.json deps show advisory tooltip from last scan.
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { language: "json", pattern: "**/package.json" },
+      { provideHover: providePackageJsonHover },
+    ),
   );
 
   // Optional auto-scan on startup.
@@ -207,14 +236,8 @@ async function cmdScanSupplyChain(): Promise<void> {
     },
     async () => {
       diagnostics?.clear();
-
-      // We use the CLI's not-yet-existing `supply scan --json` flag in v2;
-      // for now we shell out to the desktop's HTTP API or fall back to a
-      // simple manifest read + osv.dev REST call. MVP: parse package.json
-      // here and POST one OSV query per dep — same shape as the Rust
-      // matcher, just inline so we don't depend on a bundled binary the
-      // user hasn't installed yet.
       const advisories = await scanWorkspace(root);
+      cacheScanResults(advisories);
       surfaceDiagnostics(advisories);
       void vscode.window.showInformationMessage(
         advisories.length === 0
@@ -223,6 +246,16 @@ async function cmdScanSupplyChain(): Promise<void> {
       );
     },
   );
+}
+
+function cacheScanResults(advisories: SupplyAdvisory[]): void {
+  lastScan.clear();
+  for (const a of advisories) {
+    const key = a.package.toLowerCase();
+    const list = lastScan.get(key) ?? [];
+    list.push(a);
+    lastScan.set(key, list);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -345,5 +378,117 @@ function surfaceDiagnostics(advisories: SupplyAdvisory[]): void {
   }
   for (const [path, list] of grouped) {
     diagnostics.set(vscode.Uri.file(path), list);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hover provider — package.json deps
+// ---------------------------------------------------------------------------
+
+function providePackageJsonHover(
+  document: vscode.TextDocument,
+  position: vscode.Position,
+): vscode.Hover | undefined {
+  // package.json 의 dependency 라인 형식: `    "axios": "^1.4.0",`
+  const line = document.lineAt(position.line).text;
+  const match = /"([^"]+)"\s*:\s*"[^"]+"/.exec(line);
+  if (!match) return undefined;
+  const pkg = match[1].toLowerCase();
+  const advs = lastScan.get(pkg);
+  if (!advs || advs.length === 0) return undefined;
+
+  const md = new vscode.MarkdownString();
+  md.isTrusted = false;
+  md.appendMarkdown(`**API Vault — ${advs.length} advisory(ies) for \`${match[1]}\`**\n\n`);
+  for (const a of advs.slice(0, 5)) {
+    const tag = a.category === "secret_leak" ? "🔑" : a.category === "supply_chain" ? "📦" : "⚠️";
+    md.appendMarkdown(`- ${tag} **${a.severity}** [${a.source_id}] — ${a.summary}\n`);
+  }
+  if (advs.length > 5) {
+    md.appendMarkdown(`\n_…and ${advs.length - 5} more — see Problems panel_`);
+  }
+  return new vscode.Hover(md);
+}
+
+// ---------------------------------------------------------------------------
+// Language Model tools — Copilot Chat / Claude / Cursor / any 1.96+ host
+// ---------------------------------------------------------------------------
+
+class ListCredentialsTool
+  implements vscode.LanguageModelTool<{ issuer?: string; env?: string }>
+{
+  async invoke(
+    options: vscode.LanguageModelToolInvocationOptions<{ issuer?: string; env?: string }>,
+    _token: vscode.CancellationToken,
+  ): Promise<vscode.LanguageModelToolResult> {
+    const args: string[] = ["list", "--json"];
+    if (options.input?.env) args.push("--env", options.input.env);
+    if (options.input?.issuer) args.push("--issuer", options.input.issuer);
+    let result: RunResult;
+    try {
+      result = await runCli(args);
+    } catch (e) {
+      return new vscode.LanguageModelToolResult([
+        new vscode.LanguageModelTextPart(`apivault list failed: ${(e as Error).message}`),
+      ]);
+    }
+    let parsed: { credentials: CredentialSummary[] } = { credentials: [] };
+    try {
+      parsed = JSON.parse(result.stdout);
+    } catch {
+      // fallthrough — empty list
+    }
+    const summary = `${parsed.credentials.length} credential(s) — metadata only, no secret values revealed.`;
+    const body = parsed.credentials
+      .map((c) => `- ${c.id}  ${c.issuer}/${c.name} (${c.env}, ${c.status})`)
+      .join("\n");
+    return new vscode.LanguageModelToolResult([
+      new vscode.LanguageModelTextPart(`${summary}\n${body}`),
+    ]);
+  }
+}
+
+class ScanSupplyChainTool
+  implements vscode.LanguageModelTool<{ category_filter?: string }>
+{
+  async invoke(
+    options: vscode.LanguageModelToolInvocationOptions<{ category_filter?: string }>,
+    _token: vscode.CancellationToken,
+  ): Promise<vscode.LanguageModelToolResult> {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return new vscode.LanguageModelToolResult([
+        new vscode.LanguageModelTextPart("No workspace open — can't scan."),
+      ]);
+    }
+    const advisories = await scanWorkspace(folder.uri.fsPath);
+    cacheScanResults(advisories);
+    surfaceDiagnostics(advisories);
+
+    const filter = options.input?.category_filter;
+    const filtered =
+      !filter || filter === "any"
+        ? advisories
+        : advisories.filter((a) => a.category === filter);
+
+    if (filtered.length === 0) {
+      return new vscode.LanguageModelToolResult([
+        new vscode.LanguageModelTextPart(
+          `Scanned ${advisories.length} matched advisor(ies); none in category '${filter ?? "any"}'. Workspace looks clean.`,
+        ),
+      ]);
+    }
+    const body = filtered
+      .slice(0, 25)
+      .map(
+        (a) =>
+          `- [${a.severity}/${a.category}] ${a.package}@${a.version} (${a.manifest}): ${a.summary} (${a.source_id})`,
+      )
+      .join("\n");
+    return new vscode.LanguageModelToolResult([
+      new vscode.LanguageModelTextPart(
+        `${filtered.length} advisor(ies) for ${filter ?? "any"} category:\n${body}`,
+      ),
+    ]);
   }
 }

@@ -11,7 +11,7 @@
     "url": "https://github.com/api-vault/api-vault.git"
   },
   "engines": {
-    "vscode": "^1.84.0"
+    "vscode": "^1.96.0"
   },
   "categories": [
     "Other",
@@ -46,6 +46,43 @@
         "category": "API Vault"
       }
     ],
+    "languageModelTools": [
+      {
+        "name": "apivault_list_credentials",
+        "displayName": "List API Vault credentials",
+        "modelDescription": "List credentials stored in the user's API Vault — returns id / issuer / name / env / status. Does NOT reveal secret values. Use this to discover what secrets are available so you can ask the user about a specific one. Read-only.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "apivault",
+        "icon": "$(shield)",
+        "tags": ["secrets", "discovery"],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "issuer": { "type": "string", "description": "Filter by issuer slug (e.g. 'openai')" },
+            "env": { "type": "string", "enum": ["dev", "staging", "prod"] }
+          }
+        }
+      },
+      {
+        "name": "apivault_scan_supply_chain",
+        "displayName": "Scan supply-chain risk",
+        "modelDescription": "Scan the user's current workspace for npm / Cargo dependencies that have a known OSV.dev advisory (especially secret_leak / supply_chain category). Use BEFORE adding or upgrading a dependency — if a package has secret-exfil history, surface that to the user. Read-only.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "supplyrisk",
+        "icon": "$(package)",
+        "tags": ["supply-chain", "security"],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category_filter": {
+              "type": "string",
+              "enum": ["secret_leak", "supply_chain", "any"],
+              "description": "Restrict to a specific advisory category. 'any' returns all (default)."
+            }
+          }
+        }
+      }
+    ],
     "configuration": {
       "title": "API Vault",
       "properties": {
@@ -69,7 +106,7 @@
   },
   "devDependencies": {
     "@types/node": "20.x",
-    "@types/vscode": "^1.84.0",
+    "@types/vscode": "^1.96.0",
     "typescript": "^5.4.0"
   }
 }

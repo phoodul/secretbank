@@ -49,7 +49,7 @@
 | M18 | **CLI + MCP server**            | TBD         | TBD       | ✅ M18 v1 완료 (CLI 3 subcommand list/reveal/run + MCP 5 tools 포함 supply) |
 | M19 | Team / org / shared vault       | TBD         | TBD       | ⏳ placeholder (B2B 진입, M18+M21 후 베타 사용자 피드백 기반) |
 | M20 | Supply chain risk graph         | TBD         | TBD       | ✅ M20 v1 완료 (api-vault-supply crate + manifest parsers + OSV.dev + matcher + storage repos + Tauri 커맨드 + MCP tool) |
-| M21 | VS Code / JetBrains plugin      | TBD         | TBD       | 🔄 진입 (M21-1 종료 — vscode-extension scaffold + apivault.list/reveal/scanSupplyChain + status bar + 인라인 OSV 스캔 → Problems panel diagnostic. M21-2 native MCP 등록 다음) |
+| M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v1 완료 (M21-1 commands + status bar + diagnostic / M21-2 LanguageModel tools (apivault_list_credentials + apivault_scan_supply_chain) + package.json hover provider). 다음 → M22 JetBrains |
 
 ---
 
