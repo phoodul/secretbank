@@ -1,5 +1,71 @@
 # Work Log
 
+## 2026-04-28 Night mode 4 — M9 Phase C + B-4 + D-1 (3 commits)
+
+### 세션 개요
+
+- **목표**: Phase C SecSync 검증 → 채택/fallback → SyncProvider 통합 → B-4 OAuth salts → Phase D 진입.
+- **결과**: 3 commits (`b550575` C / `4f6ced0` B-4 / `2ba0069` D-1), Rust lib 152 → 153 (+1), Vitest 346 → 363 (+17), clippy 0, typecheck 0.
+
+### Phase C — secsync stable 검증 → fallback D 자동 채택
+
+5개 체크리스트로 npm + GitHub + 공식 docs 조사. 결과:
+
+| # | 체크 | 결과 |
+|:--|:--|:--|
+| 1 | 최근 6개월 commit 활동 | ❌ npm `0.5.0` (2024-06-04, 22개월 정지) |
+| 2 | Yjs 13.6.x 호환 | ⚠️ 추정 (검증 미실행) |
+| 3 | React 19 + TS 5.x | ⚠️ 추정 호환 |
+| 4 | 보안 advisory | ✅ 없음 (NLnet 펀딩) |
+| 5 | CF Workers 통합 사례 | ❌ WS 전용, 사례 0건, beta 명시 |
+
+**3 fail (1, 5 + beta)** → 사용자 결정 4 (≥3 fail 시 fallback D) 사전 승인에 따라 secsync 미설치 + fallback D 자동 채택.
+
+산출물:
+- `src/features/sync/transport.ts` — `SyncTransport` interface + `StubTransport` 클래스 (lifecycle/handler 회귀 6).
+- `SyncProvider` 확장 — `invoke('sync_get_root_key')` mount 시 호출 → rootKey(32바이트) Context 노출. NoSyncSession (`code='no_sync_session'`) → status='offline_only' (rootKey null, transport idle). generic 에러 → status='error'. unmount 시 `transport.disconnect()` 자동.
+- 신규 dep 0개. Vitest +10 (Phase A 4 + Phase C 4 + transport 6).
+- project-decisions.md D.1 갱신 / m9-phase-plan.md Phase C 정정.
+
+### Phase B-4 — OAuth callback salts → AuthSession derive
+
+T082 시점에 relay 응답은 이미 salts 포함되어 있었으나 클라이언트의 `AuthTokensResponse` 가 두 필드를 ignore 하던 dead path 정리.
+
+- `services/session.rs` 신규 `OAuthCallbackResponse` — `#[serde(flatten)] tokens` + `salt_auth` + `salt_enc` 분리 deserialize.
+- `commands/auth.rs::exchange_oauth_callback` 가 응답의 salts 를 `complete_session(.., Some(...))` 로 forward → Passkey verify 와 동일 흐름으로 enc_key 자동 derive (master_passphrase 가 메모리에 있을 때).
+- 회귀 갱신 1 (`_persists_session_and_records_salts`) + 신규 1 (`_with_passphrase_derives_enc_key`).
+- Rust lib 152 → 153 (+1). clippy 0 warning.
+
+### Phase D-1 — mapping framework
+
+Phase D 가 단일 commit 으로 무리하다고 판단 → sub-phase 분할:
+- **D-1 (이번 commit)** — framework only.
+- **D-2 (다음 큐)** — 백엔드 db:changed emit + 나머지 5 엔티티 매퍼.
+- **D-3 (다음 큐)** — origin loop 회귀 (+12 target).
+
+D-1 산출물:
+- `src/features/sync/origin.ts` — `ORIGIN_LOCAL_DB` / `ORIGIN_REMOTE` Symbol + `runWithOrigin` / `isSyncOrigin` 헬퍼. observe handler 가 자기 origin 변경을 skip 해서 무한 루프 방지.
+- `src/features/sync/mapping.ts` — `SYNC_ENTITIES` 화이트리스트 6 + `EntityMapper<TRow, TYValue>` interface + 첫 reference `credentialMapper` (vault_ref / hash_hint / usages / score 4개 device-local 필드 제외).
+- 회귀 +7 (whitelist match / origin round-trip / isSyncOrigin / toYMap omit / round-trip / device-local default / entity match).
+
+### 검증
+
+- Rust api-vault-app lib: **153 passed** (Phase B-4 +1)
+- Frontend Vitest: **363 passed** (Phase C +10, D-1 +7)
+- `cargo clippy --workspace --all-targets --all-features -D warnings` — 0
+- `pnpm typecheck` — 0
+- `pnpm lint` — 0 errors (7 pre-existing warnings)
+
+### 다음 (Night mode 5 큐)
+
+1. **D-2** — 백엔드 db:changed emit (15+ mutating 커맨드) + issuer/project/deployment/usage/settings 매퍼
+2. **D-3** — origin loop 회귀 (Y.Map ↔ SQLite 무한 루프 방지)
+3. **Phase E** — relay /sync 엔드포인트 + AEAD 라이브러리 결정 (XChaCha20-Poly1305 후보) + RelayTransport 구현 + D1 migration 0003_sync.sql
+4. **Phase F** — value sync (`encrypted_secret_values` + value-root key)
+5. **Phase G** — pairing + UI + conflict + offline + entitlement (T092~T096)
+
+---
+
 ## 2026-04-28 Night mode 3 — M9 Phase B-3 (sync_get_root_key) — Phase B 종료
 
 ### 세션 개요

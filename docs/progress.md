@@ -83,6 +83,78 @@
 
 ---
 
+## 2026-04-28 Night mode 4 — Phase C + B-4 + D-1 (3 commits)
+
+### 세션 정보
+
+- **시작점:** Night mode 3 종료 시점 (M9 Phase B 완료, 다음 큐 = Phase C / B-4 / D~G).
+- **종료 시점:** Phase C / B-4 / Phase D-1 완료. 다음 큐 = D-2 / D-3 / E / F / G.
+- **신규 commits (3개):**
+  - `b550575` feat(sync) — M9 Phase C: fallback D 채택, transport stub + sync boot 통합
+  - `4f6ced0` feat(sync) — M9 Phase B-4: OAuth callback salts → AuthSession derive
+  - `2ba0069` feat(sync) — M9 Phase D-1: mapping framework + origin marker
+
+### Phase C — secsync stable 검증 → fallback D 자동 채택
+
+- **검증 결과 3 fail / 5**:
+  1. ❌ npm publish `0.5.0` (2024-06-04, 22개월 정지)
+  2. ⚠️ Yjs 13.6.x 호환 추정 (검증 미실행)
+  3. ⚠️ React 19 + TS 5.x 추정 호환
+  4. ✅ 보안 advisory 없음 (NLnet 펀딩)
+  5. ❌ WS 전용 transport, CF Workers 통합 사례 0건, "WARNING: This is beta software."
+- 사용자 결정 4 (≥3 fail 시 fallback D) 사전 승인에 따라 **secsync 미설치, fallback D 자동 채택**.
+- `src/features/sync/transport.ts` — `SyncTransport` interface + `StubTransport` (Phase E 의 RelayTransport 도입 전 placeholder).
+- `SyncProvider` 확장 — `sync_get_root_key` invoke + rootKey context 노출 + `NoSyncSession` → `status='offline_only'` + unmount 시 `transport.disconnect()` 자동.
+- 신규 dep 0개. Vitest +10 (Phase A 4 + Phase C 4 + transport 6).
+- project-decisions.md D.1 갱신, m9-phase-plan.md Phase C 정정.
+
+### Phase B-4 — OAuth callback salts → AuthSession derive
+
+- T082 시점에 relay 응답은 이미 salts 포함, 클라이언트가 ignore 하던 dead path 정리.
+- `OAuthCallbackResponse` (services/session.rs) — `#[serde(flatten)] tokens` + `salt_auth` + `salt_enc`.
+- `exchange_oauth_callback` 가 응답의 salts 를 `complete_session(.., Some(...))` 로 forward → Passkey verify 와 동일 흐름.
+- Rust lib 152 → **153 (+1)**. clippy 0 warning.
+- 회귀 갱신 1 (`_persists_session_and_records_salts`) + 신규 1 (`_with_passphrase_derives_enc_key`).
+
+### Phase D-1 — mapping framework
+
+Phase D 를 sub-phase 로 분할 (D 전체 = 백엔드 emit hookup + 6 엔티티 매퍼 + origin loop 회귀 → 단일 commit 으로 무리).
+
+- **D-1 (이번 commit)** — framework only.
+- **D-2 (다음 큐)** — 백엔드 db:changed emit + 나머지 5 엔티티 매퍼 (issuer / project / deployment / usage / settings).
+- **D-3 (다음 큐)** — origin loop 회귀 (Y.Map → SQLite → Y.Map 무한 루프 방지 검증).
+
+D-1 산출물:
+- `src/features/sync/origin.ts` — `ORIGIN_LOCAL_DB` / `ORIGIN_REMOTE` Symbol + `runWithOrigin` / `isSyncOrigin` 헬퍼.
+- `src/features/sync/mapping.ts` — `SYNC_ENTITIES` 화이트리스트 6 + `EntityMapper<TRow, TYValue>` interface + 첫 reference `credentialMapper` (vault_ref / hash_hint / usages / score 4개 device-local 필드 제외).
+- 회귀 +7 (Vitest 363 / 전체 49 파일).
+
+### Tests (4-28 Night mode 4 종료 시점)
+
+- Rust api-vault-app lib: **153 passed** (이전 152 + 1 — B-4 +1)
+- Frontend Vitest: **363 passed** (이전 346 + 17 — Phase C +10, D-1 +7)
+- relay vitest 35 / Rust crypto 5 / storage 39 / 전체 워크스페이스 모두 그린
+- clippy --workspace --all-targets --all-features -D warnings: **0 에러**
+- typecheck: 0 에러
+
+### 다음 Night mode 5 큐
+
+1. **D-2** — 백엔드 db:changed emit hookup (15+ mutating 커맨드) + 나머지 5 엔티티 매퍼 (issuer / project / deployment / usage / settings)
+2. **D-3** — origin loop 회귀 (Y.Map ↔ SQLite 무한 루프 방지 검증, Vitest +12 target)
+3. **Phase E** — relay `/sync` 엔드포인트 + AEAD 라이브러리 결정 (`@noble/ciphers` 의 XChaCha20-Poly1305 후보) + RelayTransport 구현 + D1 migration 0003_sync.sql
+4. **Phase F** — value sync 채널 (`encrypted_secret_values` + `value-root` 키 derive)
+5. **Phase G** — pairing + UI + conflict resolver + offline + entitlement (T092~T096)
+
+### Architectural seeds (Phase Plan 과 직교, ad-hoc commit 가능)
+
+`m9-phase-plan.md` Open Issues E 에 명시된 4건:
+1. `credential.kind` enum 확장 가능 (v1.1 General Secrets 진입 비용 ↓)
+2. `issuer` → "Site" 명명 일반화 검토
+3. HIBP password breach client prep (T052 패턴 재사용)
+4. zxcvbn weak password detector (T024 LockScreen 패턴 재사용)
+
+---
+
 ## 2026-04-26 수동 검증 라운드 + 5건 hotfix
 
 세션 흐름: 사용자가 manual verification 을 요청 → step-by-step 9 단계 진행 (Relay /health → 앱 부팅 → 언락 → Incidents → Audit → RAILGUARD → GitHub Integration → Pro 토글 → Kill Switch). 단계마다 발견되는 결함을 큐(H1~H5)에 적어두고 검증 끝난 뒤 일괄 fix.
