@@ -13,6 +13,102 @@ radius before you rotate or revoke a key.
 
 ### Added
 
+#### M22 — JetBrains plugin (v1)
+
+- Gradle Kotlin DSL plugin module at `jetbrains-plugin/` targeting IntelliJ
+  Platform 2.1.0. Compatible with IDEA / WebStorm / GoLand / PyCharm / Rider /
+  CLion via `com.intellij.modules.platform`.
+- `Tools → API Vault` menu group with three actions: list credentials, reveal
+  credential (passphrase prompt → clipboard, auto-clear in 30s), scan
+  supply-chain risk.
+- Status-bar widget with the API Vault shield icon.
+- `LocalInspection` for `package.json` and `Cargo.toml` that flags lines whose
+  package matches a cached supply-chain advisory as WARNING.
+- `ApiVaultService` wraps the `apivault` CLI process and caches scan results
+  for inspection use.
+- JUnit 5 tests for the line-based manifest dependency parser.
+
+#### M21 — Editor plugins (v3)
+
+- Cargo.toml hover provider — same advisory tooltip behavior as the existing
+  package.json hover.
+- `ManifestCodeLensProvider` — risky dependency lines in package.json /
+  Cargo.toml get an inline "🔑 N advisor(ies)" code lens that opens the
+  Problems panel.
+- `scanWorkspace` now scans Cargo.toml as well as package.json.
+
+#### M21 — Editor plugins (v2)
+
+- Language Model tools (VS Code 1.96+): `apivault_list_credentials` and
+  `apivault_scan_supply_chain` so Copilot Chat / Claude / Cursor can invoke
+  the vault without per-host wiring.
+- `package.json` hover provider — last scan's advisory tooltip on dependency
+  lines.
+
+#### M21 — Editor plugins (v1)
+
+- VS Code extension with palette commands (list, reveal, scan) and Problems
+  panel diagnostics scoped to source `api-vault`.
+- Status bar item linking to the credential list.
+
+#### M20 — Supply chain risk graph (v2)
+
+- Lockfile parsers: `package-lock.json` (npm v3+ "packages" map and v6
+  "dependencies" tree), `pnpm-lock.yaml` (v6 keys with peer-meta strip),
+  `Cargo.lock`.
+- `range_eval` module — parses OSV affected-range strings (e.g.
+  `>=0 <1.0.4`) and evaluates a dep's resolved version against them. Strict
+  semver for npm/Cargo, lexical fallback for other ecosystems. Handles
+  partial versions, pre-release tags, and open upper bounds (`<*`).
+- `match_advisories` now filters out matches whose version falls outside
+  the advisory's affected range. `MatchResult.in_range` exposes the result
+  for callers that want to display a warning anyway.
+- Tauri command `supply_scan_project` reads the project's lockfiles before
+  the OSV query, so range strings are replaced with concrete versions.
+
+#### M20 — Supply chain risk graph (v1)
+
+- New `api-vault-supply` crate: `manifest`, `ecosystem`, `advisory`,
+  `matcher` modules.
+- `OsvClient` queries `api.osv.dev` per (ecosystem, name, version) tuple
+  and classifies advisories into `secret_leak` / `crypto_weak` /
+  `supply_chain` / `other` from text signals.
+- SQLite tables `package`, `package_advisory`, `package_usage` with their
+  upsert-and-list repos.
+- `supply_scan_project` Tauri command performs the full pipeline; result
+  is auto-rendered into the dependency graph.
+- `check_supply_chain_risk` MCP tool exposes the same to AI assistants.
+
+#### M19 stub
+
+- Placeholder for Team / org / shared-vault feature set; entered after
+  M22 completes and beta feedback comes in.
+
+#### M18 — CLI + MCP server
+
+- `apivault` CLI with `list`, `reveal`, `run`, and (added in M22 follow-up)
+  `scan supply-chain` subcommands. Mirrors the desktop app's vault
+  location so a single vault is shared.
+- `apivault mcp serve` starts a local Model Context Protocol server over
+  stdio. Five tools exposed: `list_credentials`, `reveal_credential`,
+  `check_railguard_status`, `suggest_railguard_template`,
+  `check_supply_chain_risk`.
+
+#### M9 — Multi-device E2EE sync
+
+- Yjs + custom transport CRDT on top of a Cloudflare Workers relay.
+- X25519 ECDH device pairing — joiner enters a 6-digit PIN from the host
+  and the master passphrase / key material is transferred over an
+  authenticated channel without re-prompting.
+- AAD bindings (`user:<userId>:cred:<credId>`) defend against swap
+  attacks at the relay layer.
+
+#### M8 — Auth (Passkey + OAuth)
+
+- Argon2id + HKDF chain for derived sub-keys (`crdt-root`, `value-root`,
+  `pair-channel`).
+- Sign-in UI, refresh-token rotation, 9 client commands.
+
 #### M0 — Foundation (T001–T012)
 
 - Tauri v2 desktop shell scaffolded with a Cargo workspace split between

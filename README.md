@@ -84,6 +84,12 @@ pnpm tauri build
 
 Architecture and task details: [`docs/architecture.md`](./docs/architecture.md) · [`docs/task.md`](./docs/task.md)
 
+User guide: [`docs/USER_GUIDE.en.md`](./docs/USER_GUIDE.en.md) · [`docs/USER_GUIDE.ko.md`](./docs/USER_GUIDE.ko.md)
+
+Release / policy: [`docs/RELEASE_GUIDE.md`](./docs/RELEASE_GUIDE.md) · [`docs/PRIVACY.md`](./docs/PRIVACY.md) · [`docs/TERMS.md`](./docs/TERMS.md) · [`SECURITY.md`](./SECURITY.md)
+
+Landing page source: [`site/`](./site/)
+
 ## License
 
 This repository follows an **Open Core** model with two licenses, separated by directory:
