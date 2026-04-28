@@ -28,7 +28,14 @@ import {
 } from "react";
 import * as Y from "yjs";
 
+import { RelayTransport } from "./relay-transport";
 import { StubTransport, type SyncTransport } from "./transport";
+
+/** Lightweight subset of `auth_status` DTO consumed by Phase E-4b. */
+interface AuthStatusDto {
+  user_id: string;
+  expires_at: number;
+}
 
 // ---------------------------------------------------------------------------
 // Context shape
@@ -102,7 +109,11 @@ export interface SyncProviderProps {
    * 명시적으로 `false` 를 주면 disablePersistence 모드에서도 invoke 호출.
    */
   disableSyncBoot?: boolean;
-  /** Phase E 에서 RelayTransport 로 교체. Phase C 기본은 StubTransport. */
+  /**
+   * Transport 주입. 미공급 시 Phase E-4b 의 default — sync boot 가 invoke 3
+   * 개 (sync_get_root_key, auth_status, sync_get_relay_url) 호출 후
+   * RelayTransport 자동 생성 + connect.
+   */
   transport?: SyncTransport;
   children: ReactNode;
 }
@@ -117,8 +128,10 @@ export function SyncProvider({
   // Y.Doc 은 mount 당 단일 인스턴스 (lazy initializer 로 first-render 직전 생성).
   const [doc] = useState<Y.Doc>(() => new Y.Doc());
 
-  // Transport 는 props 로 주입되면 그걸 쓰고, 아니면 StubTransport (lazy).
-  const [transport] = useState<SyncTransport>(
+  // Transport 초기값: providedTransport 가 있으면 그걸, 아니면 StubTransport
+  // (placeholder). default 흐름에선 sync boot effect 가 RelayTransport 로
+  // setTransport 한다. unmount cleanup 은 항상 최종 transport 의 disconnect 호출.
+  const [transport, setTransport] = useState<SyncTransport>(
     () => providedTransport ?? new StubTransport(),
   );
 
@@ -170,7 +183,8 @@ export function SyncProvider({
     };
   }, [dbName, doc, disablePersistence, skipBoot]);
 
-  // sync boot — invoke('sync_get_root_key') + transport.connect()
+  // sync boot — invoke('sync_get_root_key') (+ auth_status + sync_get_relay_url
+  // when default transport) + transport.connect()
   useEffect(() => {
     if (skipBoot) return;
     let cancelled = false;
@@ -181,9 +195,33 @@ export function SyncProvider({
         if (cancelled) return;
         const key = decodeBase64Url(b64);
         setRootKey(key);
-        await transport.connect();
+
+        // Default 흐름 — RelayTransport 자동 생성 (providedTransport 미공급 시).
+        let activeTransport = transport;
+        if (!providedTransport) {
+          const [authStatus, relayUrl] = await Promise.all([
+            invoke<AuthStatusDto | null>("auth_status"),
+            invoke<string>("sync_get_relay_url"),
+          ]);
+          if (cancelled) return;
+          const userId = authStatus?.user_id;
+          if (!userId) {
+            // 세션은 있는데 user_id 가 비어있는 비정상 상태 — sync 비활성.
+            setRootKey(null);
+            setStatus("offline_only");
+            return;
+          }
+          activeTransport = new RelayTransport({
+            baseUrl: relayUrl,
+            getAccessToken: () => invoke<string>("auth_get_access_token"),
+            getSessionKey: () => ({ rootKey: key, userId }),
+          });
+          setTransport(activeTransport);
+        }
+
+        await activeTransport.connect();
         if (cancelled) {
-          await transport.disconnect();
+          await activeTransport.disconnect();
           return;
         }
         setStatus("ready");
@@ -208,7 +246,10 @@ export function SyncProvider({
     return () => {
       cancelled = true;
     };
-  }, [skipBoot, transport]);
+    // providedTransport 만 dep — transport 자체는 default 흐름에서 setTransport
+    // 로 mid-effect 변경되므로 dep 에 넣으면 무한 재실행.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skipBoot, providedTransport]);
 
   // unmount cleanup — transport.disconnect() + doc.destroy()
   useEffect(() => {

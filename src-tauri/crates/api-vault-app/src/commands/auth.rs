@@ -549,6 +549,28 @@ pub async fn auth_signout(state: State<'_, AppContext>) -> Result<(), AuthComman
     Ok(())
 }
 
+/// **M9 Phase E-4b** — return the in-memory access token so the renderer's
+/// RelayTransport can attach it as a Bearer header.
+///
+/// Returns [`AuthCommandError::NoSession`] when there is no signed-in session.
+/// Token rotation: callers must re-invoke this on every relay request — when
+/// `auth_refresh` rotates tokens, the next call here returns the fresh value.
+///
+/// **Why expose the token to the renderer**: the RelayTransport runs in the
+/// frontend (Phase E-4a) and needs to attach `Authorization: Bearer <token>`.
+/// Tauri commands already carry tokens between renderer and backend on every
+/// auth command, so the additional surface here is minimal — and the renderer
+/// never persists the token (it's a transient string handed to fetch).
+#[tauri::command]
+pub async fn auth_get_access_token(
+    state: State<'_, AppContext>,
+) -> Result<String, AuthCommandError> {
+    use secrecy::ExposeSecret as _;
+    let guard = state.auth_session.read().await;
+    let session = guard.as_ref().ok_or(AuthCommandError::NoSession)?;
+    Ok(session.access_token.expose_secret().to_owned())
+}
+
 /// Return a sanitised view of the current session, or `None` when signed out.
 ///
 /// Reads from the in-memory cache only — assumes [`hydrate_session_from_vault`]
@@ -1603,5 +1625,71 @@ mod tests {
             err,
             AuthCommandError::MissingField { ref field } if field == "salt_auth"
         ));
+    }
+
+    // -----------------------------------------------------------------------
+    // M9 Phase E-4b — auth_get_access_token
+    // -----------------------------------------------------------------------
+
+    /// Direct variant — exercises the same logic as the Tauri command without
+    /// the State extractor.
+    async fn direct_get_access_token(ctx: &AppContext) -> Result<String, AuthCommandError> {
+        use secrecy::ExposeSecret as _;
+        let guard = ctx.auth_session.read().await;
+        let session = guard.as_ref().ok_or(AuthCommandError::NoSession)?;
+        Ok(session.access_token.expose_secret().to_owned())
+    }
+
+    #[tokio::test]
+    async fn get_access_token_returns_in_memory_token() {
+        let server = MockServer::start().await;
+        let (ctx, _dir) = make_ctx(&server).await;
+        *ctx.auth_session.write().await = Some(AuthSession {
+            user_id: "usr_alice".into(),
+            access_token: SecretString::from("the-access-jwt"),
+            refresh_token: SecretString::from("the-refresh-jwt"),
+            expires_at: 1_700_000_000,
+            salt_auth: None,
+            salt_enc: None,
+            enc_key: None,
+        });
+
+        let token = direct_get_access_token(&ctx).await.unwrap();
+        assert_eq!(token, "the-access-jwt");
+    }
+
+    #[tokio::test]
+    async fn get_access_token_without_session_returns_no_session() {
+        let server = MockServer::start().await;
+        let (ctx, _dir) = make_ctx(&server).await;
+        let err = direct_get_access_token(&ctx).await.unwrap_err();
+        assert!(matches!(err, AuthCommandError::NoSession));
+    }
+
+    /// Token rotation: after refresh writes a new access token to the session,
+    /// the next get_access_token call returns the rotated value (no caching).
+    #[tokio::test]
+    async fn get_access_token_returns_rotated_token_after_refresh() {
+        let server = MockServer::start().await;
+        let (ctx, _dir) = make_ctx(&server).await;
+        *ctx.auth_session.write().await = Some(AuthSession {
+            user_id: "usr_bob".into(),
+            access_token: SecretString::from("v1"),
+            refresh_token: SecretString::from("rx"),
+            expires_at: 1_700_000_000,
+            salt_auth: None,
+            salt_enc: None,
+            enc_key: None,
+        });
+        assert_eq!(direct_get_access_token(&ctx).await.unwrap(), "v1");
+
+        // simulate refresh rotation
+        {
+            let mut guard = ctx.auth_session.write().await;
+            if let Some(s) = guard.as_mut() {
+                s.access_token = SecretString::from("v2");
+            }
+        }
+        assert_eq!(direct_get_access_token(&ctx).await.unwrap(), "v2");
     }
 }

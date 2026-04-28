@@ -216,3 +216,102 @@ describe("SyncProvider (Phase C — sync boot + transport)", () => {
     expect(transport.status).toBe("disconnected");
   });
 });
+
+describe("SyncProvider (Phase E-4b — RelayTransport auto-wire)", () => {
+  beforeEach(() => vi.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
+
+  function setupAuthInvokeChain(rootKeyB64: string, userId: string, relayUrl: string) {
+    // sync_get_root_key, auth_status, sync_get_relay_url 순서대로 호출됨
+    // (Promise.all 이라 순서 무관). mockInvoke.mockImplementation 으로 분기.
+    mockInvoke.mockImplementation(async (cmd: unknown) => {
+      switch (cmd) {
+        case "sync_get_root_key":
+          return rootKeyB64;
+        case "auth_status":
+          return { user_id: userId, expires_at: 9_999_999_999 };
+        case "sync_get_relay_url":
+          return relayUrl;
+        case "auth_get_access_token":
+          return "test-access-token";
+        default:
+          throw new Error(`unexpected invoke: ${String(cmd)}`);
+      }
+    });
+  }
+
+  function makeRootKeyB64(bytes: number): string {
+    const arr = new Uint8Array(bytes).fill(0xab);
+    let bin = "";
+    for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  it("when no transport prop is provided, boot fans out to 3 invokes and constructs a RelayTransport", async () => {
+    setupAuthInvokeChain(makeRootKeyB64(32), "usr_alice", "https://relay.example/");
+    // RelayTransport 의 첫 pollOnce → 204 (no remote update yet) — global fetch mock.
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async () => new Response(null, { status: 204 }));
+
+    render(
+      <SyncProvider
+        dbName="test:e4b-default"
+        disablePersistence
+        disableSyncBoot={false}
+        // transport prop 없음 — default 흐름
+      >
+        <ProbeBoot />
+      </SyncProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("status")).toHaveTextContent("ready");
+    });
+    expect(screen.getByTestId("rootkey-len")).toHaveTextContent("32");
+    expect(screen.getByTestId("transport-status")).toHaveTextContent("connected");
+
+    // 3개의 boot invoke 가 호출됐는지 검증.
+    const cmds = mockInvoke.mock.calls.map((c) => c[0]);
+    expect(cmds).toContain("sync_get_root_key");
+    expect(cmds).toContain("auth_status");
+    expect(cmds).toContain("sync_get_relay_url");
+
+    // RelayTransport 의 첫 GET /sync/snapshot 이 fetch 로 발사됐는지 검증.
+    expect(fetchMock).toHaveBeenCalled();
+    const firstCall = fetchMock.mock.calls[0];
+    expect(String(firstCall[0])).toContain("https://relay.example/sync/snapshot");
+
+    fetchMock.mockRestore();
+  });
+
+  it("when auth_status returns null user_id, falls back to offline_only", async () => {
+    mockInvoke.mockImplementation(async (cmd: unknown) => {
+      switch (cmd) {
+        case "sync_get_root_key":
+          return makeRootKeyB64(32);
+        case "auth_status":
+          return null; // signed out
+        case "sync_get_relay_url":
+          return "https://relay.example/";
+        default:
+          throw new Error(`unexpected: ${String(cmd)}`);
+      }
+    });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));
+
+    render(
+      <SyncProvider dbName="test:e4b-no-user" disablePersistence disableSyncBoot={false}>
+        <ProbeBoot />
+      </SyncProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("status")).toHaveTextContent("offline_only");
+    });
+    expect(screen.getByTestId("rootkey-len")).toHaveTextContent("-1");
+    // RelayTransport 가 만들어지지 않았는지 — fetch 가 호출되지 않아야 함.
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+});

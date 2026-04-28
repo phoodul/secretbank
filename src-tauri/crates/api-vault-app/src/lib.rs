@@ -9,9 +9,9 @@ pub mod setup;
 
 use commands::audit::{audit_list, audit_verify_chain};
 use commands::auth::{
-    auth_oauth_callback, auth_oauth_start, auth_passkey_assert_start, auth_passkey_assert_verify,
-    auth_passkey_register_start, auth_passkey_register_verify, auth_refresh, auth_signout,
-    auth_status,
+    auth_get_access_token, auth_oauth_callback, auth_oauth_start, auth_passkey_assert_start,
+    auth_passkey_assert_verify, auth_passkey_register_start, auth_passkey_register_verify,
+    auth_refresh, auth_signout, auth_status,
 };
 use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
@@ -30,7 +30,7 @@ use commands::projects::{
 };
 use commands::scanner::env_scan_folder;
 use commands::settings::{settings_get, settings_set};
-use commands::sync::sync_get_root_key;
+use commands::sync::{sync_get_relay_url, sync_get_root_key};
 use commands::usage::{
     usage_create, usage_delete, usage_list_for_credential, usage_list_for_project,
 };
@@ -210,7 +210,9 @@ pub fn run(context: tauri::Context) {
             auth_refresh,
             auth_signout,
             auth_status,
+            auth_get_access_token,
             sync_get_root_key,
+            sync_get_relay_url,
         ]);
     }
 
@@ -279,7 +281,9 @@ pub fn run(context: tauri::Context) {
             auth_refresh,
             auth_signout,
             auth_status,
+            auth_get_access_token,
             sync_get_root_key,
+            sync_get_relay_url,
         ]);
     }
 

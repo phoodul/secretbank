@@ -76,8 +76,14 @@ export class RelayTransport implements SyncTransport {
   private lastVersion = 0;
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
   private cancelled = false;
+  private readonly baseUrl: string;
 
-  constructor(private readonly opts: RelayTransportOptions) {}
+  constructor(private readonly opts: RelayTransportOptions) {
+    // Url::to_string() 등 backend 에서 내려오는 url 이 trailing slash 를
+    // 가질 수 있으므로 정규화 — `${baseUrl}/sync/snapshot` 합칠 때 double
+    // slash 방지.
+    this.baseUrl = opts.baseUrl.replace(/\/+$/, "");
+  }
 
   get status(): TransportStatus {
     return this._status;
@@ -116,7 +122,7 @@ export class RelayTransport implements SyncTransport {
 
     const token = await this.opts.getAccessToken();
     const fetchFn = this.opts.fetchImpl ?? globalThis.fetch.bind(globalThis);
-    const res = await fetchFn(`${this.opts.baseUrl}/sync/snapshot`, {
+    const res = await fetchFn(`${this.baseUrl}/sync/snapshot`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -151,7 +157,7 @@ export class RelayTransport implements SyncTransport {
     }
     const token = await this.opts.getAccessToken();
     const fetchFn = this.opts.fetchImpl ?? globalThis.fetch.bind(globalThis);
-    const url = `${this.opts.baseUrl}/sync/snapshot?since=${this.lastVersion}`;
+    const url = `${this.baseUrl}/sync/snapshot?since=${this.lastVersion}`;
     const res = await fetchFn(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },

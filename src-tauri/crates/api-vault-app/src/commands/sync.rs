@@ -51,6 +51,19 @@ impl From<KdfError> for SyncCommandError {
 }
 
 // ---------------------------------------------------------------------------
+// Tauri command — sync_get_relay_url
+// ---------------------------------------------------------------------------
+
+/// Return the resolved relay base URL — same value `RelayClient` is using
+/// internally. Used by the renderer's `RelayTransport` (Phase E-4b) so that
+/// frontend and backend always agree on the relay endpoint, regardless of
+/// SQLite settings overrides or build-profile defaults.
+#[tauri::command]
+pub async fn sync_get_relay_url(state: State<'_, AppContext>) -> Result<String, SyncCommandError> {
+    Ok(state.relay_client.base_url().to_string())
+}
+
+// ---------------------------------------------------------------------------
 // Tauri command — sync_get_root_key
 // ---------------------------------------------------------------------------
 
@@ -230,5 +243,23 @@ mod tests {
         });
         let err = direct_get_root_key(&ctx).await.unwrap_err();
         assert!(matches!(err, SyncCommandError::NoSyncSession));
+    }
+
+    // -----------------------------------------------------------------------
+    // M9 Phase E-4b — sync_get_relay_url
+    // -----------------------------------------------------------------------
+
+    /// Direct variant — exercises the same logic without the State extractor.
+    async fn direct_get_relay_url(ctx: &AppContext) -> Result<String, SyncCommandError> {
+        Ok(ctx.relay_client.base_url().to_string())
+    }
+
+    #[tokio::test]
+    async fn get_relay_url_returns_relay_client_base_url() {
+        let (ctx, _dir) = make_ctx_minimal().await;
+        let url = direct_get_relay_url(&ctx).await.unwrap();
+        // make_ctx_minimal 가 RelayClient 를 http://localhost 로 만든다 — Url
+        // 의 정규화로 trailing slash 가 붙는다.
+        assert_eq!(url, "http://localhost/");
     }
 }
