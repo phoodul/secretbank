@@ -2,6 +2,25 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 10 (자율 모드 — Option A 채택 후 G-pair-3 client services 풀 완료. 비전 정렬 점검 시 사용자 결정: M9 풀 마무리 → M18 (CLI + MCP server) 즉시 진입. M18~M21 placeholder 신설.)
+- **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+F+G-pair-1/2/**3** 종료, 21/22 sub-phases). M9 잔여: G-pair-2.5 (poll 확장, 환경복구 후) / G-pair-4 (UI) / G-conflict / G-offline / G-entitlement.
+- **이번 Night mode 10 신규 commits (1개):**
+  - `0e7b58d` feat(sync) — M9 Phase G-pair-3: client services::pairing + Tauri 커맨드 7 (initiator/joiner full flow, vault_init + save_session 자동, AAD = "pair:<pin>")
+- **이번 Night mode 10 핵심 결정 (project-decisions.md [2026-04-28]):**
+  - **Option A 채택** — 시간 더 걸려도 M9 풀 마무리 후 M18 (CLI + MCP server) 진입. 단순 MVP 가 아닌 글로벌 SaaS moat-building 우선.
+  - M18~M21 신설: CLI/MCP / Team / Supply chain / IDE plugin
+- **Tests (4-28 Night mode 10 종료 시점):**
+  - api-vault-crypto: 15 (변동 없음)
+  - api-vault-app lib: **173 passed** (이전 168 + 5 pairing service)
+  - Frontend Vitest: 416 (변동 없음)
+  - Relay vitest: 67 (변동 없음 — Miniflare 환경 미복구)
+  - clippy / typecheck 모두 0
+- **이전 Night mode 9 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 9)
+
 - **Time:** 2026-04-28 Night mode 9 (자율 모드 — G-pair-2 완료. G-pair-2.5 (poll joiner_pub 확장) 시도했으나 Miniflare workerd ConnectEx #1225 환경 오류로 회귀 검증 불가 → 워킹 카피 revert, 다음 night mode 에서 환경 복구 후 재시도).
 - **Phase:** Phase 3 — Implementation, M9 🔄 (Phase A+B+C+D+E+F+G-pair-1+**G-pair-2** 종료, 20/22 sub-phases). M9 잔여: G-pair-2.5 / G-pair-3 (client) / G-pair-4 (UI) / G-conflict / G-offline / G-entitlement.
 - **이번 Night mode 9 신규 commits (1개):**
