@@ -67,3 +67,8 @@ ee/**/dist/
 ee/**/.wrangler/
 ee/**/.dev.vars
 ee/**/wrangler.toml.local
+
+# vscode-extension (M21)
+vscode-extension/node_modules/
+vscode-extension/out/
+vscode-extension/*.vsix
