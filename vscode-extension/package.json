@@ -1,0 +1,75 @@
+{
+  "name": "api-vault",
+  "displayName": "API Vault",
+  "description": "Dependency-graph-aware secrets manager with supply-chain risk detection — list / reveal credentials and scan dependencies for known secret-exfil history without leaving your editor.",
+  "version": "0.1.0",
+  "publisher": "api-vault",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://github.com/api-vault/api-vault",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/api-vault/api-vault.git"
+  },
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Other",
+    "Linters"
+  ],
+  "keywords": [
+    "secrets",
+    "credentials",
+    "supply chain",
+    "vault",
+    "api keys"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "apivault.list",
+        "title": "API Vault: List credentials",
+        "category": "API Vault"
+      },
+      {
+        "command": "apivault.reveal",
+        "title": "API Vault: Reveal credential (copy to clipboard)",
+        "category": "API Vault"
+      },
+      {
+        "command": "apivault.scanSupplyChain",
+        "title": "API Vault: Scan workspace for supply-chain risk",
+        "category": "API Vault"
+      }
+    ],
+    "configuration": {
+      "title": "API Vault",
+      "properties": {
+        "apivault.cliPath": {
+          "type": "string",
+          "default": "apivault",
+          "description": "Path to the `apivault` CLI binary. Leave as `apivault` if it is on your PATH."
+        },
+        "apivault.scanOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run a supply-chain scan when the workspace opens."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.84.0",
+    "typescript": "^5.4.0"
+  }
+}
