@@ -1,5 +1,124 @@
 # Work Log
 
+## 2026-04-28 Night mode 5 — M9 Phase D-2 / D-3 / E-1 (4 commits)
+
+### 세션 개요
+
+- **목표**: Phase D 풀 완료 (D-2 + D-3) → Phase E 진입 (E-1: AEAD).
+- **결과**: 4 commits (`7ca9a06` D-2a / `cfc1472` D-2b / `10bdb92` D-3 / `6d3b6aa` E-1), Rust lib 153 → 158 (+5), Vitest 363 → 396 (+33), clippy 0, typecheck 0.
+
+### Phase D-2a — 5 엔티티 매퍼 + ENTITY_MAPPERS registry
+
+`src/features/sync/mapping.ts` 확장:
+- issuerMapper — 모든 필드 sync (device-local 없음)
+- projectMapper — local_path 는 device-local (디바이스마다 다른 경로)
+- deploymentMapper — 모든 필드 sync
+- usageMapper — 모든 필드 sync (Credential ↔ Project 관계)
+- settingMapper — 키-값 스토어 + `SYNC_SETTING_KEYS` 화이트리스트 (project-decisions C 정책: 새 setting 명시 opt-in)
+- isSyncableSettingKey 헬퍼
+- ENTITY_MAPPERS registry (entity → mapper dispatch)
+
+Vitest +13.
+
+### Phase D-2b — 백엔드 db:changed emit + 14 커맨드 hookup
+
+신규 `services/sync_emit.rs`:
+- `DbChangeEntity` (6 variants, lowercase serde — wire 와 mapping.ts 의 SYNC_ENTITIES 와 1:1 일치)
+- `DbChangeOp` (Upsert / Delete, snake_case)
+- `DbChangePayload` + 생성자 (upsert / delete)
+- `DbChangeEmitter` trait (Send + Sync + 'static)
+- `TauriDbChangeEmitter` (production, app.handle().emit("db:changed", ...))
+- `NoopDbChangeEmitter` (테스트 / setup 이전 default)
+- IncidentEventEmitter 패턴 그대로 차용
+
+AppContext 통합:
+- 신규 필드 `db_change_emitter: SharedDbChangeEmitter`
+- `AppContext::new` 시그니처에 emitter 인자 추가
+- 8 fixture 갱신 (Noop default 명시)
+- lib.rs setup 에서 `Arc::new(TauriDbChangeEmitter::new(app.handle().clone()))` 만들어 ctx 주입
+
+14 mutating 커맨드 hookup (각각 SQLite 변경 + audit + emit 패턴 일관):
+- credential_create / _update / _delete / _rotate_value (4) — credential upsert 또는 delete
+- kill_switch do_revoke_internal — credential upsert (status=revoked). _revoke 와 _revoke_issuer 양쪽이 같은 헬퍼
+- settings_set — value Some=Upsert / None=Delete (key 자체가 id)
+- project_create / _update / _delete (3)
+- deployment_create / _update / _delete (3)
+- usage_create / _delete (2)
+- **issuer 는 사용자 mutation 명령 없어 emit 부착 없음** (preset seed 만 — 시드 자체는 sync 후보 외)
+
+Rust lib 153 → 158 (+5 sync_emit unit: upsert/delete wire shape, 6 entity lowercase singular, Noop 안전, CapturingEmitter ordering).
+
+### Phase D-3 — origin loop 회귀 + observer/bridge
+
+양방향 sync 의 두 기둥을 격리해서 검증:
+
+`src/features/sync/observer.ts`:
+- `observeMapWithOriginGuard(map, handler)` — Y.Map.observe 의 origin 검사. sync origin (LOCAL_DB / REMOTE) 의 변경은 handler 에 안 전달. user-edit propagation 채널만 wire.
+- `applyDbChangeToYMap(doc, payload, value?)` — 백엔드 emit 의 payload 를 Y.Map 에 set/delete (ORIGIN_LOCAL_DB transaction). settings entity 는 SYNC_SETTING_KEYS 화이트리스트 통과만 적용.
+
+두 layer 결합으로 observer 가 db:changed echo 를 보고 invoke 호출하는 무한 루프 방지.
+
+Vitest +10:
+- observer: LOCAL_DB skip / REMOTE skip / user-origin propagate / unsubscribe detach
+- bridge: upsert placeholder / upsert with value / delete present + missing key safe / settings whitelist (allowed key apply, blocked key skip)
+- integration: applyDbChangeToYMap 다중 호출 시 observer 0 호출 (무한 루프 방지) / user edit 1 호출 + 후속 echo 0 호출
+
+### Phase E-1 — AEAD adapter (XChaCha20-Poly1305)
+
+`src/features/sync/aead.ts`:
+- xchacha20poly1305 (`@noble/ciphers` v2.2.0, audited by Cure53, MIT)
+- 32B key (Phase B-3 의 `sync_get_root_key` 또는 그 HKDF 서브키)
+- 24B random nonce (XChaCha20 의 extended nonce — random sampling 충돌 사실상 0, vs ChaCha20 12B + 2^32 한계)
+- 16B Poly1305 tag (자동 prepend by xchacha20poly1305)
+- envelope: `[nonce(24) || ciphertext+tag]` 단일 Uint8Array
+- AAD 옵션 (Phase F/G 의 envelope binding 용 — doc_id 등)
+- 키/envelope 길이 가드
+
+왜 XChaCha20-Poly1305:
+- libsodium `crypto_aead_xchacha20poly1305_ietf` 와 wire-호환 — 미래 C/Swift 클라이언트가 합류해도 문제 없음
+- Phase F value channel 도 같은 어댑터 재사용 (key 만 다름)
+- 24B nonce 가 random 안전성 확보 (충돌 확률 무시 가능)
+
+Vitest +10 (전체 386 → 396):
+- typical Y.Doc-사이즈 round-trip
+- 다른 키로 decrypt → throw
+- ciphertext / nonce 1B tamper → throw (Poly1305 무결성)
+- 빈 plaintext round-trip (nonce + tag 만)
+- AAD mismatch → throw
+- 키 길이 가드 (encrypt + decrypt 양쪽)
+- envelope 길이 가드 (nonce + tag 미달)
+- 두 번 encrypt 시 envelope 다름 (random nonce)
+- generateNonce 무작위성
+
+신규 dep: `@noble/ciphers ^2.2.0` (작은 번들, pure TS, no WASM).
+
+### 검증
+
+- Rust api-vault-app lib: 158 passed (D-2b +5)
+- Frontend Vitest: 396 passed (D-2a +13, D-3 +10, E-1 +10)
+- `cargo clippy --workspace --all-targets --all-features -D warnings` — 0
+- `pnpm typecheck` — 0
+- `pnpm lint` — 0 errors (7 pre-existing warnings)
+
+### 다음 (Night mode 6 큐)
+
+1. **E-2** — relay D1 migration 0003_sync.sql (`encrypted_docs` 테이블) + 첫 endpoint 골격
+2. **E-3** — relay /sync/snapshot POST + /sync/deltas GET + JWT 보호 + KV rate limit + Miniflare 회귀
+3. **E-4** — RelayTransport (Phase C 의 StubTransport 자리 채우기 — AEAD + HTTP wire) + SyncProvider 의 transport prop 교체
+4. **E-5** — 통합 round-trip 검증 (db:changed → Y.Map → encrypt → push → relay → onRemoteUpdate → Y.applyUpdate)
+5. **Phase F** — value sync 채널 (`encrypted_secret_values` + `value-root` 키 derive)
+6. **Phase G** — pairing + UI + conflict + offline + entitlement (T092~T096)
+
+### Architectural seeds (m9-phase-plan.md Open Issues E)
+
+여전히 ad-hoc commit 가능 (Phase Plan 과 직교):
+1. `credential.kind` enum 확장 가능
+2. `issuer` → "Site" 명명 일반화
+3. HIBP password breach client prep
+4. zxcvbn weak password detector
+
+---
+
 ## 2026-04-28 Night mode 4 — M9 Phase C + B-4 + D-1 (3 commits)
 
 ### 세션 개요

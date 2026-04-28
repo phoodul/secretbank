@@ -2,6 +2,43 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-04-28 Night mode 5 (D-2a / D-2b / D-3 / E-1 4건 연속 완료, 다음 세션은 M9 Phase E-2 부터)
+- **Phase:** Phase 3 — Implementation, M4~M8 ✅ + M9 🔄 Phase A+B+C+**D 풀**+**E-1** 종료 (10/16 sub-phases) + M15 🔄, 111/132 태스크 (84.1%)
+- **이번 Night mode 5 신규 commits (4개):**
+  - `7ca9a06` feat(sync) — M9 Phase D-2a: 5 엔티티 매퍼 + ENTITY_MAPPERS registry
+  - `cfc1472` feat(sync) — M9 Phase D-2b: db:changed emit 통합 + 14 커맨드 hookup
+  - `10bdb92` feat(sync) — M9 Phase D-3: origin loop 회귀 + observer/bridge
+  - `6d3b6aa` feat(sync) — M9 Phase E-1: AEAD adapter (XChaCha20-Poly1305)
+- **Tests (4-28 Night mode 5 종료 시점):**
+  - Rust api-vault-app lib: **158 passed** (이전 153 + 5 sync_emit unit)
+  - Frontend Vitest: **396 passed** (이전 363 + 33 — D-2a +13, D-3 +10, E-1 +10)
+  - relay vitest 35 / clippy 0 -D warnings / typecheck 0
+- **이번 Night mode 5 처리 완료:**
+  1. ✅ **D-2a** — 5 추가 엔티티 매퍼 (issuer/project/deployment/usage/settings) + `ENTITY_MAPPERS` registry. project.local_path 는 device-local. settings 는 SYNC_SETTING_KEYS 화이트리스트 (명시 opt-in 정책).
+  2. ✅ **D-2b** — `services/sync_emit.rs` (DbChangeEntity 6 + DbChangeOp + DbChangeEmitter trait + Tauri prod / Noop test). AppContext.db_change_emitter 필드 + AppContext::new 시그니처에 emitter 추가. lib.rs setup 에서 prod emitter 주입. 14 mutating 커맨드 hookup (credential 4 / kill_switch revoke / settings / project 3 / deployment 3 / usage 2). issuer 는 사용자 mutation 명령 없어 미부착.
+  3. ✅ **D-3** — `src/features/sync/observer.ts`. observeMapWithOriginGuard (sync origin LOCAL_DB/REMOTE 변경은 callback skip — user-edit 채널만) + applyDbChangeToYMap (db:changed → Y.Map.set/delete with ORIGIN_LOCAL_DB). settings 화이트리스트 적용. 무한 루프 방지 검증.
+  4. ✅ **E-1** — `src/features/sync/aead.ts`. @noble/ciphers v2.2.0 의 XChaCha20-Poly1305. 32B key + 24B random nonce + AAD 옵션. encrypt/decrypt round-trip + tamper / mismatch 검증.
+
+- **다음 Night mode 6 큐:**
+  1. **E-2** — relay D1 migration 0003_sync.sql (`encrypted_docs` 테이블) + 첫 endpoint 골격
+  2. **E-3** — relay /sync/snapshot POST + /sync/deltas GET + JWT 보호 + KV rate limit + Miniflare 회귀
+  3. **E-4** — RelayTransport (Phase C 의 StubTransport 자리 채우기 — AEAD + HTTP wire) + SyncProvider wire (App.tsx 마운트는 E-5 후)
+  4. **E-5** — 통합 round-trip 검증 (db:changed → Y.Map → encrypt → push → relay → onRemoteUpdate → Y.applyUpdate)
+  5. **Phase F** — value sync 채널 (encrypted_secret_values)
+  6. **Phase G** — pairing + UI + conflict + offline + entitlement (T092~T096)
+
+- **이전 Night mode 4 체크포인트는 본 파일 아래 섹션 참조.**
+
+---
+
+## Night mode 5 detail entry
+
+상세 처리 이력 + 테스트 카운트는 `docs/work-log.md` 의 "2026-04-28 Night mode 5" 섹션 참조.
+
+---
+
+## Previous checkpoint (2026-04-28 Night mode 3)
+
 - **Time:** 2026-04-28 Night mode 3 (T084 + I3 + Playwright + M9 Phase A + B-1 5건 연속 완료, 다음 세션은 M9 Phase B-2 부터)
 - **Phase:** Phase 3 — Implementation, **M4~M8 ✅ + M5 10/10 ✅ + M8 8/8 ✅ + M9 🔄 Phase A+B-1 / 7 phases (Phase B 4 sub-phase 분할) + M15 🔄**, 110/132 태스크 (83.3%) + 결함 후속 처리 누적 (4-26 H1~H5 5건 + 4-27 I4/I5 2건 + I1/I2 2건 ✅, **4-28 I3 ✅ listener 표준화 + Playwright E2E 인프라 ✅ + M9 Phase Plan ✅ + 5건 결정 ✅ + Phase B-1 ✅** + J2 ✅ + J1 docs ✅)
 - **이번 Night mode 3 신규 commits (10개):**
