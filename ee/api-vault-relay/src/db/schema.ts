@@ -76,6 +76,23 @@ export const passkey = sqliteTable(
 );
 
 // ───────────────────────────────────────────────────────────
+// encrypted_doc — M9 Sync (Phase E)
+// 한 사용자 = 한 Y.Doc 모델. AEAD envelope 만 저장 (Zero-Knowledge).
+// ───────────────────────────────────────────────────────────
+export const encryptedDoc = sqliteTable(
+  "encrypted_doc",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    version: integer("version").notNull().default(0),
+    ciphertext: blob("ciphertext", { mode: "buffer" }),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+);
+
+// ───────────────────────────────────────────────────────────
 // oauth_account — GitHub / Google / future
 // ───────────────────────────────────────────────────────────
 export const oauthAccount = sqliteTable(

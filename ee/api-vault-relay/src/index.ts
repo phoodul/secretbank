@@ -6,6 +6,7 @@ import { passkeyAuth } from "./routes/auth/passkey";
 import { refreshAuth } from "./routes/auth/refresh";
 import { health } from "./routes/health";
 import { githubIntegrations } from "./routes/integrations/github";
+import { sync } from "./routes/sync";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -15,5 +16,6 @@ app.route("/auth/passkey", passkeyAuth);
 app.route("/auth/oauth", oauthAuth);
 app.route("/auth/refresh", refreshAuth);
 app.route("/integrations/github", githubIntegrations);
+app.route("/sync", sync);
 
 export default app;

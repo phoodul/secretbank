@@ -22,7 +22,7 @@ beforeAll(async () => {
   await applyD1Migrations(typedEnv.DB, typedEnv.TEST_MIGRATIONS);
 });
 
-describe("D1 schema (0001_init + 0002_auth)", () => {
+describe("D1 schema (0001_init + 0002_auth + 0003_sync)", () => {
   it("user 테이블에 auth/billing 컬럼이 모두 존재한다", async () => {
     const result = await typedEnv.DB.prepare(
       "SELECT name FROM pragma_table_info('user')",
@@ -52,9 +52,50 @@ describe("D1 schema (0001_init + 0002_auth)", () => {
     ).all<{ name: string }>();
 
     const tables = (result.results ?? []).map((r) => r.name);
-    for (const t of ["device", "passkey", "oauth_account", "user", "github_installation"]) {
+    for (const t of [
+      "device",
+      "passkey",
+      "oauth_account",
+      "user",
+      "github_installation",
+      "encrypted_doc",
+    ]) {
       expect(tables).toContain(t);
     }
+  });
+
+  it("encrypted_doc 의 user_id PK + ON DELETE CASCADE 제약이 동작한다", async () => {
+    const userId = "user_sync_001";
+    const now = Date.now();
+
+    await typedEnv.DB.prepare(
+      `INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`,
+    )
+      .bind(userId, "carol@example.com", now)
+      .run();
+
+    await typedEnv.DB.prepare(
+      `INSERT INTO encrypted_doc (user_id, version, ciphertext, created_at, updated_at)
+       VALUES (?, 1, ?, ?, ?)`,
+    )
+      .bind(userId, new Uint8Array([0xab, 0xcd, 0xef]), now, now)
+      .run();
+
+    const row = await typedEnv.DB.prepare(
+      `SELECT version FROM encrypted_doc WHERE user_id = ?`,
+    )
+      .bind(userId)
+      .first<{ version: number }>();
+    expect(row?.version).toBe(1);
+
+    // user 삭제 시 cascade 로 encrypted_doc 도 삭제되어야 함.
+    await typedEnv.DB.prepare(`DELETE FROM user WHERE id = ?`).bind(userId).run();
+    const after = await typedEnv.DB.prepare(
+      `SELECT COUNT(*) as n FROM encrypted_doc WHERE user_id = ?`,
+    )
+      .bind(userId)
+      .first<{ n: number }>();
+    expect(after?.n).toBe(0);
   });
 
   it("user 행 + passkey 행을 INSERT 하고 cascade FK 가 유지된다", async () => {
