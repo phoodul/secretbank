@@ -140,6 +140,13 @@ pub async fn credential_create(
         )
         .await;
 
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Credential,
+            id.to_string(),
+        ));
+
     Ok(id)
 }
 
@@ -220,6 +227,13 @@ pub async fn credential_update(
         )
         .await;
 
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Credential,
+            id.to_string(),
+        ));
+
     Ok(())
 }
 
@@ -253,6 +267,13 @@ pub async fn credential_delete(
             None,
         )
         .await;
+
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::delete(
+            crate::services::sync_emit::DbChangeEntity::Credential,
+            id.to_string(),
+        ));
 
     Ok(())
 }
@@ -362,6 +383,13 @@ pub async fn credential_rotate_value(
             Some(payload),
         )
         .await;
+
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Credential,
+            input.id.to_string(),
+        ));
 
     Ok(())
 }
@@ -486,6 +514,7 @@ mod tests {
             ),
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
+            db_change_emitter: crate::services::sync_emit::noop_emitter(),
         }
     }
 
@@ -610,6 +639,7 @@ mod tests {
             ),
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
+            db_change_emitter: crate::services::sync_emit::noop_emitter(),
         };
 
         // Perform the rotate (abbreviated — vault + SQLite update then audit).

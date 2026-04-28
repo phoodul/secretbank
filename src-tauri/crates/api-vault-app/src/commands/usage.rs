@@ -44,6 +44,13 @@ pub async fn usage_create(
         )
         .await;
 
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Usage,
+            id.to_string(),
+        ));
+
     Ok(id)
 }
 
@@ -97,6 +104,13 @@ pub async fn usage_delete(
             None,
         )
         .await;
+
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::delete(
+            crate::services::sync_emit::DbChangeEntity::Usage,
+            id.to_string(),
+        ));
 
     Ok(())
 }

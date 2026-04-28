@@ -358,6 +358,16 @@ pub async fn do_revoke_internal(
         )
         .await;
 
+    // M9 Phase D-2 — propagate to sync. Revoke 는 status 만 바꾸므로 upsert
+    // (delete 가 아님). also_delete_value 는 vault 의 secret 만 지우고 row
+    // 는 남기므로 마찬가지로 upsert.
+    ctx.db_change_emitter.emit_db_changed(
+        &crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Credential,
+            cred_id.to_string(),
+        ),
+    );
+
     Ok(())
 }
 
@@ -682,6 +692,7 @@ mod tests {
             ),
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
+            db_change_emitter: crate::services::sync_emit::noop_emitter(),
         }
     }
 
@@ -1186,6 +1197,7 @@ mod tests {
             ),
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
+            db_change_emitter: crate::services::sync_emit::noop_emitter(),
         };
 
         let err = do_revoke_internal(&ctx, cred_id, true)

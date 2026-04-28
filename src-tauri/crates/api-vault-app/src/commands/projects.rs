@@ -45,6 +45,13 @@ pub async fn project_create(
         )
         .await;
 
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Project,
+            id.to_string(),
+        ));
+
     Ok(id)
 }
 
@@ -104,6 +111,13 @@ pub async fn project_update(
         )
         .await;
 
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Project,
+            id.to_string(),
+        ));
+
     repo.get_by_id(id).await?.ok_or(ProjectCommandError::NotFound)
 }
 
@@ -125,6 +139,13 @@ pub async fn project_delete(
             None,
         )
         .await;
+
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::delete(
+            crate::services::sync_emit::DbChangeEntity::Project,
+            id.to_string(),
+        ));
 
     Ok(())
 }
@@ -184,6 +205,7 @@ mod tests {
             ),
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
+            db_change_emitter: crate::services::sync_emit::noop_emitter(),
         }
     }
 

@@ -50,6 +50,13 @@ pub async fn deployment_create(
         )
         .await;
 
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Deployment,
+            id.to_string(),
+        ));
+
     Ok(id)
 }
 
@@ -99,6 +106,13 @@ pub async fn deployment_update(
         )
         .await;
 
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
+            crate::services::sync_emit::DbChangeEntity::Deployment,
+            id.to_string(),
+        ));
+
     repo.get_by_id(id)
         .await?
         .ok_or(DeploymentCommandError::NotFound)
@@ -122,6 +136,13 @@ pub async fn deployment_delete(
             None,
         )
         .await;
+
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::delete(
+            crate::services::sync_emit::DbChangeEntity::Deployment,
+            id.to_string(),
+        ));
 
     Ok(())
 }

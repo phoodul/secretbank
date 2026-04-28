@@ -48,6 +48,7 @@ use commands::entitlement::{entitlement_current, entitlement_set_dev};
 use commands::railguard::{railguard_apply, railguard_preview};
 use context::AppContext;
 use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
+use services::sync_emit::TauriDbChangeEmitter;
 use tauri::{Emitter, Manager};
 
 #[cfg(feature = "tauri-plugins")]
@@ -68,8 +69,17 @@ pub fn run(context: tauri::Context) {
                 .app_data_dir()
                 .expect("failed to resolve app data dir");
 
-            let ctx = tauri::async_runtime::block_on(AppContext::new(data_dir))
-                .expect("failed to initialise AppContext");
+            // M9 Phase D-2 — db:changed Tauri emitter (production). AppContext
+            // 는 mutating 커맨드들이 호출할 수 있도록 Arc<dyn DbChangeEmitter> 를
+            // 보유한다. setup 시점에 만들어 ctx 에 주입.
+            let db_change_emitter: std::sync::Arc<dyn services::sync_emit::DbChangeEmitter> =
+                std::sync::Arc::new(TauriDbChangeEmitter::new(app.handle().clone()));
+
+            let ctx = tauri::async_runtime::block_on(AppContext::new(
+                data_dir,
+                db_change_emitter,
+            ))
+            .expect("failed to initialise AppContext");
 
             let seed_count = tauri::async_runtime::block_on(setup::seed_issuer_presets(&ctx.pool))
                 .expect("failed to seed issuer presets");

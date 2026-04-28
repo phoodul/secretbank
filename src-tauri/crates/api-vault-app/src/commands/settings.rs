@@ -61,6 +61,22 @@ pub async fn settings_set(
         )
         .await;
 
+    // M9 Phase D-2 — propagate to sync. value=None 은 row 삭제 (Y.Map delete),
+    // value=Some(...) 은 upsert. Frontend 의 화이트리스트 (SYNC_SETTING_KEYS)
+    // 가 추가 필터 — 백엔드는 모든 키를 emit 하고 mapping layer 가 결정.
+    let op = if value.is_some() {
+        crate::services::sync_emit::DbChangeOp::Upsert
+    } else {
+        crate::services::sync_emit::DbChangeOp::Delete
+    };
+    state
+        .db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload {
+            entity: crate::services::sync_emit::DbChangeEntity::Settings,
+            op,
+            id: key,
+        });
+
     Ok(())
 }
 

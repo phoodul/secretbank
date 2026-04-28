@@ -17,6 +17,7 @@ use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
 use crate::services::relay_client::RelayClient;
 use crate::services::session::AuthSession;
+use crate::services::sync_emit::SharedDbChangeEmitter;
 
 /// Application-wide shared state, managed by Tauri.
 ///
@@ -103,6 +104,17 @@ pub struct AppContext {
     /// **Zero-Knowledge 준수**: 본 필드는 절대 영속(vault file) 또는 외부(릴레이) 에
     /// 노출하지 않는다 — 메모리에서 derive 결과만 외부로 나간다 (auth_hash 만 송신).
     pub master_passphrase: Arc<RwLock<Option<SecretString>>>,
+
+    /// M9 Phase D-2 — `db:changed` Tauri 이벤트 emitter.
+    ///
+    /// 모든 mutating 커맨드가 SQLite 변경 후 호출. 프런트엔드의 `SyncProvider`
+    /// 가 받아 Y.Doc 의 해당 Y.Map 을 갱신 (Phase D-3 의 origin guard 로
+    /// 무한 루프 방지).
+    ///
+    /// 테스트 fixture 는 `noop_emitter()` 를 사용해 emit 을 무력화.
+    /// Production lib.rs setup 은 `app.handle()` 로 만든 `TauriDbChangeEmitter`
+    /// 를 [`AppContext::new`] 에 주입한다.
+    pub db_change_emitter: SharedDbChangeEmitter,
 }
 
 impl AppContext {
@@ -110,7 +122,10 @@ impl AppContext {
     ///
     /// Creates `data_dir` if it does not exist, opens the SQLite pool,
     /// and opens (or creates) the age vault.
-    pub async fn new(data_dir: PathBuf) -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new(
+        data_dir: PathBuf,
+        db_change_emitter: SharedDbChangeEmitter,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         // Ensure data directory exists.
         tokio::fs::create_dir_all(&data_dir).await?;
 
@@ -149,6 +164,7 @@ impl AppContext {
             relay_client,
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
+            db_change_emitter,
         })
     }
 
