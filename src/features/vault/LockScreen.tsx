@@ -160,6 +160,18 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 overflow-hidden">
+      {/* Layer 0 — Blueprint engineering grid (deepest backdrop) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-20"
+        style={{
+          backgroundImage:
+            "linear-gradient(oklch(from var(--vault-lapis-bright) l c h / 0.04) 1px, transparent 1px), linear-gradient(90deg, oklch(from var(--vault-lapis-bright) l c h / 0.04) 1px, transparent 1px), linear-gradient(oklch(from var(--vault-lapis-bright) l c h / 0.07) 1px, transparent 1px), linear-gradient(90deg, oklch(from var(--vault-lapis-bright) l c h / 0.07) 1px, transparent 1px)",
+          backgroundSize: "40px 40px, 40px 40px, 200px 200px, 200px 200px",
+          maskImage: "radial-gradient(ellipse 80% 60% at 50% 50%, black 0%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse 80% 60% at 50% 50%, black 0%, transparent 80%)",
+        }}
+      />
       {/* Layer 1 — Ambient depth gradient */}
       <div
         aria-hidden="true"
