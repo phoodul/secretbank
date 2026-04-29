@@ -2,6 +2,7 @@ import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
+import { motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,14 @@ import { PairJoinerDialog } from "@/features/sync/PairJoinerDialog";
 import { usePairDeepLink } from "@/features/sync/use-pair-deep-link";
 import { CreateVaultDialog } from "./CreateVaultDialog";
 import { VaultMechanism, type VaultState } from "./VaultMechanism";
+import {
+  ParticleField,
+  ScanlineOverlay,
+  SuccessBloom,
+  StatusPanel,
+  CornerOrnaments,
+  useShake,
+} from "./LockScreenAtmosphere";
 
 /** 잠금 해제 성공 후 메커니즘 정렬 애니메이션이 끝날 때까지 기다리는 시간 */
 const UNLOCK_ANIMATION_MS = 1100;
@@ -43,6 +52,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [vaultState, setVaultState] = useState<VaultState>("idle");
+  const { shaking, trigger: triggerShake, triggerKey: shakeKey } = useShake();
   /** 연속 실패 횟수 추적 — ref로 관리하여 effect 의존성 문제 방지 */
   const failCountRef = useRef(0);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
@@ -127,6 +137,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
       setVaultState("idle");
       if (error?.code === "wrong_password") {
         setErrorMsg(t("vault.wrongPassword"));
+        triggerShake();
         failCountRef.current += 1;
         // 3회 연속 실패 시 쿨다운 시작
         if (failCountRef.current >= MAX_ATTEMPTS) {
@@ -135,6 +146,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
         }
       } else {
         setErrorMsg(t("vault.internalError"));
+        triggerShake();
       }
     } finally {
       setSubmitting(false);
@@ -144,24 +156,46 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 overflow-hidden">
-      {/* Ambient lapis glow — depth without noise */}
+      {/* Layer 1 — Ambient depth gradient */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           backgroundImage:
-            "radial-gradient(600px 400px at 50% 18%, oklch(from var(--vault-lapis-glow) l c h / 0.22) 0%, transparent 60%)",
+            "radial-gradient(700px 480px at 50% 16%, oklch(from var(--vault-lapis-glow) l c h / 0.28) 0%, transparent 60%), radial-gradient(900px 600px at 50% 100%, oklch(from var(--vault-gold-glow) l c h / 0.10) 0%, transparent 65%)",
         }}
       />
 
-      <section
-        className="surface-vault gloss-shimmer relative w-full max-w-sm rounded-xl p-8"
+      {/* Layer 2 — Drifting particle dust */}
+      <ParticleField state={vaultState} />
+
+      {/* Layer 3 — CRT scanline overlay */}
+      <ScanlineOverlay />
+
+      {/* Layer 4 — Success radial bloom (only during/after unlock) */}
+      <SuccessBloom state={vaultState} />
+
+      <motion.section
+        className="surface-vault gloss-shimmer relative w-full max-w-sm rounded-xl overflow-hidden"
         aria-labelledby="lockscreen-title"
+        initial={false}
+        animate={
+          shaking
+            ? { x: [0, -8, 7, -6, 5, -3, 0] }
+            : { x: 0 }
+        }
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        // shakeKey forces motion to retrigger keyframes when consecutive
+        // wrong-password events fire faster than the previous shake settles.
+        custom={shakeKey}
       >
+        <CornerOrnaments />
+
+        <div className="px-8 pt-8 pb-4">
         {/* Live vault mechanism — concentric tumbler rings rotate, snap into
             alignment on unlock, brass center pulses gold on success. */}
         <CardHeader className="items-center gap-4 text-center p-0 pb-6">
-          <VaultMechanism state={vaultState} size={120} />
+          <VaultMechanism state={vaultState} size={140} />
           <CardTitle
             id="lockscreen-title"
             className="text-2xl font-semibold tracking-tight accent-gold-glow"
@@ -293,7 +327,9 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
             </div>
           </form>
         </CardContent>
-      </section>
+        </div>
+        <StatusPanel state={vaultState} />
+      </motion.section>
 
       {showCreate && (
         <>
