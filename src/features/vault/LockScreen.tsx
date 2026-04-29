@@ -19,6 +19,7 @@ import {
   StatusPanel,
   CornerOrnaments,
   LightBeamSweep,
+  SystemLog,
   useMouseGloss,
   useShake,
 } from "./LockScreenAtmosphere";
@@ -388,6 +389,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
           </form>
         </CardContent>
         </div>
+        <SystemLog state={vaultState} />
         <StatusPanel state={vaultState} />
       </motion.section>
 

@@ -372,6 +372,113 @@ export function LightBeamSweep() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// SystemLog — single-line typewriter readout that reflects the
+// vault's current state. Adds a strong tactical/cinematic cue.
+// ─────────────────────────────────────────────────────────────────
+
+const VERIFYING_MESSAGES = [
+  "establishing secure channel",
+  "validating credentials",
+  "decrypting master key",
+  "scanning encrypted index",
+];
+
+function messagesFor(state: VaultState): string[] {
+  switch (state) {
+    case "idle":
+      return ["vault sealed · awaiting authentication"];
+    case "verifying":
+      return VERIFYING_MESSAGES;
+    case "unlocking":
+      return ["alignment confirmed · tumblers engaged"];
+    case "unlocked":
+      return ["access granted"];
+  }
+}
+
+function useTypewriter(text: string, speedMs = 28) {
+  const [shown, setShown] = useState("");
+  useEffect(() => {
+    setShown("");
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setShown(text.slice(0, i));
+      if (i >= text.length) clearInterval(id);
+    }, speedMs);
+    return () => clearInterval(id);
+  }, [text, speedMs]);
+  return shown;
+}
+
+export function SystemLog({ state }: { state: VaultState }) {
+  const list = messagesFor(state);
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    setIdx(0);
+    if (state !== "verifying") return;
+    const id = setInterval(() => {
+      setIdx((prev) => (prev + 1) % VERIFYING_MESSAGES.length);
+    }, 1200);
+    return () => clearInterval(id);
+  }, [state]);
+
+  const message = list[idx % list.length];
+  const typed = useTypewriter(message, state === "unlocked" ? 60 : 28);
+
+  const isUnlocked = state === "unlocked";
+  const isUnlocking = state === "unlocking";
+
+  return (
+    <div
+      className="flex items-center gap-2 px-4 py-2 text-[10px] font-mono"
+      style={{
+        borderTop: "1px solid oklch(from var(--vault-lapis-bright) l c h / 0.12)",
+        backgroundColor: "oklch(from var(--vault-lapis-deep) l c h / 0.5)",
+        letterSpacing: "0.06em",
+        minHeight: "28px",
+      }}
+      aria-live="polite"
+    >
+      <span
+        style={{
+          color: isUnlocked
+            ? "var(--vault-gold-bright)"
+            : "oklch(from var(--vault-gold) l c h / 0.78)",
+        }}
+      >
+        ›
+      </span>
+      <span
+        style={{
+          color: isUnlocked || isUnlocking
+            ? "var(--vault-gold-bright)"
+            : "oklch(from var(--vault-lapis-bright) l c h / 0.92)",
+          textShadow: "0 1px 0 oklch(0 0 0 / 0.55)",
+          fontWeight: isUnlocked ? 700 : 500,
+          textTransform: isUnlocked ? "uppercase" : "none",
+        }}
+      >
+        {typed}
+        <motion.span
+          className="inline-block ml-0.5"
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: [0.2, 1, 0.2] }}
+          transition={{ duration: 0.9, repeat: Infinity }}
+          style={{
+            width: "5px",
+            height: "10px",
+            backgroundColor: "var(--vault-gold-bright)",
+            verticalAlign: "middle",
+          }}
+        />
+      </span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // useShake — small custom hook returning x-translate keyframes for
 // the shake animation triggered on wrong-password.
 // ─────────────────────────────────────────────────────────────────
