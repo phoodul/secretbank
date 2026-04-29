@@ -13,6 +13,25 @@ radius before you rotate or revoke a key.
 
 ### Added
 
+#### M22 — JetBrains plugin (v5, milestone close)
+
+- **Blast radius visualization** — right-click a credential → "Show
+  blast radius" colours the downstream graph by BFS depth (primary
+  red, secondary orange, tertiary yellow), glows the source node, and
+  dims everything outside the blast set. A bottom banner reports the
+  total affected count. This brings the desktop app's headline
+  "what breaks if I revoke?" feature into the IDE.
+- New `apivault blast-radius <id>` CLI subcommand wraps
+  `api-vault-core::blast_radius` and emits the three buckets as JSON.
+- **Context menu** (`JBPopupMenu`) on right-click. Menu items vary by
+  node kind: credential gets *Show blast radius* + *Reveal*, others
+  get the relevant *Open URL/docs/repo*. All kinds get *Focus* and
+  *Copy ID*.
+- **Keyboard shortcuts** in the graph: `Ctrl/Cmd+F` focuses the
+  search box, `Esc` clears all highlights and filters, `Ctrl/Cmd+0`
+  fits all nodes to view.
+- **Clear highlight** toolbar button alongside Refresh / Center.
+
 #### M22 — JetBrains plugin (v4)
 
 - **Interactive Graph** — double-clicking a node now triggers the right

@@ -16,6 +16,10 @@
   --edge: rgba(180, 180, 190, 0.35);
   --edge-active: #ffd457;
   --selected: #ffd457;
+  --blast-primary: #ff4d4d;
+  --blast-secondary: #ff8c42;
+  --blast-tertiary: #ffd457;
+  --blast-dim: rgba(150,150,160,0.18);
 }
 @media (prefers-color-scheme: light) {
   :root { --bg: #ffffff; --fg: #1e1f22; --muted: #555; --edge: rgba(0,0,0,0.18); }
@@ -39,6 +43,15 @@ svg { width:100%; height:100%; cursor:grab; }
 svg:active { cursor:grabbing; }
 .node circle { stroke: var(--bg); stroke-width: 1.5; cursor:pointer; }
 .node.selected circle { stroke: var(--selected); stroke-width: 3; }
+.node.blast-primary circle   { stroke: var(--blast-primary); stroke-width: 4; }
+.node.blast-secondary circle { stroke: var(--blast-secondary); stroke-width: 3; }
+.node.blast-tertiary circle  { stroke: var(--blast-tertiary); stroke-width: 2.5; }
+.node.blast-source circle    { stroke: #ffffff; stroke-width: 4;
+  filter: drop-shadow(0 0 6px var(--blast-primary)); }
+.node.blast-dim circle, line.edge.blast-dim { opacity: 0.18; }
+#blast-banner { position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+  background: rgba(255, 77, 77, 0.92); color:white; padding:6px 14px; border-radius:14px;
+  font-size:12px; display:none; }
 .node text { font-size: 11px; fill: var(--fg); pointer-events: none;
   paint-order: stroke; stroke: var(--bg); stroke-width: 3; stroke-linejoin: round; }
 line.edge { stroke: var(--edge); stroke-width: 1.2; }
@@ -53,7 +66,8 @@ line.edge.active { stroke: var(--edge-active); stroke-width: 2.5; }
   <div class="legend-row"><span class="legend-dot" style="background:var(--node-deployment)"></span> Deployment</div>
   <div class="legend-row" style="margin-top:4px; opacity:0.8">click = select · double-click = action</div>
 </div>
-<input id="search" type="search" placeholder="Filter nodes by label…" autocomplete="off">
+<input id="search" type="search" placeholder="Filter nodes by label…  (Ctrl+F)" autocomplete="off">
+<div id="blast-banner"></div>
 <div id="empty">No graph data. Add credentials and projects in the desktop app.</div>
 <div id="tooltip"></div>
 <svg id="g"><g id="root"></g></svg>
@@ -184,6 +198,61 @@ window.apivaultFocus = function(id) {
   selectNode(id, true);
 };
 
+function clearBlastClasses() {
+  for (const el of root.querySelectorAll(".node")) {
+    el.classList.remove("blast-source", "blast-primary", "blast-secondary", "blast-tertiary", "blast-dim");
+  }
+  for (const el of root.querySelectorAll("line.edge")) {
+    el.classList.remove("blast-dim");
+  }
+  const banner = document.getElementById("blast-banner");
+  if (banner) banner.style.display = "none";
+}
+
+window.apivaultClearHighlight = function() {
+  clearBlastClasses();
+  selectedId = null;
+  for (const el of root.querySelectorAll(".node")) el.classList.remove("selected");
+  for (const el of root.querySelectorAll("line.edge")) el.classList.remove("active");
+  const search = document.getElementById("search");
+  if (search) { search.value = ""; search.dispatchEvent(new Event("input")); }
+};
+
+window.apivaultBlastRadius = function(payloadOrJson) {
+  const data = (typeof payloadOrJson === "string") ? JSON.parse(payloadOrJson) : payloadOrJson;
+  clearBlastClasses();
+
+  const inSet = (id, list) => list && list.indexOf(id) >= 0;
+  const sourceId = data.credentialId;
+  const primary = data.primary || [];
+  const secondary = data.secondary || [];
+  const tertiary = data.tertiary || [];
+  const inAny = new Set([sourceId, ...primary, ...secondary, ...tertiary]);
+
+  for (const el of root.querySelectorAll(".node")) {
+    const id = el.dataset.id;
+    if (id === sourceId) el.classList.add("blast-source");
+    else if (inSet(id, primary)) el.classList.add("blast-primary");
+    else if (inSet(id, secondary)) el.classList.add("blast-secondary");
+    else if (inSet(id, tertiary)) el.classList.add("blast-tertiary");
+    else el.classList.add("blast-dim");
+  }
+  for (const el of root.querySelectorAll("line.edge")) {
+    const s = el.dataset.source, t = el.dataset.target;
+    if (!inAny.has(s) || !inAny.has(t)) el.classList.add("blast-dim");
+  }
+
+  const banner = document.getElementById("blast-banner");
+  if (banner) {
+    const total = primary.length + secondary.length + tertiary.length;
+    banner.innerHTML = `<b>Blast radius preview</b> · ${total} node${total===1?"":"s"} affected if revoked`;
+    banner.style.display = "block";
+  }
+
+  // 자동으로 source 노드에 포커스.
+  if (typeof window.apivaultFocus === "function") window.apivaultFocus(sourceId);
+};
+
 function render() {
   while (root.firstChild) root.removeChild(root.firstChild);
   empty.style.display = nodes.length === 0 ? "block" : "none";
@@ -301,6 +370,11 @@ window.apivaultLoad = function(payload) {
     }));
     edges = (data.edges || []).map(e => ({ source: e.source, target: e.target, kind: e.kind }));
     selectedId = null;
+    if (typeof window.apivaultClearHighlight === "function") {
+      // clear blast/highlight if a previous payload was active
+      const banner = document.getElementById("blast-banner");
+      if (banner) banner.style.display = "none";
+    }
     render();
     if (animId) cancelAnimationFrame(animId);
     loop();
@@ -310,6 +384,20 @@ window.apivaultLoad = function(payload) {
     console.error("apivaultLoad failed", e);
   }
 };
+
+// Keyboard shortcuts: Ctrl/Cmd+F focus search · Esc clear · Ctrl/Cmd+0 fit
+window.addEventListener("keydown", (e) => {
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === "f") {
+    e.preventDefault();
+    const s = document.getElementById("search"); if (s) { s.focus(); s.select(); }
+  } else if (mod && e.key === "0") {
+    e.preventDefault();
+    if (window.apivaultCenter) window.apivaultCenter();
+  } else if (e.key === "Escape") {
+    if (window.apivaultClearHighlight) window.apivaultClearHighlight();
+  }
+});
 
 // Search box — fuzzy contains, dim non-matches.
 document.getElementById("search").addEventListener("input", (e) => {

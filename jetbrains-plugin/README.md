@@ -15,16 +15,22 @@ Four tabs on the right side of the IDE:
   Double-click a row to jump to the manifest line. Cached scan persists
   between Tool Window opens.
 - **Graph** — dependency graph rendered inside JCEF (Issuer → Credential →
-  Project → Deployment). Self-contained force-directed layout: drag to
-  pan, scroll to zoom, click selects, **double-click activates** the node:
-  - Credential → reveal to clipboard (passphrase prompt, 30s auto-clear).
-  - Issuer → open the issuer's docs URL in your default browser.
-  - Project → open the project's repo URL.
-  - Deployment → open the deployment URL.
+  Project → Deployment). Self-contained force-directed layout.
+  - **Click** selects a node (highlights neighbors).
+  - **Double-click** triggers the default action for that kind:
+    Credential → reveal to clipboard, Issuer → docs URL,
+    Project → repo URL, Deployment → URL.
+  - **Right-click** opens a context menu: *Show blast radius* (for
+    credentials only — colours downstream nodes red/orange/yellow by
+    BFS depth, dims the rest, shows a "N nodes affected" banner),
+    *Reveal*, *Open repo/docs/URL*, *Focus*, *Copy ID*.
+  - **Filter box** dims non-matching nodes/edges.
+  - **Keyboard**: `Ctrl/Cmd + F` focus search, `Esc` clear all
+    highlights and filter, `Ctrl/Cmd + 0` fit to view.
+  - **Center** / **Clear highlight** buttons in the toolbar.
 
-  Filter box at top-right dims non-matching nodes. **Center** button
-  fits all nodes to view. No external CDN — works offline. Falls back
-  to a notice on IDE builds without JCEF.
+  No external CDN — works offline. Falls back to a notice on IDE
+  builds without JCEF.
 - **Settings** — per-project CLI path and "scan on project open" toggle.
 
 ### Tools menu (`Tools → API Vault`)

@@ -50,7 +50,7 @@
 | M19 | Team / org / shared vault       | TBD         | TBD       | ⏳ placeholder (B2B 진입, M18+M21 후 베타 사용자 피드백 기반) |
 | M20 | Supply chain risk graph         | TBD         | TBD       | ✅ M20 v2 완료 (v1 manifest+OSV+매칭+Tauri+MCP / **v2 lockfile parsers (npm v3+/pnpm v6/Cargo) + semver range eval — false positive 제거**) |
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / v3 Cargo.toml hover + ManifestCodeLens — risky deps inline) |
-| M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ M22 v4 완료 (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF force-directed / **v4 JBCefJSQuery JS↔Kotlin 브리지: 더블클릭 → credential reveal·issuer/project/deployment URL Desktop.browse · 검색 박스 dim 필터 · Center fit-to-view · CLI graph 노드에 meta(env/status/url/repo_url/docs_url) 추가**) |
+| M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + apivault blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). 다음 → M23 (모바일 / 결제 / 텔레메트리 중 선택) |
 
 ---
 

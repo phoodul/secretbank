@@ -110,6 +110,14 @@ enum Command {
         #[arg(long, default_value_t = true)]
         json: bool,
     },
+
+    /// Emit the blast radius of a credential as JSON: which nodes break
+    /// when this credential is revoked, bucketed by BFS depth.
+    /// Used by the JetBrains Graph view's "Show blast radius" action (v5).
+    BlastRadius {
+        /// Credential ULID.
+        id: String,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -154,6 +162,7 @@ async fn run(cli: Cli) -> Result<()> {
             }
         },
         Command::Graph { json: _ } => cmd_graph(cli.data_dir.as_deref()).await,
+        Command::BlastRadius { id } => cmd_blast_radius(cli.data_dir.as_deref(), &id).await,
     }
 }
 
@@ -815,6 +824,60 @@ async fn cmd_graph(data_dir_override: Option<&std::path::Path>) -> Result<()> {
     let payload = serde_json::json!({
         "nodes": nodes,
         "edges": edges,
+    });
+    println!("{}", serde_json::to_string_pretty(&payload)?);
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// `apivault blast-radius <credential-id>`
+// ---------------------------------------------------------------------------
+
+async fn cmd_blast_radius(
+    data_dir_override: Option<&std::path::Path>,
+    id_str: &str,
+) -> Result<()> {
+    use api_vault_core::blast_radius::blast_radius;
+    use api_vault_storage::sqlite::repositories::{
+        deployment::DeploymentRepo, project::ProjectRepo,
+    };
+
+    let data_dir = match data_dir_override {
+        Some(d) => d.to_path_buf(),
+        None => default_data_dir()?,
+    };
+    let db_path = data_dir.join("vault.db");
+    if !db_path.exists() {
+        return Err(anyhow!("no SQLite store at {}", db_path.display()));
+    }
+
+    let cred_id: CredentialId = id_str
+        .parse()
+        .map_err(|e| anyhow!("invalid credential id {id_str:?}: {e}"))?;
+
+    let pool = init_pool(&db_path).await.context("opening SQLite pool")?;
+    let issuers = IssuerRepo::new(&pool).list().await?;
+    let credentials = CredentialRepo::new(&pool).list_all().await?;
+    let usages = UsageRepo::new(&pool).list_all().await?;
+    let projects = ProjectRepo::new(&pool).list().await?;
+    let deployments = DeploymentRepo::new(&pool).list_all().await?;
+
+    let graph = DependencyGraph::build(&issuers, &credentials, &usages, &projects, &deployments);
+    let radius = blast_radius(&graph, cred_id);
+
+    let to_id = |nr: &NodeRef| -> String {
+        match nr {
+            NodeRef::Issuer(id) => id.to_string(),
+            NodeRef::Credential(id) => id.to_string(),
+            NodeRef::Project(id) => id.to_string(),
+            NodeRef::Deployment(id) => id.to_string(),
+        }
+    };
+    let payload = serde_json::json!({
+        "credentialId": cred_id.to_string(),
+        "primary":   radius.primary.iter().map(to_id).collect::<Vec<_>>(),
+        "secondary": radius.secondary.iter().map(to_id).collect::<Vec<_>>(),
+        "tertiary":  radius.tertiary.iter().map(to_id).collect::<Vec<_>>(),
     });
     println!("{}", serde_json::to_string_pretty(&payload)?);
     Ok(())

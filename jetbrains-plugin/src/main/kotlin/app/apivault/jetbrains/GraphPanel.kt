@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.ui.JBUI
 import org.cef.handler.CefLoadHandlerAdapter
@@ -19,10 +20,16 @@ import org.cef.browser.CefBrowser
 import java.awt.BorderLayout
 import java.awt.Desktop
 import java.awt.FlowLayout
+import java.awt.MouseInfo
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.net.URI
 import javax.swing.JButton
+import javax.swing.JMenuItem
 import javax.swing.JOptionPane
 import javax.swing.JPanel
+import javax.swing.JPopupMenu
+import javax.swing.SwingUtilities
 
 class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
 
@@ -30,13 +37,8 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
     private val mapper = ObjectMapper().registerKotlinModule()
     private val statusLabel = JBLabel(" ")
     private val browser: JBCefBrowser? = if (JBCefApp.isSupported()) JBCefBrowser() else null
+    private val bridge: JBCefJSQuery? = browser?.let { JBCefJSQuery.create(it as JBCefBrowserBase) }
 
-    /** JS → Kotlin 메시지 채널. */
-    private val bridge: JBCefJSQuery? = browser?.let {
-        JBCefJSQuery.create(it as com.intellij.ui.jcef.JBCefBrowserBase)
-    }
-
-    /** 가장 최근에 로드된 노드를 캐시 — 클릭 메시지에서 메타데이터 조회용. */
     @Volatile
     private var nodeIndex: Map<String, ApiVaultService.GraphNode> = emptyMap()
 
@@ -50,11 +52,12 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
         border = JBUI.Borders.empty(8)
 
         val toolbar = JPanel(FlowLayout(FlowLayout.LEFT, 4, 0)).apply {
-            add(JButton("Refresh", AllIcons.Actions.Refresh).apply {
-                addActionListener { refresh() }
-            })
+            add(JButton("Refresh", AllIcons.Actions.Refresh).apply { addActionListener { refresh() } })
             add(JButton("Center", AllIcons.Actions.MoveToTopLeft).apply {
                 addActionListener { runJs("window.apivaultCenter && window.apivaultCenter();") }
+            })
+            add(JButton("Clear highlight", AllIcons.Actions.GC).apply {
+                addActionListener { runJs("window.apivaultClearHighlight && window.apivaultClearHighlight();") }
             })
         }
         add(toolbar, BorderLayout.NORTH)
@@ -68,7 +71,6 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
             )
             add(msg, BorderLayout.CENTER)
         } else {
-            // JS → Kotlin handler
             bridge!!.addHandler { rawMessage ->
                 handleMessage(rawMessage)
                 null
@@ -79,11 +81,8 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
             if (resourceUrl != null) {
                 browser.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
                     override fun onLoadEnd(b: CefBrowser?, frameId: Int, statusCode: Int) {
-                        // Inject the bridge's JS callback URL into the page.
                         val injection = bridge.inject("__msg__")
-                        val js = """
-                            window.__apivaultSend = function(__msg__) { $injection };
-                        """.trimIndent()
+                        val js = "window.__apivaultSend = function(__msg__) { $injection };"
                         browser.cefBrowser.executeJavaScript(js, browser.cefBrowser.url, 0)
                         bridgeReady = true
                         pendingPayload?.let { post(it) }
@@ -117,7 +116,7 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
                 statusLabel.text = if (payload.nodes.isEmpty()) {
                     "Empty graph — add credentials and projects in the desktop app."
                 } else {
-                    "${payload.nodes.size} nodes · ${payload.edges.size} edges  (click a node for actions)"
+                    "${payload.nodes.size} nodes · ${payload.edges.size} edges  (right-click for actions)"
                 }
             }
         }
@@ -132,11 +131,6 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
         b.cefBrowser.executeJavaScript(js, b.cefBrowser.url, 0)
     }
 
-    /**
-     * Messages from graph.html. Format: `<verb>:<id>` where verb is one of
-     * `select`, `activate` (double-click), `context` (right-click).
-     * Activate is the action trigger — kind decides what we actually do.
-     */
     private fun handleMessage(raw: String) {
         val (verb, id) = raw.split(':', limit = 2).let {
             if (it.size == 2) it[0] to it[1] else return
@@ -146,18 +140,90 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
             "select" -> ApplicationManager.getApplication().invokeLater {
                 statusLabel.text = "${node.kind}: ${node.label}"
             }
-            "activate" -> activate(node)
-            "context" -> activate(node) // 일단 v4 에서는 같은 동작, v5 에서 분리
+            "activate" -> defaultActivate(node)
+            "context" -> ApplicationManager.getApplication().invokeLater { showContextMenu(node) }
         }
     }
 
-    private fun activate(node: ApiVaultService.GraphNode) {
+    /** Double-click default — most useful single action per kind. */
+    private fun defaultActivate(node: ApiVaultService.GraphNode) {
         when (node.kind) {
             "credential" -> revealCredentialFlow(node)
             "issuer" -> openUrl(node.meta["docs_url"] as? String)
-            "deployment" -> openUrl(node.meta["url"] as? String)
             "project" -> openUrl(node.meta["repo_url"] as? String)
-            else -> {} // unknown
+            "deployment" -> openUrl(node.meta["url"] as? String)
+            else -> {}
+        }
+    }
+
+    /** Right-click — JBPopupMenu with kind-specific items. */
+    private fun showContextMenu(node: ApiVaultService.GraphNode) {
+        val menu = JPopupMenu("API Vault — ${node.label}")
+        when (node.kind) {
+            "credential" -> {
+                menu.add(JMenuItem("Show blast radius").apply {
+                    addActionListener { showBlastRadius(node) }
+                })
+                menu.add(JMenuItem("Reveal to clipboard").apply {
+                    addActionListener { revealCredentialFlow(node) }
+                })
+                menu.addSeparator()
+            }
+            "issuer" -> {
+                menu.add(JMenuItem("Open docs").apply {
+                    addActionListener { openUrl(node.meta["docs_url"] as? String) }
+                })
+                menu.addSeparator()
+            }
+            "project" -> {
+                menu.add(JMenuItem("Open repo").apply {
+                    addActionListener { openUrl(node.meta["repo_url"] as? String) }
+                })
+                menu.addSeparator()
+            }
+            "deployment" -> {
+                menu.add(JMenuItem("Open URL").apply {
+                    addActionListener { openUrl(node.meta["url"] as? String) }
+                })
+                menu.addSeparator()
+            }
+        }
+        menu.add(JMenuItem("Focus node").apply {
+            addActionListener { runJs("window.apivaultFocus && window.apivaultFocus(${mapper.writeValueAsString(node.id)});") }
+        })
+        menu.add(JMenuItem("Copy ID").apply {
+            addActionListener {
+                Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(node.id), null)
+                ApplicationManager.getApplication().invokeLater { statusLabel.text = "Copied ${node.id}" }
+            }
+        })
+
+        // 마우스 위치에 표시. JCEF 브라우저 영역 내부 좌표를 못 받으니 글로벌 위치에서 panel 좌표로 환산.
+        val pos = MouseInfo.getPointerInfo()?.location
+        if (pos != null && browser != null) {
+            SwingUtilities.convertPointFromScreen(pos, browser.component)
+            menu.show(browser.component, pos.x.coerceAtLeast(0), pos.y.coerceAtLeast(0))
+        } else {
+            menu.show(this, 20, 20)
+        }
+    }
+
+    private fun showBlastRadius(node: ApiVaultService.GraphNode) {
+        if (node.kind != "credential") return
+        statusLabel.text = "Computing blast radius…"
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val rad = project.service<ApiVaultService>().blastRadius(node.id)
+            ApplicationManager.getApplication().invokeLater {
+                if (rad == null) {
+                    notify("Blast radius failed for ${node.label}.", NotificationType.ERROR)
+                    statusLabel.text = "Blast radius failed."
+                    return@invokeLater
+                }
+                val json = mapper.writeValueAsString(rad)
+                runJs("window.apivaultBlastRadius && window.apivaultBlastRadius(${mapper.writeValueAsString(json)});")
+                statusLabel.text =
+                    "Blast radius — primary ${rad.primary.size} · secondary ${rad.secondary.size} · tertiary ${rad.tertiary.size}"
+            }
         }
     }
 
@@ -180,16 +246,12 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
                         statusLabel.text = "Reveal failed."
                         return@invokeLater
                     }
-                    java.awt.Toolkit.getDefaultToolkit().systemClipboard.setContents(
-                        java.awt.datatransfer.StringSelection(value), null
-                    )
+                    Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(value), null)
                     notify("Copied ${node.label} to clipboard. Auto-clear in 30s.")
                     statusLabel.text = "${node.label} copied."
                     ApplicationManager.getApplication().executeOnPooledThread {
                         Thread.sleep(30_000)
-                        java.awt.Toolkit.getDefaultToolkit().systemClipboard.setContents(
-                            java.awt.datatransfer.StringSelection(""), null
-                        )
+                        Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(""), null)
                     }
                 }
             }
@@ -198,9 +260,7 @@ class GraphPanel(private val project: Project) : JPanel(BorderLayout()) {
 
     private fun openUrl(url: String?) {
         if (url.isNullOrBlank()) {
-            ApplicationManager.getApplication().invokeLater {
-                statusLabel.text = "No URL on this node."
-            }
+            ApplicationManager.getApplication().invokeLater { statusLabel.text = "No URL on this node." }
             return
         }
         try {

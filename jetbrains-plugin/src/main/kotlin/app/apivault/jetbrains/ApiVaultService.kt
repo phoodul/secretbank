@@ -67,6 +67,14 @@ class ApiVaultService(private val project: Project) {
             .getOrDefault(GraphPayload())
     }
 
+    /** Blast radius (M22 v5 — 'apivault blast-radius' CLI). null on failure. */
+    fun blastRadius(credentialId: String): BlastRadiusPayload? {
+        val out = run("blast-radius", credentialId) ?: return null
+        return runCatching { mapper.readValue(out, BlastRadiusPayload::class.java) }
+            .onFailure { log.warn("apivault blast-radius parse: ${it.message}") }
+            .getOrNull()
+    }
+
     /** Convenience for inspections — package_name -> highest-severity advisory in the cached scan. */
     fun advisoryFor(packageName: String): MatchedAdvisory? {
         val scan = lastScan ?: return null
@@ -156,5 +164,13 @@ class ApiVaultService(private val project: Project) {
         val source: String,
         val target: String,
         val kind: String,
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class BlastRadiusPayload(
+        val credentialId: String = "",
+        val primary: List<String> = emptyList(),
+        val secondary: List<String> = emptyList(),
+        val tertiary: List<String> = emptyList(),
     )
 }
