@@ -7,76 +7,106 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  API Vault — Design Tokens (Option A: Security Minimal)
-  - Base color ramp: slate (shadcn/ui, oklch). Faint cool hue — reads as "security tool".
-  - Semantic tokens (--color-vault-accent, --color-vault-danger, etc.) will be layered
-    on top once component needs crystallize. Keep this file small until then.
-  - All runtime values go through CSS variables so we can retheme without rebuilding.
+  API Vault — Design Tokens (Option A2: Lapis Vault)
+  ──────────────────────────────────────────────────
+  Inspired by literal vault aesthetics — deep midnight blue base + lapis
+  lazuli primary + brass/gold accents for "key / unlock / reveal" moments.
+  All values in oklch for predictable contrast across modes.
+
+  Hue map:
+    250  — midnight blue / deep indigo (background, surfaces)
+    245  — lapis lazuli (primary, links, focus rings)
+    80   — brass / gold (accent — used SPARINGLY on key moments)
+    28   — copper red (destructive, danger states)
+    155  — patina green (success — oxidized brass tone)
+    195  — verdigris teal (info — aged copper)
+
+  Custom utility classes are declared after @theme so Tailwind picks them up:
+    .surface-vault    — diagonal-light gloss gradient (cards)
+    .surface-glass    — backdrop-filter glass for modals/popovers
+    .accent-gold      — text/icon color shortcut for the gold accent
+    .gloss-shimmer    — moving sheen on hover (used on hero buttons)
 */
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  /* === LIGHT MODE — paper-like Lapis. Less common but kept for accessibility. === */
+  --background: oklch(0.985 0.005 250);
+  --foreground: oklch(0.15 0.04 250);
+  --card: oklch(0.99 0.003 250);
+  --card-foreground: oklch(0.15 0.04 250);
+  --popover: oklch(0.99 0.003 250);
+  --popover-foreground: oklch(0.15 0.04 250);
+  --primary: oklch(0.45 0.18 250);
+  --primary-foreground: oklch(0.985 0.005 250);
+  --secondary: oklch(0.94 0.02 250);
+  --secondary-foreground: oklch(0.25 0.06 250);
+  --muted: oklch(0.94 0.02 250);
+  --muted-foreground: oklch(0.45 0.04 250);
+  --accent: oklch(0.72 0.14 80);
+  --accent-foreground: oklch(0.18 0.04 250);
+  --destructive: oklch(0.5 0.18 28);
+  --destructive-foreground: oklch(0.985 0.005 250);
+  --border: oklch(0.88 0.025 250);
+  --input: oklch(0.92 0.02 250);
+  --ring: oklch(0.55 0.2 245);
   --radius: 0.625rem;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  /* API Vault semantic status tokens — light mode */
-  --vault-danger: oklch(0.577 0.245 27.325);
-  --vault-danger-foreground: oklch(0.984 0.003 247.858);
-  --vault-warning: oklch(0.768 0.179 67.367);
-  --vault-warning-foreground: oklch(0.129 0.042 264.695);
-  --vault-success: oklch(0.697 0.177 143.495);
-  --vault-success-foreground: oklch(0.129 0.042 264.695);
-  --vault-info: oklch(0.685 0.169 237.323);
-  --vault-info-foreground: oklch(0.984 0.003 247.858);
+  /* Vault semantic */
+  --vault-danger: oklch(0.5 0.18 28);
+  --vault-danger-foreground: oklch(0.985 0.005 250);
+  --vault-warning: oklch(0.72 0.14 80);
+  --vault-warning-foreground: oklch(0.18 0.04 250);
+  --vault-success: oklch(0.6 0.13 155);
+  --vault-success-foreground: oklch(0.985 0.005 250);
+  --vault-info: oklch(0.65 0.12 195);
+  --vault-info-foreground: oklch(0.985 0.005 250);
+  /* Lapis-specific extras (used by .surface-* utilities) */
+  --vault-gold: oklch(0.72 0.14 80);
+  --vault-gold-glow: oklch(0.78 0.16 80);
+  --vault-lapis: oklch(0.45 0.18 250);
+  --vault-lapis-glow: oklch(0.6 0.22 245);
+  --vault-bg-deep: oklch(0.985 0.005 250);
+  --vault-surface-edge: oklch(0.88 0.025 250);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  /* API Vault semantic status tokens — dark mode */
-  --vault-danger: oklch(0.704 0.191 22.216);
-  --vault-danger-foreground: oklch(0.984 0.003 247.858);
-  --vault-warning: oklch(0.828 0.155 85.87);
-  --vault-warning-foreground: oklch(0.129 0.042 264.695);
-  --vault-success: oklch(0.782 0.143 154.449);
-  --vault-success-foreground: oklch(0.129 0.042 264.695);
-  --vault-info: oklch(0.768 0.148 238.832);
-  --vault-info-foreground: oklch(0.984 0.003 247.858);
+  /* === DARK MODE (default app experience) — Midnight Lapis === */
+  --background: oklch(0.16 0.035 250);
+  --foreground: oklch(0.96 0.012 250);
+  --card: oklch(0.21 0.045 250);
+  --card-foreground: oklch(0.96 0.012 250);
+  --popover: oklch(0.19 0.04 250);
+  --popover-foreground: oklch(0.96 0.012 250);
+  --primary: oklch(0.62 0.18 245);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --secondary: oklch(0.27 0.05 250);
+  --secondary-foreground: oklch(0.93 0.02 250);
+  --muted: oklch(0.24 0.04 250);
+  --muted-foreground: oklch(0.7 0.03 250);
+  --accent: oklch(0.78 0.14 80);
+  --accent-foreground: oklch(0.16 0.035 250);
+  --destructive: oklch(0.6 0.2 28);
+  --destructive-foreground: oklch(0.99 0.005 250);
+  --border: oklch(0.42 0.06 245 / 28%);
+  --input: oklch(0.5 0.06 245 / 22%);
+  --ring: oklch(0.7 0.2 245);
+  /* Vault semantic — dark */
+  --vault-danger: oklch(0.65 0.22 28);
+  --vault-danger-foreground: oklch(0.99 0.005 250);
+  --vault-warning: oklch(0.82 0.16 80);
+  --vault-warning-foreground: oklch(0.16 0.035 250);
+  --vault-success: oklch(0.72 0.15 155);
+  --vault-success-foreground: oklch(0.16 0.035 250);
+  --vault-info: oklch(0.75 0.14 195);
+  --vault-info-foreground: oklch(0.16 0.035 250);
+  /* Lapis-specific extras */
+  --vault-gold: oklch(0.78 0.14 80);
+  --vault-gold-glow: oklch(0.86 0.17 82);
+  --vault-lapis: oklch(0.62 0.18 245);
+  --vault-lapis-glow: oklch(0.78 0.22 245);
+  --vault-bg-deep: oklch(0.12 0.04 252);
+  --vault-surface-edge: oklch(0.32 0.06 245);
 }
 
 @theme inline {
@@ -107,6 +137,12 @@
   --color-vault-success-foreground: var(--vault-success-foreground);
   --color-vault-info: var(--vault-info);
   --color-vault-info-foreground: var(--vault-info-foreground);
+  --color-vault-gold: var(--vault-gold);
+  --color-vault-gold-glow: var(--vault-gold-glow);
+  --color-vault-lapis: var(--vault-lapis);
+  --color-vault-lapis-glow: var(--vault-lapis-glow);
+  --color-vault-bg-deep: var(--vault-bg-deep);
+  --color-vault-surface-edge: var(--vault-surface-edge);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -133,6 +169,19 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
+    /* 다크 모드의 깊은 lapis ambient — 화면 밖 테두리에서부터 빛이 들어오는 듯 */
+    background-image:
+      radial-gradient(
+        1200px 800px at 15% -10%,
+        oklch(from var(--vault-lapis-glow) l c h / 0.18) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        900px 600px at 100% 110%,
+        oklch(from var(--vault-gold-glow) l c h / 0.10) 0%,
+        transparent 60%
+      );
+    background-attachment: fixed;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -144,5 +193,109 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Lapis Vault — Custom utility classes
+   ─────────────────────────────────────────────────────────────── */
+
+@layer components {
+  /*
+    .surface-vault
+    Cards and panels: a subtle diagonal gloss as if light hits the top-left.
+    Lifts the surface above the ambient background without harsh borders.
+  */
+  .surface-vault {
+    background-image: linear-gradient(
+      135deg,
+      oklch(from var(--card) calc(l + 0.04) c h) 0%,
+      var(--card) 35%,
+      oklch(from var(--card) calc(l - 0.02) c h) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 0 oklch(from var(--vault-lapis-glow) l c h / 0.18),
+      inset 0 -1px 0 0 oklch(0 0 0 / 0.35),
+      0 1px 0 0 oklch(0 0 0 / 0.4),
+      0 12px 32px -16px oklch(from var(--vault-lapis) l c h / 0.5);
+    border: 1px solid oklch(from var(--vault-lapis) l c h / 0.18);
+  }
+
+  /*
+    .surface-glass
+    Modals, popovers, command palette: blurred backdrop + frosted highlight.
+    Use sparingly — heavy on GPU.
+  */
+  .surface-glass {
+    background-color: oklch(from var(--card) l c h / 0.72);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    box-shadow:
+      inset 0 1px 0 0 oklch(1 0 0 / 0.08),
+      0 24px 48px -16px oklch(0 0 0 / 0.55);
+    border: 1px solid oklch(1 0 0 / 0.1);
+  }
+
+  /*
+    .accent-gold
+    Brass/gold text or icon. The "key" color — used on Reveal CTAs, vault
+    icons in hero spots, success-on-secret moments. Restraint is the rule.
+  */
+  .accent-gold {
+    color: var(--vault-gold);
+  }
+
+  /*
+    .accent-gold-glow
+    Same color but with a soft drop-shadow halo. Reserved for the very
+    "wow" moments — first-run hero icon, blast-radius source node.
+  */
+  .accent-gold-glow {
+    color: var(--vault-gold);
+    filter: drop-shadow(0 0 8px oklch(from var(--vault-gold-glow) l c h / 0.5));
+  }
+
+  /*
+    .gloss-shimmer
+    Apply to a button or card to give it a moving sheen on hover. Pairs
+    with `.surface-vault`. Respects reduced motion automatically.
+  */
+  .gloss-shimmer {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .gloss-shimmer::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      oklch(1 0 0 / 0.08) 48%,
+      oklch(1 0 0 / 0.18) 50%,
+      oklch(1 0 0 / 0.08) 52%,
+      transparent 70%
+    );
+    transform: translateX(-110%);
+    transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .gloss-shimmer:hover::before {
+    transform: translateX(110%);
+  }
+
+  /*
+    .ring-lapis
+    Focused inputs and primary CTAs get a lapis glow ring instead of the
+    default neutral ring.
+  */
+  .ring-lapis:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--background),
+      0 0 0 4px var(--vault-lapis-glow),
+      0 0 24px 0 oklch(from var(--vault-lapis-glow) l c h / 0.35);
   }
 }

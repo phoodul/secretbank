@@ -1,11 +1,11 @@
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { ShieldCheck } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PairJoinerDialog } from "@/features/sync/PairJoinerDialog";
@@ -132,18 +132,50 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="items-center gap-2 text-center">
-          <ShieldCheck className="size-10 text-primary" aria-hidden="true" />
-          <CardTitle>{t("vault.unlockTitle")}</CardTitle>
-          <CardDescription>{t("vault.unlockSubtitle")}</CardDescription>
+    <div className="relative flex min-h-screen items-center justify-center px-4 overflow-hidden">
+      {/* Ambient lapis glow — depth without noise */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            "radial-gradient(600px 400px at 50% 18%, oklch(from var(--vault-lapis-glow) l c h / 0.22) 0%, transparent 60%)",
+        }}
+      />
+
+      <section
+        className="surface-vault gloss-shimmer relative w-full max-w-sm rounded-xl p-8"
+        aria-labelledby="lockscreen-title"
+      >
+        {/* Gold key — the single accent moment of the entire screen */}
+        <CardHeader className="items-center gap-3 text-center p-0 pb-6">
+          <div
+            aria-hidden="true"
+            className="relative flex size-16 items-center justify-center rounded-full"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 30% 25%, oklch(from var(--vault-gold-glow) l c h / 0.45) 0%, transparent 65%)",
+              boxShadow:
+                "inset 0 1px 0 0 oklch(from var(--vault-gold) l c h / 0.4), 0 0 24px 0 oklch(from var(--vault-gold-glow) l c h / 0.35)",
+            }}
+          >
+            <KeyRound className="size-8 accent-gold-glow" strokeWidth={1.75} />
+          </div>
+          <CardTitle id="lockscreen-title" className="text-xl tracking-tight">
+            {t("vault.unlockTitle")}
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">
+            {t("vault.unlockSubtitle")}
+          </CardDescription>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="p-0">
           <form onSubmit={handleSubmit} noValidate>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="unlock-passphrase">{t("vault.passphraseLabel")}</Label>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="unlock-passphrase" className="text-xs uppercase tracking-wider text-muted-foreground">
+                  {t("vault.passphraseLabel")}
+                </Label>
                 <Input
                   id="unlock-passphrase"
                   ref={inputRef}
@@ -159,6 +191,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
                   disabled={isDisabled}
                   aria-invalid={!!errorMsg}
                   aria-describedby={errorMsg ? "unlock-error" : undefined}
+                  className="ring-lapis bg-input/40 border-vault-lapis/20 backdrop-blur-sm"
                 />
               </div>
 
@@ -175,23 +208,27 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
                 )
               )}
 
-              <Button type="submit" disabled={isDisabled || !password}>
+              <Button
+                type="submit"
+                disabled={isDisabled || !password}
+                className="gloss-shimmer w-full font-medium tracking-wide"
+              >
                 {t("vault.unlockButton")}
               </Button>
 
               {/* uninitialized 상태일 때만 CreateVault + Pair 링크 표시 */}
               {showCreate && (
-                <div className="flex flex-col gap-2 items-start">
+                <div className="mt-2 flex flex-col items-center gap-2 border-t border-vault-lapis/15 pt-4">
                   <button
                     type="button"
-                    className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                    className="text-sm text-muted-foreground transition-colors hover:text-vault-gold underline-offset-4 hover:underline"
                     onClick={() => setCreateOpen(true)}
                   >
                     {t("vault.createVaultLink")}
                   </button>
                   <button
                     type="button"
-                    className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                    className="text-sm text-muted-foreground transition-colors hover:text-vault-gold underline-offset-4 hover:underline"
                     onClick={() => setPairOpen(true)}
                     data-testid="lockscreen-pair-link"
                   >
@@ -202,7 +239,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
             </div>
           </form>
         </CardContent>
-      </Card>
+      </section>
 
       {showCreate && (
         <>
