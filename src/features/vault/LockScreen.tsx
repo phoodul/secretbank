@@ -18,6 +18,7 @@ import {
   SuccessBloom,
   StatusPanel,
   CornerOrnaments,
+  LightBeamSweep,
   useShake,
 } from "./LockScreenAtmosphere";
 
@@ -178,17 +179,30 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
       <motion.section
         className="surface-vault gloss-shimmer relative w-full max-w-sm rounded-xl overflow-hidden"
         aria-labelledby="lockscreen-title"
-        initial={false}
+        initial={{ opacity: 0, scale: 0.94, filter: "blur(8px)" }}
         animate={
           shaking
-            ? { x: [0, -8, 7, -6, 5, -3, 0] }
-            : { x: 0 }
+            ? {
+                opacity: 1,
+                scale: 1,
+                filter: "blur(0px)",
+                x: [0, -8, 7, -6, 5, -3, 0],
+                boxShadow: [
+                  "0 0 0 0 transparent",
+                  "0 0 28px 4px oklch(from var(--vault-danger) l c h / 0.55)",
+                  "0 0 0 0 transparent",
+                ],
+              }
+            : { opacity: 1, scale: 1, filter: "blur(0px)", x: 0 }
         }
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        // shakeKey forces motion to retrigger keyframes when consecutive
-        // wrong-password events fire faster than the previous shake settles.
+        transition={
+          shaking
+            ? { duration: 0.5, ease: "easeOut" }
+            : { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
+        }
         custom={shakeKey}
       >
+        <LightBeamSweep />
         <CornerOrnaments />
 
         <div className="px-8 pt-8 pb-4">
@@ -211,6 +225,32 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
           >
             {t("vault.unlockSubtitle")}
           </CardDescription>
+          {/* Engraved tactical label — subtle "this is a secure system" cue */}
+          <div
+            className="mt-1 flex items-center gap-2 text-[10px] font-mono"
+            style={{
+              letterSpacing: "0.18em",
+              color: "oklch(from var(--vault-gold) l c h / 0.72)",
+              textShadow: "0 1px 0 oklch(0 0 0 / 0.6)",
+            }}
+            aria-hidden
+          >
+            <span
+              className="inline-block h-px w-8"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, oklch(from var(--vault-gold) l c h / 0.6))",
+              }}
+            />
+            <span>AUTH · REQUIRED</span>
+            <span
+              className="inline-block h-px w-8"
+              style={{
+                background:
+                  "linear-gradient(90deg, oklch(from var(--vault-gold) l c h / 0.6), transparent)",
+              }}
+            />
+          </div>
         </CardHeader>
 
         <CardContent className="p-0">

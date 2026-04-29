@@ -289,6 +289,36 @@ export function CornerOrnaments() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// LightBeamSweep — a diagonal sheen that crosses the card every 6s,
+// like a security light arm panning across the vault interior.
+// ─────────────────────────────────────────────────────────────────
+
+export function LightBeamSweep() {
+  return (
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 rounded-xl"
+      initial={{ opacity: 0 }}
+      animate={{
+        opacity: [0, 0.55, 0],
+        x: ["-120%", "120%"],
+      }}
+      transition={{
+        duration: 4.2,
+        repeat: Infinity,
+        repeatDelay: 5.5,
+        ease: "easeInOut",
+      }}
+      style={{
+        backgroundImage:
+          "linear-gradient(115deg, transparent 35%, oklch(from var(--vault-gold-bright) l c h / 0.04) 47%, oklch(from var(--vault-gold-bright) l c h / 0.18) 50%, oklch(from var(--vault-gold-bright) l c h / 0.04) 53%, transparent 65%)",
+        mixBlendMode: "overlay",
+      }}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // useShake — small custom hook returning x-translate keyframes for
 // the shake animation triggered on wrong-password.
 // ─────────────────────────────────────────────────────────────────

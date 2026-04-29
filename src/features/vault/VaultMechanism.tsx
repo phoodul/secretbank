@@ -93,6 +93,49 @@ const RING_TRANSFORM = { transformOrigin: "100px 100px", transformBox: "view-box
 // Sub-layers
 // ──────────────────────────────────────────────────────────────────
 
+function DataFlowParticles({ state }: { state: VaultState }) {
+  // 4 bright dots tracking around r=72 at varied speeds; together they look
+  // like data being read off the outermost ring during idle/verifying.
+  const cx = 100, cy = 100;
+  const r = 72;
+  const seeds = [0, 0.27, 0.55, 0.81];
+  const speedFactor = state === "verifying" ? 0.18 : 1.0;
+  if (state === "unlocked") return null;
+  return (
+    <>
+      {seeds.map((s, i) => {
+        const dur = (8 + i * 1.6) * speedFactor;
+        return (
+          <motion.g
+            key={i}
+            initial={{ rotate: s * 360 }}
+            animate={{ rotate: [s * 360, s * 360 + 360] }}
+            transition={{ repeat: Infinity, duration: dur, ease: "linear" }}
+            style={{ transformOrigin: `${cx}px ${cy}px`, transformBox: "view-box" }}
+          >
+            <circle
+              cx={cx}
+              cy={cy - r}
+              r="1.1"
+              fill={i % 2 === 0 ? "var(--vault-gold-bright)" : "var(--vault-lapis-bright)"}
+              filter="url(#vault-glow-soft)"
+              opacity="0.95"
+            />
+            {/* trailing dot */}
+            <circle
+              cx={cx + 4 * Math.sin(-0.18)}
+              cy={cy - r * Math.cos(-0.18)}
+              r="0.6"
+              fill={i % 2 === 0 ? "var(--vault-gold)" : "var(--vault-lapis-bright)"}
+              opacity="0.5"
+            />
+          </motion.g>
+        );
+      })}
+    </>
+  );
+}
+
 function HexagonGrid({ state }: { state: VaultState }) {
   // Faint hexagonal mesh inside the inner area — adds depth.
   const hexSize = 6;
@@ -755,6 +798,7 @@ function BreathingChild({ state, size }: BreathingChildProps) {
         <OuterDegreeScale state={state} />
         <ScanSweep state={state} />
         <SegmentedArcRing state={state} />
+        <DataFlowParticles state={state} />
         <GlyphRing state={state} />
         <DashRing state={state} />
         <CenterCore state={state} />
