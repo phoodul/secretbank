@@ -163,10 +163,19 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
               }}
             />
           </div>
-          <CardTitle id="lockscreen-title" className="text-xl tracking-tight">
+          <CardTitle
+            id="lockscreen-title"
+            className="text-2xl font-semibold tracking-tight accent-gold-glow"
+          >
             {t("vault.unlockTitle")}
           </CardTitle>
-          <CardDescription className="text-muted-foreground">
+          <CardDescription
+            className="text-[15px]"
+            style={{
+              color: "oklch(0.92 0.02 240)",
+              textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
+            }}
+          >
             {t("vault.unlockSubtitle")}
           </CardDescription>
         </CardHeader>
@@ -175,7 +184,10 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
           <form onSubmit={handleSubmit} noValidate>
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="unlock-passphrase" className="text-xs uppercase tracking-wider text-muted-foreground">
+                <Label
+                  htmlFor="unlock-passphrase"
+                  className="text-[11px] font-semibold uppercase tracking-[0.14em] accent-gold"
+                >
                   {t("vault.passphraseLabel")}
                 </Label>
                 <Input
@@ -199,12 +211,28 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
 
               {/* 인라인 에러 또는 쿨다운 메시지 */}
               {inCooldown ? (
-                <p className="text-sm text-destructive" role="alert" aria-live="polite">
+                <p
+                  className="text-sm font-medium"
+                  role="alert"
+                  aria-live="polite"
+                  style={{
+                    color: "oklch(0.85 0.18 28)",
+                    textShadow: "0 1px 0 oklch(0 0 0 / 0.5)",
+                  }}
+                >
                   {t("vault.tooManyAttempts", { count: cooldownRemaining })}
                 </p>
               ) : (
                 errorMsg && (
-                  <p id="unlock-error" className="text-sm text-destructive" role="alert">
+                  <p
+                    id="unlock-error"
+                    className="text-sm font-medium"
+                    role="alert"
+                    style={{
+                      color: "oklch(0.85 0.18 28)",
+                      textShadow: "0 1px 0 oklch(0 0 0 / 0.5)",
+                    }}
+                  >
                     {errorMsg}
                   </p>
                 )
@@ -220,17 +248,42 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
 
               {/* uninitialized 상태일 때만 CreateVault + Pair 링크 표시 */}
               {showCreate && (
-                <div className="mt-2 flex flex-col items-center gap-2 border-t border-vault-lapis/15 pt-4">
+                <div
+                  className="mt-2 flex flex-col items-center gap-2 pt-4"
+                  style={{
+                    borderTop: "1px solid oklch(from var(--vault-lapis-bright) l c h / 0.18)",
+                  }}
+                >
                   <button
                     type="button"
-                    className="text-sm text-muted-foreground transition-colors hover:text-vault-gold underline-offset-4 hover:underline"
+                    className="text-sm font-medium transition-colors underline-offset-4 hover:underline"
+                    style={{
+                      color: "oklch(0.86 0.04 240)",
+                      textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "var(--vault-gold-bright)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "oklch(0.86 0.04 240)";
+                    }}
                     onClick={() => setCreateOpen(true)}
                   >
                     {t("vault.createVaultLink")}
                   </button>
                   <button
                     type="button"
-                    className="text-sm text-muted-foreground transition-colors hover:text-vault-gold underline-offset-4 hover:underline"
+                    className="text-sm font-medium transition-colors underline-offset-4 hover:underline"
+                    style={{
+                      color: "oklch(0.86 0.04 240)",
+                      textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "var(--vault-gold-bright)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "oklch(0.86 0.04 240)";
+                    }}
                     onClick={() => setPairOpen(true)}
                     data-testid="lockscreen-pair-link"
                   >

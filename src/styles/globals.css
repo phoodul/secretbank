@@ -30,24 +30,24 @@
 
 :root {
   /* ═══ LIGHT MODE — polished platinum + lapis inlay ═══ */
-  --background: oklch(0.93 0.012 250);
+  --background: oklch(0.985 0.006 250);
   --foreground: oklch(0.16 0.04 250);
-  --card: oklch(0.97 0.008 250);
+  --card: oklch(1 0 0);
   --card-foreground: oklch(0.16 0.04 250);
-  --popover: oklch(0.97 0.008 250);
+  --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.16 0.04 250);
   --primary: oklch(0.42 0.2 245);
   --primary-foreground: oklch(0.985 0.005 250);
-  --secondary: oklch(0.88 0.02 250);
+  --secondary: oklch(0.94 0.012 250);
   --secondary-foreground: oklch(0.22 0.06 250);
-  --muted: oklch(0.9 0.015 250);
+  --muted: oklch(0.95 0.01 250);
   --muted-foreground: oklch(0.42 0.05 250);
   --accent: oklch(0.68 0.16 80);
   --accent-foreground: oklch(0.16 0.04 250);
   --destructive: oklch(0.5 0.2 28);
   --destructive-foreground: oklch(0.99 0.005 250);
-  --border: oklch(0.78 0.04 245);
-  --input: oklch(0.96 0.01 250);
+  --border: oklch(0.86 0.025 245);
+  --input: oklch(0.97 0.008 250);
   --ring: oklch(0.55 0.22 245);
   --radius: 0.625rem;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -182,40 +182,54 @@
   body {
     @apply text-foreground font-sans antialiased;
     color: var(--foreground);
+    background-color: var(--background);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
-    /*
-      Body itself = the inside of a vault. Multiple layered metal effects:
-        1. Conic gradient: 360° reflection that moves with the eye
-        2. Top vignette: bright lapis halo at top
-        3. Bottom vignette: gold halo at bottom (warm reflection from the floor)
-        4. Brushed micro-stripes: 1px-period sheen
-    */
-    background-color: var(--vault-bg-deep);
+    position: relative;
+  }
+
+  /*
+    Ambient layer — fixed to viewport so scroll never separates content
+    from the depth gradient. Lives behind everything (#root has its own
+    z-index above this).
+  */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--background);
     background-image:
       radial-gradient(
         1100px 700px at 14% 0%,
-        oklch(from var(--vault-lapis-glow) l c h / 0.18) 0%,
+        oklch(from var(--vault-lapis-glow) l c h / 0.16) 0%,
         transparent 55%
       ),
       radial-gradient(
         900px 600px at 100% 100%,
-        oklch(from var(--vault-gold-glow) l c h / 0.1) 0%,
+        oklch(from var(--vault-gold-glow) l c h / 0.08) 0%,
         transparent 60%
-      ),
-      conic-gradient(
-        from 220deg at 50% 50%,
-        oklch(from var(--vault-bg-deep) calc(l + 0.02) c h) 0deg,
-        oklch(from var(--background) l c h) 90deg,
-        oklch(from var(--vault-bg-deep) calc(l - 0.01) c h) 180deg,
-        oklch(from var(--background) l c h) 270deg,
-        oklch(from var(--vault-bg-deep) calc(l + 0.02) c h) 360deg
       );
-    background-attachment: fixed;
-    background-blend-mode: normal, normal, multiply;
+  }
+
+  /* Dark mode: deeper ambient + base color shift */
+  .dark body::before {
+    background-color: var(--vault-bg-deep);
+    background-image:
+      radial-gradient(
+        1100px 700px at 14% 0%,
+        oklch(from var(--vault-lapis-glow) l c h / 0.22) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        900px 600px at 100% 100%,
+        oklch(from var(--vault-gold-glow) l c h / 0.12) 0%,
+        transparent 60%
+      );
   }
 
   @media (prefers-reduced-motion: reduce) {
