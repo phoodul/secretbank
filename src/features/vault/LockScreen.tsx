@@ -212,7 +212,8 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
           <VaultMechanism state={vaultState} size={140} />
           <CardTitle
             id="lockscreen-title"
-            className="text-2xl font-semibold tracking-tight accent-gold-glow"
+            className="text-2xl font-semibold accent-gold-glow"
+            style={{ letterSpacing: "0.04em" }}
           >
             {t("vault.unlockTitle")}
           </CardTitle>

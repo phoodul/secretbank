@@ -136,6 +136,69 @@ function DataFlowParticles({ state }: { state: VaultState }) {
   );
 }
 
+function SonarPing({ state }: { state: VaultState }) {
+  if (state !== "verifying") return null;
+  return (
+    <>
+      {[0, 0.6, 1.2].map((delay) => (
+        <motion.circle
+          key={delay}
+          cx="100"
+          cy="100"
+          fill="none"
+          stroke="var(--vault-lapis-bright)"
+          strokeWidth="0.6"
+          initial={{ r: 25, opacity: 0.7 }}
+          animate={{ r: [25, 90], opacity: [0.7, 0] }}
+          transition={{
+            duration: 1.8,
+            delay,
+            repeat: Infinity,
+            ease: "easeOut",
+          }}
+          filter="url(#vault-glow-soft)"
+        />
+      ))}
+    </>
+  );
+}
+
+function UnlockBurst({ state }: { state: VaultState }) {
+  if (state !== "unlocked") return null;
+  return (
+    <>
+      {Array.from({ length: 16 }, (_, i) => {
+        const angle = (i / 16) * Math.PI * 2;
+        const tx = 100 + Math.cos(angle) * 88;
+        const ty = 100 + Math.sin(angle) * 88;
+        const isGold = i % 2 === 0;
+        return (
+          <motion.circle
+            key={i}
+            cx="100"
+            cy="100"
+            r="1.6"
+            fill={isGold ? "var(--vault-gold-bright)" : "var(--vault-lapis-bright)"}
+            filter="url(#vault-glow-strong)"
+            initial={{ cx: 100, cy: 100, opacity: 1, r: 2.4 }}
+            animate={{
+              cx: tx,
+              cy: ty,
+              opacity: 0,
+              r: 0.4,
+            }}
+            transition={{
+              duration: 1.4,
+              ease: [0.22, 1, 0.36, 1],
+              delay: i * 0.015,
+            }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 function HexagonGrid({ state }: { state: VaultState }) {
   // Faint hexagonal mesh inside the inner area — adds depth.
   const hexSize = 6;
@@ -795,6 +858,7 @@ function BreathingChild({ state, size }: BreathingChildProps) {
         <CornerBrackets state={state} />
         <CrosshairReticle state={state} />
         <SystemLabels state={state} />
+        <SonarPing state={state} />
         <OuterDegreeScale state={state} />
         <ScanSweep state={state} />
         <SegmentedArcRing state={state} />
@@ -802,6 +866,7 @@ function BreathingChild({ state, size }: BreathingChildProps) {
         <GlyphRing state={state} />
         <DashRing state={state} />
         <CenterCore state={state} />
+        <UnlockBurst state={state} />
       </svg>
     </>
   );
