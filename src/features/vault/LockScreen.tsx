@@ -19,6 +19,7 @@ import {
   StatusPanel,
   CornerOrnaments,
   LightBeamSweep,
+  useMouseGloss,
   useShake,
 } from "./LockScreenAtmosphere";
 
@@ -54,6 +55,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [vaultState, setVaultState] = useState<VaultState>("idle");
   const { shaking, trigger: triggerShake, triggerKey: shakeKey } = useShake();
+  const mouseGloss = useMouseGloss();
   /** 연속 실패 횟수 추적 — ref로 관리하여 effect 의존성 문제 방지 */
   const failCountRef = useRef(0);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
@@ -193,16 +195,33 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
                   "0 0 0 0 transparent",
                 ],
               }
-            : { opacity: 1, scale: 1, filter: "blur(0px)", x: 0 }
+            : vaultState === "unlocked"
+              ? {
+                  opacity: [1, 0.85],
+                  scale: [1, 1.04, 1.06],
+                  filter: ["blur(0px)", "blur(0px)", "blur(2px)"],
+                  x: 0,
+                  boxShadow: [
+                    "0 16px 48px -8px oklch(from var(--vault-gold-glow) l c h / 0.0)",
+                    "0 16px 64px 0 oklch(from var(--vault-gold-glow) l c h / 0.45)",
+                    "0 24px 80px 8px oklch(from var(--vault-gold-glow) l c h / 0.6)",
+                  ],
+                }
+              : { opacity: 1, scale: 1, filter: "blur(0px)", x: 0 }
         }
         transition={
           shaking
             ? { duration: 0.5, ease: "easeOut" }
-            : { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
+            : vaultState === "unlocked"
+              ? { duration: 0.45, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
         }
         custom={shakeKey}
+        onMouseMove={vaultState === "idle" ? mouseGloss.onMouseMove : undefined}
+        onMouseLeave={vaultState === "idle" ? mouseGloss.onMouseLeave : undefined}
       >
         <LightBeamSweep />
+        {mouseGloss.layer}
         <CornerOrnaments />
 
         <div className="px-8 pt-8 pb-4">

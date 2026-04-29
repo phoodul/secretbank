@@ -289,6 +289,59 @@ export function CornerOrnaments() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// MouseGloss — a soft radial highlight that follows the cursor inside
+// its container. Turns a static metal surface into one that catches
+// ambient light. Pure CSS background; no rerenders thanks to direct
+// style updates.
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * Use case: parent attaches `useMouseGloss()` handlers to its container,
+ * gets back an opaque `<div>` to drop into that same container. Pointer
+ * events stay on the parent (input clicks unaffected).
+ */
+export function useMouseGloss() {
+  const layerRef = useRef<HTMLDivElement>(null);
+
+  function onMouseMove(e: React.MouseEvent<HTMLElement>) {
+    const el = layerRef.current;
+    if (!el) return;
+    const parent = el.parentElement;
+    if (!parent) return;
+    const rect = parent.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    el.style.setProperty("--mx", `${x}%`);
+    el.style.setProperty("--my", `${y}%`);
+    el.style.opacity = "1";
+  }
+
+  function onMouseLeave() {
+    if (layerRef.current) layerRef.current.style.opacity = "0";
+  }
+
+  const layer = (
+    <div
+      ref={layerRef}
+      aria-hidden
+      className="pointer-events-none absolute inset-0 rounded-xl transition-opacity duration-300"
+      style={
+        {
+          "--mx": "50%",
+          "--my": "0%",
+          opacity: 0,
+          background:
+            "radial-gradient(180px 180px at var(--mx) var(--my), oklch(from var(--vault-gold-bright) l c h / 0.2) 0%, oklch(from var(--vault-lapis-bright) l c h / 0.08) 35%, transparent 65%)",
+          mixBlendMode: "overlay",
+        } as React.CSSProperties
+      }
+    />
+  );
+
+  return { onMouseMove, onMouseLeave, layer };
+}
+
+// ─────────────────────────────────────────────────────────────────
 // LightBeamSweep — a diagonal sheen that crosses the card every 6s,
 // like a security light arm panning across the vault interior.
 // ─────────────────────────────────────────────────────────────────
