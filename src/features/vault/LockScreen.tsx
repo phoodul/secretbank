@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { KeyRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,10 @@ import { Label } from "@/components/ui/label";
 import { PairJoinerDialog } from "@/features/sync/PairJoinerDialog";
 import { usePairDeepLink } from "@/features/sync/use-pair-deep-link";
 import { CreateVaultDialog } from "./CreateVaultDialog";
+import { VaultMechanism, type VaultState } from "./VaultMechanism";
+
+/** 잠금 해제 성공 후 메커니즘 정렬 애니메이션이 끝날 때까지 기다리는 시간 */
+const UNLOCK_ANIMATION_MS = 1100;
 
 /** 연속 실패 횟수가 이 값에 도달하면 쿨다운을 시작한다 */
 const MAX_ATTEMPTS = 3;
@@ -39,6 +42,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [vaultState, setVaultState] = useState<VaultState>("idle");
   /** 연속 실패 횟수 추적 — ref로 관리하여 effect 의존성 문제 방지 */
   const failCountRef = useRef(0);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
@@ -101,19 +105,26 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
 
     setSubmitting(true);
     setErrorMsg(null);
+    setVaultState("verifying");
 
     try {
       await invoke("vault_unlock", { password });
-      // 성공: 카운터 초기화 후 상위 컴포넌트에 알림
+      // 성공: 카운터 초기화 + 메커니즘 정렬 애니메이션 → onSuccess
       failCountRef.current = 0;
       setCooldownRemaining(0);
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      onSuccess();
+      setVaultState("unlocking");
+      window.setTimeout(() => {
+        setVaultState("unlocked");
+        // 정렬 후 잠시 글로우 → 다음 화면으로 전환
+        window.setTimeout(() => onSuccess(), 220);
+      }, UNLOCK_ANIMATION_MS);
     } catch (err) {
       const error = err as VaultCommandError;
+      setVaultState("idle");
       if (error?.code === "wrong_password") {
         setErrorMsg(t("vault.wrongPassword"));
         failCountRef.current += 1;
@@ -147,22 +158,10 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
         className="surface-vault gloss-shimmer relative w-full max-w-sm rounded-xl p-8"
         aria-labelledby="lockscreen-title"
       >
-        {/* Polished brass key medallion — the only ornate moment on the screen */}
+        {/* Live vault mechanism — concentric tumbler rings rotate, snap into
+            alignment on unlock, brass center pulses gold on success. */}
         <CardHeader className="items-center gap-4 text-center p-0 pb-6">
-          <div
-            aria-hidden="true"
-            className="surface-gold relative flex size-20 items-center justify-center rounded-full"
-          >
-            <KeyRound
-              className="size-9"
-              strokeWidth={2.25}
-              style={{
-                color: "oklch(0.18 0.06 50)",
-                filter:
-                  "drop-shadow(0 1px 0 oklch(from var(--vault-gold-bright) l c h / 0.6)) drop-shadow(0 -1px 0 oklch(from var(--vault-gold-deep) l c h / 0.8))",
-              }}
-            />
-          </div>
+          <VaultMechanism state={vaultState} size={120} />
           <CardTitle
             id="lockscreen-title"
             className="text-2xl font-semibold tracking-tight accent-gold-glow"

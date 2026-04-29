@@ -468,6 +468,70 @@
   }
 
   /*
+    .surface-card
+    Gentler metal — used as the default card background app-wide. Same
+    techniques as .surface-vault but subdued so dense pages don't feel
+    over-saturated. Auto-adapts to light/dark via --card.
+  */
+  .surface-card {
+    position: relative;
+    background-color: var(--card);
+    background-image:
+      /* top sheen */
+      linear-gradient(
+        180deg,
+        oklch(from var(--vault-lapis-bright) l c h / 0.08) 0%,
+        transparent 18%
+      ),
+      /* bottom shadow */
+      linear-gradient(
+        180deg,
+        transparent 70%,
+        oklch(0 0 0 / 0.08) 100%
+      ),
+      /* very subtle brushed grain */
+      repeating-linear-gradient(
+        90deg,
+        oklch(1 0 0 / 0) 0px,
+        oklch(1 0 0 / 0.012) 1px,
+        oklch(1 0 0 / 0) 2px
+      ),
+      /* mild conic */
+      conic-gradient(
+        from 200deg at 50% 50%,
+        oklch(from var(--card) calc(l - 0.02) c h) 0deg,
+        oklch(from var(--card) calc(l + 0.025) c h) 100deg,
+        oklch(from var(--card) calc(l - 0.01) c h) 200deg,
+        oklch(from var(--card) calc(l - 0.025) c h) 280deg,
+        oklch(from var(--card) calc(l - 0.02) c h) 360deg
+      );
+    box-shadow:
+      inset 0 1px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.18),
+      inset 0 -1px 0 0 oklch(0 0 0 / 0.18),
+      0 1px 0 0 oklch(0 0 0 / 0.18),
+      0 4px 16px -4px oklch(from var(--vault-lapis-deep) l c h / 0.18);
+  }
+
+  /*
+    .window-frame
+    The polished outer frame of the entire app window. Thin brass top-rim
+    + lapis side-rims + deep bottom — feels like the cabinet edge of a
+    real vault.
+  */
+  .window-frame {
+    box-shadow:
+      /* brass top edge */
+      inset 0 1px 0 0 oklch(from var(--vault-gold-bright) l c h / 0.6),
+      inset 0 2px 0 0 oklch(from var(--vault-gold) l c h / 0.18),
+      /* lapis side rims */
+      inset 1px 0 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.35),
+      inset -1px 0 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.35),
+      /* deep bottom */
+      inset 0 -1px 0 0 oklch(from var(--vault-lapis-deep) l c h / 0.85),
+      inset 0 -2px 6px 0 oklch(0 0 0 / 0.45);
+  }
+
+  /*
     .vault-divider
     Engraved-line divider — like a milled groove on the metal.
   */

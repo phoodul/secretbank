@@ -30,14 +30,21 @@ export function AppShell() {
   const isMobile = platform === "mobile";
 
   return (
-    <div className="flex min-h-screen">
+    <div className="window-frame flex min-h-screen">
       {/* Sidebar — desktop/web only */}
       {!isMobile && <Sidebar />}
 
       {/* Main area */}
       <div className="flex flex-1 flex-col">
         {/* Header */}
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-border px-4">
+        <header
+          className="flex h-12 shrink-0 items-center justify-between px-4"
+          style={{
+            borderBottom: "1px solid oklch(from var(--vault-lapis-deep) l c h / 0.85)",
+            boxShadow:
+              "inset 0 -1px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.18), 0 1px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.06)",
+          }}
+        >
           {isMobile && (
             <div className="flex items-center gap-2">
               <ShieldCheck className="size-5 text-primary" aria-hidden />

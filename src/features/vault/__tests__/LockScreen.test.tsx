@@ -66,12 +66,16 @@ describe("LockScreen", () => {
     await user.type(input, "mysecretpassword");
     await user.click(screen.getByRole("button", { name: /unlock/i }));
 
-    await waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith("vault_unlock", {
-        password: "mysecretpassword",
-      });
-      expect(onSuccess).toHaveBeenCalledTimes(1);
-    });
+    // VaultMechanism unlock animation runs ~1.3s before onSuccess fires.
+    await waitFor(
+      () => {
+        expect(mockInvoke).toHaveBeenCalledWith("vault_unlock", {
+          password: "mysecretpassword",
+        });
+        expect(onSuccess).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("실패 경로: wrong_password 에러 시 인라인 에러 메시지를 표시한다", async () => {
