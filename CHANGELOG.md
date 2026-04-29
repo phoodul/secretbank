@@ -13,6 +13,26 @@ radius before you rotate or revoke a key.
 
 ### Added
 
+#### M22 — JetBrains plugin (v4)
+
+- **Interactive Graph** — double-clicking a node now triggers the right
+  action by node kind:
+  - Credential → passphrase prompt → reveal value to clipboard
+    (30s auto-clear).
+  - Issuer → open the issuer's docs URL.
+  - Project → open the project's repo URL.
+  - Deployment → open the deployment URL.
+- JS ↔ Kotlin bridge built on `JBCefJSQuery`. The HTML page calls
+  `__apivaultSend("verb:id")`; Kotlin parses the message, looks up the
+  node from a cached index, and dispatches the action.
+- Filter box (top-right) dims non-matching nodes and edges. **Center**
+  button computes the bounding box of all nodes and fits them to the
+  viewport.
+- `apivault graph` CLI extended to emit per-node metadata
+  (`env`, `status`, `repo_url`, `docs_url`, `url`, `platform`,
+  `issuer_id`, `project_id`) so the JetBrains action layer can route
+  by kind without re-hitting SQLite.
+
 #### M22 — JetBrains plugin (v3)
 
 - **Graph tab** in the Tool Window: dependency graph rendered inside JCEF

@@ -16,8 +16,15 @@ Four tabs on the right side of the IDE:
   between Tool Window opens.
 - **Graph** — dependency graph rendered inside JCEF (Issuer → Credential →
   Project → Deployment). Self-contained force-directed layout: drag to
-  pan, scroll to zoom, click a node to highlight neighbors. No external
-  CDN, works offline. Falls back to a notice on IDE builds without JCEF.
+  pan, scroll to zoom, click selects, **double-click activates** the node:
+  - Credential → reveal to clipboard (passphrase prompt, 30s auto-clear).
+  - Issuer → open the issuer's docs URL in your default browser.
+  - Project → open the project's repo URL.
+  - Deployment → open the deployment URL.
+
+  Filter box at top-right dims non-matching nodes. **Center** button
+  fits all nodes to view. No external CDN — works offline. Falls back
+  to a notice on IDE builds without JCEF.
 - **Settings** — per-project CLI path and "scan on project open" toggle.
 
 ### Tools menu (`Tools → API Vault`)

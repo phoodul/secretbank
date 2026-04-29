@@ -726,40 +726,69 @@ async fn cmd_graph(data_dir_override: Option<&std::path::Path>) -> Result<()> {
         .nodes()
         .map(|nr| {
             let id = node_id_string(nr);
-            let (kind, label) = match nr {
-                NodeRef::Issuer(_) => (
-                    "issuer",
-                    issuer_map
-                        .get(&id)
-                        .map(|i| i.display_name.clone())
-                        .unwrap_or_else(|| "<missing>".into()),
-                ),
-                NodeRef::Credential(_) => (
-                    "credential",
-                    cred_map
-                        .get(&id)
-                        .map(|c| c.name.clone())
-                        .unwrap_or_else(|| "<missing>".into()),
-                ),
-                NodeRef::Project(_) => (
-                    "project",
-                    project_map
-                        .get(&id)
-                        .map(|p| p.name.clone())
-                        .unwrap_or_else(|| "<missing>".into()),
-                ),
-                NodeRef::Deployment(_) => (
-                    "deployment",
-                    dep_map
-                        .get(&id)
-                        .map(|d| format!("{} @ {:?}", d.url, d.env).to_lowercase())
-                        .unwrap_or_else(|| "<missing>".into()),
-                ),
+            let (kind, label, meta) = match nr {
+                NodeRef::Issuer(_) => issuer_map
+                    .get(&id)
+                    .map(|i| {
+                        (
+                            "issuer",
+                            i.display_name.clone(),
+                            serde_json::json!({
+                                "slug": i.slug,
+                                "docs_url": i.docs_url,
+                                "icon_key": i.icon_key,
+                            }),
+                        )
+                    })
+                    .unwrap_or(("issuer", "<missing>".into(), serde_json::json!({}))),
+                NodeRef::Credential(_) => cred_map
+                    .get(&id)
+                    .map(|c| {
+                        (
+                            "credential",
+                            c.name.clone(),
+                            serde_json::json!({
+                                "env": format!("{:?}", c.env).to_lowercase(),
+                                "status": format!("{:?}", c.status).to_lowercase(),
+                                "issuer_id": c.issuer_id.to_string(),
+                            }),
+                        )
+                    })
+                    .unwrap_or(("credential", "<missing>".into(), serde_json::json!({}))),
+                NodeRef::Project(_) => project_map
+                    .get(&id)
+                    .map(|p| {
+                        (
+                            "project",
+                            p.name.clone(),
+                            serde_json::json!({
+                                "repo_url": p.repo_url,
+                                "framework": p.framework,
+                            }),
+                        )
+                    })
+                    .unwrap_or(("project", "<missing>".into(), serde_json::json!({}))),
+                NodeRef::Deployment(_) => dep_map
+                    .get(&id)
+                    .map(|d| {
+                        (
+                            "deployment",
+                            format!("{} @ {:?}", d.url, d.env).to_lowercase(),
+                            serde_json::json!({
+                                "url": d.url,
+                                "env": format!("{:?}", d.env).to_lowercase(),
+                                "platform": format!("{:?}", d.platform).to_lowercase(),
+                                "project_id": d.project_id.to_string(),
+                            }),
+                        )
+                    })
+                    .unwrap_or(("deployment", "<missing>".into(), serde_json::json!({}))),
             };
             serde_json::json!({
                 "id": id,
                 "kind": kind,
                 "label": label,
+                "meta": meta,
             })
         })
         .collect();

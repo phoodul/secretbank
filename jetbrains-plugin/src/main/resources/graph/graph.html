@@ -22,6 +22,10 @@
 }
 html, body { margin:0; padding:0; height:100%; background:var(--bg); color:var(--fg);
   font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif; overflow:hidden; }
+#search { position:absolute; top:8px; right:8px; padding:4px 8px; font-size:12px;
+  border-radius:4px; border:1px solid rgba(150,150,160,0.4); background: rgba(0,0,0,0.18);
+  color: var(--fg); width: 220px; outline: none; }
+#search:focus { border-color: var(--selected); }
 #legend { position:absolute; top:8px; left:8px; font-size:11px; color:var(--muted);
   background: rgba(0,0,0,0.18); padding:6px 8px; border-radius:6px; pointer-events:none; }
 .legend-row { display:flex; align-items:center; gap:6px; }
@@ -47,7 +51,9 @@ line.edge.active { stroke: var(--edge-active); stroke-width: 2.5; }
   <div class="legend-row"><span class="legend-dot" style="background:var(--node-credential)"></span> Credential</div>
   <div class="legend-row"><span class="legend-dot" style="background:var(--node-project)"></span> Project</div>
   <div class="legend-row"><span class="legend-dot" style="background:var(--node-deployment)"></span> Deployment</div>
+  <div class="legend-row" style="margin-top:4px; opacity:0.8">click = select · double-click = action</div>
 </div>
+<input id="search" type="search" placeholder="Filter nodes by label…" autocomplete="off">
 <div id="empty">No graph data. Add credentials and projects in the desktop app.</div>
 <div id="tooltip"></div>
 <svg id="g"><g id="root"></g></svg>
@@ -128,9 +134,14 @@ function neighbors(id) {
   return set;
 }
 
-function selectNode(id) {
+function send(verb, id) {
+  if (typeof window.__apivaultSend === "function") {
+    try { window.__apivaultSend(verb + ":" + id); } catch (e) { console.warn("send failed", e); }
+  }
+}
+
+function selectNode(id, notify) {
   selectedId = (selectedId === id) ? null : id;
-  const adj = selectedId ? neighbors(selectedId) : new Set();
   for (const el of root.querySelectorAll(".node")) {
     if (el.dataset.id === selectedId) el.classList.add("selected");
     else el.classList.remove("selected");
@@ -140,7 +151,38 @@ function selectNode(id) {
     const active = selectedId && (s === selectedId || t === selectedId);
     el.classList.toggle("active", !!active);
   }
+  if (notify && selectedId) send("select", selectedId);
 }
+
+function activateNode(id) { send("activate", id); }
+function contextNode(id) { send("context", id); }
+
+window.apivaultCenter = function() {
+  if (nodes.length === 0) return;
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  for (const n of nodes) {
+    if (n.x < minX) minX = n.x; if (n.y < minY) minY = n.y;
+    if (n.x > maxX) maxX = n.x; if (n.y > maxY) maxY = n.y;
+  }
+  const w = window.innerWidth, h = window.innerHeight;
+  const bw = (maxX - minX) || 1, bh = (maxY - minY) || 1;
+  const pad = 40;
+  viewK = Math.min((w - 2*pad) / bw, (h - 2*pad) / bh, 1.5);
+  viewX = w/2 - viewK * (minX + bw/2);
+  viewY = h/2 - viewK * (minY + bh/2);
+  applyTransform();
+};
+
+window.apivaultFocus = function(id) {
+  const n = nodes.find(n => n.id === id);
+  if (!n) return;
+  const w = window.innerWidth, h = window.innerHeight;
+  viewK = Math.max(viewK, 1);
+  viewX = w/2 - viewK * n.x;
+  viewY = h/2 - viewK * n.y;
+  applyTransform();
+  selectNode(id, true);
+};
 
 function render() {
   while (root.firstChild) root.removeChild(root.firstChild);
@@ -179,7 +221,9 @@ function render() {
     g.addEventListener("mouseenter", (ev) => showTooltip(n, ev));
     g.addEventListener("mousemove", (ev) => showTooltip(n, ev));
     g.addEventListener("mouseleave", hideTooltip);
-    g.addEventListener("click", (ev) => { ev.stopPropagation(); selectNode(n.id); });
+    g.addEventListener("click", (ev) => { ev.stopPropagation(); selectNode(n.id, true); });
+    g.addEventListener("dblclick", (ev) => { ev.stopPropagation(); ev.preventDefault(); activateNode(n.id); });
+    g.addEventListener("contextmenu", (ev) => { ev.stopPropagation(); ev.preventDefault(); contextNode(n.id); });
     n._el = g;
     root.appendChild(g);
   }
@@ -266,6 +310,25 @@ window.apivaultLoad = function(payload) {
     console.error("apivaultLoad failed", e);
   }
 };
+
+// Search box — fuzzy contains, dim non-matches.
+document.getElementById("search").addEventListener("input", (e) => {
+  const q = (e.target.value || "").trim().toLowerCase();
+  for (const el of root.querySelectorAll(".node")) {
+    const id = el.dataset.id;
+    const n = nodes.find(nn => nn.id === id);
+    if (!n) continue;
+    const hit = q === "" || (n.label || "").toLowerCase().includes(q) || (n.kind || "").toLowerCase().includes(q);
+    el.style.opacity = hit ? "1" : "0.18";
+  }
+  for (const el of root.querySelectorAll("line.edge")) {
+    const s = el.dataset.source, t = el.dataset.target;
+    const ns = nodes.find(nn => nn.id === s), nt = nodes.find(nn => nn.id === t);
+    const hit = q === "" || (ns && (ns.label || "").toLowerCase().includes(q)) ||
+                            (nt && (nt.label || "").toLowerCase().includes(q));
+    el.style.opacity = hit ? "1" : "0.08";
+  }
+});
 
 // Empty initial state
 window.apivaultLoad({ nodes: [], edges: [] });

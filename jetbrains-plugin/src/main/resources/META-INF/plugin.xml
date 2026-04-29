@@ -28,7 +28,7 @@
         <h3>0.1.0</h3>
         <ul>
             <li>Tool Window (right side) with Credentials / Supply chain / Graph / Settings tabs.</li>
-            <li><b>Graph tab</b> renders the dependency graph (Issuer → Credential → Project → Deployment) inside JCEF using a self-contained force-directed layout — pan, zoom, click to highlight neighbors, no external CDN.</li>
+            <li><b>Graph tab</b> renders the dependency graph (Issuer → Credential → Project → Deployment) inside JCEF — pan, zoom, click selects, <b>double-click triggers actions</b>: reveal credential to clipboard, open issuer docs / project repo / deployment URL in the system browser. Filter box dims non-matching nodes. No external CDN.</li>
             <li>Auto-scan on project open (opt-in via Settings tab).</li>
             <li>Status-bar widget, Tools menu actions, manifest inspections (package.json / Cargo.toml / requirements.txt / go.mod patterns).</li>
             <li>Backed by the local <code>apivault</code> CLI — list / reveal / scan / graph subcommands.</li>

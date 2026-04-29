@@ -147,6 +147,7 @@ class ApiVaultService(private val project: Project) {
         val id: String,
         val kind: String,
         val label: String,
+        val meta: Map<String, Any?> = emptyMap(),
     )
 
     @JsonIgnoreProperties(ignoreUnknown = true)
