@@ -147,19 +147,21 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
         className="surface-vault gloss-shimmer relative w-full max-w-sm rounded-xl p-8"
         aria-labelledby="lockscreen-title"
       >
-        {/* Gold key — the single accent moment of the entire screen */}
-        <CardHeader className="items-center gap-3 text-center p-0 pb-6">
+        {/* Polished brass key medallion — the only ornate moment on the screen */}
+        <CardHeader className="items-center gap-4 text-center p-0 pb-6">
           <div
             aria-hidden="true"
-            className="relative flex size-16 items-center justify-center rounded-full"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 30% 25%, oklch(from var(--vault-gold-glow) l c h / 0.45) 0%, transparent 65%)",
-              boxShadow:
-                "inset 0 1px 0 0 oklch(from var(--vault-gold) l c h / 0.4), 0 0 24px 0 oklch(from var(--vault-gold-glow) l c h / 0.35)",
-            }}
+            className="surface-gold relative flex size-20 items-center justify-center rounded-full"
           >
-            <KeyRound className="size-8 accent-gold-glow" strokeWidth={1.75} />
+            <KeyRound
+              className="size-9"
+              strokeWidth={2.25}
+              style={{
+                color: "oklch(0.18 0.06 50)",
+                filter:
+                  "drop-shadow(0 1px 0 oklch(from var(--vault-gold-bright) l c h / 0.6)) drop-shadow(0 -1px 0 oklch(from var(--vault-gold-deep) l c h / 0.8))",
+              }}
+            />
           </div>
           <CardTitle id="lockscreen-title" className="text-xl tracking-tight">
             {t("vault.unlockTitle")}

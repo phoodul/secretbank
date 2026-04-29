@@ -7,106 +7,118 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  API Vault — Design Tokens (Option A2: Lapis Vault)
-  ──────────────────────────────────────────────────
-  Inspired by literal vault aesthetics — deep midnight blue base + lapis
-  lazuli primary + brass/gold accents for "key / unlock / reveal" moments.
-  All values in oklch for predictable contrast across modes.
+  API Vault — Design Tokens (Option A2: Lapis Vault, METAL pass)
+  ──────────────────────────────────────────────────────────────
+  Goal: feel like *actual polished metal*, not "blue background".
+  Core techniques:
+    · conic-gradient        → 360° specular reflection (the hero technique)
+    · stacked linear bands  → top-rim highlight + bottom-rim shadow (bevel)
+    · brushed micro-stripes → ~1% interval linear-gradient (tactile)
+    · inset multi-shadows   → carved/embossed feel
+    · color-shift across surface (warm reflection on cool metal)
 
-  Hue map:
-    250  — midnight blue / deep indigo (background, surfaces)
-    245  — lapis lazuli (primary, links, focus rings)
-    80   — brass / gold (accent — used SPARINGLY on key moments)
-    28   — copper red (destructive, danger states)
-    155  — patina green (success — oxidized brass tone)
-    195  — verdigris teal (info — aged copper)
-
-  Custom utility classes are declared after @theme so Tailwind picks them up:
-    .surface-vault    — diagonal-light gloss gradient (cards)
-    .surface-glass    — backdrop-filter glass for modals/popovers
-    .accent-gold      — text/icon color shortcut for the gold accent
-    .gloss-shimmer    — moving sheen on hover (used on hero buttons)
+  Color hue map (oklch):
+    250  midnight indigo (deep base)
+    245  lapis lazuli (primary metal)
+    230  cool steel highlight
+    80   brass / champagne gold
+    55   dark bronze (gold shadow)
+    28   copper red (destructive)
+    155  patina green (success)
+    195  verdigris teal (info)
 */
 
 :root {
-  /* === LIGHT MODE — paper-like Lapis. Less common but kept for accessibility. === */
-  --background: oklch(0.985 0.005 250);
-  --foreground: oklch(0.15 0.04 250);
-  --card: oklch(0.99 0.003 250);
-  --card-foreground: oklch(0.15 0.04 250);
-  --popover: oklch(0.99 0.003 250);
-  --popover-foreground: oklch(0.15 0.04 250);
-  --primary: oklch(0.45 0.18 250);
+  /* ═══ LIGHT MODE — polished platinum + lapis inlay ═══ */
+  --background: oklch(0.93 0.012 250);
+  --foreground: oklch(0.16 0.04 250);
+  --card: oklch(0.97 0.008 250);
+  --card-foreground: oklch(0.16 0.04 250);
+  --popover: oklch(0.97 0.008 250);
+  --popover-foreground: oklch(0.16 0.04 250);
+  --primary: oklch(0.42 0.2 245);
   --primary-foreground: oklch(0.985 0.005 250);
-  --secondary: oklch(0.94 0.02 250);
-  --secondary-foreground: oklch(0.25 0.06 250);
-  --muted: oklch(0.94 0.02 250);
-  --muted-foreground: oklch(0.45 0.04 250);
-  --accent: oklch(0.72 0.14 80);
-  --accent-foreground: oklch(0.18 0.04 250);
-  --destructive: oklch(0.5 0.18 28);
-  --destructive-foreground: oklch(0.985 0.005 250);
-  --border: oklch(0.88 0.025 250);
-  --input: oklch(0.92 0.02 250);
-  --ring: oklch(0.55 0.2 245);
+  --secondary: oklch(0.88 0.02 250);
+  --secondary-foreground: oklch(0.22 0.06 250);
+  --muted: oklch(0.9 0.015 250);
+  --muted-foreground: oklch(0.42 0.05 250);
+  --accent: oklch(0.68 0.16 80);
+  --accent-foreground: oklch(0.16 0.04 250);
+  --destructive: oklch(0.5 0.2 28);
+  --destructive-foreground: oklch(0.99 0.005 250);
+  --border: oklch(0.78 0.04 245);
+  --input: oklch(0.96 0.01 250);
+  --ring: oklch(0.55 0.22 245);
   --radius: 0.625rem;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   /* Vault semantic */
-  --vault-danger: oklch(0.5 0.18 28);
-  --vault-danger-foreground: oklch(0.985 0.005 250);
-  --vault-warning: oklch(0.72 0.14 80);
-  --vault-warning-foreground: oklch(0.18 0.04 250);
-  --vault-success: oklch(0.6 0.13 155);
-  --vault-success-foreground: oklch(0.985 0.005 250);
-  --vault-info: oklch(0.65 0.12 195);
-  --vault-info-foreground: oklch(0.985 0.005 250);
-  /* Lapis-specific extras (used by .surface-* utilities) */
-  --vault-gold: oklch(0.72 0.14 80);
-  --vault-gold-glow: oklch(0.78 0.16 80);
-  --vault-lapis: oklch(0.45 0.18 250);
-  --vault-lapis-glow: oklch(0.6 0.22 245);
-  --vault-bg-deep: oklch(0.985 0.005 250);
-  --vault-surface-edge: oklch(0.88 0.025 250);
+  --vault-danger: oklch(0.5 0.2 28);
+  --vault-danger-foreground: oklch(0.99 0.005 250);
+  --vault-warning: oklch(0.68 0.16 80);
+  --vault-warning-foreground: oklch(0.16 0.04 250);
+  --vault-success: oklch(0.55 0.14 155);
+  --vault-success-foreground: oklch(0.99 0.005 250);
+  --vault-info: oklch(0.6 0.14 195);
+  --vault-info-foreground: oklch(0.99 0.005 250);
+  /* Metal palette — light-mode polished stone/brass */
+  --vault-gold: oklch(0.7 0.18 82);
+  --vault-gold-bright: oklch(0.92 0.16 90);
+  --vault-gold-deep: oklch(0.4 0.14 55);
+  --vault-gold-glow: oklch(0.84 0.2 85);
+  --vault-lapis: oklch(0.38 0.24 252);
+  --vault-lapis-bright: oklch(0.72 0.22 244);
+  --vault-lapis-deep: oklch(0.2 0.16 254);
+  --vault-lapis-glow: oklch(0.55 0.28 248);
+  --vault-steel-bright: oklch(0.92 0.02 235);
+  --vault-bg-deep: oklch(0.88 0.018 250);
+  --vault-surface-edge: oklch(0.78 0.04 245);
 }
 
 .dark {
-  /* === DARK MODE (default app experience) — Midnight Lapis === */
-  --background: oklch(0.16 0.035 250);
+  /* ═══ DARK MODE (default) — midnight lapis metal ═══ */
+  --background: oklch(0.14 0.04 252);
   --foreground: oklch(0.96 0.012 250);
-  --card: oklch(0.21 0.045 250);
+  --card: oklch(0.22 0.06 248);
   --card-foreground: oklch(0.96 0.012 250);
-  --popover: oklch(0.19 0.04 250);
+  --popover: oklch(0.2 0.05 250);
   --popover-foreground: oklch(0.96 0.012 250);
-  --primary: oklch(0.62 0.18 245);
+  --primary: oklch(0.62 0.2 245);
   --primary-foreground: oklch(0.99 0.005 250);
-  --secondary: oklch(0.27 0.05 250);
+  --secondary: oklch(0.28 0.06 248);
   --secondary-foreground: oklch(0.93 0.02 250);
-  --muted: oklch(0.24 0.04 250);
+  --muted: oklch(0.24 0.05 250);
   --muted-foreground: oklch(0.7 0.03 250);
-  --accent: oklch(0.78 0.14 80);
-  --accent-foreground: oklch(0.16 0.035 250);
-  --destructive: oklch(0.6 0.2 28);
+  --accent: oklch(0.78 0.16 80);
+  --accent-foreground: oklch(0.14 0.04 252);
+  --destructive: oklch(0.62 0.22 28);
   --destructive-foreground: oklch(0.99 0.005 250);
-  --border: oklch(0.42 0.06 245 / 28%);
-  --input: oklch(0.5 0.06 245 / 22%);
-  --ring: oklch(0.7 0.2 245);
+  --border: oklch(0.45 0.08 245 / 32%);
+  --input: oklch(0.5 0.07 245 / 24%);
+  --ring: oklch(0.72 0.22 245);
   /* Vault semantic — dark */
   --vault-danger: oklch(0.65 0.22 28);
   --vault-danger-foreground: oklch(0.99 0.005 250);
   --vault-warning: oklch(0.82 0.16 80);
-  --vault-warning-foreground: oklch(0.16 0.035 250);
-  --vault-success: oklch(0.72 0.15 155);
-  --vault-success-foreground: oklch(0.16 0.035 250);
-  --vault-info: oklch(0.75 0.14 195);
-  --vault-info-foreground: oklch(0.16 0.035 250);
-  /* Lapis-specific extras */
-  --vault-gold: oklch(0.78 0.14 80);
-  --vault-gold-glow: oklch(0.86 0.17 82);
-  --vault-lapis: oklch(0.62 0.18 245);
-  --vault-lapis-glow: oklch(0.78 0.22 245);
-  --vault-bg-deep: oklch(0.12 0.04 252);
-  --vault-surface-edge: oklch(0.32 0.06 245);
+  --vault-warning-foreground: oklch(0.14 0.04 252);
+  --vault-success: oklch(0.74 0.16 155);
+  --vault-success-foreground: oklch(0.14 0.04 252);
+  --vault-info: oklch(0.78 0.15 195);
+  --vault-info-foreground: oklch(0.14 0.04 252);
+  /* Metal palette — REAL stone/metal references */
+  /* Brass/gold: deep bronze (l=0.36) → polished gold (l=0.78) → mirror specular (l=0.96) */
+  --vault-gold: oklch(0.74 0.18 82);
+  --vault-gold-bright: oklch(0.94 0.16 92);
+  --vault-gold-deep: oklch(0.36 0.14 55);
+  --vault-gold-glow: oklch(0.88 0.2 85);
+  /* Lapis lazuli: deep ultramarine (l=0.16) → saturated lapis (l=0.42) → polished sky (l=0.85) */
+  --vault-lapis: oklch(0.42 0.24 252);
+  --vault-lapis-bright: oklch(0.85 0.2 240);
+  --vault-lapis-deep: oklch(0.16 0.14 254);
+  --vault-lapis-glow: oklch(0.7 0.28 248);
+  --vault-steel-bright: oklch(0.78 0.04 235);
+  --vault-bg-deep: oklch(0.1 0.05 254);
+  --vault-surface-edge: oklch(0.4 0.1 245);
 }
 
 @theme inline {
@@ -138,9 +150,14 @@
   --color-vault-info: var(--vault-info);
   --color-vault-info-foreground: var(--vault-info-foreground);
   --color-vault-gold: var(--vault-gold);
+  --color-vault-gold-bright: var(--vault-gold-bright);
+  --color-vault-gold-deep: var(--vault-gold-deep);
   --color-vault-gold-glow: var(--vault-gold-glow);
   --color-vault-lapis: var(--vault-lapis);
+  --color-vault-lapis-bright: var(--vault-lapis-bright);
+  --color-vault-lapis-deep: var(--vault-lapis-deep);
   --color-vault-lapis-glow: var(--vault-lapis-glow);
+  --color-vault-steel-bright: var(--vault-steel-bright);
   --color-vault-bg-deep: var(--vault-bg-deep);
   --color-vault-surface-edge: var(--vault-surface-edge);
   --radius-sm: calc(var(--radius) - 4px);
@@ -163,25 +180,42 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
+    color: var(--foreground);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
-    /* 다크 모드의 깊은 lapis ambient — 화면 밖 테두리에서부터 빛이 들어오는 듯 */
+    /*
+      Body itself = the inside of a vault. Multiple layered metal effects:
+        1. Conic gradient: 360° reflection that moves with the eye
+        2. Top vignette: bright lapis halo at top
+        3. Bottom vignette: gold halo at bottom (warm reflection from the floor)
+        4. Brushed micro-stripes: 1px-period sheen
+    */
+    background-color: var(--vault-bg-deep);
     background-image:
       radial-gradient(
-        1200px 800px at 15% -10%,
+        1100px 700px at 14% 0%,
         oklch(from var(--vault-lapis-glow) l c h / 0.18) 0%,
         transparent 55%
       ),
       radial-gradient(
-        900px 600px at 100% 110%,
-        oklch(from var(--vault-gold-glow) l c h / 0.10) 0%,
+        900px 600px at 100% 100%,
+        oklch(from var(--vault-gold-glow) l c h / 0.1) 0%,
         transparent 60%
+      ),
+      conic-gradient(
+        from 220deg at 50% 50%,
+        oklch(from var(--vault-bg-deep) calc(l + 0.02) c h) 0deg,
+        oklch(from var(--background) l c h) 90deg,
+        oklch(from var(--vault-bg-deep) calc(l - 0.01) c h) 180deg,
+        oklch(from var(--background) l c h) 270deg,
+        oklch(from var(--vault-bg-deep) calc(l + 0.02) c h) 360deg
       );
     background-attachment: fixed;
+    background-blend-mode: normal, normal, multiply;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -196,106 +230,242 @@
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   Lapis Vault — Custom utility classes
-   ─────────────────────────────────────────────────────────────── */
+/* ═════════════════════════════════════════════════════════════════
+   Lapis Vault — METAL utility classes
+   The point: each surface should look milled out of solid material.
+   ═════════════════════════════════════════════════════════════════ */
 
 @layer components {
   /*
     .surface-vault
-    Cards and panels: a subtle diagonal gloss as if light hits the top-left.
-    Lifts the surface above the ambient background without harsh borders.
+    Polished lapis lazuli slab. 6 stacked layers — order matters (top first):
+      1) pyrite flecks  — scattered tiny gold sparkles (the lapis tell)
+      2) calcite veins  — very faint white streaks (high-end stone)
+      3) top sheen      — bright specular bar near the top edge
+      4) bottom shadow  — deep navy vignette at bottom
+      5) brushed grain  — 1px vertical micro-stripes
+      6) base conic     — DRAMATIC 360° lapis luminance shifts
   */
   .surface-vault {
-    background-image: linear-gradient(
-      135deg,
-      oklch(from var(--card) calc(l + 0.04) c h) 0%,
-      var(--card) 35%,
-      oklch(from var(--card) calc(l - 0.02) c h) 100%
-    );
+    position: relative;
+    background-color: var(--vault-lapis-deep);
+    background-image:
+      /* 1. pyrite flecks — tiny gold dots scattered through the lapis */
+      radial-gradient(circle at 12% 22%, oklch(from var(--vault-gold-bright) l c h / 0.55) 0%, transparent 0.6%),
+      radial-gradient(circle at 78% 14%, oklch(from var(--vault-gold-bright) l c h / 0.45) 0%, transparent 0.5%),
+      radial-gradient(circle at 33% 58%, oklch(from var(--vault-gold-bright) l c h / 0.4)  0%, transparent 0.4%),
+      radial-gradient(circle at 88% 62%, oklch(from var(--vault-gold-bright) l c h / 0.5)  0%, transparent 0.5%),
+      radial-gradient(circle at 22% 84%, oklch(from var(--vault-gold-bright) l c h / 0.4)  0%, transparent 0.45%),
+      radial-gradient(circle at 64% 78%, oklch(from var(--vault-gold-bright) l c h / 0.55) 0%, transparent 0.55%),
+      radial-gradient(circle at 50% 34%, oklch(from var(--vault-gold-bright) l c h / 0.35) 0%, transparent 0.35%),
+      /* 2. calcite veins — faint white streaks */
+      radial-gradient(80% 8% at 60% 30%, oklch(1 0 0 / 0.05) 0%, transparent 70%),
+      radial-gradient(70% 6% at 30% 70%, oklch(1 0 0 / 0.04) 0%, transparent 70%),
+      /* 3. top sheen — polished mirror band */
+      linear-gradient(
+        180deg,
+        oklch(from var(--vault-lapis-bright) l c h / 0.32) 0%,
+        oklch(from var(--vault-lapis-bright) l c h / 0.08) 6%,
+        transparent 14%,
+        transparent 100%
+      ),
+      /* 4. bottom navy shadow */
+      linear-gradient(
+        180deg,
+        transparent 60%,
+        oklch(from var(--vault-lapis-deep) l c h / 0.45) 90%,
+        oklch(from var(--vault-lapis-deep) l c h / 0.7) 100%
+      ),
+      /* 5. brushed grain */
+      repeating-linear-gradient(
+        90deg,
+        oklch(1 0 0 / 0) 0px,
+        oklch(1 0 0 / 0.025) 1px,
+        oklch(1 0 0 / 0) 2px
+      ),
+      /* 6. base conic — DRAMATIC luminance shifts (this is the metal) */
+      conic-gradient(
+        from 210deg at 50% 50%,
+        var(--vault-lapis-deep) 0deg,
+        var(--vault-lapis) 60deg,
+        var(--vault-lapis-bright) 115deg,
+        var(--vault-lapis) 170deg,
+        var(--vault-lapis-deep) 230deg,
+        oklch(from var(--vault-lapis-deep) calc(l - 0.04) c h) 280deg,
+        var(--vault-lapis) 330deg,
+        var(--vault-lapis-deep) 360deg
+      );
     box-shadow:
-      inset 0 1px 0 0 oklch(from var(--vault-lapis-glow) l c h / 0.18),
-      inset 0 -1px 0 0 oklch(0 0 0 / 0.35),
-      0 1px 0 0 oklch(0 0 0 / 0.4),
-      0 12px 32px -16px oklch(from var(--vault-lapis) l c h / 0.5);
-    border: 1px solid oklch(from var(--vault-lapis) l c h / 0.18);
+      /* polished top rim — mirror highlight */
+      inset 0 1px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.85),
+      inset 0 2px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.32),
+      inset 0 3px 6px 0 oklch(from var(--vault-lapis-bright) l c h / 0.18),
+      /* deep bottom bevel */
+      inset 0 -1px 0 0 oklch(0 0 0 / 0.6),
+      inset 0 -2px 0 0 oklch(from var(--vault-lapis-deep) l c h / 0.85),
+      inset 0 -8px 16px 0 oklch(0 0 0 / 0.35),
+      /* side rims */
+      inset 1px 0 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.15),
+      inset -1px 0 0 0 oklch(0 0 0 / 0.4),
+      /* outer drop */
+      0 2px 0 0 oklch(0 0 0 / 0.5),
+      0 18px 40px -10px oklch(0 0 0 / 0.7),
+      0 32px 80px -24px oklch(from var(--vault-lapis) l c h / 0.55);
+    border: 1px solid oklch(from var(--vault-lapis-deep) l c h / 0.9);
+  }
+
+  /*
+    .surface-gold
+    Polished brass — full luminance range from deep bronze to white-hot
+    specular. Use on the key icon, premium badges, Pro CTAs.
+  */
+  .surface-gold {
+    position: relative;
+    background-color: var(--vault-gold-deep);
+    background-image:
+      /* white-hot specular point — the sharp glint */
+      radial-gradient(
+        14% 14% at 28% 18%,
+        oklch(0.98 0.05 88) 0%,
+        oklch(from var(--vault-gold-bright) l c h / 0.7) 60%,
+        transparent 100%
+      ),
+      /* secondary highlight halo */
+      radial-gradient(
+        65% 65% at 30% 22%,
+        oklch(from var(--vault-gold-bright) l c h / 0.5) 0%,
+        transparent 50%
+      ),
+      /* opposite-corner deep shadow */
+      radial-gradient(
+        70% 70% at 82% 88%,
+        oklch(from var(--vault-gold-deep) l c h / 0.85) 0%,
+        transparent 55%
+      ),
+      /* brushed grain (rotated 30deg for radial brushing feel) */
+      repeating-linear-gradient(
+        30deg,
+        oklch(1 0 0 / 0) 0px,
+        oklch(1 0 0 / 0.06) 1px,
+        oklch(1 0 0 / 0) 2px
+      ),
+      /* dramatic warm conic — full brass luminance range */
+      conic-gradient(
+        from 220deg at 50% 50%,
+        var(--vault-gold-deep) 0deg,
+        var(--vault-gold) 70deg,
+        var(--vault-gold-bright) 130deg,
+        var(--vault-gold) 200deg,
+        var(--vault-gold-deep) 260deg,
+        oklch(from var(--vault-gold-deep) calc(l - 0.06) c h) 310deg,
+        var(--vault-gold-deep) 360deg
+      );
+    box-shadow:
+      /* mirror-bright top rim */
+      inset 0 1px 0 0 oklch(from var(--vault-gold-bright) l c h / 1),
+      inset 0 2px 0 0 oklch(from var(--vault-gold-bright) l c h / 0.55),
+      /* deep bronze bottom rim */
+      inset 0 -1px 0 0 oklch(from var(--vault-gold-deep) l c h / 1),
+      inset 0 -2px 4px 0 oklch(from var(--vault-gold-deep) l c h / 0.7),
+      /* side bevels */
+      inset 1px 0 0 0 oklch(from var(--vault-gold-bright) l c h / 0.5),
+      inset -1px 0 0 0 oklch(from var(--vault-gold-deep) l c h / 0.7),
+      /* outer drop + warm halo */
+      0 2px 0 0 oklch(0 0 0 / 0.5),
+      0 6px 14px 0 oklch(from var(--vault-gold-deep) l c h / 0.55),
+      0 0 32px 0 oklch(from var(--vault-gold-glow) l c h / 0.45);
   }
 
   /*
     .surface-glass
-    Modals, popovers, command palette: blurred backdrop + frosted highlight.
-    Use sparingly — heavy on GPU.
+    Frosted glass — modals, popovers. Thinner specular, depends on the
+    background showing through.
   */
   .surface-glass {
-    background-color: oklch(from var(--card) l c h / 0.72);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    background-color: oklch(from var(--card) l c h / 0.62);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow:
-      inset 0 1px 0 0 oklch(1 0 0 / 0.08),
-      0 24px 48px -16px oklch(0 0 0 / 0.55);
-    border: 1px solid oklch(1 0 0 / 0.1);
+      inset 0 1px 0 0 oklch(1 0 0 / 0.12),
+      inset 0 -1px 0 0 oklch(0 0 0 / 0.35),
+      0 24px 48px -16px oklch(0 0 0 / 0.6);
+    border: 1px solid oklch(1 0 0 / 0.12);
   }
 
   /*
-    .accent-gold
-    Brass/gold text or icon. The "key" color — used on Reveal CTAs, vault
-    icons in hero spots, success-on-secret moments. Restraint is the rule.
+    .accent-gold — solid gold text/icon
+    .accent-gold-glow — gold + halo (hero moments)
   */
   .accent-gold {
     color: var(--vault-gold);
   }
-
-  /*
-    .accent-gold-glow
-    Same color but with a soft drop-shadow halo. Reserved for the very
-    "wow" moments — first-run hero icon, blast-radius source node.
-  */
   .accent-gold-glow {
-    color: var(--vault-gold);
-    filter: drop-shadow(0 0 8px oklch(from var(--vault-gold-glow) l c h / 0.5));
+    color: var(--vault-gold-bright);
+    filter:
+      drop-shadow(0 0 6px oklch(from var(--vault-gold-glow) l c h / 0.6))
+      drop-shadow(0 1px 0 oklch(from var(--vault-gold-deep) l c h / 0.8));
   }
 
   /*
     .gloss-shimmer
-    Apply to a button or card to give it a moving sheen on hover. Pairs
-    with `.surface-vault`. Respects reduced motion automatically.
+    A specular sweep that crosses on hover — the "buff cloth across metal"
+    motion. Pairs with .surface-vault and .surface-gold.
   */
   .gloss-shimmer {
     position: relative;
     overflow: hidden;
     isolation: isolate;
   }
-  .gloss-shimmer::before {
+  .gloss-shimmer::after {
     content: "";
     position: absolute;
     inset: -2px;
     background: linear-gradient(
-      120deg,
+      115deg,
       transparent 30%,
-      oklch(1 0 0 / 0.08) 48%,
-      oklch(1 0 0 / 0.18) 50%,
-      oklch(1 0 0 / 0.08) 52%,
+      oklch(1 0 0 / 0.04) 44%,
+      oklch(1 0 0 / 0.18) 49%,
+      oklch(1 0 0 / 0.32) 50%,
+      oklch(1 0 0 / 0.18) 51%,
+      oklch(1 0 0 / 0.04) 56%,
       transparent 70%
     );
-    transform: translateX(-110%);
-    transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translateX(-110%) skewX(-12deg);
+    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
-    z-index: 1;
+    z-index: 2;
+    mix-blend-mode: overlay;
   }
-  .gloss-shimmer:hover::before {
-    transform: translateX(110%);
+  .gloss-shimmer:hover::after {
+    transform: translateX(110%) skewX(-12deg);
   }
 
   /*
     .ring-lapis
-    Focused inputs and primary CTAs get a lapis glow ring instead of the
-    default neutral ring.
+    Focus ring — lapis halo. Replaces the default neutral ring.
   */
   .ring-lapis:focus-visible {
     outline: none;
     box-shadow:
       0 0 0 2px var(--background),
       0 0 0 4px var(--vault-lapis-glow),
-      0 0 24px 0 oklch(from var(--vault-lapis-glow) l c h / 0.35);
+      0 0 28px 0 oklch(from var(--vault-lapis-glow) l c h / 0.45),
+      inset 0 1px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.4);
+  }
+
+  /*
+    .vault-divider
+    Engraved-line divider — like a milled groove on the metal.
+  */
+  .vault-divider {
+    height: 1px;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      oklch(0 0 0 / 0.4) 30%,
+      oklch(0 0 0 / 0.4) 70%,
+      transparent 100%
+    );
+    box-shadow: 0 1px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.18);
   }
 }
