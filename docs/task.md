@@ -2256,6 +2256,7 @@ api-vault 의 두 갈래 통합:
 | T-23-B-2 | AgeVaultStorage::initialize_with_charter (None/Single/Shamir2of3) + CharterMode/CharterIssuance pub enum + 7 통합 테스트 (envelope→enc_key 복원 검증 포함) | 2026-04-30 | `24ce24a` |
 | T-23-B-3 | AgeVaultStorage::recover_with_charter (charter → 새 passphrase + 옵션 새 charter 발급) + identity_from_enc_key 헬퍼 분리 + 7 통합 테스트 (옛 pw/옛 charter 무효 검증 + Shamir combine path) | 2026-05-01 | `27802f0` |
 | T-23-B-4 | Tauri 커맨드 3종 (vault_init_with_charter / vault_recovery_unlock / vault_has_charter) + audit 훅 (issued/recovered) + DTOs (CharterIssuanceDto/CharterRecoveryInput) + AppContext 확장 + 9 unit | 2026-05-01 | `92531d0` |
+| T-23-C   | Charter 발급 UI (CharterDisplay + CharterModeSelector + Lapis 톤 SVG 봉인 + print 디자인) + CreateVaultDialog 확장 (3 phase) + en/ko i18n 36 키 + Vitest 7→10 | 2026-05-01 | `855cae0` |
 
 ---
 
