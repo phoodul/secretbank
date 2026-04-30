@@ -2251,7 +2251,7 @@ api-vault 의 두 갈래 통합:
 
 | Task ID | 제목 | 완료일 | 커밋 해시 |
 | :------ | :--- | :----- | :-------- |
-| T-23-A  | api-vault-charter crate (EFF Diceware wordlist + 6-word + 4-digit verifier codec + Shamir 2-of-3 split + XChaCha20-Poly1305 envelope + 31 회귀) | 2026-04-30 | _pending commit_ |
+| T-23-A  | api-vault-charter crate (EFF Diceware wordlist + 6-word + 4-digit verifier codec + Shamir 2-of-3 split + XChaCha20-Poly1305 envelope + 31 회귀) | 2026-04-30 | `91ace0b` |
 
 ---
 
