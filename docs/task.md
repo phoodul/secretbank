@@ -2259,6 +2259,8 @@ api-vault 의 두 갈래 통합:
 | T-23-C   | Charter 발급 UI (CharterDisplay + CharterModeSelector + Lapis 톤 SVG 봉인 + print 디자인) + CreateVaultDialog 확장 (3 phase) + en/ko i18n 36 키 + Vitest 7→10 | 2026-05-01 | `855cae0` |
 | T-23-D   | Recovery flow UI (RecoveryDialog 3 phase + Single/Shamir 입력 + 새 charter 모드 라디오 + 에러 매핑) + LockScreen Forgot link (vault_has_charter 조건부) + LockScreen 회귀 테스트 보정 | 2026-05-01 | `20d6752` |
 | Hotfix unlock anim | unlock 애니메이션 마지막 ring 감속 (spring → cubic-bezier ease-out [0.16, 1, 0.3, 1], duration 1.4s, UNLOCK_ANIMATION_MS 1940ms) | 2026-05-01 | `ac1ef95` |
+| T-23-E-1 | Backend cooldown sidecar (services/charter_cooldown.rs + 9 tests) + vault_unlock 검사 + recovery 시 apply_recovery_event + VaultCommandError::CooldownActive + Tauri 커맨드 3종 (status / set_enabled / clear) | 2026-05-01 | `4769248` |
+| T-23-E-2 | Frontend cooldown UI (CharterCooldownSection 토글 + LockScreen cooldown_active 메시지) + en/ko i18n 9 키 + audit metadata 확장 | 2026-05-01 | `1bf141e` |
 
 ---
 
