@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "Sprache"
+  },
+  "vault": {
+    "unlockTitle": "Tresor entsperren",
+    "unlockSubtitle": "Geben Sie Ihre Master-Passphrase ein",
+    "unlockButton": "Entsperren",
+    "passphraseLabel": "Passphrase",
+    "passphrasePlaceholder": "Passphrase eingeben",
+    "createVaultLink": "Zum ersten Mal? Neuen Tresor erstellen",
+    "pairWithDeviceLink": "Bereits ein Gerät? Damit koppeln",
+    "wrongPassword": "Falsche Passphrase. Bitte erneut versuchen.",
+    "tooManyAttempts": "Zu viele Versuche. Erneut versuchen in {{count}} s…",
+    "internalError": "Ein unerwarteter Fehler ist aufgetreten. Bitte erneut versuchen."
+  }
+}

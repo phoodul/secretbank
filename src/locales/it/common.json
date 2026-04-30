@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "Lingua"
+  },
+  "vault": {
+    "unlockTitle": "Sblocca cassaforte",
+    "unlockSubtitle": "Inserisci la tua passphrase principale",
+    "unlockButton": "Sblocca",
+    "passphraseLabel": "Passphrase",
+    "passphrasePlaceholder": "Inserisci la passphrase",
+    "createVaultLink": "Prima volta? Crea una nuova cassaforte",
+    "pairWithDeviceLink": "Hai già un dispositivo? Associalo",
+    "wrongPassword": "Passphrase errata. Riprova.",
+    "tooManyAttempts": "Troppi tentativi. Riprova tra {{count}} s…",
+    "internalError": "Si è verificato un errore imprevisto. Riprova."
+  }
+}

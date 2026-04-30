@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "Idioma"
+  },
+  "vault": {
+    "unlockTitle": "Desbloquear cofre",
+    "unlockSubtitle": "Insira a sua senha mestra",
+    "unlockButton": "Desbloquear",
+    "passphraseLabel": "Senha",
+    "passphrasePlaceholder": "Digite a senha",
+    "createVaultLink": "Primeira vez? Crie um novo cofre",
+    "pairWithDeviceLink": "Já tem um dispositivo? Emparelhe-o",
+    "wrongPassword": "Senha incorreta. Tente novamente.",
+    "tooManyAttempts": "Tentativas em excesso. Tente em {{count}} s…",
+    "internalError": "Ocorreu um erro inesperado. Tente novamente."
+  }
+}

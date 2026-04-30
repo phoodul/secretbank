@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "Idioma"
+  },
+  "vault": {
+    "unlockTitle": "Desbloquear bóveda",
+    "unlockSubtitle": "Introduce tu frase de contraseña maestra",
+    "unlockButton": "Desbloquear",
+    "passphraseLabel": "Frase de contraseña",
+    "passphrasePlaceholder": "Introduce la frase de contraseña",
+    "createVaultLink": "¿Primera vez? Crea una nueva bóveda",
+    "pairWithDeviceLink": "¿Tienes un dispositivo existente? Empareja con él",
+    "wrongPassword": "Frase de contraseña incorrecta. Inténtalo de nuevo.",
+    "tooManyAttempts": "Demasiados intentos. Reintenta en {{count}} s…",
+    "internalError": "Se produjo un error inesperado. Inténtalo de nuevo."
+  }
+}

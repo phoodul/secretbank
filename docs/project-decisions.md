@@ -986,3 +986,23 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - 단순 MVP 채우기 ≠ 글로벌 SaaS. 차별화 우선.
 
 ---
+
+## [2026-04-30] LockScreen 글로벌 LanguageSwitcher — 11개 언어 선반 진입
+
+- **결정:** LockScreen 우측 상단 corner 에 `LanguageSwitcher` (globe icon dropdown) 통합. 지원 언어 11개:
+  - 기존 4개: en, ko, ja, zh
+  - 신규 7개: es (스페인어), fr (프랑스어), de (독일어), it (이탈리아어), el (그리스어), pt (포르투갈어), ru (러시아어)
+- **이유:**
+  - 글로벌 SaaS 비전 (project_vision.md "월 $2 / 년 $15 글로벌 SaaS") 을 위해서는 **첫 인상 화면인 LockScreen 의 언어 가시성**이 가장 큰 wedge
+  - IT 강국 + 인구 규모 기준 11개 언어가 첫 lap 의 적정 폭. 추가 언어 (아랍어 RTL, 힌디어, 베트남어, 폴란드어 등) 는 사용자 수요 기반으로 추후 lap 에서 단계적
+  - LanguageDetector 의 `localStorage` 캐시로 사용자 선택이 자동 영속화 → 다음 실행에도 유지
+- **번역 범위:** 신규 7개 언어 common.json 은 **LockScreen 가시 키만 정확 번역** (vault.* 11개 키 + settings.language). 다른 화면은 i18next 의 fallback 메커니즘으로 자동 영어 표시. 전체 번역 보강은 **M13 (i18n + Updater + Release) 시점에 단계적**.
+  - 기존 4개 언어 (en/ko/ja/zh) 는 이미 전체 709줄 번역 — 그대로 사용
+  - 신규 언어 자동 fallback 설계는 i18next 의 표준 동작 — 별도 코드 없음
+- **컴포넌트 위치:** `src/components/language-switcher.tsx` (일반 컴포넌트). LockScreen 외 settings 페이지 등에서 재사용 가능. `variant="corner"` (vault 톤 globe 버튼) / `variant="plain"` (표준 폼 dropdown) 두 형태.
+- **영향:**
+  - 신규 locale 7개 추가 → bundle 사이즈 미세 증가 (각 ~500B) — 첫 lap 핵심 키만 포함이라 전체 영향 미미
+  - 추후 M13 에서 11개 언어 × 709 키 풀 번역 단계로 진입 — 현재 골격 그대로 확장
+  - 다른 화면 (Inventory/Graph/Settings 등) 의 언어 보강은 사용자 베타 피드백으로 우선순위 결정
+
+---

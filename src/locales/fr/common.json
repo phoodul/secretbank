@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "Langue"
+  },
+  "vault": {
+    "unlockTitle": "Déverrouiller le coffre",
+    "unlockSubtitle": "Saisissez votre phrase secrète principale",
+    "unlockButton": "Déverrouiller",
+    "passphraseLabel": "Phrase secrète",
+    "passphrasePlaceholder": "Saisissez la phrase secrète",
+    "createVaultLink": "Première fois ? Créez un nouveau coffre",
+    "pairWithDeviceLink": "Vous avez déjà un appareil ? Associez-le",
+    "wrongPassword": "Phrase secrète incorrecte. Veuillez réessayer.",
+    "tooManyAttempts": "Trop de tentatives. Nouvelle tentative dans {{count}} s…",
+    "internalError": "Une erreur inattendue s'est produite. Veuillez réessayer."
+  }
+}

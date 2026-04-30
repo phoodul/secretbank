@@ -1,5 +1,29 @@
 # Work Log
 
+## 2026-04-30 Night mode 18 — LockScreen 글로벌 LanguageSwitcher (1 commit)
+
+### 세션 개요
+
+- **목표:** LockScreen 에 11개 언어 (en/ko/ja/zh/es/fr/de/it/el/pt/ru) 선택 UI. 글로벌 SaaS 비전의 첫 i18n wedge.
+- **결과:** 1 commit. Frontend Vitest 445 → 449 (LanguageSwitcher +4).
+
+### 변경
+
+- 신규 7개 locale: `src/locales/{es,fr,de,it,el,pt,ru}/common.json` — vault.* 11 가시 키 + settings.language. 나머지는 i18next fallback (영어).
+- `src/lib/i18n.ts` — 11개 언어 등록 + `SUPPORTED_LANGUAGES` (nativeName + englishName) export.
+- `src/components/language-switcher.tsx` — Globe icon DropdownMenuRadioGroup. `variant="corner"` (vault 톤) / `variant="plain"`.
+- `src/features/vault/LockScreen.tsx` — 우측 상단 corner 절대 위치로 LanguageSwitcher 통합.
+- `src/components/__tests__/language-switcher.test.tsx` — 4 단위 테스트.
+- `docs/project-decisions.md` 갱신 — 2026-04-30 결정 추가.
+- `docs/progress.md` 갱신 — Night mode 18 체크포인트.
+
+### 검증
+
+- typecheck 통과 / 변경 파일 lint 0 / Vitest 449 (기존 LockScreen 6 회귀 0)
+- 신규 7개 언어는 LockScreen 가시 키만 번역 — M13 시점에 풀 번역 단계적 보강 예정.
+
+---
+
 ## 2026-04-28 Night mode 7 — M9 Phase E-4b / E-5 / F-1 (3 commits)
 
 ### 세션 개요

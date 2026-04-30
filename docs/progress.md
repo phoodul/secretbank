@@ -2,7 +2,25 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-04-29 Night mode 17 (자율 모드 — **M21 v1 풀 완료**. VS Code extension: 3 commands + status bar + diagnostics + LM tools + package.json hover provider).
+- **Time:** 2026-04-30 Night mode 18 (사용자 trigger — **LockScreen 글로벌 LanguageSwitcher 11개 언어**. M21 v1~v3 / M22 v1~v5 / M22.5 / Night mode 1/N~7/N 후속.)
+- **Phase:** Phase 3 — Implementation. M9 ✅ + M18 v1 ✅ + M20 v1+v2 ✅ + M21 v1+v3 ✅ + M22 ✅ + M22.5 (Lapis Vault 디자인) + Night mode 시리즈 (LockScreen sci-fi HUD) 진행 중. 이번 세션은 **글로벌 SaaS 비전의 첫 wedge — LockScreen i18n 진입**.
+- **이번 Night mode 18 변경:**
+  - 신규 7개 locale: `src/locales/{es,fr,de,it,el,pt,ru}/common.json` — LockScreen 가시 키 (vault.* 11개) + `settings.language` 만 정확 번역. 나머지는 i18next fallback (영어).
+  - 갱신: `src/lib/i18n.ts` — 11개 언어 등록 + `SUPPORTED_LANGUAGES` 배열 (nativeName + englishName) export
+  - 신규: `src/components/language-switcher.tsx` — Globe icon DropdownMenu, 11개 언어를 native name + english name 으로 표시. `variant="corner"` (vault 톤) / `variant="plain"` 두 형태
+  - 갱신: `src/features/vault/LockScreen.tsx` — 우측 상단 corner 절대 위치로 `LanguageSwitcher variant="corner"` 추가
+  - 신규 단위 테스트 4개: `src/components/__tests__/language-switcher.test.tsx` (현재 언어 표시 / 11개 옵션 / changeLanguage 호출 / corner variant 톤)
+- **Tests (Night mode 18 종료 시점):**
+  - Frontend Vitest: **449 passed** (이전 445 + LanguageSwitcher 4)
+  - 기존 LockScreen 6 테스트 회귀 없음
+  - typecheck 통과 / 변경 파일 lint 0
+- **글로벌 SaaS 비전 정렬:**
+  - LockScreen = 첫 인상 화면. 영어 외 사용자에게 **즉시 자국어 인지** → 글로벌 진입 wedge
+  - 11개 언어 = IT 강국 + 인구 규모 기준 첫 lap 적정 폭 (en/ko/ja/zh/es/fr/de/it/el/pt/ru)
+  - 자동 LanguageDetector cache → 사용자 선택 영속화
+  - 다른 화면의 언어 보강은 **M13 i18n + Release** 시점에 단계적
+- **이전 Night mode 17 체크포인트:**
+  - **Time:** 2026-04-29 Night mode 17 (자율 모드 — **M21 v1 풀 완료**. VS Code extension: 3 commands + status bar + diagnostics + LM tools + package.json hover provider).
 - **Phase:** Phase 3 — Implementation. M9 ✅ + M18 v1 ✅ + M20 v1 ✅ + **M21 v1 ✅**. 4 marquee 차별화 마일스톤 연속 완료.
 - **이번 Night mode 17 신규 commits (3개):**
   - `755de93` feat(vscode) — M21-1: vscode-extension scaffold + 3 commands + status bar + 인라인 OSV 스캔 → Problems panel

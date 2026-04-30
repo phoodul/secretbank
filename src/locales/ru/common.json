@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "Язык"
+  },
+  "vault": {
+    "unlockTitle": "Разблокировать хранилище",
+    "unlockSubtitle": "Введите главную парольную фразу",
+    "unlockButton": "Разблокировать",
+    "passphraseLabel": "Парольная фраза",
+    "passphrasePlaceholder": "Введите парольную фразу",
+    "createVaultLink": "Впервые? Создайте новое хранилище",
+    "pairWithDeviceLink": "Уже есть устройство? Сопрягите его",
+    "wrongPassword": "Неверная парольная фраза. Попробуйте снова.",
+    "tooManyAttempts": "Слишком много попыток. Повтор через {{count}} с…",
+    "internalError": "Произошла непредвиденная ошибка. Попробуйте снова."
+  }
+}

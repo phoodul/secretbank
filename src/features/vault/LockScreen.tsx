@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { PairJoinerDialog } from "@/features/sync/PairJoinerDialog";
 import { usePairDeepLink } from "@/features/sync/use-pair-deep-link";
 import { CreateVaultDialog } from "./CreateVaultDialog";
@@ -190,6 +191,12 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
 
       {/* Layer 4 — Success radial bloom (only during/after unlock) */}
       <SuccessBloom state={vaultState} />
+
+      {/* Top-right corner — global language switcher (11 locales).
+          페이지 레벨 절대 위치 — vault card 의 모션과 분리. */}
+      <div className="absolute right-4 top-4 z-10">
+        <LanguageSwitcher variant="corner" />
+      </div>
 
       <motion.section
         className="surface-vault gloss-shimmer relative w-full max-w-sm rounded-xl overflow-hidden"
