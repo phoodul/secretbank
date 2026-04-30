@@ -217,7 +217,46 @@
     "alreadyInitialized": "A vault already exists. Please unlock it instead.",
     "internalError": "An unexpected error occurred. Please try again.",
     "loading": "Checking vault status…",
-    "lockedToast": "Vault locked"
+    "lockedToast": "Vault locked",
+    "charter": {
+      "modeLabel": "Recovery Charter",
+      "modeHelp": "If you forget the passphrase, this is the only way to recover your vault. The relay server cannot help — your vault is end-to-end encrypted.",
+      "modeNone": "Skip — I accept that losing my passphrase means losing my vault",
+      "modeSingle": "Single Charter (recommended)",
+      "modeSingleHelp": "One printable document with 6 words and a 4-digit verifier. Store it offline.",
+      "modeShamir": "Shamir 2-of-3 (advanced)",
+      "modeShamirHelp": "Three separate documents — any 2 reconstruct the charter. Distribute to family / lawyer / safe.",
+      "issuanceTitle": "Vault Charter",
+      "issuanceSubtitle": "Save or print this once. We cannot show it again.",
+      "warningHeader": "This is the only recovery key for your vault.",
+      "warningBody": "Store it somewhere physical and secure. Anyone with this charter can recover your vault, but you also lose your vault forever if you lose it.",
+      "printButton": "Print",
+      "doneButton": "I've saved it",
+      "confirmDoneTitle": "Have you saved the Charter?",
+      "confirmDoneBody": "Once you close this dialog, the Charter will not be shown again. If you lose it, vault recovery becomes impossible.",
+      "confirmDoneCancel": "Not yet",
+      "confirmDoneConfirm": "Yes, I have it saved",
+      "shareLabel": "Share {{index}} of 3",
+      "verifierLabel": "Verifier"
+    },
+    "recovery": {
+      "forgotLink": "Forgot your passphrase?",
+      "title": "Recover Vault with Charter",
+      "subtitle": "Enter your Vault Charter to unlock and reset the passphrase.",
+      "modeSingle": "Single Charter (6 words + verifier)",
+      "modeShamir": "Shamir 2-of-3 (any 2 shares)",
+      "phraseLabel": "Charter phrase",
+      "phrasePlaceholder": "WORD1 WORD2 WORD3 WORD4 WORD5 WORD6 - 1234",
+      "shareLabel": "Share {{index}}",
+      "sharePlaceholder": "Share {{index}} of 3: WORD1 WORD2 WORD3 WORD4 WORD5 WORD6 WORD7 - 1234",
+      "newPassphraseLabel": "New passphrase",
+      "newPassphraseConfirmLabel": "Confirm new passphrase",
+      "submitButton": "Recover and reset passphrase",
+      "successToast": "Vault recovered. Sign in with your new passphrase.",
+      "errorAbsent": "This vault has no Vault Charter. Recovery is not available.",
+      "errorInvalid": "Charter does not unlock this vault. Check spelling and verifier.",
+      "errorParse": "Charter format is invalid. {{detail}}"
+    }
   },
   "auth": {
     "signIn": {

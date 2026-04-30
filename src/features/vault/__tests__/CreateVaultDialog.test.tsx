@@ -114,24 +114,97 @@ describe("CreateVaultDialog", () => {
     });
   });
 
-  it("성공 경로: 일치하는 패스프레이즈로 제출하면 invoke를 호출하고 onSuccess를 실행한다", async () => {
+  it("기본값: Single Charter 모드가 선택되어 있다", () => {
+    renderDialog();
+    const single = screen.getByLabelText(/single charter/i) as HTMLInputElement;
+    expect(single.checked).toBe(true);
+  });
+
+  it("성공 경로 (single): 패스프레이즈 + 모드 single 로 vault_init_with_charter 호출", async () => {
     const user = userEvent.setup();
     const onSuccess = vi.fn();
-    mockInvoke.mockResolvedValueOnce(undefined);
+    // backend → issuance Single
+    mockInvoke.mockResolvedValueOnce({
+      kind: "single",
+      charter: {
+        words: ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot"],
+        verifier: 7042,
+        formatted: "ALPHA BRAVO CHARLIE DELTA ECHO FOXTROT - 7042",
+      },
+    });
 
     renderDialog(onSuccess);
 
-    const passphraseInput = screen.getByLabelText(/^passphrase$/i);
-    const confirmInput = screen.getByLabelText(/confirm passphrase/i);
-
-    await user.type(passphraseInput, "mysecretpassword123");
-    await user.type(confirmInput, "mysecretpassword123");
+    await user.type(screen.getByLabelText(/^passphrase$/i), "mysecretpassword123");
+    await user.type(screen.getByLabelText(/confirm passphrase/i), "mysecretpassword123");
     await user.click(screen.getByRole("button", { name: /create vault/i }));
 
     await waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith("vault_init", {
+      expect(mockInvoke).toHaveBeenCalledWith("vault_init_with_charter", {
         password: "mysecretpassword123",
+        mode: "single",
       });
+    });
+
+    // Charter display 화면이 나타나야 한다
+    await waitFor(() => {
+      expect(screen.getByText(/Vault Charter/i)).toBeInTheDocument();
+      expect(screen.getByText(/ALPHA/i)).toBeInTheDocument();
+      expect(screen.getByText("7042")).toBeInTheDocument();
+    });
+
+    // "I've saved it" 버튼 클릭 → confirm overlay → "Yes" → onSuccess
+    await user.click(screen.getByRole("button", { name: /I've saved it/i }));
+    await user.click(screen.getByRole("button", { name: /Yes, I have it saved/i }));
+
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it("Shamir 모드 선택 시 mode 'shamir2of3' 으로 invoke", async () => {
+    const user = userEvent.setup();
+    mockInvoke.mockResolvedValueOnce({
+      kind: "shamir2of3",
+      shares: [
+        { index: 1, words: ["a", "b", "c", "d", "e", "f", "g"], verifier: 1, formatted: "Share 1 of 3: ..." },
+        { index: 2, words: ["a", "b", "c", "d", "e", "f", "g"], verifier: 2, formatted: "Share 2 of 3: ..." },
+        { index: 3, words: ["a", "b", "c", "d", "e", "f", "g"], verifier: 3, formatted: "Share 3 of 3: ..." },
+      ],
+    });
+
+    renderDialog();
+    await user.click(screen.getByLabelText(/Shamir 2-of-3/i));
+    await user.type(screen.getByLabelText(/^passphrase$/i), "mysecretpassword123");
+    await user.type(screen.getByLabelText(/confirm passphrase/i), "mysecretpassword123");
+    await user.click(screen.getByRole("button", { name: /create vault/i }));
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith("vault_init_with_charter", {
+        password: "mysecretpassword123",
+        mode: "shamir2of3",
+      });
+    });
+  });
+
+  it("None 모드 선택 시 mode 'none' 으로 invoke 후 즉시 onSuccess", async () => {
+    const user = userEvent.setup();
+    const onSuccess = vi.fn();
+    mockInvoke.mockResolvedValueOnce({ kind: "none" });
+
+    renderDialog(onSuccess);
+    await user.click(screen.getByLabelText(/Skip/i));
+    await user.type(screen.getByLabelText(/^passphrase$/i), "mysecretpassword123");
+    await user.type(screen.getByLabelText(/confirm passphrase/i), "mysecretpassword123");
+    await user.click(screen.getByRole("button", { name: /create vault/i }));
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith("vault_init_with_charter", {
+        password: "mysecretpassword123",
+        mode: "none",
+      });
+    });
+
+    // None 모드는 issuance 표시 안 하고 즉시 onSuccess.
+    await waitFor(() => {
       expect(onSuccess).toHaveBeenCalledTimes(1);
     });
   });

@@ -217,7 +217,46 @@
     "alreadyInitialized": "이미 볼트가 존재합니다. 잠금을 해제하세요.",
     "internalError": "예기치 않은 오류가 발생했습니다. 다시 시도하세요.",
     "loading": "볼트 상태 확인 중…",
-    "lockedToast": "볼트 잠금됨"
+    "lockedToast": "볼트 잠금됨",
+    "charter": {
+      "modeLabel": "Vault Charter (복구 헌장)",
+      "modeHelp": "패스프레이즈를 잊었을 때 vault 를 복구할 유일한 수단입니다. 릴레이 서버는 도와줄 수 없습니다 — 모든 데이터가 종단 간 암호화되어 있기 때문입니다.",
+      "modeNone": "건너뛰기 — 패스프레이즈 분실 시 vault 영구 손실에 동의합니다",
+      "modeSingle": "단일 Charter (권장)",
+      "modeSingleHelp": "6 단어 + 4자리 검증자가 인쇄된 한 장짜리 문서. 오프라인에 보관하세요.",
+      "modeShamir": "Shamir 2-of-3 (고급)",
+      "modeShamirHelp": "3 장으로 분할된 문서 — 어느 2 장이든 복구 가능. 가족·변호사·금고 등으로 분산 보관.",
+      "issuanceTitle": "Vault Charter",
+      "issuanceSubtitle": "지금 한 번만 저장하거나 인쇄할 수 있습니다.",
+      "warningHeader": "이 vault 의 유일한 복구 키입니다.",
+      "warningBody": "오프라인의 안전한 곳에 보관하세요. 이 charter 가 있으면 누구나 vault 를 복구할 수 있고, 분실하면 vault 도 영영 사라집니다.",
+      "printButton": "인쇄",
+      "doneButton": "저장 완료",
+      "confirmDoneTitle": "Charter 를 저장하셨습니까?",
+      "confirmDoneBody": "이 다이얼로그를 닫으면 Charter 는 다시 표시되지 않습니다. 분실 시 vault 복구는 불가능해집니다.",
+      "confirmDoneCancel": "아직 안 했어요",
+      "confirmDoneConfirm": "네, 저장했습니다",
+      "shareLabel": "Share {{index}} / 3",
+      "verifierLabel": "검증자"
+    },
+    "recovery": {
+      "forgotLink": "패스프레이즈를 잊으셨나요?",
+      "title": "Charter 로 Vault 복구",
+      "subtitle": "Vault Charter 를 입력하여 잠금 해제 + 패스프레이즈 재설정.",
+      "modeSingle": "단일 Charter (6 단어 + 검증자)",
+      "modeShamir": "Shamir 2-of-3 (2 장 이상)",
+      "phraseLabel": "Charter 구문",
+      "phrasePlaceholder": "WORD1 WORD2 WORD3 WORD4 WORD5 WORD6 - 1234",
+      "shareLabel": "Share {{index}}",
+      "sharePlaceholder": "Share {{index}} of 3: WORD1 WORD2 WORD3 WORD4 WORD5 WORD6 WORD7 - 1234",
+      "newPassphraseLabel": "새 패스프레이즈",
+      "newPassphraseConfirmLabel": "새 패스프레이즈 확인",
+      "submitButton": "복구하고 패스프레이즈 재설정",
+      "successToast": "Vault 가 복구되었습니다. 새 패스프레이즈로 잠금 해제하세요.",
+      "errorAbsent": "이 vault 에는 Charter 가 없어 복구할 수 없습니다.",
+      "errorInvalid": "Charter 가 vault 와 일치하지 않습니다. 단어와 검증자를 확인하세요.",
+      "errorParse": "Charter 형식이 올바르지 않습니다. {{detail}}"
+    }
   },
   "auth": {
     "signIn": {
