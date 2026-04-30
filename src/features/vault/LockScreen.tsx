@@ -37,7 +37,17 @@ const MAX_ATTEMPTS = 3;
 const COOLDOWN_SECONDS = 10;
 
 interface VaultCommandError {
-  code: "already_initialized" | "not_initialized" | "wrong_password" | "not_unlocked" | "internal";
+  code:
+    | "already_initialized"
+    | "not_initialized"
+    | "wrong_password"
+    | "not_unlocked"
+    | "cooldown_active"
+    | "charter_absent"
+    | "charter_invalid"
+    | "charter_parse_error"
+    | "internal";
+  seconds_remaining?: number;
 }
 
 interface LockScreenProps {
@@ -166,6 +176,12 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
           failCountRef.current = 0;
           startCooldown();
         }
+      } else if (error?.code === "cooldown_active") {
+        // Charter 복구 후 7일 잠금 — UI 에 일자/시간 단위로 표시.
+        const seconds = error.seconds_remaining ?? 0;
+        const hours = Math.ceil(seconds / 3600);
+        setErrorMsg(t("vault.charterCooldownActive", { hours }));
+        triggerShake();
       } else {
         setErrorMsg(t("vault.internalError"));
         triggerShake();

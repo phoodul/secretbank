@@ -14,6 +14,7 @@ import { useGraphNodesDraggable } from "@/features/graph/use-graph-nodes-draggab
 
 import { CloudSyncSection } from "@/features/auth/CloudSyncSection";
 import { SubscriptionSection } from "@/features/billing/SubscriptionSection";
+import { CharterCooldownSection } from "./CharterCooldownSection";
 import { GithubIntegrationSection } from "./GithubIntegrationSection";
 import { IntegrationsSection } from "./IntegrationsSection";
 import { type AutoLockMinutes, useAutoLockMinutes } from "./use-settings";
@@ -152,6 +153,9 @@ export function SettingsPage() {
             </Select>
           )}
         </div>
+
+        {/* Charter cooldown — recovery 후 7일간 unlock 거부 (도난 방지) */}
+        <CharterCooldownSection />
       </section>
 
       {/* ------------------------------------------------------------------ */}
