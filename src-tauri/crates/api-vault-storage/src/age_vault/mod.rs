@@ -49,7 +49,7 @@ use x25519_dalek::StaticSecret;
 use zeroize::Zeroize;
 
 use api_vault_charter::{
-    shamir_split, wrap_enc_key, Charter, CharterSecret, ShamirShare, WrappedKey,
+    shamir_split, unwrap_enc_key, wrap_enc_key, Charter, CharterSecret, ShamirShare, WrappedKey,
 };
 use api_vault_crypto::kdf;
 
@@ -247,6 +247,91 @@ impl AgeVaultStorage {
         Ok(issuance)
     }
 
+    /// Vault Charter 로 vault 를 복구하고 새 passphrase 로 재발급한다.
+    ///
+    /// 흐름:
+    /// 1. vault 파일 헤더에서 charter envelope 추출 (없으면 `Crypto("no charter envelope")`).
+    /// 2. `charter_secret` 으로 envelope 를 unwrap → 기존 `enc_key` (32B) 복원.
+    /// 3. 기존 `enc_key` 로 identity 파생 → age payload 복호화 → record map 추출.
+    /// 4. 새 salt 2개 + `new_password` 로 새 enc_key 파생.
+    /// 5. `new_charter_mode` 에 따라 (None/Single/Shamir2of3) 새 charter 동시 발급.
+    /// 6. record map 을 새 identity 로 재암호화, 새 헤더 + envelope 로 atomic write.
+    /// 7. 호출자에게 [`CharterIssuance`] 반환 (새 charter 가 발급됐다면 그것).
+    ///
+    /// 이 작업이 성공한 후로는 옛 passphrase 로는 unlock 할 수 없고,
+    /// 옛 charter 도 더 이상 작동하지 않는다 (envelope 새로 만들어져 있음).
+    pub async fn recover_with_charter(
+        &mut self,
+        charter_secret: CharterSecret,
+        new_password: &SecretString,
+        new_charter_mode: CharterMode,
+    ) -> Result<CharterIssuance, VaultError> {
+        // 1. 파일에서 헤더 + age payload 읽기
+        let (old_header, age_payload) = read_vault_file(&self.path)?;
+
+        // 2. charter envelope 추출
+        let envelope_bytes = old_header.charter_envelope.as_ref().ok_or_else(|| {
+            VaultError::Crypto("vault has no charter envelope (cannot recover via charter)".into())
+        })?;
+        let wrapped = WrappedKey::from_bytes(envelope_bytes)
+            .map_err(|e| VaultError::Crypto(format!("malformed charter envelope: {e}")))?;
+
+        // 3. unwrap → 기존 enc_key (32B)
+        let recovered_enc_bytes = unwrap_enc_key(&charter_secret, &wrapped).map_err(|_| {
+            VaultError::Crypto(
+                "charter does not unlock this vault (wrong charter or tampered envelope)".into(),
+            )
+        })?;
+        let recovered_enc = SecretBox::new(Box::new(recovered_enc_bytes));
+
+        // 4. 기존 identity 파생 → age payload 복호화 → records 추출
+        let old_identity = identity_from_enc_key(&recovered_enc)?;
+        let plaintext = age_decrypt_with_identity(&old_identity, &age_payload)?;
+        let map: HashMap<String, Vec<u8>> = record_map::deserialize(&plaintext)?;
+
+        // 5. 새 salt + 새 password 로 새 enc_key 파생
+        let new_salt_auth = kdf::generate_salt();
+        let new_salt_enc = kdf::generate_salt();
+        let new_enc_key = kdf::derive_enc_key(new_password, &new_salt_enc)
+            .map_err(|e| VaultError::Crypto(format!("new enc_key derive: {e}")))?;
+
+        // 6. 새 charter (옵션)
+        let (new_envelope_bytes, issuance) = match new_charter_mode {
+            CharterMode::None => (None, CharterIssuance::None),
+            CharterMode::Single | CharterMode::Shamir2of3 => {
+                let new_secret = CharterSecret::random();
+                let new_wrapped = wrap_enc_key(&new_secret, new_enc_key.expose_secret())
+                    .map_err(|e| VaultError::Crypto(format!("new charter wrap: {e}")))?;
+                let issuance = match new_charter_mode {
+                    CharterMode::Single => {
+                        CharterIssuance::Single(Charter::from_secret(&new_secret))
+                    }
+                    CharterMode::Shamir2of3 => {
+                        CharterIssuance::Shamir(Box::new(shamir_split(&new_secret)))
+                    }
+                    CharterMode::None => unreachable!(),
+                };
+                (Some(new_wrapped.to_bytes()), issuance)
+            }
+        };
+
+        // 7. records 를 새 identity 로 재암호화
+        let new_header = VaultHeader {
+            salt_auth: new_salt_auth,
+            salt_enc: new_salt_enc,
+            charter_envelope: new_envelope_bytes,
+        };
+        let payload_bytes = record_map::serialize(&map)?;
+        let new_age_payload = encrypt_payload(&new_header, new_password, &payload_bytes)?;
+        write_vault_file(&self.path, &new_header, &new_age_payload)?;
+
+        // 8. Locked 상태로 전이 (호출자가 new_password 로 unlock 해야 한다)
+        let mut state = self.state.write().await;
+        *state = VaultState::Locked { header: new_header };
+
+        Ok(issuance)
+    }
+
     /// 내부 flush: dirty 플래그가 true 일 때 records → MessagePack → age encrypt → disk.
     ///
     /// `state` 에 대한 쓰기 잠금은 이미 호출자가 보유하고 있어야 한다.
@@ -288,25 +373,24 @@ fn derive_identity(
     password: &SecretString,
     header: &VaultHeader,
 ) -> Result<age::x25519::Identity, VaultError> {
-    // 1단계: Argon2id
+    // 1단계: Argon2id → enc_key
     let enc_key = kdf::derive_enc_key(password, &header.salt_enc)
         .map_err(|e| VaultError::Crypto(e.to_string()))?;
+    // 2~3단계: enc_key → identity (recover_with_charter 와 공유)
+    identity_from_enc_key(&enc_key)
+}
 
-    // 2단계: HKDF subkey "age-vault"
+/// enc_key (이미 derive 되었거나 charter envelope 에서 unwrap 된 32B) 에서 identity 파생.
+///
+/// recovery 경로에서 password Argon2id 를 거치지 않고 enc_key 가 직접 알려진 경우 사용한다.
+fn identity_from_enc_key(
+    enc_key: &SecretBox<[u8; 32]>,
+) -> Result<age::x25519::Identity, VaultError> {
     let age_seed =
-        kdf::derive_subkey(&enc_key, "age-vault").map_err(|e| VaultError::Crypto(e.to_string()))?;
-
-    // 3단계: [u8; 32] → StaticSecret → Identity
-    // StaticSecret::from 은 Copy 가 아닌 owned [u8; 32] 를 받는다.
-    // expose_secret() 으로 &[u8; 32] 를 얻어 복사 후 변환한다.
+        kdf::derive_subkey(enc_key, "age-vault").map_err(|e| VaultError::Crypto(e.to_string()))?;
     let seed_bytes: [u8; 32] = *age_seed.expose_secret();
     let static_secret = StaticSecret::from(seed_bytes);
-    // age::x25519::Identity(StaticSecret) 은 pub(crate) 이므로
-    // 직접 생성 불가. bech32 encode/decode 우회 없이 접근하는 방법:
-    // StaticSecret 의 raw bytes 를 bech32 로 인코딩 → Identity::from_str 으로 파싱.
-    let identity = identity_from_static_secret(static_secret)?;
-
-    Ok(identity)
+    identity_from_static_secret(static_secret)
 }
 
 /// `StaticSecret` 을 age::x25519::Identity 로 변환한다.

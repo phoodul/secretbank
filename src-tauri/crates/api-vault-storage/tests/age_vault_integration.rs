@@ -435,3 +435,229 @@ async fn vault_with_charter_unlocks_via_password_normally() {
     vault.unlock(make_password("pw")).await.unwrap();
     assert!(vault.is_unlocked().await);
 }
+
+// ─────────────────────────────────────────────
+//  M23-B-3: recover_with_charter — recovery 경로
+// ─────────────────────────────────────────────
+
+#[tokio::test]
+async fn recover_with_correct_charter_then_unlock_via_new_password() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+
+    // 1. vault 생성 + Single charter 발급
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+    let issuance = vault
+        .initialize_with_charter(&make_password("old-pw"), CharterMode::Single)
+        .await
+        .unwrap();
+    let charter = match issuance {
+        CharterIssuance::Single(c) => c,
+        _ => panic!("expected Single"),
+    };
+
+    // 2. 기존 records 가 있으면 의미가 있는 round-trip — 한 줄 추가 후 flush
+    vault.unlock(make_password("old-pw")).await.unwrap();
+    vault
+        .put_secret("hello", make_secret(b"world"))
+        .await
+        .unwrap();
+    vault.flush().await.unwrap();
+    vault.lock().await.unwrap();
+
+    // 3. recovery — charter 로 새 password 발급. 이 때는 새 charter 는 None.
+    let charter_secret = charter.to_secret().expect("verifier valid");
+    let recover_issuance = vault
+        .recover_with_charter(charter_secret, &make_password("new-pw"), CharterMode::None)
+        .await
+        .unwrap();
+    assert!(matches!(recover_issuance, CharterIssuance::None));
+
+    // 4. 새 password 로 unlock + records 복원 검증
+    vault.unlock(make_password("new-pw")).await.unwrap();
+    let recovered = vault.get_secret("hello").await.unwrap();
+    assert_eq!(recovered.expose_secret(), b"world");
+}
+
+#[tokio::test]
+async fn recover_with_wrong_charter_fails() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+    vault
+        .initialize_with_charter(&make_password("old-pw"), CharterMode::Single)
+        .await
+        .unwrap();
+
+    // 다른 random secret 으로 recover 시도
+    let bogus_secret = api_vault_charter::CharterSecret::random();
+    let result = vault
+        .recover_with_charter(bogus_secret, &make_password("new-pw"), CharterMode::None)
+        .await;
+    match result {
+        Err(VaultError::Crypto(msg)) => {
+            assert!(
+                msg.contains("does not unlock"),
+                "expected 'does not unlock' error, got: {msg}"
+            );
+        }
+        other => panic!("expected Crypto error, got {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn recover_fails_when_vault_has_no_charter_envelope() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+    // None 모드로 초기화 — charter envelope 없음
+    vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::None)
+        .await
+        .unwrap();
+
+    let some_secret = api_vault_charter::CharterSecret::random();
+    let result = vault
+        .recover_with_charter(some_secret, &make_password("new-pw"), CharterMode::None)
+        .await;
+    match result {
+        Err(VaultError::Crypto(msg)) => {
+            assert!(
+                msg.contains("no charter envelope"),
+                "expected 'no charter envelope', got: {msg}"
+            );
+        }
+        other => panic!("expected Crypto error, got {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn recover_invalidates_old_password() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("old-pw"), CharterMode::Single)
+        .await
+        .unwrap();
+    let charter = match issuance {
+        CharterIssuance::Single(c) => c,
+        _ => unreachable!(),
+    };
+
+    let secret = charter.to_secret().unwrap();
+    vault
+        .recover_with_charter(secret, &make_password("new-pw"), CharterMode::None)
+        .await
+        .unwrap();
+
+    // 옛 password 로는 unlock 실패
+    let result = vault.unlock(make_password("old-pw")).await;
+    assert!(
+        matches!(result, Err(VaultError::WrongPassword)),
+        "old password must no longer unlock"
+    );
+}
+
+#[tokio::test]
+async fn recover_invalidates_old_charter() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("old-pw"), CharterMode::Single)
+        .await
+        .unwrap();
+    let old_charter = match issuance {
+        CharterIssuance::Single(c) => c,
+        _ => unreachable!(),
+    };
+
+    // 한 번 recover (새 charter 도 함께 발급)
+    let old_secret = old_charter.to_secret().unwrap();
+    let new_issuance = vault
+        .recover_with_charter(old_secret, &make_password("new-pw"), CharterMode::Single)
+        .await
+        .unwrap();
+    let new_charter = match new_issuance {
+        CharterIssuance::Single(c) => c,
+        _ => panic!("expected new Single charter"),
+    };
+
+    // 옛 charter (의 secret) 로는 더 이상 recover 안 됨 — 다시 시도 시 fail
+    let stale_secret = old_charter.to_secret().unwrap();
+    let result = vault
+        .recover_with_charter(stale_secret, &make_password("yet-newer-pw"), CharterMode::None)
+        .await;
+    assert!(
+        matches!(result, Err(VaultError::Crypto(_))),
+        "old charter must no longer recover after rotation"
+    );
+
+    // 새 charter 는 작동
+    let fresh_secret = new_charter.to_secret().unwrap();
+    vault
+        .recover_with_charter(fresh_secret, &make_password("yet-newer-pw"), CharterMode::None)
+        .await
+        .unwrap();
+    vault.unlock(make_password("yet-newer-pw")).await.unwrap();
+}
+
+#[tokio::test]
+async fn recover_with_shamir_combine_path() {
+    use api_vault_charter::shamir_combine;
+
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::Shamir2of3)
+        .await
+        .unwrap();
+    let shares = match issuance {
+        CharterIssuance::Shamir(s) => s,
+        _ => panic!("expected Shamir"),
+    };
+
+    // 가족 시나리오: 1번과 3번 share 만 있음 (2번 분실)
+    let combined = shamir_combine(&[shares[0].clone(), shares[2].clone()]).unwrap();
+
+    vault
+        .recover_with_charter(combined, &make_password("new-pw"), CharterMode::None)
+        .await
+        .unwrap();
+    vault.unlock(make_password("new-pw")).await.unwrap();
+    assert!(vault.is_unlocked().await);
+}
+
+#[tokio::test]
+async fn recover_can_issue_new_shamir_set() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::Single)
+        .await
+        .unwrap();
+    let charter = match issuance {
+        CharterIssuance::Single(c) => c,
+        _ => unreachable!(),
+    };
+
+    // recover 시 Shamir 로 charter 모드 변경
+    let secret = charter.to_secret().unwrap();
+    let new_issuance = vault
+        .recover_with_charter(secret, &make_password("pw2"), CharterMode::Shamir2of3)
+        .await
+        .unwrap();
+    match new_issuance {
+        CharterIssuance::Shamir(shares) => {
+            assert_eq!(shares.len(), 3);
+        }
+        _ => panic!("expected Shamir issuance after recovery"),
+    }
+}
