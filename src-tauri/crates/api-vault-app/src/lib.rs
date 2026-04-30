@@ -42,6 +42,9 @@ use commands::sync::{
 use commands::usage::{
     usage_create, usage_delete, usage_list_for_credential, usage_list_for_project,
 };
+use commands::charter_cooldown::{
+    charter_cooldown_clear, charter_cooldown_set_enabled, charter_cooldown_status,
+};
 use commands::vault::{
     vault_has_charter, vault_init, vault_init_with_charter, vault_lock, vault_recovery_unlock,
     vault_status, vault_unlock,
@@ -166,6 +169,9 @@ pub fn run(context: tauri::Context) {
             vault_status,
             vault_has_charter,
             vault_recovery_unlock,
+            charter_cooldown_status,
+            charter_cooldown_set_enabled,
+            charter_cooldown_clear,
             vault_setting_get,
             vault_setting_set,
             credential_create,
@@ -251,6 +257,9 @@ pub fn run(context: tauri::Context) {
             vault_status,
             vault_has_charter,
             vault_recovery_unlock,
+            charter_cooldown_status,
+            charter_cooldown_set_enabled,
+            charter_cooldown_clear,
             vault_setting_get,
             vault_setting_set,
             credential_create,

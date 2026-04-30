@@ -46,6 +46,10 @@ pub enum VaultCommandError {
     #[error("charter parse error: {detail}")]
     CharterParseError { detail: String },
 
+    /// vault unlock blocked by an active charter cooldown (post-recovery anti-theft delay).
+    #[error("cooldown active: {seconds_remaining}s remaining")]
+    CooldownActive { seconds_remaining: u64 },
+
     #[error("internal error: {message}")]
     Internal { message: String },
 }
@@ -256,6 +260,12 @@ pub async fn vault_unlock(
     state: State<'_, AppContext>,
     app_handle: tauri::AppHandle,
 ) -> Result<(), VaultCommandError> {
+    // M23-E: charter cooldown — recovery 후 7일간 unlock 거부 (사용자가 settings 에서 활성화한 경우).
+    if let Ok(Some(seconds_remaining)) =
+        crate::services::charter_cooldown::check_active(&state.data_dir)
+    {
+        return Err(VaultCommandError::CooldownActive { seconds_remaining });
+    }
     {
         let mut vault = state.vault.write().await;
         do_vault_unlock(vault.as_mut(), &password).await?;
@@ -466,6 +476,15 @@ pub async fn vault_recovery_unlock(
         .recover_vault_with_charter(charter_secret, &new_pw, new_charter_mode.into())
         .await?;
     let kind = issuance_kind_label(&issuance);
+
+    // M23-E: cooldown sidecar 갱신 — recovery 시각 기록 + (활성화된 경우) 7일 잠금.
+    let cooldown_after =
+        crate::services::charter_cooldown::apply_recovery_event(&state.data_dir).map_err(|e| {
+            VaultCommandError::Internal {
+                message: format!("cooldown sidecar write failed: {e}"),
+            }
+        })?;
+
     state
         .audit
         .record(
@@ -473,7 +492,14 @@ pub async fn vault_recovery_unlock(
             "vault.charter.recovered",
             "vault",
             state.user_id.clone(),
-            Some(serde_json::json!({ "new_charter_mode": kind }).to_string()),
+            Some(
+                serde_json::json!({
+                    "new_charter_mode": kind,
+                    "cooldown_enabled": cooldown_after.enabled,
+                    "cooldown_until_unix_ms": cooldown_after.cooldown_until_unix_ms,
+                })
+                .to_string(),
+            ),
         )
         .await;
     Ok(issuance.into())
