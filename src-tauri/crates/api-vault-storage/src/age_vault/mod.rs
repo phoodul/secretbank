@@ -48,11 +48,51 @@ use tokio::sync::RwLock;
 use x25519_dalek::StaticSecret;
 use zeroize::Zeroize;
 
+use api_vault_charter::{
+    shamir_split, wrap_enc_key, Charter, CharterSecret, ShamirShare, WrappedKey,
+};
 use api_vault_crypto::kdf;
 
 use crate::vault::{SecretBytes, VaultError, VaultStorage};
 
 use self::file::{read_vault_file, write_vault_file, VaultHeader};
+
+// ───────────────────────────────────────────────────
+//  Charter (recovery) 발급 모드 / 발급 결과
+// ───────────────────────────────────────────────────
+
+/// vault 생성 시 charter 발급 정책.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CharterMode {
+    /// charter 발급 안 함 (legacy / 사용자가 명시적으로 거부).
+    None,
+    /// 단일 charter — 한 장 (6 단어 + verifier).
+    Single,
+    /// Shamir 2-of-3 분할 — 3 장 중 2장으로 복원 가능.
+    Shamir2of3,
+}
+
+/// vault 생성 시 1회만 사용자에게 노출되는 charter 발급 결과.
+///
+/// 호출자는 이 값을 사용자에게 표시하고 (인쇄 / PDF / 화면) 즉시 폐기해야 한다.
+/// 메모리 안전: 내부 [`Charter`] / [`ShamirShare`] 의 단어/index 는 user-facing 표현이라 평문이며,
+/// 실제 secret 인 [`CharterSecret`] 은 Drop 시 zeroize.
+#[derive(Debug)]
+pub enum CharterIssuance {
+    /// charter 발급을 건너뛴 경우.
+    None,
+    /// 단일 charter.
+    Single(Charter),
+    /// Shamir 2-of-3 — 3 장의 share. UI 가 사용자에게 모두 보여줘야.
+    Shamir(Box<[ShamirShare; 3]>),
+}
+
+impl CharterIssuance {
+    /// 발급된 charter 가 있는지 (None 이 아닌지).
+    pub fn is_some(&self) -> bool {
+        !matches!(self, CharterIssuance::None)
+    }
+}
 
 // ───────────────────────────────────────────────────
 //  내부 상태 enum
@@ -121,11 +161,38 @@ impl AgeVaultStorage {
         })
     }
 
-    /// 볼트를 초기화한다.
+    /// 볼트를 초기화한다 (charter 없이 — legacy / 명시적 opt-out).
     ///
-    /// 새 salt 2개를 생성하고 빈 레코드 맵을 암호화해 파일을 저장한다.
+    /// 사용자에게 recovery 옵션을 제공하지 않는다. 출시 빌드는 가급적
+    /// [`Self::initialize_with_charter`] 를 사용하라.
+    ///
     /// 이미 파일이 존재하면 `VaultError::Crypto("vault already initialized")` 를 반환한다.
     pub async fn initialize(&mut self, password: &SecretString) -> Result<(), VaultError> {
+        let _ = self
+            .initialize_with_charter(password, CharterMode::None)
+            .await?;
+        Ok(())
+    }
+
+    /// 볼트를 초기화하며 동시에 Vault Charter 를 발급한다.
+    ///
+    /// 흐름:
+    /// 1. 새 salt 2개 생성 (auth / enc).
+    /// 2. mode != None 인 경우:
+    ///    - random `CharterSecret` 생성.
+    ///    - password → Argon2id → enc_key (32B) 파생.
+    ///    - charter_secret 으로 enc_key 를 XChaCha20-Poly1305 envelope.
+    ///    - envelope 를 vault header 의 charter_envelope 슬롯에 저장.
+    /// 3. 빈 record map 을 age 로 암호화하고 파일에 기록.
+    /// 4. 호출자에게 [`CharterIssuance`] 반환 — UI 는 즉시 사용자에게 1회 표시.
+    ///
+    /// 발급된 [`Charter`] / [`ShamirShare`] 는 vault 파일에 저장되지 않는다.
+    /// vault 파일에는 envelope (charter 로만 풀 수 있는 wrap) 만 들어간다.
+    pub async fn initialize_with_charter(
+        &mut self,
+        password: &SecretString,
+        mode: CharterMode,
+    ) -> Result<CharterIssuance, VaultError> {
         {
             let state = self.state.read().await;
             if !matches!(*state, VaultState::NotInitialized) {
@@ -133,7 +200,38 @@ impl AgeVaultStorage {
             }
         }
 
-        let header = VaultHeader::new(kdf::generate_salt(), kdf::generate_salt());
+        let salt_auth = kdf::generate_salt();
+        let salt_enc = kdf::generate_salt();
+
+        let (charter_envelope_bytes, issuance) = match mode {
+            CharterMode::None => (None, CharterIssuance::None),
+            CharterMode::Single | CharterMode::Shamir2of3 => {
+                let enc_key = kdf::derive_enc_key(password, &salt_enc)
+                    .map_err(|e| VaultError::Crypto(format!("enc_key derive: {e}")))?;
+                let charter_secret = CharterSecret::random();
+                let wrapped: WrappedKey =
+                    wrap_enc_key(&charter_secret, enc_key.expose_secret())
+                        .map_err(|e| VaultError::Crypto(format!("charter wrap: {e}")))?;
+                let envelope_bytes = wrapped.to_bytes();
+
+                let issuance = match mode {
+                    CharterMode::Single => {
+                        CharterIssuance::Single(Charter::from_secret(&charter_secret))
+                    }
+                    CharterMode::Shamir2of3 => {
+                        CharterIssuance::Shamir(Box::new(shamir_split(&charter_secret)))
+                    }
+                    CharterMode::None => unreachable!(),
+                };
+                (Some(envelope_bytes), issuance)
+            }
+        };
+
+        let header = VaultHeader {
+            salt_auth,
+            salt_enc,
+            charter_envelope: charter_envelope_bytes,
+        };
 
         // 빈 레코드 맵을 암호화해 파일에 기록한다.
         let empty_map: HashMap<String, Vec<u8>> = HashMap::new();
@@ -146,7 +244,7 @@ impl AgeVaultStorage {
         let mut state = self.state.write().await;
         *state = VaultState::Locked { header };
 
-        Ok(())
+        Ok(issuance)
     }
 
     /// 내부 flush: dirty 플래그가 true 일 때 records → MessagePack → age encrypt → disk.

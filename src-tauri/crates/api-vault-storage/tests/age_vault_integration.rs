@@ -256,3 +256,182 @@ async fn flush_while_locked_returns_not_unlocked() {
         result
     );
 }
+
+// ─────────────────────────────────────────────
+//  M23-B-2: initialize_with_charter — 발급 모드별 검증
+// ─────────────────────────────────────────────
+
+use api_vault_charter::{unwrap_enc_key, WrappedKey};
+use api_vault_storage::age_vault::{
+    file::{read_vault_file, HEADER_V1_SIZE},
+    CharterIssuance, CharterMode,
+};
+
+#[tokio::test]
+async fn initialize_with_charter_single_writes_envelope_and_yields_charter() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::Single)
+        .await
+        .unwrap();
+
+    let charter = match issuance {
+        CharterIssuance::Single(c) => c,
+        other => panic!("expected Single issuance, got {other:?}"),
+    };
+    assert_eq!(charter.words.len(), 6);
+    assert!(charter.verifier < 10_000);
+
+    // 디스크 파일 — VERSION_V2 + CHARTER_FLAG=0x01.
+    let raw = std::fs::read(&vault_path).unwrap();
+    assert_eq!(raw[8], 0x02, "version byte = v2");
+    assert_eq!(raw[HEADER_V1_SIZE], 0x01, "charter flag = present");
+}
+
+#[tokio::test]
+async fn initialize_with_charter_shamir_yields_three_distinct_shares() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::Shamir2of3)
+        .await
+        .unwrap();
+
+    match issuance {
+        CharterIssuance::Shamir(shares) => {
+            assert_eq!(shares.len(), 3);
+            assert_ne!(shares[0].words, shares[1].words);
+            assert_ne!(shares[1].words, shares[2].words);
+            assert_ne!(shares[0].words, shares[2].words);
+            for sh in shares.iter() {
+                assert_eq!(sh.words.len(), 7);
+                assert!((1..=3).contains(&sh.index));
+            }
+        }
+        other => panic!("expected Shamir, got {other:?}"),
+    }
+
+    // 단일 envelope 만 디스크에 저장 (Shamir 분할은 발급된 share 에서만 의미).
+    let (header, _) = read_vault_file(&vault_path).unwrap();
+    assert!(
+        header.charter_envelope.is_some(),
+        "Shamir 모드도 envelope 1개만 저장"
+    );
+}
+
+#[tokio::test]
+async fn initialize_with_charter_none_omits_envelope() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::None)
+        .await
+        .unwrap();
+    assert!(matches!(issuance, CharterIssuance::None));
+
+    let (header, _) = read_vault_file(&vault_path).unwrap();
+    assert!(
+        header.charter_envelope.is_none(),
+        "None 모드는 envelope 저장하지 않음"
+    );
+}
+
+#[tokio::test]
+async fn legacy_initialize_remains_no_charter_path() {
+    // 기존 `initialize()` 경로 — charter 발급 안 함.
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+    vault.initialize(&make_password("pw")).await.unwrap();
+
+    let (header, _) = read_vault_file(&vault_path).unwrap();
+    assert!(
+        header.charter_envelope.is_none(),
+        "legacy initialize 는 charter 없이 동작"
+    );
+}
+
+#[tokio::test]
+async fn issued_charter_unwraps_envelope_back_to_password_derived_enc_key() {
+    use api_vault_crypto::kdf;
+    use secrecy::ExposeSecret;
+
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::Single)
+        .await
+        .unwrap();
+    let charter = match issuance {
+        CharterIssuance::Single(c) => c,
+        _ => panic!("expected Single"),
+    };
+
+    let (header, _) = read_vault_file(&vault_path).unwrap();
+    let envelope_bytes = header.charter_envelope.expect("envelope must be present");
+    let wrapped = WrappedKey::from_bytes(&envelope_bytes).expect("WrappedKey parse");
+
+    // charter → CharterSecret → unwrap → enc_key.
+    let secret = charter.to_secret().expect("charter verifier valid");
+    let recovered_enc = unwrap_enc_key(&secret, &wrapped).expect("envelope decrypts");
+
+    // password 로 다시 derive 한 enc_key 와 비트 동일.
+    let derived = kdf::derive_enc_key(&make_password("pw"), &header.salt_enc).unwrap();
+    assert_eq!(&recovered_enc, derived.expose_secret());
+}
+
+#[tokio::test]
+async fn shamir_shares_combine_back_to_envelope_unwrap_capable_secret() {
+    use api_vault_charter::shamir_combine;
+    use api_vault_crypto::kdf;
+    use secrecy::ExposeSecret;
+
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    let issuance = vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::Shamir2of3)
+        .await
+        .unwrap();
+    let shares = match issuance {
+        CharterIssuance::Shamir(s) => s,
+        _ => panic!("expected Shamir"),
+    };
+
+    // 3장 중 2장으로 secret 복원.
+    let secret = shamir_combine(&[shares[0].clone(), shares[2].clone()])
+        .expect("any 2 shares must reconstruct");
+
+    let (header, _) = read_vault_file(&vault_path).unwrap();
+    let wrapped = WrappedKey::from_bytes(header.charter_envelope.as_ref().unwrap()).unwrap();
+    let recovered_enc = unwrap_enc_key(&secret, &wrapped).expect("envelope decrypts");
+
+    let derived = kdf::derive_enc_key(&make_password("pw"), &header.salt_enc).unwrap();
+    assert_eq!(&recovered_enc, derived.expose_secret());
+}
+
+#[tokio::test]
+async fn vault_with_charter_unlocks_via_password_normally() {
+    // charter 발급은 password unlock 경로에 영향 주지 않는다.
+    let dir = tempfile::tempdir().unwrap();
+    let vault_path = dir.path().join("vault.age");
+    let mut vault = AgeVaultStorage::open(&vault_path).await.unwrap();
+
+    vault
+        .initialize_with_charter(&make_password("pw"), CharterMode::Single)
+        .await
+        .unwrap();
+    vault.lock().await.unwrap();
+    vault.unlock(make_password("pw")).await.unwrap();
+    assert!(vault.is_unlocked().await);
+}
