@@ -1521,3 +1521,21 @@ M4 UI (T056 Incidents 페이지) 완성 이후에는 `/incidents` 목록 + `inci
 ## 2026-04-24 (세션 정리 — M3 전체 회고, 수동 검증 보류)
 
 ### M3 Dependency Graph & Blast Radius — 8/8 ✅ 종료
+
+## 2026-05-01 — M23 Vault Charter 마일스톤 클로즈
+
+passphrase 분실 시 vault 영구 손실 차단 메커니즘 완성. 1Password Emergency Kit 와 차별화 4 축 모두 구현.
+
+- M23-A: api-vault-charter crate (EFF Diceware 7776 단어 + sharks SSS + XChaCha20-Poly1305 envelope, 31 unit)
+- M23-B-1: vault 파일 포맷 v2 (charter envelope 슬롯, v1 backward compat, 7 회귀)
+- M23-B-2: initialize_with_charter (Single/Shamir2of3/None, 7 통합)
+- M23-B-3: recover_with_charter (charter → 새 passphrase, 옛 charter 자동 무효, 7 통합)
+- M23-B-4: Tauri 커맨드 (vault_init_with_charter / vault_recovery_unlock / vault_has_charter) + audit hook (issued / recovered) + 9 unit
+- M23-C: CharterDisplay UI (Lapis 청금석 + 황동 봉인 + 인쇄 디자인) + CreateVaultDialog 3-phase 확장 + en/ko i18n 36 키 + Vitest 7→10
+- M23-D: RecoveryDialog (Single/Shamir 입력 + 새 charter 모드 라디오 + 에러 매핑) + LockScreen Forgot link + 회귀 보정
+- M23-E-1: cooldown sidecar (vault.age.cooldown.json) + vault_unlock 검사 + recovery 시 apply + 9 unit
+- M23-E-2: Settings 토글 + LockScreen cooldown 메시지 + en/ko i18n 9 키
+- unlock 애니메이션 감속 fix (이전 unresolved): spring → cubic-bezier ease-out
+
+총 12 코드 + 6 docs commit. 워크스페이스 clippy 0. 모든 회귀 통과.
+

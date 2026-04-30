@@ -861,3 +861,52 @@ D-1 산출물:
 - **Mobile**: Tauri Android/iOS (M11)
 - **Relay**: Cloudflare Workers (wrangler publish)
 - **CI**: GitHub Actions (.github/workflows/)
+
+---
+
+## M23 Vault Charter — 마일스톤 클로즈 (2026-05-01)
+
+### 회고
+
+passphrase 분실 시 vault 영구 손실 = 출시 블로커. M23 으로 해소. 차별화 4 축 모두 구현:
+
+1. **컨셉 "Vault Charter"** (1Password Emergency Kit 와 다른 봉인 헌장 메타포)
+2. **Diceware 6 단어 + 4-digit verifier** — 한 단어 typo 즉시 감지 (1Password base32 는 못 함)
+3. **Shamir 2-of-3 분할** — 가족/유산 시나리오. 1Password 가 못 하는 영역
+4. **Audit log + 7일 cooldown** — 도난 + charter 동시 탈취 시 시간 벌기
+
+### 기술 요약
+
+- crate: `api-vault-charter` (EFF Diceware wordlist 7776 + sharks SSS + XChaCha20-Poly1305 envelope) + 31 unit
+- vault 파일 포맷 v2 (charter envelope 슬롯, v1 backward compat) + 7 file 회귀
+- AgeVaultStorage: initialize_with_charter / recover_with_charter + 14 통합 회귀
+- Tauri 커맨드: vault_init_with_charter / vault_recovery_unlock / vault_has_charter / charter_cooldown_status / charter_cooldown_set_enabled / charter_cooldown_clear
+- Frontend: CharterDisplay (Lapis 톤 인쇄용) + CreateVaultDialog 확장 + RecoveryDialog + LockScreen Forgot link + Settings 토글
+- audit log: vault.charter.issued / vault.charter.recovered (cooldown 메타 포함)
+- cooldown sidecar (`vault.age.cooldown.json`) — vault 잠긴 상태에서도 unlock 시점 검사 가능
+- unlock 애니메이션 감속 fix (cubic-bezier ease-out [0.16, 1, 0.3, 1] / 1.4s)
+
+### 누적 commit (12 코드 + 6 docs)
+
+- 91ace0b feat(charter): M23-A codec crate
+- c82b790 feat(storage): M23-B-1 vault format v2
+- 24ce24a feat(storage): M23-B-2 initialize_with_charter
+- 27802f0 feat(storage): M23-B-3 recover_with_charter
+- 92531d0 feat(commands): M23-B-4 Tauri 커맨드 + audit
+- 855cae0 feat(ui): M23-C 발급 UI + 인쇄 디자인
+- 20d6752 feat(ui): M23-D Recovery flow UI
+- ac1ef95 fix(ui): unlock 애니메이션 감속
+- 4769248 feat(commands): M23-E-1 cooldown backend
+- 1bf141e feat(ui): M23-E-2 cooldown frontend
+- c475633 docs(milestone): M23 클로즈
+
+### 출시까지 남은 작업
+
+- **M13 i18n + Updater + Release** — 자동 업데이트 + GitHub Releases 자동화 (자율 진입 가능)
+- **Windows 코드 서명** — EV cert 또는 SmartScreen 평판 빌드업 (사용자 결정 필요)
+- **macOS notarization** — Apple Developer ($99/yr, 사용자 결정 필요)
+- **데모 영상** — LockScreen 애니메이션 + Charter 발급 흐름 30초 영상
+- **랜딩 페이지** (`site/`) — Lapis Vault 톤 적용 (이미 도메인 api-vault.app 보유)
+
+다음 자율 lap 후보: M13 v1 (auto-updater 설정 + GitHub Releases workflow) — 코드 서명 없어도 작업 가능.
+
