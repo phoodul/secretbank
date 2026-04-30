@@ -1012,3 +1012,44 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - 다른 화면 (Inventory/Graph/Settings 등) 의 언어 보강은 사용자 베타 피드백으로 우선순위 결정
 
 ---
+
+## 2026-04-30 — M23 Vault Charter (recovery 메커니즘) 신설
+
+- **결정:** passphrase 분실 대비 recovery 메커니즘으로 "Vault Charter" 마일스톤(M23) 신설.
+- **이유:** Zero-Knowledge 아키텍처 특성상 passphrase 를 잊으면 vault 가 영구 손실. 출시 블로커. 서버 reset 불가 (relay 는 ciphertext 만 보유). 사용자 단 한 명이라도 passphrase 잊고 vault 날아가면 평판 회복 불가.
+- **영향:**
+  - 출시 전 필수 마일스톤. 시나리오 A 베타 출시 전 M23-A~D 완료 필요.
+  - vault 파일 포맷에 두 번째 envelope 추가 (charter-derived key 로 enc_key wrap).
+  - Settings 에 "Charter cooldown 7일" 토글 추가 (도난 방지).
+
+## 2026-04-30 — Charter 차별화 4 축 (1Password Emergency Kit 와 다름)
+
+- **결정:** 출시 시 4 차별화 축을 모두 구현.
+  1. **컨셉 이름**: "Vault Charter" (1Password 의 "Emergency Kit" 과 다른 봉인 헌장 메타포).
+  2. **포맷**: Diceware 6 단어 + 4-digit verifier (entropy ≈ 77.55 bit + 한 단어 오타 즉시 감지).
+  3. **분할**: Shamir Secret Sharing 2-of-3 — 한 장 분실해도 vault 살아남고, 1 장 도난 시 정보 0 노출.
+  4. **알림 hook**: charter unwrap 시점 callback 노출 → 백엔드가 sync 알림 emit (페어링 디바이스 push).
+- **포맷 선택 근거:**
+  - EFF large wordlist (7776 단어, public domain). BIP-39 (cryptocurrency 색채) 와 차별화.
+  - 6 단어 = 약 2^77.55 ≈ 220 sextillion 조합. brute-force 비현실적.
+  - 4-digit verifier = SHA-256 첫 4byte mod 10000. 한 단어 typo 시 99.99% 확률로 즉시 감지 — 1Password 의 base32 는 이게 안 됨.
+- **분할 선택 근거:**
+  - sharks crate (GF(2⁸) byte-wise SSS, 정보 이론적 보안).
+  - 단일 mode 와 별개로 user 가 옵션 선택 (일반 사용자 = 단일, 가족/유산 시나리오 = 분할).
+  - 각 share = 7 단어 (index 1B + secret 10B = 88bit). 단일 charter 의 6 단어와 한 단어 차이만.
+- **영향:**
+  - api-vault-charter crate 신설 (sharks + EFF wordlist 의존성).
+  - vault 파일 포맷에 charter envelope 슬롯 추가.
+  - 발급 UI 에 "단일 / Shamir 2-of-3" 토글 추가 (M23-C).
+
+## 2026-04-30 — 출시 도메인: api-vault.app (사용자 보유)
+
+- **결정:** 출시 도메인은 사용자가 이미 보유한 `api-vault.app` 사용.
+- **이유:**
+  - `apivault.dev` 는 다른 컨셉의 실 운영 사이트 (경쟁자 아님).
+  - `apivault.app` 은 squatter (parking 페이지).
+  - `api-vault.app` 은 레포명과 정확히 일치 + Google `.app` TLD (HTTPS 강제) + 이미 보유.
+- **영향:**
+  - 랜딩 페이지(`site/`) 배포 타겟 확정.
+  - GitHub Releases 가 binary 의 source of truth.
+  - VS Code / JetBrains marketplace, Homebrew, winget, Flathub 등 다층 채널 모두 `api-vault.app` 으로 안내.

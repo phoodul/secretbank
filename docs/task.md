@@ -50,7 +50,8 @@
 | M19 | Team / org / shared vault       | TBD         | TBD       | ⏳ placeholder (B2B 진입, M18+M21 후 베타 사용자 피드백 기반) |
 | M20 | Supply chain risk graph         | TBD         | TBD       | ✅ M20 v2 완료 (v1 manifest+OSV+매칭+Tauri+MCP / **v2 lockfile parsers (npm v3+/pnpm v6/Cargo) + semver range eval — false positive 제거**) |
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / v3 Cargo.toml hover + ManifestCodeLens — risky deps inline) |
-| M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + apivault blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). 다음 → M23 (모바일 / 결제 / 텔레메트리 중 선택) |
+| M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + apivault blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). |
+| **M23** | **Vault Charter (recovery 메커니즘) — 출시 블로커** | T-23-A~E | 5 (+1 hotfix) | 🔄 1/6 진행 중 (T-23-A ✅ codec crate / T-23-B 백엔드 통합 / T-23-C 발급 UI + PDF / T-23-D recovery flow UI / T-23-E sync 알림 + cooldown / unlock 감속 fix) |
 
 ---
 
@@ -2241,6 +2242,16 @@ api-vault 의 두 갈래 통합:
 | M13       | 5         |
 | M14       | 7         |
 | **Total** | **125**   |
+
+---
+
+## M23 진행 현황 (Vault Charter — recovery 메커니즘)
+
+매 sub-task 완료 시 commiter 가 커밋을 만든 직후 한 줄 추가.
+
+| Task ID | 제목 | 완료일 | 커밋 해시 |
+| :------ | :--- | :----- | :-------- |
+| T-23-A  | api-vault-charter crate (EFF Diceware wordlist + 6-word + 4-digit verifier codec + Shamir 2-of-3 split + XChaCha20-Poly1305 envelope + 31 회귀) | 2026-04-30 | _pending commit_ |
 
 ---
 
