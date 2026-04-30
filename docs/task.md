@@ -2254,6 +2254,7 @@ api-vault 의 두 갈래 통합:
 | T-23-A  | api-vault-charter crate (EFF Diceware wordlist + 6-word + 4-digit verifier codec + Shamir 2-of-3 split + XChaCha20-Poly1305 envelope + 31 회귀) | 2026-04-30 | `91ace0b` |
 | T-23-B-1 | vault 파일 포맷 v2 — charter envelope 슬롯 (CHARTER_FLAG + 2B LEN + envelope, max 1024B) + v1 backward compat + 7 신규 회귀 | 2026-04-30 | `c82b790` |
 | T-23-B-2 | AgeVaultStorage::initialize_with_charter (None/Single/Shamir2of3) + CharterMode/CharterIssuance pub enum + 7 통합 테스트 (envelope→enc_key 복원 검증 포함) | 2026-04-30 | `24ce24a` |
+| T-23-B-3 | AgeVaultStorage::recover_with_charter (charter → 새 passphrase + 옵션 새 charter 발급) + identity_from_enc_key 헬퍼 분리 + 7 통합 테스트 (옛 pw/옛 charter 무효 검증 + Shamir combine path) | 2026-05-01 | `27802f0` |
 
 ---
 
