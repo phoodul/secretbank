@@ -133,10 +133,7 @@ impl AgeVaultStorage {
             }
         }
 
-        let header = VaultHeader {
-            salt_auth: kdf::generate_salt(),
-            salt_enc: kdf::generate_salt(),
-        };
+        let header = VaultHeader::new(kdf::generate_salt(), kdf::generate_salt());
 
         // 빈 레코드 맵을 암호화해 파일에 기록한다.
         let empty_map: HashMap<String, Vec<u8>> = HashMap::new();
