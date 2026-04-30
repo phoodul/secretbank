@@ -78,10 +78,13 @@ function ringTransition(state: VaultState, m: RingMotion) {
       return { repeat: Infinity, duration: m.verifyingSeconds, ease: "linear" as const };
     case "unlocking":
     case "unlocked":
+      // 강 ease-out cubic-bezier — 마지막 정렬 지점에서 점차 느려지며 정확히 맞춰지는
+      // 느낌을 살린다. 이전 spring(200/22) 은 끝부분이 가속되는 느낌이라 사용자가
+      // "마지막이 오히려 빨라진다" 고 보고했음. P3 cubic-bezier [0.16, 1, 0.3, 1] 은
+      // 표준 ease-out 보다 더 강한 deceleration profile (Material expressive 권장).
       return {
-        type: "spring" as const,
-        stiffness: 200,
-        damping: 22,
+        duration: 1.4,
+        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
         delay: m.snapDelay,
       };
   }

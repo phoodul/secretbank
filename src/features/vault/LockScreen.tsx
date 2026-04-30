@@ -26,8 +26,10 @@ import {
   useShake,
 } from "./LockScreenAtmosphere";
 
-/** 잠금 해제 성공 후 메커니즘 정렬 애니메이션이 끝날 때까지 기다리는 시간 */
-const UNLOCK_ANIMATION_MS = 1100;
+/** 잠금 해제 성공 후 메커니즘 정렬 애니메이션이 끝날 때까지 기다리는 시간.
+ *  ringTransition 의 cubic-bezier ease-out (1.4s) + snapDelay 0.54s + 여유 = 약 1.95s.
+ *  마지막 ring (snapDelay=0.54) 가 1.4s 후 끝나므로 1940ms 가 안전선. */
+const UNLOCK_ANIMATION_MS = 1940;
 
 /** 연속 실패 횟수가 이 값에 도달하면 쿨다운을 시작한다 */
 const MAX_ATTEMPTS = 3;
