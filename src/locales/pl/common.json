@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "Język"
+  },
+  "vault": {
+    "unlockTitle": "Odblokuj sejf",
+    "unlockSubtitle": "Wprowadź swoje główne hasło",
+    "unlockButton": "Odblokuj",
+    "passphraseLabel": "Hasło",
+    "passphrasePlaceholder": "Wprowadź hasło",
+    "createVaultLink": "Pierwszy raz? Utwórz nowy sejf",
+    "pairWithDeviceLink": "Masz już urządzenie? Sparuj je",
+    "wrongPassword": "Nieprawidłowe hasło. Spróbuj ponownie.",
+    "tooManyAttempts": "Zbyt wiele prób. Spróbuj ponownie za {{count}} s…",
+    "internalError": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+  }
+}

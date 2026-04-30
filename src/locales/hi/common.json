@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "भाषा"
+  },
+  "vault": {
+    "unlockTitle": "वॉल्ट अनलॉक करें",
+    "unlockSubtitle": "अपना मास्टर पासफ़्रेज़ दर्ज करें",
+    "unlockButton": "अनलॉक करें",
+    "passphraseLabel": "पासफ़्रेज़",
+    "passphrasePlaceholder": "पासफ़्रेज़ दर्ज करें",
+    "createVaultLink": "पहली बार? नया वॉल्ट बनाएं",
+    "pairWithDeviceLink": "मौजूदा डिवाइस है? उससे जोड़ें",
+    "wrongPassword": "गलत पासफ़्रेज़। कृपया पुनः प्रयास करें।",
+    "tooManyAttempts": "बहुत अधिक प्रयास। {{count}} सेकंड में पुनः प्रयास करें…",
+    "internalError": "एक अप्रत्याशित त्रुटि हुई। कृपया पुनः प्रयास करें।"
+  }
+}

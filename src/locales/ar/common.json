@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "اللغة"
+  },
+  "vault": {
+    "unlockTitle": "فتح الخزنة",
+    "unlockSubtitle": "أدخل عبارة المرور الرئيسية",
+    "unlockButton": "فتح",
+    "passphraseLabel": "عبارة المرور",
+    "passphrasePlaceholder": "أدخل عبارة المرور",
+    "createVaultLink": "المرة الأولى؟ أنشئ خزنة جديدة",
+    "pairWithDeviceLink": "لديك جهاز موجود؟ قم بإقرانه",
+    "wrongPassword": "عبارة مرور غير صحيحة. حاول مرة أخرى.",
+    "tooManyAttempts": "محاولات كثيرة جداً. أعد المحاولة بعد {{count}} ث…",
+    "internalError": "حدث خطأ غير متوقع. حاول مرة أخرى."
+  }
+}

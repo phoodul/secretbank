@@ -987,11 +987,17 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 
 ---
 
-## [2026-04-30] LockScreen 글로벌 LanguageSwitcher — 11개 언어 선반 진입
+## [2026-04-30] LockScreen 글로벌 LanguageSwitcher — 11개 → 15개 언어로 확장 (사용자 trigger)
 
-- **결정:** LockScreen 우측 상단 corner 에 `LanguageSwitcher` (globe icon dropdown) 통합. 지원 언어 11개:
+- **갱신 (같은 날 내 후속):** 사용자 지적으로 인도어(힌디) 누락이 잘못 — 인구 규모 (~6억) 상 한국어/일본어/그리스어보다 더 큰 시장 무시. 4개 추가:
+  - **ar** (العربية / 아랍어, **RTL**): MENA 권역 + 글로벌 무슬림 + IT 시장 (UAE/사우디 정부 디지털화 가속)
+  - **hi** (हिन्दी / 힌디어): IT 강국 인도. 직전 lap 누락 보정.
+  - **vi** (Tiếng Việt / 베트남어): 동남아 IT 허브 (FPT/VNG/Tiki 생태계)
+  - **pl** (Polski / 폴란드어): 유럽 IT 강국 (CD Projekt/Allegro)
+- **RTL 처리:** `SUPPORTED_LANGUAGES` 에 `dir: "ltr" | "rtl"` 메타필드 추가. `i18n.ts` 에서 `i18next.on("languageChanged", ...)` 으로 `<html lang>` + `<html dir>` 자동 동기화 → 아랍어 선택 시 layout 자동 RTL.
+- **결정 (원본):** LockScreen 우측 상단 corner 에 `LanguageSwitcher` (globe icon dropdown) 통합. **지원 언어 15개**:
   - 기존 4개: en, ko, ja, zh
-  - 신규 7개: es (스페인어), fr (프랑스어), de (독일어), it (이탈리아어), el (그리스어), pt (포르투갈어), ru (러시아어)
+  - 신규 11개 (이번 lap): es, fr, de, it, el, pt, ru, **ar, hi, vi, pl**
 - **이유:**
   - 글로벌 SaaS 비전 (project_vision.md "월 $2 / 년 $15 글로벌 SaaS") 을 위해서는 **첫 인상 화면인 LockScreen 의 언어 가시성**이 가장 큰 wedge
   - IT 강국 + 인구 규모 기준 11개 언어가 첫 lap 의 적정 폭. 추가 언어 (아랍어 RTL, 힌디어, 베트남어, 폴란드어 등) 는 사용자 수요 기반으로 추후 lap 에서 단계적

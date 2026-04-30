@@ -1,11 +1,21 @@
 # Work Log
 
-## 2026-04-30 Night mode 18 — LockScreen 글로벌 LanguageSwitcher (1 commit)
+## 2026-04-30 Night mode 18 — LockScreen 글로벌 LanguageSwitcher (2 commits, 11 → 15 언어)
 
 ### 세션 개요
 
-- **목표:** LockScreen 에 11개 언어 (en/ko/ja/zh/es/fr/de/it/el/pt/ru) 선택 UI. 글로벌 SaaS 비전의 첫 i18n wedge.
-- **결과:** 1 commit. Frontend Vitest 445 → 449 (LanguageSwitcher +4).
+- **목표:** LockScreen 에 글로벌 언어 선택 UI. 글로벌 SaaS 비전의 첫 i18n wedge.
+- **결과:** 2 commits 같은 날.
+  - 1차 11개: en/ko/ja/zh/es/fr/de/it/el/pt/ru
+  - **2차 +4 (사용자 지적 — 인도어 누락 보정):** ar (RTL) / hi / vi / pl → 총 **15개**
+- Frontend Vitest 445 → 450 (LanguageSwitcher +5, RTL 회귀 포함).
+
+### 2차 lap 변경 (같은 날 후속)
+
+- 신규 4개 locale: `src/locales/{ar,hi,vi,pl}/common.json` — LockScreen 가시 키 정확 번역
+- `src/lib/i18n.ts` — `SUPPORTED_LANGUAGES` 에 `dir: "ltr" | "rtl"` 메타필드 추가
+- `i18next.on("languageChanged", ...)` — `<html lang>` + `<html dir>` 자동 동기화. 아랍어 선택 시 layout 자동 RTL.
+- 단위 테스트 +1 (RTL 검증)
 
 ### 변경
 

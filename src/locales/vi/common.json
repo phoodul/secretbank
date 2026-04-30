@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "language": "Ngôn ngữ"
+  },
+  "vault": {
+    "unlockTitle": "Mở khóa kho lưu trữ",
+    "unlockSubtitle": "Nhập cụm từ mật khẩu chính của bạn",
+    "unlockButton": "Mở khóa",
+    "passphraseLabel": "Cụm từ mật khẩu",
+    "passphrasePlaceholder": "Nhập cụm từ mật khẩu",
+    "createVaultLink": "Lần đầu? Tạo kho lưu trữ mới",
+    "pairWithDeviceLink": "Đã có thiết bị? Ghép cặp với thiết bị đó",
+    "wrongPassword": "Cụm từ mật khẩu không đúng. Vui lòng thử lại.",
+    "tooManyAttempts": "Quá nhiều lần thử. Thử lại sau {{count}} giây…",
+    "internalError": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại."
+  }
+}
