@@ -45,6 +45,7 @@ api-vault-feeds = { path = "../api-vault-feeds" }
 api-vault-railguard = { path = "../api-vault-railguard" }
 api-vault-audit = { path = "../api-vault-audit" }
 api-vault-supply = { path = "../api-vault-supply" }
+api-vault-charter = { path = "../api-vault-charter" }
 tokio-util = { workspace = true }
 ed25519-dalek = { version = "2", features = ["rand_core"] }
 rand_core = { version = "0.6", features = ["std"] }

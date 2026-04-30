@@ -42,7 +42,10 @@ use commands::sync::{
 use commands::usage::{
     usage_create, usage_delete, usage_list_for_credential, usage_list_for_project,
 };
-use commands::vault::{vault_init, vault_lock, vault_status, vault_unlock};
+use commands::vault::{
+    vault_has_charter, vault_init, vault_init_with_charter, vault_lock, vault_recovery_unlock,
+    vault_status, vault_unlock,
+};
 use commands::vault_settings::{vault_setting_get, vault_setting_set};
 use commands::kill_switch::{
     kill_switch_request_confirm, kill_switch_revoke,
@@ -157,9 +160,12 @@ pub fn run(context: tauri::Context) {
         builder = builder.invoke_handler(tauri::generate_handler![
             greet,
             vault_init,
+            vault_init_with_charter,
             vault_unlock,
             vault_lock,
             vault_status,
+            vault_has_charter,
+            vault_recovery_unlock,
             vault_setting_get,
             vault_setting_set,
             credential_create,
@@ -239,9 +245,12 @@ pub fn run(context: tauri::Context) {
         builder = builder.invoke_handler(tauri::generate_handler![
             greet,
             vault_init,
+            vault_init_with_charter,
             vault_unlock,
             vault_lock,
             vault_status,
+            vault_has_charter,
+            vault_recovery_unlock,
             vault_setting_get,
             vault_setting_set,
             credential_create,

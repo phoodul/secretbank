@@ -192,4 +192,40 @@ impl AppContext {
         *guard = Box::new(age_vault);
         Ok(())
     }
+
+    /// Initialize the vault and simultaneously issue a Vault Charter.
+    ///
+    /// Returns `CharterIssuance` so the calling command can serialize it for the UI
+    /// (1 회 화면 표시 후 폐기).
+    pub async fn initialize_vault_with_charter(
+        &self,
+        password: &SecretString,
+        mode: api_vault_storage::age_vault::CharterMode,
+    ) -> Result<api_vault_storage::age_vault::CharterIssuance, VaultError> {
+        let vault_path = self.data_dir.join("vault.age");
+        let mut age_vault = AgeVaultStorage::open(&vault_path).await?;
+        let issuance = age_vault.initialize_with_charter(password, mode).await?;
+        let mut guard = self.vault.write().await;
+        *guard = Box::new(age_vault);
+        Ok(issuance)
+    }
+
+    /// Recover the vault using a `CharterSecret` and reissue with `new_password`.
+    ///
+    /// Returns the optional new `CharterIssuance` (if `new_charter_mode != None`).
+    pub async fn recover_vault_with_charter(
+        &self,
+        charter_secret: api_vault_charter::CharterSecret,
+        new_password: &SecretString,
+        new_charter_mode: api_vault_storage::age_vault::CharterMode,
+    ) -> Result<api_vault_storage::age_vault::CharterIssuance, VaultError> {
+        let vault_path = self.data_dir.join("vault.age");
+        let mut age_vault = AgeVaultStorage::open(&vault_path).await?;
+        let issuance = age_vault
+            .recover_with_charter(charter_secret, new_password, new_charter_mode)
+            .await?;
+        let mut guard = self.vault.write().await;
+        *guard = Box::new(age_vault);
+        Ok(issuance)
+    }
 }
