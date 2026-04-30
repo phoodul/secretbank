@@ -31,6 +31,12 @@ function renderLockScreen(showCreate = false, onSuccess = vi.fn()) {
 describe("LockScreen", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default invoke mock — vault_has_charter (mount-time effect) returns false
+    // unless a specific test overrides via mockResolvedValueOnce.
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === "vault_has_charter") return false;
+      return undefined;
+    });
   });
 
   afterEach(() => {
@@ -57,8 +63,11 @@ describe("LockScreen", () => {
     const user = userEvent.setup();
     const onSuccess = vi.fn();
 
-    // vault_unlock이 성공으로 resolve
-    mockInvoke.mockResolvedValueOnce(undefined);
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === "vault_has_charter") return false;
+      if (cmd === "vault_unlock") return undefined;
+      return undefined;
+    });
 
     renderLockScreen(false, onSuccess);
 
@@ -81,8 +90,11 @@ describe("LockScreen", () => {
   it("실패 경로: wrong_password 에러 시 인라인 에러 메시지를 표시한다", async () => {
     const user = userEvent.setup();
 
-    // vault_unlock이 wrong_password로 reject
-    mockInvoke.mockRejectedValueOnce({ code: "wrong_password" });
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === "vault_has_charter") return false;
+      if (cmd === "vault_unlock") throw { code: "wrong_password" };
+      return undefined;
+    });
 
     renderLockScreen();
 
@@ -98,8 +110,11 @@ describe("LockScreen", () => {
   it("3회 연속 실패 후 쿨다운: 버튼이 비활성화되고 카운트다운이 표시된다", async () => {
     const user = userEvent.setup();
 
-    // 3번 모두 wrong_password로 reject
-    mockInvoke.mockRejectedValue({ code: "wrong_password" });
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === "vault_has_charter") return false;
+      if (cmd === "vault_unlock") throw { code: "wrong_password" };
+      return undefined;
+    });
 
     renderLockScreen();
 

@@ -12,6 +12,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { PairJoinerDialog } from "@/features/sync/PairJoinerDialog";
 import { usePairDeepLink } from "@/features/sync/use-pair-deep-link";
 import { CreateVaultDialog } from "./CreateVaultDialog";
+import { RecoveryDialog } from "./RecoveryDialog";
 import { VaultMechanism, type VaultState } from "./VaultMechanism";
 import {
   ParticleField,
@@ -64,6 +65,20 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [pairOpen, setPairOpen] = useState(false);
   const [pairPrefillUrl, setPairPrefillUrl] = useState<string | undefined>(undefined);
+  const [hasCharter, setHasCharter] = useState(false);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+
+  // Mount 시 vault 가 charter envelope 을 가지고 있는지 확인. showCreate=false 인 경우만
+  // 의미가 있다 (이미 vault 가 있는 경우). showCreate=true 면 vault 자체가 없어 false.
+  useEffect(() => {
+    if (showCreate) {
+      setHasCharter(false);
+      return;
+    }
+    invoke("vault_has_charter")
+      .then((v) => setHasCharter(Boolean(v)))
+      .catch(() => setHasCharter(false));
+  }, [showCreate]);
 
   // Deep-link auto-route — apivault://pair?... 로 진입하면 PairJoinerDialog
   // 자동 open. uninitialized 상태에서만 (showCreate=true) listener 활성.
@@ -359,6 +374,22 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
                 {t("vault.unlockButton")}
               </Button>
 
+              {/* Initialized + charter 보유 vault — Forgot passphrase 진입점 */}
+              {!showCreate && hasCharter && (
+                <button
+                  type="button"
+                  className="text-xs font-medium underline-offset-4 hover:underline"
+                  style={{
+                    color: "oklch(from var(--vault-gold) l c h / 0.78)",
+                    textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
+                  }}
+                  onClick={() => setRecoveryOpen(true)}
+                  data-testid="lockscreen-forgot-link"
+                >
+                  {t("vault.recovery.forgotLink")}
+                </button>
+              )}
+
               {/* uninitialized 상태일 때만 CreateVault + Pair 링크 표시 */}
               {showCreate && (
                 <div
@@ -422,6 +453,13 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
             prefillUrl={pairPrefillUrl}
           />
         </>
+      )}
+      {!showCreate && hasCharter && (
+        <RecoveryDialog
+          open={recoveryOpen}
+          onOpenChange={setRecoveryOpen}
+          onSuccess={onSuccess}
+        />
       )}
     </div>
   );
