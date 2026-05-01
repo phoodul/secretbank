@@ -125,12 +125,13 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Tauri bundle
+      # Real release path — uses tauri-action to upload artifacts to a draft Release.
+      - name: Build Tauri bundle (release upload)
+        if: ${{ !inputs.dry_run }}
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # 코드 서명 — secrets 가 없으면 skip 되고 unsigned 로 빌드.
-          # (실제 prod release 전에 secrets 등록 필수.)
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           # macOS notarization
@@ -147,6 +148,16 @@ jobs:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
           tagName: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+
+      # Dry-run path — calls `pnpm tauri build` directly so we get raw logs and
+      # don't need a GitHub Release to exist. Same signing secrets, no upload.
+      - name: Build Tauri bundle (dry run — no upload)
+        if: ${{ inputs.dry_run }}
+        shell: bash
+        run: pnpm tauri build ${{ matrix.args }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Upload bundle artifacts (dry run)
         if: ${{ inputs.dry_run }}
