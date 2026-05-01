@@ -62,7 +62,16 @@
     "keyCleared": "密钥已清除",
     "saveKeyFailed": "保存密钥失败",
     "vaultLockedWarning": "请先解锁保险库以更改此设置。",
-    "keyConfiguredPlaceholder": "已配置（隐藏）"
+    "keyConfiguredPlaceholder": "已配置（隐藏）",
+    "charterCooldown": "Charter 恢复冷却 (7 天)",
+    "charterCooldownDescription": "通过 Vault Charter 恢复后,封锁 unlock 7 天。防范设备失窃 + Charter 失窃的纵深防御。",
+    "charterCooldownActive": "冷却生效中 — unlock 约被封锁 {{hours}} 小时。",
+    "charterCooldownClear": "解除冷却",
+    "charterCooldownClearConfirm": "解除当前冷却? 之后的 unlock 将立即生效。",
+    "charterCooldownClearedToast": "已解除冷却。",
+    "charterCooldownToggleFailed": "无法更改冷却设置。",
+    "charterLastRecoveredAt": "最近恢复: {{when}}",
+    "internalError": "发生意外错误。请重试。"
   },
   "inventory": {
     "title": "清单",
@@ -217,7 +226,47 @@
     "alreadyInitialized": "保险库已存在，请直接解锁。",
     "internalError": "发生了意外错误，请重试。",
     "loading": "正在检查保险库状态…",
-    "lockedToast": "保险库已锁定"
+    "lockedToast": "保险库已锁定",
+    "charterCooldownActive": "恢复冷却生效中。Vault 约被锁定 {{hours}} 小时。",
+    "charter": {
+      "modeLabel": "恢复 Charter",
+      "modeHelp": "如果你忘记密码短语,这是恢复 Vault 的唯一方法。中继服务器无法提供帮助 — 你的 Vault 是端到端加密的。",
+      "modeNone": "跳过 — 我接受丢失密码短语意味着丢失 Vault",
+      "modeSingle": "单个 Charter (推荐)",
+      "modeSingleHelp": "一份可打印的文档,包含 6 个单词和一个 4 位验证码。请离线保存。",
+      "modeShamir": "Shamir 2-of-3 (高级)",
+      "modeShamirHelp": "3 份独立文档 — 任意 2 份可重建 Charter。分发给家人 / 律师 / 保险柜。",
+      "issuanceTitle": "Vault Charter",
+      "issuanceSubtitle": "请保存或打印一次。我们无法再次显示。",
+      "warningHeader": "这是你 Vault 的唯一恢复密钥。",
+      "warningBody": "请存放在物理安全的地方。任何持有此 Charter 的人都能恢复你的 Vault,但若丢失则 Vault 也永久丢失。",
+      "printButton": "打印",
+      "doneButton": "已保存",
+      "confirmDoneTitle": "已保存 Charter 吗?",
+      "confirmDoneBody": "关闭此对话框后 Charter 将不再显示。若丢失则无法恢复 Vault。",
+      "confirmDoneCancel": "尚未",
+      "confirmDoneConfirm": "是,已保存",
+      "shareLabel": "分片 {{index}} / 3",
+      "verifierLabel": "验证码"
+    },
+    "recovery": {
+      "forgotLink": "忘记密码短语?",
+      "title": "通过 Charter 恢复 Vault",
+      "subtitle": "输入 Vault Charter 以解锁并重置密码短语。",
+      "modeSingle": "单个 Charter (6 单词 + 验证码)",
+      "modeShamir": "Shamir 2-of-3 (任意 2 个分片)",
+      "phraseLabel": "Charter 短语",
+      "phrasePlaceholder": "WORD1 WORD2 WORD3 WORD4 WORD5 WORD6 - 1234",
+      "shareLabel": "分片 {{index}}",
+      "sharePlaceholder": "分片 {{index}} / 3: WORD1 WORD2 WORD3 WORD4 WORD5 WORD6 WORD7 - 1234",
+      "newPassphraseLabel": "新的密码短语",
+      "newPassphraseConfirmLabel": "确认新的密码短语",
+      "submitButton": "恢复并重置密码短语",
+      "successToast": "Vault 已恢复。请使用新的密码短语登录。",
+      "errorAbsent": "此 Vault 没有 Vault Charter。无法恢复。",
+      "errorInvalid": "Charter 无法解锁此 Vault。请检查拼写和验证码。",
+      "errorParse": "Charter 格式无效。{{detail}}"
+    }
   },
   "auth": {
     "signIn": {

@@ -62,7 +62,16 @@
     "keyCleared": "キーを削除しました",
     "saveKeyFailed": "キーの保存に失敗しました",
     "vaultLockedWarning": "この設定を変更するにはボールトをアンロックしてください。",
-    "keyConfiguredPlaceholder": "設定済み（非表示）"
+    "keyConfiguredPlaceholder": "設定済み（非表示）",
+    "charterCooldown": "Charter リカバリ クールダウン (7日間)",
+    "charterCooldownDescription": "Vault Charter によるリカバリの後、7日間 unlock をブロックします。盗難 PC + Charter 盗難への多層防御。",
+    "charterCooldownActive": "クールダウン有効中 — unlock は約 {{hours}} 時間ブロックされます。",
+    "charterCooldownClear": "クールダウン解除",
+    "charterCooldownClearConfirm": "現在のクールダウンを解除しますか? 以降の unlock はすぐに動作します。",
+    "charterCooldownClearedToast": "クールダウンを解除しました。",
+    "charterCooldownToggleFailed": "クールダウン設定を変更できませんでした。",
+    "charterLastRecoveredAt": "最終リカバリ: {{when}}",
+    "internalError": "予期しないエラーが発生しました。もう一度お試しください。"
   },
   "inventory": {
     "title": "インベントリ",
@@ -217,7 +226,47 @@
     "alreadyInitialized": "ボールトはすでに存在します。ロックを解除してください。",
     "internalError": "予期しないエラーが発生しました。再度お試しください。",
     "loading": "ボールトの状態を確認中…",
-    "lockedToast": "ボールトをロックしました"
+    "lockedToast": "ボールトをロックしました",
+    "charterCooldownActive": "リカバリ クールダウン有効中。Vault は約 {{hours}} 時間 ロックされます。",
+    "charter": {
+      "modeLabel": "リカバリ Charter",
+      "modeHelp": "パスフレーズを忘れた場合、これが Vault を復旧する唯一の方法です。リレーサーバーは助けられません — Vault はエンドツーエンド暗号化されています。",
+      "modeNone": "スキップ — パスフレーズを失えば Vault も失うことを承知しています",
+      "modeSingle": "シングル Charter (推奨)",
+      "modeSingleHelp": "印刷可能な書類1枚に6語 + 4桁の検証子。オフラインで保管してください。",
+      "modeShamir": "Shamir 2-of-3 (上級)",
+      "modeShamirHelp": "3つの別々の書類 — そのうち2つで Charter を再構築。家族 / 弁護士 / 金庫 に分散。",
+      "issuanceTitle": "Vault Charter",
+      "issuanceSubtitle": "1度だけ保存または印刷してください。再表示はできません。",
+      "warningHeader": "これは Vault の唯一のリカバリキーです。",
+      "warningBody": "物理的に安全な場所に保管してください。この Charter を持つ者は誰でも Vault を復旧できますが、紛失すれば Vault も永遠に失います。",
+      "printButton": "印刷",
+      "doneButton": "保存しました",
+      "confirmDoneTitle": "Charter を保存しましたか?",
+      "confirmDoneBody": "このダイアログを閉じると Charter は二度と表示されません。紛失すると Vault の復旧は不可能になります。",
+      "confirmDoneCancel": "まだです",
+      "confirmDoneConfirm": "はい、保存しました",
+      "shareLabel": "シェア {{index}} / 3",
+      "verifierLabel": "検証子"
+    },
+    "recovery": {
+      "forgotLink": "パスフレーズを忘れた?",
+      "title": "Charter で Vault を復旧",
+      "subtitle": "Vault Charter を入力して unlock + パスフレーズをリセット。",
+      "modeSingle": "シングル Charter (6語 + 検証子)",
+      "modeShamir": "Shamir 2-of-3 (任意の2シェア)",
+      "phraseLabel": "Charter フレーズ",
+      "phrasePlaceholder": "WORD1 WORD2 WORD3 WORD4 WORD5 WORD6 - 1234",
+      "shareLabel": "シェア {{index}}",
+      "sharePlaceholder": "シェア {{index}} / 3: WORD1 WORD2 WORD3 WORD4 WORD5 WORD6 WORD7 - 1234",
+      "newPassphraseLabel": "新しいパスフレーズ",
+      "newPassphraseConfirmLabel": "新しいパスフレーズの確認",
+      "submitButton": "復旧してパスフレーズをリセット",
+      "successToast": "Vault を復旧しました。新しいパスフレーズでサインインしてください。",
+      "errorAbsent": "この Vault には Vault Charter がありません。復旧できません。",
+      "errorInvalid": "Charter ではこの Vault を unlock できません。スペルと検証子を確認してください。",
+      "errorParse": "Charter の形式が無効です。{{detail}}"
+    }
   },
   "auth": {
     "signIn": {
