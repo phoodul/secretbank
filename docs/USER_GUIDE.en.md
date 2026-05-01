@@ -50,11 +50,14 @@ Builds: https://github.com/api-vault/api-vault/releases
 
 1. On first launch you see "**Create vault**".
 2. Enter a master passphrase (16+ chars recommended — 4–6 random words).
-3. A 24-word recovery code is shown. **Write it on paper, store offline.**
-   Do not paste it into a clipboard manager.
-4. Confirm and an empty vault is created.
+3. Choose a Vault Charter mode (recommended: **Single charter**). Click
+   **Create vault** and a printable charter is shown — 6 Diceware words
+   plus a 4-digit verifier. **Print or write it on paper, store offline.**
+   Do not paste it into a clipboard manager. The charter is shown only once.
+4. Confirm "I've saved it" and an empty vault is created. (See §12.3 for
+   Shamir 2-of-3 mode and recovery instructions.)
 
-> ⚠️ If you lose **both** the master passphrase and the recovery code, the
+> ⚠️ If you lose **both** the master passphrase and the Vault Charter, the
 > data is **unrecoverable**. We can't help — that's the cost of
 > Zero-Knowledge.
 
@@ -443,12 +446,42 @@ Cursor — picks these up automatically.
 2. Provide the backup file + master passphrase.
 3. Done. Graph, usage, RAILGUARD rulesets — all preserved.
 
-### 12.3 Lost master passphrase
+### 12.3 Lost master passphrase — Vault Charter
 
-- Your **24-word recovery code** is the only way back in.
-- Enter it to temporarily unlock, then immediately set a new passphrase.
-- Lost the recovery code too? The data is unrecoverable. That is the
-  trade-off of Zero-Knowledge.
+When you create a vault you can issue a **Vault Charter** — the only key that
+can unlock the vault if the passphrase is lost. The relay server cannot help:
+your data is end-to-end encrypted on this device.
+
+Two modes (chosen at vault creation, changeable at recovery time):
+
+- **Single charter** (recommended). 6 Diceware words + a 4-digit verifier.
+  One sheet, store offline.
+  ```
+  TUNDRA HARBOR FLINT MOTH OPAL CASCADE - 7042
+  ```
+  The 4-digit verifier rejects single-word typos immediately — you do not
+  silently end up with a useless recovery key.
+
+- **Shamir 2-of-3** (advanced). Three sheets, any **two** reconstruct the
+  charter. Distribute to family / lawyer / safe — losing one sheet does not
+  lose the vault, and a single stolen sheet leaks zero bits about the secret.
+
+To recover:
+
+1. On the lock screen, click **Forgot your passphrase?**
+2. Pick the mode you used (single / Shamir).
+3. Type the charter (or any 2 of 3 shares) and a new passphrase.
+4. The vault is reissued with the new passphrase. The old charter is now
+   invalidated; a new charter is offered (recommended — the old one was on
+   paper that may have leaked).
+
+Optional **7-day cooldown** (Settings → Security): after a recovery, the
+vault refuses to unlock for 7 days even with the correct new passphrase.
+Defense in depth against "stolen laptop + stolen charter" — gives you time
+to wipe the vault file remotely.
+
+Lost the charter too? The data is unrecoverable. That is the trade-off of
+Zero-Knowledge.
 
 ---
 
