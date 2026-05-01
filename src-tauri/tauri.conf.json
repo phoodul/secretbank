@@ -30,7 +30,9 @@
     },
     "updater": {
       "pubkey": "",
-      "endpoints": []
+      "endpoints": [
+        "https://github.com/api-vault/api-vault/releases/latest/download/latest.json"
+      ]
     }
   },
   "bundle": {

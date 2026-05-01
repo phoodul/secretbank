@@ -15,12 +15,16 @@ matches it to your vault automatically and surfaces exactly which services are a
 ## Features (MVP)
 
 - **Zero-Knowledge vault** — secrets are encrypted on-device; the relay server never sees plaintext
+- **Vault Charter recovery** — Diceware 6-word + 4-digit verifier with optional Shamir 2-of-3 split. Lose your passphrase, not your vault.
 - **Dependency graph** — visual map of Issuer → Credential → Usage → Project → Deployment → URL
 - **Blast radius preview** — simulate what breaks before you revoke a key
-- **Incident feed** — auto-match NVD/GitHub Advisory alerts to credentials in your vault
+- **Supply chain risk graph** — match `package.json` / `Cargo.toml` deps against the OSV.dev advisory feed
+- **Incident feed** — auto-match NVD / GitHub Advisory alerts to credentials in your vault
 - **Kill Switch** — one-click revoke with two-step confirmation (free tier)
 - **RAILGUARD** — auto-generate `.cursorrules` / `CLAUDE.md` / Copilot instructions for AI editors
-- **Multi-device E2EE sync** — Yjs + SecSync delta CRDT over a Cloudflare Workers relay
+- **CLI + MCP** — `apivault run -- cmd` (Doppler-style env injection from your dependency graph) and a stdio MCP server for Claude / Cursor / Copilot
+- **VS Code + JetBrains plugins** — package hover, supply-chain diagnostics, blast-radius graph
+- **Multi-device E2EE sync** — Yjs CRDT + XChaCha20-Poly1305 over a Cloudflare Workers relay
 - **Open Core** — local vault and graph engine are AGPL-3.0; premium connectors and relay are EE
 
 ## Tech Stack
