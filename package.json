@@ -16,7 +16,8 @@
     "test": "vitest",
     "e2e": "playwright test --config=e2e/playwright.config.ts",
     "e2e:install": "playwright install --with-deps chromium",
-    "e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui"
+    "e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
+    "capture:demo": "npx --yes tsx scripts/capture-demo.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",

@@ -23,6 +23,9 @@ const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 5173);
 export default defineConfig({
   testDir: ".",
   testMatch: /.*\.spec\.ts$/,
+  // demo.spec.ts 는 marketing 영상 캡처 전용 — 일반 E2E 흐름에서 제외.
+  // 별도 실행: `pnpm capture:demo` (scripts/capture-demo.ts)
+  testIgnore: /.*demo\.spec\.ts$/,
   timeout: 30_000,
   expect: { timeout: 5_000 },
   fullyParallel: true,

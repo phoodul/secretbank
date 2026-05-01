@@ -80,3 +80,7 @@ jetbrains-plugin/.idea/
 jetbrains-plugin/gradle/
 jetbrains-plugin/gradlew
 jetbrains-plugin/gradlew.bat
+
+# Marketing 영상 — 큰 binary, 필요 시 `pnpm capture:demo` 로 재생성
+media/*.webm
+media/*.mp4
