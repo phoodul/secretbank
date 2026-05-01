@@ -485,7 +485,153 @@ Zero-Knowledge.
 
 ---
 
-## 13. FAQ
+## 13. Troubleshooting
+
+### 13.1 Windows — "Windows protected your PC" SmartScreen warning
+
+**Symptom:** On first launch, Windows shows "Microsoft Defender SmartScreen
+prevented an unrecognized app from starting."
+
+**Cause:** Until we have a Windows OV/EV code-signing certificate (purchased
+post-launch — not for v0.1.x), the installer is unsigned. SmartScreen
+flags every unsigned `.exe` until enough users have installed it for
+"reputation" to build.
+
+**Fix (user):** Click **More info** → **Run anyway**. The vault is
+otherwise unaffected — the binary is the same one built by GitHub Actions
+from public, AGPL source.
+
+**Fix (us, post-launch):** Once we ship an OV cert, this warning
+disappears for new installs.
+
+### 13.2 macOS — "App is damaged and can't be opened"
+
+**Symptom:** macOS refuses to launch the app, says it's damaged.
+
+**Cause:** Gatekeeper blocks un-notarized apps from unidentified developers.
+For v0.1.x we have a Tauri update-signing key but no Apple Developer
+notarization yet.
+
+**Fix:**
+```sh
+xattr -cr "/Applications/API Vault.app"
+```
+The first command strips the quarantine attribute Gatekeeper added on
+download. After that, double-click works normally.
+
+Or, in the **Security & Privacy** pane, click **Open Anyway** after the
+first failed launch.
+
+### 13.3 Linux — `error while loading shared libraries: libwebkit2gtk-4.1.so.0`
+
+**Symptom:** App fails with a missing-library error on Ubuntu/Debian.
+
+**Cause:** Tauri v2 needs WebKit2GTK 4.1 (newer than the GTK 4.0 default
+on some distros).
+
+**Fix (Debian/Ubuntu):**
+```sh
+sudo apt-get install -y libwebkit2gtk-4.1-0 libayatana-appindicator3-1
+```
+
+**Fix (Fedora/RHEL):**
+```sh
+sudo dnf install -y webkit2gtk4.1 libappindicator-gtk3
+```
+
+### 13.4 "Vault is locked" but you typed the right passphrase
+
+**Possible causes:**
+1. **Cooldown active** after a Charter recovery (default 7 days). Settings
+   → Security → "Charter recovery cooldown" shows whether it's on.
+   Solution: wait, or click **Clear cooldown** (audited).
+2. **Wrong vault file.** The default is `~/.local/share/api-vault/vault.age`
+   (Linux), `~/Library/Application Support/api-vault/vault.age` (macOS),
+   `%APPDATA%\api-vault\vault.age` (Windows). If you migrated machines
+   without copying this file, you have an empty new vault.
+3. **Caps Lock or different keyboard layout.** Sounds obvious — it's still
+   the #1 cause.
+
+### 13.5 Auto-updater never finds a new version
+
+**Symptom:** "You're up to date" even after a new GitHub Release.
+
+**Diagnose:**
+- Check **Settings → Updates** for the last-checked timestamp.
+- Verify network reachability to `github.com` (the updater hits
+  `releases/latest/download/latest.json`).
+- For pre-release tags (`v0.1.0-pre1`), the updater **intentionally**
+  skips them on the stable channel.
+
+**Hard refresh:**
+1. Quit the app.
+2. Delete the updater cache:
+   - macOS: `~/Library/Caches/api-vault/updater/`
+   - Linux: `~/.cache/api-vault/updater/`
+   - Windows: `%LOCALAPPDATA%\api-vault\Cache\updater\`
+3. Relaunch.
+
+### 13.6 CLI — `apivault: command not found`
+
+The CLI binary is installed alongside the desktop app. Add it to your PATH:
+
+| OS | Path |
+| :-- | :-- |
+| macOS | `/Applications/API Vault.app/Contents/MacOS/apivault` |
+| Linux (deb/rpm) | `/usr/bin/apivault` |
+| Linux (AppImage) | extract first, the binary is in `usr/bin/apivault` |
+| Windows | `%LOCALAPPDATA%\Programs\api-vault\apivault.exe` |
+
+For convenience, symlink to a directory that's already on PATH:
+```sh
+# macOS
+sudo ln -s "/Applications/API Vault.app/Contents/MacOS/apivault" /usr/local/bin/apivault
+
+# Linux
+sudo ln -s /usr/bin/apivault /usr/local/bin/apivault
+
+# Windows (PowerShell as admin)
+New-Item -ItemType SymbolicLink -Path "C:\Windows\apivault.exe" `
+  -Target "$env:LOCALAPPDATA\Programs\api-vault\apivault.exe"
+```
+
+### 13.7 MCP server doesn't appear in Claude Desktop / Cursor
+
+**Verify config:**
+- Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows). Section 10.3 of this guide has the exact JSON.
+- Cursor: `~/.cursor/mcp.json`.
+
+**Common pitfalls:**
+- Path uses single backslashes on Windows — must be **double-escaped**
+  in JSON: `"C:\\Users\\you\\..."`.
+- Claude Desktop must be **fully quit** (not just closed) to reload the
+  config: tray icon → Quit, then relaunch.
+- Vault must be **unlocked** when the host calls `reveal_credential` —
+  the MCP server queries the live desktop session. Lock = empty.
+
+### 13.8 Charter recovery rejected — "Charter does not unlock this vault"
+
+The Charter is verified by both **content** (6 words) and **verifier**
+(the 4-digit number printed alongside). A single-letter typo in any word
+will fail the SHA-256 check and reject before any decryption attempt.
+
+Steps:
+1. Re-check the **6 words** against your printed copy. Words use the
+   EFF large wordlist — common short English words.
+2. Re-check the **4-digit verifier** (a number from `0000` to `9999`).
+   It's case-insensitive but must be exact.
+3. For Shamir 2-of-3: only **2 of any 3** shares are needed. If you
+   have all three, try different pair combinations — one share may have
+   a typo while the other two are clean.
+
+If the words are exactly right and recovery still fails, the vault file
+itself may have been replaced (e.g., by an OS reinstall that overwrote
+your data directory). In that case the Charter is for a different
+vault and recovery is not possible.
+
+---
+
+## 14. FAQ
 
 **Q. How is this different from 1Password / Bitwarden?**
 A. They're vaults. We're vault + **dependency graph** + **blast-radius
@@ -517,4 +663,4 @@ disclosure.
 
 ---
 
-Last updated: 2026-04-28 — at M20 v2 / M21 v3.
+Last updated: 2026-05-02 — at M23 Vault Charter close + first prerelease infra.
