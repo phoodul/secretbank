@@ -2,7 +2,19 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-01 (M23 Vault Charter 클로즈 + 출시 폴리시 lap 종료 + **출시 경로 통일 lap (21 파일 일괄 정정)**)
+- **Time:** 2026-05-01 (M23 Vault Charter 클로즈 + 출시 폴리시 lap + **출시 경로 통일 lap** + **release.yml dry-run 모드 추가**)
+- **release.yml dry-run lap (이번 turn):**
+  - `workflow_dispatch.inputs` 에 `dry_run` boolean 추가, `tag` 를 optional + default `v0.0.0-dryrun` 으로 변경
+  - `create-release` job 에 `if: !inputs.dry_run` — Release 생성 skip
+  - `build-tauri` job 에 `if: always() && (success || skipped)` — `create-release` skip 도 통과
+  - `tagName` 을 `github.event_name == 'push' ? github.ref_name : inputs.tag` 로 분기
+  - `Upload bundle artifacts (dry run)` step 추가 — `actions/upload-artifact@v4` 로 bundle 캡처
+  - `publish-release` 에 `if: !inputs.dry_run`
+  - `publish-vscode-extension` 에 `if: !inputs.dry_run && !contains(ref_name, '-')`
+  - `RELEASE_GUIDE.md` 에 "Dry-run pipeline check" 섹션 추가 — 사용법 + 실패 모드별 디버깅
+  - **사용법**: GitHub Actions 페이지 → Release workflow → Run workflow → "Dry run" 체크 → Run. 빌드 결과는 workflow run artifacts 로 다운로드 가능.
+- **사용자 secrets 등록 완료 (이전 turn):** `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 둘 다 등록됨. dry-run 으로 즉시 검증 가능 상태.
+- **출시 경로 통일 lap (이전 turn — `82b5d79`):**
 - **출시 경로 통일 lap (이번 turn):**
   - GitHub repo URL: `api-vault/api-vault` → `phoodul/api-vault` (17 파일, 27 occurrences)
   - 잘못된 도메인 표기: `apivault.app` (squatter 보유) → `api-vault.app` (사용자 보유) (4 파일, 17 occurrences)

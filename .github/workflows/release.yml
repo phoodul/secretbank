@@ -4,22 +4,34 @@ name: Release
 # Builds Tauri bundles for Windows / macOS (universal) / Linux and uploads
 # them to a GitHub Release. The desktop installer + tauri-updater manifest
 # end up on https://github.com/phoodul/api-vault/releases.
+#
+# Manual workflow_dispatch supports `dry_run` mode — builds all platforms
+# without creating a GitHub Release; bundles are uploaded as workflow
+# artifacts for inspection. Use this to verify the pipeline (Rust toolchain,
+# Tauri bundle, signing secrets) before pushing the first real tag.
 
 on:
   push:
     tags:
       - "v*"
-  workflow_dispatch: # 수동 트리거 (긴급 hotfix용)
+  workflow_dispatch: # 수동 트리거 (긴급 hotfix 또는 dry-run 빌드 검증)
     inputs:
       tag:
-        description: "Release tag (vX.Y.Z)"
-        required: true
+        description: "Release tag (vX.Y.Z) — dry_run 일 때는 placeholder OK"
+        required: false
+        default: "v0.0.0-dryrun"
+      dry_run:
+        description: "Dry run — 빌드만 검증, GitHub Release 생성/업로드 안 함"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
 
 jobs:
   create-release:
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     outputs:
       release_id: ${{ steps.create.outputs.result }}
@@ -54,6 +66,7 @@ jobs:
 
   build-tauri:
     needs: create-release
+    if: ${{ always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped') }}
     strategy:
       fail-fast: false
       matrix:
@@ -133,10 +146,21 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
-          tagName: ${{ github.ref_name }}
+          tagName: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+
+      - name: Upload bundle artifacts (dry run)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.platform }}
+          path: |
+            src-tauri/target/release/bundle/**/*
+            src-tauri/target/universal-apple-darwin/release/bundle/**/*
+          if-no-files-found: warn
 
   publish-release:
     needs: [create-release, build-tauri]
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
@@ -152,7 +176,7 @@ jobs:
   publish-vscode-extension:
     needs: build-tauri
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.ref_name, '-') }} # pre-release 는 skip
+    if: ${{ !inputs.dry_run && !contains(github.ref_name, '-') }} # dry-run / pre-release skip
     defaults:
       run:
         working-directory: vscode-extension

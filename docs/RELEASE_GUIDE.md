@@ -129,6 +129,40 @@ desktop app's `src/`).
       release's vault file.
 - [ ] User-facing strings reviewed (en + ko at minimum).
 
+### Dry-run pipeline check (recommended before first real tag)
+
+Before pushing a real `v*` tag, you can verify the entire build/sign
+pipeline without creating a GitHub Release. The Release workflow accepts
+a `dry_run` boolean input via manual trigger.
+
+1. Open https://github.com/phoodul/api-vault/actions/workflows/release.yml
+2. Click **Run workflow** (top-right).
+3. Leave `tag` at the default (`v0.0.0-dryrun`) and check **Dry run**.
+4. **Run workflow**.
+
+What runs:
+- ✅ All 3 platform builds (macOS universal / Windows / Linux).
+- ✅ Tauri signing key applied (verifies `TAURI_SIGNING_PRIVATE_KEY` +
+  `_PASSWORD` secrets are valid; an unsigned bundle is OK if you haven't
+  registered them yet).
+- ✅ Bundles uploaded as **workflow artifacts** (downloadable from the
+  run page for ~90 days).
+- ❌ No GitHub Release created.
+- ❌ No tag created/pushed.
+- ❌ VS Code extension not published.
+
+Common dry-run failure modes:
+- "Invalid base64 secret key" → `TAURI_SIGNING_PRIVATE_KEY` was pasted
+  incorrectly. Re-copy with `Get-Content $HOME\.tauri\api-vault.key | Set-Clipboard`
+  and re-add the secret.
+- "Decryption failed" → `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` mismatch.
+- macOS notarization step failure → APPLE_* secrets missing or wrong;
+  it's safe to ignore for a first dry-run if you haven't registered
+  Apple Developer yet.
+- Linux missing system deps → bug in `Install Linux system deps` step.
+
+When dry-run is green, push the real tag.
+
 ### Cut the release
 
 ```sh
