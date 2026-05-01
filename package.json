@@ -17,7 +17,9 @@
     "e2e": "playwright test --config=e2e/playwright.config.ts",
     "e2e:install": "playwright install --with-deps chromium",
     "e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
-    "capture:demo": "npx --yes tsx scripts/capture-demo.ts"
+    "capture:demo": "npx --yes tsx scripts/capture-demo.ts",
+    "version:bump": "npx --yes tsx scripts/version-bump.ts",
+    "changelog:gen": "npx --yes tsx scripts/changelog-from-commits.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
