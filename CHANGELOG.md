@@ -13,6 +13,65 @@ radius before you rotate or revoke a key.
 
 ### Added
 
+#### M23 — Vault Charter recovery (출시 블로커 해소, milestone close)
+
+- **`api-vault-charter` crate** — EFF Diceware large wordlist (7776 words,
+  public domain) embedded; 6-word + 4-digit verifier codec; Shamir Secret
+  Sharing 2-of-3 (sharks crate, GF(2⁸) byte-wise); XChaCha20-Poly1305
+  envelope wrapping a 32B `enc_key` with Argon2id-derived charter key.
+  31 unit tests covering codec round-trip, single-word typo detection,
+  share split + 2-of-3 reconstruction, wrong-charter and tampered-envelope
+  rejection, secret zeroize on drop.
+- **Vault file format v2** — `CHARTER_FLAG (1B) + LEN (2B) + envelope (≤1024B)`
+  appended to the v1 header. Legacy v1 files read transparently with
+  `charter_envelope = None`. 7 file-level regressions.
+- **`AgeVaultStorage::initialize_with_charter`** — vault creation issues a
+  charter (Single / Shamir2of3 / None) atomic with the empty record map.
+  Issued `Charter` / `ShamirShare` is shown to the UI once and never
+  persisted. 7 integration tests.
+- **`AgeVaultStorage::recover_with_charter`** — charter unwraps the envelope
+  back to `enc_key`, decrypts the existing records, then rewraps everything
+  under a fresh salt + new passphrase. Old passphrase and old charter are
+  both invalidated; an optional new charter mode is offered. 7 integration
+  tests including Shamir-combine recovery and post-recovery rotation.
+- **3 Tauri commands** — `vault_init_with_charter`, `vault_recovery_unlock`,
+  `vault_has_charter`. DTOs (`CharterIssuanceDto` with snake_case `kind`
+  tag, `CharterRecoveryInput` for single phrase or Shamir share list).
+  Audit hook records `vault.charter.issued` and `vault.charter.recovered`
+  with cooldown metadata. 9 unit tests.
+- **Charter UI (Lapis tone, printable)** — `CharterDisplay` with brass-and-
+  lapis SVG seal artwork, monospace word grid, 4-digit verifier line,
+  per-share index for Shamir mode. `@media print` strips the warning banner
+  and overlay; backgrounds become white-on-black for paper. Two-step "I've
+  saved it" confirmation overlay prevents accidental dismissal.
+- **`RecoveryDialog`** — `Forgot your passphrase?` link on the lock screen
+  (only when `vault_has_charter` is true). Mode radios (single / Shamir),
+  3 share textareas with optional 3rd, new passphrase + confirm with zxcvbn
+  meter, new-charter-mode radios, error mapping for `charter_absent` /
+  `charter_invalid` / `charter_parse_error`.
+- **Charter cooldown sidecar** — `vault.age.cooldown.json` plaintext
+  metadata file (enabled flag + cooldown_until_unix_ms +
+  last_recovery_unix_ms). Sits outside the encrypted vault so unlock can
+  consult it without first decrypting. `apply_recovery_event` is invoked
+  on every successful recovery; `vault_unlock` rejects with
+  `CooldownActive { seconds_remaining }` while the window is open.
+  Defense-in-depth against "stolen laptop + stolen charter" — gives the
+  legitimate owner a 7-day window to wipe the vault file remotely.
+- **Settings → Charter cooldown toggle** — `CharterCooldownSection` calls
+  `charter_cooldown_status` on mount, exposes a switch and a "Clear
+  cooldown" button when active. Vault must be unlocked to change the
+  toggle (self-attestation).
+- **i18n** — 36 charter UI keys in en + ko (vault.charter.* + vault.recovery.*),
+  9 cooldown keys.
+- **Unlock animation deceleration fix** (carry-over from Night mode 7) —
+  `VaultMechanism` ringTransition switched from spring(200/22) to
+  cubic-bezier ease-out `[0.16, 1, 0.3, 1]` with 1.4s duration. Rings
+  now visibly slow down as they snap into alignment, matching the
+  Magnific tecnologia ocular reference aesthetic.
+- **README + landing page + USER_GUIDE (en/ko) + TERMS** — updated
+  references from "24-word recovery code" placeholder to actual Vault
+  Charter mechanics.
+
 #### M22 — JetBrains plugin (v5, milestone close)
 
 - **Blast radius visualization** — right-click a credential → "Show
