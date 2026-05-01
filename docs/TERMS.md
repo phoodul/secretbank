@@ -23,8 +23,8 @@ without subscription.
 
 - You must be at least 18 years old, or the age of legal majority in
   your jurisdiction, whichever is higher.
-- You agree to keep your master passphrase and recovery code safe. We
-  cannot recover them — see SECURITY and PRIVACY policies.
+- You agree to keep your master passphrase and Vault Charter (or Shamir
+  shares) safe. We cannot recover them — see SECURITY and PRIVACY policies.
 - One subscription = one human user. Sharing an account with multiple
   humans requires the **Team** tier (when available; see roadmap).
 
@@ -68,7 +68,7 @@ We provide:
 
 We do not provide:
 
-- Recovery if you lose both passphrase and recovery code (impossible by
+- Recovery if you lose both passphrase and Vault Charter (impossible by
   design — Zero-Knowledge).
 - Indemnity for losses caused by your operational mistakes.
 
