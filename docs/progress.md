@@ -2,6 +2,53 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-01 (M23 Vault Charter 클로즈 + 출시 폴리시 lap 종료 + **출시 경로 통일 lap (21 파일 일괄 정정)**)
+- **출시 경로 통일 lap (이번 turn):**
+  - GitHub repo URL: `api-vault/api-vault` → `phoodul/api-vault` (17 파일, 27 occurrences)
+  - 잘못된 도메인 표기: `apivault.app` (squatter 보유) → `api-vault.app` (사용자 보유) (4 파일, 17 occurrences)
+  - `src-tauri/tauri.conf.json` 의 updater pubkey 채워넣음 (사용자 로컬 `~/.tauri/api-vault.key.pub` 의 base64 형태)
+  - `docs/project-decisions.md` 에 "GitHub repo: phoodul/api-vault" 결정 추가 (이전 "api-vault org" 결정 갱신)
+  - 보존 5곳: winget path template (1), historical org 결정 (1), historical "왜 apivault.app 못 썼는지" 설명 (3)
+  - 별도 식별자 (GitHub 와 무관, 그대로 유지): vscode-extension publisher / winget PackageIdentifier / snap name / homebrew cask name 모두 `api-vault`
+- **Phase:** Phase 3 — Implementation. **출시 블로커 모두 해소**. 누적: M0~M9 ✅ + M18 v1 ✅ + M20 v1+v2 ✅ + M21 v1+v2+v3 ✅ + M22 v5 ✅ + M22.5 (Lapis Vault 디자인) ✅ + Night mode VaultMechanism 시리즈 ✅ + Night mode 18 LockScreen i18n 15개 언어 + RTL ✅ + **M23 Vault Charter ✅**.
+- **M23 Vault Charter — 풀 마일스톤 클로즈 (2026-04-30 ~ 2026-05-01, 12 code + 6 docs commits):**
+  - **A** `91ace0b` `api-vault-charter` crate — EFF Diceware 7776 + `sharks` SSS + XChaCha20-Poly1305 envelope (31 unit)
+  - **B-1** `c82b790` vault 파일 포맷 v2 — charter envelope 슬롯 (CHARTER_FLAG + 2B LEN, max 1024B) + v1 backward compat (7 회귀)
+  - **B-2** `24ce24a` `initialize_with_charter` (None/Single/Shamir2of3) + `CharterMode`/`CharterIssuance` (7 통합)
+  - **B-3** `27802f0` `recover_with_charter` — charter → 새 passphrase + 옵션 새 charter, 옛 charter 자동 무효 (7 통합)
+  - **B-4** `92531d0` Tauri 커맨드 3종 (`vault_init_with_charter` / `vault_recovery_unlock` / `vault_has_charter`) + audit hook (issued/recovered) + 9 unit
+  - **C** `855cae0` Charter 발급 UI — `CharterDisplay` (Lapis 청금석 + 황동 봉인 + 인쇄 디자인) + `CreateVaultDialog` 3-phase + en/ko 36 i18n + Vitest 7→10
+  - **D** `20d6752` `RecoveryDialog` (Single/Shamir 입력 + 새 charter 모드 라디오 + 에러 매핑) + LockScreen Forgot link (`vault_has_charter` 조건부)
+  - **Hotfix** `ac1ef95` unlock 애니메이션 마지막 ring 감속 (spring → cubic-bezier ease-out [0.16, 1, 0.3, 1], 1.4s)
+  - **E-1** `4769248` cooldown sidecar (`services/charter_cooldown.rs` + `vault.age.cooldown.json`) + `vault_unlock` 검사 + `apply_recovery_event` + 3 Tauri 커맨드 + 9 unit
+  - **E-2** `1bf141e` `CharterCooldownSection` 토글 + LockScreen cooldown_active 메시지 + en/ko 9 i18n + audit metadata 확장
+- **M23 클로즈 후 출시 폴리시 (5 commits — release infra/landing/docs):**
+  - `800bd69` feat(release) — updater endpoint + README Vault Charter / supply / IDE 소개
+  - `23e1510` feat(site) — 랜딩 페이지 Vault Charter recovery 카드 + 가격표 항목
+  - `92acfef` docs(user-guide) — Vault Charter 섹션으로 24-word recovery 갱신 (en + ko)
+  - `bc2c670` docs(terms) — recovery code → Vault Charter 용어 정정
+  - `215b538` docs(changelog) — M23 Vault Charter 항목 추가
+- **현재 git 상태:** branch `main`, working tree **clean**. 마지막 커밋 `215b538`.
+- **테스트 (M23 클로즈 시점):** 워크스페이스 clippy 0, 모든 회귀 통과.
+- **남은 핵심 마일스톤:** M10 Payments / M11 Mobile / M12 Web Viewer / **M13 i18n + Updater + Release** / M14 Auto Rotation / M15 CI/CD (T132/T133 진입) / M19 Team / M16/M17 placeholder.
+- **출시까지 남은 사용자 액션 (이전 세션 마지막 메시지에서 확정 — 코드만으로 못 끝남):**
+  1. **Tauri signing key 생성** + `tauri.conf.json` pubkey + GitHub secret (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) — 사용자 로컬 `pnpm tauri signer generate`, 5분, 무료
+  2. **첫 release tag push** — `git tag v0.1.0-pre1 && git push --tags` → `release.yml` 자동 빌드 트리거, 무료
+  3. **DNS** — `api-vault.app` 도메인을 GitHub Pages / Cloudflare Pages 로 연결 후 `site/index.html` 배포, $0–$5
+  4. **macOS notarization** — Apple Developer 등록 ($99/yr) → cert 발급 → secrets 등록
+  5. **Windows OV cert** — Sectigo / SSL.com OV cert 구매 → secrets 등록 (~$150/yr). EV 는 트랙션 후
+  6. **데모 영상** — LockScreen 애니메이션 + Charter 발급 + Recovery 흐름 30–60초 캡처 (OBS, 무료)
+  7. **Hacker News "Show HN" + Product Hunt** — Lapis Vault + Supply chain × AI agent + Charter recovery 패키지로 (무료)
+- **검증 필요한 가정:** CHANGELOG 의 "tauri-action 이 `latest.json` 자동 생성" 은 첫 dry-run release 에서 확인 필요 (현재 docs 만 명시).
+- **자율 가능 다음 lap 후보 (사용자 우선순위 결정 대기):**
+  - **A. Demo capture script** — `scripts/capture-demo.ts` puppeteer/playwright 스크립트로 LockScreen + Charter 흐름 무인 녹화. 사용자가 OBS 안 켜고 영상 추출 가능. ~30–60분.
+  - **B. Pre-release smoke test workflow** — `.github/workflows/release.yml` dry-run 모드 (tag 없이 PR 단위로 unsigned bundle 생성 + artifacts 업로드). ~30–60분.
+- **권장 우선순위:** 사용자 액션 1 (Tauri signing key) 먼저 → 그 사이 자율 lap A 또는 B 진행.
+
+---
+
+## Previous checkpoint (2026-04-30 Night mode 18 — LockScreen i18n 15개 언어)
+
 - **Time:** 2026-04-30 Night mode 18 (사용자 trigger — **LockScreen 글로벌 LanguageSwitcher 15개 언어 + RTL**. 인도어 누락 보정 후속 lap.)
 - **Phase:** Phase 3 — Implementation. M9 ✅ + M18 v1 ✅ + M20 v1+v2 ✅ + M21 v1+v3 ✅ + M22 ✅ + M22.5 (Lapis Vault 디자인) + Night mode 시리즈 (LockScreen sci-fi HUD) 진행 중. 이번 세션은 **글로벌 SaaS 비전의 첫 wedge — LockScreen i18n 진입**.
 - **이번 Night mode 18 변경 (2 commits, 같은 날 lap):**

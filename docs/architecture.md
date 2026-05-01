@@ -994,13 +994,13 @@ matrix:
 
 - `stable` — 기본, 모든 사용자.
 - `beta` — opt-in (Preferences > Advanced > Beta updates).
-- Tauri updater endpoint: `https://releases.apivault.app/{channel}/{target}/{current_version}` → GitHub Releases 리다이렉트 또는 Cloudflare R2 미러.
+- Tauri updater endpoint: `https://releases.api-vault.app/{channel}/{target}/{current_version}` → GitHub Releases 리다이렉트 또는 Cloudflare R2 미러.
 
 ### 7.4 랜딩 / 문서 호스팅
 
 - 랜딩 페이지: **Astro** (`apps/marketing/`, 별도 repo) → Cloudflare Pages.
 - 제품 문서: Starlight (Astro 기반) → Cloudflare Pages.
-- 도메인: `apivault.app` (apex → marketing), `app.apivault.app` (웹 뷰어), `relay.apivault.app` (API).
+- 도메인: `api-vault.app` (apex → marketing), `app.api-vault.app` (웹 뷰어), `relay.api-vault.app` (API).
 
 ---
 

@@ -44,7 +44,7 @@ ordered by how often you'll actually use each.
 | macOS | `api-vault_universal.dmg` or `brew install --cask api-vault` |
 | Linux | `.deb` / `.AppImage` / `.rpm` or `snap install api-vault` |
 
-Builds: https://github.com/api-vault/api-vault/releases
+Builds: https://github.com/phoodul/api-vault/releases
 
 ### 1.3 First run — set the master passphrase
 
@@ -508,7 +508,7 @@ A. No. It only stores ChaCha20-Poly1305 ciphertext produced on your device.
 The server source lives at [`/ee/`](../ee/) for verification.
 
 **Q. I want to contribute.**
-A. https://github.com/api-vault/api-vault — issues and PRs welcome. CLA
+A. https://github.com/phoodul/api-vault — issues and PRs welcome. CLA
 required before merge.
 
 **Q. I found a security issue.**

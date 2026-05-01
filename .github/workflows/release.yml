@@ -3,7 +3,7 @@ name: Release
 # Triggers when a `v*` tag is pushed (e.g. `v0.1.0`).
 # Builds Tauri bundles for Windows / macOS (universal) / Linux and uploads
 # them to a GitHub Release. The desktop installer + tauri-updater manifest
-# end up on https://github.com/api-vault/api-vault/releases.
+# end up on https://github.com/phoodul/api-vault/releases.
 
 on:
   push:

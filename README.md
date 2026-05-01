@@ -3,7 +3,7 @@
 The secrets manager that understands your dependency graph.
 
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
-![CI](https://github.com/api-vault/api-vault/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/phoodul/api-vault/actions/workflows/ci.yml/badge.svg)
 
 ## About
 

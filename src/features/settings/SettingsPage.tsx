@@ -232,7 +232,7 @@ export function SettingsPage() {
             <button
               type="button"
               className="text-primary underline-offset-4 hover:underline"
-              onClick={() => openExternal("https://github.com/api-vault/api-vault")}
+              onClick={() => openExternal("https://github.com/phoodul/api-vault")}
             >
               {t("settings.openRepo")}
             </button>

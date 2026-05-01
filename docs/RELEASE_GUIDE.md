@@ -91,8 +91,8 @@ GitHub secrets:
 
 ### 6. Homebrew tap (optional but recommended)
 
-Create a separate repo `api-vault/homebrew-api-vault`. Users then install
-with `brew install --cask api-vault/api-vault/api-vault`. The Cask file at
+Create a separate repo `phoodul/homebrew-api-vault`. Users then install
+with `brew install --cask phoodul/api-vault/api-vault`. The Cask file at
 `distribution/homebrew/Casks/api-vault.rb` goes in that tap's `Casks/`
 directory.
 

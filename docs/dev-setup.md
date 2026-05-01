@@ -53,7 +53,7 @@ Full Tauri prereqs: https://v2.tauri.app/start/prerequisites/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/api-vault/api-vault.git
+git clone https://github.com/phoodul/api-vault.git
 cd api-vault
 
 # 2. Install frontend dependencies

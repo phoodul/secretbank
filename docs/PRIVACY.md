@@ -161,7 +161,7 @@ knowingly collect their data.
 
 If the policy materially changes, we publish the new version with the
 date at the top, and Pro users get an email. Past versions are retained
-in git history at https://github.com/api-vault/api-vault/commits/main/docs/PRIVACY.md.
+in git history at https://github.com/phoodul/api-vault/commits/main/docs/PRIVACY.md.
 
 ---
 

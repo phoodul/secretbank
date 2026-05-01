@@ -11,8 +11,8 @@ cask "api-vault" do
   # is in place, ship per-arch.
   arch arm: "aarch64", intel: "x64"
 
-  url "https://github.com/api-vault/api-vault/releases/download/v#{version}/api-vault_#{version}_#{arch}.dmg",
-      verified: "github.com/api-vault/api-vault/"
+  url "https://github.com/phoodul/api-vault/releases/download/v#{version}/api-vault_#{version}_#{arch}.dmg",
+      verified: "github.com/phoodul/api-vault/"
 
   sha256 arm:   "TBD-FILL-AFTER-RELEASE-BUILD-aarch64",
          intel: "TBD-FILL-AFTER-RELEASE-BUILD-x86_64"

@@ -36,9 +36,9 @@
 
 ## Q4: Can I use this commercially without AGPL obligations?
 
-**EN:** A separate commercial license is available for organizations that cannot comply with AGPL terms (e.g., proprietary SaaS use). Contact: **contact@apivault.app** _(placeholder — not yet active)_.
+**EN:** A separate commercial license is available for organizations that cannot comply with AGPL terms (e.g., proprietary SaaS use). Contact: **contact@api-vault.app** _(placeholder — not yet active)_.
 
-**KO:** AGPL 조건을 준수할 수 없는 경우(예: 독점 SaaS 재배포) 별도 상업용 라이선스를 문의하세요: contact@apivault.app _(아직 미운영)_.
+**KO:** AGPL 조건을 준수할 수 없는 경우(예: 독점 SaaS 재배포) 별도 상업용 라이선스를 문의하세요: contact@api-vault.app _(아직 미운영)_.
 
 ---
 

@@ -1053,3 +1053,16 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - 랜딩 페이지(`site/`) 배포 타겟 확정.
   - GitHub Releases 가 binary 의 source of truth.
   - VS Code / JetBrains marketplace, Homebrew, winget, Flathub 등 다층 채널 모두 `api-vault.app` 으로 안내.
+
+## 2026-05-01 — GitHub repo 경로: `phoodul/api-vault` (org 미운영)
+
+- **결정:** 출시 GitHub repo 는 사용자 개인 계정 `phoodul/api-vault`. `api-vault` org 는 만들지 않음 (현재 1인 운영, org 비용/오버헤드 없음).
+- **이유:**
+  - org 만들어도 owner 1명 + repo 1개라 실질 차이 없음.
+  - 출시 직전 명시적 owner 결정 필요 (release.yml / homebrew tap / winget manifest / 자동 업데이트 endpoint 등에 박힘).
+  - 트랙션 잡히면 `api-vault` org 로 transfer 가능 (GitHub 의 transfer 는 redirect 자동 유지).
+- **영향:**
+  - 모든 `https://github.com/api-vault/api-vault/...` URL 을 `https://github.com/phoodul/api-vault/...` 로 일괄 정정 (21 파일).
+  - Tauri updater endpoint, homebrew tap (`phoodul/homebrew-api-vault`), CLA bot, CI badge 등 모두 갱신.
+  - **보존:** `docs/project-decisions.md:472` 의 historical "GitHub Organization 이름은 api-vault" 결정은 그대로 — 본 항목이 이를 갱신함을 기록.
+  - **별도 식별자:** vscode-extension `publisher: api-vault`, winget `PackageIdentifier: api-vault.api-vault`, snap `name: api-vault`, homebrew cask `api-vault` 는 GitHub 와 무관한 채널별 ID 라 그대로 유지.

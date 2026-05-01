@@ -1631,7 +1631,7 @@
 - **DoD**:
   - `docs/runbooks/paddle-setup.md` — 벤더 신청, KYC, 제품 생성, 가격 등록 (USD $2/월)
   - Paddle 샌드박스 환경 먼저 테스트
-  - webhook URL: `https://relay.apivault.app/billing/paddle/webhook`
+  - webhook URL: `https://relay.api-vault.app/billing/paddle/webhook`
 - **Files Touched**: `docs/runbooks/paddle-setup.md`
 - **Tests**: manual — 샌드박스 checkout 성공
 
@@ -1851,11 +1851,11 @@
 - **Milestone**: M12
 - **Priority**: Must
 - **Depends on**: T110
-- **Goal**: `app.apivault.app` 에 웹 뷰어 배포.
+- **Goal**: `app.api-vault.app` 에 웹 뷰어 배포.
 - **DoD**:
   - `wrangler.pages.toml`
   - GitHub Actions `.github/workflows/deploy-web.yml` — main 브랜치 push 시 `pnpm build:web && wrangler pages deploy dist-web`
-  - CORS: 릴레이에서 `app.apivault.app` 허용
+  - CORS: 릴레이에서 `app.api-vault.app` 허용
 - **Files Touched**: `.github/workflows/deploy-web.yml`, `wrangler.pages.toml`, `api-vault-relay/src/index.ts` (CORS)
 - **Tests**: manual — https 접속 확인
 
@@ -1926,10 +1926,10 @@
 - **DoD**:
   - `docs/legal/privacy.md`, `docs/legal/terms.md` 작성 (템플릿 기반 + 변호사 리뷰는 Open Issue)
   - `apps/marketing/` Astro 프로젝트 (별도 repo or monorepo): 홈, Features, Pricing, Download, Blog (empty), Docs 링크
-  - `apivault.app` 도메인 연결 (Cloudflare DNS)
+  - `api-vault.app` 도메인 연결 (Cloudflare DNS)
   - `README.md` 에 마케팅 사이트 + 다운로드 링크
 - **Files Touched**: `docs/legal/*.md`, `apps/marketing/*`, `README.md`
-- **Tests**: manual — https://apivault.app 200 OK
+- **Tests**: manual — https://api-vault.app 200 OK
 
 ---
 
@@ -2042,7 +2042,7 @@
    - 대안 B (planner 제안): Free = 2대(랩탑+폰), 3대부터 Pro. 진입장벽 ↓, Pro 전환 명확.
    - 사용자 결정 요청.
 
-2. **도메인 확보 (`apivault.app`)**
+2. **도메인 확보 (`api-vault.app`)**
    - 대안: `api-vault.dev`, `keyvault.dev`, `apivault.io`
    - 등록 비용 ~$10~30/년
 

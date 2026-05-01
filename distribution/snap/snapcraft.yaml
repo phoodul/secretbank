@@ -20,7 +20,7 @@ confinement: strict
 license: AGPL-3.0-or-later
 website: https://api-vault.app
 contact: support@api-vault.app
-issues: https://github.com/api-vault/api-vault/issues
+issues: https://github.com/phoodul/api-vault/issues
 
 apps:
   api-vault:

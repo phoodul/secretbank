@@ -5,10 +5,10 @@
   "version": "0.1.0",
   "publisher": "api-vault",
   "license": "AGPL-3.0-or-later",
-  "homepage": "https://github.com/api-vault/api-vault",
+  "homepage": "https://github.com/phoodul/api-vault",
   "repository": {
     "type": "git",
-    "url": "https://github.com/api-vault/api-vault.git"
+    "url": "https://github.com/phoodul/api-vault.git"
   },
   "engines": {
     "vscode": "^1.96.0"

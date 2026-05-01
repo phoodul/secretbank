@@ -42,7 +42,7 @@
 | M10  | RevenueCat 프로젝트 (무료 ~ $2.5K ARR)                                     | $0 초반        | 즉시                  |
 | M10  | Apple Developer Program                                                    | $99/년         | 즉시                  |
 | M10  | Google Play Console                                                        | $25 일회       | 즉시                  |
-| M13  | 도메인 (apivault.app 등)                                                   | ~$30/년        | 즉시                  |
+| M13  | 도메인 (api-vault.app 등)                                                   | ~$30/년        | 즉시                  |
 | M13  | SignPath.io 또는 Azure Trusted Signing                                     | ~$15~50/월     | 심사 1~3일            |
 | M13  | 변호사 법률 리뷰 (Privacy/ToS)                                             | $500~1500 일회 | 1~2주                 |
 
@@ -899,7 +899,7 @@ import billing from "./routes/billing";
 import me from "./routes/me";
 
 const app = new Hono<{ Bindings: Env }>();
-app.use("*", cors({ origin: ["tauri://localhost", "https://app.apivault.app"] }));
+app.use("*", cors({ origin: ["tauri://localhost", "https://app.api-vault.app"] }));
 app.get("/health", (c) => c.text("ok"));
 app.route("/auth", auth);
 app.route("/sync", sync);
@@ -1005,7 +1005,7 @@ export function SyncProvider({ children }: Props) {
     if (rootKey && entitlement.plan === "pro") {
       secsync = new SecSyncClient({
         doc: d,
-        websocketEndpoint: "wss://relay.apivault.app/sync/ws",
+        websocketEndpoint: "wss://relay.api-vault.app/sync/ws",
         key: rootKey,
         documentId: userId,
       });
@@ -1398,12 +1398,12 @@ test("passkey login works with virtual authenticator", async ({ browser }) => {
 | :---------------------------------- | :---------------------------------------------------------------------------------------- |
 | 번들에 Tauri-only 코드 포함 시 에러 | vite `define: { '__TAURI__': JSON.stringify(false) }` + `isTauri()` 가드 + dynamic import |
 | WebAuthn Safari / Firefox 동작 차이 | iOS Safari 16+ 필수 안내, Firefox 은 플랫폼 authenticator 제한 — fallback: OAuth          |
-| 릴레이 CORS 설정 누락               | `cors({ origin: ['https://app.apivault.app', 'https://*.apivault.app'] })`                |
+| 릴레이 CORS 설정 누락               | `cors({ origin: ['https://app.api-vault.app', 'https://*.api-vault.app'] })`                |
 | IndexedDB 에 enc_key 저장 위험      | 저장 금지 — 세션당 password 재입력 필수 (또는 WebAuthn PRF — Phase 2)                     |
 
 ### 검증 체크리스트
 
-- [ ] https://app.apivault.app 접속 → SignIn 페이지
+- [ ] https://app.api-vault.app 접속 → SignIn 페이지
 - [ ] Passkey 로그인 → Inventory 읽기 전용 목록
 - [ ] Credential 클릭 → Detail (값 표시는 "Reveal" 버튼으로 서버 복호화 불가 — 로컬 enc_key 필요)
 - [ ] 수정/삭제 버튼 disabled + tooltip "Use desktop app"
@@ -1514,7 +1514,7 @@ end
 - [ ] 데스크톱 앱에서 "Check for updates" → `v0.1.0-rc.1` 감지 → 설치 → 버전 표시 갱신
 - [ ] minisign 서명이 깨진 가짜 업데이트 → 거부 + 에러 메시지
 - [ ] TestFlight / Play Internal Track 에 자동 업로드
-- [ ] https://apivault.app 랜딩 페이지 200 OK
+- [ ] https://api-vault.app 랜딩 페이지 200 OK
 - [ ] Privacy Policy / Terms 페이지 접근 가능
 - [ ] Settings > Language 에서 ko/ja 전환 시 UI 번역
 
@@ -1549,7 +1549,7 @@ end
 ## Open Issues 요약 (Gate 2 사용자 확인 필요)
 
 1. **Free tier 디바이스 수** — 1대 (decisions 준수) vs 2대 (planner 제안)
-2. **도메인 확보** — apivault.app 가용성
+2. **도메인 확보** — api-vault.app 가용성
 3. **계정 등록 타이밍** — Apple/Google/Paddle/Cloudflare Paid 언제 결제할지
 4. **Windows 서명 방식** — SignPath OSS 신청 vs EV 인증서 구매
 5. **변호사 리뷰 예산** — Privacy/ToS 검토 $500~1500
