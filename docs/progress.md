@@ -2,7 +2,96 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-01 (M23 Vault Charter 클로즈 + 출시 폴리시 lap + **출시 경로 통일 lap** + **release.yml dry-run 모드 추가**)
+- **Time:** 2026-05-01 ~ 2026-05-02 (Night mode 자율 lap — **출시 launch 인프라 5개 lap 완주**)
+- **세션 개요:** 사용자 자는 동안 (option A 풀 진행 승인) 자율 모드로 5 lap 연속 진행. 모두 push 완료. 최종 commit `b391ebe` (origin/main).
+- **이번 세션 5 lap 누적 commits (이전 세션 + 이번 turn):**
+  - `82b5d79` chore(release) — GitHub repo URL `api-vault/api-vault` → `phoodul/api-vault` 일괄 정정 (17 파일) + 도메인 `apivault.app` → `api-vault.app` (4 파일) + tauri.conf.json updater pubkey 채움
+  - `0f2dc32` feat(release) — release.yml dry-run 모드 (workflow_dispatch + dry_run boolean input)
+  - `3e81836` fix(release) — dry-run 시 tauri-action 우회 (releaseId 없으면 "Release not found" 발생) → pnpm tauri build 직접 호출
+  - **(2026-05-01 dry-run 100% 통과 — 3 매트릭스 모두 ✅)**
+  - **(2026-05-01 v0.1.0-pre1 real tag push — release.yml 자동 trigger)**
+  - `8d1d544` feat(demo) — marketing 영상 자동 캡처 (`pnpm capture:demo`, 3 시나리오 webm)
+  - `5730e79` feat(i18n) — ja/zh 의 M23 Vault Charter 45 키 보강 (en parity 622/622)
+  - `4da601e` feat(scripts) — version-bump.ts + changelog-from-commits.ts 자동화 (다음 release cut 두 명령으로 끝)
+  - `b391ebe` docs(user-guide) — Troubleshooting 섹션 8개 추가 (en + ko)
+
+### 자율 5 lap 상세
+
+#### Lap 1 — Demo capture script (`8d1d544`)
+- **`e2e/demo.spec.ts`** — 3 test, 각자 독립 webm 출력
+  - `lock-screen` — sci-fi HUD + atmosphere + mouse gloss 주변 6 점 cycling
+  - `charter-issuance` — 패스프레이즈 입력 → CharterDisplay (Lapis 톤) 8s 캡처
+  - `recovery-flow` — Forgot link → RecoveryDialog → 6 단어 타이핑
+- **`scripts/capture-demo.ts`** — Playwright 실행 + test-results/.../video.webm → media/<scene>.webm 복사
+- **`e2e/playwright.config.ts`** — testIgnore `/.*demo\.spec\.ts$/` (regular E2E 와 분리)
+- **`package.json`** — `capture:demo` 스크립트
+- **`.gitignore`** — `media/*.webm`, `media/*.mp4` 제외 (큰 binary)
+- **`media/README.md`** — ffmpeg 변환/concat 가이드
+- 사용: `pnpm capture:demo` (vite dev server 자동 spawn → Playwright → 영상 출력)
+
+#### Lap 2 — `v0.1.0-pre1` real tag push
+- 메시지: M0~M9 + M18~M22 + M22.5 + M23 Vault Charter 누적, 차별화 4 축 모두 구현
+- prerelease (`-pre1`) 표시로 GitHub Releases 메인 페이지에는 미게시
+- Tauri signing 적용, Apple/Windows 코드 서명은 secrets 미등록이라 unsigned (SmartScreen/Gatekeeper 경고 발생 — Troubleshooting 섹션에 사용자 안내)
+- VS Code extension publish skip (PAT 미등록)
+- **사용자 깨었을 때 확인할 것:** https://github.com/phoodul/api-vault/releases — `v0.1.0-pre1` prerelease 가 published 되어있는지. workflow run 결과 (대략 ~20분 후 published).
+
+#### Lap 3 — i18n ja/zh M23 키 보강 (`5730e79`)
+- 부족 키 45 개 — 모두 M23 Vault Charter 관련 (`settings.charter*`, `vault.charter.*`, `vault.recovery.*`)
+- ja: 일본어 formal 어조 (です/ます), 보안/리커버리 문구라 직역 회피
+- zh: Simplified Chinese, formal tone
+- 결과: ja/zh 모두 622/622 (en parity)
+- **다른 12 locale (ar/de/el/es/fr/hi/it/pl/pt/ru/vi)** 은 17 키 (LangSwitcher 만) — 의도된 상태, 향후 lap 에서 보강
+
+#### Lap 4 — 자동화 스크립트 (`4da601e`)
+- **`scripts/version-bump.ts`** — root package.json + vscode-extension/package.json + tauri.conf.json + src-tauri/Cargo.toml (workspace + 모든 crate) + winget/snap/homebrew 매니페스트 일괄 bump. SemVer 검증 + `--dry-run`. 사용: `pnpm version:bump 0.2.0`
+- **`scripts/changelog-from-commits.ts`** — `git log <from>..<to>` 의 conventional commits 를 카테고리별 그루핑 (Added/Fixed/Performance/Changed + Breaking marker `!`). docs/test/ci/build/style 무시. markdown 으로 stdout 출력. 사용: `pnpm changelog:gen v0.1.0 v0.2.0`
+- **결과:** 다음 release cut 이 2 명령 (`version:bump` + `changelog:gen`) 으로 끝남. 이전엔 17 파일 수동 동기화 필요 (휴먼 에러 위험).
+
+#### Lap 5 — Troubleshooting 섹션 8개 (`b391ebe`)
+- en + ko 양쪽 추가 (en 520줄 → 645줄, ko 481줄 → 600줄+)
+- 8 시나리오 — 출시 후 사용자가 가장 많이 부딪힐 것들:
+  1. Windows SmartScreen (unsigned binary)
+  2. macOS "앱이 손상되었습니다" (un-notarized) — `xattr -cr` 해결
+  3. Linux libwebkit2gtk-4.1 missing (apt/dnf install)
+  4. 패스프레이즈 맞는데 unlock 실패 (cooldown / vault 경로 / Caps Lock)
+  5. Auto-updater 새 버전 못 찾음 (캐시 삭제 + pre-release skip 정책)
+  6. CLI `command not found` (OS 별 PATH symlink)
+  7. MCP 서버 Claude/Cursor 미인식 (JSON escape, Quit 재실행)
+  8. Charter recovery 거부 (typo, Shamir 페어 조합, vault 교체)
+- 코드 서명 인프라가 launch 후 도입되므로 13.1/13.2 가 v0.1.x 의 가장 빈번한 경고 — 미리 매뉴얼화로 support 부하 감소.
+
+### 사용자 깨었을 때 확인 우선순위
+
+1. **https://github.com/phoodul/api-vault/releases** — `v0.1.0-pre1` prerelease 와 artifacts (.dmg / .msi / .exe / .deb / .AppImage / .rpm + signature 파일) 확인
+2. **workflow run 페이지** — 매트릭스별 빌드 상태 + `latest.json` 자동 생성 검증 (CHANGELOG 의 가정 검증)
+3. **Demo script 동작 검증 (선택)** — `pnpm install` (tsx auto-install) 후 `pnpm capture:demo`. media/ 에 3 webm 생성 확인.
+
+### 출시까지 남은 사용자 액션 (코드만으로 못 끝남, 우선순위 순)
+
+1. ✅ ~~Tauri signing key + GitHub secrets~~ (완료)
+2. ✅ ~~첫 release tag push~~ (자율로 완료, 결과 검증 대기)
+3. **DNS — `api-vault.app` 도메인 → GitHub Pages / Cloudflare Pages 연결 + site/index.html 배포** ($0–$5)
+4. **macOS notarization** — Apple Developer 등록 ($99/yr) → cert → secrets
+5. **Windows OV cert** — Sectigo / SSL.com 구매 ($150/yr) → secrets
+6. **데모 영상** — `pnpm capture:demo` 자동 캡처 + ffmpeg 으로 mp4 변환 (Lap 1 인프라로 자동화됨)
+7. **Hacker News Show HN + Product Hunt** — Lapis Vault + Supply chain × AI agent + Charter recovery 묶어 게시
+
+### 다음 자율 lap 후보 (사용자 결정 후)
+
+| # | 작업 | 시간 | 가치 |
+|:--|:--|:--|:--|
+| A | 다른 12 locale 의 핵심 키 (~50) 보강 (de/fr/es/zh-TW 우선) | 1.5h | 글로벌 SaaS 첫 인상 |
+| B | site/index.html 추가 폴리시 (Vault Charter 카드 강조 + screenshot) | 30분 | launch 페이지 임팩트 |
+| C | M14 Auto rotation R1 phase (provider 1 — Stripe restricted key) | 큰 (3h+) | Pro 가격 정당화 |
+| D | M10 Payments scaffold (Stripe webhook + entitlement) | 큰 | revenue 기반 |
+| E | M15 CI/CD 의 T132/T133 정식 종료 (test-on-PR 통합) | 1h | 회귀 안전망 |
+
+---
+
+## Previous checkpoint (2026-05-01 — M23 Vault Charter 클로즈 + 출시 폴리시 lap 종료)
+
+- **Time:** 2026-05-01 (M23 Vault Charter 클로즈 + 출시 폴리시 lap 종료 + **출시 경로 통일 lap** + **release.yml dry-run 모드 추가**)
 - **release.yml dry-run lap (이번 turn):**
   - `workflow_dispatch.inputs` 에 `dry_run` boolean 추가, `tag` 를 optional + default `v0.0.0-dryrun` 으로 변경
   - `create-release` job 에 `if: !inputs.dry_run` — Release 생성 skip

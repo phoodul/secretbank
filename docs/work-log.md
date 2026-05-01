@@ -1522,6 +1522,20 @@ M4 UI (T056 Incidents 페이지) 완성 이후에는 `/incidents` 목록 + `inci
 
 ### M3 Dependency Graph & Blast Radius — 8/8 ✅ 종료
 
+## 2026-05-02 — Night mode 자율 5 lap (출시 launch 인프라 풀 패키지)
+
+사용자가 자는 동안 option A 풀 진행 승인. 5 lap 연속 자율 진행.
+
+- Lap 1 (`8d1d544`): Demo capture script — Playwright 기반 3 시나리오 자동 영상 (`pnpm capture:demo`)
+- Lap 2: `v0.1.0-pre1` real release tag push — release.yml 자동 trigger, prerelease 빌드 인프라 첫 실전
+- Lap 3 (`5730e79`): i18n ja/zh M23 Vault Charter 키 45개 보강 (en parity 622/622)
+- Lap 4 (`4da601e`): version-bump.ts + changelog-from-commits.ts — 다음 release cut 두 명령으로 끝
+- Lap 5 (`b391ebe`): Troubleshooting 섹션 8개 (en + ko) — SmartScreen / Gatekeeper / libwebkit / cooldown / updater / CLI / MCP / Charter
+
+이전 turn 의 출시 경로 통일 lap (`82b5d79`) + release.yml dry-run (`0f2dc32`, `3e81836`) 까지 합치면 출시 launch 까지 코드/문서 측면 자율 가능 작업 거의 완료. 남은 것은 사용자 액션 (DNS / Apple Dev / Windows OV cert / HN/PH 게시).
+
+차별화 4 축 (graph + supply chain × AI agent × IDE × charter recovery) 모두 구현 완료. 글로벌 SaaS 비전 정렬.
+
 ## 2026-05-01 — M23 Vault Charter 마일스톤 클로즈
 
 passphrase 분실 시 vault 영구 손실 차단 메커니즘 완성. 1Password Emergency Kit 와 차별화 4 축 모두 구현.
