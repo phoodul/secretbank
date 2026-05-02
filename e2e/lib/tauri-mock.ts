@@ -13,9 +13,7 @@
  * the unmocked path.
  */
 
-export type CommandResult =
-  | { kind: "ok"; value: unknown }
-  | { kind: "err"; error: unknown };
+export type CommandResult = { kind: "ok"; value: unknown } | { kind: "err"; error: unknown };
 
 export type CommandMap = Record<string, CommandResult>;
 

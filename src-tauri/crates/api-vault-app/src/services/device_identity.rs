@@ -151,9 +151,12 @@ pub async fn ensure_device_keys(
 
             let id_str = String::from_utf8(id_bytes.expose_secret().clone())
                 .map_err(|e| DeviceIdentityError::Vault(format!("device/id UTF-8: {e}")))?;
-            let device_id: DeviceId = id_str.parse().map_err(|e: <DeviceId as std::str::FromStr>::Err| {
-                DeviceIdentityError::Vault(e.to_string())
-            })?;
+            let device_id: DeviceId =
+                id_str
+                    .parse()
+                    .map_err(|e: <DeviceId as std::str::FromStr>::Err| {
+                        DeviceIdentityError::Vault(e.to_string())
+                    })?;
 
             // Verify SQLite consistency
             let repo = DeviceRepo::new(pool);
@@ -165,9 +168,7 @@ pub async fn ensure_device_keys(
                     });
                 }
                 _ => {
-                    return Err(DeviceIdentityError::InconsistentDevice {
-                        vault_id: id_str,
-                    });
+                    return Err(DeviceIdentityError::InconsistentDevice { vault_id: id_str });
                 }
             }
         }
@@ -268,14 +269,10 @@ mod tests {
         let vault = unlocked_vault().await;
         let (_dir, pool) = make_pool().await;
 
-        let identity = ensure_device_keys(
-            vault.clone(),
-            &pool,
-            "test-device",
-            DevicePlatform::Linux,
-        )
-        .await
-        .expect("ensure_device_keys should succeed");
+        let identity =
+            ensure_device_keys(vault.clone(), &pool, "test-device", DevicePlatform::Linux)
+                .await
+                .expect("ensure_device_keys should succeed");
 
         // DeviceId is a valid ULID
         let id_str = identity.device_id.to_string();
@@ -289,7 +286,10 @@ mod tests {
         let stored = &active[0];
         // Public key in SQLite matches the verifying key derived from signing key
         let expected_vk = identity.verifying_key().to_bytes().to_vec();
-        assert_eq!(stored.public_key, expected_vk, "public_key must match verifying key");
+        assert_eq!(
+            stored.public_key, expected_vk,
+            "public_key must match verifying key"
+        );
 
         // Vault has both paths
         let vault_guard = vault.read().await;
@@ -297,14 +297,21 @@ mod tests {
             .get_secret(VAULT_PATH_SIGNING_KEY)
             .await
             .expect("signing key must be in vault");
-        assert_eq!(key_bytes.expose_secret().len(), 32, "signing key must be 32 bytes");
+        assert_eq!(
+            key_bytes.expose_secret().len(),
+            32,
+            "signing key must be 32 bytes"
+        );
 
         let id_bytes = vault_guard
             .get_secret(VAULT_PATH_DEVICE_ID)
             .await
             .expect("device/id must be in vault");
         let stored_id_str = String::from_utf8(id_bytes.expose_secret().clone()).unwrap();
-        assert_eq!(stored_id_str, id_str, "vault device/id must match returned device_id");
+        assert_eq!(
+            stored_id_str, id_str,
+            "vault device/id must match returned device_id"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -337,7 +344,11 @@ mod tests {
         // Still exactly one device in SQLite
         let repo = DeviceRepo::new(&pool);
         let active = repo.list_active().await.unwrap();
-        assert_eq!(active.len(), 1, "second call must not create a duplicate device row");
+        assert_eq!(
+            active.len(),
+            1,
+            "second call must not create a duplicate device row"
+        );
     }
 
     // -----------------------------------------------------------------------

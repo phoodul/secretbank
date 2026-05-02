@@ -29,9 +29,10 @@ export const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
  */
 function resolveSigningKey(env: Env): Uint8Array {
   const raw = env.JWT_SIGNING_KEY?.trim();
-  const secret = raw && raw.length >= 32
-    ? raw
-    : `dev-only-fallback:${env.RP_ID || "localhost"}:please-set-JWT_SIGNING_KEY`;
+  const secret =
+    raw && raw.length >= 32
+      ? raw
+      : `dev-only-fallback:${env.RP_ID || "localhost"}:please-set-JWT_SIGNING_KEY`;
   return new TextEncoder().encode(secret);
 }
 

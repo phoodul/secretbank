@@ -471,7 +471,10 @@ mod tests {
 
         std::fs::write(&vault_path, &bytes).unwrap();
         let result = read_vault_file(&vault_path);
-        assert!(result.is_err(), "zero-length charter envelope must be rejected");
+        assert!(
+            result.is_err(),
+            "zero-length charter envelope must be rejected"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -575,7 +578,11 @@ mod tests {
         let backups: Vec<_> = std::fs::read_dir(dir.path())
             .unwrap()
             .filter_map(|e| e.ok())
-            .filter(|e| e.file_name().to_string_lossy().starts_with("vault.age.bak-"))
+            .filter(|e| {
+                e.file_name()
+                    .to_string_lossy()
+                    .starts_with("vault.age.bak-")
+            })
             .collect();
 
         assert!(

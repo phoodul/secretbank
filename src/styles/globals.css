@@ -265,64 +265,89 @@
     background-color: var(--vault-lapis-deep);
     background-image:
       /* 1. pyrite flecks — tiny gold dots scattered through the lapis */
-      radial-gradient(circle at 12% 22%, oklch(from var(--vault-gold-bright) l c h / 0.55) 0%, transparent 0.6%),
-      radial-gradient(circle at 78% 14%, oklch(from var(--vault-gold-bright) l c h / 0.45) 0%, transparent 0.5%),
-      radial-gradient(circle at 33% 58%, oklch(from var(--vault-gold-bright) l c h / 0.4)  0%, transparent 0.4%),
-      radial-gradient(circle at 88% 62%, oklch(from var(--vault-gold-bright) l c h / 0.5)  0%, transparent 0.5%),
-      radial-gradient(circle at 22% 84%, oklch(from var(--vault-gold-bright) l c h / 0.4)  0%, transparent 0.45%),
-      radial-gradient(circle at 64% 78%, oklch(from var(--vault-gold-bright) l c h / 0.55) 0%, transparent 0.55%),
-      radial-gradient(circle at 50% 34%, oklch(from var(--vault-gold-bright) l c h / 0.35) 0%, transparent 0.35%),
+      radial-gradient(
+        circle at 12% 22%,
+        oklch(from var(--vault-gold-bright) l c h / 0.55) 0%,
+        transparent 0.6%
+      ),
+      radial-gradient(
+        circle at 78% 14%,
+        oklch(from var(--vault-gold-bright) l c h / 0.45) 0%,
+        transparent 0.5%
+      ),
+      radial-gradient(
+        circle at 33% 58%,
+        oklch(from var(--vault-gold-bright) l c h / 0.4) 0%,
+        transparent 0.4%
+      ),
+      radial-gradient(
+        circle at 88% 62%,
+        oklch(from var(--vault-gold-bright) l c h / 0.5) 0%,
+        transparent 0.5%
+      ),
+      radial-gradient(
+        circle at 22% 84%,
+        oklch(from var(--vault-gold-bright) l c h / 0.4) 0%,
+        transparent 0.45%
+      ),
+      radial-gradient(
+        circle at 64% 78%,
+        oklch(from var(--vault-gold-bright) l c h / 0.55) 0%,
+        transparent 0.55%
+      ),
+      radial-gradient(
+        circle at 50% 34%,
+        oklch(from var(--vault-gold-bright) l c h / 0.35) 0%,
+        transparent 0.35%
+      ),
       /* 2. calcite veins — faint white streaks */
-      radial-gradient(80% 8% at 60% 30%, oklch(1 0 0 / 0.05) 0%, transparent 70%),
+        radial-gradient(80% 8% at 60% 30%, oklch(1 0 0 / 0.05) 0%, transparent 70%),
       radial-gradient(70% 6% at 30% 70%, oklch(1 0 0 / 0.04) 0%, transparent 70%),
       /* 3. top sheen — polished mirror band */
-      linear-gradient(
-        180deg,
-        oklch(from var(--vault-lapis-bright) l c h / 0.32) 0%,
-        oklch(from var(--vault-lapis-bright) l c h / 0.08) 6%,
-        transparent 14%,
-        transparent 100%
-      ),
+        linear-gradient(
+          180deg,
+          oklch(from var(--vault-lapis-bright) l c h / 0.32) 0%,
+          oklch(from var(--vault-lapis-bright) l c h / 0.08) 6%,
+          transparent 14%,
+          transparent 100%
+        ),
       /* 4. bottom navy shadow */
-      linear-gradient(
-        180deg,
-        transparent 60%,
-        oklch(from var(--vault-lapis-deep) l c h / 0.45) 90%,
-        oklch(from var(--vault-lapis-deep) l c h / 0.7) 100%
-      ),
+        linear-gradient(
+          180deg,
+          transparent 60%,
+          oklch(from var(--vault-lapis-deep) l c h / 0.45) 90%,
+          oklch(from var(--vault-lapis-deep) l c h / 0.7) 100%
+        ),
       /* 5. brushed grain */
-      repeating-linear-gradient(
-        90deg,
-        oklch(1 0 0 / 0) 0px,
-        oklch(1 0 0 / 0.025) 1px,
-        oklch(1 0 0 / 0) 2px
-      ),
+        repeating-linear-gradient(
+          90deg,
+          oklch(1 0 0 / 0) 0px,
+          oklch(1 0 0 / 0.025) 1px,
+          oklch(1 0 0 / 0) 2px
+        ),
       /* 6. base conic — DRAMATIC luminance shifts (this is the metal) */
-      conic-gradient(
-        from 210deg at 50% 50%,
-        var(--vault-lapis-deep) 0deg,
-        var(--vault-lapis) 60deg,
-        var(--vault-lapis-bright) 115deg,
-        var(--vault-lapis) 170deg,
-        var(--vault-lapis-deep) 230deg,
-        oklch(from var(--vault-lapis-deep) calc(l - 0.04) c h) 280deg,
-        var(--vault-lapis) 330deg,
-        var(--vault-lapis-deep) 360deg
-      );
+        conic-gradient(
+          from 210deg at 50% 50%,
+          var(--vault-lapis-deep) 0deg,
+          var(--vault-lapis) 60deg,
+          var(--vault-lapis-bright) 115deg,
+          var(--vault-lapis) 170deg,
+          var(--vault-lapis-deep) 230deg,
+          oklch(from var(--vault-lapis-deep) calc(l - 0.04) c h) 280deg,
+          var(--vault-lapis) 330deg,
+          var(--vault-lapis-deep) 360deg
+        );
     box-shadow:
       /* polished top rim — mirror highlight */
       inset 0 1px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.85),
       inset 0 2px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.32),
       inset 0 3px 6px 0 oklch(from var(--vault-lapis-bright) l c h / 0.18),
-      /* deep bottom bevel */
-      inset 0 -1px 0 0 oklch(0 0 0 / 0.6),
+      /* deep bottom bevel */ inset 0 -1px 0 0 oklch(0 0 0 / 0.6),
       inset 0 -2px 0 0 oklch(from var(--vault-lapis-deep) l c h / 0.85),
       inset 0 -8px 16px 0 oklch(0 0 0 / 0.35),
-      /* side rims */
-      inset 1px 0 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.15),
+      /* side rims */ inset 1px 0 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.15),
       inset -1px 0 0 0 oklch(0 0 0 / 0.4),
-      /* outer drop */
-      0 2px 0 0 oklch(0 0 0 / 0.5),
+      /* outer drop */ 0 2px 0 0 oklch(0 0 0 / 0.5),
       0 18px 40px -10px oklch(0 0 0 / 0.7),
       0 32px 80px -24px oklch(from var(--vault-lapis) l c h / 0.55);
     border: 1px solid oklch(from var(--vault-lapis-deep) l c h / 0.9);
@@ -345,47 +370,44 @@
         transparent 100%
       ),
       /* secondary highlight halo */
-      radial-gradient(
-        65% 65% at 30% 22%,
-        oklch(from var(--vault-gold-bright) l c h / 0.5) 0%,
-        transparent 50%
-      ),
+        radial-gradient(
+          65% 65% at 30% 22%,
+          oklch(from var(--vault-gold-bright) l c h / 0.5) 0%,
+          transparent 50%
+        ),
       /* opposite-corner deep shadow */
-      radial-gradient(
-        70% 70% at 82% 88%,
-        oklch(from var(--vault-gold-deep) l c h / 0.85) 0%,
-        transparent 55%
-      ),
+        radial-gradient(
+          70% 70% at 82% 88%,
+          oklch(from var(--vault-gold-deep) l c h / 0.85) 0%,
+          transparent 55%
+        ),
       /* brushed grain (rotated 30deg for radial brushing feel) */
-      repeating-linear-gradient(
-        30deg,
-        oklch(1 0 0 / 0) 0px,
-        oklch(1 0 0 / 0.06) 1px,
-        oklch(1 0 0 / 0) 2px
-      ),
+        repeating-linear-gradient(
+          30deg,
+          oklch(1 0 0 / 0) 0px,
+          oklch(1 0 0 / 0.06) 1px,
+          oklch(1 0 0 / 0) 2px
+        ),
       /* dramatic warm conic — full brass luminance range */
-      conic-gradient(
-        from 220deg at 50% 50%,
-        var(--vault-gold-deep) 0deg,
-        var(--vault-gold) 70deg,
-        var(--vault-gold-bright) 130deg,
-        var(--vault-gold) 200deg,
-        var(--vault-gold-deep) 260deg,
-        oklch(from var(--vault-gold-deep) calc(l - 0.06) c h) 310deg,
-        var(--vault-gold-deep) 360deg
-      );
+        conic-gradient(
+          from 220deg at 50% 50%,
+          var(--vault-gold-deep) 0deg,
+          var(--vault-gold) 70deg,
+          var(--vault-gold-bright) 130deg,
+          var(--vault-gold) 200deg,
+          var(--vault-gold-deep) 260deg,
+          oklch(from var(--vault-gold-deep) calc(l - 0.06) c h) 310deg,
+          var(--vault-gold-deep) 360deg
+        );
     box-shadow:
       /* mirror-bright top rim */
       inset 0 1px 0 0 oklch(from var(--vault-gold-bright) l c h / 1),
       inset 0 2px 0 0 oklch(from var(--vault-gold-bright) l c h / 0.55),
-      /* deep bronze bottom rim */
-      inset 0 -1px 0 0 oklch(from var(--vault-gold-deep) l c h / 1),
+      /* deep bronze bottom rim */ inset 0 -1px 0 0 oklch(from var(--vault-gold-deep) l c h / 1),
       inset 0 -2px 4px 0 oklch(from var(--vault-gold-deep) l c h / 0.7),
-      /* side bevels */
-      inset 1px 0 0 0 oklch(from var(--vault-gold-bright) l c h / 0.5),
+      /* side bevels */ inset 1px 0 0 0 oklch(from var(--vault-gold-bright) l c h / 0.5),
       inset -1px 0 0 0 oklch(from var(--vault-gold-deep) l c h / 0.7),
-      /* outer drop + warm halo */
-      0 2px 0 0 oklch(0 0 0 / 0.5),
+      /* outer drop + warm halo */ 0 2px 0 0 oklch(0 0 0 / 0.5),
       0 6px 14px 0 oklch(from var(--vault-gold-deep) l c h / 0.55),
       0 0 32px 0 oklch(from var(--vault-gold-glow) l c h / 0.45);
   }
@@ -415,8 +437,7 @@
   }
   .accent-gold-glow {
     color: var(--vault-gold-bright);
-    filter:
-      drop-shadow(0 0 6px oklch(from var(--vault-gold-glow) l c h / 0.6))
+    filter: drop-shadow(0 0 6px oklch(from var(--vault-gold-glow) l c h / 0.6))
       drop-shadow(0 1px 0 oklch(from var(--vault-gold-deep) l c h / 0.8));
   }
 
@@ -483,28 +504,23 @@
         oklch(from var(--vault-lapis-bright) l c h / 0.08) 0%,
         transparent 18%
       ),
-      /* bottom shadow */
-      linear-gradient(
-        180deg,
-        transparent 70%,
-        oklch(0 0 0 / 0.08) 100%
-      ),
+      /* bottom shadow */ linear-gradient(180deg, transparent 70%, oklch(0 0 0 / 0.08) 100%),
       /* very subtle brushed grain */
-      repeating-linear-gradient(
-        90deg,
-        oklch(1 0 0 / 0) 0px,
-        oklch(1 0 0 / 0.012) 1px,
-        oklch(1 0 0 / 0) 2px
-      ),
+        repeating-linear-gradient(
+          90deg,
+          oklch(1 0 0 / 0) 0px,
+          oklch(1 0 0 / 0.012) 1px,
+          oklch(1 0 0 / 0) 2px
+        ),
       /* mild conic */
-      conic-gradient(
-        from 200deg at 50% 50%,
-        oklch(from var(--card) calc(l - 0.02) c h) 0deg,
-        oklch(from var(--card) calc(l + 0.025) c h) 100deg,
-        oklch(from var(--card) calc(l - 0.01) c h) 200deg,
-        oklch(from var(--card) calc(l - 0.025) c h) 280deg,
-        oklch(from var(--card) calc(l - 0.02) c h) 360deg
-      );
+        conic-gradient(
+          from 200deg at 50% 50%,
+          oklch(from var(--card) calc(l - 0.02) c h) 0deg,
+          oklch(from var(--card) calc(l + 0.025) c h) 100deg,
+          oklch(from var(--card) calc(l - 0.01) c h) 200deg,
+          oklch(from var(--card) calc(l - 0.025) c h) 280deg,
+          oklch(from var(--card) calc(l - 0.02) c h) 360deg
+        );
     box-shadow:
       inset 0 1px 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.18),
       inset 0 -1px 0 0 oklch(0 0 0 / 0.18),
@@ -523,11 +539,9 @@
       /* brass top edge */
       inset 0 1px 0 0 oklch(from var(--vault-gold-bright) l c h / 0.6),
       inset 0 2px 0 0 oklch(from var(--vault-gold) l c h / 0.18),
-      /* lapis side rims */
-      inset 1px 0 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.35),
+      /* lapis side rims */ inset 1px 0 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.35),
       inset -1px 0 0 0 oklch(from var(--vault-lapis-bright) l c h / 0.35),
-      /* deep bottom */
-      inset 0 -1px 0 0 oklch(from var(--vault-lapis-deep) l c h / 0.85),
+      /* deep bottom */ inset 0 -1px 0 0 oklch(from var(--vault-lapis-deep) l c h / 0.85),
       inset 0 -2px 6px 0 oklch(0 0 0 / 0.45);
   }
 

@@ -97,7 +97,8 @@ impl Charter {
     /// Encode a secret → 6 words + verifier.
     pub fn from_secret(secret: &CharterSecret) -> Self {
         let indices = encode_indices(secret);
-        let words: [String; WORD_COUNT] = std::array::from_fn(|i| wordlist::at(indices[i]).to_string());
+        let words: [String; WORD_COUNT] =
+            std::array::from_fn(|i| wordlist::at(indices[i]).to_string());
         let verifier = compute_verifier(&words);
         Self { words, verifier }
     }
@@ -113,7 +114,8 @@ impl Charter {
         }
         let mut indices = [0usize; WORD_COUNT];
         for (i, w) in self.words.iter().enumerate() {
-            indices[i] = wordlist::index_of(w).ok_or_else(|| CharterError::UnknownWord(w.clone()))?;
+            indices[i] =
+                wordlist::index_of(w).ok_or_else(|| CharterError::UnknownWord(w.clone()))?;
         }
         Ok(decode_indices(&indices))
     }
@@ -364,9 +366,13 @@ mod tests {
     fn debug_output_redacts_secret_bytes() {
         // Use distinctive byte values that would only appear if the raw array were leaked
         // (and not in any plausible part of the redacted format like the byte-count suffix).
-        let secret = CharterSecret::from_bytes([0xAB, 0xCD, 0xEF, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33]);
+        let secret =
+            CharterSecret::from_bytes([0xAB, 0xCD, 0xEF, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33]);
         let dbg = format!("{secret:?}");
-        assert!(dbg.contains("redacted"), "expected redaction marker in {dbg}");
+        assert!(
+            dbg.contains("redacted"),
+            "expected redaction marker in {dbg}"
+        );
         // The default `[u8; N]` Debug would print "[171, 205," etc. — none of those tokens
         // should leak.
         assert!(!dbg.contains("171"), "raw decimal byte leaked: {dbg}");

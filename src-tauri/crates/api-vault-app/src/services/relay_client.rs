@@ -278,12 +278,10 @@ mod tests {
         Mock::given(method("POST"))
             .and(path("/echo"))
             .and(body_json(serde_json::json!({"msg": "hi"})))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "ok": true,
-                    "seen": "hi",
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "ok": true,
+                "seen": "hi",
+            })))
             .mount(&server)
             .await;
 
@@ -309,11 +307,9 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/auth/passkey/register/start"))
-            .respond_with(
-                ResponseTemplate::new(400).set_body_json(serde_json::json!({
-                    "error": "invalid_email",
-                })),
-            )
+            .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
+                "error": "invalid_email",
+            })))
             .mount(&server)
             .await;
 
@@ -347,9 +343,8 @@ mod tests {
             .await;
 
         let client = RelayClient::new(url(&server)).unwrap();
-        let result: Result<EchoResp, _> = client
-            .post_json("/echo", &Echo { msg: "x".into() })
-            .await;
+        let result: Result<EchoResp, _> =
+            client.post_json("/echo", &Echo { msg: "x".into() }).await;
         assert!(matches!(result.unwrap_err(), RelayError::Decode(_)));
     }
 
@@ -365,7 +360,10 @@ mod tests {
         // compare via `origin()` to stay tolerant of that.
         assert_eq!(
             client.base_url().origin().ascii_serialization(),
-            Url::parse(DEFAULT_RELAY_URL).unwrap().origin().ascii_serialization(),
+            Url::parse(DEFAULT_RELAY_URL)
+                .unwrap()
+                .origin()
+                .ascii_serialization(),
         );
     }
 

@@ -46,7 +46,7 @@
   - **보안 audit 단순화:** "어떤 데이터가 sync 되는가?" 한 곳 문서화
   - **CRDT 구조와 일치:** SecSync 의 변경 추적은 `Y.Map.observe` — observe 안 하는 entity 자동 device-local
 - **Sync 대상 (CRDT)**:
-  - `credential` — issuer_id / name / kind / status / last_rotated_at *(value 자체는 별도 채널 T091)*
+  - `credential` — issuer*id / name / kind / status / last_rotated_at *(value 자체는 별도 채널 T091)\_
   - `issuer` — 사용자 정의 issuer 메타
   - `project` / `deployment` — 모든 메타
   - `usage` — credential ↔ project 관계
@@ -77,13 +77,13 @@
 
 Phase C 진입 시점에 위 5개 체크리스트로 1차 검증 (npm + GitHub + 공식 docs 조사). 결과:
 
-| # | 체크 | 결과 | 근거 |
-|:--|:--|:--|:--|
-| 1 | 최근 6개월 release/commit 활동 | ❌ FAIL | npm 마지막 publish `0.5.0` (**2024-06-04, 22개월 정지**). GitHub "No releases published" |
-| 2 | Yjs 13.6.x 호환 | ⚠️ 추정 호환 | 공식 docs `useYjsSync` 예제 — yjs major 호환 가능성 높음, 다만 검증 안 함 |
-| 3 | React 19 + TypeScript 5.x 충돌 없음 | ⚠️ 추정 호환 | 95.3% TypeScript, 다만 React 19 명시 호환 표기 없음 |
-| 4 | 알려진 보안 이슈 없음 | ✅ PASS | NLnet 펀딩, advisory 없음 |
-| 5 | Cloudflare Workers (D1 + KV + Hono) 통합 사례 | ❌ FAIL | WebSocket 전용 transport (`websocketEndpoint` URL 만 설정 가능, transport layer 추상화 없음). CF Workers 가 WS Upgrade 지원하지만 사례 0건. **stable 명시: "WARNING: This is beta software."** |
+| #   | 체크                                          | 결과         | 근거                                                                                                                                                                                           |
+| :-- | :-------------------------------------------- | :----------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 최근 6개월 release/commit 활동                | ❌ FAIL      | npm 마지막 publish `0.5.0` (**2024-06-04, 22개월 정지**). GitHub "No releases published"                                                                                                       |
+| 2   | Yjs 13.6.x 호환                               | ⚠️ 추정 호환 | 공식 docs `useYjsSync` 예제 — yjs major 호환 가능성 높음, 다만 검증 안 함                                                                                                                      |
+| 3   | React 19 + TypeScript 5.x 충돌 없음           | ⚠️ 추정 호환 | 95.3% TypeScript, 다만 React 19 명시 호환 표기 없음                                                                                                                                            |
+| 4   | 알려진 보안 이슈 없음                         | ✅ PASS      | NLnet 펀딩, advisory 없음                                                                                                                                                                      |
+| 5   | Cloudflare Workers (D1 + KV + Hono) 통합 사례 | ❌ FAIL      | WebSocket 전용 transport (`websocketEndpoint` URL 만 설정 가능, transport layer 추상화 없음). CF Workers 가 WS Upgrade 지원하지만 사례 0건. **stable 명시: "WARNING: This is beta software."** |
 
 **총 3 fail (1, 5 + beta 명시) → fallback D 자동 채택.** 사용자 결정 4 의 사전 승인에 따름 (≥ 3 fail).
 
@@ -849,6 +849,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 4. **CI/CD 통합 마일스톤**: GitHub Actions / GitLab CI / Vercel preview / Netlify build hook 통합으로 키 누출 차단 자동화. **M5 GitHub connector (T060+) 완료 후 신설 마일스톤 (M15)** 으로 진행. 새 마일스톤 placeholder 는 task.md 에 동시 추가.
 
 마일스톤 신설 순서 (확정):
+
 - **M14** Auto Rotation (T119~T125) — M9 완료 후
 - **M15** CI/CD Integration — M5 완료 후
 - **M16** Anonymous Telemetry (옵트인) — M9 완료 후
@@ -938,12 +939,14 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 ### 진단 (2026-04-28 시점)
 
 **현재 강점 (실재 차별화):**
+
 - M3 dependency graph + blast radius (1Password/Doppler 가 못 함)
 - M4 incident feed auto-match (Bitwarden Watchtower 보다 정확)
 - M5 RAILGUARD (.cursorrules / CLAUDE.md / Copilot — AI 에디터 시대의 신선한 카테고리)
 - M6 audit hash chain (1Password 도 안 함)
 
 **비전 대비 부족 (글로벌 경쟁 관점):**
+
 - CLI 부재 — Doppler 의 `doppler run -- npm start` 같은 dev tool 일급 시민 표면 부재
 - MCP server 부재 — Claude / Cursor 가 vault 와 직접 대화하는 새 카테고리 (아직 어떤 경쟁사도 안 만듦, **우리 선점 가능**)
 - Team / RBAC / SSO 부재 — B2B 진입 비용 0
@@ -1002,7 +1005,7 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - 글로벌 SaaS 비전 (project_vision.md "월 $2 / 년 $15 글로벌 SaaS") 을 위해서는 **첫 인상 화면인 LockScreen 의 언어 가시성**이 가장 큰 wedge
   - IT 강국 + 인구 규모 기준 11개 언어가 첫 lap 의 적정 폭. 추가 언어 (아랍어 RTL, 힌디어, 베트남어, 폴란드어 등) 는 사용자 수요 기반으로 추후 lap 에서 단계적
   - LanguageDetector 의 `localStorage` 캐시로 사용자 선택이 자동 영속화 → 다음 실행에도 유지
-- **번역 범위:** 신규 7개 언어 common.json 은 **LockScreen 가시 키만 정확 번역** (vault.* 11개 키 + settings.language). 다른 화면은 i18next 의 fallback 메커니즘으로 자동 영어 표시. 전체 번역 보강은 **M13 (i18n + Updater + Release) 시점에 단계적**.
+- **번역 범위:** 신규 7개 언어 common.json 은 **LockScreen 가시 키만 정확 번역** (vault.\* 11개 키 + settings.language). 다른 화면은 i18next 의 fallback 메커니즘으로 자동 영어 표시. 전체 번역 보강은 **M13 (i18n + Updater + Release) 시점에 단계적**.
   - 기존 4개 언어 (en/ko/ja/zh) 는 이미 전체 709줄 번역 — 그대로 사용
   - 신규 언어 자동 fallback 설계는 i18next 의 표준 동작 — 별도 코드 없음
 - **컴포넌트 위치:** `src/components/language-switcher.tsx` (일반 컴포넌트). LockScreen 외 settings 페이지 등에서 재사용 가능. `variant="corner"` (vault 톤 globe 버튼) / `variant="plain"` (표준 폼 dropdown) 두 형태.

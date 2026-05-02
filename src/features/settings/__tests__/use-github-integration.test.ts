@@ -60,9 +60,7 @@ describe("useGithubIntegration deep-link callback", () => {
     // Fire a synthetic deep-link event with a github callback URL
     await act(async () => {
       deepLinkListeners[0]({
-        payload: [
-          "apivault://github/callback?installation_id=42&setup_action=install",
-        ],
+        payload: ["apivault://github/callback?installation_id=42&setup_action=install"],
       });
       // wait for the await save inside the listener to flush
       await Promise.resolve();
@@ -100,9 +98,7 @@ describe("useGithubIntegration deep-link callback", () => {
     // Allow microtasks to flush
     await new Promise((r) => setTimeout(r, 10));
 
-    const saveCalls = mockInvoke.mock.calls.filter(
-      (c) => c[0] === "github_save_installation",
-    );
+    const saveCalls = mockInvoke.mock.calls.filter((c) => c[0] === "github_save_installation");
     expect(saveCalls).toHaveLength(0);
   });
 });

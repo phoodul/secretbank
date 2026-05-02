@@ -5,49 +5,49 @@
  * We mock the platform module to control the returned value.
  */
 
-import { renderHook } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { renderHook } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('useIsMobile', () => {
+describe("useIsMobile", () => {
   beforeEach(() => {
     vi.resetModules();
   });
 
-  it('returns desktop when usePlatform returns desktop', async () => {
-    vi.doMock('@/lib/platform', () => ({
-      usePlatform: () => 'desktop',
-      getPlatform: () => 'desktop',
+  it("returns desktop when usePlatform returns desktop", async () => {
+    vi.doMock("@/lib/platform", () => ({
+      usePlatform: () => "desktop",
+      getPlatform: () => "desktop",
     }));
 
-    const { useIsMobile } = await import('../use-is-mobile');
+    const { useIsMobile } = await import("../use-is-mobile");
     const { result } = renderHook(() => useIsMobile());
-    expect(result.current).toBe('desktop');
+    expect(result.current).toBe("desktop");
   });
 
-  it('returns mobile when usePlatform returns mobile', async () => {
-    vi.doMock('@/lib/platform', () => ({
-      usePlatform: () => 'mobile',
-      getPlatform: () => 'mobile',
+  it("returns mobile when usePlatform returns mobile", async () => {
+    vi.doMock("@/lib/platform", () => ({
+      usePlatform: () => "mobile",
+      getPlatform: () => "mobile",
     }));
 
-    const { useIsMobile } = await import('../use-is-mobile');
+    const { useIsMobile } = await import("../use-is-mobile");
     const { result } = renderHook(() => useIsMobile());
-    expect(result.current).toBe('mobile');
+    expect(result.current).toBe("mobile");
   });
 
-  it('returns desktop when usePlatform returns web', async () => {
-    vi.doMock('@/lib/platform', () => ({
-      usePlatform: () => 'web',
-      getPlatform: () => 'web',
+  it("returns desktop when usePlatform returns web", async () => {
+    vi.doMock("@/lib/platform", () => ({
+      usePlatform: () => "web",
+      getPlatform: () => "web",
     }));
 
-    const { useIsMobile } = await import('../use-is-mobile');
+    const { useIsMobile } = await import("../use-is-mobile");
     const { result } = renderHook(() => useIsMobile());
     // 'web' maps to 'desktop' for graph purposes
-    expect(result.current).toBe('desktop');
+    expect(result.current).toBe("desktop");
   });
 });

@@ -79,8 +79,7 @@ export function RecoveryDialog({ open, onOpenChange, onSuccess }: RecoveryDialog
     mode === "single"
       ? phrase.trim().length > 0
       : [share1, share2, share3].filter((s) => s.trim().length > 0).length >= 2;
-  const passwordsValid =
-    newPassphrase.length >= 12 && newPassphrase === confirm;
+  const passwordsValid = newPassphrase.length >= 12 && newPassphrase === confirm;
   const isValid = inputComplete && passwordsValid && !submitting;
 
   function clearAll() {
@@ -115,9 +114,7 @@ export function RecoveryDialog({ open, onOpenChange, onSuccess }: RecoveryDialog
         ? { kind: "single" as const, phrase: phrase.trim() }
         : {
             kind: "shamir" as const,
-            shares: [share1, share2, share3]
-              .map((s) => s.trim())
-              .filter((s) => s.length > 0),
+            shares: [share1, share2, share3].map((s) => s.trim()).filter((s) => s.length > 0),
           };
 
     try {
@@ -154,9 +151,7 @@ export function RecoveryDialog({ open, onOpenChange, onSuccess }: RecoveryDialog
           setErrorMsg(t("vault.recovery.errorInvalid"));
           break;
         case "charter_parse_error":
-          setErrorMsg(
-            t("vault.recovery.errorParse", { detail: error.detail ?? "" }),
-          );
+          setErrorMsg(t("vault.recovery.errorParse", { detail: error.detail ?? "" }));
           break;
         default:
           setErrorMsg(t("vault.internalError"));
@@ -172,9 +167,7 @@ export function RecoveryDialog({ open, onOpenChange, onSuccess }: RecoveryDialog
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className={cn(phase.kind === "issued" ? "sm:max-w-2xl" : "sm:max-w-md")}
-      >
+      <DialogContent className={cn(phase.kind === "issued" ? "sm:max-w-2xl" : "sm:max-w-md")}>
         {phase.kind !== "issued" && (
           <>
             <DialogHeader>
@@ -228,8 +221,7 @@ export function RecoveryDialog({ open, onOpenChange, onSuccess }: RecoveryDialog
                   <div className="flex flex-col gap-3">
                     {[1, 2, 3].map((i) => {
                       const value = i === 1 ? share1 : i === 2 ? share2 : share3;
-                      const setter =
-                        i === 1 ? setShare1 : i === 2 ? setShare2 : setShare3;
+                      const setter = i === 1 ? setShare1 : i === 2 ? setShare2 : setShare3;
                       const optional = i === 3 ? " (optional)" : "";
                       return (
                         <div key={i} className="flex flex-col gap-1.5">
@@ -258,9 +250,7 @@ export function RecoveryDialog({ open, onOpenChange, onSuccess }: RecoveryDialog
 
                 {/* 새 passphrase */}
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="recovery-new-pw">
-                    {t("vault.recovery.newPassphraseLabel")}
-                  </Label>
+                  <Label htmlFor="recovery-new-pw">{t("vault.recovery.newPassphraseLabel")}</Label>
                   <Input
                     id="recovery-new-pw"
                     type="password"

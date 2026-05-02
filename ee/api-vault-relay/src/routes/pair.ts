@@ -99,21 +99,13 @@ async function requireAuth(
   } catch (e) {
     return {
       ok: false,
-      res: c.json(
-        { error: "invalid_access_token", detail: String((e as Error).message) },
-        401,
-      ),
+      res: c.json({ error: "invalid_access_token", detail: String((e as Error).message) }, 401),
     };
   }
 }
 
 function isB64(s: unknown): s is string {
-  return (
-    typeof s === "string" &&
-    s.length > 0 &&
-    s.length <= 4096 &&
-    /^[A-Za-z0-9+/=_-]+$/.test(s)
-  );
+  return typeof s === "string" && s.length > 0 && s.length <= 4096 && /^[A-Za-z0-9+/=_-]+$/.test(s);
 }
 
 // ---------------------------------------------------------------------------
@@ -175,9 +167,7 @@ pair.post("/start", async (c) => {
     return c.json({ error: ent.reason, limit: ent.limit }, 403);
   }
 
-  const body = (await c.req.json().catch(() => null)) as
-    | { initiator_pub_b64?: unknown }
-    | null;
+  const body = (await c.req.json().catch(() => null)) as { initiator_pub_b64?: unknown } | null;
   if (!body || !isB64(body.initiator_pub_b64)) {
     return c.json({ error: "missing_or_invalid_pub_key" }, 400);
   }
@@ -220,9 +210,10 @@ pair.post("/join", async (c) => {
     });
   }
 
-  const body = (await c.req.json().catch(() => null)) as
-    | { pin?: unknown; joiner_pub_b64?: unknown }
-    | null;
+  const body = (await c.req.json().catch(() => null)) as {
+    pin?: unknown;
+    joiner_pub_b64?: unknown;
+  } | null;
   if (
     !body ||
     typeof body.pin !== "string" ||
@@ -263,9 +254,10 @@ pair.post("/payload", async (c) => {
     });
   }
 
-  const body = (await c.req.json().catch(() => null)) as
-    | { pin?: unknown; ciphertext_b64?: unknown }
-    | null;
+  const body = (await c.req.json().catch(() => null)) as {
+    pin?: unknown;
+    ciphertext_b64?: unknown;
+  } | null;
   if (
     !body ||
     typeof body.pin !== "string" ||

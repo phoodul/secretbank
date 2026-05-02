@@ -10,20 +10,20 @@
 
 ### 1-1. 엔드포인트
 
-| 항목 | 값 |
-|:-----|:---|
-| Base URL | `https://services.nvd.nist.gov/rest/json/cves/2.0` |
-| HTTP 메서드 | GET |
-| 응답 형식 | JSON |
+| 항목        | 값                                                 |
+| :---------- | :------------------------------------------------- |
+| Base URL    | `https://services.nvd.nist.gov/rest/json/cves/2.0` |
+| HTTP 메서드 | GET                                                |
+| 응답 형식   | JSON                                               |
 
 출처: [Vulnerability APIs - NVD](https://nvd.nist.gov/developers/vulnerabilities)
 
 ### 1-2. Rate Limit 정책 (2026-04-24 기준)
 
-| 구분 | Rate Limit |
-|:-----|:-----------|
-| API 키 없음 (public) | **5 requests / rolling 30-second window** |
-| API 키 있음 | **50 requests / rolling 30-second window** |
+| 구분                 | Rate Limit                                 |
+| :------------------- | :----------------------------------------- |
+| API 키 없음 (public) | **5 requests / rolling 30-second window**  |
+| API 키 있음          | **50 requests / rolling 30-second window** |
 
 - 공식 "Start Here" 페이지에 명시된 수치 ([Developers - Start Here - NVD](https://nvd.nist.gov/developers/start-here))
 - 참고: 예전 문서에서 언급된 "50 req/30s without key" 수치는 더 이상 유효하지 않음. 현재 공개(무인증) 한도는 5 req/30s
@@ -44,10 +44,10 @@ apiKey: <key-value>
 
 ### 1-4. 증분 쿼리 파라미터 — 날짜 형식
 
-| 파라미터 | 설명 |
-|:---------|:-----|
+| 파라미터           | 설명                       |
+| :----------------- | :------------------------- |
 | `lastModStartDate` | 수정 시작 날짜/시간 (포함) |
-| `lastModEndDate` | 수정 종료 날짜/시간 (포함) |
+| `lastModEndDate`   | 수정 종료 날짜/시간 (포함) |
 
 **필수 형식**: ISO-8601 확장 포맷, UTC 오프셋 포함
 
@@ -67,13 +67,14 @@ apiKey: <key-value>
 
 ### 1-5. 페이지네이션
 
-| 파라미터/필드 | 설명 |
-|:--------------|:-----|
-| `startIndex` | 0-based 시작 인덱스 (기본값: 0) |
+| 파라미터/필드    | 설명                                                         |
+| :--------------- | :----------------------------------------------------------- |
+| `startIndex`     | 0-based 시작 인덱스 (기본값: 0)                              |
 | `resultsPerPage` | 페이지당 결과 수, **최대 2,000** (기본값: API 내부 최적화값) |
-| `totalResults` | 응답 JSON 최상위에 반환되는 전체 결과 수 |
+| `totalResults`   | 응답 JSON 최상위에 반환되는 전체 결과 수                     |
 
 페이지 순회 패턴:
+
 ```
 startIndex = 0
 loop:
@@ -143,12 +144,12 @@ loop:
 
 ### 1-7. 에러 응답 포맷
 
-| HTTP 상태 | 의미 | 응답 |
-|:----------|:-----|:-----|
-| 400 | 잘못된 파라미터 (날짜 형식 오류 등) | 응답 헤더 `message` 필드에 디버그 메시지 포함 |
-| 403/404 | 잘못된 API 키 또는 리소스 없음 | `message` 헤더 |
-| 429 | Rate limit 초과 | `Retry-After` 헤더 (초 단위 정수 또는 HTTP-date) |
-| 503 | 서버 일시 불가 | `Retry-After` 헤더 (있을 수 있음) |
+| HTTP 상태 | 의미                                | 응답                                             |
+| :-------- | :---------------------------------- | :----------------------------------------------- |
+| 400       | 잘못된 파라미터 (날짜 형식 오류 등) | 응답 헤더 `message` 필드에 디버그 메시지 포함    |
+| 403/404   | 잘못된 API 키 또는 리소스 없음      | `message` 헤더                                   |
+| 429       | Rate limit 초과                     | `Retry-After` 헤더 (초 단위 정수 또는 HTTP-date) |
+| 503       | 서버 일시 불가                      | `Retry-After` 헤더 (있을 수 있음)                |
 
 - NVD 공식 문서는 에러 응답 body 포맷을 명시하지 않음. `message`는 헤더에 포함됨
 - 실제 구현체들(DependencyCheck 등)은 HTTP 상태 코드만 보고 재시도 로직 구현
@@ -163,21 +164,25 @@ loop:
 NIST는 CVE 제출 급증(2020~2025년 263% 증가, 2025년 42,000건 처리)에 대응하여 **리스크 기반 우선순위 모델**로 전환했다.
 
 **우선 처리 대상 CVE (CVSS 스코어링 + 상세 분석 제공):**
+
 1. CISA KEV(Known Exploited Vulnerabilities) 카탈로그 수록 CVE
 2. 미국 연방정부 사용 소프트웨어 CVE
 3. Executive Order 14028 기준 핵심 소프트웨어 CVE
 
 **"Not Scheduled" 상태:**
+
 - 위 기준 미달 CVE는 `vulnStatus: "Not Scheduled"` 로 반환
 - API에 존재하지만 NIST 독자 분석/CVSS 스코어링 미제공
 - 2026-03-01 이전 미처리 백로그도 "Not Scheduled" 전환
 
 **API 소비자 영향:**
+
 - `metrics.cvssMetricV31` 필드가 **없거나 비어있을 수 있음** (CVE 제출자가 스코어를 제공한 경우 그 값 사용, 아니면 누락)
 - `baseSeverity` 파싱 시 `Option<>` 또는 기본값 처리 필수
 - 단독 NVD 의존 시 false negative 발생 가능성 증가
 
 출처:
+
 - [NIST Updates NVD Operations (2026-04-15)](https://www.nist.gov/news-events/news/2026/04/nist-updates-nvd-operations-address-record-cve-growth)
 - [Aikido: NIST NVD changes 2026](https://www.aikido.dev/blog/nist-nvd-changes-2026)
 - [NIST Drops NVD Enrichment for Pre-March 2026 Vulnerabilities - Infosecurity Magazine](https://www.infosecurity-magazine.com/news/nvd-enrichment-premarch-2026/)
@@ -224,14 +229,15 @@ match limiter.check() {
 
 ### 2-3. Quota 설정
 
-| 메서드 | 설명 |
-|:-------|:-----|
-| `Quota::per_second(n: NonZeroU32)` | 초당 n개 허용, 버스트 = n |
-| `Quota::per_minute(n: NonZeroU32)` | 분당 n개 허용, 버스트 = n |
+| 메서드                                             | 설명                              |
+| :------------------------------------------------- | :-------------------------------- |
+| `Quota::per_second(n: NonZeroU32)`                 | 초당 n개 허용, 버스트 = n         |
+| `Quota::per_minute(n: NonZeroU32)`                 | 분당 n개 허용, 버스트 = n         |
 | `Quota::with_period(d: Duration) -> Option<Quota>` | 주기 d마다 1개 보충. d=0이면 None |
-| `.allow_burst(n: NonZeroU32)` | 최대 버스트 크기 설정 (기본: 1) |
+| `.allow_burst(n: NonZeroU32)`                      | 최대 버스트 크기 설정 (기본: 1)   |
 
 NVD rate limit 매핑:
+
 ```rust
 // API 키 없음: 5 req / 30s
 let quota_public = Quota::with_period(Duration::from_secs(6))
@@ -246,11 +252,11 @@ let quota_with_key = Quota::with_period(Duration::from_millis(600))
 
 ### 2-4. `until_ready()` vs `check()` 차이
 
-| 메서드 | 시그니처 | 동작 |
-|:-------|:---------|:-----|
-| `until_ready()` | `async fn until_ready(&self) -> MW::PositiveOutcome` | 허용될 때까지 비동기 대기. Rate limit 소진 시 자동 sleep 후 재시도. |
-| `check()` | `fn check(&self) -> Result<MW::PositiveOutcome, MW::NegativeOutcome>` | 즉시 성공/실패 반환. 실패 시 `NotUntil` 정보(다음 허용 시각) 포함. |
-| `until_ready_with_jitter()` | async | 다수 concurrent 요청 시 thundering herd 방지용 jitter 추가 |
+| 메서드                      | 시그니처                                                              | 동작                                                                |
+| :-------------------------- | :-------------------------------------------------------------------- | :------------------------------------------------------------------ |
+| `until_ready()`             | `async fn until_ready(&self) -> MW::PositiveOutcome`                  | 허용될 때까지 비동기 대기. Rate limit 소진 시 자동 sleep 후 재시도. |
+| `check()`                   | `fn check(&self) -> Result<MW::PositiveOutcome, MW::NegativeOutcome>` | 즉시 성공/실패 반환. 실패 시 `NotUntil` 정보(다음 허용 시각) 포함.  |
+| `until_ready_with_jitter()` | async                                                                 | 다수 concurrent 요청 시 thundering herd 방지용 jitter 추가          |
 
 **권장**: HTTP 클라이언트 루프에서는 `until_ready().await` 사용. 직접 재시도 로직 구현 시 `check()`.
 
@@ -279,7 +285,7 @@ assert!(limiter.check().is_ok());
 - 실제 시간에 의존하지 않으므로 단위 테스트에 적합
 - `direct_with_clock(quota, clock)` 에 레퍼런스로 전달
 
-출처: [governor::clock - Rust](https://docs.rs/governor/latest/governor/clock/index.html), [governor::_guide - Rust](https://docs.rs/governor/latest/governor/_guide/index.html)
+출처: [governor::clock - Rust](https://docs.rs/governor/latest/governor/clock/index.html), [governor::\_guide - Rust](https://docs.rs/governor/latest/governor/_guide/index.html)
 
 ---
 
@@ -327,11 +333,11 @@ async fn test_nvd_fetch() {
 
 ### 3-3. 쿼리 파라미터 매칭
 
-| 함수 | 설명 |
-|:-----|:-----|
-| `query_param("key", "exact_value")` | 정확히 일치 (`QueryParamExactMatcher`) |
+| 함수                                     | 설명                                                |
+| :--------------------------------------- | :-------------------------------------------------- |
+| `query_param("key", "exact_value")`      | 정확히 일치 (`QueryParamExactMatcher`)              |
 | `query_param_contains("key", "partial")` | 값이 부분 문자열 포함 (`QueryParamContainsMatcher`) |
-| `query_param_is_missing("key")` | 파라미터가 없어야 함 (`QueryParamIsMissingMatcher`) |
+| `query_param_is_missing("key")`          | 파라미터가 없어야 함 (`QueryParamIsMissingMatcher`) |
 
 ### 3-4. 에러 시나리오 Mock
 
@@ -350,9 +356,9 @@ ResponseTemplate::new(404)
 
 ### 3-5. `mount()` vs `mount_as_scoped()`
 
-| 메서드 | 수명 | 용도 |
-|:-------|:-----|:-----|
-| `.mount(&mock_server).await` | `MockServer` 전체 수명 | 일반 테스트 |
+| 메서드                                 | 수명                    | 용도                      |
+| :------------------------------------- | :---------------------- | :------------------------ |
+| `.mount(&mock_server).await`           | `MockServer` 전체 수명  | 일반 테스트               |
 | `.mount_as_scoped(&mock_server).await` | 반환된 `MockGuard` 수명 | 특정 코드 블록에서만 활성 |
 
 `mount_as_scoped` 는 `MockGuard` 가 drop되면 자동 해제됨. 조건부 mock 또는 일부 요청만 가로챌 때 유용.
@@ -405,17 +411,17 @@ let s = dt.format(&fmt).unwrap();
 
 **주요 컴포넌트:**
 
-| 컴포넌트 | 설명 |
-|:---------|:-----|
-| `[year]` | 4자리 연도 |
-| `[month]` | 2자리 월 (01~12) |
-| `[day]` | 2자리 일 |
-| `[hour]` | 2자리 시 (00~23) |
-| `[minute]` | 2자리 분 |
-| `[second]` | 2자리 초 |
-| `[subsecond digits:3]` | 소수점 이하 정확히 3자리 (밀리초) |
+| 컴포넌트                       | 설명                                             |
+| :----------------------------- | :----------------------------------------------- |
+| `[year]`                       | 4자리 연도                                       |
+| `[month]`                      | 2자리 월 (01~12)                                 |
+| `[day]`                        | 2자리 일                                         |
+| `[hour]`                       | 2자리 시 (00~23)                                 |
+| `[minute]`                     | 2자리 분                                         |
+| `[second]`                     | 2자리 초                                         |
+| `[subsecond digits:3]`         | 소수점 이하 정확히 3자리 (밀리초)                |
 | `[offset_hour sign:mandatory]` | UTC 오프셋 시간부, 항상 부호 포함 (`+00`, `-05`) |
-| `[offset_minute]` | UTC 오프셋 분부 (`00`, `30`) |
+| `[offset_minute]`              | UTC 오프셋 분부 (`00`, `30`)                     |
 
 ### 4-3. Cargo features 요구사항
 
@@ -530,15 +536,15 @@ pub async fn fetch_page(/* ... */) -> Result<NvdResponse, NvdError> {
 
 ## 6. 구현 시 주의사항 요약
 
-| 항목 | 주의사항 |
-|:-----|:---------|
-| Rate limit | API 키 없음 = 5/30s. governor `Quota::with_period(6s).allow_burst(5)` 패턴 권장 |
-| 날짜 형식 | 오프셋은 반드시 `±HH:MM` (분 포함). `-05` 단독 사용 시 404 |
-| `+` URL 인코딩 | reqwest `.query()` 사용 시 자동 처리됨 |
-| `cvssMetricV31` 누락 | 2026-04-15 이후 많은 CVE에서 CVSS 없을 수 있음. `Option<Vec<...>>` 로 모델링 |
-| `vulnStatus` | `"Not Scheduled"` 값 추가됨. 파싱 enum에 포함 필요 |
-| 120일 제한 | `lastModStartDate` ~ `lastModEndDate` 범위 최대 120일. 초과 시 에러 |
-| reqwest gzip | workspace dep에 gzip feature 포함 → NVD 응답 자동 압축 해제 |
+| 항목                 | 주의사항                                                                        |
+| :------------------- | :------------------------------------------------------------------------------ |
+| Rate limit           | API 키 없음 = 5/30s. governor `Quota::with_period(6s).allow_burst(5)` 패턴 권장 |
+| 날짜 형식            | 오프셋은 반드시 `±HH:MM` (분 포함). `-05` 단독 사용 시 404                      |
+| `+` URL 인코딩       | reqwest `.query()` 사용 시 자동 처리됨                                          |
+| `cvssMetricV31` 누락 | 2026-04-15 이후 많은 CVE에서 CVSS 없을 수 있음. `Option<Vec<...>>` 로 모델링    |
+| `vulnStatus`         | `"Not Scheduled"` 값 추가됨. 파싱 enum에 포함 필요                              |
+| 120일 제한           | `lastModStartDate` ~ `lastModEndDate` 범위 최대 120일. 초과 시 에러             |
+| reqwest gzip         | workspace dep에 gzip feature 포함 → NVD 응답 자동 압축 해제                     |
 
 ---
 
@@ -551,7 +557,7 @@ pub async fn fetch_page(/* ... */) -> Result<NvdResponse, NvdError> {
 - [Aikido: NIST NVD changes 2026](https://www.aikido.dev/blog/nist-nvd-changes-2026)
 - [Infosecurity Magazine: NIST Drops Enrichment](https://www.infosecurity-magazine.com/news/nvd-enrichment-premarch-2026/)
 - [governor - docs.rs](https://docs.rs/governor/latest/governor/)
-- [governor::_guide - Rust](https://docs.rs/governor/latest/governor/_guide/index.html)
+- [governor::\_guide - Rust](https://docs.rs/governor/latest/governor/_guide/index.html)
 - [governor::Quota - Rust](https://docs.rs/governor/latest/governor/struct.Quota.html)
 - [governor::RateLimiter - Rust](https://docs.rs/governor/latest/governor/struct.RateLimiter.html)
 - [governor::clock - Rust](https://docs.rs/governor/latest/governor/clock/index.html)

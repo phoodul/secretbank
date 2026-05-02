@@ -4,7 +4,7 @@
 
 name: api-vault
 base: core22
-version: '0.1.0'
+version: "0.1.0"
 summary: Dependency-graph-aware secrets manager with supply-chain risk
 description: |
   API Vault is an open-core desktop secrets manager that goes beyond simple

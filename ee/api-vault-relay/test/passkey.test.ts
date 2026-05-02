@@ -70,12 +70,12 @@ describe("POST /auth/passkey/register/start", () => {
 
   it("is idempotent — same email returns the same user_id and salts on a second call", async () => {
     const email = `bob-${Date.now()}@example.com`;
-    const first = await (await postJson("/auth/passkey/register/start", { email })).json() as {
+    const first = (await (await postJson("/auth/passkey/register/start", { email })).json()) as {
       user_id: string;
       salt_auth: string;
       salt_enc: string;
     };
-    const second = await (await postJson("/auth/passkey/register/start", { email })).json() as {
+    const second = (await (await postJson("/auth/passkey/register/start", { email })).json()) as {
       user_id: string;
       salt_auth: string;
       salt_enc: string;
@@ -91,7 +91,13 @@ describe("POST /auth/passkey/register/verify", () => {
   it("returns 410 when challenge is absent (expired/never started)", async () => {
     const resp = await postJson("/auth/passkey/register/verify", {
       email: "no-challenge@example.com",
-      response: { id: "abc", rawId: "abc", type: "public-key", response: {}, clientExtensionResults: {} },
+      response: {
+        id: "abc",
+        rawId: "abc",
+        type: "public-key",
+        response: {},
+        clientExtensionResults: {},
+      },
     });
     expect(resp.status).toBe(410);
     const body = (await resp.json()) as { error: string };
@@ -130,7 +136,13 @@ describe("POST /auth/passkey/assert/verify", () => {
   it("returns 410 when challenge is absent", async () => {
     const resp = await postJson("/auth/passkey/assert/verify", {
       email: "x@y.z",
-      response: { id: "abc", rawId: "abc", type: "public-key", response: {}, clientExtensionResults: {} },
+      response: {
+        id: "abc",
+        rawId: "abc",
+        type: "public-key",
+        response: {},
+        clientExtensionResults: {},
+      },
     });
     expect(resp.status).toBe(410);
   });

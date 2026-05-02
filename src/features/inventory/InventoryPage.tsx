@@ -45,7 +45,16 @@ function writeHideRevoked(value: boolean): void {
 
 export function InventoryPage() {
   const { t } = useTranslation("common");
-  const { items: rawItems, loading, error, filter, setFilter, search, setSearch, refresh } = useInventory();
+  const {
+    items: rawItems,
+    loading,
+    error,
+    filter,
+    setFilter,
+    search,
+    setSearch,
+    refresh,
+  } = useInventory();
   const { issuers } = useIssuers();
   const { entitlement } = useEntitlement();
   const isPro = entitlement?.tier === "pro";
@@ -183,8 +192,9 @@ export function InventoryPage() {
         </div>
 
         {/* Bulk revoke 버튼 — issuer 필터 선택 + non-revoked 존재 시에만 */}
-        {showBulkRevoke && selectedIssuer && (
-          isPro ? (
+        {showBulkRevoke &&
+          selectedIssuer &&
+          (isPro ? (
             <Button
               variant="destructive"
               size="sm"
@@ -222,8 +232,7 @@ export function InventoryPage() {
                 <TooltipContent>{t("pro.lock.tooltip")}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )
-        )}
+          ))}
       </div>
 
       {/* 에러 배너 */}

@@ -7,9 +7,9 @@
 use std::collections::HashMap;
 
 use api_vault_audit::{verify as verify_chain, ChainVerification};
-use api_vault_storage::{AuditFilter, AuditRepo};
-use api_vault_storage::sqlite::repositories::device::DeviceRepo;
 use api_vault_core::DeviceId;
+use api_vault_storage::sqlite::repositories::device::DeviceRepo;
+use api_vault_storage::{AuditFilter, AuditRepo};
 use ed25519_dalek::VerifyingKey;
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -85,7 +85,9 @@ pub enum AuditCommandError {
 
 impl From<api_vault_storage::sqlite::StorageError> for AuditCommandError {
     fn from(e: api_vault_storage::sqlite::StorageError) -> Self {
-        Self::Storage { message: e.to_string() }
+        Self::Storage {
+            message: e.to_string(),
+        }
     }
 }
 
@@ -220,7 +222,9 @@ pub async fn audit_verify_chain(
                 continue;
             }
             Err(e) => {
-                return Err(AuditCommandError::Storage { message: e.to_string() });
+                return Err(AuditCommandError::Storage {
+                    message: e.to_string(),
+                });
             }
         };
 
@@ -251,8 +255,10 @@ pub async fn audit_verify_chain(
             }
         };
 
-        let ChainVerification { valid_count, first_invalid_seq } =
-            verify_chain(&entries, &vk);
+        let ChainVerification {
+            valid_count,
+            first_invalid_seq,
+        } = verify_chain(&entries, &vk);
 
         if first_invalid_seq.is_some() {
             all_valid = false;
@@ -295,7 +301,8 @@ mod tests {
     // Shared helpers (mirrors audit_ctx.rs tests)
     // -----------------------------------------------------------------------
 
-    async fn unlocked_vault() -> Arc<RwLock<Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync>>> {
+    async fn unlocked_vault(
+    ) -> Arc<RwLock<Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync>>> {
         let mut mock = MockVaultStorage::new("pw");
         mock.unlock(secrecy::SecretString::from("pw".to_owned()))
             .await
@@ -351,15 +358,33 @@ mod tests {
         let ctx = make_ctx(pool.clone(), Some(identity));
 
         // 2 credential entries + 1 project entry
-        ctx.record(AuditActor::LocalUser, "credential.create", "credential", "c1", None)
-            .await
-            .unwrap();
-        ctx.record(AuditActor::LocalUser, "credential.update", "credential", "c2", None)
-            .await
-            .unwrap();
-        ctx.record(AuditActor::LocalUser, "project.create", "project", "p1", None)
-            .await
-            .unwrap();
+        ctx.record(
+            AuditActor::LocalUser,
+            "credential.create",
+            "credential",
+            "c1",
+            None,
+        )
+        .await
+        .unwrap();
+        ctx.record(
+            AuditActor::LocalUser,
+            "credential.update",
+            "credential",
+            "c2",
+            None,
+        )
+        .await
+        .unwrap();
+        ctx.record(
+            AuditActor::LocalUser,
+            "project.create",
+            "project",
+            "p1",
+            None,
+        )
+        .await
+        .unwrap();
 
         let repo = AuditRepo::new(&pool);
         let filter = api_vault_storage::AuditFilter {
@@ -369,7 +394,11 @@ mod tests {
         };
         let results = repo.list(&filter).await.unwrap();
 
-        assert_eq!(results.len(), 2, "filter subject_kind=credential must return 2 entries");
+        assert_eq!(
+            results.len(),
+            2,
+            "filter subject_kind=credential must return 2 entries"
+        );
         for entry in &results {
             assert_eq!(entry.subject_kind, "credential");
         }
@@ -402,12 +431,18 @@ mod tests {
         let repo = AuditRepo::new(&pool);
 
         // Default limit (0 → 100 in repo implementation)
-        let default_filter = api_vault_storage::AuditFilter { limit: 0, ..Default::default() };
+        let default_filter = api_vault_storage::AuditFilter {
+            limit: 0,
+            ..Default::default()
+        };
         let capped = repo.list(&default_filter).await.unwrap();
         assert_eq!(capped.len(), 100, "default limit must cap at 100");
 
         // Explicit limit 500 (more than seeded)
-        let big_filter = api_vault_storage::AuditFilter { limit: 500, ..Default::default() };
+        let big_filter = api_vault_storage::AuditFilter {
+            limit: 500,
+            ..Default::default()
+        };
         let all = repo.list(&big_filter).await.unwrap();
         assert_eq!(all.len(), 150, "limit=500 must return all 150 entries");
     }

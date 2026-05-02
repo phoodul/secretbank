@@ -104,9 +104,7 @@ describe("RelayTransport — pollOnce", () => {
     const b64 = btoa(String.fromCharCode(...envelope));
 
     const fetchMock = makeFetchMock();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse(200, { version: 5, ciphertext_b64: b64 }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { version: 5, ciphertext_b64: b64 }));
 
     const t = new RelayTransport({
       baseUrl: "http://relay.test",
@@ -178,7 +176,11 @@ describe("RelayTransport — pollOnce", () => {
   });
 
   it("transitions status to 'error' when AEAD decryption fails (envelope tamper / wrong key)", async () => {
-    const goodEnvelope = encrypt(KEY, new Uint8Array([1, 2, 3]), new TextEncoder().encode(`user:${USER_ID}`));
+    const goodEnvelope = encrypt(
+      KEY,
+      new Uint8Array([1, 2, 3]),
+      new TextEncoder().encode(`user:${USER_ID}`),
+    );
     goodEnvelope[goodEnvelope.length - 1] ^= 0x01; // tamper tag
     const tampered_b64 = btoa(String.fromCharCode(...goodEnvelope));
 
@@ -199,12 +201,14 @@ describe("RelayTransport — pollOnce", () => {
   });
 
   it("AAD binds to user — different user's envelope fails to decrypt (cross-user replay safe)", async () => {
-    const otherEnvelope = encrypt(KEY, new Uint8Array([1, 2, 3]), new TextEncoder().encode("user:other"));
+    const otherEnvelope = encrypt(
+      KEY,
+      new Uint8Array([1, 2, 3]),
+      new TextEncoder().encode("user:other"),
+    );
     const b64 = btoa(String.fromCharCode(...otherEnvelope));
     const fetchMock = makeFetchMock();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse(200, { version: 1, ciphertext_b64: b64 }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { version: 1, ciphertext_b64: b64 }));
 
     const t = new RelayTransport({
       baseUrl: "http://relay.test",

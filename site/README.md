@@ -14,6 +14,7 @@ wrangler pages deploy site --project-name api-vault-landing
 
 Or attach the GitHub repo at <https://dash.cloudflare.com/?to=/:account/pages>
 and set:
+
 - Production branch: `main`
 - Build command: (none)
 - Build output directory: `site`

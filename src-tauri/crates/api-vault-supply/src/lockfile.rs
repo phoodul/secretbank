@@ -70,8 +70,7 @@ fn collect_npm_dep_tree(
 ) {
     for (name, val) in obj {
         if let Some(ver) = val.get("version").and_then(|v| v.as_str()) {
-            out
-                .entry((Ecosystem::Npm, name.clone()))
+            out.entry((Ecosystem::Npm, name.clone()))
                 .or_insert_with(|| ver.to_string());
         }
         if let Some(nested) = val.get("dependencies").and_then(|v| v.as_object()) {
@@ -91,8 +90,7 @@ pub fn parse_pnpm_lock_yaml(path: &Path) -> Result<ResolvedVersions, SupplyError
         for (key, _val) in map {
             let Some(k) = key.as_str() else { continue };
             if let Some((name, version)) = parse_pnpm_pkg_key(k) {
-                out
-                    .entry((Ecosystem::Npm, name.to_string()))
+                out.entry((Ecosystem::Npm, name.to_string()))
                     .or_insert_with(|| version.to_string());
             }
         }
@@ -126,8 +124,8 @@ fn parse_pnpm_pkg_key(key: &str) -> Option<(&str, &str)> {
 /// `Cargo.lock`. `[[package]]` 배열의 각 항목에 name/version.
 pub fn parse_cargo_lock(path: &Path) -> Result<ResolvedVersions, SupplyError> {
     let raw = std::fs::read_to_string(path)?;
-    let parsed: toml::Value = toml::from_str(&raw)
-        .map_err(|e| SupplyError::Manifest(format!("Cargo.lock: {e}")))?;
+    let parsed: toml::Value =
+        toml::from_str(&raw).map_err(|e| SupplyError::Manifest(format!("Cargo.lock: {e}")))?;
     let mut out = ResolvedVersions::new();
 
     let Some(packages) = parsed.get("package").and_then(|v| v.as_array()) else {
@@ -141,8 +139,7 @@ pub fn parse_cargo_lock(path: &Path) -> Result<ResolvedVersions, SupplyError> {
         let Some(version) = pkg.get("version").and_then(|v| v.as_str()) else {
             continue;
         };
-        out
-            .entry((Ecosystem::Cargo, name.to_string()))
+        out.entry((Ecosystem::Cargo, name.to_string()))
             .or_insert_with(|| version.to_string());
     }
 
@@ -151,10 +148,7 @@ pub fn parse_cargo_lock(path: &Path) -> Result<ResolvedVersions, SupplyError> {
 
 /// manifest 의 [`DependencyDeclaration`] 에 lockfile resolved version 을 덮어
 /// 씌운다. 일치 없는 dep 은 그대로 유지 (range string).
-pub fn apply_resolved(
-    deps: &mut [crate::DependencyDeclaration],
-    resolved: &ResolvedVersions,
-) {
+pub fn apply_resolved(deps: &mut [crate::DependencyDeclaration], resolved: &ResolvedVersions) {
     for d in deps.iter_mut() {
         if let Some(v) = resolved.get(&(d.ecosystem, d.name.clone())) {
             d.version = v.clone();
@@ -191,7 +185,10 @@ mod tests {
         let dir = write_tmp("package-lock.json", json);
         let r = parse_package_lock_json(&dir.path().join("package-lock.json")).unwrap();
         assert_eq!(r.get(&(Ecosystem::Npm, "axios".into())).unwrap(), "1.7.2");
-        assert_eq!(r.get(&(Ecosystem::Npm, "@scope/foo".into())).unwrap(), "2.3.4");
+        assert_eq!(
+            r.get(&(Ecosystem::Npm, "@scope/foo".into())).unwrap(),
+            "2.3.4"
+        );
     }
 
     #[test]
@@ -230,7 +227,10 @@ packages:
         let dir = write_tmp("pnpm-lock.yaml", yaml);
         let r = parse_pnpm_lock_yaml(&dir.path().join("pnpm-lock.yaml")).unwrap();
         assert_eq!(r.get(&(Ecosystem::Npm, "axios".into())).unwrap(), "1.7.2");
-        assert_eq!(r.get(&(Ecosystem::Npm, "@scope/foo".into())).unwrap(), "2.3.4");
+        assert_eq!(
+            r.get(&(Ecosystem::Npm, "@scope/foo".into())).unwrap(),
+            "2.3.4"
+        );
     }
 
     #[test]
@@ -248,8 +248,14 @@ version = "1.36.0"
 "#;
         let dir = write_tmp("Cargo.lock", lock);
         let r = parse_cargo_lock(&dir.path().join("Cargo.lock")).unwrap();
-        assert_eq!(r.get(&(Ecosystem::Cargo, "serde".into())).unwrap(), "1.0.197");
-        assert_eq!(r.get(&(Ecosystem::Cargo, "tokio".into())).unwrap(), "1.36.0");
+        assert_eq!(
+            r.get(&(Ecosystem::Cargo, "serde".into())).unwrap(),
+            "1.0.197"
+        );
+        assert_eq!(
+            r.get(&(Ecosystem::Cargo, "tokio".into())).unwrap(),
+            "1.36.0"
+        );
     }
 
     #[test]

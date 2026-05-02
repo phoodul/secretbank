@@ -42,11 +42,11 @@ We **never** transmit any of these to our servers in the free tier.
 
 With Pro disabled and telemetry off, the only outbound connections are:
 
-| Destination | Purpose | Data sent |
-| :---------- | :------ | :-------- |
-| `services.nvd.nist.gov`, `api.github.com/advisories`, issuer RSS feeds | Incident feed polling | Version strings of public feeds — no vault data |
-| `api.osv.dev` | Supply-chain scan | Package ecosystem + name + version of dependencies you choose to scan |
-| `api.github.com` | Updater check (signed manifest) | Your app version |
+| Destination                                                            | Purpose                         | Data sent                                                             |
+| :--------------------------------------------------------------------- | :------------------------------ | :-------------------------------------------------------------------- |
+| `services.nvd.nist.gov`, `api.github.com/advisories`, issuer RSS feeds | Incident feed polling           | Version strings of public feeds — no vault data                       |
+| `api.osv.dev`                                                          | Supply-chain scan               | Package ecosystem + name + version of dependencies you choose to scan |
+| `api.github.com`                                                       | Updater check (signed manifest) | Your app version                                                      |
 
 You can disable each of these in **Settings → Network**. The feed and
 supply-chain scan are local-only after disable; the updater check becomes
@@ -121,13 +121,13 @@ account record and stop billing within 7 days. Local vault data is
 
 ## 6. Data retention
 
-| Data class | Retention |
-| :--------- | :-------- |
-| Local vault | Until you delete it on your device |
+| Data class              | Retention                                                  |
+| :---------------------- | :--------------------------------------------------------- |
+| Local vault             | Until you delete it on your device                         |
 | Pro ciphertext on relay | Until you delete the device or unsubscribe + 30 days grace |
-| Anonymous telemetry | 30 days |
-| Stripe customer record | Per Stripe's policy + our books (legal minimum) |
-| Email support thread | 1 year, or until you ask us to delete it |
+| Anonymous telemetry     | 30 days                                                    |
+| Stripe customer record  | Per Stripe's policy + our books (legal minimum)            |
+| Email support thread    | 1 year, or until you ask us to delete it                   |
 
 ---
 

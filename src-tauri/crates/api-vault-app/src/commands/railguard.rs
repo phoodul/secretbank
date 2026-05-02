@@ -289,10 +289,7 @@ pub(crate) fn apply_rules(
                 let existing = std::fs::read_to_string(&abs).map_err(|e| RailguardError::Io {
                     message: e.to_string(),
                 })?;
-                let separator = format!(
-                    "\n\n<!-- RAILGUARD {} applied {} -->\n",
-                    rel, now_ts
-                );
+                let separator = format!("\n\n<!-- RAILGUARD {} applied {} -->\n", rel, now_ts);
                 let merged = format!("{}{}{}", existing, separator, content);
                 let bytes = merged.len();
                 (merged, None, bytes)
@@ -434,7 +431,10 @@ mod tests {
         // of at runtime.
         let json = serde_json::json!([{"kind": "overwrite", "backup": true}]);
         let parsed = serde_json::from_value::<ApplyMode>(json);
-        assert!(parsed.is_err(), "array shape must not deserialize as ApplyMode");
+        assert!(
+            parsed.is_err(),
+            "array shape must not deserialize as ApplyMode"
+        );
     }
 
     fn make_ctx() -> RenderContext {
@@ -462,12 +462,23 @@ mod tests {
         let previews = build_preview(dir.path(), &rules, &ctx).unwrap();
         assert_eq!(previews.len(), 4);
         for p in &previews {
-            assert_eq!(p.action, PreviewAction::Create, "expected Create for {:?}", p.kind);
+            assert_eq!(
+                p.action,
+                PreviewAction::Create,
+                "expected Create for {:?}",
+                p.kind
+            );
             assert!(!p.exists);
         }
 
         // Apply → 4 파일 모두 작성, backup_path 없음
-        let applied = apply_rules(dir.path(), &rules, &ctx, ApplyMode::Overwrite { backup: false }).unwrap();
+        let applied = apply_rules(
+            dir.path(),
+            &rules,
+            &ctx,
+            ApplyMode::Overwrite { backup: false },
+        )
+        .unwrap();
         assert_eq!(applied.len(), 4);
         for a in &applied {
             assert!(a.wrote_bytes > 0);
@@ -497,12 +508,21 @@ mod tests {
         assert!(previews[0].exists);
 
         // Apply with Overwrite { backup: true } → .bak-{ts} 생성 + 파일 덮어씀
-        let applied = apply_rules(dir.path(), &rules, &ctx, ApplyMode::Overwrite { backup: true }).unwrap();
+        let applied = apply_rules(
+            dir.path(),
+            &rules,
+            &ctx,
+            ApplyMode::Overwrite { backup: true },
+        )
+        .unwrap();
         assert_eq!(applied.len(), 1);
         let a = &applied[0];
         assert!(a.backup_path.is_some(), "backup_path should be set");
         let bak_rel = a.backup_path.as_ref().unwrap();
-        assert!(dir.path().join(bak_rel).exists(), "backup file should exist");
+        assert!(
+            dir.path().join(bak_rel).exists(),
+            "backup file should exist"
+        );
 
         // 원본 경로에 렌더된 내용이 있어야 한다
         let new_content = std::fs::read_to_string(&cursorrules_path).unwrap();
@@ -520,24 +540,48 @@ mod tests {
         let rules = all_rules();
 
         // 먼저 한 번 apply 해서 정확한 콘텐츠로 씌운다
-        apply_rules(dir.path(), &rules, &ctx, ApplyMode::Overwrite { backup: false }).unwrap();
+        apply_rules(
+            dir.path(),
+            &rules,
+            &ctx,
+            ApplyMode::Overwrite { backup: false },
+        )
+        .unwrap();
 
         // Preview → 모두 Skip
         let previews = build_preview(dir.path(), &rules, &ctx).unwrap();
         for p in &previews {
-            assert_eq!(p.action, PreviewAction::Skip, "expected Skip for {:?}", p.kind);
+            assert_eq!(
+                p.action,
+                PreviewAction::Skip,
+                "expected Skip for {:?}",
+                p.kind
+            );
         }
 
         // ApplyMode::Overwrite { backup: false } 는 Skip action 무시하고 그대로 쓴다
-        let applied_overwrite = apply_rules(dir.path(), &rules, &ctx, ApplyMode::Overwrite { backup: false }).unwrap();
+        let applied_overwrite = apply_rules(
+            dir.path(),
+            &rules,
+            &ctx,
+            ApplyMode::Overwrite { backup: false },
+        )
+        .unwrap();
         for a in &applied_overwrite {
-            assert!(a.wrote_bytes > 0, "Overwrite should still write even when content matches");
+            assert!(
+                a.wrote_bytes > 0,
+                "Overwrite should still write even when content matches"
+            );
         }
 
         // ApplyMode::SkipExisting → wrote_bytes=0 (파일 건너뜀)
         let applied_skip = apply_rules(dir.path(), &rules, &ctx, ApplyMode::SkipExisting).unwrap();
         for a in &applied_skip {
-            assert_eq!(a.wrote_bytes, 0, "SkipExisting should not write existing file: {:?}", a.kind);
+            assert_eq!(
+                a.wrote_bytes, 0,
+                "SkipExisting should not write existing file: {:?}",
+                a.kind
+            );
         }
     }
 
@@ -577,10 +621,19 @@ mod tests {
         assert!(applied[0].backup_path.is_none());
 
         let result = std::fs::read_to_string(&claude_path).unwrap();
-        assert!(result.starts_with("# existing"), "original content must be preserved");
-        assert!(result.contains("<!-- RAILGUARD"), "separator comment must be present");
+        assert!(
+            result.starts_with("# existing"),
+            "original content must be preserved"
+        );
+        assert!(
+            result.contains("<!-- RAILGUARD"),
+            "separator comment must be present"
+        );
         // 렌더된 내용이 포함되어야 한다
-        assert!(result.contains("TestApp"), "rendered project name must appear");
+        assert!(
+            result.contains("TestApp"),
+            "rendered project name must appear"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -600,7 +653,10 @@ mod tests {
         assert!(applied[0].backup_path.is_none());
 
         let after = std::fs::read_to_string(&cursor_path).unwrap();
-        assert_eq!(after, "do not touch", "file content must not change with SkipExisting");
+        assert_eq!(
+            after, "do not touch",
+            "file content must not change with SkipExisting"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -614,8 +670,13 @@ mod tests {
 
         // apply 후 결과 파일 4개 존재 확인 (기존 테스트와 동일하지만
         // 이 테스트는 "동일 부모 디렉토리에 4 룰 동시에" 케이스를 명시함)
-        let applied = apply_rules(dir.path(), &rules, &ctx, ApplyMode::Overwrite { backup: false })
-            .unwrap();
+        let applied = apply_rules(
+            dir.path(),
+            &rules,
+            &ctx,
+            ApplyMode::Overwrite { backup: false },
+        )
+        .unwrap();
         assert_eq!(applied.len(), 4, "4 rules must all be applied");
 
         // 각 파일이 실제로 존재하는지 + 서로 다른 경로인지 확인
@@ -637,7 +698,11 @@ mod tests {
         let tmp_count = std::fs::read_dir(dir.path())
             .unwrap()
             .filter_map(|e| e.ok())
-            .filter(|e| e.file_name().to_string_lossy().starts_with(".railguard_tmp_"))
+            .filter(|e| {
+                e.file_name()
+                    .to_string_lossy()
+                    .starts_with(".railguard_tmp_")
+            })
             .count();
         assert_eq!(tmp_count, 0, "no tmp files should remain after apply");
     }
@@ -728,10 +793,7 @@ mod tests {
             frameworks: vec![],
             issuers: vec!["iss".to_owned(); 65],
         };
-        assert!(
-            ctx.validate().is_err(),
-            "issuers list > 64 items must fail"
-        );
+        assert!(ctx.validate().is_err(), "issuers list > 64 items must fail");
 
         // 제어문자 거부
         ctx = RenderContext {
@@ -762,7 +824,13 @@ mod tests {
                 std::fs::write(&p, "seed").unwrap();
             }
             // 약간의 시간 차이를 위해 timestamp 가 같을 수 있지만 rename 으로 진행
-            apply_rules(dir.path(), &rules, &ctx, ApplyMode::Overwrite { backup: true }).unwrap();
+            apply_rules(
+                dir.path(),
+                &rules,
+                &ctx,
+                ApplyMode::Overwrite { backup: true },
+            )
+            .unwrap();
         }
 
         let backups: Vec<_> = std::fs::read_dir(dir.path())

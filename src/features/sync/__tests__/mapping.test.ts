@@ -287,8 +287,6 @@ describe("ENTITY_MAPPERS registry (Phase D-2a)", () => {
   });
 
   it("has exactly 6 entries (no leakage of unrelated keys)", () => {
-    expect(Object.keys(ENTITY_MAPPERS).sort()).toEqual(
-      [...SYNC_ENTITIES].sort(),
-    );
+    expect(Object.keys(ENTITY_MAPPERS).sort()).toEqual([...SYNC_ENTITIES].sort());
   });
 });

@@ -135,9 +135,7 @@ describe("SyncProvider (Phase C — sync boot + transport)", () => {
       expect(screen.getByTestId("status")).toHaveTextContent("ready");
     });
     expect(screen.getByTestId("rootkey-len")).toHaveTextContent("32");
-    expect(screen.getByTestId("transport-status")).toHaveTextContent(
-      "connected",
-    );
+    expect(screen.getByTestId("transport-status")).toHaveTextContent("connected");
     expect(mockInvoke).toHaveBeenCalledWith("sync_get_root_key");
   });
 
@@ -298,7 +296,9 @@ describe("SyncProvider (Phase E-4b — RelayTransport auto-wire)", () => {
           throw new Error(`unexpected: ${String(cmd)}`);
       }
     });
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
 
     render(
       <SyncProvider dbName="test:e4b-no-user" disablePersistence disableSyncBoot={false}>

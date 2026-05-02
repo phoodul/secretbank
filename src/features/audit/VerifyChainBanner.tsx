@@ -15,15 +15,8 @@ export function VerifyChainBanner({ verifyChain }: VerifyChainBannerProps) {
     return (
       <div className="flex items-center gap-3 rounded-md border px-4 py-3">
         <ShieldCheck className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-        <span className="flex-1 text-sm text-muted-foreground">
-          {t("audit.subtitle")}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => void verify()}
-        >
+        <span className="flex-1 text-sm text-muted-foreground">{t("audit.subtitle")}</span>
+        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => void verify()}>
           {t("audit.verify.action")}
         </Button>
       </div>
@@ -47,12 +40,7 @@ export function VerifyChainBanner({ verifyChain }: VerifyChainBannerProps) {
       >
         <ShieldAlert className="h-4 w-4 shrink-0 text-destructive" aria-hidden />
         <span className="flex-1 text-sm text-destructive">{state.error}</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => void verify()}
-        >
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => void verify()}>
           {t("audit.verify.action")}
         </Button>
       </div>
@@ -100,12 +88,7 @@ export function VerifyChainBanner({ verifyChain }: VerifyChainBannerProps) {
         <span className="flex-1 text-sm font-medium text-destructive">
           {t("audit.verify.failed")}
         </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => void verify()}
-        >
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => void verify()}>
           {t("audit.verify.action")}
         </Button>
       </div>
@@ -120,9 +103,7 @@ export function VerifyChainBanner({ verifyChain }: VerifyChainBannerProps) {
               <span className="text-muted-foreground">—</span>
               <span>{d.valid_count} valid</span>
               {d.first_invalid_seq != null && (
-                <span className="text-destructive">
-                  first invalid seq: {d.first_invalid_seq}
-                </span>
+                <span className="text-destructive">first invalid seq: {d.first_invalid_seq}</span>
               )}
             </li>
           ))}

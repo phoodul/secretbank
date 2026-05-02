@@ -38,11 +38,11 @@ ordered by how often you'll actually use each.
 
 ### 1.2 Install
 
-| Platform | How |
-| :------- | :-- |
-| Windows | `api-vault_x64-setup.exe` or `winget install api-vault` |
-| macOS | `api-vault_universal.dmg` or `brew install --cask api-vault` |
-| Linux | `.deb` / `.AppImage` / `.rpm` or `snap install api-vault` |
+| Platform | How                                                          |
+| :------- | :----------------------------------------------------------- |
+| Windows  | `api-vault_x64-setup.exe` or `winget install api-vault`      |
+| macOS    | `api-vault_universal.dmg` or `brew install --cask api-vault` |
+| Linux    | `.deb` / `.AppImage` / `.rpm` or `snap install api-vault`    |
 
 Builds: https://github.com/phoodul/api-vault/releases
 
@@ -126,9 +126,10 @@ Issuer ─▶ Credential ─▶ Usage (code site) ─▶ Project ─▶ Deployme
 The graph is only useful if it knows where each key is consumed.
 
 **Auto (recommended)** — drop-zone scanner:
+
 1. Sidebar **Scan** → drag a project folder.
 2. Detects `.env*`, `process.env.X`, `os.getenv("X")`, `Bun.env.X` via regex
-   + AST.
+   - AST.
 3. Each finding is presented; pick the matching credential and **Link**.
 
 **Manual** — credential detail → **Add usage** → file path + line number.
@@ -153,10 +154,12 @@ The graph is only useful if it knows where each key is consumed.
 ### 4.2 The view
 
 Sidebar **Incidents**:
+
 - **Affecting you** — incidents that match your vault.
 - **All** — every polled incident.
 
 Each card:
+
 - Headline, publish date, source link.
 - **Affected credentials** — your N credentials matching this incident.
 - **Action** — `Rotate`, `Snooze`, `Mark resolved`.
@@ -239,6 +242,7 @@ exact, not approximate.
 ### 7.3 Graph integration
 
 Scan results are written into the graph automatically:
+
 - `Project` → `Package` (color-coded by risk) → affected `Credential`.
 - The cross-domain blast radius story: "this npm package has a known
   secret-leak history → this project depends on it → these credentials are
@@ -246,10 +250,10 @@ Scan results are written into the graph automatically:
 
 ### 7.4 Supported manifests
 
-| Ecosystem | Manifest | Lockfile (exact-version resolution) |
-| :-------- | :------- | :---------------------------------- |
+| Ecosystem         | Manifest       | Lockfile (exact-version resolution)   |
+| :---------------- | :------------- | :------------------------------------ |
 | npm / pnpm / yarn | `package.json` | `package-lock.json`, `pnpm-lock.yaml` |
-| Cargo (Rust) | `Cargo.toml` | `Cargo.lock` |
+| Cargo (Rust)      | `Cargo.toml`   | `Cargo.lock`                          |
 
 PyPI / GoMod / Maven: manifest only for now (lockfile parsing is planned).
 
@@ -265,6 +269,7 @@ Pro feature. Read and write the same vault from a second device.
 shown (60-second TTL).
 
 **Device 2 (joiner)**:
+
 1. On a fresh install, pick **Pair with another device** on the first
    screen.
 2. Enter the host's PIN.
@@ -354,13 +359,13 @@ apivault mcp serve --port 3737  # SSE (Copilot Chat, etc.)
 
 ### 10.2 Exposed tools
 
-| Tool | Description |
-| :--- | :---------- |
-| `list_credentials` | Metadata only, no values |
-| `reveal_credential` | Returns a value after a user OS confirm dialog |
-| `check_railguard_status` | Whether RAILGUARD rules are present in the project |
-| `suggest_railguard_template` | Generate per-editor ruleset draft |
-| `check_supply_chain_risk` | Run a supply-chain scan on the current project |
+| Tool                         | Description                                        |
+| :--------------------------- | :------------------------------------------------- |
+| `list_credentials`           | Metadata only, no values                           |
+| `reveal_credential`          | Returns a value after a user OS confirm dialog     |
+| `check_railguard_status`     | Whether RAILGUARD rules are present in the project |
+| `suggest_railguard_template` | Generate per-editor ruleset draft                  |
+| `check_supply_chain_risk`    | Run a supply-chain scan on the current project     |
 
 ### 10.3 Claude Desktop
 
@@ -456,9 +461,11 @@ Two modes (chosen at vault creation, changeable at recovery time):
 
 - **Single charter** (recommended). 6 Diceware words + a 4-digit verifier.
   One sheet, store offline.
+
   ```
   TUNDRA HARBOR FLINT MOTH OPAL CASCADE - 7042
   ```
+
   The 4-digit verifier rejects single-word typos immediately — you do not
   silently end up with a useless recovery key.
 
@@ -513,9 +520,11 @@ For v0.1.x we have a Tauri update-signing key but no Apple Developer
 notarization yet.
 
 **Fix:**
+
 ```sh
 xattr -cr "/Applications/API Vault.app"
 ```
+
 The first command strips the quarantine attribute Gatekeeper added on
 download. After that, double-click works normally.
 
@@ -530,11 +539,13 @@ first failed launch.
 on some distros).
 
 **Fix (Debian/Ubuntu):**
+
 ```sh
 sudo apt-get install -y libwebkit2gtk-4.1-0 libayatana-appindicator3-1
 ```
 
 **Fix (Fedora/RHEL):**
+
 ```sh
 sudo dnf install -y webkit2gtk4.1 libappindicator-gtk3
 ```
@@ -542,6 +553,7 @@ sudo dnf install -y webkit2gtk4.1 libappindicator-gtk3
 ### 13.4 "Vault is locked" but you typed the right passphrase
 
 **Possible causes:**
+
 1. **Cooldown active** after a Charter recovery (default 7 days). Settings
    → Security → "Charter recovery cooldown" shows whether it's on.
    Solution: wait, or click **Clear cooldown** (audited).
@@ -557,6 +569,7 @@ sudo dnf install -y webkit2gtk4.1 libappindicator-gtk3
 **Symptom:** "You're up to date" even after a new GitHub Release.
 
 **Diagnose:**
+
 - Check **Settings → Updates** for the last-checked timestamp.
 - Verify network reachability to `github.com` (the updater hits
   `releases/latest/download/latest.json`).
@@ -564,6 +577,7 @@ sudo dnf install -y webkit2gtk4.1 libappindicator-gtk3
   skips them on the stable channel.
 
 **Hard refresh:**
+
 1. Quit the app.
 2. Delete the updater cache:
    - macOS: `~/Library/Caches/api-vault/updater/`
@@ -575,14 +589,15 @@ sudo dnf install -y webkit2gtk4.1 libappindicator-gtk3
 
 The CLI binary is installed alongside the desktop app. Add it to your PATH:
 
-| OS | Path |
-| :-- | :-- |
-| macOS | `/Applications/API Vault.app/Contents/MacOS/apivault` |
-| Linux (deb/rpm) | `/usr/bin/apivault` |
-| Linux (AppImage) | extract first, the binary is in `usr/bin/apivault` |
-| Windows | `%LOCALAPPDATA%\Programs\api-vault\apivault.exe` |
+| OS               | Path                                                  |
+| :--------------- | :---------------------------------------------------- |
+| macOS            | `/Applications/API Vault.app/Contents/MacOS/apivault` |
+| Linux (deb/rpm)  | `/usr/bin/apivault`                                   |
+| Linux (AppImage) | extract first, the binary is in `usr/bin/apivault`    |
+| Windows          | `%LOCALAPPDATA%\Programs\api-vault\apivault.exe`      |
 
 For convenience, symlink to a directory that's already on PATH:
+
 ```sh
 # macOS
 sudo ln -s "/Applications/API Vault.app/Contents/MacOS/apivault" /usr/local/bin/apivault
@@ -598,10 +613,12 @@ New-Item -ItemType SymbolicLink -Path "C:\Windows\apivault.exe" `
 ### 13.7 MCP server doesn't appear in Claude Desktop / Cursor
 
 **Verify config:**
+
 - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows). Section 10.3 of this guide has the exact JSON.
 - Cursor: `~/.cursor/mcp.json`.
 
 **Common pitfalls:**
+
 - Path uses single backslashes on Windows — must be **double-escaped**
   in JSON: `"C:\\Users\\you\\..."`.
 - Claude Desktop must be **fully quit** (not just closed) to reload the
@@ -616,6 +633,7 @@ The Charter is verified by both **content** (6 words) and **verifier**
 will fail the SHA-256 check and reject before any decryption attempt.
 
 Steps:
+
 1. Re-check the **6 words** against your printed copy. Words use the
    EFF large wordlist — common short English words.
 2. Re-check the **4-digit verifier** (a number from `0000` to `9999`).

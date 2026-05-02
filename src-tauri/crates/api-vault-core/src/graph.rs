@@ -178,9 +178,19 @@ impl DependencyGraph {
     /// Iterate over all edges as `(source NodeRef, target NodeRef, EdgeKind)`.
     pub fn edges(&self) -> impl Iterator<Item = (NodeRef, NodeRef, EdgeKind)> + '_ {
         self.graph.edge_indices().map(move |ei| {
-            let (from, to) = self.graph.edge_endpoints(ei).expect("edge endpoints always valid");
-            let kind = *self.graph.edge_weight(ei).expect("edge weight always valid");
-            (*self.graph.node_weight(from).expect("node weight valid"), *self.graph.node_weight(to).expect("node weight valid"), kind)
+            let (from, to) = self
+                .graph
+                .edge_endpoints(ei)
+                .expect("edge endpoints always valid");
+            let kind = *self
+                .graph
+                .edge_weight(ei)
+                .expect("edge weight always valid");
+            (
+                *self.graph.node_weight(from).expect("node weight valid"),
+                *self.graph.node_weight(to).expect("node weight valid"),
+                kind,
+            )
         })
     }
 
@@ -273,11 +283,7 @@ mod tests {
         }
     }
 
-    fn make_usage(
-        id: UsageId,
-        credential_id: CredentialId,
-        project_id: ProjectId,
-    ) -> Usage {
+    fn make_usage(id: UsageId, credential_id: CredentialId, project_id: ProjectId) -> Usage {
         Usage {
             id,
             credential_id,

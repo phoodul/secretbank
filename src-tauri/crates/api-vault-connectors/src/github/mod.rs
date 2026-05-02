@@ -199,8 +199,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path("/repos/org/repo-a/secret-scanning/alerts"))
             .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(serde_json::json!([make_alert(10)])),
+                ResponseTemplate::new(200).set_body_json(serde_json::json!([make_alert(10)])),
             )
             .expect(1)
             .mount(&server)
@@ -209,8 +208,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path("/repos/org/repo-b/secret-scanning/alerts"))
             .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(serde_json::json!([make_alert(20)])),
+                ResponseTemplate::new(200).set_body_json(serde_json::json!([make_alert(20)])),
             )
             .expect(1)
             .mount(&server)
@@ -257,8 +255,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path("/repos/org/repo-ok/secret-scanning/alerts"))
             .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(serde_json::json!([make_alert(99)])),
+                ResponseTemplate::new(200).set_body_json(serde_json::json!([make_alert(99)])),
             )
             .mount(&server)
             .await;
@@ -272,8 +269,14 @@ mod tests {
 
         // GithubConnector::list_keys 내부 로직을 재현 — 실패 시 warn + skip
         let repos = vec![
-            RepoRef { owner: "org".to_owned(), repo: "repo-fail".to_owned() },
-            RepoRef { owner: "org".to_owned(), repo: "repo-ok".to_owned() },
+            RepoRef {
+                owner: "org".to_owned(),
+                repo: "repo-fail".to_owned(),
+            },
+            RepoRef {
+                owner: "org".to_owned(),
+                repo: "repo-ok".to_owned(),
+            },
         ];
         let mut all: Vec<RemoteKey> = Vec::new();
         for r in &repos {

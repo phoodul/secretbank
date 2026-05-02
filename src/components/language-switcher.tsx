@@ -91,9 +91,7 @@ export function LanguageSwitcher({ className, variant = "plain" }: LanguageSwitc
               <span className="flex flex-col">
                 <span>{lang.nativeName}</span>
                 {lang.englishName !== lang.nativeName && (
-                  <span className="text-[10px] text-muted-foreground">
-                    {lang.englishName}
-                  </span>
+                  <span className="text-[10px] text-muted-foreground">{lang.englishName}</span>
                 )}
               </span>
             </DropdownMenuRadioItem>

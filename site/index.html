@@ -1,214 +1,388 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="API Vault — the secrets manager that understands your dependency graph. Detects supply-chain risk in your npm/Cargo dependencies. Free, open source, works offline.">
-<meta property="og:title" content="API Vault">
-<meta property="og:description" content="The secrets manager that understands your dependency graph.">
-<meta property="og:url" content="https://api-vault.app">
-<meta property="og:type" content="website">
-<title>API Vault — secrets manager that understands your dependency graph</title>
-<link rel="canonical" href="https://api-vault.app">
-<style>
-  :root {
-    --bg: #0b0b0d;
-    --fg: #e7e7ea;
-    --muted: #9a9aa1;
-    --accent: #5cffa6;
-    --danger: #ff6b6b;
-    --card: #15151a;
-    --border: #25252c;
-    --link: #92b7ff;
-    --maxw: 960px;
-  }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #fdfdfd; --fg: #15151a; --muted: #555; --accent: #006d3a;
-      --danger: #b00020; --card: #fafafa; --border: #e3e3e7; --link: #1a4fbf;
-    }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background: var(--bg); color: var(--fg);
-    line-height: 1.55; -webkit-font-smoothing: antialiased;
-  }
-  a { color: var(--link); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  code, pre { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; }
-  main { max-width: var(--maxw); margin: 0 auto; padding: 4rem 1.5rem 6rem; }
-  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
-  .logo { font-weight: 700; font-size: 1.1rem; letter-spacing: -.01em; }
-  .logo span { color: var(--accent); }
-  nav a { margin-left: 1.5rem; color: var(--muted); font-size: 0.95rem; }
-  nav a:hover { color: var(--fg); text-decoration: none; }
-  h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -.02em; margin: 0 0 1rem; }
-  h1 span { color: var(--accent); }
-  .lede { font-size: 1.15rem; color: var(--muted); max-width: 56ch; margin-bottom: 2rem; }
-  .cta { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 4rem; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.75rem 1.25rem; border-radius: 8px;
-    font-weight: 600; font-size: 0.95rem;
-    border: 1px solid var(--border); transition: border-color .15s, background .15s;
-  }
-  .btn-primary { background: var(--accent); color: #0b0b0d; border-color: var(--accent); }
-  .btn-primary:hover { text-decoration: none; opacity: .9; }
-  .btn-secondary { color: var(--fg); background: transparent; }
-  .btn-secondary:hover { border-color: var(--fg); text-decoration: none; }
-  section { margin: 4rem 0; }
-  h2 { font-size: 1.6rem; letter-spacing: -.01em; margin: 0 0 1.5rem; }
-  h2 span { color: var(--accent); }
-  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 1.25rem;
-  }
-  .card h3 { margin: 0 0 0.5rem; font-size: 1.05rem; }
-  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-  .price { display: flex; gap: 1rem; flex-wrap: wrap; }
-  .price-card { flex: 1; min-width: 240px; }
-  .price-card .amount { font-size: 1.8rem; font-weight: 700; }
-  .price-card .amount small { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
-  .price-card ul { padding-left: 1.2rem; margin: 0.75rem 0 0; color: var(--muted); }
-  .price-card.pro { border-color: var(--accent); }
-  pre {
-    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.9rem;
-  }
-  footer {
-    border-top: 1px solid var(--border); padding-top: 2rem; margin-top: 5rem;
-    color: var(--muted); font-size: 0.9rem;
-    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
-  }
-  footer a { color: var(--muted); margin-right: 1rem; }
-  footer a:last-child { margin-right: 0; }
-  .badge {
-    display: inline-block; font-size: 0.75rem; padding: 2px 8px;
-    border-radius: 999px; background: var(--card); color: var(--muted);
-    border: 1px solid var(--border); margin-left: 0.5rem; vertical-align: middle;
-  }
-</style>
-</head>
-<body>
-<main>
-  <header>
-    <div class="logo">API <span>Vault</span></div>
-    <nav>
-      <a href="#features">Features</a>
-      <a href="#pricing">Pricing</a>
-      <a href="https://github.com/phoodul/api-vault">GitHub</a>
-      <a href="https://github.com/phoodul/api-vault/blob/main/docs/USER_GUIDE.en.md">Docs</a>
-    </nav>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="API Vault — the secrets manager that understands your dependency graph. Detects supply-chain risk in your npm/Cargo dependencies. Free, open source, works offline."
+    />
+    <meta property="og:title" content="API Vault" />
+    <meta
+      property="og:description"
+      content="The secrets manager that understands your dependency graph."
+    />
+    <meta property="og:url" content="https://api-vault.app" />
+    <meta property="og:type" content="website" />
+    <title>API Vault — secrets manager that understands your dependency graph</title>
+    <link rel="canonical" href="https://api-vault.app" />
+    <style>
+      :root {
+        --bg: #0b0b0d;
+        --fg: #e7e7ea;
+        --muted: #9a9aa1;
+        --accent: #5cffa6;
+        --danger: #ff6b6b;
+        --card: #15151a;
+        --border: #25252c;
+        --link: #92b7ff;
+        --maxw: 960px;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #fdfdfd;
+          --fg: #15151a;
+          --muted: #555;
+          --accent: #006d3a;
+          --danger: #b00020;
+          --card: #fafafa;
+          --border: #e3e3e7;
+          --link: #1a4fbf;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: var(--link);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+      }
+      main {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 4rem 1.5rem 6rem;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3rem;
+      }
+      .logo {
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: -0.01em;
+      }
+      .logo span {
+        color: var(--accent);
+      }
+      nav a {
+        margin-left: 1.5rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      nav a:hover {
+        color: var(--fg);
+        text-decoration: none;
+      }
+      h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        margin: 0 0 1rem;
+      }
+      h1 span {
+        color: var(--accent);
+      }
+      .lede {
+        font-size: 1.15rem;
+        color: var(--muted);
+        max-width: 56ch;
+        margin-bottom: 2rem;
+      }
+      .cta {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 4rem;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: 1px solid var(--border);
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #0b0b0d;
+        border-color: var(--accent);
+      }
+      .btn-primary:hover {
+        text-decoration: none;
+        opacity: 0.9;
+      }
+      .btn-secondary {
+        color: var(--fg);
+        background: transparent;
+      }
+      .btn-secondary:hover {
+        border-color: var(--fg);
+        text-decoration: none;
+      }
+      section {
+        margin: 4rem 0;
+      }
+      h2 {
+        font-size: 1.6rem;
+        letter-spacing: -0.01em;
+        margin: 0 0 1.5rem;
+      }
+      h2 span {
+        color: var(--accent);
+      }
+      .grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+      }
+      .card h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.05rem;
+      }
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      .price {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .price-card {
+        flex: 1;
+        min-width: 240px;
+      }
+      .price-card .amount {
+        font-size: 1.8rem;
+        font-weight: 700;
+      }
+      .price-card .amount small {
+        font-size: 0.9rem;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .price-card ul {
+        padding-left: 1.2rem;
+        margin: 0.75rem 0 0;
+        color: var(--muted);
+      }
+      .price-card.pro {
+        border-color: var(--accent);
+      }
+      pre {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        overflow-x: auto;
+        font-size: 0.9rem;
+      }
+      footer {
+        border-top: 1px solid var(--border);
+        padding-top: 2rem;
+        margin-top: 5rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      footer a {
+        color: var(--muted);
+        margin-right: 1rem;
+      }
+      footer a:last-child {
+        margin-right: 0;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--card);
+        color: var(--muted);
+        border: 1px solid var(--border);
+        margin-left: 0.5rem;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="logo">API <span>Vault</span></div>
+        <nav>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="https://github.com/phoodul/api-vault">GitHub</a>
+          <a href="https://github.com/phoodul/api-vault/blob/main/docs/USER_GUIDE.en.md">Docs</a>
+        </nav>
+      </header>
 
-  <h1>The secrets manager that <span>understands your dependency graph.</span></h1>
-  <p class="lede">
-    Stores keys. But also tells you who uses them, where, and what breaks if
-    you revoke. Auto-matches NVD/GHSA incidents to your vault. Scans your
-    npm/Cargo deps for known secret-leak history. Free. Open source. Runs
-    fully offline.
-  </p>
+      <h1>The secrets manager that <span>understands your dependency graph.</span></h1>
+      <p class="lede">
+        Stores keys. But also tells you who uses them, where, and what breaks if you revoke.
+        Auto-matches NVD/GHSA incidents to your vault. Scans your npm/Cargo deps for known
+        secret-leak history. Free. Open source. Runs fully offline.
+      </p>
 
-  <div class="cta">
-    <a class="btn btn-primary" href="https://github.com/phoodul/api-vault/releases">Download</a>
-    <a class="btn btn-secondary" href="https://github.com/phoodul/api-vault">View source</a>
-  </div>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/phoodul/api-vault/releases">Download</a>
+        <a class="btn btn-secondary" href="https://github.com/phoodul/api-vault">View source</a>
+      </div>
 
-  <section id="features">
-    <h2>What you get on day one <span>— free, no account</span></h2>
-    <div class="grid">
-      <div class="card">
-        <h3>Dependency graph</h3>
-        <p>Visual map of Issuer → Credential → Usage → Project → Deployment → URL. Filter, search, simulate.</p>
-      </div>
-      <div class="card">
-        <h3>Blast radius</h3>
-        <p>Preview which services break before you revoke a key. No production accidents.</p>
-      </div>
-      <div class="card">
-        <h3>Incident feed</h3>
-        <p>NVD / GHSA / issuer RSS polled locally and matched to your vault. Server never sees what you store.</p>
-      </div>
-      <div class="card">
-        <h3>Supply chain scan</h3>
-        <p>OSV.dev queried for every npm / Cargo dep with secret-leak history. Lockfile-aware.</p>
-      </div>
-      <div class="card">
-        <h3>RAILGUARD</h3>
-        <p>Auto-generates <code>.cursorrules</code> / <code>CLAUDE.md</code> / Copilot instructions so AI editors can&rsquo;t exfiltrate keys.</p>
-      </div>
-      <div class="card">
-        <h3>CLI + MCP + IDE</h3>
-        <p><code>apivault</code> in your terminal. MCP server for Claude / Cursor. VS Code &amp; JetBrains plugins. <span class="badge">M18 · M21 · M22</span></p>
-      </div>
-      <div class="card">
-        <h3>Vault Charter recovery</h3>
-        <p>Diceware 6 words + 4-digit verifier. Optional Shamir 2-of-3 split for inheritance. Forget your passphrase, not your vault. <span class="badge">M23</span></p>
-      </div>
-    </div>
-  </section>
+      <section id="features">
+        <h2>What you get on day one <span>— free, no account</span></h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Dependency graph</h3>
+            <p>
+              Visual map of Issuer → Credential → Usage → Project → Deployment → URL. Filter,
+              search, simulate.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Blast radius</h3>
+            <p>Preview which services break before you revoke a key. No production accidents.</p>
+          </div>
+          <div class="card">
+            <h3>Incident feed</h3>
+            <p>
+              NVD / GHSA / issuer RSS polled locally and matched to your vault. Server never sees
+              what you store.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Supply chain scan</h3>
+            <p>
+              OSV.dev queried for every npm / Cargo dep with secret-leak history. Lockfile-aware.
+            </p>
+          </div>
+          <div class="card">
+            <h3>RAILGUARD</h3>
+            <p>
+              Auto-generates <code>.cursorrules</code> / <code>CLAUDE.md</code> / Copilot
+              instructions so AI editors can&rsquo;t exfiltrate keys.
+            </p>
+          </div>
+          <div class="card">
+            <h3>CLI + MCP + IDE</h3>
+            <p>
+              <code>apivault</code> in your terminal. MCP server for Claude / Cursor. VS Code &amp;
+              JetBrains plugins. <span class="badge">M18 · M21 · M22</span>
+            </p>
+          </div>
+          <div class="card">
+            <h3>Vault Charter recovery</h3>
+            <p>
+              Diceware 6 words + 4-digit verifier. Optional Shamir 2-of-3 split for inheritance.
+              Forget your passphrase, not your vault. <span class="badge">M23</span>
+            </p>
+          </div>
+        </div>
+      </section>
 
-  <section>
-    <h2>Try it from your terminal</h2>
-    <pre>$ apivault list --json
+      <section>
+        <h2>Try it from your terminal</h2>
+        <pre>
+$ apivault list --json
 $ apivault scan supply-chain --project .
-$ apivault run --project &lt;id&gt; -- npm run deploy</pre>
-  </section>
+$ apivault run --project &lt;id&gt; -- npm run deploy</pre
+        >
+      </section>
 
-  <section id="pricing">
-    <h2>Pricing</h2>
-    <div class="price">
-      <div class="card price-card">
-        <h3>Free</h3>
-        <div class="amount">$0</div>
-        <p>Forever. AGPL-3.0.</p>
-        <ul>
-          <li>Local vault &amp; graph (unlimited)</li>
-          <li>Incident feed</li>
-          <li>Kill Switch</li>
-          <li>RAILGUARD</li>
-          <li>Supply-chain scan</li>
-          <li>CLI · MCP · VS Code · JetBrains</li>
-          <li>Vault Charter recovery (single + Shamir 2-of-3)</li>
-        </ul>
-      </div>
-      <div class="card price-card pro">
-        <h3>Pro</h3>
-        <div class="amount">$2 <small>/ month or $15 / year</small></div>
-        <p>Multi-device + automation.</p>
-        <ul>
-          <li>E2EE sync across up to 5 devices</li>
-          <li>Auto-revoke (Stripe, GitHub, ...)</li>
-          <li>Auto-rotation</li>
-          <li>14-day refund, cancel anytime</li>
-        </ul>
-      </div>
-    </div>
-  </section>
+      <section id="pricing">
+        <h2>Pricing</h2>
+        <div class="price">
+          <div class="card price-card">
+            <h3>Free</h3>
+            <div class="amount">$0</div>
+            <p>Forever. AGPL-3.0.</p>
+            <ul>
+              <li>Local vault &amp; graph (unlimited)</li>
+              <li>Incident feed</li>
+              <li>Kill Switch</li>
+              <li>RAILGUARD</li>
+              <li>Supply-chain scan</li>
+              <li>CLI · MCP · VS Code · JetBrains</li>
+              <li>Vault Charter recovery (single + Shamir 2-of-3)</li>
+            </ul>
+          </div>
+          <div class="card price-card pro">
+            <h3>Pro</h3>
+            <div class="amount">$2 <small>/ month or $15 / year</small></div>
+            <p>Multi-device + automation.</p>
+            <ul>
+              <li>E2EE sync across up to 5 devices</li>
+              <li>Auto-revoke (Stripe, GitHub, ...)</li>
+              <li>Auto-rotation</li>
+              <li>14-day refund, cancel anytime</li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
-  <section>
-    <h2>Why this exists</h2>
-    <p style="color: var(--muted); max-width: 64ch;">
-      Existing vaults answer "where is the key?" — none answer "what
-      happens when this key leaks?" or "is the npm package I'm about to
-      install going to phone home with my <code>.env</code>?" That gap
-      is where breaches start. We close it on your laptop, before the
-      breach mail arrives.
-    </p>
-  </section>
+      <section>
+        <h2>Why this exists</h2>
+        <p style="color: var(--muted); max-width: 64ch">
+          Existing vaults answer "where is the key?" — none answer "what happens when this key
+          leaks?" or "is the npm package I'm about to install going to phone home with my
+          <code>.env</code>?" That gap is where breaches start. We close it on your laptop, before
+          the breach mail arrives.
+        </p>
+      </section>
 
-  <footer>
-    <div>
-      <a href="https://github.com/phoodul/api-vault">GitHub</a>
-      <a href="https://github.com/phoodul/api-vault/blob/main/docs/PRIVACY.md">Privacy</a>
-      <a href="https://github.com/phoodul/api-vault/blob/main/docs/TERMS.md">Terms</a>
-      <a href="https://github.com/phoodul/api-vault/blob/main/SECURITY.md">Security</a>
-    </div>
-    <div>© API Vault contributors · AGPL-3.0</div>
-  </footer>
-</main>
-</body>
+      <footer>
+        <div>
+          <a href="https://github.com/phoodul/api-vault">GitHub</a>
+          <a href="https://github.com/phoodul/api-vault/blob/main/docs/PRIVACY.md">Privacy</a>
+          <a href="https://github.com/phoodul/api-vault/blob/main/docs/TERMS.md">Terms</a>
+          <a href="https://github.com/phoodul/api-vault/blob/main/SECURITY.md">Security</a>
+        </div>
+        <div>© API Vault contributors · AGPL-3.0</div>
+      </footer>
+    </main>
+  </body>
 </html>

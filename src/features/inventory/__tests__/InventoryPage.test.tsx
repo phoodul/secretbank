@@ -60,7 +60,11 @@ describe("InventoryPage", () => {
       if (cmd === "kill_switch_revoke_issuer") return Promise.resolve({ revoked: 0, failed: [] });
       // entitlement — Pro by default so bulk revoke tests work
       if (cmd === "entitlement_current")
-        return Promise.resolve({ tier: "pro", pro_until: Date.now() + 86_400_000, from_cache: false });
+        return Promise.resolve({
+          tier: "pro",
+          pro_until: Date.now() + 86_400_000,
+          from_cache: false,
+        });
       return Promise.resolve(MOCK_CREDENTIALS);
     });
   });
@@ -316,9 +320,7 @@ describe("InventoryPage", () => {
       if (cmd === "kill_switch_revoke_issuer") return Promise.resolve({ revoked: 0, failed: [] });
       // issuer_id 필터 적용 — active 크리덴셜만 반환
       return Promise.resolve(
-        MOCK_CREDENTIALS.filter(
-          (c) => c.issuer_id === MOCK_ISSUER.id && c.status !== "revoked",
-        ),
+        MOCK_CREDENTIALS.filter((c) => c.issuer_id === MOCK_ISSUER.id && c.status !== "revoked"),
       );
     });
 

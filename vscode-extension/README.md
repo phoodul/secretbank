@@ -5,6 +5,7 @@
 ## Features
 
 ### Commands (palette)
+
 - **List credentials** — `API Vault: List credentials` opens a Quick Pick.
 - **Reveal credential** — pick one, enter your vault passphrase, value lands
   on the clipboard.
@@ -14,8 +15,10 @@
   panel.
 
 ### Language Model tools (VS Code 1.96+)
+
 Copilot Chat, Claude, Cursor — any chat host that implements VS Code's
 language-model tool API picks these up automatically:
+
 - `apivault_list_credentials` — read-only metadata, no secret values.
 - `apivault_scan_supply_chain` — current workspace, optional
   `category_filter` (`secret_leak` / `supply_chain` / `any`).
@@ -23,6 +26,7 @@ language-model tool API picks these up automatically:
 Reference inline with `#apivault` and `#supplyrisk`.
 
 ### Editor surface
+
 - Status bar item ($(shield) API Vault → opens list).
 - `package.json` hover — last scan's advisory tooltip on dep lines
   (run scan first to populate the cache).
@@ -35,10 +39,10 @@ Reference inline with `#apivault` and `#supplyrisk`.
 
 ## Why this exists
 
-VS Code is where developers write the code that *uses* their secrets. Pulling
+VS Code is where developers write the code that _uses_ their secrets. Pulling
 the vault — and the supply-chain risk graph that surrounds it — into the
 editor closes the loop: you see "this npm package has a credential-exfil
-advisory" *before* you commit the dependency, not after the breach mail.
+advisory" _before_ you commit the dependency, not after the breach mail.
 
 ## Roadmap
 

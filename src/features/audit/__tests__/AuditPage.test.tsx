@@ -54,7 +54,11 @@ function makeReport(allValid: boolean): ChainVerifyReport {
     all_valid: allValid,
     total_entries: 3,
     devices: [
-      { device_id: "device-abc-123", valid_count: allValid ? 3 : 2, first_invalid_seq: allValid ? null : 2 },
+      {
+        device_id: "device-abc-123",
+        valid_count: allValid ? 3 : 2,
+        first_invalid_seq: allValid ? null : 2,
+      },
     ],
   };
 }

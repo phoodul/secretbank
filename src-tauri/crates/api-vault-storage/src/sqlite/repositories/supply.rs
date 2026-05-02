@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use ulid::Ulid;
 
-use crate::sqlite::{StorageError, SqlitePool};
+use crate::sqlite::{SqlitePool, StorageError};
 
 // ---------------------------------------------------------------------------
 // Package
@@ -312,14 +312,41 @@ mod tests {
     #[tokio::test]
     async fn advisory_upsert_dedup_by_source_pair() {
         let (_dir, p) = pool().await;
-        let pkg = PackageRepo::new(&p).upsert("npm", "axios", 100).await.unwrap();
+        let pkg = PackageRepo::new(&p)
+            .upsert("npm", "axios", 100)
+            .await
+            .unwrap();
         let r = PackageAdvisoryRepo::new(&p);
         let id1 = r
-            .upsert(&pkg, "osv", "GHSA-1", "high", "secret_leak", "summary", None, None, 1, 1, None)
+            .upsert(
+                &pkg,
+                "osv",
+                "GHSA-1",
+                "high",
+                "secret_leak",
+                "summary",
+                None,
+                None,
+                1,
+                1,
+                None,
+            )
             .await
             .unwrap();
         let id2 = r
-            .upsert(&pkg, "osv", "GHSA-1", "critical", "secret_leak", "summary v2", None, None, 1, 2, None)
+            .upsert(
+                &pkg,
+                "osv",
+                "GHSA-1",
+                "critical",
+                "secret_leak",
+                "summary v2",
+                None,
+                None,
+                1,
+                2,
+                None,
+            )
             .await
             .unwrap();
         assert_eq!(id1, id2);
@@ -333,7 +360,10 @@ mod tests {
     async fn package_usage_upsert_dedup_by_project_pkg_manifest() {
         let (_dir, p) = pool().await;
         seed_project(&p, "prj_test").await;
-        let pkg = PackageRepo::new(&p).upsert("npm", "axios", 100).await.unwrap();
+        let pkg = PackageRepo::new(&p)
+            .upsert("npm", "axios", 100)
+            .await
+            .unwrap();
         let r = PackageUsageRepo::new(&p);
         let id1 = r
             .upsert("prj_test", &pkg, "1.0.0", Some("package.json"), 100, "prod")

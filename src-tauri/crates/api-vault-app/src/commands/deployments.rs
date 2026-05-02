@@ -86,9 +86,15 @@ pub async fn deployment_update(
     repo.update(id, &patch).await?;
 
     let mut updated_fields: Vec<&str> = Vec::new();
-    if patch.url.is_some() { updated_fields.push("url"); }
-    if patch.platform.is_some() { updated_fields.push("platform"); }
-    if patch.env.is_some() { updated_fields.push("env"); }
+    if patch.url.is_some() {
+        updated_fields.push("url");
+    }
+    if patch.platform.is_some() {
+        updated_fields.push("platform");
+    }
+    if patch.env.is_some() {
+        updated_fields.push("env");
+    }
     let payload = if updated_fields.is_empty() {
         None
     } else {

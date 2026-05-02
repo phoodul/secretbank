@@ -27,10 +27,7 @@ import {
   finishAuthentication,
   finishRegistration,
 } from "../../lib/webauthn";
-import type {
-  AuthenticationResponseJSON,
-  RegistrationResponseJSON,
-} from "@simplewebauthn/server";
+import type { AuthenticationResponseJSON, RegistrationResponseJSON } from "@simplewebauthn/server";
 
 export const passkeyAuth = new Hono<{ Bindings: Env }>();
 
@@ -92,7 +89,10 @@ async function createUser(db: D1Database, email: string): Promise<UserRow> {
   return {
     id,
     email,
-    salt_auth: saltAuth.buffer.slice(saltAuth.byteOffset, saltAuth.byteOffset + saltAuth.byteLength),
+    salt_auth: saltAuth.buffer.slice(
+      saltAuth.byteOffset,
+      saltAuth.byteOffset + saltAuth.byteLength,
+    ),
     salt_enc: saltEnc.buffer.slice(saltEnc.byteOffset, saltEnc.byteOffset + saltEnc.byteLength),
   };
 }
@@ -168,7 +168,7 @@ function bufferToUint8(b: ArrayBuffer | Uint8Array | null): Uint8Array {
 // POST /auth/passkey/register/start
 // ────────────────────────────────────────────────────────────
 passkeyAuth.post("/register/start", async (c) => {
-  const body = await c.req.json().catch(() => null) as { email?: unknown } | null;
+  const body = (await c.req.json().catch(() => null)) as { email?: unknown } | null;
   if (!body || !isValidEmail(body.email)) {
     return c.json({ error: "invalid_email" }, 400);
   }
@@ -203,7 +203,7 @@ passkeyAuth.post("/register/start", async (c) => {
 // POST /auth/passkey/register/verify
 // ────────────────────────────────────────────────────────────
 passkeyAuth.post("/register/verify", async (c) => {
-  const body = await c.req.json().catch(() => null) as {
+  const body = (await c.req.json().catch(() => null)) as {
     email?: unknown;
     response?: unknown;
   } | null;
@@ -247,7 +247,7 @@ passkeyAuth.post("/register/verify", async (c) => {
 // POST /auth/passkey/assert/start
 // ────────────────────────────────────────────────────────────
 passkeyAuth.post("/assert/start", async (c) => {
-  const body = await c.req.json().catch(() => null) as { email?: unknown } | null;
+  const body = (await c.req.json().catch(() => null)) as { email?: unknown } | null;
   if (!body || !isValidEmail(body.email)) {
     return c.json({ error: "invalid_email" }, 400);
   }
@@ -276,7 +276,7 @@ passkeyAuth.post("/assert/start", async (c) => {
 // POST /auth/passkey/assert/verify
 // ────────────────────────────────────────────────────────────
 passkeyAuth.post("/assert/verify", async (c) => {
-  const body = await c.req.json().catch(() => null) as {
+  const body = (await c.req.json().catch(() => null)) as {
     email?: unknown;
     response?: unknown;
   } | null;
@@ -312,11 +312,7 @@ passkeyAuth.post("/assert/verify", async (c) => {
   }
   if (!verification.verified) return c.json({ error: "auth_failed" }, 401);
 
-  await updatePasskeyCounter(
-    c.env.DB,
-    passkey.id,
-    verification.authenticationInfo.newCounter,
-  );
+  await updatePasskeyCounter(c.env.DB, passkey.id, verification.authenticationInfo.newCounter);
 
   const tokens = await mintTokenPair(c.env, user.id);
   return c.json({ user_id: user.id, ...tokens });

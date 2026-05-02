@@ -13,13 +13,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import {
-  AEAD_KEY_BYTES,
-  AEAD_NONCE_BYTES,
-  decrypt,
-  encrypt,
-  generateNonce,
-} from "../aead";
+import { AEAD_KEY_BYTES, AEAD_NONCE_BYTES, decrypt, encrypt, generateNonce } from "../aead";
 
 function makeKey(byte: number = 0xab): Uint8Array {
   return new Uint8Array(AEAD_KEY_BYTES).fill(byte);

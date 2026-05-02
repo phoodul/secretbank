@@ -175,9 +175,7 @@ describe("KillSwitchDialog", () => {
     // toast 는 즉시 호출되지만, onRevoked 는 I4 hotfix 로 1500ms 후 setTimeout
     // + microtask 안에서 호출된다 (Radix compose-refs 무한 루프 방지).
     await waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalledWith(
-        expect.stringMatching(/revoked/i),
-      );
+      expect(mockToast.success).toHaveBeenCalledWith(expect.stringMatching(/revoked/i));
     });
     await waitFor(() => expect(onRevoked).toHaveBeenCalled(), { timeout: 3000 });
   });
@@ -188,8 +186,7 @@ describe("KillSwitchDialog", () => {
   it("(e) kill_switch_request_confirm 실패 시 에러를 표시하고 다이얼로그를 열린 채로 유지한다", async () => {
     const user = userEvent.setup();
     mockInvoke.mockImplementation((cmd: string) => {
-      if (cmd === "kill_switch_request_confirm")
-        return Promise.reject("network timeout");
+      if (cmd === "kill_switch_request_confirm") return Promise.reject("network timeout");
       return Promise.resolve(undefined);
     });
 

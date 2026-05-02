@@ -56,9 +56,7 @@ export function SignInPage() {
 
   const handleSuccess = useCallback(
     (session: AuthSessionDto) => {
-      toast.success(
-        t("auth.signedInAs", { email: email.trim() || session.user_id }),
-      );
+      toast.success(t("auth.signedInAs", { email: email.trim() || session.user_id }));
       navigate("/settings");
     },
     [email, navigate, t],
@@ -105,8 +103,7 @@ export function SignInPage() {
     navigate("/settings");
   }
 
-  const oauthBusy = (provider: OAuthProvider) =>
-    pending !== null && pending.provider === provider;
+  const oauthBusy = (provider: OAuthProvider) => pending !== null && pending.provider === provider;
   const anyBusy = pending !== null;
 
   return (
@@ -116,12 +113,8 @@ export function SignInPage() {
           <div className="bg-primary/10 mx-auto flex h-12 w-12 items-center justify-center rounded-full">
             <ShieldCheck className="text-primary h-6 w-6" aria-hidden />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("auth.signIn.title")}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            {t("auth.signIn.subtitle")}
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("auth.signIn.title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("auth.signIn.subtitle")}</p>
         </div>
 
         <div className="space-y-4">
@@ -160,18 +153,14 @@ export function SignInPage() {
               provider="github"
               busy={oauthBusy("github")}
               disabled={anyBusy && !oauthBusy("github")}
-              onStart={(provider, expectedState) =>
-                setPending({ provider, expectedState })
-              }
+              onStart={(provider, expectedState) => setPending({ provider, expectedState })}
               onError={handleError}
             />
             <OAuthButton
               provider="google"
               busy={oauthBusy("google")}
               disabled={anyBusy && !oauthBusy("google")}
-              onStart={(provider, expectedState) =>
-                setPending({ provider, expectedState })
-              }
+              onStart={(provider, expectedState) => setPending({ provider, expectedState })}
               onError={handleError}
             />
           </div>

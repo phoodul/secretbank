@@ -165,10 +165,7 @@ pub async fn pull_values_since(
     drop(session_guard);
 
     let path = format!("/sync/values?since={since_ms}");
-    let list: ValueListResponse = ctx
-        .relay_client
-        .get_json_authed(&path, &bearer)
-        .await?;
+    let list: ValueListResponse = ctx.relay_client.get_json_authed(&path, &bearer).await?;
 
     let mut applied: Vec<PulledValueRecord> = Vec::with_capacity(list.values.len());
     for ev in list.values {
@@ -257,7 +254,10 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let pool = Arc::new(init_pool(&dir.path().join("test.db")).await.unwrap());
         let mut vault = MockVaultStorage::new("pw");
-        vault.unlock(SecretString::from("pw".to_owned())).await.unwrap();
+        vault
+            .unlock(SecretString::from("pw".to_owned()))
+            .await
+            .unwrap();
         let vault_box: Box<dyn VaultStorage + Send + Sync> = Box::new(vault);
 
         let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
@@ -348,16 +348,14 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path_regex(r"^/sync/values"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "values": [{
-                        "credential_id": "crd_remote_1",
-                        "version": 3,
-                        "ciphertext_b64": env_b64,
-                        "updated_at": 1_710_000_000_000_i64,
-                    }]
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "values": [{
+                    "credential_id": "crd_remote_1",
+                    "version": 3,
+                    "ciphertext_b64": env_b64,
+                    "updated_at": 1_710_000_000_000_i64,
+                }]
+            })))
             .mount(&server)
             .await;
 
@@ -380,16 +378,14 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("GET"))
             .and(path_regex(r"^/sync/values"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "values": [{
-                        "credential_id": "crd_bad",
-                        "version": 1,
-                        "ciphertext_b64": "AAAA",  // 길이가 nonce + tag 미달
-                        "updated_at": 1_710_000_000_000_i64,
-                    }]
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "values": [{
+                    "credential_id": "crd_bad",
+                    "version": 1,
+                    "ciphertext_b64": "AAAA",  // 길이가 nonce + tag 미달
+                    "updated_at": 1_710_000_000_000_i64,
+                }]
+            })))
             .mount(&server)
             .await;
 

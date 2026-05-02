@@ -5,11 +5,11 @@ reports as the highest-priority class of issue.
 
 ## Supported versions
 
-| Version | Support window |
-| :------ | :------------- |
-| Latest stable (`v0.x` series, `main`) | full support |
-| One previous stable | security fixes only, 90 days after a new stable |
-| Older | unsupported |
+| Version                               | Support window                                  |
+| :------------------------------------ | :---------------------------------------------- |
+| Latest stable (`v0.x` series, `main`) | full support                                    |
+| One previous stable                   | security fixes only, 90 days after a new stable |
+| Older                                 | unsupported                                     |
 
 We will publish a CHANGELOG entry for every security-relevant fix.
 
@@ -76,7 +76,7 @@ attachments larger than 10 MB.
 
 | Date | Auditor | Scope | Report |
 | :--- | :------ | :---- | :----- |
-| TBD | TBD | TBD | TBD |
+| TBD  | TBD     | TBD   | TBD    |
 
 External audits are planned before v1.0. They will be linked here once
 delivered.

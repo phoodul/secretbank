@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = 'apivault:graph:nodePositions';
+const STORAGE_KEY = "apivault:graph:nodePositions";
 
 export type NodePosition = { x: number; y: number };
 export type NodePositionMap = Record<string, NodePosition>;
@@ -10,22 +10,18 @@ function readStorage(): NodePositionMap {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
-    if (
-      parsed === null ||
-      typeof parsed !== 'object' ||
-      Array.isArray(parsed)
-    ) {
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {};
     }
     const out: NodePositionMap = {};
     for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
       if (
         v &&
-        typeof v === 'object' &&
-        'x' in v &&
-        'y' in v &&
-        typeof (v as NodePosition).x === 'number' &&
-        typeof (v as NodePosition).y === 'number' &&
+        typeof v === "object" &&
+        "x" in v &&
+        "y" in v &&
+        typeof (v as NodePosition).x === "number" &&
+        typeof (v as NodePosition).y === "number" &&
         Number.isFinite((v as NodePosition).x) &&
         Number.isFinite((v as NodePosition).y)
       ) {
@@ -79,8 +75,8 @@ export function useGraphNodePositions(): UseGraphNodePositions {
     function onStorage(e: StorageEvent) {
       if (e.key === STORAGE_KEY) setPositionsState(readStorage());
     }
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const setPosition = useCallback((id: string, pos: NodePosition) => {

@@ -25,9 +25,7 @@ import type { Deployment } from "./types";
 // Types
 // ---------------------------------------------------------------------------
 
-type SettledState =
-  | { phase: "ok"; data: Deployment[] }
-  | { phase: "error"; message: string };
+type SettledState = { phase: "ok"; data: Deployment[] } | { phase: "error"; message: string };
 
 type ListState = { phase: "loading" } | SettledState;
 
@@ -55,7 +53,7 @@ export function DeploymentSection({ projectId }: DeploymentSectionProps) {
   const currentKey = `${projectId}:${tick}`;
 
   const state: ListState =
-    currentKey !== resolvedKey ? { phase: "loading" } : settled ?? { phase: "loading" };
+    currentKey !== resolvedKey ? { phase: "loading" } : (settled ?? { phase: "loading" });
 
   useEffect(() => {
     let cancelled = false;
@@ -126,11 +124,7 @@ export function DeploymentSection({ projectId }: DeploymentSectionProps) {
         </Button>
       </div>
 
-      <DeploymentList
-        state={state}
-        onEdit={openEdit}
-        onDelete={(d) => setDeleteTarget(d)}
-      />
+      <DeploymentList state={state} onEdit={openEdit} onDelete={(d) => setDeleteTarget(d)} />
 
       <DeploymentDialog
         open={dialogOpen}

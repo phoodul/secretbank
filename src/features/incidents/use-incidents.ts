@@ -38,8 +38,7 @@ export function useIncidents(filter: IncidentFilter): UseIncidentsResult {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          const message =
-            typeof err === "string" ? err : "Failed to load incidents";
+          const message = typeof err === "string" ? err : "Failed to load incidents";
           setFetchState({ phase: "error", message });
         }
       });

@@ -36,13 +36,7 @@ export interface OAuthButtonProps {
   onError: (message: string) => void;
 }
 
-export function OAuthButton({
-  provider,
-  busy,
-  disabled,
-  onStart,
-  onError,
-}: OAuthButtonProps) {
+export function OAuthButton({ provider, busy, disabled, onStart, onError }: OAuthButtonProps) {
   const { t } = useTranslation("common");
 
   async function handleClick() {
@@ -59,10 +53,7 @@ export function OAuthButton({
     }
   }
 
-  const label =
-    provider === "github"
-      ? t("auth.oauth.github")
-      : t("auth.oauth.google");
+  const label = provider === "github" ? t("auth.oauth.github") : t("auth.oauth.google");
 
   return (
     <Button
@@ -91,12 +82,7 @@ export function OAuthButton({
 function ProviderIcon({ provider }: { provider: OAuthProvider }) {
   if (provider === "github") {
     return (
-      <svg
-        aria-hidden
-        className="h-4 w-4 mr-2"
-        viewBox="0 0 16 16"
-        fill="currentColor"
-      >
+      <svg aria-hidden className="h-4 w-4 mr-2" viewBox="0 0 16 16" fill="currentColor">
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -107,11 +93,7 @@ function ProviderIcon({ provider }: { provider: OAuthProvider }) {
   }
   // google
   return (
-    <svg
-      aria-hidden
-      className="h-4 w-4 mr-2"
-      viewBox="0 0 24 24"
-    >
+    <svg aria-hidden className="h-4 w-4 mr-2" viewBox="0 0 24 24">
       <path
         fill="#EA4335"
         d="M5.27 9.76A7.08 7.08 0 0119 8.46l-4.5 4.5A4.5 4.5 0 005.5 12c0-.78.2-1.53.5-2.18l-.73-2.06z"

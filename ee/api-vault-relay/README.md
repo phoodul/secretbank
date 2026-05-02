@@ -46,11 +46,11 @@ pnpm typecheck
 
 ## 환경변수 (.dev.vars)
 
-| 변수                     | 종류      | 설명                                                                 |
-| :----------------------- | :-------- | :------------------------------------------------------------------- |
-| `GITHUB_APP_ID`          | public    | GitHub App 등록 후 받은 App ID. `wrangler.toml` `[vars]` 에 직접 입력 |
-| `GITHUB_APP_PRIVATE_KEY` | secret    | RS256 PEM. `wrangler secret put GITHUB_APP_PRIVATE_KEY` 로 주입      |
-| `GITHUB_WEBHOOK_SECRET`  | secret    | webhook 서명 검증용. `wrangler secret put GITHUB_WEBHOOK_SECRET` 로 주입 |
+| 변수                     | 종류   | 설명                                                                     |
+| :----------------------- | :----- | :----------------------------------------------------------------------- |
+| `GITHUB_APP_ID`          | public | GitHub App 등록 후 받은 App ID. `wrangler.toml` `[vars]` 에 직접 입력    |
+| `GITHUB_APP_PRIVATE_KEY` | secret | RS256 PEM. `wrangler secret put GITHUB_APP_PRIVATE_KEY` 로 주입          |
+| `GITHUB_WEBHOOK_SECRET`  | secret | webhook 서명 검증용. `wrangler secret put GITHUB_WEBHOOK_SECRET` 로 주입 |
 
 실제 GitHub App private key 발급 방법은 [docs/runbooks/github-app-registration.md](../../docs/runbooks/github-app-registration.md) 참조.
 

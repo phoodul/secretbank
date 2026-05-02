@@ -151,7 +151,9 @@ export function ProjectDialog({ open, onOpenChange, onSuccess, editTarget }: Pro
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? t("projects.editTitle") : t("projects.createTitle")}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t("projects.editTitle") : t("projects.createTitle")}
+          </DialogTitle>
           <DialogDescription>
             {isEditing ? t("projects.editDescription") : t("projects.createDescription")}
           </DialogDescription>
@@ -238,11 +240,7 @@ export function ProjectDialog({ open, onOpenChange, onSuccess, editTarget }: Pro
                 <FormItem>
                   <FormLabel>{t("projects.fieldLocalPath")}</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="/Users/me/code/my-app"
-                      autoComplete="off"
-                      {...field}
-                    />
+                    <Input placeholder="/Users/me/code/my-app" autoComplete="off" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

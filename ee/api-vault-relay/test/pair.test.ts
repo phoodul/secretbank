@@ -31,9 +31,7 @@ beforeAll(async () => {
 });
 
 async function ensureUser(userId: string, email: string): Promise<void> {
-  await typedEnv.DB.prepare(
-    `INSERT OR IGNORE INTO user (id, email, created_at) VALUES (?, ?, ?)`,
-  )
+  await typedEnv.DB.prepare(`INSERT OR IGNORE INTO user (id, email, created_at) VALUES (?, ?, ?)`)
     .bind(userId, email, Date.now())
     .run();
 }
@@ -209,9 +207,7 @@ describe("/pair/start — Phase G-entitlement (free 2 device limit)", () => {
   it("free user with 2 active devices → 403 device_limit_reached", async () => {
     const userId = "usr_pair_ent_free";
     await ensureUser(userId, "ent-free@example.com");
-    await typedEnv.DB.prepare("UPDATE user SET plan = 'free' WHERE id = ?")
-      .bind(userId)
-      .run();
+    await typedEnv.DB.prepare("UPDATE user SET plan = 'free' WHERE id = ?").bind(userId).run();
     // 두 active device 등록
     const now = Date.now();
     await typedEnv.DB.prepare(
@@ -241,9 +237,7 @@ describe("/pair/start — Phase G-entitlement (free 2 device limit)", () => {
   it("pro user with 5 active devices → start ok", async () => {
     const userId = "usr_pair_ent_pro";
     await ensureUser(userId, "ent-pro@example.com");
-    await typedEnv.DB.prepare("UPDATE user SET plan = 'pro' WHERE id = ?")
-      .bind(userId)
-      .run();
+    await typedEnv.DB.prepare("UPDATE user SET plan = 'pro' WHERE id = ?").bind(userId).run();
     const now = Date.now();
     for (let i = 0; i < 5; i++) {
       await typedEnv.DB.prepare(
@@ -264,9 +258,7 @@ describe("/pair/start — Phase G-entitlement (free 2 device limit)", () => {
   it("free user with 0 devices → start ok (no devices yet, common bootstrap case)", async () => {
     const userId = "usr_pair_ent_zero";
     await ensureUser(userId, "ent-zero@example.com");
-    await typedEnv.DB.prepare("UPDATE user SET plan = 'free' WHERE id = ?")
-      .bind(userId)
-      .run();
+    await typedEnv.DB.prepare("UPDATE user SET plan = 'free' WHERE id = ?").bind(userId).run();
     const token = await mintAccessToken(typedEnv, userId);
     const r = await call("POST", "/pair/start", {
       token,
@@ -316,7 +308,10 @@ describe("end-to-end pair round-trip", () => {
     // 5. joiner polls — 받음
     const pollGot = await call("GET", `/pair/poll?pin=${pin}`);
     expect(pollGot.status).toBe(200);
-    const body = (await pollGot.json()) as { payload_ciphertext_b64: string };
+    const body = (await pollGot.json()) as {
+      payload_ciphertext_b64: string;
+      joiner_pub_b64: string;
+    };
     expect(body.payload_ciphertext_b64).toBe(CT_PAYLOAD);
     expect(body.joiner_pub_b64).toBe(PUB_B_B64);
   });

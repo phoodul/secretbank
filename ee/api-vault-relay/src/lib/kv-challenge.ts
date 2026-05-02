@@ -34,10 +34,7 @@ export async function putChallenge<T>(
  * Get-and-consume — returns the value and immediately deletes the entry
  * to prevent challenge reuse.
  */
-export async function consumeChallenge<T>(
-  kv: KVNamespace,
-  key: string,
-): Promise<T | null> {
+export async function consumeChallenge<T>(kv: KVNamespace, key: string): Promise<T | null> {
   const raw = await kv.get(key);
   if (!raw) return null;
   await kv.delete(key);

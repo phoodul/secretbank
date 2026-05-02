@@ -154,11 +154,7 @@ export function DeploymentDialog({
                 <FormItem>
                   <FormLabel>{t("deployments.fieldUrl")}</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="https://app.example.com"
-                      autoComplete="off"
-                      {...field}
-                    />
+                    <Input placeholder="https://app.example.com" autoComplete="off" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

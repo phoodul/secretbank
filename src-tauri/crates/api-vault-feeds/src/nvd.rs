@@ -3,8 +3,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use governor::{DefaultDirectRateLimiter, Quota, RateLimiter};
-use time::OffsetDateTime;
 use time::macros::format_description;
+use time::OffsetDateTime;
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -142,9 +142,8 @@ fn format_nvd_date(dt: OffsetDateTime) -> String {
 /// Example: `"2026-04-01T12:00:00.000"` → OffsetDateTime (UTC)
 fn parse_nvd_time(s: &str) -> Result<OffsetDateTime, time::error::Parse> {
     // NVD timestamps lack offset; try with subseconds first, then without.
-    const FMT_MS: &[time::format_description::BorrowedFormatItem<'_>] = format_description!(
-        "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond]"
-    );
+    const FMT_MS: &[time::format_description::BorrowedFormatItem<'_>] =
+        format_description!("[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond]");
     const FMT_PLAIN: &[time::format_description::BorrowedFormatItem<'_>] =
         format_description!("[year]-[month]-[day]T[hour]:[minute]:[second]");
 
@@ -174,7 +173,12 @@ fn map_raw_to_public(raw: RawCve) -> Result<NvdCve, NvdError> {
         .cvss_metric_v31
         .as_deref()
         .and_then(|v| v.first())
-        .map(|m| (Some(m.cvss_data.base_score), Some(m.cvss_data.base_severity.clone())))
+        .map(|m| {
+            (
+                Some(m.cvss_data.base_score),
+                Some(m.cvss_data.base_severity.clone()),
+            )
+        })
         .unwrap_or((None, None));
 
     let cwes = raw
@@ -233,10 +237,7 @@ pub struct NvdClient {
 impl NvdClient {
     /// Create a client pointing at the official NVD endpoint.
     pub fn new(api_key: Option<String>) -> Self {
-        Self::with_base_url(
-            "https://services.nvd.nist.gov/rest/json/cves/2.0",
-            api_key,
-        )
+        Self::with_base_url("https://services.nvd.nist.gov/rest/json/cves/2.0", api_key)
     }
 
     /// Create a client with an overridden base URL (used in tests).
@@ -254,10 +255,7 @@ impl NvdClient {
     /// Fetch all CVEs modified since `since` up to now, using pagination.
     ///
     /// Returns `NvdError::RangeTooLarge` immediately if the range exceeds 120 days.
-    pub async fn fetch_incremental(
-        &self,
-        since: OffsetDateTime,
-    ) -> Result<Vec<NvdCve>, NvdError> {
+    pub async fn fetch_incremental(&self, since: OffsetDateTime) -> Result<Vec<NvdCve>, NvdError> {
         let now = OffsetDateTime::now_utc();
         let days = (now - since).whole_days();
         if days > MAX_RANGE_DAYS {
@@ -306,15 +304,12 @@ impl NvdClient {
         start_date: &str,
         end_date: &str,
     ) -> Result<RawPage, NvdError> {
-        let mut req = self
-            .http
-            .get(&self.base_url)
-            .query(&[
-                ("lastModStartDate", start_date),
-                ("lastModEndDate", end_date),
-                ("startIndex", &start_index.to_string()),
-                ("resultsPerPage", &results_per_page.to_string()),
-            ]);
+        let mut req = self.http.get(&self.base_url).query(&[
+            ("lastModStartDate", start_date),
+            ("lastModEndDate", end_date),
+            ("startIndex", &start_index.to_string()),
+            ("resultsPerPage", &results_per_page.to_string()),
+        ]);
 
         if let Some(key) = &self.api_key {
             req = req.header("apiKey", key.as_str());
@@ -345,10 +340,7 @@ impl NvdClient {
                     .and_then(|v| v.to_str().ok())
                     .unwrap_or("unknown server error")
                     .to_string();
-                Err(NvdError::Server {
-                    status: s,
-                    message,
-                })
+                Err(NvdError::Server { status: s, message })
             }
             s => {
                 let message = resp
@@ -357,10 +349,7 @@ impl NvdClient {
                     .and_then(|v| v.to_str().ok())
                     .unwrap_or("client error")
                     .to_string();
-                Err(NvdError::Client {
-                    status: s,
-                    message,
-                })
+                Err(NvdError::Client { status: s, message })
             }
         }
     }
@@ -469,9 +458,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path("/"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(single_cve_page(1, 0, 1)),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(single_cve_page(1, 0, 1)))
             .mount(&mock_server)
             .await;
 
@@ -498,9 +485,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path("/"))
             .and(query_param("startIndex", "0"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(single_cve_page(2100, 0, 2000)),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(single_cve_page(2100, 0, 2000)))
             .mount(&mock_server)
             .await;
 
@@ -530,9 +515,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path("/"))
-            .respond_with(
-                ResponseTemplate::new(429).insert_header("Retry-After", "30"),
-            )
+            .respond_with(ResponseTemplate::new(429).insert_header("Retry-After", "30"))
             .mount(&mock_server)
             .await;
 
@@ -600,9 +583,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path("/"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(no_cvss_cve_page()),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(no_cvss_cve_page()))
             .mount(&mock_server)
             .await;
 

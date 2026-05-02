@@ -70,7 +70,13 @@ mod tests {
 
     #[test]
     fn db_name_is_lowercase() {
-        for e in [Ecosystem::Npm, Ecosystem::PyPI, Ecosystem::Cargo, Ecosystem::GoMod, Ecosystem::Maven] {
+        for e in [
+            Ecosystem::Npm,
+            Ecosystem::PyPI,
+            Ecosystem::Cargo,
+            Ecosystem::GoMod,
+            Ecosystem::Maven,
+        ] {
             let n = e.db_name();
             assert_eq!(n, n.to_lowercase(), "db_name must be lowercase: {n}");
         }

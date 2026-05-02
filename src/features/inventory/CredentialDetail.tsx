@@ -459,11 +459,7 @@ export function CredentialDetail({
             </section>
 
             {/* === 5. Usages section === */}
-            <UsageSection
-              credentialId={cred.id}
-              usages={cred.usages}
-              onChanged={fetchDetail}
-            />
+            <UsageSection credentialId={cred.id} usages={cred.usages} onChanged={fetchDetail} />
 
             {/* === 5b. Incidents section === */}
             <section>

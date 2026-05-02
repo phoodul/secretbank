@@ -222,7 +222,10 @@ async fn flush_persists_data_while_staying_unlocked() {
         // flush: 잠금 없이 디스크에 기록
         vault.flush().await.unwrap();
         // 아직 unlocked 상태여야 함
-        assert!(vault.is_unlocked().await, "flush 후 여전히 unlocked 상태여야 함");
+        assert!(
+            vault.is_unlocked().await,
+            "flush 후 여전히 unlocked 상태여야 함"
+        );
     }
 
     // 새 인스턴스로 열어서 값 확인 (flush 로 디스크에 쓰였으므로 복원 가능)
@@ -589,7 +592,11 @@ async fn recover_invalidates_old_charter() {
     // 옛 charter (의 secret) 로는 더 이상 recover 안 됨 — 다시 시도 시 fail
     let stale_secret = old_charter.to_secret().unwrap();
     let result = vault
-        .recover_with_charter(stale_secret, &make_password("yet-newer-pw"), CharterMode::None)
+        .recover_with_charter(
+            stale_secret,
+            &make_password("yet-newer-pw"),
+            CharterMode::None,
+        )
         .await;
     assert!(
         matches!(result, Err(VaultError::Crypto(_))),
@@ -599,7 +606,11 @@ async fn recover_invalidates_old_charter() {
     // 새 charter 는 작동
     let fresh_secret = new_charter.to_secret().unwrap();
     vault
-        .recover_with_charter(fresh_secret, &make_password("yet-newer-pw"), CharterMode::None)
+        .recover_with_charter(
+            fresh_secret,
+            &make_password("yet-newer-pw"),
+            CharterMode::None,
+        )
         .await
         .unwrap();
     vault.unlock(make_password("yet-newer-pw")).await.unwrap();

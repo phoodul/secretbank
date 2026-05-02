@@ -169,7 +169,10 @@ mod tests {
         let b = encrypt(&k, b"x", b"aad").unwrap();
         assert_ne!(a, b);
         // 둘 다 정상 복호.
-        assert_eq!(decrypt(&k, &a, b"aad").unwrap(), decrypt(&k, &b, b"aad").unwrap());
+        assert_eq!(
+            decrypt(&k, &a, b"aad").unwrap(),
+            decrypt(&k, &b, b"aad").unwrap()
+        );
     }
 
     #[test]

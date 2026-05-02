@@ -61,7 +61,7 @@ radius before you rotate or revoke a key.
   `charter_cooldown_status` on mount, exposes a switch and a "Clear
   cooldown" button when active. Vault must be unlocked to change the
   toggle (self-attestation).
-- **i18n** — 36 charter UI keys in en + ko (vault.charter.* + vault.recovery.*),
+- **i18n** — 36 charter UI keys in en + ko (vault.charter._ + vault.recovery._),
   9 cooldown keys.
 - **Unlock animation deceleration fix** (carry-over from Night mode 7) —
   `VaultMechanism` ringTransition switched from spring(200/22) to
@@ -83,9 +83,9 @@ radius before you rotate or revoke a key.
 - New `apivault blast-radius <id>` CLI subcommand wraps
   `api-vault-core::blast_radius` and emits the three buckets as JSON.
 - **Context menu** (`JBPopupMenu`) on right-click. Menu items vary by
-  node kind: credential gets *Show blast radius* + *Reveal*, others
-  get the relevant *Open URL/docs/repo*. All kinds get *Focus* and
-  *Copy ID*.
+  node kind: credential gets _Show blast radius_ + _Reveal_, others
+  get the relevant _Open URL/docs/repo_. All kinds get _Focus_ and
+  _Copy ID_.
 - **Keyboard shortcuts** in the graph: `Ctrl/Cmd+F` focuses the
   search box, `Esc` clears all highlights and filters, `Ctrl/Cmd+0`
   fits all nodes to view.

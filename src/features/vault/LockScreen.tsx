@@ -278,184 +278,184 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
         <CornerOrnaments />
 
         <div className="px-8 pt-8 pb-4">
-        {/* Live vault mechanism — concentric tumbler rings rotate, snap into
+          {/* Live vault mechanism — concentric tumbler rings rotate, snap into
             alignment on unlock, brass center pulses gold on success. */}
-        <CardHeader className="items-center gap-4 text-center p-0 pb-6">
-          <VaultMechanism state={vaultState} size={140} />
-          <CardTitle
-            id="lockscreen-title"
-            className="text-2xl font-semibold accent-gold-glow"
-            style={{ letterSpacing: "0.04em" }}
-          >
-            {t("vault.unlockTitle")}
-          </CardTitle>
-          <CardDescription
-            className="text-[15px]"
-            style={{
-              color: "oklch(0.92 0.02 240)",
-              textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
-            }}
-          >
-            {t("vault.unlockSubtitle")}
-          </CardDescription>
-          {/* Engraved tactical label — subtle "this is a secure system" cue */}
-          <div
-            className="mt-1 flex items-center gap-2 text-[10px] font-mono"
-            style={{
-              letterSpacing: "0.18em",
-              color: "oklch(from var(--vault-gold) l c h / 0.72)",
-              textShadow: "0 1px 0 oklch(0 0 0 / 0.6)",
-            }}
-            aria-hidden
-          >
-            <span
-              className="inline-block h-px w-8"
+          <CardHeader className="items-center gap-4 text-center p-0 pb-6">
+            <VaultMechanism state={vaultState} size={140} />
+            <CardTitle
+              id="lockscreen-title"
+              className="text-2xl font-semibold accent-gold-glow"
+              style={{ letterSpacing: "0.04em" }}
+            >
+              {t("vault.unlockTitle")}
+            </CardTitle>
+            <CardDescription
+              className="text-[15px]"
               style={{
-                background:
-                  "linear-gradient(90deg, transparent, oklch(from var(--vault-gold) l c h / 0.6))",
+                color: "oklch(0.92 0.02 240)",
+                textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
               }}
-            />
-            <span>AUTH · REQUIRED</span>
-            <span
-              className="inline-block h-px w-8"
+            >
+              {t("vault.unlockSubtitle")}
+            </CardDescription>
+            {/* Engraved tactical label — subtle "this is a secure system" cue */}
+            <div
+              className="mt-1 flex items-center gap-2 text-[10px] font-mono"
               style={{
-                background:
-                  "linear-gradient(90deg, oklch(from var(--vault-gold) l c h / 0.6), transparent)",
+                letterSpacing: "0.18em",
+                color: "oklch(from var(--vault-gold) l c h / 0.72)",
+                textShadow: "0 1px 0 oklch(0 0 0 / 0.6)",
               }}
-            />
-          </div>
-        </CardHeader>
+              aria-hidden
+            >
+              <span
+                className="inline-block h-px w-8"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent, oklch(from var(--vault-gold) l c h / 0.6))",
+                }}
+              />
+              <span>AUTH · REQUIRED</span>
+              <span
+                className="inline-block h-px w-8"
+                style={{
+                  background:
+                    "linear-gradient(90deg, oklch(from var(--vault-gold) l c h / 0.6), transparent)",
+                }}
+              />
+            </div>
+          </CardHeader>
 
-        <CardContent className="p-0">
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
-                <Label
-                  htmlFor="unlock-passphrase"
-                  className="text-[11px] font-semibold uppercase tracking-[0.14em] accent-gold"
-                >
-                  {t("vault.passphraseLabel")}
-                </Label>
-                <Input
-                  id="unlock-passphrase"
-                  ref={inputRef}
-                  type="password"
-                  autoComplete="current-password"
-                  autoFocus
-                  placeholder={t("vault.passphrasePlaceholder")}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setErrorMsg(null);
-                  }}
-                  disabled={isDisabled}
-                  aria-invalid={!!errorMsg}
-                  aria-describedby={errorMsg ? "unlock-error" : undefined}
-                  className="ring-lapis bg-input/40 border-vault-lapis/20 backdrop-blur-sm"
-                />
-              </div>
+          <CardContent className="p-0">
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <Label
+                    htmlFor="unlock-passphrase"
+                    className="text-[11px] font-semibold uppercase tracking-[0.14em] accent-gold"
+                  >
+                    {t("vault.passphraseLabel")}
+                  </Label>
+                  <Input
+                    id="unlock-passphrase"
+                    ref={inputRef}
+                    type="password"
+                    autoComplete="current-password"
+                    autoFocus
+                    placeholder={t("vault.passphrasePlaceholder")}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrorMsg(null);
+                    }}
+                    disabled={isDisabled}
+                    aria-invalid={!!errorMsg}
+                    aria-describedby={errorMsg ? "unlock-error" : undefined}
+                    className="ring-lapis bg-input/40 border-vault-lapis/20 backdrop-blur-sm"
+                  />
+                </div>
 
-              {/* 인라인 에러 또는 쿨다운 메시지 */}
-              {inCooldown ? (
-                <p
-                  className="text-sm font-medium"
-                  role="alert"
-                  aria-live="polite"
-                  style={{
-                    color: "oklch(0.85 0.18 28)",
-                    textShadow: "0 1px 0 oklch(0 0 0 / 0.5)",
-                  }}
-                >
-                  {t("vault.tooManyAttempts", { count: cooldownRemaining })}
-                </p>
-              ) : (
-                errorMsg && (
+                {/* 인라인 에러 또는 쿨다운 메시지 */}
+                {inCooldown ? (
                   <p
-                    id="unlock-error"
                     className="text-sm font-medium"
                     role="alert"
+                    aria-live="polite"
                     style={{
                       color: "oklch(0.85 0.18 28)",
                       textShadow: "0 1px 0 oklch(0 0 0 / 0.5)",
                     }}
                   >
-                    {errorMsg}
+                    {t("vault.tooManyAttempts", { count: cooldownRemaining })}
                   </p>
-                )
-              )}
+                ) : (
+                  errorMsg && (
+                    <p
+                      id="unlock-error"
+                      className="text-sm font-medium"
+                      role="alert"
+                      style={{
+                        color: "oklch(0.85 0.18 28)",
+                        textShadow: "0 1px 0 oklch(0 0 0 / 0.5)",
+                      }}
+                    >
+                      {errorMsg}
+                    </p>
+                  )
+                )}
 
-              <Button
-                type="submit"
-                disabled={isDisabled || !password}
-                className="gloss-shimmer w-full font-medium tracking-wide"
-              >
-                {t("vault.unlockButton")}
-              </Button>
-
-              {/* Initialized + charter 보유 vault — Forgot passphrase 진입점 */}
-              {!showCreate && hasCharter && (
-                <button
-                  type="button"
-                  className="text-xs font-medium underline-offset-4 hover:underline"
-                  style={{
-                    color: "oklch(from var(--vault-gold) l c h / 0.78)",
-                    textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
-                  }}
-                  onClick={() => setRecoveryOpen(true)}
-                  data-testid="lockscreen-forgot-link"
+                <Button
+                  type="submit"
+                  disabled={isDisabled || !password}
+                  className="gloss-shimmer w-full font-medium tracking-wide"
                 >
-                  {t("vault.recovery.forgotLink")}
-                </button>
-              )}
+                  {t("vault.unlockButton")}
+                </Button>
 
-              {/* uninitialized 상태일 때만 CreateVault + Pair 링크 표시 */}
-              {showCreate && (
-                <div
-                  className="mt-2 flex flex-col items-center gap-2 pt-4"
-                  style={{
-                    borderTop: "1px solid oklch(from var(--vault-lapis-bright) l c h / 0.18)",
-                  }}
-                >
+                {/* Initialized + charter 보유 vault — Forgot passphrase 진입점 */}
+                {!showCreate && hasCharter && (
                   <button
                     type="button"
-                    className="text-sm font-medium transition-colors underline-offset-4 hover:underline"
+                    className="text-xs font-medium underline-offset-4 hover:underline"
                     style={{
-                      color: "oklch(0.86 0.04 240)",
+                      color: "oklch(from var(--vault-gold) l c h / 0.78)",
                       textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "var(--vault-gold-bright)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "oklch(0.86 0.04 240)";
-                    }}
-                    onClick={() => setCreateOpen(true)}
+                    onClick={() => setRecoveryOpen(true)}
+                    data-testid="lockscreen-forgot-link"
                   >
-                    {t("vault.createVaultLink")}
+                    {t("vault.recovery.forgotLink")}
                   </button>
-                  <button
-                    type="button"
-                    className="text-sm font-medium transition-colors underline-offset-4 hover:underline"
+                )}
+
+                {/* uninitialized 상태일 때만 CreateVault + Pair 링크 표시 */}
+                {showCreate && (
+                  <div
+                    className="mt-2 flex flex-col items-center gap-2 pt-4"
                     style={{
-                      color: "oklch(0.86 0.04 240)",
-                      textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
+                      borderTop: "1px solid oklch(from var(--vault-lapis-bright) l c h / 0.18)",
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "var(--vault-gold-bright)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "oklch(0.86 0.04 240)";
-                    }}
-                    onClick={() => setPairOpen(true)}
-                    data-testid="lockscreen-pair-link"
                   >
-                    {t("vault.pairWithDeviceLink")}
-                  </button>
-                </div>
-              )}
-            </div>
-          </form>
-        </CardContent>
+                    <button
+                      type="button"
+                      className="text-sm font-medium transition-colors underline-offset-4 hover:underline"
+                      style={{
+                        color: "oklch(0.86 0.04 240)",
+                        textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "var(--vault-gold-bright)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "oklch(0.86 0.04 240)";
+                      }}
+                      onClick={() => setCreateOpen(true)}
+                    >
+                      {t("vault.createVaultLink")}
+                    </button>
+                    <button
+                      type="button"
+                      className="text-sm font-medium transition-colors underline-offset-4 hover:underline"
+                      style={{
+                        color: "oklch(0.86 0.04 240)",
+                        textShadow: "0 1px 0 oklch(0 0 0 / 0.4)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "var(--vault-gold-bright)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "oklch(0.86 0.04 240)";
+                      }}
+                      onClick={() => setPairOpen(true)}
+                      data-testid="lockscreen-pair-link"
+                    >
+                      {t("vault.pairWithDeviceLink")}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </form>
+          </CardContent>
         </div>
         <SystemLog state={vaultState} />
         <StatusPanel state={vaultState} />
@@ -473,11 +473,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
         </>
       )}
       {!showCreate && hasCharter && (
-        <RecoveryDialog
-          open={recoveryOpen}
-          onOpenChange={setRecoveryOpen}
-          onSuccess={onSuccess}
-        />
+        <RecoveryDialog open={recoveryOpen} onOpenChange={setRecoveryOpen} onSuccess={onSuccess} />
       )}
     </div>
   );

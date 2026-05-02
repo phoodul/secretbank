@@ -1,6 +1,6 @@
-import type { Node, NodeProps } from '@xyflow/react';
+import type { Node, NodeProps } from "@xyflow/react";
 
-import type { GraphNodeData } from '../adapter';
+import type { GraphNodeData } from "../adapter";
 
 /**
  * Custom comparator for React.memo on all 4 custom node components.

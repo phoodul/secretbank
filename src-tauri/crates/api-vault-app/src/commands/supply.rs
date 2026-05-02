@@ -79,10 +79,7 @@ fn now_ms() -> i64 {
 
 fn discover_manifests(root: &Path) -> Vec<(PathBuf, &'static str)> {
     let mut out = Vec::new();
-    for (rel, kind) in [
-        ("package.json", "npm"),
-        ("Cargo.toml", "cargo"),
-    ] {
+    for (rel, kind) in [("package.json", "npm"), ("Cargo.toml", "cargo")] {
         let p = root.join(rel);
         if p.exists() {
             out.push((p, kind));
@@ -148,9 +145,13 @@ pub async fn supply_scan_project(
     state: State<'_, AppContext>,
 ) -> Result<SupplyScanReport, SupplyCommandError> {
     let _project_id_parsed: ProjectId =
-        project_id.parse().map_err(|e: <ProjectId as std::str::FromStr>::Err| {
-            SupplyCommandError::InvalidProjectId { message: e.to_string() }
-        })?;
+        project_id
+            .parse()
+            .map_err(|e: <ProjectId as std::str::FromStr>::Err| {
+                SupplyCommandError::InvalidProjectId {
+                    message: e.to_string(),
+                }
+            })?;
     let root = std::path::PathBuf::from(&project_path);
     if !root.exists() {
         return Err(SupplyCommandError::PathNotFound { path: project_path });

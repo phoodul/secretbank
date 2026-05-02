@@ -172,7 +172,9 @@ export function SubscriptionSection() {
             >
               {isPro
                 ? proUntilDate
-                  ? t("subscription.tierPro") + " · " + t("subscription.proUntil", { date: proUntilDate })
+                  ? t("subscription.tierPro") +
+                    " · " +
+                    t("subscription.proUntil", { date: proUntilDate })
                   : t("subscription.tierPro")
                 : t("subscription.tierFree")}
             </Badge>
@@ -204,8 +206,12 @@ export function SubscriptionSection() {
 
       {/* Developer Tools */}
       <DevTools
-        onSetPro={async (ms) => { await setDev(ms); }}
-        onReset={async () => { await setDev(null); }}
+        onSetPro={async (ms) => {
+          await setDev(ms);
+        }}
+        onReset={async () => {
+          await setDev(null);
+        }}
       />
     </section>
   );

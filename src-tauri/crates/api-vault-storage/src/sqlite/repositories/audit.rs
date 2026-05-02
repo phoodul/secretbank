@@ -63,10 +63,7 @@ impl<'a> AuditRepo<'a> {
 
     /// Fetch the entry with the highest `seq` for a given device.
     /// Returns `None` if the device has no entries yet.
-    pub async fn last_for_device(
-        &self,
-        device_id: &str,
-    ) -> Result<Option<AuditLog>, StorageError> {
+    pub async fn last_for_device(&self, device_id: &str) -> Result<Option<AuditLog>, StorageError> {
         let row = sqlx::query(
             r#"SELECT id, seq, device_id, actor, action, subject_kind, subject_id,
                       payload_json, prev_hash, entry_hash, signature, created_at

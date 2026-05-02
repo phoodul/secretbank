@@ -259,7 +259,11 @@ mod tests {
         let s = score_at(&c, t(0));
         assert_eq!(s.total, 50);
         assert_eq!(s.level, ScoreLevel::Warn);
-        let f = s.factors.iter().find(|f| f.code == FactorCode::Expired).unwrap();
+        let f = s
+            .factors
+            .iter()
+            .find(|f| f.code == FactorCode::Expired)
+            .unwrap();
         assert_eq!(f.penalty, 50);
         assert_eq!(f.severity, FactorSeverity::Danger);
         assert_eq!(f.days, Some(10));
@@ -316,7 +320,11 @@ mod tests {
         let mut c = cred(CredentialStatus::Active);
         c.scope = None;
         let s = score_at(&c, t(1));
-        let f = s.factors.iter().find(|f| f.code == FactorCode::NoScope).unwrap();
+        let f = s
+            .factors
+            .iter()
+            .find(|f| f.code == FactorCode::NoScope)
+            .unwrap();
         assert_eq!(f.penalty, 5);
         assert_eq!(f.severity, FactorSeverity::Info);
     }

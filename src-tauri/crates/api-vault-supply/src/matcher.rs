@@ -31,9 +31,7 @@ pub fn match_advisories(
     let mut out = Vec::new();
     for (i, d) in deps.iter().enumerate() {
         for (j, a) in advisories.iter().enumerate() {
-            if d.ecosystem != a.ecosystem
-                || !d.name.eq_ignore_ascii_case(&a.package_name)
-            {
+            if d.ecosystem != a.ecosystem || !d.name.eq_ignore_ascii_case(&a.package_name) {
                 continue;
             }
             let in_range = match a.affected_range.as_deref() {
@@ -117,14 +115,8 @@ mod tests {
 
     #[test]
     fn cartesian_emits_multiple_pairs() {
-        let deps = vec![
-            dep("axios", Ecosystem::Npm),
-            dep("axios", Ecosystem::Npm),
-        ];
-        let advs = vec![
-            adv("axios", Ecosystem::Npm),
-            adv("axios", Ecosystem::Npm),
-        ];
+        let deps = vec![dep("axios", Ecosystem::Npm), dep("axios", Ecosystem::Npm)];
+        let advs = vec![adv("axios", Ecosystem::Npm), adv("axios", Ecosystem::Npm)];
         // 2 × 2 = 4 매칭
         assert_eq!(match_advisories(&deps, &advs).len(), 4);
     }

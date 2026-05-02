@@ -48,9 +48,7 @@ export function AuditFilterBar({ filter, onChange }: AuditFilterBarProps) {
   }
 
   const hasFilter =
-    filter.action_prefix != null ||
-    filter.subject_kind != null ||
-    filter.device_id != null;
+    filter.action_prefix != null || filter.subject_kind != null || filter.device_id != null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -64,10 +62,7 @@ export function AuditFilterBar({ filter, onChange }: AuditFilterBarProps) {
       />
 
       {/* Subject kind dropdown */}
-      <Select
-        value={filter.subject_kind ?? "__any__"}
-        onValueChange={handleSubjectKind}
-      >
+      <Select value={filter.subject_kind ?? "__any__"} onValueChange={handleSubjectKind}>
         <SelectTrigger className="h-8 w-40 text-xs" aria-label={t("audit.filter.subjectKind")}>
           <SelectValue placeholder={t("audit.filter.subjectKindAny")} />
         </SelectTrigger>
@@ -92,12 +87,7 @@ export function AuditFilterBar({ filter, onChange }: AuditFilterBarProps) {
 
       {/* Clear */}
       {hasFilter && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-1 text-xs"
-          onClick={handleClear}
-        >
+        <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={handleClear}>
           <X className="h-3 w-3" aria-hidden />
           {t("audit.filter.clear")}
         </Button>

@@ -49,10 +49,7 @@ let diagnostics: vscode.DiagnosticCollection | undefined;
 const lastScan: Map<string, SupplyAdvisory[]> = new Map(); // key = package name (lowercase)
 
 export function activate(context: vscode.ExtensionContext): void {
-  statusItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Right,
-    100,
-  );
+  statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusItem.text = "$(shield) API Vault";
   statusItem.tooltip = "Click to list credentials";
   statusItem.command = "apivault.list";
@@ -310,12 +307,7 @@ async function scanWorkspace(root: string): Promise<SupplyAdvisory[]> {
     const raw = await fs.readFile(cargoPath, "utf-8");
     const deps = parseCargoDeps(raw);
     for (const [name, version] of deps) {
-      if (
-        version === "workspace" ||
-        version === "path" ||
-        version === "git" ||
-        version === "*"
-      ) {
+      if (version === "workspace" || version === "path" || version === "git" || version === "*") {
         continue;
       }
       const advs = await queryOsv("cargo", name, normalizeVersion(version));
@@ -552,9 +544,7 @@ class ManifestCodeLensProvider implements vscode.CodeLensProvider {
 // Language Model tools — Copilot Chat / Claude / Cursor / any 1.96+ host
 // ---------------------------------------------------------------------------
 
-class ListCredentialsTool
-  implements vscode.LanguageModelTool<{ issuer?: string; env?: string }>
-{
+class ListCredentialsTool implements vscode.LanguageModelTool<{ issuer?: string; env?: string }> {
   async invoke(
     options: vscode.LanguageModelToolInvocationOptions<{ issuer?: string; env?: string }>,
     _token: vscode.CancellationToken,
@@ -586,9 +576,7 @@ class ListCredentialsTool
   }
 }
 
-class ScanSupplyChainTool
-  implements vscode.LanguageModelTool<{ category_filter?: string }>
-{
+class ScanSupplyChainTool implements vscode.LanguageModelTool<{ category_filter?: string }> {
   async invoke(
     options: vscode.LanguageModelToolInvocationOptions<{ category_filter?: string }>,
     _token: vscode.CancellationToken,
@@ -605,9 +593,7 @@ class ScanSupplyChainTool
 
     const filter = options.input?.category_filter;
     const filtered =
-      !filter || filter === "any"
-        ? advisories
-        : advisories.filter((a) => a.category === filter);
+      !filter || filter === "any" ? advisories : advisories.filter((a) => a.category === filter);
 
     if (filtered.length === 0) {
       return new vscode.LanguageModelToolResult([

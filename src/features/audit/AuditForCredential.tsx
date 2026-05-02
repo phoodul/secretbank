@@ -42,10 +42,7 @@ export interface AuditForCredentialProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AuditForCredential({
-  credentialId,
-  onViewAll,
-}: AuditForCredentialProps) {
+export function AuditForCredential({ credentialId, onViewAll }: AuditForCredentialProps) {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
 
@@ -62,19 +59,14 @@ export function AuditForCredential({
     if (onViewAll) {
       onViewAll();
     } else {
-      void navigate(
-        `/audit?subject_kind=credential&subject_id=${credentialId}`,
-      );
+      void navigate(`/audit?subject_kind=credential&subject_id=${credentialId}`);
     }
   }
 
   // ---- loading ----
   if (loading) {
     return (
-      <div
-        className="flex flex-col gap-2"
-        data-testid="audit-for-credential-loading"
-      >
+      <div className="flex flex-col gap-2" data-testid="audit-for-credential-loading">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-6 w-full" />
         ))}
@@ -99,10 +91,7 @@ export function AuditForCredential({
   // ---- empty ----
   if (entries.length === 0) {
     return (
-      <p
-        className="text-xs text-muted-foreground"
-        data-testid="audit-for-credential-empty"
-      >
+      <p className="text-xs text-muted-foreground" data-testid="audit-for-credential-empty">
         {t("inventory.auditEmpty")}
       </p>
     );
@@ -139,9 +128,7 @@ export function AuditForCredential({
               </span>
 
               {/* Actor */}
-              <span className="truncate text-muted-foreground">
-                {entry.actor}
-              </span>
+              <span className="truncate text-muted-foreground">{entry.actor}</span>
             </li>
           );
         })}

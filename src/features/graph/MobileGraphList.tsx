@@ -10,31 +10,31 @@
  * The interactive React Flow graph is rendered only on desktop.
  */
 
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Building2, FolderGit2, KeyRound, Server, X } from 'lucide-react';
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Building2, FolderGit2, KeyRound, Server, X } from "lucide-react";
 
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import type { BlastRadius, BlastRadiusNode, GraphNode, GraphPayload, NodeKind } from './types';
-import { useBlastRadiusSelection } from './use-blast-radius-selection';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import type { BlastRadius, BlastRadiusNode, GraphNode, GraphPayload, NodeKind } from "./types";
+import { useBlastRadiusSelection } from "./use-blast-radius-selection";
 
 // ---------------------------------------------------------------------------
 // Icon lookup by node kind
 // ---------------------------------------------------------------------------
 
 function KindIcon({ kind, className }: { kind: NodeKind; className?: string }) {
-  const cls = cn('h-4 w-4 shrink-0', className);
+  const cls = cn("h-4 w-4 shrink-0", className);
   switch (kind) {
-    case 'issuer':
+    case "issuer":
       return <Building2 className={cls} />;
-    case 'credential':
+    case "credential":
       return <KeyRound className={cls} />;
-    case 'project':
+    case "project":
       return <FolderGit2 className={cls} />;
-    case 'deployment':
+    case "deployment":
       return <Server className={cls} />;
   }
 }
@@ -78,12 +78,12 @@ interface ImpactTreeProps {
 }
 
 function ImpactTree({ buckets, nodesById, credentialLabel, onClear }: ImpactTreeProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   const sections: Array<{ key: keyof BlastRadius; labelKey: string }> = [
-    { key: 'primary', labelKey: 'graph.mobile.bucket.primary' },
-    { key: 'secondary', labelKey: 'graph.mobile.bucket.secondary' },
-    { key: 'tertiary', labelKey: 'graph.mobile.bucket.tertiary' },
+    { key: "primary", labelKey: "graph.mobile.bucket.primary" },
+    { key: "secondary", labelKey: "graph.mobile.bucket.secondary" },
+    { key: "tertiary", labelKey: "graph.mobile.bucket.tertiary" },
   ];
 
   return (
@@ -91,17 +91,17 @@ function ImpactTree({ buckets, nodesById, credentialLabel, onClear }: ImpactTree
       {/* Header row */}
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold leading-tight">
-          {t('graph.mobile.impactTitle', { name: credentialLabel })}
+          {t("graph.mobile.impactTitle", { name: credentialLabel })}
         </h2>
         <Button
           variant="ghost"
           size="sm"
           onClick={onClear}
           className="h-7 gap-1 text-xs"
-          aria-label={t('graph.mobile.clear')}
+          aria-label={t("graph.mobile.clear")}
         >
           <X className="h-3 w-3" />
-          {t('graph.mobile.clear')}
+          {t("graph.mobile.clear")}
         </Button>
       </div>
 
@@ -152,17 +152,20 @@ function CredentialCard({ node, selected, onSelect }: CredentialCardProps) {
       type="button"
       onClick={onSelect}
       className={cn(
-        'w-full text-left transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        "w-full text-left transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
       <Card
         className={cn(
-          'flex items-center gap-3 px-3 py-3 transition-colors',
-          selected && 'border-primary bg-primary/5',
+          "flex items-center gap-3 px-3 py-3 transition-colors",
+          selected && "border-primary bg-primary/5",
         )}
       >
-        <KindIcon kind="credential" className={selected ? 'text-primary' : 'text-muted-foreground'} />
+        <KindIcon
+          kind="credential"
+          className={selected ? "text-primary" : "text-muted-foreground"}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-sm font-medium">{node.label}</span>
         </div>
@@ -185,7 +188,7 @@ export interface MobileGraphListProps {
 }
 
 export function MobileGraphList({ payload }: MobileGraphListProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
   const selection = useBlastRadiusSelection();
 
   // Build an id→node lookup for the impact tree
@@ -197,7 +200,7 @@ export function MobileGraphList({ payload }: MobileGraphListProps) {
 
   // Flat list of credential nodes only
   const credentials = useMemo(
-    () => payload.nodes.filter((n) => n.kind === 'credential'),
+    () => payload.nodes.filter((n) => n.kind === "credential"),
     [payload.nodes],
   );
 
@@ -209,13 +212,12 @@ export function MobileGraphList({ payload }: MobileGraphListProps) {
         className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center"
       >
         <KeyRound className="h-8 w-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">{t('graph.mobile.empty')}</p>
+        <p className="text-sm text-muted-foreground">{t("graph.mobile.empty")}</p>
       </div>
     );
   }
 
-  const selectedCredId =
-    selection.state.phase !== 'idle' ? selection.state.credentialId : null;
+  const selectedCredId = selection.state.phase !== "idle" ? selection.state.credentialId : null;
 
   const selectedCredNode = selectedCredId ? nodesById.get(selectedCredId) : undefined;
 
@@ -224,7 +226,7 @@ export function MobileGraphList({ payload }: MobileGraphListProps) {
       {/* Credentials section */}
       <section className="flex flex-col gap-3 p-4">
         <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          {t('graph.mobile.credentialsTitle')}
+          {t("graph.mobile.credentialsTitle")}
         </h2>
         <ul className="flex flex-col gap-2">
           {credentials.map((cred) => (
@@ -246,22 +248,20 @@ export function MobileGraphList({ payload }: MobileGraphListProps) {
       </section>
 
       {/* Divider — only visible when impact tree is shown */}
-      {selection.state.phase !== 'idle' && <hr className="border-border" />}
+      {selection.state.phase !== "idle" && <hr className="border-border" />}
 
       {/* Impact tree — shown when a credential is selected */}
-      {selection.state.phase === 'loading' && (
-        <div className="p-4 text-sm text-muted-foreground">
-          {t('graph.blastRadius.loading')}
-        </div>
+      {selection.state.phase === "loading" && (
+        <div className="p-4 text-sm text-muted-foreground">{t("graph.blastRadius.loading")}</div>
       )}
 
-      {selection.state.phase === 'error' && (
+      {selection.state.phase === "error" && (
         <div className="p-4 text-sm text-destructive">
-          {t('graph.blastRadius.error')}: {selection.state.message}
+          {t("graph.blastRadius.error")}: {selection.state.message}
         </div>
       )}
 
-      {selection.state.phase === 'ok' && (
+      {selection.state.phase === "ok" && (
         <ImpactTree
           buckets={selection.state.buckets}
           nodesById={nodesById}

@@ -13,28 +13,41 @@ use commands::auth::{
     auth_passkey_assert_verify, auth_passkey_register_start, auth_passkey_register_verify,
     auth_refresh, auth_signout, auth_status,
 };
+use commands::charter_cooldown::{
+    charter_cooldown_clear, charter_cooldown_set_enabled, charter_cooldown_status,
+};
 use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
     credential_rotate_value, credential_update,
+};
+use commands::deployments::{
+    deployment_create, deployment_delete, deployment_list_for_project, deployment_update,
+};
+use commands::entitlement::{entitlement_current, entitlement_set_dev};
+use commands::github::{
+    github_install_url, github_list_installations, github_remove_installation,
+    github_save_installation, github_scan_repo,
 };
 use commands::graph::{blast_radius_for_credential, graph_fetch};
 use commands::incidents::{
     incident_dismiss, incident_feed_refresh, incident_list, incident_matches_for_credential,
 };
 use commands::issuer::{issuer_get, issuer_list};
-use commands::deployments::{
-    deployment_create, deployment_delete, deployment_list_for_project, deployment_update,
+use commands::kill_switch::{
+    kill_switch_request_confirm, kill_switch_request_confirm_issuer, kill_switch_revoke,
+    kill_switch_revoke_issuer,
 };
-use commands::projects::{
-    project_create, project_delete, project_get, project_list, project_update,
-};
-use commands::scanner::env_scan_folder;
-use commands::settings::{settings_get, settings_set};
 use commands::pairing::{
     sync_pair_cancel, sync_pair_initiator_finalize, sync_pair_initiator_poll,
     sync_pair_initiator_start, sync_pair_joiner_apply, sync_pair_joiner_join,
     sync_pair_joiner_poll,
 };
+use commands::projects::{
+    project_create, project_delete, project_get, project_list, project_update,
+};
+use commands::railguard::{railguard_apply, railguard_preview};
+use commands::scanner::env_scan_folder;
+use commands::settings::{settings_get, settings_set};
 use commands::supply::supply_scan_project;
 use commands::sync::{
     sync_get_relay_url, sync_get_root_key, sync_value_pull_since, sync_value_push,
@@ -42,24 +55,11 @@ use commands::sync::{
 use commands::usage::{
     usage_create, usage_delete, usage_list_for_credential, usage_list_for_project,
 };
-use commands::charter_cooldown::{
-    charter_cooldown_clear, charter_cooldown_set_enabled, charter_cooldown_status,
-};
 use commands::vault::{
     vault_has_charter, vault_init, vault_init_with_charter, vault_lock, vault_recovery_unlock,
     vault_status, vault_unlock,
 };
 use commands::vault_settings::{vault_setting_get, vault_setting_set};
-use commands::kill_switch::{
-    kill_switch_request_confirm, kill_switch_revoke,
-    kill_switch_request_confirm_issuer, kill_switch_revoke_issuer,
-};
-use commands::github::{
-    github_install_url, github_list_installations, github_remove_installation,
-    github_save_installation, github_scan_repo,
-};
-use commands::entitlement::{entitlement_current, entitlement_set_dev};
-use commands::railguard::{railguard_apply, railguard_preview};
 use context::AppContext;
 use services::feed_scheduler::{spawn_feed_scheduler, FeedSchedulerConfig, TauriEmitter};
 use services::sync_emit::TauriDbChangeEmitter;
@@ -89,11 +89,8 @@ pub fn run(context: tauri::Context) {
             let db_change_emitter: std::sync::Arc<dyn services::sync_emit::DbChangeEmitter> =
                 std::sync::Arc::new(TauriDbChangeEmitter::new(app.handle().clone()));
 
-            let ctx = tauri::async_runtime::block_on(AppContext::new(
-                data_dir,
-                db_change_emitter,
-            ))
-            .expect("failed to initialise AppContext");
+            let ctx = tauri::async_runtime::block_on(AppContext::new(data_dir, db_change_emitter))
+                .expect("failed to initialise AppContext");
 
             let seed_count = tauri::async_runtime::block_on(setup::seed_issuer_presets(&ctx.pool))
                 .expect("failed to seed issuer presets");
@@ -132,8 +129,7 @@ pub fn run(context: tauri::Context) {
                 }
                 let handle = app.handle().clone();
                 app.deep_link().on_open_url(move |event| {
-                    let urls: Vec<String> =
-                        event.urls().iter().map(|u| u.to_string()).collect();
+                    let urls: Vec<String> = event.urls().iter().map(|u| u.to_string()).collect();
                     tracing::info!("deep-link received: {:?}", urls);
                     if let Err(e) = handle.emit("deep-link", urls) {
                         tracing::warn!("deep-link emit failed: {e}");

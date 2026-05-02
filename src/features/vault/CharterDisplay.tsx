@@ -68,9 +68,7 @@ export function CharterDisplay({ issuance, onDone }: CharterDisplayProps) {
         <h2 className="text-2xl font-semibold tracking-tight text-vault-gold-bright">
           {t("vault.charter.issuanceTitle")}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          {t("vault.charter.issuanceSubtitle")}
-        </p>
+        <p className="text-sm text-muted-foreground">{t("vault.charter.issuanceSubtitle")}</p>
       </header>
 
       {/* Warning banner — only on screen, not on print */}
@@ -101,10 +99,7 @@ export function CharterDisplay({ issuance, onDone }: CharterDisplayProps) {
       </footer>
 
       {confirmOpen && (
-        <ConfirmDoneOverlay
-          onCancel={() => setConfirmOpen(false)}
-          onConfirm={handleConfirmYes}
-        />
+        <ConfirmDoneOverlay onCancel={() => setConfirmOpen(false)} onConfirm={handleConfirmYes} />
       )}
     </div>
   );
@@ -195,12 +190,7 @@ function CharterWordsGrid({ words }: CharterWordsGridProps) {
   // 6 단어 → 3 col × 2 row, 7 단어 → 4 col × 2 row (마지막 셀 비움).
   const cols = words.length === 7 ? 4 : 3;
   return (
-    <div
-      className={cn(
-        "grid gap-x-4 gap-y-2",
-        cols === 4 ? "grid-cols-4" : "grid-cols-3",
-      )}
-    >
+    <div className={cn("grid gap-x-4 gap-y-2", cols === 4 ? "grid-cols-4" : "grid-cols-3")}>
       {words.map((w, i) => (
         <div
           key={i}
@@ -251,9 +241,7 @@ function ConfirmDoneOverlay({ onCancel, onConfirm }: ConfirmDoneOverlayProps) {
     >
       <div className="m-4 max-w-md rounded-lg border bg-card p-5 shadow-lg">
         <h3 className="text-lg font-semibold">{t("vault.charter.confirmDoneTitle")}</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("vault.charter.confirmDoneBody")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("vault.charter.confirmDoneBody")}</p>
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="outline" onClick={onCancel}>
             {t("vault.charter.confirmDoneCancel")}

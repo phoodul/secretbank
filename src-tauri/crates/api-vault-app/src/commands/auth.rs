@@ -519,10 +519,7 @@ pub async fn auth_refresh(
     };
 
     let body = serde_json::json!({ "refresh_token": refresh_token });
-    let tokens: AuthTokensResponse = state
-        .relay_client
-        .post_json("/auth/refresh", &body)
-        .await?;
+    let tokens: AuthTokensResponse = state.relay_client.post_json("/auth/refresh", &body).await?;
     // Refresh: rotate tokens but keep previously persisted salts. complete_session
     // copies them from auth_session and re-derives enc_key deterministically.
     complete_session(&state, tokens, None).await
@@ -672,7 +669,10 @@ mod tests {
         );
 
         let mut vault = MockVaultStorage::new("pw");
-        vault.unlock(SecretString::from("pw".to_owned())).await.unwrap();
+        vault
+            .unlock(SecretString::from("pw".to_owned()))
+            .await
+            .unwrap();
         let vault_box: Box<dyn VaultStorage + Send + Sync> = Box::new(vault);
 
         let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
@@ -784,14 +784,12 @@ mod tests {
         Mock::given(method("POST"))
             .and(path("/auth/passkey/register/start"))
             .and(body_json(serde_json::json!({"email": "alice@example.com"})))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_alice",
-                    "options": { "challenge": "abc", "rp": { "name": "api-vault" } },
-                    "salt_auth": "AAAA",
-                    "salt_enc": "BBBB",
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_alice",
+                "options": { "challenge": "abc", "rp": { "name": "api-vault" } },
+                "salt_auth": "AAAA",
+                "salt_enc": "BBBB",
+            })))
             .mount(&server)
             .await;
 
@@ -825,7 +823,9 @@ mod tests {
             .await;
 
         let (ctx, _dir) = make_ctx(&server).await;
-        let err = direct_register_start(&ctx, "broken".into()).await.unwrap_err();
+        let err = direct_register_start(&ctx, "broken".into())
+            .await
+            .unwrap_err();
         match err {
             AuthCommandError::Relay { status, body } => {
                 assert_eq!(status, 400);
@@ -843,15 +843,13 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/auth/passkey/register/verify"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_alice",
-                    "access_token": "access-jwt",
-                    "refresh_token": "refresh-jwt",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_alice",
+                "access_token": "access-jwt",
+                "refresh_token": "refresh-jwt",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 
@@ -888,15 +886,13 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/auth/passkey/assert/verify"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_bob",
-                    "access_token": "ax",
-                    "refresh_token": "rx",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_bob",
+                "access_token": "ax",
+                "refresh_token": "rx",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 
@@ -938,13 +934,9 @@ mod tests {
         // Lock the vault after make_ctx unlocked it.
         ctx.vault.write().await.lock().await.unwrap();
 
-        let err = direct_register_verify(
-            &ctx,
-            "alice@example.com".into(),
-            serde_json::json!({}),
-        )
-        .await
-        .unwrap_err();
+        let err = direct_register_verify(&ctx, "alice@example.com".into(), serde_json::json!({}))
+            .await
+            .unwrap_err();
         assert!(matches!(err, AuthCommandError::VaultLocked));
     }
 
@@ -973,12 +965,10 @@ mod tests {
             .and(body_json(
                 serde_json::json!({"redirect_uri": "apivault://auth/callback"}),
             ))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "state": "deadbeef",
-                    "authorize_url": "https://github.com/login/oauth/authorize?client_id=x",
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "state": "deadbeef",
+                "authorize_url": "https://github.com/login/oauth/authorize?client_id=x",
+            })))
             .mount(&server)
             .await;
 
@@ -1004,17 +994,15 @@ mod tests {
             .and(body_json(
                 serde_json::json!({"code": "the-code", "state": "deadbeef"}),
             ))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_carol",
-                    "access_token": "ax",
-                    "refresh_token": "rx",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                    "salt_auth": test_salt_auth(),
-                    "salt_enc": test_salt_enc(),
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_carol",
+                "access_token": "ax",
+                "refresh_token": "rx",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+                "salt_auth": test_salt_auth(),
+                "salt_enc": test_salt_enc(),
+            })))
             .mount(&server)
             .await;
 
@@ -1030,7 +1018,10 @@ mod tests {
         assert_eq!(session.salt_auth, Some(test_salt_auth()));
         assert_eq!(session.salt_enc, Some(test_salt_enc()));
         // master_passphrase=None → enc_key 는 derive 안 됨
-        assert!(session.enc_key.is_none(), "enc_key skipped without passphrase");
+        assert!(
+            session.enc_key.is_none(),
+            "enc_key skipped without passphrase"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -1042,17 +1033,15 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/auth/oauth/google/callback"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_dora",
-                    "access_token": "ax",
-                    "refresh_token": "rx",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                    "salt_auth": test_salt_auth(),
-                    "salt_enc": test_salt_enc(),
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_dora",
+                "access_token": "ax",
+                "refresh_token": "rx",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+                "salt_auth": test_salt_auth(),
+                "salt_enc": test_salt_enc(),
+            })))
             .mount(&server)
             .await;
 
@@ -1127,10 +1116,7 @@ mod tests {
             }
         };
         let body = serde_json::json!({ "refresh_token": refresh_token });
-        let tokens: AuthTokensResponse = ctx
-            .relay_client
-            .post_json("/auth/refresh", &body)
-            .await?;
+        let tokens: AuthTokensResponse = ctx.relay_client.post_json("/auth/refresh", &body).await?;
         complete_session(ctx, tokens, None).await
     }
 
@@ -1169,31 +1155,29 @@ mod tests {
         // 1) seed a session via assert_verify
         Mock::given(method("POST"))
             .and(path("/auth/passkey/assert/verify"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_dave",
-                    "access_token": "old-access",
-                    "refresh_token": "old-refresh",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_dave",
+                "access_token": "old-access",
+                "refresh_token": "old-refresh",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 
         // 2) refresh: relay returns a brand-new pair
         Mock::given(method("POST"))
             .and(path("/auth/refresh"))
-            .and(body_json(serde_json::json!({"refresh_token": "old-refresh"})))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_dave",
-                    "access_token": "NEW-access",
-                    "refresh_token": "NEW-refresh",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .and(body_json(
+                serde_json::json!({"refresh_token": "old-refresh"}),
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_dave",
+                "access_token": "NEW-access",
+                "refresh_token": "NEW-refresh",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 
@@ -1263,15 +1247,13 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/auth/passkey/assert/verify"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_eve",
-                    "access_token": "ax",
-                    "refresh_token": "rx",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_eve",
+                "access_token": "ax",
+                "refresh_token": "rx",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 
@@ -1375,8 +1357,7 @@ mod tests {
         passphrase: &str,
     ) -> (AppContext, tempfile::TempDir) {
         let (ctx, dir) = make_ctx(server).await;
-        *ctx.master_passphrase.write().await =
-            Some(SecretString::from(passphrase.to_owned()));
+        *ctx.master_passphrase.write().await = Some(SecretString::from(passphrase.to_owned()));
         (ctx, dir)
     }
 
@@ -1387,15 +1368,13 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/auth/passkey/register/verify"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_alice",
-                    "access_token": "ax",
-                    "refresh_token": "rx",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_alice",
+                "access_token": "ax",
+                "refresh_token": "rx",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 
@@ -1423,15 +1402,13 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/auth/passkey/register/verify"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_alice",
-                    "access_token": "ax",
-                    "refresh_token": "rx",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_alice",
+                "access_token": "ax",
+                "refresh_token": "rx",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 
@@ -1536,30 +1513,26 @@ mod tests {
         // 1) seed a session with salts via assert_verify
         Mock::given(method("POST"))
             .and(path("/auth/passkey/assert/verify"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_irene",
-                    "access_token": "old-ax",
-                    "refresh_token": "old-rx",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_irene",
+                "access_token": "old-ax",
+                "refresh_token": "old-rx",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 
         // 2) refresh: relay returns rotated tokens, no salts
         Mock::given(method("POST"))
             .and(path("/auth/refresh"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "user_id": "usr_irene",
-                    "access_token": "NEW-ax",
-                    "refresh_token": "NEW-rx",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "user_id": "usr_irene",
+                "access_token": "NEW-ax",
+                "refresh_token": "NEW-rx",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            })))
             .mount(&server)
             .await;
 

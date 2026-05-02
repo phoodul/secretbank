@@ -20,10 +20,10 @@ Four tabs on the right side of the IDE:
   - **Double-click** triggers the default action for that kind:
     Credential → reveal to clipboard, Issuer → docs URL,
     Project → repo URL, Deployment → URL.
-  - **Right-click** opens a context menu: *Show blast radius* (for
+  - **Right-click** opens a context menu: _Show blast radius_ (for
     credentials only — colours downstream nodes red/orange/yellow by
     BFS depth, dims the rest, shows a "N nodes affected" banner),
-    *Reveal*, *Open repo/docs/URL*, *Focus*, *Copy ID*.
+    _Reveal_, _Open repo/docs/URL_, _Focus_, _Copy ID_.
   - **Filter box** dims non-matching nodes/edges.
   - **Keyboard**: `Ctrl/Cmd + F` focus search, `Esc` clear all
     highlights and filter, `Ctrl/Cmd + 0` fit to view.
@@ -31,6 +31,7 @@ Four tabs on the right side of the IDE:
 
   No external CDN — works offline. Falls back to a notice on IDE
   builds without JCEF.
+
 - **Settings** — per-project CLI path and "scan on project open" toggle.
 
 ### Tools menu (`Tools → API Vault`)

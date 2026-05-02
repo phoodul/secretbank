@@ -94,7 +94,9 @@ impl From<ValueSyncError> for SyncCommandError {
             ValueSyncError::Vault(v) => Self::Internal {
                 message: v.to_string(),
             },
-            ValueSyncError::Decode(m) | ValueSyncError::Internal(m) => Self::Internal { message: m },
+            ValueSyncError::Decode(m) | ValueSyncError::Internal(m) => {
+                Self::Internal { message: m }
+            }
         }
     }
 }
@@ -178,9 +180,7 @@ pub async fn sync_value_pull_since(
 /// path). Frontend should surface a "Sign in / unlock to enable sync"
 /// message.
 #[tauri::command]
-pub async fn sync_get_root_key(
-    state: State<'_, AppContext>,
-) -> Result<String, SyncCommandError> {
+pub async fn sync_get_root_key(state: State<'_, AppContext>) -> Result<String, SyncCommandError> {
     let session_guard = state.auth_session.read().await;
     let session = session_guard
         .as_ref()
@@ -247,7 +247,8 @@ mod tests {
 
         let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
         let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));
-        let relay_client = Arc::new(RelayClient::new(Url::parse("http://localhost").unwrap()).unwrap());
+        let relay_client =
+            Arc::new(RelayClient::new(Url::parse("http://localhost").unwrap()).unwrap());
 
         let ctx = AppContext {
             vault: Arc::new(RwLock::new(vault_box)),

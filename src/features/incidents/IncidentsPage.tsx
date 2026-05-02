@@ -120,12 +120,7 @@ export function IncidentsPage() {
         >
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
           <span className="flex-1">{t("incidents.error")}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-xs"
-            onClick={refresh}
-          >
+          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={refresh}>
             <RefreshCw className="h-3 w-3" />
             {t("common.retry")}
           </Button>

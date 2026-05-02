@@ -40,7 +40,9 @@ interface StatePayload {
 }
 
 function isValidEmail(s: unknown): s is string {
-  return typeof s === "string" && s.length > 0 && s.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  return (
+    typeof s === "string" && s.length > 0 && s.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+  );
 }
 
 function randomState(): string {
@@ -117,7 +119,10 @@ async function createUser(db: D1Database, email: string): Promise<UserRow> {
   return {
     id,
     email,
-    salt_auth: saltAuth.buffer.slice(saltAuth.byteOffset, saltAuth.byteOffset + saltAuth.byteLength),
+    salt_auth: saltAuth.buffer.slice(
+      saltAuth.byteOffset,
+      saltAuth.byteOffset + saltAuth.byteLength,
+    ),
     salt_enc: saltEnc.buffer.slice(saltEnc.byteOffset, saltEnc.byteOffset + saltEnc.byteLength),
   };
 }

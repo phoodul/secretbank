@@ -20,8 +20,7 @@ export function IncidentCard({ entry, onDismissed }: IncidentCardProps) {
   const { incident, matches } = entry;
   const [dismissing, setDismissing] = useState(false);
 
-  const allDismissed =
-    matches.length > 0 && matches.every((m) => m.dismissed_at !== null);
+  const allDismissed = matches.length > 0 && matches.every((m) => m.dismissed_at !== null);
 
   const displayDate = incident.published_at ?? incident.detected_at;
   const relativeDate = formatDistanceToNow(new Date(displayDate), { addSuffix: true });
@@ -107,12 +106,7 @@ export function IncidentCard({ entry, onDismissed }: IncidentCardProps) {
       {/* Actions */}
       <div className="mt-3 flex items-center gap-2">
         {incident.url && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1 text-xs"
-            onClick={handleView}
-          >
+          <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={handleView}>
             <ExternalLink className="h-3 w-3" />
             {t("incidents.card.view")}
           </Button>
@@ -166,16 +160,14 @@ function SeverityIcon({ severity }: { severity: IncidentSeverity }) {
 function SeverityBadge({ severity }: { severity: IncidentSeverity }) {
   const { t } = useTranslation("common");
 
-  const variantMap: Record<
-    IncidentSeverity,
-    "destructive" | "default" | "secondary" | "outline"
-  > = {
-    critical: "destructive",
-    high: "destructive",
-    medium: "default",
-    low: "secondary",
-    info: "outline",
-  };
+  const variantMap: Record<IncidentSeverity, "destructive" | "default" | "secondary" | "outline"> =
+    {
+      critical: "destructive",
+      high: "destructive",
+      medium: "default",
+      low: "secondary",
+      info: "outline",
+    };
 
   return (
     <Badge variant={variantMap[severity]} className="text-[10px]">

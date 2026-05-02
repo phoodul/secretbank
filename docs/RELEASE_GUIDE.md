@@ -24,14 +24,14 @@ Cost: USD 99 / year. Required to ship `.dmg`/`.app` that opens without
 
 Add to GitHub repo secrets:
 
-| Secret | Value |
-| :----- | :---- |
-| `APPLE_CERTIFICATE` | base64 of the `.p12` file |
-| `APPLE_CERTIFICATE_PASSWORD` | the `.p12` password |
-| `APPLE_SIGNING_IDENTITY` | "Developer ID Application: Your Name (TEAMID)" |
-| `APPLE_ID` | your Apple developer email |
-| `APPLE_PASSWORD` | the app-specific password |
-| `APPLE_TEAM_ID` | the 10-char Team ID |
+| Secret                       | Value                                          |
+| :--------------------------- | :--------------------------------------------- |
+| `APPLE_CERTIFICATE`          | base64 of the `.p12` file                      |
+| `APPLE_CERTIFICATE_PASSWORD` | the `.p12` password                            |
+| `APPLE_SIGNING_IDENTITY`     | "Developer ID Application: Your Name (TEAMID)" |
+| `APPLE_ID`                   | your Apple developer email                     |
+| `APPLE_PASSWORD`             | the app-specific password                      |
+| `APPLE_TEAM_ID`              | the 10-char Team ID                            |
 
 ### 2. Windows EV / OV code signing certificate
 
@@ -47,10 +47,10 @@ We recommend **OV** for v1.0 budget reasons.
 
 GitHub secrets:
 
-| Secret | Value |
-| :----- | :---- |
-| `WINDOWS_CERTIFICATE` | base64 of the `.pfx` |
-| `WINDOWS_CERTIFICATE_PASSWORD` | the `.pfx` password |
+| Secret                         | Value                |
+| :----------------------------- | :------------------- |
+| `WINDOWS_CERTIFICATE`          | base64 of the `.pfx` |
+| `WINDOWS_CERTIFICATE_PASSWORD` | the `.pfx` password  |
 
 ### 3. Tauri updater signing key
 
@@ -77,10 +77,10 @@ password as `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 
 GitHub secrets:
 
-| Secret | Value |
-| :----- | :---- |
+| Secret     | Value                   |
+| :--------- | :---------------------- |
 | `VSCE_PAT` | VS Code Marketplace PAT |
-| `OVSX_PAT` | Open VSX PAT |
+| `OVSX_PAT` | Open VSX PAT            |
 
 ### 5. winget submission account
 
@@ -141,6 +141,7 @@ a `dry_run` boolean input via manual trigger.
 4. **Run workflow**.
 
 What runs:
+
 - ✅ All 3 platform builds (macOS universal / Windows / Linux).
 - ✅ Tauri signing key applied (verifies `TAURI_SIGNING_PRIVATE_KEY` +
   `_PASSWORD` secrets are valid; an unsigned bundle is OK if you haven't
@@ -152,11 +153,12 @@ What runs:
 - ❌ VS Code extension not published.
 
 Common dry-run failure modes:
+
 - "Invalid base64 secret key" → `TAURI_SIGNING_PRIVATE_KEY` was pasted
   incorrectly. Re-copy with `Get-Content $HOME\.tauri\api-vault.key | Set-Clipboard`
   and re-add the secret.
 - "Decryption failed" → `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` mismatch.
-- macOS notarization step failure → APPLE_* secrets missing or wrong;
+- macOS notarization step failure → APPLE\_\* secrets missing or wrong;
   it's safe to ignore for a first dry-run if you haven't registered
   Apple Developer yet.
 - Linux missing system deps → bug in `Install Linux system deps` step.
@@ -173,6 +175,7 @@ git push origin v0.1.0
 ```
 
 The push triggers `.github/workflows/release.yml`:
+
 - Creates a draft GitHub Release.
 - Builds Tauri bundles on macOS / Windows / Linux runners.
 - Signs + notarizes (macOS), signs (Windows) using the secrets above.
@@ -199,6 +202,7 @@ If a job fails, fix forward — do **not** edit the tag. Push a
 ### Rollback
 
 If a critical bug ships:
+
 1. Mark the GitHub Release as **pre-release** (un-promotes it).
 2. Edit `latest.json` (Tauri updater manifest) to point to the previous
    version.

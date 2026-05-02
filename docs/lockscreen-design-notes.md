@@ -79,6 +79,7 @@ pnpm tauri dev
 ## 구현된 시각 레이어 총 개수
 
 ### LockScreen 레벨 (8 레이어)
+
 1. Blueprint 청사진 그리드 (`-z-20`)
 2. Ambient lapis radial gradient (`-z-10`)
 3. ParticleField — 38 drifting particles
@@ -89,6 +90,7 @@ pnpm tauri dev
 8. LightBeamSweep + MouseGloss
 
 ### 카드 내부 (5 레이어)
+
 9. VaultMechanism — 11 sub-layer (아래 참조)
 10. CardHeader — 타이틀 + 설명 + AUTH·REQUIRED 라벨
 11. Form — Label + Input + Error + Button + 보조 링크
@@ -96,6 +98,7 @@ pnpm tauri dev
 13. StatusPanel — LED + state + version + timestamp
 
 ### VaultMechanism 내부 (11 sub-layer)
+
 14. HexagonGrid (~16 cells, opacity 0.18)
 15. CornerBrackets (4 L 마커)
 16. CrosshairReticle (4 cardinal cross)
@@ -116,18 +119,18 @@ pnpm tauri dev
 
 ## 만약 마음에 안 드는 부분이 있다면
 
-| 부분 | 위치 | 변경 방법 |
-|:--|:--|:--|
-| Lapis 너무 진함/연함 | `globals.css` `--vault-lapis*` | chroma 값 (0.20~0.28 사이) |
-| 황동 너무 강함/약함 | `globals.css` `--vault-gold*` | chroma + lightness |
-| 메커니즘 크기 | `LockScreen.tsx` `<VaultMechanism size={140}>` | 100~180 |
-| 회전 속도 | `VaultMechanism.tsx` `RING_TRANSFORM` 검색 → `idleSeconds` | 더 빠르게/느리게 |
-| 스캔 속도 | `ScanSweep` 함수 `sweepDuration` | idle 4 / verify 1 / unlock 1.2 |
-| Glyph 코드 | `VaultMechanism.tsx` `FINAL_CODES` 배열 | 자유롭게 |
-| 시스템 로그 메시지 | `LockScreenAtmosphere.tsx` `VERIFYING_MESSAGES` | 자유롭게 |
-| 파티클 개수 | `LockScreenAtmosphere.tsx` `makeParticles(38)` | 줄이거나 늘림 |
-| 광선 sweep 빈도 | `LightBeamSweep` `repeatDelay: 5.5` | 작게=자주 |
-| Mouse gloss 비활성 | `LockScreen.tsx` `vaultState !== "idle"` 조건 | 항상 켜기/끄기 |
+| 부분                 | 위치                                                       | 변경 방법                      |
+| :------------------- | :--------------------------------------------------------- | :----------------------------- |
+| Lapis 너무 진함/연함 | `globals.css` `--vault-lapis*`                             | chroma 값 (0.20~0.28 사이)     |
+| 황동 너무 강함/약함  | `globals.css` `--vault-gold*`                              | chroma + lightness             |
+| 메커니즘 크기        | `LockScreen.tsx` `<VaultMechanism size={140}>`             | 100~180                        |
+| 회전 속도            | `VaultMechanism.tsx` `RING_TRANSFORM` 검색 → `idleSeconds` | 더 빠르게/느리게               |
+| 스캔 속도            | `ScanSweep` 함수 `sweepDuration`                           | idle 4 / verify 1 / unlock 1.2 |
+| Glyph 코드           | `VaultMechanism.tsx` `FINAL_CODES` 배열                    | 자유롭게                       |
+| 시스템 로그 메시지   | `LockScreenAtmosphere.tsx` `VERIFYING_MESSAGES`            | 자유롭게                       |
+| 파티클 개수          | `LockScreenAtmosphere.tsx` `makeParticles(38)`             | 줄이거나 늘림                  |
+| 광선 sweep 빈도      | `LightBeamSweep` `repeatDelay: 5.5`                        | 작게=자주                      |
+| Mouse gloss 비활성   | `LockScreen.tsx` `vaultState !== "idle"` 조건              | 항상 켜기/끄기                 |
 
 ---
 

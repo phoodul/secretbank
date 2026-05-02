@@ -209,9 +209,8 @@ impl AgeVaultStorage {
                 let enc_key = kdf::derive_enc_key(password, &salt_enc)
                     .map_err(|e| VaultError::Crypto(format!("enc_key derive: {e}")))?;
                 let charter_secret = CharterSecret::random();
-                let wrapped: WrappedKey =
-                    wrap_enc_key(&charter_secret, enc_key.expose_secret())
-                        .map_err(|e| VaultError::Crypto(format!("charter wrap: {e}")))?;
+                let wrapped: WrappedKey = wrap_enc_key(&charter_secret, enc_key.expose_secret())
+                    .map_err(|e| VaultError::Crypto(format!("charter wrap: {e}")))?;
                 let envelope_bytes = wrapped.to_bytes();
 
                 let issuance = match mode {

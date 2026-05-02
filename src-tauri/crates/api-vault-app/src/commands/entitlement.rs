@@ -61,19 +61,14 @@ pub async fn entitlement_set_dev(
                 let value = ts.to_string();
                 // Max 64 bytes — a 13-digit ms timestamp is well within limit.
                 vault
-                    .put_secret(
-                        VAULT_KEY_PRO_UNTIL,
-                        SecretBytes::new(value.into_bytes()),
-                    )
+                    .put_secret(VAULT_KEY_PRO_UNTIL, SecretBytes::new(value.into_bytes()))
                     .await
                     .map_err(EntitlementError::from)?;
             }
-            None => {
-                match vault.delete_secret(VAULT_KEY_PRO_UNTIL).await {
-                    Ok(()) | Err(VaultError::NotFound { .. }) => {}
-                    Err(e) => return Err(EntitlementError::from(e)),
-                }
-            }
+            None => match vault.delete_secret(VAULT_KEY_PRO_UNTIL).await {
+                Ok(()) | Err(VaultError::NotFound { .. }) => {}
+                Err(e) => return Err(EntitlementError::from(e)),
+            },
         }
 
         vault.flush().await.map_err(EntitlementError::from)?;

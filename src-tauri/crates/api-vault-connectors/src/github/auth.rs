@@ -88,10 +88,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result =
-            fetch_installation_token(&server.uri(), "user-tok", 42)
-                .await
-                .expect("should succeed");
+        let result = fetch_installation_token(&server.uri(), "user-tok", 42)
+            .await
+            .expect("should succeed");
 
         assert_eq!(result.token, "ghs_test_token");
         assert_eq!(result.expires_at, "2099-01-01T00:00:00Z");
@@ -126,9 +125,7 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/integrations/github/installation-token"))
-            .respond_with(
-                ResponseTemplate::new(500).set_body_string("internal server error"),
-            )
+            .respond_with(ResponseTemplate::new(500).set_body_string("internal server error"))
             .mount(&server)
             .await;
 

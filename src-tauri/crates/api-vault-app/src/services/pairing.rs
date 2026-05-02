@@ -301,7 +301,10 @@ pub async fn initiator_finalize(
     let (priv_key, payload, bearer) = {
         let pair_guard = ctx.pairing_session.read().await;
         let kpair = match pair_guard.as_ref() {
-            Some(PairingSession::Initiator { pin: stored, keypair }) if stored == pin => {
+            Some(PairingSession::Initiator {
+                pin: stored,
+                keypair,
+            }) if stored == pin => {
                 // SecretBox copy — we need the priv bytes
                 kp::PairingKeypair {
                     priv_key: SecretBox::new(Box::new(*keypair.priv_key.expose_secret())),
@@ -368,10 +371,7 @@ pub async fn initiator_finalize(
 // ---------------------------------------------------------------------------
 
 /// Step 1 (joiner) — accept deep-link / QR, generate keypair, upload to relay.
-pub async fn joiner_join(
-    ctx: &AppContext,
-    pin: &str,
-) -> Result<JoinerJoinDto, PairingError> {
+pub async fn joiner_join(ctx: &AppContext, pin: &str) -> Result<JoinerJoinDto, PairingError> {
     check_pin(pin)?;
 
     let keypair = kp::generate_keypair();
@@ -410,11 +410,7 @@ pub async fn joiner_poll(ctx: &AppContext, pin: &str) -> Result<JoinerPollDto, P
         let guard = ctx.pairing_session.read().await;
         match guard.as_ref() {
             Some(PairingSession::Joiner { pin: stored, .. }) if stored == pin => {}
-            Some(_) => {
-                return Err(PairingError::RoleMismatch {
-                    expected: "joiner",
-                })
-            }
+            Some(_) => return Err(PairingError::RoleMismatch { expected: "joiner" }),
             None => return Err(PairingError::NoActiveSession),
         }
     }
@@ -447,11 +443,7 @@ pub async fn joiner_apply(
                 SecretBox::new(Box::new(*keypair.priv_key.expose_secret())),
                 *initiator_pub,
             ),
-            Some(_) => {
-                return Err(PairingError::RoleMismatch {
-                    expected: "joiner",
-                })
-            }
+            Some(_) => return Err(PairingError::RoleMismatch { expected: "joiner" }),
             None => return Err(PairingError::NoActiveSession),
         }
     };
@@ -541,18 +533,27 @@ mod tests {
 
     #[test]
     fn check_pin_rejects_short() {
-        assert!(matches!(check_pin("12345"), Err(PairingError::InvalidPin { got: 5 })));
+        assert!(matches!(
+            check_pin("12345"),
+            Err(PairingError::InvalidPin { got: 5 })
+        ));
     }
 
     #[test]
     fn check_pin_rejects_non_digit() {
-        assert!(matches!(check_pin("abcdef"), Err(PairingError::InvalidPin { .. })));
+        assert!(matches!(
+            check_pin("abcdef"),
+            Err(PairingError::InvalidPin { .. })
+        ));
     }
 
     #[test]
     fn decode_pub_key_rejects_bad_length() {
         let short = B64.encode([0u8; 16]);
-        assert!(matches!(decode_pub_key(&short), Err(PairingError::InvalidPubKey(16))));
+        assert!(matches!(
+            decode_pub_key(&short),
+            Err(PairingError::InvalidPubKey(16))
+        ));
     }
 
     #[test]

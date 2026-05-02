@@ -4,11 +4,11 @@
 
 산출물:
 
-| 파일                         | 내용                                       |
-| :--------------------------- | :----------------------------------------- |
-| `lock-screen.webm`           | sci-fi HUD + 15-language switcher          |
-| `charter-issuance.webm`      | Lapis vault charter (marquee 차별화)       |
-| `recovery-flow.webm`         | RecoveryDialog (Forgot passphrase)         |
+| 파일                    | 내용                                 |
+| :---------------------- | :----------------------------------- |
+| `lock-screen.webm`      | sci-fi HUD + 15-language switcher    |
+| `charter-issuance.webm` | Lapis vault charter (marquee 차별화) |
+| `recovery-flow.webm`    | RecoveryDialog (Forgot passphrase)   |
 
 webm 파일들은 `.gitignore` 됨 (큰 binary, 필요 시 재생성).
 

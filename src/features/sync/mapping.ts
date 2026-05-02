@@ -16,17 +16,8 @@
  */
 
 import type { Issuer } from "../inventory/use-issuers";
-import type {
-  CredentialFull,
-  CredentialStatus,
-  Env,
-  Usage,
-} from "../inventory/types";
-import type {
-  Deployment,
-  DeploymentPlatform,
-  Project,
-} from "../projects/types";
+import type { CredentialFull, CredentialStatus, Env, Usage } from "../inventory/types";
+import type { Deployment, DeploymentPlatform, Project } from "../projects/types";
 
 // ---------------------------------------------------------------------------
 // Whitelist of sync-eligible entities

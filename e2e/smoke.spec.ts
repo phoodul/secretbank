@@ -58,9 +58,7 @@ test.describe("smoke", () => {
     expect(consoleErrors).toEqual([]);
   });
 
-  test("unlocked vault → inventory route reachable, settings route reachable", async ({
-    page,
-  }) => {
+  test("unlocked vault → inventory route reachable, settings route reachable", async ({ page }) => {
     await page.addInitScript({
       content: buildInitScript(unlockedVault, onboardingDone),
     });
@@ -83,9 +81,9 @@ test.describe("smoke", () => {
 
     await page.goto("/auth/sign-in");
 
-    await expect(
-      page.getByRole("heading", { name: /Connect to API Vault/i }),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: /Connect to API Vault/i })).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page.getByRole("button", { name: /passkey/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /GitHub/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /Google/i })).toBeVisible();

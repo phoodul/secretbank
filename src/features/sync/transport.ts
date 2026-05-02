@@ -13,12 +13,7 @@
  *   (connect/disconnect) 을 어떻게 다루는지 검증 가능한 최소 표면
  */
 
-export type TransportStatus =
-  | "idle"
-  | "connecting"
-  | "connected"
-  | "disconnected"
-  | "error";
+export type TransportStatus = "idle" | "connecting" | "connected" | "disconnected" | "error";
 
 export interface SyncTransport {
   /**

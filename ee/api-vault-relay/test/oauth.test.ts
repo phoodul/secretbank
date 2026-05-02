@@ -101,7 +101,7 @@ describe("POST /auth/oauth/:provider/callback", () => {
 
     // 2) mock fetch for token + user
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : (input as Request).url ?? String(input);
+      const url = typeof input === "string" ? input : ((input as Request).url ?? String(input));
       if (url === "https://github.com/login/oauth/access_token") {
         return new Response(JSON.stringify({ access_token: "ghs_mock" }), {
           status: 200,
@@ -150,7 +150,7 @@ describe("POST /auth/oauth/:provider/callback", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
-        const url = typeof input === "string" ? input : (input as Request).url ?? String(input);
+        const url = typeof input === "string" ? input : ((input as Request).url ?? String(input));
         if (url === "https://github.com/login/oauth/access_token") {
           return new Response(JSON.stringify({ access_token: "ghs_priv" }), { status: 200 });
         }
@@ -189,7 +189,7 @@ describe("POST /auth/oauth/:provider/callback", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
-        const url = typeof input === "string" ? input : (input as Request).url ?? String(input);
+        const url = typeof input === "string" ? input : ((input as Request).url ?? String(input));
         if (url === "https://oauth2.googleapis.com/token") {
           return new Response(JSON.stringify({ access_token: "ya29.mock" }), { status: 200 });
         }
@@ -222,12 +222,14 @@ describe("POST /auth/oauth/:provider/callback", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
-        const url = typeof input === "string" ? input : (input as Request).url ?? String(input);
+        const url = typeof input === "string" ? input : ((input as Request).url ?? String(input));
         if (url === "https://github.com/login/oauth/access_token") {
           return new Response(JSON.stringify({ access_token: "t1" }), { status: 200 });
         }
         if (url === "https://api.github.com/user") {
-          return new Response(JSON.stringify({ id: 4242, email: "dave@example.com" }), { status: 200 });
+          return new Response(JSON.stringify({ id: 4242, email: "dave@example.com" }), {
+            status: 200,
+          });
         }
         return new Response("nope", { status: 500 });
       }),
@@ -243,12 +245,14 @@ describe("POST /auth/oauth/:provider/callback", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
-        const url = typeof input === "string" ? input : (input as Request).url ?? String(input);
+        const url = typeof input === "string" ? input : ((input as Request).url ?? String(input));
         if (url === "https://github.com/login/oauth/access_token") {
           return new Response(JSON.stringify({ access_token: "t2" }), { status: 200 });
         }
         if (url === "https://api.github.com/user") {
-          return new Response(JSON.stringify({ id: 4242, email: "dave@example.com" }), { status: 200 });
+          return new Response(JSON.stringify({ id: 4242, email: "dave@example.com" }), {
+            status: 200,
+          });
         }
         return new Response("nope", { status: 500 });
       }),

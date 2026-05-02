@@ -14,10 +14,7 @@ interface GitHubTokenResponse {
  * GitHub App JWT (RS256) 를 발급한다.
  * iat = now - 60s (clock skew 보정), exp = now + 10min, iss = appId.
  */
-export async function generateAppJwt(
-  appId: string,
-  privateKeyPem: string,
-): Promise<string> {
+export async function generateAppJwt(appId: string, privateKeyPem: string): Promise<string> {
   const privateKey = await importPKCS8(privateKeyPem, "RS256");
   const now = Math.floor(Date.now() / 1000);
 

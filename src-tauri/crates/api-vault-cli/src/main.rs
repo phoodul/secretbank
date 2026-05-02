@@ -23,8 +23,8 @@ use anyhow::{anyhow, Context as _, Result};
 use clap::{Parser, Subcommand};
 use secrecy::SecretString;
 
-use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus, ProjectId, UsageWhereKind};
 use api_vault_core::graph::{DependencyGraph, EdgeKind, NodeRef};
+use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus, ProjectId, UsageWhereKind};
 use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::init_pool;
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
@@ -148,14 +148,20 @@ async fn main() -> ExitCode {
 async fn run(cli: Cli) -> Result<()> {
     match cli.command {
         Command::List { env, issuer, json } => {
-            cmd_list(cli.data_dir.as_deref(), env.as_deref(), issuer.as_deref(), json).await
+            cmd_list(
+                cli.data_dir.as_deref(),
+                env.as_deref(),
+                issuer.as_deref(),
+                json,
+            )
+            .await
         }
-        Command::Reveal { id, print, clear_after } => {
-            cmd_reveal(cli.data_dir.as_deref(), &id, print, clear_after).await
-        }
-        Command::Run { project, cmd } => {
-            cmd_run(cli.data_dir.as_deref(), &project, cmd).await
-        }
+        Command::Reveal {
+            id,
+            print,
+            clear_after,
+        } => cmd_reveal(cli.data_dir.as_deref(), &id, print, clear_after).await,
+        Command::Run { project, cmd } => cmd_run(cli.data_dir.as_deref(), &project, cmd).await,
         Command::Scan { kind } => match kind {
             ScanKind::SupplyChain { project, json } => {
                 cmd_scan_supply_chain(project.as_deref(), json).await
@@ -297,7 +303,10 @@ async fn cmd_list(
         println!("(no credentials)");
         return Ok(());
     }
-    let header = format!("{:<28} {:<12} {:<24} {:<8} {}", "ID", "ISSUER", "NAME", "ENV", "STATUS");
+    let header = format!(
+        "{:<28} {:<12} {:<24} {:<8} {}",
+        "ID", "ISSUER", "NAME", "ENV", "STATUS"
+    );
     println!("{header}");
     println!("{}", "-".repeat(header.len()));
     for c in &creds {
@@ -388,9 +397,7 @@ async fn cmd_reveal(
 
     // Clipboard + auto-clear.
     copy_to_clipboard_with_clear(&plaintext, clear_after_secs).await?;
-    println!(
-        "value copied to clipboard — clearing in {clear_after_secs}s",
-    );
+    println!("value copied to clipboard — clearing in {clear_after_secs}s",);
     Ok(())
 }
 
@@ -520,8 +527,8 @@ async fn cmd_run(
 /// string. Returns once the clear is done so the binary's exit guarantees
 /// the clipboard no longer holds the secret.
 async fn copy_to_clipboard_with_clear(plaintext: &str, clear_after_secs: u64) -> Result<()> {
-    let mut cb = arboard::Clipboard::new()
-        .context("clipboard unavailable — try `--print` instead")?;
+    let mut cb =
+        arboard::Clipboard::new().context("clipboard unavailable — try `--print` instead")?;
     cb.set_text(plaintext.to_owned())
         .context("setting clipboard contents")?;
     if clear_after_secs == 0 {
@@ -714,11 +721,26 @@ async fn cmd_graph(data_dir_override: Option<&std::path::Path>) -> Result<()> {
     }
     let pool = init_pool(&db_path).await.context("opening SQLite pool")?;
 
-    let issuers = IssuerRepo::new(&pool).list().await.context("listing issuers")?;
-    let credentials = CredentialRepo::new(&pool).list_all().await.context("listing credentials")?;
-    let usages = UsageRepo::new(&pool).list_all().await.context("listing usages")?;
-    let projects = ProjectRepo::new(&pool).list().await.context("listing projects")?;
-    let deployments = DeploymentRepo::new(&pool).list_all().await.context("listing deployments")?;
+    let issuers = IssuerRepo::new(&pool)
+        .list()
+        .await
+        .context("listing issuers")?;
+    let credentials = CredentialRepo::new(&pool)
+        .list_all()
+        .await
+        .context("listing credentials")?;
+    let usages = UsageRepo::new(&pool)
+        .list_all()
+        .await
+        .context("listing usages")?;
+    let projects = ProjectRepo::new(&pool)
+        .list()
+        .await
+        .context("listing projects")?;
+    let deployments = DeploymentRepo::new(&pool)
+        .list_all()
+        .await
+        .context("listing deployments")?;
 
     let graph = DependencyGraph::build(&issuers, &credentials, &usages, &projects, &deployments);
 
@@ -833,10 +855,7 @@ async fn cmd_graph(data_dir_override: Option<&std::path::Path>) -> Result<()> {
 // `apivault blast-radius <credential-id>`
 // ---------------------------------------------------------------------------
 
-async fn cmd_blast_radius(
-    data_dir_override: Option<&std::path::Path>,
-    id_str: &str,
-) -> Result<()> {
+async fn cmd_blast_radius(data_dir_override: Option<&std::path::Path>, id_str: &str) -> Result<()> {
     use api_vault_core::blast_radius::blast_radius;
     use api_vault_storage::sqlite::repositories::{
         deployment::DeploymentRepo, project::ProjectRepo,

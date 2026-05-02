@@ -4,7 +4,7 @@
 //! can exercise logic without a running Tauri app.
 
 use api_vault_audit::AuditActor;
-use api_vault_charter::{Charter, ShamirShare, shamir_combine};
+use api_vault_charter::{shamir_combine, Charter, ShamirShare};
 use api_vault_storage::age_vault::{
     file::read_vault_file as read_vault_file_storage, CharterIssuance, CharterMode,
 };
@@ -395,11 +395,10 @@ pub fn parse_recovery_input(
 ) -> Result<api_vault_charter::CharterSecret, VaultCommandError> {
     match input {
         CharterRecoveryInput::Single { phrase } => {
-            let charter = Charter::parse(&phrase).map_err(|e| {
-                VaultCommandError::CharterParseError {
+            let charter =
+                Charter::parse(&phrase).map_err(|e| VaultCommandError::CharterParseError {
                     detail: e.to_string(),
-                }
-            })?;
+                })?;
             charter
                 .to_secret()
                 .map_err(|e| VaultCommandError::CharterParseError {
@@ -417,11 +416,10 @@ pub fn parse_recovery_input(
             }
             let mut parsed: Vec<ShamirShare> = Vec::with_capacity(shares.len());
             for s in &shares {
-                let sh = ShamirShare::parse(s).map_err(|e| {
-                    VaultCommandError::CharterParseError {
+                let sh =
+                    ShamirShare::parse(s).map_err(|e| VaultCommandError::CharterParseError {
                         detail: e.to_string(),
-                    }
-                })?;
+                    })?;
                 parsed.push(sh);
             }
             shamir_combine(&parsed).map_err(|e| VaultCommandError::CharterParseError {
@@ -478,12 +476,10 @@ pub async fn vault_recovery_unlock(
     let kind = issuance_kind_label(&issuance);
 
     // M23-E: cooldown sidecar 갱신 — recovery 시각 기록 + (활성화된 경우) 7일 잠금.
-    let cooldown_after =
-        crate::services::charter_cooldown::apply_recovery_event(&state.data_dir).map_err(|e| {
-            VaultCommandError::Internal {
-                message: format!("cooldown sidecar write failed: {e}"),
-            }
-        })?;
+    let cooldown_after = crate::services::charter_cooldown::apply_recovery_event(&state.data_dir)
+        .map_err(|e| VaultCommandError::Internal {
+        message: format!("cooldown sidecar write failed: {e}"),
+    })?;
 
     state
         .audit
@@ -511,8 +507,7 @@ pub async fn vault_has_charter(state: State<'_, AppContext>) -> Result<bool, Vau
     if !vault_path.exists() {
         return Ok(false);
     }
-    let (header, _) =
-        read_vault_file_storage(&vault_path).map_err(VaultCommandError::from)?;
+    let (header, _) = read_vault_file_storage(&vault_path).map_err(VaultCommandError::from)?;
     Ok(header.charter_envelope.is_some())
 }
 
@@ -593,15 +588,17 @@ mod charter_command_tests {
         tampered[2] = api_vault_charter::wordlist::at(other).to_string();
         let bad = format!("{} - {:04}", tampered.join(" "), charter.verifier);
         let result = parse_recovery_input(CharterRecoveryInput::Single { phrase: bad });
-        assert!(matches!(result, Err(VaultCommandError::CharterParseError { .. })));
+        assert!(matches!(
+            result,
+            Err(VaultCommandError::CharterParseError { .. })
+        ));
     }
 
     #[test]
     fn vault_command_error_maps_charter_absent_message() {
-        let err: VaultCommandError = VaultError::Crypto(
-            "vault has no charter envelope (cannot recover via charter)".into(),
-        )
-        .into();
+        let err: VaultCommandError =
+            VaultError::Crypto("vault has no charter envelope (cannot recover via charter)".into())
+                .into();
         assert!(matches!(err, VaultCommandError::CharterAbsent));
     }
 
@@ -627,8 +624,7 @@ mod charter_command_tests {
         assert_eq!(json.get("kind").and_then(|v| v.as_str()), Some("single"));
 
         let shares = shamir_split(&secret);
-        let shamir: CharterIssuanceDto =
-            CharterIssuance::Shamir(Box::new(shares)).into();
+        let shamir: CharterIssuanceDto = CharterIssuance::Shamir(Box::new(shares)).into();
         let json = serde_json::to_value(&shamir).unwrap();
         assert_eq!(
             json.get("kind").and_then(|v| v.as_str()),

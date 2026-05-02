@@ -156,11 +156,7 @@ impl IssuerConfirmTokenStore {
     /// Returns `Ok(issuer_id)` if token is valid, `Err` otherwise.
     ///
     /// Wrong-issuer-id mismatch does NOT consume the token.
-    pub async fn consume(
-        &self,
-        token: &str,
-        issuer_id: &IssuerId,
-    ) -> Result<IssuerId, ()> {
+    pub async fn consume(&self, token: &str, issuer_id: &IssuerId) -> Result<IssuerId, ()> {
         let mut guard = self.inner.lock().await;
 
         let entry = match guard.get(token) {
@@ -341,9 +337,12 @@ pub async fn do_revoke_internal(
             }
         }
 
-        vault.flush().await.map_err(|e| KillSwitchError::VaultFlushFailed {
-            message: e.to_string(),
-        })?;
+        vault
+            .flush()
+            .await
+            .map_err(|e| KillSwitchError::VaultFlushFailed {
+                message: e.to_string(),
+            })?;
     }
 
     // 4. Audit.
@@ -361,12 +360,11 @@ pub async fn do_revoke_internal(
     // M9 Phase D-2 — propagate to sync. Revoke 는 status 만 바꾸므로 upsert
     // (delete 가 아님). also_delete_value 는 vault 의 secret 만 지우고 row
     // 는 남기므로 마찬가지로 upsert.
-    ctx.db_change_emitter.emit_db_changed(
-        &crate::services::sync_emit::DbChangePayload::upsert(
+    ctx.db_change_emitter
+        .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
             crate::services::sync_emit::DbChangeEntity::Credential,
             cred_id.to_string(),
-        ),
-    );
+        ));
 
     Ok(())
 }
@@ -481,7 +479,9 @@ pub async fn kill_switch_revoke_issuer(
     app_handle: tauri::AppHandle,
 ) -> Result<KillSwitchBulkResult, KillSwitchError> {
     // Pro gate: bulk revoke requires Pro subscription.
-    crate::entitlement::require_pro(&state).await.map_err(KillSwitchError::from)?;
+    crate::entitlement::require_pro(&state)
+        .await
+        .map_err(KillSwitchError::from)?;
 
     let issuer_id = parse_issuer_id(&input.issuer_id)?;
 
@@ -554,7 +554,9 @@ pub async fn kill_switch_revoke_issuer(
 mod tests {
     use std::sync::Arc;
 
-    use api_vault_core::{CredentialFilter, CredentialInput, CredentialStatus, Env, IssuerInput, IssuerId};
+    use api_vault_core::{
+        CredentialFilter, CredentialInput, CredentialStatus, Env, IssuerId, IssuerInput,
+    };
     use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
     use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
     use api_vault_storage::vault::mock::MockVaultStorage;
@@ -670,8 +672,7 @@ mod tests {
         let vault_box: Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync> =
             Box::new(vault);
         let vault_arc = Arc::new(RwLock::new(vault_box));
-        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> =
-            Arc::new(RwLock::new(None));
+        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
         let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));
         AppContext {
             vault: vault_arc,
@@ -968,11 +969,7 @@ mod tests {
 
         // Verify issuer A credentials are all Revoked
         for cred_id in &cred_a_ids {
-            let updated = cred_repo
-                .get_by_id(*cred_id)
-                .await
-                .unwrap()
-                .unwrap();
+            let updated = cred_repo.get_by_id(*cred_id).await.unwrap().unwrap();
             assert_eq!(
                 updated.status,
                 CredentialStatus::Revoked,
@@ -983,11 +980,7 @@ mod tests {
 
         // Verify issuer B credentials remain Active
         for cred_id in &cred_b_ids {
-            let unchanged = cred_repo
-                .get_by_id(*cred_id)
-                .await
-                .unwrap()
-                .unwrap();
+            let unchanged = cred_repo.get_by_id(*cred_id).await.unwrap().unwrap();
             assert_eq!(
                 unchanged.status,
                 CredentialStatus::Active,
@@ -1098,7 +1091,10 @@ mod tests {
 
     #[async_trait::async_trait]
     impl api_vault_storage::vault::VaultStorage for FailingFlushVault {
-        async fn unlock(&mut self, pw: secrecy::SecretString) -> Result<(), api_vault_storage::vault::VaultError> {
+        async fn unlock(
+            &mut self,
+            pw: secrecy::SecretString,
+        ) -> Result<(), api_vault_storage::vault::VaultError> {
             self.inner.unlock(pw).await
         }
         async fn is_unlocked(&self) -> bool {
@@ -1117,7 +1113,8 @@ mod tests {
         async fn get_secret(
             &self,
             path: &str,
-        ) -> Result<api_vault_storage::vault::SecretBytes, api_vault_storage::vault::VaultError> {
+        ) -> Result<api_vault_storage::vault::SecretBytes, api_vault_storage::vault::VaultError>
+        {
             self.inner.get_secret(path).await
         }
         async fn delete_secret(
@@ -1172,9 +1169,12 @@ mod tests {
             // Pre-seed the secret in vault so delete_secret succeeds
             {
                 let mut vg = vault_arc.write().await;
-                vg.put_secret(&format!("credentials/{c}"), SecretBytes::new(b"secret".to_vec()))
-                    .await
-                    .unwrap();
+                vg.put_secret(
+                    &format!("credentials/{c}"),
+                    SecretBytes::new(b"secret".to_vec()),
+                )
+                .await
+                .unwrap();
             }
             c
         };

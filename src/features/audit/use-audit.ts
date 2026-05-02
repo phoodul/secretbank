@@ -39,8 +39,7 @@ export function useAudit(filter: AuditListInput): UseAuditResult {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          const message =
-            typeof err === "string" ? err : "Failed to load audit log";
+          const message = typeof err === "string" ? err : "Failed to load audit log";
           setFetchState({ phase: "error", message });
         }
       });

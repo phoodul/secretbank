@@ -133,10 +133,7 @@ mod tests {
     fn upsert_serialization_matches_wire_shape() {
         let payload = DbChangePayload::upsert(DbChangeEntity::Credential, "crd_01");
         let s = serde_json::to_string(&payload).unwrap();
-        assert_eq!(
-            s,
-            r#"{"entity":"credential","op":"upsert","id":"crd_01"}"#
-        );
+        assert_eq!(s, r#"{"entity":"credential","op":"upsert","id":"crd_01"}"#);
     }
 
     #[test]

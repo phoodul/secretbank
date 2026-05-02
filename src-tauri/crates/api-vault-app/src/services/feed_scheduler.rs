@@ -10,9 +10,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use api_vault_feeds::{
-    default_presets, match_incident, GhsaClient, NvdClient, RssClient,
-};
+use api_vault_feeds::{default_presets, match_incident, GhsaClient, NvdClient, RssClient};
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
 use api_vault_storage::sqlite::repositories::incident::IncidentRepo;
 use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
@@ -21,7 +19,9 @@ use time::OffsetDateTime;
 use tokio::task::JoinSet;
 use tokio_util::sync::CancellationToken;
 
-use crate::services::feed_normalize::{build_issuer_index, normalize_ghsa, normalize_nvd, normalize_rss};
+use crate::services::feed_normalize::{
+    build_issuer_index, normalize_ghsa, normalize_nvd, normalize_rss,
+};
 
 // ---------------------------------------------------------------------------
 // Event emitter abstraction (테스트 가능성을 위해 trait 로 분리)
@@ -250,7 +250,13 @@ pub fn spawn_feed_scheduler(
         ));
     }
 
-    FeedSchedulerHandle { cancel, join_set, pool, config, emitter }
+    FeedSchedulerHandle {
+        cancel,
+        join_set,
+        pool,
+        config,
+        emitter,
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -623,8 +629,8 @@ mod tests {
     async fn test_scheduler_spawn_and_shutdown_immediately() {
         // 실제 DB 없이 종료 경로만 검증한다.
         // pool 생성 없이 테스트하기 위해 interval 을 매우 길게 설정해 tick 이 안 오도록 함.
-        use tempfile::tempdir;
         use api_vault_storage::sqlite::init_pool;
+        use tempfile::tempdir;
 
         let dir = tempdir().unwrap();
         let db_path = dir.path().join("test.db");

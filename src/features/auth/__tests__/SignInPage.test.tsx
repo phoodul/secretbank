@@ -65,9 +65,7 @@ describe("SignInPage", () => {
 
   it("renders title, email input, and three sign-in options", () => {
     renderPage();
-    expect(
-      screen.getByRole("heading", { name: /Connect to API Vault/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Connect to API Vault/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /passkey/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /GitHub/i })).toBeInTheDocument();
@@ -76,12 +74,8 @@ describe("SignInPage", () => {
 
   it("Keep offline → navigates to /settings", async () => {
     renderPage();
-    await userEvent.click(
-      screen.getByRole("button", { name: /Keep this device offline/i }),
-    );
-    await waitFor(() =>
-      expect(screen.getByTestId("location")).toHaveTextContent("/settings"),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /Keep this device offline/i }));
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/settings"));
   });
 
   it("OAuth happy path: start → deep-link → callback → success toast → /settings", async () => {
@@ -108,9 +102,7 @@ describe("SignInPage", () => {
     // Fire a synthetic deep-link event with the matching state
     const fire = deepLinkListeners[0];
     fire({
-      payload: [
-        "apivault://auth/callback?provider=github&code=the-code&state=deadbeef",
-      ],
+      payload: ["apivault://auth/callback?provider=github&code=the-code&state=deadbeef"],
     });
 
     await waitFor(() =>
@@ -120,9 +112,7 @@ describe("SignInPage", () => {
         oauthState: "deadbeef",
       }),
     );
-    await waitFor(() =>
-      expect(screen.getByTestId("location")).toHaveTextContent("/settings"),
-    );
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/settings"));
     expect(toast.success).toHaveBeenCalled();
   });
 
@@ -143,16 +133,12 @@ describe("SignInPage", () => {
 
     const fire = deepLinkListeners[0];
     fire({
-      payload: [
-        "apivault://auth/callback?provider=github&code=the-code&state=BAD",
-      ],
+      payload: ["apivault://auth/callback?provider=github&code=the-code&state=BAD"],
     });
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     // auth_oauth_callback must NOT have been invoked
-    const callbackCalls = mockInvoke.mock.calls.filter(
-      (c) => c[0] === "auth_oauth_callback",
-    );
+    const callbackCalls = mockInvoke.mock.calls.filter((c) => c[0] === "auth_oauth_callback");
     expect(callbackCalls).toHaveLength(0);
   });
 });

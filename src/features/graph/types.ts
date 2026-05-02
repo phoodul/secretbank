@@ -14,9 +14,9 @@
  * rename_all, so `meta_json` stays `meta_json` in JSON.
  */
 
-export type NodeKind = 'issuer' | 'credential' | 'project' | 'deployment';
+export type NodeKind = "issuer" | "credential" | "project" | "deployment";
 
-export type GraphEdgeKind = 'issues' | 'used_by' | 'deployed_as';
+export type GraphEdgeKind = "issues" | "used_by" | "deployed_as";
 
 export interface GraphNode {
   id: string;

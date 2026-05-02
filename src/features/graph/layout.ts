@@ -1,7 +1,7 @@
-import dagre from '@dagrejs/dagre';
-import type { Edge, Node } from '@xyflow/react';
+import dagre from "@dagrejs/dagre";
+import type { Edge, Node } from "@xyflow/react";
 
-export type LayoutDirection = 'TB' | 'LR';
+export type LayoutDirection = "TB" | "LR";
 
 export interface LayoutOptions {
   direction: LayoutDirection;

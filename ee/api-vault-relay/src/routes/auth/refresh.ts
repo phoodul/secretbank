@@ -24,10 +24,7 @@ refreshAuth.post("/", async (c) => {
   try {
     claims = await verifyToken(c.env, body.refresh_token, "refresh");
   } catch (e) {
-    return c.json(
-      { error: "invalid_refresh_token", detail: String((e as Error).message) },
-      401,
-    );
+    return c.json({ error: "invalid_refresh_token", detail: String((e as Error).message) }, 401);
   }
 
   const tokens = await mintTokenPair(c.env, claims.sub);

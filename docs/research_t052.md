@@ -2,7 +2,7 @@
 
 > 작성일: 2026-04-24
 > 조사 범위: HIBP API v3 공식 문서, 엔드포인트/인증/Rate Limit/응답 스키마, governor 매핑,
->            Rust 생태계 기존 crate, wiremock 테스트 전략
+> Rust 생태계 기존 crate, wiremock 테스트 전략
 > 기준: 2026-04-24 현재 최신 정보 확인. 확인 불가 항목은 "확인 불가"로 명시.
 
 ---
@@ -11,17 +11,18 @@
 
 ### 1-1. 현재 최신 버전
 
-| 항목 | 값 |
-|:-----|:---|
-| **현재 최신 버전** | **v3** |
-| **공식 문서 URL** | `https://haveibeenpwned.com/API/v3` (대소문자 무관) |
-| **Base URL** | `https://haveibeenpwned.com/api/v3` |
-| **v4 존재 여부** | **없음** (2026-04-24 기준, 공식 사이트 검색 결과 v4 언급 없음) |
+| 항목               | 값                                                             |
+| :----------------- | :------------------------------------------------------------- |
+| **현재 최신 버전** | **v3**                                                         |
+| **공식 문서 URL**  | `https://haveibeenpwned.com/API/v3` (대소문자 무관)            |
+| **Base URL**       | `https://haveibeenpwned.com/api/v3`                            |
+| **v4 존재 여부**   | **없음** (2026-04-24 기준, 공식 사이트 검색 결과 v4 언급 없음) |
 
 v3 는 v2 대비 이메일 주소 / 도메인 검색 엔드포인트에 **브레이킹 체인지**를 포함한다.
 인증 방식이 `Authorization: Bearer` 에서 `hibp-api-key` 커스텀 헤더로 변경됐다.
 
 출처:
+
 - [HIBP API v3 공식 문서](https://haveibeenpwned.com/API/v3) — 2026-04-24 직접 확인
 - [HIBP API v3 공식 문서 (대문자 alias)](https://haveibeenpwned.com/api/v3) — 동일 페이지
 
@@ -31,12 +32,12 @@ v3 는 v2 대비 이메일 주소 / 도메인 검색 엔드포인트에 **브레
 
 ### 2-1. 기본 정보
 
-| 항목 | 값 |
-|:-----|:---|
-| 메서드 | `GET` |
-| 경로 | `/api/v3/breachedaccount/{email}` |
+| 항목          | 값                                                                    |
+| :------------ | :-------------------------------------------------------------------- |
+| 메서드        | `GET`                                                                 |
+| 경로          | `/api/v3/breachedaccount/{email}`                                     |
 | 전체 URL 예시 | `https://haveibeenpwned.com/api/v3/breachedaccount/foo%40example.com` |
-| 대소문자 구분 | 없음 (email 은 소문자 정규화됨) |
+| 대소문자 구분 | 없음 (email 은 소문자 정규화됨)                                       |
 
 ### 2-2. URL 인코딩
 
@@ -58,16 +59,17 @@ let url = format!(
 
 ### 2-3. 쿼리 파라미터
 
-| 파라미터 | 기본값 | 설명 |
-|:---------|:-------|:-----|
-| `truncateResponse` | `true` | `true` 이면 `Name` 필드만 반환. `false` 로 설정 시 전체 Breach 객체 반환. |
-| `IncludeUnverified` | `true` | `false` 로 설정 시 미검증 breach 제외. |
-| `Domain` | (없음) | 특정 도메인으로 필터링. 예: `Domain=adobe.com` |
+| 파라미터            | 기본값 | 설명                                                                      |
+| :------------------ | :----- | :------------------------------------------------------------------------ |
+| `truncateResponse`  | `true` | `true` 이면 `Name` 필드만 반환. `false` 로 설정 시 전체 Breach 객체 반환. |
+| `IncludeUnverified` | `true` | `false` 로 설정 시 미검증 breach 제외.                                    |
+| `Domain`            | (없음) | 특정 도메인으로 필터링. 예: `Domain=adobe.com`                            |
 
 **중요**: full breach 데이터를 원하면 반드시 `truncateResponse=false` 를 명시해야 한다.
 기본(truncated) 응답은 `[{"Name":"Adobe"},{"Name":"Gawker"}]` 형태로, Name 만 담긴 배열이다.
 
 출처:
+
 - [HIBP API v3 breachedAccount 섹션](https://haveibeenpwned.com/api/v3#BreachedAccount) — 2026-04-24 직접 확인
 
 ---
@@ -76,11 +78,11 @@ let url = format!(
 
 ### 3-1. 헤더
 
-| 항목 | 값 |
-|:-----|:---|
-| **헤더 이름** | `hibp-api-key` (소문자, HTTP/1.1 헤더 이름은 case-insensitive 이나 공식 문서 표기 기준) |
-| **값 형식** | 32자 16진수 문자열 |
-| **테스트용 키** | `00000000000000000000000000000000` (`hibp-integration-tests.com` 도메인 이메일 전용) |
+| 항목            | 값                                                                                      |
+| :-------------- | :-------------------------------------------------------------------------------------- |
+| **헤더 이름**   | `hibp-api-key` (소문자, HTTP/1.1 헤더 이름은 case-insensitive 이나 공식 문서 표기 기준) |
+| **값 형식**     | 32자 16진수 문자열                                                                      |
+| **테스트용 키** | `00000000000000000000000000000000` (`hibp-integration-tests.com` 도메인 이메일 전용)    |
 
 ```rust
 // reqwest header 설정
@@ -97,36 +99,37 @@ User-Agent 가 없는 경우 → **HTTP 403** 반환.
 
 **Core 플랜 (개인/소규모)**
 
-| 플랜 | RPM | 월 요금 (연간 기준) |
-|:-----|:----|:------------------|
-| Core 1 | 10 | $4.39 |
-| Core 2 | 50 | $21.59 |
-| Core 3 | 100 | $36.99 |
-| Core 4 | 500 | $159 |
-| Core 5 | 1,000 | $319 |
+| 플랜   | RPM   | 월 요금 (연간 기준) |
+| :----- | :---- | :------------------ |
+| Core 1 | 10    | $4.39               |
+| Core 2 | 50    | $21.59              |
+| Core 3 | 100   | $36.99              |
+| Core 4 | 500   | $159                |
+| Core 5 | 1,000 | $319                |
 
 **Pro 플랜 (MSP/다중 도메인 모니터링)**
 
-| 플랜 | RPM | 월 요금 (연간 기준) |
-|:-----|:----|:------------------|
-| Pro 1 | 1,000 | $379 |
-| Pro 2 | 2,000 | $699 |
-| Pro 3 | 4,000 | $1,299 |
-| Pro 4 | 8,000 | $2,499 |
-| Pro 5 | 16,000 | $4,599 |
+| 플랜  | RPM    | 월 요금 (연간 기준) |
+| :---- | :----- | :------------------ |
+| Pro 1 | 1,000  | $379                |
+| Pro 2 | 2,000  | $699                |
+| Pro 3 | 4,000  | $1,299              |
+| Pro 4 | 8,000  | $2,499              |
+| Pro 5 | 16,000 | $4,599              |
 
 **High RPM 플랜 (대용량 API 처리)**
 
-| 플랜 | RPM | 월 요금 (연간 기준) |
-|:-----|:----|:------------------|
-| High RPM 4000 | 4,000 | $1,150 |
-| High RPM 8000 | 8,000 | $2,299 |
-| High RPM 12000 | 12,000 | $3,449 |
-| High RPM 24000 | 24,000 | $5,833 |
+| 플랜           | RPM    | 월 요금 (연간 기준) |
+| :------------- | :----- | :------------------ |
+| High RPM 4000  | 4,000  | $1,150              |
+| High RPM 8000  | 8,000  | $2,299              |
+| High RPM 12000 | 12,000 | $3,449              |
+| High RPM 24000 | 24,000 | $5,833              |
 
 연간 결제 시 약 19% 할인.
 
 출처:
+
 - [HIBP 구독 페이지](https://haveibeenpwned.com/Subscription) — 2026-04-24 직접 확인
 - [Troy Hunt 블로그 — Rate Limit and Annual Billing 발표](https://www.troyhunt.com/the-have-i-been-pwned-api-now-has-different-rate-limits-and-annual-billing/) — 과금 체계 배경 설명
 
@@ -139,13 +142,13 @@ User-Agent 가 없는 경우 → **HTTP 403** 반환.
 HIBP API 는 **Requests Per Minute (RPM)** 단위로 rate limit 을 명시한다.
 가장 저렴한 Core 1 가 **10 RPM** 이다.
 
-| 등급 | RPM |
-|:-----|:----|
+| 등급                 | RPM                 |
+| :------------------- | :------------------ |
 | **키 없음 (public)** | **불가 (HTTP 401)** |
-| Core 1 (최저) | 10 |
-| Core 5 | 1,000 |
-| Pro 5 | 16,000 |
-| High RPM 24000 | 24,000 |
+| Core 1 (최저)        | 10                  |
+| Core 5               | 1,000               |
+| Pro 5                | 16,000              |
+| High RPM 24000       | 24,000              |
 
 - 키 없이 `/api/v3/breachedaccount/` 를 호출하면 **HTTP 401** 즉시 반환.
 - 가장 보수적인 전제: 프리 플랜은 없으므로 API key 는 반드시 필요.
@@ -179,12 +182,12 @@ fn build_limiter(rpm: u32) -> Arc<DefaultDirectRateLimiter> {
 
 **티어별 권장 RPM 설정:**
 
-| HIBP 플랜 | API RPM | governor 설정 |
-|:----------|:--------|:-------------|
-| Core 1 | 10 | `Quota::per_minute(nonzero!(10u32))` |
-| Core 2 | 50 | `Quota::per_minute(nonzero!(50u32))` |
-| Core 3 | 100 | `Quota::per_minute(nonzero!(100u32))` |
-| Core 5 | 1,000 | `Quota::per_minute(nonzero!(1000u32))` |
+| HIBP 플랜 | API RPM | governor 설정                          |
+| :-------- | :------ | :------------------------------------- |
+| Core 1    | 10      | `Quota::per_minute(nonzero!(10u32))`   |
+| Core 2    | 50      | `Quota::per_minute(nonzero!(50u32))`   |
+| Core 3    | 100     | `Quota::per_minute(nonzero!(100u32))`  |
+| Core 5    | 1,000   | `Quota::per_minute(nonzero!(1000u32))` |
 
 **기본값 권장**: 구현에서는 `api_key` 가 제공되면 **Core 1 기준 10 RPM** 으로 초기화하되,
 호출자가 `rpm` 을 오버라이드할 수 있도록 생성자 파라미터를 열어두는 것이 바람직하다.
@@ -203,6 +206,7 @@ fn build_limiter(rpm: Option<u32>) -> Arc<DefaultDirectRateLimiter> {
 버스트 최대 10 토큰을 허용한다.
 
 출처:
+
 - [governor Quota docs.rs](https://docs.rs/governor/latest/governor/struct.Quota.html) — 2026-04-24 확인
 - [HIBP 구독 페이지 Rate Limit 표](https://haveibeenpwned.com/Subscription) — 2026-04-24 확인
 - [Troy Hunt 429 support FAQ](https://support.haveibeenpwned.com/hc/en-au/articles/5744766972431) — retry-after 형식 확인
@@ -214,6 +218,7 @@ fn build_limiter(rpm: Option<u32>) -> Arc<DefaultDirectRateLimiter> {
 ### 5-1. 공식 명시
 
 공식 API 문서에 명시:
+
 > "Requests without a user agent are forbidden and will return HTTP 403."
 
 User-Agent 헤더가 **누락되면 HTTP 403 Forbidden** 을 즉시 반환한다.
@@ -221,9 +226,11 @@ User-Agent 헤더가 **누락되면 HTTP 403 Forbidden** 을 즉시 반환한다
 ### 5-2. 권장 형식
 
 공식 가이드라인:
+
 > "The user agent should accurately describe the nature of the API consumer."
 
 권장 패턴:
+
 - `api-vault/0.1.0` (앱 이름/버전)
 - `api-vault/0.1.0 (contact: phoodul@gmail.com)` (연락처 포함)
 
@@ -236,6 +243,7 @@ let client = reqwest::Client::builder()
 ```
 
 출처:
+
 - [HIBP API v3 공식 문서 — User Agent 섹션](https://haveibeenpwned.com/API/v3) — 2026-04-24 확인
 
 ---
@@ -247,28 +255,28 @@ let client = reqwest::Client::builder()
 2026-04-24 공식 API 엔드포인트 직접 호출
 (`GET /api/v3/breach/TelegramStealerLogs`) 로 확인한 실제 응답 기준.
 
-| 필드명 | 타입 | 설명 | Nullable |
-|:-------|:-----|:-----|:---------|
-| `Name` | `String` | URL-friendly slug (고유 식별자) | No |
-| `Title` | `String` | 화면 표시용 이름 | No |
-| `Domain` | `String` | 유출 발생 사이트 도메인 (빈 문자열 가능) | No |
-| `BreachDate` | `String` | 날짜만 (`YYYY-MM-DD`, ISO 8601) | No |
-| `AddedDate` | `String` | HIBP 에 추가된 일시 (ISO 8601, 예: `2024-08-01T05:38:53Z`) | No |
-| `ModifiedDate` | `String` | HIBP 레코드 수정 일시 (ISO 8601) | No |
-| `PwnCount` | `u64` | 유출된 이메일 계정 수 | No |
-| `Description` | `String` | HTML 포함 가능 설명 | No |
-| `DataClasses` | `Vec<String>` | 알파벳 순 유출 데이터 유형 배열 | No |
-| `IsVerified` | `bool` | 검증된 breach 여부 | No |
-| `IsFabricated` | `bool` | 조작된 breach 여부 | No |
-| `IsSensitive` | `bool` | 민감 breach (공개 API 에서 이메일 주소 미반환) | No |
-| `IsRetired` | `bool` | 데이터 영구 삭제 여부 | No |
-| `IsSpamList` | `bool` | 스팸 리스트 분류 여부 | No |
-| `IsMalware` | `bool` | 말웨어 캠페인 기원 여부 | No |
-| `IsSubscriptionFree` | `bool` | 도메인 검색 시 구독 부족 표시용 (이메일 검색 시는 항상 false) | No |
-| `IsStealerLog` | `bool` | 스틸러 로그(info-stealer) 기원 여부 | No |
-| `LogoPath` | `String` | 로고 이미지 URI | No |
-| `Attribution` | `Option<String>` | 데이터 제공자 요청 귀속 정보 | **Yes** (null 가능) |
-| `DisclosureUrl` | `Option<String>` | 공개 URL (일부 breach 에 존재) | **Yes** (null 가능) |
+| 필드명               | 타입             | 설명                                                          | Nullable            |
+| :------------------- | :--------------- | :------------------------------------------------------------ | :------------------ |
+| `Name`               | `String`         | URL-friendly slug (고유 식별자)                               | No                  |
+| `Title`              | `String`         | 화면 표시용 이름                                              | No                  |
+| `Domain`             | `String`         | 유출 발생 사이트 도메인 (빈 문자열 가능)                      | No                  |
+| `BreachDate`         | `String`         | 날짜만 (`YYYY-MM-DD`, ISO 8601)                               | No                  |
+| `AddedDate`          | `String`         | HIBP 에 추가된 일시 (ISO 8601, 예: `2024-08-01T05:38:53Z`)    | No                  |
+| `ModifiedDate`       | `String`         | HIBP 레코드 수정 일시 (ISO 8601)                              | No                  |
+| `PwnCount`           | `u64`            | 유출된 이메일 계정 수                                         | No                  |
+| `Description`        | `String`         | HTML 포함 가능 설명                                           | No                  |
+| `DataClasses`        | `Vec<String>`    | 알파벳 순 유출 데이터 유형 배열                               | No                  |
+| `IsVerified`         | `bool`           | 검증된 breach 여부                                            | No                  |
+| `IsFabricated`       | `bool`           | 조작된 breach 여부                                            | No                  |
+| `IsSensitive`        | `bool`           | 민감 breach (공개 API 에서 이메일 주소 미반환)                | No                  |
+| `IsRetired`          | `bool`           | 데이터 영구 삭제 여부                                         | No                  |
+| `IsSpamList`         | `bool`           | 스팸 리스트 분류 여부                                         | No                  |
+| `IsMalware`          | `bool`           | 말웨어 캠페인 기원 여부                                       | No                  |
+| `IsSubscriptionFree` | `bool`           | 도메인 검색 시 구독 부족 표시용 (이메일 검색 시는 항상 false) | No                  |
+| `IsStealerLog`       | `bool`           | 스틸러 로그(info-stealer) 기원 여부                           | No                  |
+| `LogoPath`           | `String`         | 로고 이미지 URI                                               | No                  |
+| `Attribution`        | `Option<String>` | 데이터 제공자 요청 귀속 정보                                  | **Yes** (null 가능) |
+| `DisclosureUrl`      | `Option<String>` | 공개 URL (일부 breach 에 존재)                                | **Yes** (null 가능) |
 
 **실제 응답 예시 (TelegramStealerLogs):**
 
@@ -285,7 +293,7 @@ let client = reqwest::Client::builder()
   "LogoPath": "https://logos.haveibeenpwned.com/List.png",
   "Attribution": null,
   "DisclosureUrl": null,
-  "DataClasses": ["Email addresses","Passwords"],
+  "DataClasses": ["Email addresses", "Passwords"],
   "IsVerified": true,
   "IsFabricated": false,
   "IsSensitive": false,
@@ -334,11 +342,11 @@ Rust 의 snake_case 필드 `breach_date` → serde PascalCase 변환 → `Breach
 
 ### 6-3. 날짜 파싱 전략
 
-| 필드 | 포맷 | 파싱 방법 |
-|:-----|:-----|:---------|
-| `BreachDate` | `"YYYY-MM-DD"` | `time::Date::parse()` + `time::format_description` |
-| `AddedDate` | `"2024-08-01T05:38:53Z"` | `time::OffsetDateTime::parse()` + Rfc3339 |
-| `ModifiedDate` | `"2025-03-04T02:06:27Z"` | 동일 |
+| 필드           | 포맷                     | 파싱 방법                                          |
+| :------------- | :----------------------- | :------------------------------------------------- |
+| `BreachDate`   | `"YYYY-MM-DD"`           | `time::Date::parse()` + `time::format_description` |
+| `AddedDate`    | `"2024-08-01T05:38:53Z"` | `time::OffsetDateTime::parse()` + Rfc3339          |
+| `ModifiedDate` | `"2025-03-04T02:06:27Z"` | 동일                                               |
 
 **AddedDate / ModifiedDate 는 Z suffix(UTC) 를 포함한 ISO 8601**. `time` 크레이트의
 `time::format_description::well_known::Rfc3339` 로 직접 파싱 가능.
@@ -364,6 +372,7 @@ fn parse_breach_date(s: &str) -> Result<time::Date, time::error::Parse> {
 ```
 
 출처:
+
 - [HIBP API v3 공식 문서](https://haveibeenpwned.com/API/v3) — 2026-04-24 확인
 - 직접 API 호출: `GET https://haveibeenpwned.com/api/v3/breach/TelegramStealerLogs` — 2026-04-24 확인
 
@@ -371,15 +380,15 @@ fn parse_breach_date(s: &str) -> Result<time::Date, time::error::Parse> {
 
 ## 7. HTTP 상태 코드 Semantics
 
-| 상태 코드 | 의미 | HibpClient 처리 |
-|:---------|:-----|:---------------|
-| **200** | 1개 이상 breach 발견 → body: `Vec<HibpBreach>` (JSON 배열) | `Ok(Vec<HibpBreach>)` |
-| **400** | 잘못된 요청 (이메일 포맷 오류 등) | `Err(HibpError::BadRequest)` |
-| **401** | API key 누락 또는 잘못됨 | `Err(HibpError::Unauthorized)` |
-| **403** | User-Agent 누락 또는 접근 금지 | `Err(HibpError::Forbidden)` |
-| **404** | **breach 없음 — 정상 케이스** | **`Ok(Vec::new())`** |
-| **429** | Rate limit 초과, `retry-after` 헤더 확인 | `Err(HibpError::RateLimited { retry_after })` |
-| **503** | 서비스 일시 중단 (CDN 또는 upstream) | `Err(HibpError::Server { status: 503 })` |
+| 상태 코드 | 의미                                                       | HibpClient 처리                               |
+| :-------- | :--------------------------------------------------------- | :-------------------------------------------- |
+| **200**   | 1개 이상 breach 발견 → body: `Vec<HibpBreach>` (JSON 배열) | `Ok(Vec<HibpBreach>)`                         |
+| **400**   | 잘못된 요청 (이메일 포맷 오류 등)                          | `Err(HibpError::BadRequest)`                  |
+| **401**   | API key 누락 또는 잘못됨                                   | `Err(HibpError::Unauthorized)`                |
+| **403**   | User-Agent 누락 또는 접근 금지                             | `Err(HibpError::Forbidden)`                   |
+| **404**   | **breach 없음 — 정상 케이스**                              | **`Ok(Vec::new())`**                          |
+| **429**   | Rate limit 초과, `retry-after` 헤더 확인                   | `Err(HibpError::RateLimited { retry_after })` |
+| **503**   | 서비스 일시 중단 (CDN 또는 upstream)                       | `Err(HibpError::Server { status: 503 })`      |
 
 **핵심 설계 결정 — 404 → Ok(empty)**:
 공식 문서: "If the email address is not found in a breach, an HTTP 404 response will be returned."
@@ -413,6 +422,7 @@ match resp.status().as_u16() {
 ```
 
 출처:
+
 - [HIBP API v3 공식 문서 — Response Codes](https://haveibeenpwned.com/API/v3) — 2026-04-24 확인
 
 ---
@@ -421,10 +431,10 @@ match resp.status().as_u16() {
 
 ### 8-1. 기본값 및 동작
 
-| 설정 | 응답 크기 | 응답 예시 |
-|:-----|:---------|:---------|
-| `truncateResponse=true` (기본값) | 약 98% 절감 | `[{"Name":"Adobe"},{"Name":"Gawker"}]` |
-| `truncateResponse=false` (명시 필요) | 전체 | 위 §6의 전체 필드 포함 JSON 배열 |
+| 설정                                 | 응답 크기   | 응답 예시                              |
+| :----------------------------------- | :---------- | :------------------------------------- |
+| `truncateResponse=true` (기본값)     | 약 98% 절감 | `[{"Name":"Adobe"},{"Name":"Gawker"}]` |
+| `truncateResponse=false` (명시 필요) | 전체        | 위 §6의 전체 필드 포함 JSON 배열       |
 
 T052 의 목적은 full breach 데이터를 파싱해 UI 에 표시하는 것이므로
 **반드시 `truncateResponse=false` 를 쿼리 파라미터에 포함해야 한다**.
@@ -456,6 +466,7 @@ pub async fn has_breach(&self, email: &str) -> Result<bool, HibpError> {
 그러나 **T052 범위에서는 `get_breaches(email)` 단일 메서드만 구현**한다.
 
 출처:
+
 - [HIBP API v3 공식 문서 — Truncating the response body](https://haveibeenpwned.com/API/v3) — 2026-04-24 확인
 
 ---
@@ -471,10 +482,10 @@ pub async fn has_breach(&self, email: &str) -> Result<bool, HibpError> {
 
 ### 9-2. AddedDate vs ModifiedDate
 
-| 필드 | 의미 | 사용 시나리오 |
-|:-----|:-----|:------------|
-| `AddedDate` | HIBP 데이터베이스에 처음 추가된 시각 | "이 breach 가 언제 등록됐나?" |
-| `ModifiedDate` | HIBP 레코드가 마지막으로 수정된 시각 | "최근 업데이트 여부 확인" |
+| 필드           | 의미                                 | 사용 시나리오                 |
+| :------------- | :----------------------------------- | :---------------------------- |
+| `AddedDate`    | HIBP 데이터베이스에 처음 추가된 시각 | "이 breach 가 언제 등록됐나?" |
+| `ModifiedDate` | HIBP 레코드가 마지막으로 수정된 시각 | "최근 업데이트 여부 확인"     |
 
 T052 의 `HibpBreach` DTO 에는 두 필드 모두 포함한다.
 증분 fetch 시 "X 시각 이후 ModifiedDate 를 가진 breach 만 가져오기" 는
@@ -482,6 +493,7 @@ T052 의 `HibpBreach` DTO 에는 두 필드 모두 포함한다.
 (날짜 필터는 없음 — 항상 전체 breach 목록을 반환)
 
 출처:
+
 - [HIBP API v3 공식 문서 — Breach model](https://haveibeenpwned.com/API/v3) — 2026-04-24 확인
 - 직접 API 응답 확인: `GET /api/v3/breach/TelegramStealerLogs` — 2026-04-24
 
@@ -491,26 +503,26 @@ T052 의 `HibpBreach` DTO 에는 두 필드 모두 포함한다.
 
 ### 10-1. 주요 crate 목록
 
-| crate 이름 | 최신 버전 | API v3 지원 | breachedaccount 엔드포인트 | 마지막 활동 | 권장 여부 |
-|:----------|:---------|:-----------|:--------------------------|:-----------|:---------|
-| `hibp` | 0.1.0 | 부분 (Pwned Passwords 전용) | 없음 | ~5년 전 | **사용 불가** |
-| `pwnage` | 0.0.1 | v3 명시 | 확인 불가 | ~6년 전 | **사용 불가** |
-| `pwned` (pwned-rs) | ~0.1.x | v3 (README 명시) | 일부 (이메일 breach 포함) | ~2021 (24 커밋) | **사용 비권장** |
-| `haveibeenpwned` | 불명 | 불명 | 불명 | 불명 | **사용 불가** |
-| `haveibeenpwnd` | 불명 | 불명 | 불명 | ~2017 | **사용 불가** |
+| crate 이름         | 최신 버전 | API v3 지원                 | breachedaccount 엔드포인트 | 마지막 활동     | 권장 여부       |
+| :----------------- | :-------- | :-------------------------- | :------------------------- | :-------------- | :-------------- |
+| `hibp`             | 0.1.0     | 부분 (Pwned Passwords 전용) | 없음                       | ~5년 전         | **사용 불가**   |
+| `pwnage`           | 0.0.1     | v3 명시                     | 확인 불가                  | ~6년 전         | **사용 불가**   |
+| `pwned` (pwned-rs) | ~0.1.x    | v3 (README 명시)            | 일부 (이메일 breach 포함)  | ~2021 (24 커밋) | **사용 비권장** |
+| `haveibeenpwned`   | 불명      | 불명                        | 불명                       | 불명            | **사용 불가**   |
+| `haveibeenpwnd`    | 불명      | 불명                        | 불명                       | ~2017           | **사용 불가**   |
 
 **결론: 직접 구현이 유일한 현실적 옵션.**
 
 ### 10-2. 직접 구현 vs crate 사용 트레이드오프
 
-| 기준 | 기존 crate 사용 | 직접 구현 |
-|:-----|:--------------|:---------|
-| 개발 속도 | 빠름 (crate 활발할 경우) | 추가 공수 필요 |
-| 활발한 crate 존재 | **없음** (모두 방치 상태) | — |
-| reqwest 버전 호환 | 불명 (대부분 구버전 reqwest) | reqwest 0.12 직접 사용 |
-| governor 통합 | 없음 | 직접 추가 |
+| 기준               | 기존 crate 사용                         | 직접 구현                         |
+| :----------------- | :-------------------------------------- | :-------------------------------- |
+| 개발 속도          | 빠름 (crate 활발할 경우)                | 추가 공수 필요                    |
+| 활발한 crate 존재  | **없음** (모두 방치 상태)               | —                                 |
+| reqwest 버전 호환  | 불명 (대부분 구버전 reqwest)            | reqwest 0.12 직접 사용            |
+| governor 통합      | 없음                                    | 직접 추가                         |
 | 프로젝트 패턴 통일 | 불가 (NvdClient/GhsaClient 패턴과 상이) | NvdClient/GhsaClient 와 동일 패턴 |
-| tokio 0.1 vs 1.x | 구버전 의존 위험 | tokio 최신 직접 사용 |
+| tokio 0.1 vs 1.x   | 구버전 의존 위험                        | tokio 최신 직접 사용              |
 
 **직접 구현 권장.** T049 (`NvdClient`)와 T050 (`GhsaClient`) 의 패턴을 그대로 따라
 `HibpClient` 를 구현한다.
@@ -560,6 +572,7 @@ impl HibpClient {
 ```
 
 출처:
+
 - [hibp docs.rs](https://docs.rs/hibp/0.1.0/hibp/) — 2026-04-24 확인
 - [pwned-rs GitHub](https://github.com/wisespace-io/pwned-rs) — 2026-04-24 확인
 - [crates.io hibp 키워드](https://crates.io/keywords/hibp) — 2026-04-24 확인
@@ -610,16 +623,16 @@ NvdError / GhsaError 와 동일한 패턴. HIBP-specific 케이스로 `Unauthori
 
 ### 12-1. 테스트 케이스 목록
 
-| ID | 시나리오 | 기대 결과 |
-|:---|:---------|:---------|
-| T1 | HTTP 200, `truncateResponse=false`, breach 2개 | `Ok(vec![breach1, breach2])` |
-| T2 | HTTP 404 | `Ok(Vec::new())` |
-| T3 | HTTP 401 | `Err(HibpError::Unauthorized)` |
-| T4 | HTTP 403 | `Err(HibpError::Forbidden)` |
-| T5 | HTTP 429 + `retry-after: 5` | `Err(HibpError::RateLimited { retry_after: 5s })` |
-| T6 | HTTP 503 | `Err(HibpError::Server { status: 503 })` |
-| T7 | 응답 JSON 에 `ModifiedDate` null | `ParseTime` 에러 발생 안 하고 `Option` 처리 |
-| T8 | email 에 `+` 특수문자 포함 (`foo+bar@example.com`) | URL 인코딩 후 정상 요청 |
+| ID  | 시나리오                                           | 기대 결과                                         |
+| :-- | :------------------------------------------------- | :------------------------------------------------ |
+| T1  | HTTP 200, `truncateResponse=false`, breach 2개     | `Ok(vec![breach1, breach2])`                      |
+| T2  | HTTP 404                                           | `Ok(Vec::new())`                                  |
+| T3  | HTTP 401                                           | `Err(HibpError::Unauthorized)`                    |
+| T4  | HTTP 403                                           | `Err(HibpError::Forbidden)`                       |
+| T5  | HTTP 429 + `retry-after: 5`                        | `Err(HibpError::RateLimited { retry_after: 5s })` |
+| T6  | HTTP 503                                           | `Err(HibpError::Server { status: 503 })`          |
+| T7  | 응답 JSON 에 `ModifiedDate` null                   | `ParseTime` 에러 발생 안 하고 `Option` 처리       |
+| T8  | email 에 `+` 특수문자 포함 (`foo+bar@example.com`) | URL 인코딩 후 정상 요청                           |
 
 ### 12-2. wiremock 패턴 (NvdClient 동일)
 
@@ -688,6 +701,7 @@ async fn get_breaches_404_returns_empty_vec() {
 ```
 
 출처:
+
 - [wiremock docs.rs 0.6.x](https://docs.rs/wiremock/latest/wiremock/) — 2026-04-24 확인
 - NvdClient 테스트 패턴 (`src-tauri/crates/api-vault-feeds/src/nvd.rs`) 참조
 
@@ -695,16 +709,16 @@ async fn get_breaches_404_returns_empty_vec() {
 
 ## 출처 목록
 
-| URL | 신뢰도 | 관련성 | 확인일 |
-|:----|:-------|:-------|:-------|
-| [HIBP API v3 공식 문서](https://haveibeenpwned.com/API/v3) | HIGH (공식) | 10 | 2026-04-24 |
-| [HIBP 구독 페이지](https://haveibeenpwned.com/Subscription) | HIGH (공식) | 9 | 2026-04-24 |
-| [HIBP breach/TelegramStealerLogs 실제 응답](https://haveibeenpwned.com/api/v3/breach/TelegramStealerLogs) | HIGH (공식 API) | 10 | 2026-04-24 직접 확인 |
-| [Troy Hunt — Rate Limits and Annual Billing](https://www.troyhunt.com/the-have-i-been-pwned-api-now-has-different-rate-limits-and-annual-billing/) | HIGH (저자 공식 블로그) | 8 | 2026-04-24 |
-| [governor Quota docs.rs](https://docs.rs/governor/latest/governor/struct.Quota.html) | HIGH (공식 문서) | 9 | 2026-04-24 |
-| [hibp crate docs.rs](https://docs.rs/hibp/0.1.0/hibp/) | MEDIUM (비활성 crate) | 5 | 2026-04-24 |
-| [pwned-rs GitHub](https://github.com/wisespace-io/pwned-rs) | MEDIUM (비활성 crate) | 5 | 2026-04-24 |
-| [crates.io hibp 키워드](https://crates.io/keywords/hibp) | MEDIUM (레지스트리) | 6 | 2026-04-24 |
-| [wiremock docs.rs](https://docs.rs/wiremock/latest/wiremock/) | HIGH (공식 문서) | 8 | 2026-04-24 |
-| [HIBP 구독 FAQ — 플랜 안내](https://support.haveibeenpwned.com/hc/en-au/articles/13868920521103) | HIGH (공식 서포트) | 8 | 2026-04-24 |
-| [HIBP 구 플랜 FAQ — Pwned → Core 전환](https://support.haveibeenpwned.com/hc/en-au/articles/15617510034063) | HIGH (공식 서포트) | 7 | 2026-04-24 |
+| URL                                                                                                                                                | 신뢰도                  | 관련성 | 확인일               |
+| :------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------- | :----- | :------------------- |
+| [HIBP API v3 공식 문서](https://haveibeenpwned.com/API/v3)                                                                                         | HIGH (공식)             | 10     | 2026-04-24           |
+| [HIBP 구독 페이지](https://haveibeenpwned.com/Subscription)                                                                                        | HIGH (공식)             | 9      | 2026-04-24           |
+| [HIBP breach/TelegramStealerLogs 실제 응답](https://haveibeenpwned.com/api/v3/breach/TelegramStealerLogs)                                          | HIGH (공식 API)         | 10     | 2026-04-24 직접 확인 |
+| [Troy Hunt — Rate Limits and Annual Billing](https://www.troyhunt.com/the-have-i-been-pwned-api-now-has-different-rate-limits-and-annual-billing/) | HIGH (저자 공식 블로그) | 8      | 2026-04-24           |
+| [governor Quota docs.rs](https://docs.rs/governor/latest/governor/struct.Quota.html)                                                               | HIGH (공식 문서)        | 9      | 2026-04-24           |
+| [hibp crate docs.rs](https://docs.rs/hibp/0.1.0/hibp/)                                                                                             | MEDIUM (비활성 crate)   | 5      | 2026-04-24           |
+| [pwned-rs GitHub](https://github.com/wisespace-io/pwned-rs)                                                                                        | MEDIUM (비활성 crate)   | 5      | 2026-04-24           |
+| [crates.io hibp 키워드](https://crates.io/keywords/hibp)                                                                                           | MEDIUM (레지스트리)     | 6      | 2026-04-24           |
+| [wiremock docs.rs](https://docs.rs/wiremock/latest/wiremock/)                                                                                      | HIGH (공식 문서)        | 8      | 2026-04-24           |
+| [HIBP 구독 FAQ — 플랜 안내](https://support.haveibeenpwned.com/hc/en-au/articles/13868920521103)                                                   | HIGH (공식 서포트)      | 8      | 2026-04-24           |
+| [HIBP 구 플랜 FAQ — Pwned → Core 전환](https://support.haveibeenpwned.com/hc/en-au/articles/15617510034063)                                        | HIGH (공식 서포트)      | 7      | 2026-04-24           |

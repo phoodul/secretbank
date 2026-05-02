@@ -356,18 +356,20 @@ pub fn derive_session_keys(
     salt_auth_b64: &str,
     salt_enc_b64: &str,
 ) -> Result<DerivedSessionKeys, SessionKdfError> {
-    let salt_auth = URL_SAFE_NO_PAD
-        .decode(salt_auth_b64)
-        .map_err(|e| SessionKdfError::InvalidSalt {
-            field: "salt_auth",
-            message: e.to_string(),
-        })?;
-    let salt_enc = URL_SAFE_NO_PAD
-        .decode(salt_enc_b64)
-        .map_err(|e| SessionKdfError::InvalidSalt {
-            field: "salt_enc",
-            message: e.to_string(),
-        })?;
+    let salt_auth =
+        URL_SAFE_NO_PAD
+            .decode(salt_auth_b64)
+            .map_err(|e| SessionKdfError::InvalidSalt {
+                field: "salt_auth",
+                message: e.to_string(),
+            })?;
+    let salt_enc =
+        URL_SAFE_NO_PAD
+            .decode(salt_enc_b64)
+            .map_err(|e| SessionKdfError::InvalidSalt {
+                field: "salt_enc",
+                message: e.to_string(),
+            })?;
 
     if salt_auth == salt_enc {
         return Err(SessionKdfError::SaltsIdentical);
@@ -376,10 +378,7 @@ pub fn derive_session_keys(
     let auth_hash = kdf::derive_auth_hash(passphrase, &salt_auth)?;
     let enc_key = kdf::derive_enc_key(passphrase, &salt_enc)?;
 
-    Ok(DerivedSessionKeys {
-        auth_hash,
-        enc_key,
-    })
+    Ok(DerivedSessionKeys { auth_hash, enc_key })
 }
 
 // ---------------------------------------------------------------------------
@@ -478,10 +477,7 @@ mod tests {
     async fn load_partial_state_returns_none() {
         let mut vault = unlocked_vault().await;
         vault
-            .put_secret(
-                KEY_USER_ID,
-                SecretBytes::new(b"usr_orphan".to_vec()),
-            )
+            .put_secret(KEY_USER_ID, SecretBytes::new(b"usr_orphan".to_vec()))
             .await
             .unwrap();
         // No access / refresh / expires written.
@@ -500,7 +496,10 @@ mod tests {
 
         assert!(load_session(vault.as_ref()).await.unwrap().is_none());
         let remaining = vault.list_secrets(VAULT_PREFIX).await.unwrap();
-        assert!(remaining.is_empty(), "expected no auth/* keys, got {remaining:?}");
+        assert!(
+            remaining.is_empty(),
+            "expected no auth/* keys, got {remaining:?}"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -524,10 +523,7 @@ mod tests {
         let k1 = derive_session_keys(&pw, &salt_a, &salt_e).unwrap();
         let k2 = derive_session_keys(&pw, &salt_a, &salt_e).unwrap();
         assert_eq!(k1.auth_hash, k2.auth_hash);
-        assert_eq!(
-            k1.enc_key.expose_secret(),
-            k2.enc_key.expose_secret(),
-        );
+        assert_eq!(k1.enc_key.expose_secret(), k2.enc_key.expose_secret(),);
     }
 
     /// salt_auth 와 salt_enc 가 다르면 auth_hash 와 enc_key 도 달라야 한다.
@@ -581,12 +577,8 @@ mod tests {
     #[tokio::test]
     async fn save_then_load_preserves_salts() {
         let mut vault = unlocked_vault().await;
-        let session = sample_session_with_salts(
-            "usr_42",
-            1_700_003_600,
-            "AAAA-salt-auth",
-            "BBBB-salt-enc",
-        );
+        let session =
+            sample_session_with_salts("usr_42", 1_700_003_600, "AAAA-salt-auth", "BBBB-salt-enc");
         save_session(&mut vault, &session).await.unwrap();
 
         let loaded = load_session(vault.as_ref()).await.unwrap().unwrap();
@@ -599,8 +591,7 @@ mod tests {
     #[tokio::test]
     async fn enc_key_never_persists_to_vault() {
         let mut vault = unlocked_vault().await;
-        let mut session =
-            sample_session_with_salts("usr_42", 1_700_003_600, "salt-a", "salt-e");
+        let mut session = sample_session_with_salts("usr_42", 1_700_003_600, "salt-a", "salt-e");
         // Inject a fake enc_key (memory only).
         session.enc_key = Some(SecretBox::new(Box::new([0xAB; 32])));
         save_session(&mut vault, &session).await.unwrap();
@@ -626,8 +617,7 @@ mod tests {
         let mut vault = unlocked_vault().await;
 
         // First save: with salts.
-        let with_salts =
-            sample_session_with_salts("usr_42", 1_700_003_600, "old-a", "old-e");
+        let with_salts = sample_session_with_salts("usr_42", 1_700_003_600, "old-a", "old-e");
         save_session(&mut vault, &with_salts).await.unwrap();
         assert_eq!(
             load_session(vault.as_ref())
@@ -667,10 +657,7 @@ mod tests {
             .await
             .unwrap();
         vault
-            .put_secret(
-                KEY_EXPIRES_AT,
-                SecretBytes::new(b"1700003600".to_vec()),
-            )
+            .put_secret(KEY_EXPIRES_AT, SecretBytes::new(b"1700003600".to_vec()))
             .await
             .unwrap();
 
@@ -685,8 +672,7 @@ mod tests {
     /// the struct in logs must not leak salts or enc_key bytes.
     #[test]
     fn debug_masks_secret_fields() {
-        let session =
-            sample_session_with_salts("usr_42", 1_700_003_600, "salt-a", "salt-e");
+        let session = sample_session_with_salts("usr_42", 1_700_003_600, "salt-a", "salt-e");
         let debug_output = format!("{session:?}");
         assert!(debug_output.contains("usr_42"));
         assert!(debug_output.contains("***"));

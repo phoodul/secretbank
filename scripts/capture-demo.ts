@@ -26,7 +26,6 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, "..");
-const E2E_DIR = path.join(REPO_ROOT, "e2e");
 const TEST_RESULTS = path.join(REPO_ROOT, "test-results");
 const MEDIA_DIR = path.join(REPO_ROOT, "media");
 
@@ -104,4 +103,6 @@ if (code !== 0) {
 copyArtifacts();
 console.log("\n[capture-demo] Done.\n");
 console.log("Tip — convert to mp4 for Twitter / Product Hunt:");
-console.log("  ffmpeg -i media/lock-screen.webm -c:v libx264 -pix_fmt yuv420p media/lock-screen.mp4");
+console.log(
+  "  ffmpeg -i media/lock-screen.webm -c:v libx264 -pix_fmt yuv420p media/lock-screen.mp4",
+);

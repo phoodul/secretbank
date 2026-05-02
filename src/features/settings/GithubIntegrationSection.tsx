@@ -240,7 +240,9 @@ function ScanPanel({ installations, scan, isPro }: ScanPanelProps) {
                     <Lock className="h-3.5 w-3.5 mr-1" aria-hidden />
                     {t("githubIntegration.scan.action")}
                   </Button>
-                  <Badge variant="secondary" className="text-xs">{t("pro.lock.badge")}</Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {t("pro.lock.badge")}
+                  </Badge>
                 </span>
               </TooltipTrigger>
               <TooltipContent>{t("pro.lock.tooltip")}</TooltipContent>
@@ -313,9 +315,7 @@ export function GithubIntegrationSection() {
           </p>
         </div>
         <Badge variant={isConnected ? "default" : "outline"} className="shrink-0">
-          {isConnected
-            ? t("githubIntegration.connected")
-            : t("githubIntegration.notConnected")}
+          {isConnected ? t("githubIntegration.connected") : t("githubIntegration.notConnected")}
         </Badge>
       </div>
 
@@ -328,9 +328,7 @@ export function GithubIntegrationSection() {
           onClick={() => void handleConnect()}
         >
           <GitBranch className="h-4 w-4 mr-2" />
-          {connecting
-            ? t("githubIntegration.connecting")
-            : t("githubIntegration.connectGithub")}
+          {connecting ? t("githubIntegration.connecting") : t("githubIntegration.connectGithub")}
         </Button>
       )}
 
@@ -345,9 +343,7 @@ export function GithubIntegrationSection() {
       )}
 
       {/* Installation list */}
-      {loading && (
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      )}
+      {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {!loading && installations.length > 0 && (
         <div className="space-y-2">
@@ -358,12 +354,7 @@ export function GithubIntegrationSection() {
               onRemove={(id) => setRemoveDialog({ open: true, installationId: id })}
             />
           ))}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => refresh()}
-          >
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => refresh()}>
             <RefreshCw className="h-3.5 w-3.5 mr-1" />
             Refresh
           </Button>

@@ -30,9 +30,7 @@ beforeAll(async () => {
 });
 
 async function ensureUser(userId: string, email: string): Promise<void> {
-  await typedEnv.DB.prepare(
-    `INSERT OR IGNORE INTO user (id, email, created_at) VALUES (?, ?, ?)`,
-  )
+  await typedEnv.DB.prepare(`INSERT OR IGNORE INTO user (id, email, created_at) VALUES (?, ?, ?)`)
     .bind(userId, email, Date.now())
     .run();
 }
@@ -294,9 +292,7 @@ describe("/sync/snapshot — rate limit", () => {
     // 각 테스트 시작 시 KV 의 ratelimit 카운터를 초기화 — 다른 테스트 누적 영향 방지.
     // (Miniflare 는 namespace 별 격리지만 windowId 겹침 가능)
     const list = await typedEnv.TOKEN_CACHE.list({ prefix: "ratelimit:sync:" });
-    await Promise.all(
-      list.keys.map((k) => typedEnv.TOKEN_CACHE.delete(k.name)),
-    );
+    await Promise.all(list.keys.map((k) => typedEnv.TOKEN_CACHE.delete(k.name)));
   });
 
   it("429 after exceeding 100 req/min", async () => {

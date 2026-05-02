@@ -141,7 +141,9 @@ mod tests {
     use crate::models::deployment::DeploymentPlatform;
     use crate::models::issuer::Issuer;
     use crate::models::usage::UsageWhereKind;
-    use crate::models::{credential::Credential, deployment::Deployment, project::Project, usage::Usage};
+    use crate::models::{
+        credential::Credential, deployment::Deployment, project::Project, usage::Usage,
+    };
     use time::OffsetDateTime;
 
     // -----------------------------------------------------------------------
@@ -257,9 +259,17 @@ mod tests {
         let br = blast_radius(&g, cred_id);
 
         // Primary: the project
-        assert_eq!(br.primary, vec![NodeRef::Project(proj_id)], "primary must contain the project");
+        assert_eq!(
+            br.primary,
+            vec![NodeRef::Project(proj_id)],
+            "primary must contain the project"
+        );
         // Secondary: the deployment
-        assert_eq!(br.secondary, vec![NodeRef::Deployment(dep_id)], "secondary must contain the deployment");
+        assert_eq!(
+            br.secondary,
+            vec![NodeRef::Deployment(dep_id)],
+            "secondary must contain the deployment"
+        );
         // Tertiary: nothing with current model
         assert!(br.tertiary.is_empty(), "tertiary should be empty");
     }
@@ -377,7 +387,10 @@ mod tests {
         let br1 = blast_radius(&g, cred_id);
         let br2 = blast_radius(&g, cred_id);
 
-        assert_eq!(br1, br2, "blast_radius must return identical results on repeated calls");
+        assert_eq!(
+            br1, br2,
+            "blast_radius must return identical results on repeated calls"
+        );
         assert_eq!(br1.primary.len(), 3);
         assert_eq!(br1.secondary.len(), 3);
     }

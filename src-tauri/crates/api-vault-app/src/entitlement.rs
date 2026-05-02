@@ -112,9 +112,12 @@ pub async fn current_entitlement(ctx: &AppContext) -> Result<Entitlement, Entitl
                     message: format!("pro_until UTF-8 decode: {e}"),
                 }
             })?;
-            let ts = s.trim().parse::<i64>().map_err(|e| EntitlementError::Storage {
-                message: format!("pro_until parse i64: {e}"),
-            })?;
+            let ts = s
+                .trim()
+                .parse::<i64>()
+                .map_err(|e| EntitlementError::Storage {
+                    message: format!("pro_until parse i64: {e}"),
+                })?;
             Some(ts)
         }
         Err(VaultError::NotFound { .. }) => None,
@@ -169,14 +172,16 @@ mod tests {
 
     // Minimal context helper: only vault is needed for entitlement tests.
     async fn ctx_with_vault(vault: MockVaultStorage) -> AppContext {
-        use std::path::PathBuf;
         use crate::audit_ctx::AuditCtx;
         use crate::commands::kill_switch::{ConfirmTokenStore, IssuerConfirmTokenStore};
         use crate::services::device_identity::DeviceIdentity;
         use api_vault_storage::sqlite::init_pool;
+        use std::path::PathBuf;
 
         // Use an in-memory SQLite database for tests.
-        let pool = init_pool(&PathBuf::from(":memory:")).await.expect("in-memory pool");
+        let pool = init_pool(&PathBuf::from(":memory:"))
+            .await
+            .expect("in-memory pool");
         let pool = Arc::new(pool);
         let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
         let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));
@@ -211,7 +216,10 @@ mod tests {
     #[tokio::test]
     async fn no_key_returns_free() {
         let mut vault = MockVaultStorage::new("pw");
-        vault.unlock(SecretString::from("pw".to_owned())).await.unwrap();
+        vault
+            .unlock(SecretString::from("pw".to_owned()))
+            .await
+            .unwrap();
         let ctx = ctx_with_vault(vault).await;
 
         let ent = current_entitlement(&ctx).await.expect("ok");
@@ -225,7 +233,10 @@ mod tests {
     #[tokio::test]
     async fn future_timestamp_returns_pro() {
         let mut vault = MockVaultStorage::new("pw");
-        vault.unlock(SecretString::from("pw".to_owned())).await.unwrap();
+        vault
+            .unlock(SecretString::from("pw".to_owned()))
+            .await
+            .unwrap();
 
         let future_ms = OffsetDateTime::now_utc().unix_timestamp() * 1000 + 86_400_000; // +1 day
         vault
@@ -248,7 +259,10 @@ mod tests {
     #[tokio::test]
     async fn past_timestamp_returns_free() {
         let mut vault = MockVaultStorage::new("pw");
-        vault.unlock(SecretString::from("pw".to_owned())).await.unwrap();
+        vault
+            .unlock(SecretString::from("pw".to_owned()))
+            .await
+            .unwrap();
 
         let past_ms = OffsetDateTime::now_utc().unix_timestamp() * 1000 - 86_400_000; // -1 day
         vault
@@ -286,7 +300,10 @@ mod tests {
     #[tokio::test]
     async fn require_pro_free_returns_not_pro() {
         let mut vault = MockVaultStorage::new("pw");
-        vault.unlock(SecretString::from("pw".to_owned())).await.unwrap();
+        vault
+            .unlock(SecretString::from("pw".to_owned()))
+            .await
+            .unwrap();
         let ctx = ctx_with_vault(vault).await;
 
         let result = require_pro(&ctx).await;
@@ -302,7 +319,10 @@ mod tests {
     #[tokio::test]
     async fn require_pro_pro_returns_ok() {
         let mut vault = MockVaultStorage::new("pw");
-        vault.unlock(SecretString::from("pw".to_owned())).await.unwrap();
+        vault
+            .unlock(SecretString::from("pw".to_owned()))
+            .await
+            .unwrap();
 
         let future_ms = OffsetDateTime::now_utc().unix_timestamp() * 1000 + 86_400_000;
         vault
@@ -315,6 +335,9 @@ mod tests {
 
         let ctx = ctx_with_vault(vault).await;
         let result = require_pro(&ctx).await;
-        assert!(result.is_ok(), "Pro tier must pass require_pro, got: {result:?}");
+        assert!(
+            result.is_ok(),
+            "Pro tier must pass require_pro, got: {result:?}"
+        );
     }
 }

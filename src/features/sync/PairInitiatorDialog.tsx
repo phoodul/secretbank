@@ -118,9 +118,7 @@ export function PairInitiatorDialog({ open, onOpenChange }: PairInitiatorDialogP
                 </div>
               </div>
 
-              <p className="text-muted-foreground text-xs">
-                {t("sync.pair.waiting")}
-              </p>
+              <p className="text-muted-foreground text-xs">{t("sync.pair.waiting")}</p>
             </div>
           )}
 
@@ -142,12 +140,7 @@ export function PairInitiatorDialog({ open, onOpenChange }: PairInitiatorDialogP
               <p className="text-sm text-destructive">
                 {errorMessage ?? t("sync.pair.genericError")}
               </p>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => void start()}
-              >
+              <Button type="button" size="sm" variant="outline" onClick={() => void start()}>
                 <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
                 {t("sync.pair.retry")}
               </Button>
@@ -157,9 +150,7 @@ export function PairInitiatorDialog({ open, onOpenChange }: PairInitiatorDialogP
 
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            {status === "completed"
-              ? t("common.close")
-              : t("common.cancel")}
+            {status === "completed" ? t("common.close") : t("common.cancel")}
           </Button>
         </DialogFooter>
       </DialogContent>

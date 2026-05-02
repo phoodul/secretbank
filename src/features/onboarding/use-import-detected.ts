@@ -4,9 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { DetectedKey } from "./types";
 
 /** Per-row import decision. */
-export type ImportDecision =
-  | "new"
-  | { kind: "replace"; credentialId: string };
+export type ImportDecision = "new" | { kind: "replace"; credentialId: string };
 
 export interface ImportArgs {
   detected: DetectedKey[];
@@ -42,120 +40,115 @@ export interface UseImportDetectedResult {
 export function useImportDetected(): UseImportDetectedResult {
   const [state, setState] = useState<State>({ phase: "idle" });
 
-  const importSelected = useCallback(
-    async (args: ImportArgs): Promise<ImportResult | null> => {
-      setState({ phase: "importing" });
+  const importSelected = useCallback(async (args: ImportArgs): Promise<ImportResult | null> => {
+    setState({ phase: "importing" });
 
-      try {
-        // Determine if any "new" decisions exist (need a project).
-        const hasNew = [...args.selectedDecisions.values()].some(
-          (d) => d === "new",
-        );
+    try {
+      // Determine if any "new" decisions exist (need a project).
+      const hasNew = [...args.selectedDecisions.values()].some((d) => d === "new");
 
-        let projectId: string | null = null;
-        if (hasNew) {
-          projectId = await invoke<string>("project_create", {
-            input: {
-              name: args.projectName,
-              repo_url: null,
-              framework: null,
-              runtime: null,
-              local_path: args.projectLocalPath,
-            },
-          });
-        }
+      let projectId: string | null = null;
+      if (hasNew) {
+        projectId = await invoke<string>("project_create", {
+          input: {
+            name: args.projectName,
+            repo_url: null,
+            framework: null,
+            runtime: null,
+            local_path: args.projectLocalPath,
+          },
+        });
+      }
 
-        let credentialsCreated = 0;
-        let credentialsReplaced = 0;
-        let usagesCreated = 0;
-        let failures = 0;
+      let credentialsCreated = 0;
+      let credentialsReplaced = 0;
+      let usagesCreated = 0;
+      let failures = 0;
 
-        for (const [idx, decision] of args.selectedDecisions.entries()) {
-          const dk = args.detected[idx];
-          if (!dk) continue;
+      for (const [idx, decision] of args.selectedDecisions.entries()) {
+        const dk = args.detected[idx];
+        if (!dk) continue;
 
-          if (decision !== "new" && decision.kind === "replace") {
-            // Replace mode: update the vault secret via credential_rotate_value.
-            try {
-              await invoke("credential_rotate_value", {
-                input: {
-                  id: decision.credentialId,
-                  value: "scanned:unknown",
-                  hash_hint: dk.value_hint,
-                },
-              });
-              credentialsReplaced += 1;
-            } catch (e) {
-              console.warn("credential_rotate_value failed", e);
-              failures += 1;
-            }
-            continue;
-          }
-
-          // "new" path — identical to previous behavior.
-          const issuerId = dk.issuer_slug ? args.issuerBySlug.get(dk.issuer_slug) : undefined;
-          if (!issuerId) {
-            failures += 1;
-            continue;
-          }
-
-          const credName = dk.env_var_name ?? `${dk.issuer_slug ?? "key"}-${dk.line}`;
-
+        if (decision !== "new" && decision.kind === "replace") {
+          // Replace mode: update the vault secret via credential_rotate_value.
           try {
-            const credentialId = await invoke<string>("credential_create", {
-              args: {
-                issuer_id: issuerId,
-                name: credName,
-                env: "prod",
-                scope: null,
-                expires_at: null,
-                hash_hint: dk.value_hint,
+            await invoke("credential_rotate_value", {
+              input: {
+                id: decision.credentialId,
                 value: "scanned:unknown",
+                hash_hint: dk.value_hint,
               },
             });
-            credentialsCreated += 1;
-
-            if (projectId) {
-              try {
-                await invoke("usage_create", {
-                  input: {
-                    credential_id: credentialId,
-                    project_id: projectId,
-                    deployment_id: null,
-                    where_kind: "env_var",
-                    where_value: dk.env_var_name ?? dk.file_path,
-                  },
-                });
-                usagesCreated += 1;
-              } catch (e) {
-                console.warn("usage_create failed", e);
-                failures += 1;
-              }
-            }
+            credentialsReplaced += 1;
           } catch (e) {
-            console.warn("credential_create failed", e);
+            console.warn("credential_rotate_value failed", e);
             failures += 1;
           }
+          continue;
         }
 
-        const result: ImportResult = {
-          projectId,
-          projectName: args.projectName,
-          credentialsCreated,
-          credentialsReplaced,
-          usagesCreated,
-          failures,
-        };
-        setState({ phase: "ok", result });
-        return result;
-      } catch (err) {
-        const message = typeof err === "string" ? err : "Failed to create project";
-        setState({ phase: "error", message });
-        return null;
+        // "new" path — identical to previous behavior.
+        const issuerId = dk.issuer_slug ? args.issuerBySlug.get(dk.issuer_slug) : undefined;
+        if (!issuerId) {
+          failures += 1;
+          continue;
+        }
+
+        const credName = dk.env_var_name ?? `${dk.issuer_slug ?? "key"}-${dk.line}`;
+
+        try {
+          const credentialId = await invoke<string>("credential_create", {
+            args: {
+              issuer_id: issuerId,
+              name: credName,
+              env: "prod",
+              scope: null,
+              expires_at: null,
+              hash_hint: dk.value_hint,
+              value: "scanned:unknown",
+            },
+          });
+          credentialsCreated += 1;
+
+          if (projectId) {
+            try {
+              await invoke("usage_create", {
+                input: {
+                  credential_id: credentialId,
+                  project_id: projectId,
+                  deployment_id: null,
+                  where_kind: "env_var",
+                  where_value: dk.env_var_name ?? dk.file_path,
+                },
+              });
+              usagesCreated += 1;
+            } catch (e) {
+              console.warn("usage_create failed", e);
+              failures += 1;
+            }
+          }
+        } catch (e) {
+          console.warn("credential_create failed", e);
+          failures += 1;
+        }
       }
-    },
-    [],
-  );
+
+      const result: ImportResult = {
+        projectId,
+        projectName: args.projectName,
+        credentialsCreated,
+        credentialsReplaced,
+        usagesCreated,
+        failures,
+      };
+      setState({ phase: "ok", result });
+      return result;
+    } catch (err) {
+      const message = typeof err === "string" ? err : "Failed to create project";
+      setState({ phase: "error", message });
+      return null;
+    }
+  }, []);
 
   const reset = useCallback(() => setState({ phase: "idle" }), []);
 

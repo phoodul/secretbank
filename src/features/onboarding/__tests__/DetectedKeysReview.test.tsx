@@ -109,10 +109,28 @@ describe("DetectedKeysReview", () => {
     invokeSpy.mockImplementation((cmd: string) => {
       if (cmd === "railguard_preview") {
         return Promise.resolve([
-          { kind: "cursor_rules", path: ".cursorrules", content: "", exists: false, action: "create" },
-          { kind: "windsurf_rules", path: ".windsurfrules", content: "", exists: false, action: "create" },
+          {
+            kind: "cursor_rules",
+            path: ".cursorrules",
+            content: "",
+            exists: false,
+            action: "create",
+          },
+          {
+            kind: "windsurf_rules",
+            path: ".windsurfrules",
+            content: "",
+            exists: false,
+            action: "create",
+          },
           { kind: "claude_md", path: "CLAUDE.md", content: "", exists: false, action: "create" },
-          { kind: "copilot_instructions", path: ".github/copilot-instructions.md", content: "", exists: false, action: "create" },
+          {
+            kind: "copilot_instructions",
+            path: ".github/copilot-instructions.md",
+            content: "",
+            exists: false,
+            action: "create",
+          },
         ]);
       }
       if (cmd === "project_list") return Promise.resolve([]);
@@ -153,9 +171,7 @@ describe("DetectedKeysReview", () => {
 
   it("이미 추적 중인 hash_hint 는 'Already tracked' + 체크박스 비활성", () => {
     const detected = [mockDetected({ value_hint: "dupe" })];
-    const existing: CredentialSummary[] = [
-      makeCredSummary({ hash_hint: "dupe" }),
-    ];
+    const existing: CredentialSummary[] = [makeCredSummary({ hash_hint: "dupe" })];
     renderReview(detected, existing);
 
     expect(screen.getByText(/already tracked|이미 등록됨/i)).toBeInTheDocument();
@@ -186,13 +202,18 @@ describe("DetectedKeysReview", () => {
     renderReview(detected, [], "/home/u/my-project");
 
     const user = userEvent.setup();
-    const button = screen.getByRole("button", { name: /import 2 keys|2개 가져오기|2個インポート/i });
+    const button = screen.getByRole("button", {
+      name: /import 2 keys|2개 가져오기|2個インポート/i,
+    });
     await user.click(button);
 
     await waitFor(() => {
       const commands = invokeSpy.mock.calls
         .map((c) => c[0] as string)
-        .filter((c) => c !== "railguard_preview" && c !== "project_list" && c !== "usage_list_for_project");
+        .filter(
+          (c) =>
+            c !== "railguard_preview" && c !== "project_list" && c !== "usage_list_for_project",
+        );
       expect(commands).toEqual([
         "project_create",
         "credential_create",
@@ -240,9 +261,21 @@ describe("DetectedKeysReview", () => {
       if (cmd === "railguard_preview") {
         return Promise.resolve([
           { kind: "cursor_rules", path: ".cursorrules", content: "", exists: true, action: "skip" },
-          { kind: "windsurf_rules", path: ".windsurfrules", content: "", exists: true, action: "skip" },
+          {
+            kind: "windsurf_rules",
+            path: ".windsurfrules",
+            content: "",
+            exists: true,
+            action: "skip",
+          },
           { kind: "claude_md", path: "CLAUDE.md", content: "", exists: true, action: "skip" },
-          { kind: "copilot_instructions", path: ".github/copilot-instructions.md", content: "", exists: true, action: "skip" },
+          {
+            kind: "copilot_instructions",
+            path: ".github/copilot-instructions.md",
+            content: "",
+            exists: true,
+            action: "skip",
+          },
         ]);
       }
       if (cmd === "project_list") return Promise.resolve([]);
@@ -276,12 +309,30 @@ describe("DetectedKeysReview", () => {
       if (cmd === "railguard_preview") return Promise.resolve([]);
       if (cmd === "project_list") {
         return Promise.resolve([
-          { id: "proj-1", name: "proj", local_path: "/home/u/proj", repo_url: null, framework: null, runtime: null, created_at: 0, updated_at: 0 },
+          {
+            id: "proj-1",
+            name: "proj",
+            local_path: "/home/u/proj",
+            repo_url: null,
+            framework: null,
+            runtime: null,
+            created_at: 0,
+            updated_at: 0,
+          },
         ]);
       }
       if (cmd === "usage_list_for_project") {
         return Promise.resolve([
-          { id: "u1", credential_id: CRED_ID, project_id: "proj-1", deployment_id: null, where_kind: "env_var", where_value: "OPENAI_API_KEY", verified_at: null, verified_by: null },
+          {
+            id: "u1",
+            credential_id: CRED_ID,
+            project_id: "proj-1",
+            deployment_id: null,
+            where_kind: "env_var",
+            where_value: "OPENAI_API_KEY",
+            verified_at: null,
+            verified_by: null,
+          },
         ]);
       }
       return Promise.resolve(null);
@@ -303,20 +354,36 @@ describe("DetectedKeysReview", () => {
   it("Replace 모드로 Import 클릭 → credential_rotate_value 호출됨, credential_create 호출 안 됨", async () => {
     const CRED_ID = "01HZCRED_OLD0000000000001";
     const existing = [makeCredSummary({ id: CRED_ID, hash_hint: "bbbb" })];
-    const detected = [
-      mockDetected({ env_var_name: "OPENAI_API_KEY", value_hint: "cccc" }),
-    ];
+    const detected = [mockDetected({ env_var_name: "OPENAI_API_KEY", value_hint: "cccc" })];
 
     invokeSpy.mockImplementation((cmd: string) => {
       if (cmd === "railguard_preview") return Promise.resolve([]);
       if (cmd === "project_list") {
         return Promise.resolve([
-          { id: "proj-1", name: "proj", local_path: "/home/u/proj", repo_url: null, framework: null, runtime: null, created_at: 0, updated_at: 0 },
+          {
+            id: "proj-1",
+            name: "proj",
+            local_path: "/home/u/proj",
+            repo_url: null,
+            framework: null,
+            runtime: null,
+            created_at: 0,
+            updated_at: 0,
+          },
         ]);
       }
       if (cmd === "usage_list_for_project") {
         return Promise.resolve([
-          { id: "u1", credential_id: CRED_ID, project_id: "proj-1", deployment_id: null, where_kind: "env_var", where_value: "OPENAI_API_KEY", verified_at: null, verified_by: null },
+          {
+            id: "u1",
+            credential_id: CRED_ID,
+            project_id: "proj-1",
+            deployment_id: null,
+            where_kind: "env_var",
+            where_value: "OPENAI_API_KEY",
+            verified_at: null,
+            verified_by: null,
+          },
         ]);
       }
       if (cmd === "credential_rotate_value") return Promise.resolve(null);
@@ -329,7 +396,9 @@ describe("DetectedKeysReview", () => {
     await screen.findByTestId("rotated-badge-0");
 
     const user = userEvent.setup();
-    const importButton = await screen.findByRole("button", { name: /import|가져오기|インポート|导入/i });
+    const importButton = await screen.findByRole("button", {
+      name: /import|가져오기|インポート|导入/i,
+    });
     await user.click(importButton);
 
     await waitFor(() => {
@@ -359,12 +428,30 @@ describe("DetectedKeysReview", () => {
       if (cmd === "railguard_preview") return Promise.resolve([]);
       if (cmd === "project_list") {
         return Promise.resolve([
-          { id: "proj-1", name: "proj", local_path: "/home/u/proj", repo_url: null, framework: null, runtime: null, created_at: 0, updated_at: 0 },
+          {
+            id: "proj-1",
+            name: "proj",
+            local_path: "/home/u/proj",
+            repo_url: null,
+            framework: null,
+            runtime: null,
+            created_at: 0,
+            updated_at: 0,
+          },
         ]);
       }
       if (cmd === "usage_list_for_project") {
         return Promise.resolve([
-          { id: "u1", credential_id: CRED_ID, project_id: "proj-1", deployment_id: null, where_kind: "env_var", where_value: "OPENAI_API_KEY", verified_at: null, verified_by: null },
+          {
+            id: "u1",
+            credential_id: CRED_ID,
+            project_id: "proj-1",
+            deployment_id: null,
+            where_kind: "env_var",
+            where_value: "OPENAI_API_KEY",
+            verified_at: null,
+            verified_by: null,
+          },
         ]);
       }
       return Promise.resolve(null);
@@ -384,16 +471,23 @@ describe("DetectedKeysReview", () => {
   });
 
   it("다른 project (scannedPath 매칭 없음) → 기존 동작 (배지 없음, 신규 credential 으로 import)", async () => {
-    const detected = [
-      mockDetected({ env_var_name: "OPENAI_API_KEY", value_hint: "dddd" }),
-    ];
+    const detected = [mockDetected({ env_var_name: "OPENAI_API_KEY", value_hint: "dddd" })];
 
     invokeSpy.mockImplementation((cmd: string) => {
       if (cmd === "railguard_preview") return Promise.resolve([]);
       if (cmd === "project_list") {
         // Different local_path → no match.
         return Promise.resolve([
-          { id: "proj-other", name: "other", local_path: "/home/u/other-project", repo_url: null, framework: null, runtime: null, created_at: 0, updated_at: 0 },
+          {
+            id: "proj-other",
+            name: "other",
+            local_path: "/home/u/other-project",
+            repo_url: null,
+            framework: null,
+            runtime: null,
+            created_at: 0,
+            updated_at: 0,
+          },
         ]);
       }
       if (cmd === "project_create") return Promise.resolve("01HZNEWPROJECT000000000");
@@ -411,12 +505,17 @@ describe("DetectedKeysReview", () => {
 
     // Import button should exist and clicking creates a new credential.
     const user = userEvent.setup();
-    const importButton = screen.getByRole("button", { name: /import 1 key|1개 가져오기|1個インポート|导入 1 个/i });
+    const importButton = screen.getByRole("button", {
+      name: /import 1 key|1개 가져오기|1個インポート|导入 1 个/i,
+    });
     await user.click(importButton);
 
     await waitFor(() => {
-      const cmds = invokeSpy.mock.calls.map((c) => c[0] as string)
-        .filter((c) => !["railguard_preview", "project_list", "usage_list_for_project"].includes(c));
+      const cmds = invokeSpy.mock.calls
+        .map((c) => c[0] as string)
+        .filter(
+          (c) => !["railguard_preview", "project_list", "usage_list_for_project"].includes(c),
+        );
       expect(cmds).toContain("credential_create");
       expect(cmds).not.toContain("credential_rotate_value");
     });
@@ -425,20 +524,36 @@ describe("DetectedKeysReview", () => {
   it("Add as new 라디오 선택 후 Import → credential_create 호출됨 (replace 우회)", async () => {
     const CRED_ID = "01HZCRED_BYPASS000000000";
     const existing = [makeCredSummary({ id: CRED_ID, hash_hint: "bbbb" })];
-    const detected = [
-      mockDetected({ env_var_name: "OPENAI_API_KEY", value_hint: "cccc" }),
-    ];
+    const detected = [mockDetected({ env_var_name: "OPENAI_API_KEY", value_hint: "cccc" })];
 
     invokeSpy.mockImplementation((cmd: string) => {
       if (cmd === "railguard_preview") return Promise.resolve([]);
       if (cmd === "project_list") {
         return Promise.resolve([
-          { id: "proj-1", name: "proj", local_path: "/home/u/proj", repo_url: null, framework: null, runtime: null, created_at: 0, updated_at: 0 },
+          {
+            id: "proj-1",
+            name: "proj",
+            local_path: "/home/u/proj",
+            repo_url: null,
+            framework: null,
+            runtime: null,
+            created_at: 0,
+            updated_at: 0,
+          },
         ]);
       }
       if (cmd === "usage_list_for_project") {
         return Promise.resolve([
-          { id: "u1", credential_id: CRED_ID, project_id: "proj-1", deployment_id: null, where_kind: "env_var", where_value: "OPENAI_API_KEY", verified_at: null, verified_by: null },
+          {
+            id: "u1",
+            credential_id: CRED_ID,
+            project_id: "proj-1",
+            deployment_id: null,
+            where_kind: "env_var",
+            where_value: "OPENAI_API_KEY",
+            verified_at: null,
+            verified_by: null,
+          },
         ]);
       }
       if (cmd === "project_create") return Promise.resolve("01HZNEWPROJECT000000001");

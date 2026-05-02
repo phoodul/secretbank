@@ -76,7 +76,9 @@ pub async fn project_get(
     state: State<'_, AppContext>,
 ) -> Result<Project, ProjectCommandError> {
     let repo = ProjectRepo::new(&state.pool);
-    repo.get_by_id(id).await?.ok_or(ProjectCommandError::NotFound)
+    repo.get_by_id(id)
+        .await?
+        .ok_or(ProjectCommandError::NotFound)
 }
 
 #[tauri::command]
@@ -89,11 +91,21 @@ pub async fn project_update(
     repo.update(id, &patch).await?;
 
     let mut updated_fields: Vec<&str> = Vec::new();
-    if patch.name.is_some() { updated_fields.push("name"); }
-    if patch.repo_url.is_some() { updated_fields.push("repo_url"); }
-    if patch.framework.is_some() { updated_fields.push("framework"); }
-    if patch.runtime.is_some() { updated_fields.push("runtime"); }
-    if patch.local_path.is_some() { updated_fields.push("local_path"); }
+    if patch.name.is_some() {
+        updated_fields.push("name");
+    }
+    if patch.repo_url.is_some() {
+        updated_fields.push("repo_url");
+    }
+    if patch.framework.is_some() {
+        updated_fields.push("framework");
+    }
+    if patch.runtime.is_some() {
+        updated_fields.push("runtime");
+    }
+    if patch.local_path.is_some() {
+        updated_fields.push("local_path");
+    }
     let payload = if updated_fields.is_empty() {
         None
     } else {
@@ -118,7 +130,9 @@ pub async fn project_update(
             id.to_string(),
         ));
 
-    repo.get_by_id(id).await?.ok_or(ProjectCommandError::NotFound)
+    repo.get_by_id(id)
+        .await?
+        .ok_or(ProjectCommandError::NotFound)
 }
 
 #[tauri::command]
@@ -158,7 +172,7 @@ pub async fn project_delete(
 mod tests {
     use std::sync::Arc;
 
-    use api_vault_core::{ProjectInput};
+    use api_vault_core::ProjectInput;
     use api_vault_storage::sqlite::repositories::project::ProjectRepo;
     use api_vault_storage::vault::mock::MockVaultStorage;
     use api_vault_storage::vault::VaultStorage as _;
@@ -183,8 +197,7 @@ mod tests {
         let vault_box: Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync> =
             Box::new(vault);
         let vault_arc = Arc::new(RwLock::new(vault_box));
-        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> =
-            Arc::new(RwLock::new(None));
+        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
         let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));
         AppContext {
             vault: vault_arc,
@@ -232,7 +245,10 @@ mod tests {
         } else {
             ProjectRepo::new(&pool).list().await.unwrap()
         };
-        assert!(list.is_empty(), "project_list must return empty vec when vault is locked");
+        assert!(
+            list.is_empty(),
+            "project_list must return empty vec when vault is locked"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -243,7 +259,10 @@ mod tests {
         let (_dir, pool) = make_pool().await;
         let pool = Arc::new(pool);
         let mut vault = MockVaultStorage::new("pw");
-        vault.unlock(SecretString::from("pw".to_owned())).await.unwrap();
+        vault
+            .unlock(SecretString::from("pw".to_owned()))
+            .await
+            .unwrap();
 
         // Seed one project.
         ProjectRepo::new(&pool)
@@ -270,6 +289,10 @@ mod tests {
         } else {
             ProjectRepo::new(&pool).list().await.unwrap()
         };
-        assert_eq!(list.len(), 1, "project_list must return 1 item when vault is unlocked");
+        assert_eq!(
+            list.len(),
+            1,
+            "project_list must return 1 item when vault is unlocked"
+        );
     }
 }

@@ -103,12 +103,12 @@ impl ShamirShare {
         }
 
         let verifier_token = body[SHARE_WORD_COUNT];
-        let verifier: u32 = verifier_token.parse().map_err(|e: std::num::ParseIntError| {
-            ShamirError::InvalidVerifier {
+        let verifier: u32 = verifier_token
+            .parse()
+            .map_err(|e: std::num::ParseIntError| ShamirError::InvalidVerifier {
                 index,
                 detail: e.to_string(),
-            }
-        })?;
+            })?;
         if verifier >= VERIFIER_MOD {
             return Err(ShamirError::InvalidVerifier {
                 index,
@@ -330,9 +330,8 @@ mod tests {
             let secret = CharterSecret::random();
             let shares = shamir_split(&secret);
             for combo in &[(0, 1), (0, 2), (1, 2)] {
-                let recovered =
-                    shamir_combine(&[shares[combo.0].clone(), shares[combo.1].clone()])
-                        .expect("any 2 shares must reconstruct");
+                let recovered = shamir_combine(&[shares[combo.0].clone(), shares[combo.1].clone()])
+                    .expect("any 2 shares must reconstruct");
                 assert_eq!(secret, recovered, "combo {combo:?} mismatch");
             }
         }
@@ -447,7 +446,10 @@ mod tests {
         let expected = secret.as_bytes().to_vec();
         // It either returns an error or a different (wrong) reconstruction.
         if let Ok(bytes) = result {
-            assert_ne!(bytes, expected, "duplicate shares must not produce correct secret");
+            assert_ne!(
+                bytes, expected,
+                "duplicate shares must not produce correct secret"
+            );
         }
     }
 }

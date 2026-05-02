@@ -40,11 +40,7 @@ export function generateNonce(): Uint8Array {
  * AAD (associated data) 는 옵션 — Phase F/G 의 envelope metadata 에 사용
  * (예: doc_id 를 AAD 로 묶어 cross-doc replay 방지). 미설정 시 빈 buffer.
  */
-export function encrypt(
-  key: Uint8Array,
-  plaintext: Uint8Array,
-  aad?: Uint8Array,
-): Uint8Array {
+export function encrypt(key: Uint8Array, plaintext: Uint8Array, aad?: Uint8Array): Uint8Array {
   if (key.length !== AEAD_KEY_BYTES) {
     throw new Error(`AEAD key must be ${AEAD_KEY_BYTES} bytes, got ${key.length}`);
   }
@@ -64,11 +60,7 @@ export function encrypt(
  * 변조된 메시지 / 잘못된 키 / 잘못된 AAD 면 throw — 호출자는 try/catch
  * 로 보호하고 invalid_payload 같은 사용자 친화 에러로 surface 한다.
  */
-export function decrypt(
-  key: Uint8Array,
-  envelope: Uint8Array,
-  aad?: Uint8Array,
-): Uint8Array {
+export function decrypt(key: Uint8Array, envelope: Uint8Array, aad?: Uint8Array): Uint8Array {
   if (key.length !== AEAD_KEY_BYTES) {
     throw new Error(`AEAD key must be ${AEAD_KEY_BYTES} bytes, got ${key.length}`);
   }

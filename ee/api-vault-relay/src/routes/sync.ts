@@ -57,10 +57,7 @@ async function requireAuth(
   } catch (e) {
     return {
       ok: false,
-      res: c.json(
-        { error: "invalid_access_token", detail: String((e as Error).message) },
-        401,
-      ),
+      res: c.json({ error: "invalid_access_token", detail: String((e as Error).message) }, 401),
     };
   }
 }
@@ -88,11 +85,9 @@ sync.get("/snapshot", async (c) => {
 
   const rl = await checkRateLimit(c.env.TOKEN_CACHE, auth.userId, SYNC_RATE_LIMIT);
   if (!rl.ok) {
-    return c.json(
-      { error: "rate_limited", reset_ms: rl.resetMs },
-      429,
-      { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
-    );
+    return c.json({ error: "rate_limited", reset_ms: rl.resetMs }, 429, {
+      "Retry-After": String(Math.ceil(rl.resetMs / 1000)),
+    });
   }
 
   const sinceRaw = c.req.query("since");
@@ -130,16 +125,12 @@ sync.post("/snapshot", async (c) => {
 
   const rl = await checkRateLimit(c.env.TOKEN_CACHE, auth.userId, SYNC_RATE_LIMIT);
   if (!rl.ok) {
-    return c.json(
-      { error: "rate_limited", reset_ms: rl.resetMs },
-      429,
-      { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
-    );
+    return c.json({ error: "rate_limited", reset_ms: rl.resetMs }, 429, {
+      "Retry-After": String(Math.ceil(rl.resetMs / 1000)),
+    });
   }
 
-  const body = (await c.req.json().catch(() => null)) as
-    | { ciphertext_b64?: unknown }
-    | null;
+  const body = (await c.req.json().catch(() => null)) as { ciphertext_b64?: unknown } | null;
   if (!body || typeof body.ciphertext_b64 !== "string" || body.ciphertext_b64.length === 0) {
     return c.json({ error: "missing_ciphertext" }, 400);
   }
@@ -171,9 +162,7 @@ sync.post("/snapshot", async (c) => {
     .bind(auth.userId, ct, now, now)
     .run();
 
-  const row = await c.env.DB.prepare(
-    "SELECT version FROM encrypted_doc WHERE user_id = ?",
-  )
+  const row = await c.env.DB.prepare("SELECT version FROM encrypted_doc WHERE user_id = ?")
     .bind(auth.userId)
     .first<{ version: number }>();
 
@@ -191,16 +180,15 @@ sync.post("/values", async (c) => {
 
   const rl = await checkRateLimit(c.env.TOKEN_CACHE, auth.userId, SYNC_RATE_LIMIT);
   if (!rl.ok) {
-    return c.json(
-      { error: "rate_limited", reset_ms: rl.resetMs },
-      429,
-      { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
-    );
+    return c.json({ error: "rate_limited", reset_ms: rl.resetMs }, 429, {
+      "Retry-After": String(Math.ceil(rl.resetMs / 1000)),
+    });
   }
 
-  const body = (await c.req.json().catch(() => null)) as
-    | { credential_id?: unknown; ciphertext_b64?: unknown }
-    | null;
+  const body = (await c.req.json().catch(() => null)) as {
+    credential_id?: unknown;
+    ciphertext_b64?: unknown;
+  } | null;
   if (!body) return c.json({ error: "invalid_payload" }, 400);
   if (typeof body.credential_id !== "string" || body.credential_id.length === 0) {
     return c.json({ error: "missing_credential_id" }, 400);
@@ -256,11 +244,9 @@ sync.get("/values", async (c) => {
 
   const rl = await checkRateLimit(c.env.TOKEN_CACHE, auth.userId, SYNC_RATE_LIMIT);
   if (!rl.ok) {
-    return c.json(
-      { error: "rate_limited", reset_ms: rl.resetMs },
-      429,
-      { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
-    );
+    return c.json({ error: "rate_limited", reset_ms: rl.resetMs }, 429, {
+      "Retry-After": String(Math.ceil(rl.resetMs / 1000)),
+    });
   }
 
   const sinceRaw = c.req.query("since");

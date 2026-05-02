@@ -359,7 +359,10 @@ mod tests {
         let deserialized: GraphPayload =
             serde_json::from_str(&serialized).expect("deserialize failed");
 
-        assert_eq!(payload, deserialized, "GraphPayload must round-trip through JSON");
+        assert_eq!(
+            payload, deserialized,
+            "GraphPayload must round-trip through JSON"
+        );
     }
 
     // -----------------------------------------------------------------------

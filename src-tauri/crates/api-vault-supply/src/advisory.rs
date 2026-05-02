@@ -250,11 +250,7 @@ struct OsvEvent {
     fixed: Option<String>,
 }
 
-fn osv_to_advisory(
-    v: OsvVuln,
-    ecosystem: Ecosystem,
-    package_name: &str,
-) -> PackageAdvisory {
+fn osv_to_advisory(v: OsvVuln, ecosystem: Ecosystem, package_name: &str) -> PackageAdvisory {
     let summary = v.summary.unwrap_or_else(|| v.id.clone());
     let detail = v.details;
     let combined = format!("{summary} {}", detail.clone().unwrap_or_default());
@@ -396,7 +392,10 @@ mod tests {
             .mount(&server)
             .await;
         let cli = OsvClient::with_base_url(server.uri());
-        let advs = cli.query(Ecosystem::Npm, "malicious-pkg", "1.0.3").await.unwrap();
+        let advs = cli
+            .query(Ecosystem::Npm, "malicious-pkg", "1.0.3")
+            .await
+            .unwrap();
         assert_eq!(advs.len(), 1);
         let a = &advs[0];
         assert_eq!(a.source_id, "GHSA-test-0001");
@@ -414,7 +413,10 @@ mod tests {
             .mount(&server)
             .await;
         let cli = OsvClient::with_base_url(server.uri());
-        let advs = cli.query(Ecosystem::Npm, "safe-pkg", "2.0.0").await.unwrap();
+        let advs = cli
+            .query(Ecosystem::Npm, "safe-pkg", "2.0.0")
+            .await
+            .unwrap();
         assert!(advs.is_empty());
     }
 

@@ -46,7 +46,9 @@ export function CharterCooldownSection() {
     if (!status) return;
     const next = !status.enabled;
     try {
-      const updated = (await invoke("charter_cooldown_set_enabled", { enabled: next })) as CharterCooldownStatusDto;
+      const updated = (await invoke("charter_cooldown_set_enabled", {
+        enabled: next,
+      })) as CharterCooldownStatusDto;
       setStatus(updated);
     } catch {
       toast.error(t("settings.charterCooldownToggleFailed"));

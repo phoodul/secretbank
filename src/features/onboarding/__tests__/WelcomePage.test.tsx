@@ -79,7 +79,9 @@ describe("WelcomePage", () => {
     renderPage();
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /welcome to api vault/i })).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: /drop your project folder/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /drop your project folder/i }),
+      ).toBeInTheDocument();
       expect(screen.getByText(/step 1 of 3/i)).toBeInTheDocument();
     });
   });
@@ -94,7 +96,9 @@ describe("WelcomePage", () => {
 
     await user.click(screen.getByRole("button", { name: /^next$/i }));
 
-    expect(screen.getByRole("heading", { name: /add your first key manually/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /add your first key manually/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/step 2 of 3/i)).toBeInTheDocument();
   });
 

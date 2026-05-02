@@ -55,16 +55,16 @@ use tokio::sync::Mutex;
 
 use api_vault_core::{CredentialFilter, CredentialId, CredentialStatus};
 use api_vault_railguard::{render, RenderContext, RuleKind};
-use api_vault_supply::advisory::{AdvisoryCategory, AdvisorySeverity, OsvClient};
-use api_vault_supply::manifest::{parse_cargo_toml, parse_package_json};
-use api_vault_supply::matcher::match_advisories;
-use api_vault_supply::DependencyDeclaration;
 use api_vault_storage::age_vault::AgeVaultStorage;
 use api_vault_storage::sqlite::init_pool;
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
 use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
 use api_vault_storage::sqlite::SqlitePool;
 use api_vault_storage::vault::VaultStorage;
+use api_vault_supply::advisory::{AdvisoryCategory, AdvisorySeverity, OsvClient};
+use api_vault_supply::manifest::{parse_cargo_toml, parse_package_json};
+use api_vault_supply::matcher::match_advisories;
+use api_vault_supply::DependencyDeclaration;
 
 const PROTOCOL_VERSION: &str = "2024-11-05";
 const SERVER_NAME: &str = "api-vault-mcp";
@@ -320,7 +320,10 @@ async fn handle_tool_call(state: &ServerState, params: &Value) -> Result<Value, 
         .get("name")
         .and_then(Value::as_str)
         .ok_or_else(|| RpcError::invalid_params("missing tool name"))?;
-    let arguments = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
+    let arguments = params
+        .get("arguments")
+        .cloned()
+        .unwrap_or_else(|| json!({}));
 
     match name {
         "list_credentials" => tool_list_credentials(state, &arguments).await,
@@ -343,7 +346,9 @@ async fn tool_check_supply_chain_risk(args: &Value) -> Result<Value, RpcError> {
         .unwrap_or("any");
     let root = std::path::PathBuf::from(path_str);
     if !root.exists() {
-        return Err(RpcError::invalid_params(format!("path does not exist: {path_str}")));
+        return Err(RpcError::invalid_params(format!(
+            "path does not exist: {path_str}"
+        )));
     }
 
     let mut deps: Vec<DependencyDeclaration> = Vec::new();
@@ -478,8 +483,9 @@ async fn tool_check_railguard_status(args: &Value) -> Result<Value, RpcError> {
     } else {
         "RAILGUARD: missing files — recommend `apivault railguard apply` or use suggest_railguard_template to preview.".to_string()
     };
-    let json_text = serde_json::to_string_pretty(&json!({ "files": rows, "all_present": all_present }))
-        .map_err(|e| RpcError::internal(e.to_string()))?;
+    let json_text =
+        serde_json::to_string_pretty(&json!({ "files": rows, "all_present": all_present }))
+            .map_err(|e| RpcError::internal(e.to_string()))?;
     Ok(json!({
         "content": [{ "type": "text", "text": format!("{summary}\n\n{json_text}") }]
     }))
@@ -506,18 +512,26 @@ fn tool_suggest_railguard_template(args: &Value) -> Result<Value, RpcError> {
     let frameworks: Vec<String> = args
         .get("frameworks")
         .and_then(Value::as_array)
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_default();
     let issuers: Vec<String> = args
         .get("issuers")
         .and_then(Value::as_array)
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_default();
     let mut ctx = RenderContext::new(project_name);
     ctx.frameworks = frameworks;
     ctx.issuers = issuers;
-    let rendered = render(kind, &ctx)
-        .map_err(|e| RpcError::invalid_params(format!("render failed: {e}")))?;
+    let rendered =
+        render(kind, &ctx).map_err(|e| RpcError::invalid_params(format!("render failed: {e}")))?;
     Ok(json!({
         "content": [
             {
@@ -755,11 +769,7 @@ async fn main() -> Result<()> {
     let stdin = tokio::io::stdin();
     let mut reader = BufReader::new(stdin).lines();
     let mut stdout = tokio::io::stdout();
-    while let Some(line) = reader
-        .next_line()
-        .await
-        .context("reading stdin")?
-    {
+    while let Some(line) = reader.next_line().await.context("reading stdin")? {
         if line.trim().is_empty() {
             continue;
         }

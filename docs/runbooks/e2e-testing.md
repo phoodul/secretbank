@@ -4,10 +4,10 @@
 
 API Vault 의 E2E 회귀는 두 단계로 분리된다:
 
-| 단계 | 무엇을 검증 | 도구 | 상태 |
-|:----|:----------|:----|:----|
-| **A. Browser-mode smoke** | React 앱이 부팅되고 라우팅·i18n·정적 렌더가 회귀 없이 동작 | Playwright + Vite dev server + `tauri-mock.ts` polyfill | ✅ 활성 (CI 통합) |
-| **B. Desktop binary E2E** | 실제 Tauri 바이너리가 OS 이벤트·IPC·deep-link 까지 포함해 동작 | tauri-driver + `webdriverio` (또는 selenium) | 🚧 deferred (인프라 결정 보류) |
+| 단계                      | 무엇을 검증                                                    | 도구                                                    | 상태                           |
+| :------------------------ | :------------------------------------------------------------- | :------------------------------------------------------ | :----------------------------- |
+| **A. Browser-mode smoke** | React 앱이 부팅되고 라우팅·i18n·정적 렌더가 회귀 없이 동작     | Playwright + Vite dev server + `tauri-mock.ts` polyfill | ✅ 활성 (CI 통합)              |
+| **B. Desktop binary E2E** | 실제 Tauri 바이너리가 OS 이벤트·IPC·deep-link 까지 포함해 동작 | tauri-driver + `webdriverio` (또는 selenium)            | 🚧 deferred (인프라 결정 보류) |
 
 본 runbook 은 **A 의 운영 가이드** 와 **B 의 진입 조건 / 사용자 액션 체크리스트** 를 담는다.
 
@@ -122,10 +122,10 @@ i18n 로딩이 비동기라서 가끔 첫 1~2초간 리졸버가 키만 표시. 
 
 ## 관련 파일
 
-| 파일 | 역할 |
-|:----|:----|
-| `e2e/playwright.config.ts` | webServer · 브라우저 · 타임아웃 설정 |
-| `e2e/lib/tauri-mock.ts` | invoke polyfill 빌더 |
-| `e2e/smoke.spec.ts` | 현재 smoke 회귀 (3건) |
-| `.github/workflows/ci.yml` (`e2e` job) | CI 자동 실행 |
-| `package.json` 의 `e2e` / `e2e:install` / `e2e:ui` script | 로컬 진입점 |
+| 파일                                                      | 역할                                 |
+| :-------------------------------------------------------- | :----------------------------------- |
+| `e2e/playwright.config.ts`                                | webServer · 브라우저 · 타임아웃 설정 |
+| `e2e/lib/tauri-mock.ts`                                   | invoke polyfill 빌더                 |
+| `e2e/smoke.spec.ts`                                       | 현재 smoke 회귀 (3건)                |
+| `.github/workflows/ci.yml` (`e2e` job)                    | CI 자동 실행                         |
+| `package.json` 의 `e2e` / `e2e:install` / `e2e:ui` script | 로컬 진입점                          |

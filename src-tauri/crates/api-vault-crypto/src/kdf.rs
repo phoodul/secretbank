@@ -18,10 +18,7 @@ fn argon2_instance() -> Result<Argon2<'static>, KdfError> {
 ///
 /// Salt 길이는 호출자가 결정한다 (예: 로컬 vault 16바이트, 릴레이 발급 salt 16~32바이트).
 /// argon2 crate 는 8~2^32-1 byte salt 를 허용한다.
-pub fn derive_auth_hash(
-    password: &SecretString,
-    salt: &[u8],
-) -> Result<[u8; 32], KdfError> {
+pub fn derive_auth_hash(password: &SecretString, salt: &[u8]) -> Result<[u8; 32], KdfError> {
     let argon2 = argon2_instance()?;
     let mut output = [0u8; 32];
     argon2

@@ -49,9 +49,7 @@ export function WelcomePage() {
             <>
               <FolderDown className="text-primary mx-auto size-10" aria-hidden />
               <h2 className="text-lg font-medium">{t("onboarding.stepDropTitle")}</h2>
-              <p className="text-muted-foreground text-sm">
-                {t("onboarding.stepDropDescription")}
-              </p>
+              <p className="text-muted-foreground text-sm">{t("onboarding.stepDropDescription")}</p>
             </>
           )}
           {step === 2 && (
@@ -70,9 +68,7 @@ export function WelcomePage() {
             <>
               <PartyPopper className="text-primary mx-auto size-10" aria-hidden />
               <h2 className="text-lg font-medium">{t("onboarding.stepDoneTitle")}</h2>
-              <p className="text-muted-foreground text-sm">
-                {t("onboarding.stepDoneDescription")}
-              </p>
+              <p className="text-muted-foreground text-sm">{t("onboarding.stepDoneDescription")}</p>
             </>
           )}
         </section>

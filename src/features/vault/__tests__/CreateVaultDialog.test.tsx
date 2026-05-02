@@ -165,9 +165,24 @@ describe("CreateVaultDialog", () => {
     mockInvoke.mockResolvedValueOnce({
       kind: "shamir2of3",
       shares: [
-        { index: 1, words: ["a", "b", "c", "d", "e", "f", "g"], verifier: 1, formatted: "Share 1 of 3: ..." },
-        { index: 2, words: ["a", "b", "c", "d", "e", "f", "g"], verifier: 2, formatted: "Share 2 of 3: ..." },
-        { index: 3, words: ["a", "b", "c", "d", "e", "f", "g"], verifier: 3, formatted: "Share 3 of 3: ..." },
+        {
+          index: 1,
+          words: ["a", "b", "c", "d", "e", "f", "g"],
+          verifier: 1,
+          formatted: "Share 1 of 3: ...",
+        },
+        {
+          index: 2,
+          words: ["a", "b", "c", "d", "e", "f", "g"],
+          verifier: 2,
+          formatted: "Share 2 of 3: ...",
+        },
+        {
+          index: 3,
+          words: ["a", "b", "c", "d", "e", "f", "g"],
+          verifier: 3,
+          formatted: "Share 3 of 3: ...",
+        },
       ],
     });
 

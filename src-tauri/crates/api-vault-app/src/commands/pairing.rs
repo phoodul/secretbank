@@ -8,8 +8,7 @@ use thiserror::Error;
 
 use crate::context::AppContext;
 use crate::services::pairing::{
-    self as svc, InitiatorPollDto, InitiatorStartDto, JoinerJoinDto, JoinerPollDto,
-    PairingError,
+    self as svc, InitiatorPollDto, InitiatorStartDto, JoinerJoinDto, JoinerPollDto, PairingError,
 };
 
 #[derive(Debug, Error, Serialize)]

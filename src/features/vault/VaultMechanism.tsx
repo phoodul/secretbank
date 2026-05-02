@@ -99,7 +99,8 @@ const RING_TRANSFORM = { transformOrigin: "100px 100px", transformBox: "view-box
 function DataFlowParticles({ state }: { state: VaultState }) {
   // 4 bright dots tracking around r=72 at varied speeds; together they look
   // like data being read off the outermost ring during idle/verifying.
-  const cx = 100, cy = 100;
+  const cx = 100,
+    cy = 100;
   const r = 72;
   const seeds = [0, 0.27, 0.55, 0.81];
   const speedFactor = state === "verifying" ? 0.18 : 1.0;
@@ -205,7 +206,8 @@ function UnlockBurst({ state }: { state: VaultState }) {
 function HexagonGrid({ state }: { state: VaultState }) {
   // Faint hexagonal mesh inside the inner area — adds depth.
   const hexSize = 6;
-  const cx = 100, cy = 100;
+  const cx = 100,
+    cy = 100;
   const cells: Array<{ x: number; y: number }> = [];
   // 5x5 grid centered, then filter to within radius 50
   for (let row = -3; row <= 3; row++) {
@@ -247,7 +249,8 @@ function HexagonGrid({ state }: { state: VaultState }) {
 function SystemLabels({ state }: { state: VaultState }) {
   // Small system-status text rendered as part of the mechanism for
   // technical-readout vibe.
-  const cx = 100, cy = 100;
+  const cx = 100,
+    cy = 100;
   const labels = [
     { text: "SEC-A1", angle: 30, r: 92 },
     { text: "ENC-OK", angle: 150, r: 92 },
@@ -323,9 +326,11 @@ function CornerBrackets({ state }: { state: VaultState }) {
         >
           <path
             d="M 0 12 L 0 0 L 12 0"
-            stroke={state === "unlocking" || state === "unlocked"
-              ? "var(--vault-gold-bright)"
-              : "var(--vault-gold)"}
+            stroke={
+              state === "unlocking" || state === "unlocked"
+                ? "var(--vault-gold-bright)"
+                : "var(--vault-gold)"
+            }
             strokeWidth="1.4"
             fill="none"
             strokeLinecap="round"
@@ -339,7 +344,9 @@ function CornerBrackets({ state }: { state: VaultState }) {
 }
 
 function OuterDegreeScale({ state }: { state: VaultState }) {
-  const cx = 100, cy = 100, r = 88;
+  const cx = 100,
+    cy = 100,
+    r = 88;
   const motionCfg: RingMotion = {
     idleSeconds: 90,
     verifyingSeconds: 16,
@@ -367,7 +374,11 @@ function OuterDegreeScale({ state }: { state: VaultState }) {
             y1={inner.y}
             x2={outer.x}
             y2={outer.y}
-            stroke={isMajor ? "var(--vault-gold-bright)" : "oklch(from var(--vault-lapis-bright) l c h / 0.55)"}
+            stroke={
+              isMajor
+                ? "var(--vault-gold-bright)"
+                : "oklch(from var(--vault-lapis-bright) l c h / 0.55)"
+            }
             strokeWidth={isMajor ? 0.9 : isMid ? 0.5 : 0.3}
             strokeLinecap="round"
           />
@@ -400,7 +411,9 @@ function OuterDegreeScale({ state }: { state: VaultState }) {
 }
 
 function SegmentedArcRing({ state }: { state: VaultState }) {
-  const cx = 100, cy = 100, r = 75;
+  const cx = 100,
+    cy = 100,
+    r = 75;
   const motionCfg: RingMotion = {
     idleSeconds: 28,
     verifyingSeconds: 6,
@@ -482,7 +495,9 @@ const FINAL_CODES = ["A1F", "8C2", "5E9", "B7D", "3K0", "F6N", "Q9X", "Z2P"];
 const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 function GlyphRing({ state }: { state: VaultState }) {
-  const cx = 100, cy = 100, r = 60;
+  const cx = 100,
+    cy = 100,
+    r = 60;
   const [codes, setCodes] = useState<string[]>(FINAL_CODES);
 
   useEffect(() => {
@@ -536,7 +551,11 @@ function GlyphRing({ state }: { state: VaultState }) {
               y="0.4"
               fontSize="3.2"
               fontFamily="var(--font-mono)"
-              fill={state === "unlocked" || state === "unlocking" ? "var(--vault-gold-bright)" : "var(--vault-gold)"}
+              fill={
+                state === "unlocked" || state === "unlocking"
+                  ? "var(--vault-gold-bright)"
+                  : "var(--vault-gold)"
+              }
               textAnchor="middle"
               dominantBaseline="middle"
               style={{ letterSpacing: "0.3px", fontWeight: 600 }}
@@ -552,9 +571,10 @@ function GlyphRing({ state }: { state: VaultState }) {
 
 function ScanSweep({ state }: { state: VaultState }) {
   if (state === "unlocked") return null;
-  const cx = 100, cy = 100, r = 82;
-  const sweepDuration =
-    state === "idle" ? 4 : state === "verifying" ? 1 : 1.2;
+  const cx = 100,
+    cy = 100,
+    r = 82;
+  const sweepDuration = state === "idle" ? 4 : state === "verifying" ? 1 : 1.2;
   return (
     <motion.g
       initial={false}
@@ -589,10 +609,10 @@ function ScanSweep({ state }: { state: VaultState }) {
 function CrosshairReticle({ state }: { state: VaultState }) {
   // Fixed (does not rotate). Marks the 4 cardinal directions.
   const positions = [
-    { x: 100, y: 4 },   // top
+    { x: 100, y: 4 }, // top
     { x: 196, y: 100 }, // right
     { x: 100, y: 196 }, // bottom
-    { x: 4, y: 100 },   // left
+    { x: 4, y: 100 }, // left
   ];
   return (
     <motion.g
@@ -622,7 +642,8 @@ function CrosshairReticle({ state }: { state: VaultState }) {
 }
 
 function CenterCore({ state }: { state: VaultState }) {
-  const cx = 100, cy = 100;
+  const cx = 100,
+    cy = 100;
   const isOpen = state === "unlocked" || state === "unlocking";
 
   // Hexagon points at radius 32
@@ -682,14 +703,7 @@ function CenterCore({ state }: { state: VaultState }) {
       />
 
       {/* Specular highlight on disc */}
-      <ellipse
-        cx={cx - 5}
-        cy={cy - 5}
-        rx="5"
-        ry="3"
-        fill="oklch(0.98 0.04 88)"
-        opacity="0.55"
-      />
+      <ellipse cx={cx - 5} cy={cy - 5} rx="5" ry="3" fill="oklch(0.98 0.04 88)" opacity="0.55" />
 
       {/* Bright reactor core */}
       <motion.circle
@@ -703,9 +717,7 @@ function CenterCore({ state }: { state: VaultState }) {
           r: isOpen ? [7, 9, 7] : 7,
         }}
         transition={
-          isOpen
-            ? { repeat: Infinity, duration: 1.2, ease: "easeInOut" }
-            : { duration: 0.4 }
+          isOpen ? { repeat: Infinity, duration: 1.2, ease: "easeInOut" } : { duration: 0.4 }
         }
         filter="url(#vault-glow-strong)"
       />
@@ -792,11 +804,7 @@ function VaultDefs() {
 
 export function VaultMechanism({ state, size = 200 }: Props) {
   return (
-    <div
-      className="relative"
-      style={{ width: size, height: size }}
-      aria-hidden="true"
-    >
+    <div className="relative" style={{ width: size, height: size }} aria-hidden="true">
       {/* CSS-driven ambient glow under the SVG */}
       <motion.div
         className="absolute inset-0 rounded-full"
@@ -843,7 +851,6 @@ interface BreathingChildProps {
 function BreathingChild({ state, size }: BreathingChildProps) {
   return (
     <>
-
       <svg
         viewBox="0 0 200 200"
         width={size}

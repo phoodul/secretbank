@@ -42,7 +42,7 @@
 | M10  | RevenueCat 프로젝트 (무료 ~ $2.5K ARR)                                     | $0 초반        | 즉시                  |
 | M10  | Apple Developer Program                                                    | $99/년         | 즉시                  |
 | M10  | Google Play Console                                                        | $25 일회       | 즉시                  |
-| M13  | 도메인 (api-vault.app 등)                                                   | ~$30/년        | 즉시                  |
+| M13  | 도메인 (api-vault.app 등)                                                  | ~$30/년        | 즉시                  |
 | M13  | SignPath.io 또는 Azure Trusted Signing                                     | ~$15~50/월     | 심사 1~3일            |
 | M13  | 변호사 법률 리뷰 (Privacy/ToS)                                             | $500~1500 일회 | 1~2주                 |
 
@@ -1398,7 +1398,7 @@ test("passkey login works with virtual authenticator", async ({ browser }) => {
 | :---------------------------------- | :---------------------------------------------------------------------------------------- |
 | 번들에 Tauri-only 코드 포함 시 에러 | vite `define: { '__TAURI__': JSON.stringify(false) }` + `isTauri()` 가드 + dynamic import |
 | WebAuthn Safari / Firefox 동작 차이 | iOS Safari 16+ 필수 안내, Firefox 은 플랫폼 authenticator 제한 — fallback: OAuth          |
-| 릴레이 CORS 설정 누락               | `cors({ origin: ['https://app.api-vault.app', 'https://*.api-vault.app'] })`                |
+| 릴레이 CORS 설정 누락               | `cors({ origin: ['https://app.api-vault.app', 'https://*.api-vault.app'] })`              |
 | IndexedDB 에 enc_key 저장 위험      | 저장 금지 — 세션당 password 재입력 필수 (또는 WebAuthn PRF — Phase 2)                     |
 
 ### 검증 체크리스트

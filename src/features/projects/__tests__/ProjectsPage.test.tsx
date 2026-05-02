@@ -106,9 +106,7 @@ function routeInvokes(responses: RoutedResponses) {
       case "project_create":
         return Promise.resolve(responses.project_create ?? "new-id");
       case "project_update":
-        return Promise.resolve(
-          responses.project_update ?? makeProject({ id: "updated" }),
-        );
+        return Promise.resolve(responses.project_update ?? makeProject({ id: "updated" }));
       case "project_delete":
         return Promise.resolve(undefined);
       case "usage_list_for_project":

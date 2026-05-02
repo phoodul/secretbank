@@ -90,7 +90,12 @@ impl AuditCtx {
             payload_json,
         };
 
-        let entry = match append(input, prev.as_ref(), &signing_key, OffsetDateTime::now_utc()) {
+        let entry = match append(
+            input,
+            prev.as_ref(),
+            &signing_key,
+            OffsetDateTime::now_utc(),
+        ) {
             Ok(e) => e,
             Err(e) => {
                 warn!(error = %e, "audit: append failed");
@@ -130,7 +135,8 @@ mod tests {
     // Helpers shared across tests
     // -----------------------------------------------------------------------
 
-    async fn unlocked_vault() -> Arc<RwLock<Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync>>> {
+    async fn unlocked_vault(
+    ) -> Arc<RwLock<Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync>>> {
         let mut mock = MockVaultStorage::new("pw");
         mock.unlock(secrecy::SecretString::from("pw".to_owned()))
             .await
@@ -154,10 +160,7 @@ mod tests {
             .expect("ensure_device_keys")
     }
 
-    fn make_ctx(
-        pool: Arc<sqlx::SqlitePool>,
-        identity: Option<DeviceIdentity>,
-    ) -> AuditCtx {
+    fn make_ctx(pool: Arc<sqlx::SqlitePool>, identity: Option<DeviceIdentity>) -> AuditCtx {
         let di = Arc::new(RwLock::new(identity));
         AuditCtx::new(pool, di)
     }
@@ -188,7 +191,10 @@ mod tests {
             .fetch_one(pool.as_ref())
             .await
             .unwrap();
-        assert_eq!(count.0, 0, "no row should be inserted when identity missing");
+        assert_eq!(
+            count.0, 0,
+            "no row should be inserted when identity missing"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -238,17 +244,32 @@ mod tests {
         let ctx = make_ctx(pool.clone(), Some(identity));
 
         let e0 = ctx
-            .record(AuditActor::LocalUser, "credential.create", "credential", "c1", None)
+            .record(
+                AuditActor::LocalUser,
+                "credential.create",
+                "credential",
+                "c1",
+                None,
+            )
             .await
             .unwrap();
         let e1 = ctx
-            .record(AuditActor::LocalUser, "credential.update", "credential", "c1", None)
+            .record(
+                AuditActor::LocalUser,
+                "credential.update",
+                "credential",
+                "c1",
+                None,
+            )
             .await
             .unwrap();
 
         assert_eq!(e0.seq, 0);
         assert_eq!(e1.seq, 1);
-        assert_eq!(e1.prev_hash, e0.entry_hash, "prev_hash of e1 must equal entry_hash of e0");
+        assert_eq!(
+            e1.prev_hash, e0.entry_hash,
+            "prev_hash of e1 must equal entry_hash of e0"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -276,7 +297,12 @@ mod tests {
         // seq 는 0, 1, 2 여야 하며 모두 달라야 한다.
         let mut seqs = [e0.seq, e1.seq, e2.seq];
         seqs.sort();
-        assert_eq!(seqs, [0, 1, 2], "concurrent records must have distinct seqs: {:?}", seqs);
+        assert_eq!(
+            seqs,
+            [0, 1, 2],
+            "concurrent records must have distinct seqs: {:?}",
+            seqs
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -292,15 +318,33 @@ mod tests {
 
         let ctx = make_ctx(pool.clone(), Some(identity));
 
-        ctx.record(AuditActor::LocalUser, "credential.create", "credential", "c1", None)
-            .await
-            .unwrap();
-        ctx.record(AuditActor::LocalUser, "credential.update", "credential", "c1", None)
-            .await
-            .unwrap();
-        ctx.record(AuditActor::LocalUser, "credential.delete", "credential", "c1", None)
-            .await
-            .unwrap();
+        ctx.record(
+            AuditActor::LocalUser,
+            "credential.create",
+            "credential",
+            "c1",
+            None,
+        )
+        .await
+        .unwrap();
+        ctx.record(
+            AuditActor::LocalUser,
+            "credential.update",
+            "credential",
+            "c1",
+            None,
+        )
+        .await
+        .unwrap();
+        ctx.record(
+            AuditActor::LocalUser,
+            "credential.delete",
+            "credential",
+            "c1",
+            None,
+        )
+        .await
+        .unwrap();
 
         // Fetch all entries for this device and verify
         let repo = AuditRepo::new(pool.as_ref());

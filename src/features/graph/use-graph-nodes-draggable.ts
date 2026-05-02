@@ -1,10 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
 
-const STORAGE_KEY = 'apivault:graph:nodesDraggable';
+const STORAGE_KEY = "apivault:graph:nodesDraggable";
 
 function readStorage(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'true';
+    return localStorage.getItem(STORAGE_KEY) === "true";
   } catch {
     return false;
   }

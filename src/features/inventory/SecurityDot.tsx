@@ -39,12 +39,7 @@ export function SecurityDot({ score, size = "sm", className }: SecurityDotProps)
             role="img"
             aria-label={accessibleName}
             data-level={score.level}
-            className={cn(
-              "inline-block shrink-0 rounded-full",
-              sizeClass,
-              colorClass,
-              className,
-            )}
+            className={cn("inline-block shrink-0 rounded-full", sizeClass, colorClass, className)}
           />
         </TooltipTrigger>
         <TooltipContent side="top" align="start" className="max-w-xs">

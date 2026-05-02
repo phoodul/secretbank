@@ -6,8 +6,8 @@
 use crate::{Auth, ConnectorError, RemoteKey};
 use reqwest::{header::LINK, Client};
 use serde::Deserialize;
-use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 use tracing::warn;
 
 pub(crate) const GITHUB_API_BASE: &str = "https://api.github.com";
@@ -40,7 +40,10 @@ fn parse_next_link(header_value: &str) -> Option<String> {
     for part in header_value.split(',') {
         let part = part.trim();
         if let Some((url_part, rel_part)) = part.split_once(';') {
-            let url = url_part.trim().trim_start_matches('<').trim_end_matches('>');
+            let url = url_part
+                .trim()
+                .trim_start_matches('<')
+                .trim_end_matches('>');
             let rel = rel_part.trim();
             if rel == r#"rel="next""# {
                 return Some(url.to_string());
@@ -67,16 +70,20 @@ fn parse_retry_after(headers: &reqwest::header::HeaderMap) -> Option<u64> {
 
 fn map_alert(alert: AlertResponse, owner: &str, repo: &str) -> Option<RemoteKey> {
     let number = alert.number;
-    let first_detected = alert
-        .created_at
-        .as_deref()
-        .and_then(|s| match OffsetDateTime::parse(s, &Rfc3339) {
-            Ok(dt) => Some(dt),
-            Err(_) => {
-                warn!(alert_number = number, "failed to parse alert created_at timestamp");
-                None
-            }
-        });
+    let first_detected =
+        alert
+            .created_at
+            .as_deref()
+            .and_then(|s| match OffsetDateTime::parse(s, &Rfc3339) {
+                Ok(dt) => Some(dt),
+                Err(_) => {
+                    warn!(
+                        alert_number = number,
+                        "failed to parse alert created_at timestamp"
+                    );
+                    None
+                }
+            });
 
     Some(RemoteKey {
         id: format!("{}-{}-{}", owner, repo, number),
@@ -121,7 +128,10 @@ pub(crate) async fn list_alerts_with_base(
 
     loop {
         if pages >= MAX_PAGES {
-            warn!(owner, repo, "reached max pages ({MAX_PAGES}) for secret scanning alerts");
+            warn!(
+                owner,
+                repo, "reached max pages ({MAX_PAGES}) for secret scanning alerts"
+            );
             break;
         }
 
@@ -358,9 +368,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path("/repos/owner/repo/secret-scanning/alerts"))
-            .respond_with(
-                ResponseTemplate::new(429).insert_header("Retry-After", "60"),
-            )
+            .respond_with(ResponseTemplate::new(429).insert_header("Retry-After", "60"))
             .mount(&server)
             .await;
 
@@ -372,7 +380,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            ConnectorError::RateLimited { retry_after_secs: Some(60) }
+            ConnectorError::RateLimited {
+                retry_after_secs: Some(60)
+            }
         ));
     }
 
@@ -393,7 +403,9 @@ mod tests {
         // Auth::Bearer
         let err = list_alerts_with_base(
             &client,
-            &Auth::Bearer { token: "pat".to_owned() },
+            &Auth::Bearer {
+                token: "pat".to_owned(),
+            },
             &server.uri(),
             "owner",
             "repo",

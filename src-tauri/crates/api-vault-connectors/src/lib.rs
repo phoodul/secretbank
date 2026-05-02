@@ -117,9 +117,7 @@ pub mod testing {
 mod tests {
     use super::testing::MockConnector;
     use super::*;
-    use api_vault_core::{
-        Incident, IncidentId, IncidentSeverity, IncidentSource,
-    };
+    use api_vault_core::{Incident, IncidentId, IncidentSeverity, IncidentSource};
     use time::OffsetDateTime;
 
     fn make_incident() -> Incident {

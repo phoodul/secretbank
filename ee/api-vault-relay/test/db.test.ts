@@ -6,10 +6,7 @@
  * @cloudflare/vitest-pool-workers 는 wrangler.toml 의 migrations_dir 을 자동으로
  * 적용하지 않으므로 setup 단계에서 applyD1Migrations 를 직접 호출한다.
  */
-import {
-  env,
-  applyD1Migrations,
-} from "cloudflare:test";
+import { env, applyD1Migrations } from "cloudflare:test";
 import { beforeAll, describe, it, expect } from "vitest";
 import type { Env } from "../src/env";
 
@@ -24,9 +21,9 @@ beforeAll(async () => {
 
 describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () => {
   it("user 테이블에 auth/billing 컬럼이 모두 존재한다", async () => {
-    const result = await typedEnv.DB.prepare(
-      "SELECT name FROM pragma_table_info('user')",
-    ).all<{ name: string }>();
+    const result = await typedEnv.DB.prepare("SELECT name FROM pragma_table_info('user')").all<{
+      name: string;
+    }>();
 
     const cols = (result.results ?? []).map((r) => r.name).sort();
     // legacy + new auth columns
@@ -69,9 +66,7 @@ describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () 
     const userId = "user_secval_001";
     const now = Date.now();
 
-    await typedEnv.DB.prepare(
-      `INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`,
-    )
+    await typedEnv.DB.prepare(`INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`)
       .bind(userId, "secval1@example.com", now)
       .run();
 
@@ -111,9 +106,7 @@ describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () 
     const userId = "user_sync_001";
     const now = Date.now();
 
-    await typedEnv.DB.prepare(
-      `INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`,
-    )
+    await typedEnv.DB.prepare(`INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`)
       .bind(userId, "carol@example.com", now)
       .run();
 
@@ -124,9 +117,7 @@ describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () 
       .bind(userId, new Uint8Array([0xab, 0xcd, 0xef]), now, now)
       .run();
 
-    const row = await typedEnv.DB.prepare(
-      `SELECT version FROM encrypted_doc WHERE user_id = ?`,
-    )
+    const row = await typedEnv.DB.prepare(`SELECT version FROM encrypted_doc WHERE user_id = ?`)
       .bind(userId)
       .first<{ version: number }>();
     expect(row?.version).toBe(1);
@@ -145,9 +136,7 @@ describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () 
     const userId = "user_test_001";
     const now = Date.now();
 
-    await typedEnv.DB.prepare(
-      `INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`,
-    )
+    await typedEnv.DB.prepare(`INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`)
       .bind(userId, "alice@example.com", now)
       .run();
 
@@ -158,9 +147,7 @@ describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () 
       .bind("pk_test_001", userId, new Uint8Array([1, 2, 3, 4]), new Uint8Array([5, 6, 7, 8]), now)
       .run();
 
-    const row = await typedEnv.DB.prepare(
-      `SELECT user_id, sign_count FROM passkey WHERE id = ?`,
-    )
+    const row = await typedEnv.DB.prepare(`SELECT user_id, sign_count FROM passkey WHERE id = ?`)
       .bind("pk_test_001")
       .first<{ user_id: string; sign_count: number }>();
 
@@ -172,9 +159,7 @@ describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () 
     const userId = "user_test_002";
     const now = Date.now();
 
-    await typedEnv.DB.prepare(
-      `INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`,
-    )
+    await typedEnv.DB.prepare(`INSERT INTO user (id, email, created_at) VALUES (?, ?, ?)`)
       .bind(userId, "bob@example.com", now)
       .run();
 
@@ -204,4 +189,5 @@ describe("D1 schema (0001_init + 0002_auth + 0003_sync + 0004_sync_values)", () 
 // ─────────────────────────────────────────────────────────────
 // Type used in the env cast (added by vitest.config.ts setup)
 // ─────────────────────────────────────────────────────────────
-type D1MigrationOptions = Parameters<typeof applyD1Migrations>[1] extends Array<infer T> ? T : never;
+type D1MigrationOptions =
+  Parameters<typeof applyD1Migrations>[1] extends Array<infer T> ? T : never;

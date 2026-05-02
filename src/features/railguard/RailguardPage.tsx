@@ -68,9 +68,7 @@ export function RailguardPage() {
   );
 
   // Selected rule kinds (all checked by default).
-  const [selectedRules, setSelectedRules] = useState<Set<RuleKind>>(
-    () => new Set(ALL_RULE_KINDS),
-  );
+  const [selectedRules, setSelectedRules] = useState<Set<RuleKind>>(() => new Set(ALL_RULE_KINDS));
 
   // Advanced accordion.
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -146,11 +144,12 @@ export function RailguardPage() {
 
   const isPreviewing = state.phase === "previewing";
   const isApplying = state.phase === "applying";
-  const previews = state.phase === "previewed" || state.phase === "applying" || state.phase === "applied"
-    ? state.previews
-    : state.phase === "error" && state.previews
+  const previews =
+    state.phase === "previewed" || state.phase === "applying" || state.phase === "applied"
       ? state.previews
-      : null;
+      : state.phase === "error" && state.previews
+        ? state.previews
+        : null;
   const applied = state.phase === "applied" ? state.applied : null;
   const errorMsg = state.phase === "error" ? state.message : null;
 
@@ -254,9 +253,7 @@ export function RailguardPage() {
       )}
 
       {/* Preview results */}
-      {previews !== null && previews.length > 0 && (
-        <RuleFilesPreview previews={previews} />
-      )}
+      {previews !== null && previews.length > 0 && <RuleFilesPreview previews={previews} />}
 
       {/* Apply mode selector + action buttons */}
       <div className="flex flex-wrap items-center gap-3">
@@ -299,16 +296,14 @@ export function RailguardPage() {
       {/* Applied results */}
       {applied !== null && applied.length > 0 && (
         <div className="flex flex-col gap-1" data-testid="railguard-applied-list">
-          <p className="text-sm font-medium text-green-600">{t("railguard.applied.title", { count: applied.length })}</p>
+          <p className="text-sm font-medium text-green-600">
+            {t("railguard.applied.title", { count: applied.length })}
+          </p>
           <ul className="list-disc list-inside space-y-0.5">
             {applied.map((a) => (
               <li key={a.kind} className="font-mono text-xs text-muted-foreground">
                 {a.path}
-                {a.backup_path && (
-                  <span className="ml-2 text-amber-600">
-                    → {a.backup_path}
-                  </span>
-                )}
+                {a.backup_path && <span className="ml-2 text-amber-600">→ {a.backup_path}</span>}
               </li>
             ))}
           </ul>

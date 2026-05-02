@@ -41,11 +41,7 @@ interface AuthStatusDto {
 // Context shape
 // ---------------------------------------------------------------------------
 
-export type SyncStatus =
-  | "initializing"
-  | "ready"
-  | "offline_only"
-  | "error";
+export type SyncStatus = "initializing" | "ready" | "offline_only" | "error";
 
 export interface SyncContextValue {
   doc: Y.Doc;

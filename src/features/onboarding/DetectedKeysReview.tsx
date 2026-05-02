@@ -24,7 +24,11 @@ export interface DetectedKeysReviewProps {
   scannedPath: string;
   /** Existing credentials, for duplicate detection via hash_hint. */
   existingCredentials: CredentialSummary[];
-  onImportComplete?: (summary: { projectId: string | null; projectName: string; count: number }) => void;
+  onImportComplete?: (summary: {
+    projectId: string | null;
+    projectName: string;
+    count: number;
+  }) => void;
 }
 
 function folderNameFromPath(p: string): string {
@@ -207,9 +211,7 @@ export function DetectedKeysReview({
 
   const projectName = folderNameFromPath(scannedPath);
   const selectedCount = decisions.size;
-  const replaceCount = [...decisions.values()].filter(
-    (d) => d !== "new",
-  ).length;
+  const replaceCount = [...decisions.values()].filter((d) => d !== "new").length;
   const newCount = selectedCount - replaceCount;
   const isImporting = state.phase === "importing";
 
@@ -246,9 +248,7 @@ export function DetectedKeysReview({
     });
     if (result) {
       if (result.credentialsReplaced > 0 && result.credentialsCreated === 0) {
-        toast.success(
-          t("onboarding.toast.replacedSummary", { count: result.credentialsReplaced }),
-        );
+        toast.success(t("onboarding.toast.replacedSummary", { count: result.credentialsReplaced }));
       } else if (result.credentialsReplaced > 0) {
         toast.success(
           t("onboarding.importMixed", {
@@ -362,7 +362,9 @@ export function DetectedKeysReview({
               />
               <div role="cell" className="flex items-center gap-2">
                 <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
-                <span className="text-xs">{preset?.display_name ?? t("onboarding.unknownIssuer")}</span>
+                <span className="text-xs">
+                  {preset?.display_name ?? t("onboarding.unknownIssuer")}
+                </span>
               </div>
               <span role="cell" className="truncate font-mono text-xs">
                 {dk.env_var_name ?? <span className="text-muted-foreground">—</span>}
@@ -400,10 +402,7 @@ export function DetectedKeysReview({
               {/* Replace / Add-as-new radio — only shown for rotated rows that are selected */}
               <div role="cell" className="flex items-center gap-2">
                 {isRotated && checked ? (
-                  <div
-                    className="flex gap-2 text-[10px]"
-                    data-testid={`rotation-mode-${idx}`}
-                  >
+                  <div className="flex gap-2 text-[10px]" data-testid={`rotation-mode-${idx}`}>
                     <label className="flex cursor-pointer items-center gap-1">
                       <input
                         type="radio"
@@ -440,28 +439,26 @@ export function DetectedKeysReview({
 
       {/* RAILGUARD CTA — shown only when ≥1 rule file is missing (T068). */}
       {railguardMissing ? (
-      <div
-        className="flex items-center gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm"
-        data-testid="railguard-cta"
-      >
-        <Wand2 className="size-4 shrink-0 text-blue-500" aria-hidden />
-        <div className="flex-1">
-          <span className="font-medium text-blue-700 dark:text-blue-300">
-            {t("onboarding.railguardCta.title")}
-          </span>{" "}
-          <span className="text-muted-foreground">{t("onboarding.railguardCta.body")}</span>
-        </div>
-        <button
-          type="button"
-          className="shrink-0 text-xs font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-          onClick={() =>
-            navigate(`/railguard?projectPath=${encodeURIComponent(scannedPath)}`)
-          }
-          data-testid="railguard-cta-link"
+        <div
+          className="flex items-center gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm"
+          data-testid="railguard-cta"
         >
-          {t("onboarding.railguardCta.action")} →
-        </button>
-      </div>
+          <Wand2 className="size-4 shrink-0 text-blue-500" aria-hidden />
+          <div className="flex-1">
+            <span className="font-medium text-blue-700 dark:text-blue-300">
+              {t("onboarding.railguardCta.title")}
+            </span>{" "}
+            <span className="text-muted-foreground">{t("onboarding.railguardCta.body")}</span>
+          </div>
+          <button
+            type="button"
+            className="shrink-0 text-xs font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+            onClick={() => navigate(`/railguard?projectPath=${encodeURIComponent(scannedPath)}`)}
+            data-testid="railguard-cta-link"
+          >
+            {t("onboarding.railguardCta.action")} →
+          </button>
+        </div>
       ) : null}
     </div>
   );

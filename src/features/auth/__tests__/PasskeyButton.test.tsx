@@ -14,10 +14,7 @@ vi.mock("@simplewebauthn/browser", () => ({
 }));
 
 import { invoke } from "@tauri-apps/api/core";
-import {
-  startAuthentication,
-  startRegistration,
-} from "@simplewebauthn/browser";
+import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
 
 import { PasskeyButton } from "../PasskeyButton";
 
@@ -38,13 +35,7 @@ describe("PasskeyButton", () => {
   });
 
   it("disabled when email is blank", () => {
-    render(
-      <PasskeyButton
-        email=""
-        onSuccess={vi.fn()}
-        onError={vi.fn()}
-      />,
-    );
+    render(<PasskeyButton email="" onSuccess={vi.fn()} onError={vi.fn()} />);
     expect(screen.getByRole("button")).toBeDisabled();
   });
 
@@ -67,13 +58,7 @@ describe("PasskeyButton", () => {
 
     const onSuccess = vi.fn();
     const onError = vi.fn();
-    render(
-      <PasskeyButton
-        email="alice@example.com"
-        onSuccess={onSuccess}
-        onError={onError}
-      />,
-    );
+    render(<PasskeyButton email="alice@example.com" onSuccess={onSuccess} onError={onError} />);
 
     await userEvent.click(screen.getByRole("button"));
 
@@ -116,13 +101,7 @@ describe("PasskeyButton", () => {
     mockStartReg.mockResolvedValue({ id: "raw-reg" } as never);
 
     const onSuccess = vi.fn();
-    render(
-      <PasskeyButton
-        email="new@example.com"
-        onSuccess={onSuccess}
-        onError={vi.fn()}
-      />,
-    );
+    render(<PasskeyButton email="new@example.com" onSuccess={onSuccess} onError={vi.fn()} />);
 
     await userEvent.click(screen.getByRole("button"));
 
@@ -145,13 +124,7 @@ describe("PasskeyButton", () => {
 
     const onError = vi.fn();
     const onSuccess = vi.fn();
-    render(
-      <PasskeyButton
-        email="alice@example.com"
-        onSuccess={onSuccess}
-        onError={onError}
-      />,
-    );
+    render(<PasskeyButton email="alice@example.com" onSuccess={onSuccess} onError={onError} />);
 
     await userEvent.click(screen.getByRole("button"));
 
@@ -172,13 +145,7 @@ describe("PasskeyButton", () => {
       throw new Error(`unexpected command: ${cmd}`);
     });
 
-    render(
-      <PasskeyButton
-        email="alice@example.com"
-        onSuccess={vi.fn()}
-        onError={vi.fn()}
-      />,
-    );
+    render(<PasskeyButton email="alice@example.com" onSuccess={vi.fn()} onError={vi.fn()} />);
 
     const button = screen.getByRole("button");
     await userEvent.click(button);

@@ -19,9 +19,9 @@
  * from the dynamic `import()` of the module, not from the function itself.
  */
 
-import { usePlatform } from '@/lib/platform';
+import { usePlatform } from "@/lib/platform";
 
-export type MobilePhase = 'loading' | 'mobile' | 'desktop';
+export type MobilePhase = "loading" | "mobile" | "desktop";
 
 /**
  * Returns 'loading' while the async OS check is pending (first frame only
@@ -33,7 +33,7 @@ export type MobilePhase = 'loading' | 'mobile' | 'desktop';
 export function useIsMobile(): MobilePhase {
   const platform = usePlatform();
 
-  if (platform === 'mobile') return 'mobile';
+  if (platform === "mobile") return "mobile";
   // 'web' is treated as desktop for graph purposes
-  return 'desktop';
+  return "desktop";
 }

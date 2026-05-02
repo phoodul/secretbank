@@ -1,8 +1,4 @@
-import {
-  env,
-  createExecutionContext,
-  waitOnExecutionContext,
-} from "cloudflare:test";
+import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, vi } from "vitest";
 import worker from "../src/index";
 import type { Env } from "../src/env";
@@ -14,14 +10,11 @@ describe("POST /integrations/github/installation-token", () => {
   // Authorization 헤더 없음 → 401
   it("returns 401 when Authorization header is missing", async () => {
     const ctx = createExecutionContext();
-    const req = new Request(
-      "http://localhost/integrations/github/installation-token",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ installation_id: 12345 }),
-      },
-    );
+    const req = new Request("http://localhost/integrations/github/installation-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ installation_id: 12345 }),
+    });
     const resp = await worker.fetch(req, typedEnv, ctx);
     await waitOnExecutionContext(ctx);
 
@@ -33,17 +26,14 @@ describe("POST /integrations/github/installation-token", () => {
   // installation_id 누락 → 400
   it("returns 400 when installation_id is missing", async () => {
     const ctx = createExecutionContext();
-    const req = new Request(
-      "http://localhost/integrations/github/installation-token",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer test-token",
-        },
-        body: JSON.stringify({}),
+    const req = new Request("http://localhost/integrations/github/installation-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer test-token",
       },
-    );
+      body: JSON.stringify({}),
+    });
     const resp = await worker.fetch(req, typedEnv, ctx);
     await waitOnExecutionContext(ctx);
 
@@ -55,17 +45,14 @@ describe("POST /integrations/github/installation-token", () => {
   // installation_id 가 숫자 아님 → 400
   it("returns 400 when installation_id is not a number", async () => {
     const ctx = createExecutionContext();
-    const req = new Request(
-      "http://localhost/integrations/github/installation-token",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer test-token",
-        },
-        body: JSON.stringify({ installation_id: "not-a-number" }),
+    const req = new Request("http://localhost/integrations/github/installation-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer test-token",
       },
-    );
+      body: JSON.stringify({ installation_id: "not-a-number" }),
+    });
     const resp = await worker.fetch(req, typedEnv, ctx);
     await waitOnExecutionContext(ctx);
 
@@ -98,17 +85,14 @@ describe("POST /integrations/github/installation-token", () => {
     vi.stubGlobal("fetch", fetchSpy);
 
     const ctx = createExecutionContext();
-    const req = new Request(
-      "http://localhost/integrations/github/installation-token",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer test-token",
-        },
-        body: JSON.stringify({ installation_id: 99999 }),
+    const req = new Request("http://localhost/integrations/github/installation-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer test-token",
       },
-    );
+      body: JSON.stringify({ installation_id: 99999 }),
+    });
     const resp = await worker.fetch(req, typedEnv, ctx);
     await waitOnExecutionContext(ctx);
 
@@ -130,17 +114,14 @@ describe("POST /integrations/github/installation-token", () => {
   it("returns error status when GitHub App private key is invalid", async () => {
     // env.GITHUB_APP_PRIVATE_KEY 가 빈 문자열이므로 JWT 서명 실패 → 500 응답
     const ctx = createExecutionContext();
-    const req = new Request(
-      "http://localhost/integrations/github/installation-token",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer test-token",
-        },
-        body: JSON.stringify({ installation_id: 77777 }),
+    const req = new Request("http://localhost/integrations/github/installation-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer test-token",
       },
-    );
+      body: JSON.stringify({ installation_id: 77777 }),
+    });
     const resp = await worker.fetch(req, typedEnv, ctx);
     await waitOnExecutionContext(ctx);
 

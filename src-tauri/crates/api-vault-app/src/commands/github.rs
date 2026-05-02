@@ -8,10 +8,7 @@
 //! used for GitHub API calls is a placeholder `"stub"` until the Cloudflare Workers
 //! relay is deployed (T061).
 
-use api_vault_connectors::{
-    github::GithubConnector,
-    Auth, RemoteKey, RepoRef,
-};
+use api_vault_connectors::{github::GithubConnector, Auth, RemoteKey, RepoRef};
 use api_vault_storage::vault::{ExposeSecret, SecretBytes, VaultError};
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -25,8 +22,7 @@ use crate::entitlement::EntitlementError;
 // Constants
 // ---------------------------------------------------------------------------
 
-pub const GITHUB_APP_INSTALL_URL: &str =
-    "https://github.com/apps/api-vault/installations/new";
+pub const GITHUB_APP_INSTALL_URL: &str = "https://github.com/apps/api-vault/installations/new";
 
 const VAULT_KEY: &str = "settings/github_installations";
 
@@ -163,7 +159,10 @@ pub async fn github_save_installation(
 
     let now_ms = OffsetDateTime::now_utc().unix_timestamp() * 1000;
 
-    if let Some(existing) = list.iter_mut().find(|e| e.installation_id == installation_id) {
+    if let Some(existing) = list
+        .iter_mut()
+        .find(|e| e.installation_id == installation_id)
+    {
         existing.installed_at = now_ms;
     } else {
         list.push(GithubInstallationStored {
@@ -262,11 +261,16 @@ pub async fn github_scan_repo(
     state: State<'_, AppContext>,
 ) -> Result<Vec<RemoteKey>, GithubCommandError> {
     // Pro gate: Secret Scanning is a Pro-only feature.
-    crate::entitlement::require_pro(&state).await.map_err(GithubCommandError::from)?;
+    crate::entitlement::require_pro(&state)
+        .await
+        .map_err(GithubCommandError::from)?;
 
     // Verify the installation exists.
     let list = read_installations(&state).await?;
-    if !list.iter().any(|e| e.installation_id == input.installation_id) {
+    if !list
+        .iter()
+        .any(|e| e.installation_id == input.installation_id)
+    {
         return Err(GithubCommandError::Internal {
             message: format!("installation {} not found", input.installation_id),
         });

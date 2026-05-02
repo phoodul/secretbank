@@ -53,13 +53,7 @@ export interface ProjectDetailProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function ProjectDetail({
-  open,
-  project,
-  onClose,
-  onEdit,
-  onDeleted,
-}: ProjectDetailProps) {
+export function ProjectDetail({ open, project, onClose, onEdit, onDeleted }: ProjectDetailProps) {
   const { t } = useTranslation("common");
   // Loading 은 effect 내 동기 setState 를 피하기 위해 파생값으로 계산한다.
   // (react-hooks/set-state-in-effect 규칙 — CredentialDetail 과 동일 패턴)

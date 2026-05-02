@@ -79,7 +79,11 @@ describe("SubscriptionSection", () => {
     mockInvoke.mockResolvedValueOnce({ tier: "free", pro_until: null, from_cache: false });
     // After setDev: pro
     mockInvoke.mockResolvedValueOnce(undefined); // entitlement_set_dev
-    mockInvoke.mockResolvedValueOnce({ tier: "pro", pro_until: Date.now() + 86400000, from_cache: false }); // refresh
+    mockInvoke.mockResolvedValueOnce({
+      tier: "pro",
+      pro_until: Date.now() + 86400000,
+      from_cache: false,
+    }); // refresh
 
     const user = userEvent.setup();
     renderSection();

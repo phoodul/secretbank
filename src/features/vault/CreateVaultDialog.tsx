@@ -149,11 +149,7 @@ export function CreateVaultDialog({ open, onOpenChange, onSuccess }: CreateVault
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className={cn(
-          phase.kind === "issued" ? "sm:max-w-2xl" : "sm:max-w-md",
-        )}
-      >
+      <DialogContent className={cn(phase.kind === "issued" ? "sm:max-w-2xl" : "sm:max-w-md")}>
         {phase.kind !== "issued" && (
           <>
             <DialogHeader>
@@ -205,11 +201,7 @@ export function CreateVaultDialog({ open, onOpenChange, onSuccess }: CreateVault
                 </div>
 
                 {/* Charter 모드 선택 */}
-                <CharterModeSelector
-                  value={mode}
-                  onChange={setMode}
-                  disabled={submitting}
-                />
+                <CharterModeSelector value={mode} onChange={setMode} disabled={submitting} />
 
                 {fieldError && (
                   <p className="text-xs text-destructive" role="alert" id="passphrase-error">
@@ -306,9 +298,7 @@ function ModeRadio({
       htmlFor={id}
       className={cn(
         "flex cursor-pointer items-start gap-2 rounded border border-transparent px-2 py-1.5 transition-colors",
-        checked
-          ? "border-vault-gold/60 bg-vault-gold/5"
-          : "hover:border-vault-gold/30",
+        checked ? "border-vault-gold/60 bg-vault-gold/5" : "hover:border-vault-gold/30",
         disabled && "cursor-not-allowed opacity-50",
       )}
     >
@@ -324,10 +314,7 @@ function ModeRadio({
       />
       <div className="flex flex-col">
         <span
-          className={cn(
-            "text-sm font-medium",
-            danger ? "text-vault-danger" : "text-foreground",
-          )}
+          className={cn("text-sm font-medium", danger ? "text-vault-danger" : "text-foreground")}
         >
           {label}
         </span>

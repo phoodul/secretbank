@@ -52,11 +52,11 @@ fn lexical_in_range(version: &str, range: &str) -> bool {
 
 #[derive(Debug, Clone)]
 enum Bound {
-    Ge(String),  // >=
-    Gt(String),  // >
-    Le(String),  // <=
-    Lt(String),  // <
-    Eq(String),  // =
+    Ge(String), // >=
+    Gt(String), // >
+    Le(String), // <=
+    Lt(String), // <
+    Eq(String), // =
 }
 
 impl Bound {
@@ -110,7 +110,9 @@ fn parse_bounds(range: &str) -> Vec<Bound> {
         } else if let Some(rest) = token.strip_prefix('<') {
             Some(Bound::Lt(rest.to_string()))
         } else {
-            token.strip_prefix('=').map(|rest| Bound::Eq(rest.to_string()))
+            token
+                .strip_prefix('=')
+                .map(|rest| Bound::Eq(rest.to_string()))
         };
         if let Some(b) = parsed {
             // "<*" — fixed 미지정. 무시 (open upper bound = always satisfied).
@@ -154,8 +156,16 @@ mod tests {
 
     #[test]
     fn cargo_in_range() {
-        assert!(version_in_range("1.2.3", ">=1.0.0 <2.0.0", Ecosystem::Cargo));
-        assert!(!version_in_range("0.9.0", ">=1.0.0 <2.0.0", Ecosystem::Cargo));
+        assert!(version_in_range(
+            "1.2.3",
+            ">=1.0.0 <2.0.0",
+            Ecosystem::Cargo
+        ));
+        assert!(!version_in_range(
+            "0.9.0",
+            ">=1.0.0 <2.0.0",
+            Ecosystem::Cargo
+        ));
     }
 
     #[test]
@@ -174,7 +184,11 @@ mod tests {
     #[test]
     fn unparseable_version_is_conservative() {
         // 못 읽으면 매칭 (false-negative 방지)
-        assert!(version_in_range("not-a-version", ">=0 <1.0.4", Ecosystem::Npm));
+        assert!(version_in_range(
+            "not-a-version",
+            ">=0 <1.0.4",
+            Ecosystem::Npm
+        ));
     }
 
     #[test]

@@ -1,10 +1,6 @@
 // Mirror of Rust types from railguard module.
 
-export type RuleKind =
-  | "cursor_rules"
-  | "windsurf_rules"
-  | "claude_md"
-  | "copilot_instructions";
+export type RuleKind = "cursor_rules" | "windsurf_rules" | "claude_md" | "copilot_instructions";
 
 export type PreviewAction = "create" | "update" | "skip";
 

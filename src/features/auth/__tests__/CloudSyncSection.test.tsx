@@ -47,15 +47,11 @@ describe("CloudSyncSection", () => {
     mockInvoke.mockResolvedValue(null);
     renderSection();
 
-    await waitFor(() =>
-      expect(screen.getByText(/Not signed in/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/Not signed in/i)).toBeInTheDocument());
     const button = screen.getByRole("button", { name: /^Sign in$/i });
     await userEvent.click(button);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("location")).toHaveTextContent("/auth/sign-in"),
-    );
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/auth/sign-in"));
   });
 
   it("signed in: shows truncated user_id and Sign out button", async () => {
@@ -65,15 +61,9 @@ describe("CloudSyncSection", () => {
     });
     renderSection();
 
-    await waitFor(() =>
-      expect(screen.getByText(/Signed in/i)).toBeInTheDocument(),
-    );
-    expect(
-      screen.getByText(/User: usr_alice_xx…/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Sign out/i }),
-    ).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Signed in/i)).toBeInTheDocument());
+    expect(screen.getByText(/User: usr_alice_xx…/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sign out/i })).toBeInTheDocument();
   });
 
   it("signed in: clicking Sign out calls auth_signout and clears UI", async () => {
@@ -89,14 +79,10 @@ describe("CloudSyncSection", () => {
 
     renderSection();
 
-    await waitFor(() =>
-      expect(screen.getByText(/Signed in/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/Signed in/i)).toBeInTheDocument());
     await userEvent.click(screen.getByRole("button", { name: /Sign out/i }));
 
-    await waitFor(() =>
-      expect(screen.getByText(/Not signed in/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/Not signed in/i)).toBeInTheDocument());
     expect(mockInvoke).toHaveBeenCalledWith("auth_signout");
   });
 });

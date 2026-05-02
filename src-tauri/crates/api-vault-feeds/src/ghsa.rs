@@ -4,8 +4,8 @@ use std::time::Duration;
 
 use governor::{DefaultDirectRateLimiter, Quota, RateLimiter};
 use reqwest::header::{ACCEPT, LINK};
-use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -116,7 +116,10 @@ fn parse_next_link(header_value: &str) -> Option<String> {
     for part in header_value.split(',') {
         let part = part.trim();
         if let Some((url_part, rel_part)) = part.split_once(';') {
-            let url = url_part.trim().trim_start_matches('<').trim_end_matches('>');
+            let url = url_part
+                .trim()
+                .trim_start_matches('<')
+                .trim_end_matches('>');
             let rel = rel_part.trim();
             if rel == r#"rel="next""# {
                 return Some(url.to_string());
@@ -320,10 +323,7 @@ impl GhsaClient {
                         .and_then(|v| v.to_str().ok())
                         .unwrap_or("unknown server error")
                         .to_string();
-                    return Err(GhsaError::Server {
-                        status: s,
-                        message,
-                    });
+                    return Err(GhsaError::Server { status: s, message });
                 }
                 s => {
                     let message = resp
@@ -332,10 +332,7 @@ impl GhsaClient {
                         .and_then(|v| v.to_str().ok())
                         .unwrap_or("client error")
                         .to_string();
-                    return Err(GhsaError::Client {
-                        status: s,
-                        message,
-                    });
+                    return Err(GhsaError::Client { status: s, message });
                 }
             }
         }
@@ -442,8 +439,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path("/"))
             .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(serde_json::json!([make_advisory(1)])),
+                ResponseTemplate::new(200).set_body_json(serde_json::json!([make_advisory(1)])),
             )
             .mount(&mock_server)
             .await;
@@ -474,10 +470,7 @@ mod tests {
             .and(query_param_is_missing("after"))
             .respond_with(
                 ResponseTemplate::new(200)
-                    .insert_header(
-                        "Link",
-                        format!(r#"<{}>; rel="next""#, page2_url),
-                    )
+                    .insert_header("Link", format!(r#"<{}>; rel="next""#, page2_url))
                     .set_body_json(serde_json::json!([make_advisory(1)])),
             )
             .mount(&mock_server)
@@ -487,8 +480,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path("/page2"))
             .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(serde_json::json!([make_advisory(2)])),
+                ResponseTemplate::new(200).set_body_json(serde_json::json!([make_advisory(2)])),
             )
             .mount(&mock_server)
             .await;
@@ -508,9 +500,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path("/"))
-            .respond_with(
-                ResponseTemplate::new(429).insert_header("Retry-After", "60"),
-            )
+            .respond_with(ResponseTemplate::new(429).insert_header("Retry-After", "60"))
             .mount(&mock_server)
             .await;
 

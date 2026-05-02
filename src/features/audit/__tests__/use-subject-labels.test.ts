@@ -17,9 +17,7 @@ describe("resolveSubjectLabel", () => {
   });
 
   it("shows other non-ulid literal ids as-is", () => {
-    expect(resolveSubjectLabel("settings", "auto-lock", EMPTY_MAPS)).toBe(
-      "settings:auto-lock",
-    );
+    expect(resolveSubjectLabel("settings", "auto-lock", EMPTY_MAPS)).toBe("settings:auto-lock");
     expect(resolveSubjectLabel("incident", "feed", EMPTY_MAPS)).toBe("incident:feed");
   });
 
@@ -34,9 +32,7 @@ describe("resolveSubjectLabel", () => {
 
   it("falls back to credential:<short-ulid> when no name is registered", () => {
     const ulid = "01HXY7Q3X8WJZ5VK0NMA2C9F3R";
-    expect(resolveSubjectLabel("credential", ulid, EMPTY_MAPS)).toBe(
-      "credential:2C9F3R",
-    );
+    expect(resolveSubjectLabel("credential", ulid, EMPTY_MAPS)).toBe("credential:2C9F3R");
   });
 
   it("returns 'name (…ulid)' when the credential name is known", () => {
@@ -45,9 +41,7 @@ describe("resolveSubjectLabel", () => {
       credentials: new Map([[ulid, "OpenAI Prod"]]),
       projects: new Map<string, string>(),
     };
-    expect(resolveSubjectLabel("credential", ulid, maps)).toBe(
-      "OpenAI Prod (…2C9F3R)",
-    );
+    expect(resolveSubjectLabel("credential", ulid, maps)).toBe("OpenAI Prod (…2C9F3R)");
   });
 
   it("returns 'name (…ulid)' when the project name is known", () => {
@@ -56,9 +50,7 @@ describe("resolveSubjectLabel", () => {
       credentials: new Map<string, string>(),
       projects: new Map([[ulid, "checkout-svc"]]),
     };
-    expect(resolveSubjectLabel("project", ulid, maps)).toBe(
-      "checkout-svc (…2C9F3R)",
-    );
+    expect(resolveSubjectLabel("project", ulid, maps)).toBe("checkout-svc (…2C9F3R)");
   });
 
   // ---------------------------------------------------------------------------

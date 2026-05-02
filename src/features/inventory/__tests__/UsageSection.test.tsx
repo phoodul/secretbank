@@ -80,10 +80,7 @@ function routeInvokes(routes: Routes = {}) {
   });
 }
 
-function renderSection(props: {
-  usages: Usage[];
-  onChanged?: () => void;
-}) {
+function renderSection(props: { usages: Usage[]; onChanged?: () => void }) {
   const onChanged = props.onChanged ?? vi.fn();
   const result = render(
     <UsageSection credentialId={CRED_ID} usages={props.usages} onChanged={onChanged} />,

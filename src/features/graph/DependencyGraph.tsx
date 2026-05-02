@@ -1,6 +1,6 @@
-import '@xyflow/react/dist/style.css';
+import "@xyflow/react/dist/style.css";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Background,
   Controls,
@@ -12,16 +12,16 @@ import {
   useReactFlow,
   useViewport,
   type Node,
-} from '@xyflow/react';
-import { useTranslation } from 'react-i18next';
+} from "@xyflow/react";
+import { useTranslation } from "react-i18next";
 
-import { Button } from '@/components/ui/button';
-import { toReactFlowElements, type GraphNodeData } from './adapter';
-import type { LayoutDirection } from './layout';
-import { nodeTypes } from './node-types';
-import type { GraphPayload } from './types';
-import { useBlastRadiusSelection } from './use-blast-radius-selection';
-import { useGraphNodePositions } from './use-graph-node-positions';
+import { Button } from "@/components/ui/button";
+import { toReactFlowElements, type GraphNodeData } from "./adapter";
+import type { LayoutDirection } from "./layout";
+import { nodeTypes } from "./node-types";
+import type { GraphPayload } from "./types";
+import { useBlastRadiusSelection } from "./use-blast-radius-selection";
+import { useGraphNodePositions } from "./use-graph-node-positions";
 
 // ---------------------------------------------------------------------------
 // Inner component (needs to be inside ReactFlowProvider to call useReactFlow)
@@ -35,7 +35,7 @@ interface InnerGraphProps {
 }
 
 function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraphProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
   const { fitView } = useReactFlow();
   const { zoom } = useViewport();
 
@@ -52,7 +52,11 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialElements.edges);
 
-  const { state: selectionState, select: selectionSelect, clear: selectionClear } = useBlastRadiusSelection();
+  const {
+    state: selectionState,
+    select: selectionSelect,
+    clear: selectionClear,
+  } = useBlastRadiusSelection();
 
   // Compact mode: hide labels when graph is large AND zoomed out
   const manyNodes = nodes.length > 200;
@@ -70,7 +74,16 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
     requestAnimationFrame(() => {
       fitView({ padding: 0.15 });
     });
-  }, [payload, direction, savedPositions, prunePositions, setNodes, setEdges, fitView, selectionClear]);
+  }, [
+    payload,
+    direction,
+    savedPositions,
+    prunePositions,
+    setNodes,
+    setEdges,
+    fitView,
+    selectionClear,
+  ]);
 
   // Persist node position when the user finishes dragging
   const onNodeDragStop = useCallback(
@@ -96,10 +109,10 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
   // Click on a credential node → load blast radius; click again → toggle off
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node<GraphNodeData>) => {
-      if (node.data.kind !== 'credential') return;
+      if (node.data.kind !== "credential") return;
       if (
-        selectionState.phase !== 'idle' &&
-        'credentialId' in selectionState &&
+        selectionState.phase !== "idle" &&
+        "credentialId" in selectionState &&
         selectionState.credentialId === node.id
       ) {
         selectionClear();
@@ -113,19 +126,19 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
   // Esc key clears selection
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') selectionClear();
+      if (e.key === "Escape") selectionClear();
     }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [selectionClear]);
 
   // Derive nodes with blast-radius status + compact flag injected (does NOT mutate state)
   const computedNodes = useMemo(() => {
-    const sm = selectionState.phase === 'ok' ? selectionState.statusMap : null;
+    const sm = selectionState.phase === "ok" ? selectionState.statusMap : null;
     if (!sm && !compactMode) return nodes;
     return nodes.map((n) => {
       const next = { ...n.data };
-      if (sm) next.status = sm[n.id] ?? 'dimmed';
+      if (sm) next.status = sm[n.id] ?? "dimmed";
       if (compactMode) next.compact = true;
       return { ...n, data: next };
     });
@@ -139,24 +152,24 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
             variant="outline"
             size="sm"
             onClick={onResetLayout}
-            aria-label={t('graph.resetLayout')}
+            aria-label={t("graph.resetLayout")}
           >
-            {t('graph.resetLayout')}
+            {t("graph.resetLayout")}
           </Button>
         )}
         <Button
           variant="outline"
           size="sm"
           onClick={onToggle}
-          aria-label={t('graph.toggleDirection')}
+          aria-label={t("graph.toggleDirection")}
         >
-          {direction === 'TB' ? t('graph.direction.tb') : t('graph.direction.lr')}
+          {direction === "TB" ? t("graph.direction.tb") : t("graph.direction.lr")}
         </Button>
       </div>
 
-      {selectionState.phase === 'ok' && (
+      {selectionState.phase === "ok" && (
         <p className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-md bg-background/80 px-3 py-1 text-xs text-muted-foreground shadow backdrop-blur-sm">
-          {t('graph.blastRadius.clearHint')}
+          {t("graph.blastRadius.clearHint")}
         </p>
       )}
 
@@ -198,10 +211,10 @@ export interface DependencyGraphProps {
  * available in the inner component. Direction state is lifted here.
  */
 export function DependencyGraph({ payload, nodesDraggable = false }: DependencyGraphProps) {
-  const [direction, setDirection] = useState<LayoutDirection>('TB');
+  const [direction, setDirection] = useState<LayoutDirection>("TB");
 
   const toggle = useCallback(() => {
-    setDirection((d) => (d === 'TB' ? 'LR' : 'TB'));
+    setDirection((d) => (d === "TB" ? "LR" : "TB"));
   }, []);
 
   return (

@@ -1,9 +1,9 @@
-import type { NodeTypes } from '@xyflow/react';
+import type { NodeTypes } from "@xyflow/react";
 
-import { CredentialNode } from './nodes/CredentialNode';
-import { DeploymentNode } from './nodes/DeploymentNode';
-import { IssuerNode } from './nodes/IssuerNode';
-import { ProjectNode } from './nodes/ProjectNode';
+import { CredentialNode } from "./nodes/CredentialNode";
+import { DeploymentNode } from "./nodes/DeploymentNode";
+import { IssuerNode } from "./nodes/IssuerNode";
+import { ProjectNode } from "./nodes/ProjectNode";
 
 /**
  * Module-scope constant — do NOT inline this object in JSX.

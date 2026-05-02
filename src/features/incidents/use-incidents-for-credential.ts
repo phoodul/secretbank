@@ -48,8 +48,7 @@ export function useIncidentsForCredential(
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          const message =
-            typeof err === "string" ? err : "Failed to load incidents for credential";
+          const message = typeof err === "string" ? err : "Failed to load incidents for credential";
           setFetchState({ phase: "error", message });
         }
       });

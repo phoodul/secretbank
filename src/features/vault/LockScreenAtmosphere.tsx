@@ -138,11 +138,7 @@ export function SuccessBloom({ state }: { state: VaultState }) {
         }}
       />
       {/* 8 light rays */}
-      <svg
-        className="absolute size-[420px]"
-        viewBox="0 0 100 100"
-        style={{ overflow: "visible" }}
-      >
+      <svg className="absolute size-[420px]" viewBox="0 0 100 100" style={{ overflow: "visible" }}>
         {Array.from({ length: 8 }, (_, i) => {
           const angle = (i / 8) * 360;
           const rad = (angle * Math.PI) / 180;
@@ -193,7 +189,7 @@ export function StatusPanel({ state }: StatusPanelProps) {
     return () => clearInterval(id);
   }, []);
   const time = now.toISOString().substring(11, 19); // HH:MM:SS
-  const date = now.toISOString().substring(0, 10);  // YYYY-MM-DD
+  const date = now.toISOString().substring(0, 10); // YYYY-MM-DD
 
   const statusLabel =
     state === "verifying"
@@ -452,9 +448,10 @@ export function SystemLog({ state }: { state: VaultState }) {
       </span>
       <span
         style={{
-          color: isUnlocked || isUnlocking
-            ? "var(--vault-gold-bright)"
-            : "oklch(from var(--vault-lapis-bright) l c h / 0.92)",
+          color:
+            isUnlocked || isUnlocking
+              ? "var(--vault-gold-bright)"
+              : "oklch(from var(--vault-lapis-bright) l c h / 0.92)",
           textShadow: "0 1px 0 oklch(0 0 0 / 0.55)",
           fontWeight: isUnlocked ? 700 : 500,
           textTransform: isUnlocked ? "uppercase" : "none",

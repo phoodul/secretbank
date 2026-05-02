@@ -130,8 +130,7 @@ export function useGithubIntegration(): UseGithubIntegrationReturn {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          const message =
-            err instanceof Error ? err.message : String(err);
+          const message = err instanceof Error ? err.message : String(err);
           setFetchState({ phase: "error", message });
         }
       });
@@ -191,14 +190,11 @@ export function useGithubIntegration(): UseGithubIntegrationReturn {
     }
   }, [connecting]);
 
-  const remove = useCallback(
-    async (installationId: number) => {
-      await ipcRemoveInstallation(installationId);
-      setFetchState({ phase: "loading" });
-      setTick((n) => n + 1);
-    },
-    [],
-  );
+  const remove = useCallback(async (installationId: number) => {
+    await ipcRemoveInstallation(installationId);
+    setFetchState({ phase: "loading" });
+    setTick((n) => n + 1);
+  }, []);
 
   const scan = useCallback(
     async (installationId: number, owner: string, repo: string): Promise<RemoteKey[]> => {

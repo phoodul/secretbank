@@ -1,11 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { AlertCircle, FileText } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { AuditEntry } from "./types";
 import { actionFamily, ACTION_FAMILY_CLASS } from "./action-family";
@@ -77,10 +72,7 @@ function ActionBadge({ action, familyLabel }: ActionBadgeProps) {
     <Tooltip>
       <TooltipTrigger asChild>
         <span
-          className={cn(
-            "inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium",
-            cls,
-          )}
+          className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium", cls)}
         >
           {action}
         </span>
@@ -182,30 +174,36 @@ export function AuditTimeline({ entries, loading, error, onRetry }: AuditTimelin
 
   const actorLabel = (actor: string) => {
     switch (actor) {
-      case "local-user": return t("audit.actor.localUser");
-      case "system": return t("audit.actor.system");
-      case "connector": return t("audit.actor.connector");
-      default: return actor;
+      case "local-user":
+        return t("audit.actor.localUser");
+      case "system":
+        return t("audit.actor.system");
+      case "connector":
+        return t("audit.actor.connector");
+      default:
+        return actor;
     }
   };
 
   const familyLabel = (action: string) => {
     const f = actionFamily(action);
     switch (f) {
-      case "create": return t("audit.actionFamily.create");
-      case "update": return t("audit.actionFamily.update");
-      case "delete": return t("audit.actionFamily.delete");
-      case "reveal": return t("audit.actionFamily.reveal");
-      default: return t("audit.actionFamily.default");
+      case "create":
+        return t("audit.actionFamily.create");
+      case "update":
+        return t("audit.actionFamily.update");
+      case "delete":
+        return t("audit.actionFamily.delete");
+      case "reveal":
+        return t("audit.actionFamily.reveal");
+      default:
+        return t("audit.actionFamily.default");
     }
   };
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div
-        className="overflow-hidden rounded-md border"
-        data-testid="audit-table"
-      >
+      <div className="overflow-hidden rounded-md border" data-testid="audit-table">
         {/* Header */}
         <div className="grid grid-cols-[160px_90px_1fr_160px_100px] gap-3 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
           <span>{t("audit.table.time")}</span>
@@ -232,7 +230,9 @@ export function AuditTimeline({ entries, loading, error, onRetry }: AuditTimelin
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      <span className="font-mono text-xs">{formatAbsolute(entry.created_at_ms)}</span>
+                      <span className="font-mono text-xs">
+                        {formatAbsolute(entry.created_at_ms)}
+                      </span>
                     </TooltipContent>
                   </Tooltip>
 
@@ -243,7 +243,10 @@ export function AuditTimeline({ entries, loading, error, onRetry }: AuditTimelin
                   <ActionBadge action={entry.action} familyLabel={familyLabel(entry.action)} />
 
                   {/* Subject — resolved to name when available, ID otherwise */}
-                  <span className="font-mono text-muted-foreground truncate" title={entry.subject_id}>
+                  <span
+                    className="font-mono text-muted-foreground truncate"
+                    title={entry.subject_id}
+                  >
                     {resolveSubjectLabel(entry.subject_kind, entry.subject_id, subjectLabels)}
                   </span>
 

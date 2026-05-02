@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
+use api_vault_core::id::{CredentialId, IncidentMatchId};
 use api_vault_core::models::credential::Credential;
 use api_vault_core::models::incident::{Incident, IncidentMatch, MatchReason};
 use api_vault_core::models::issuer::Issuer;
-use api_vault_core::id::{CredentialId, IncidentMatchId};
 use time::OffsetDateTime;
 
 // ---------------------------------------------------------------------------
@@ -71,7 +71,8 @@ pub fn match_incident_at(
         let display_lower = issuer.display_name.to_lowercase();
 
         let matches_slug = slug_lower.len() >= 3 && haystack.contains(slug_lower.as_str());
-        let matches_display = !display_lower.is_empty() && haystack.contains(display_lower.as_str());
+        let matches_display =
+            !display_lower.is_empty() && haystack.contains(display_lower.as_str());
 
         if matches_slug || matches_display {
             for cred in credentials.iter().filter(|c| c.issuer_id == issuer.id) {
@@ -123,7 +124,9 @@ mod tests {
     use super::*;
     use api_vault_core::id::{CredentialId, IncidentId, IssuerId};
     use api_vault_core::models::credential::{Credential, CredentialStatus, Env};
-    use api_vault_core::models::incident::{Incident, IncidentSeverity, IncidentSource, MatchReason};
+    use api_vault_core::models::incident::{
+        Incident, IncidentSeverity, IncidentSource, MatchReason,
+    };
     use api_vault_core::models::issuer::Issuer;
     use time::OffsetDateTime;
 
@@ -205,7 +208,12 @@ mod tests {
         let cred2 = make_credential(&openai, "OpenAI Staging Key");
         let cred3 = make_credential(&stripe, "Stripe Key");
 
-        let incident = make_incident(Some(openai.id), "OpenAI data breach", None, IncidentSource::Nvd);
+        let incident = make_incident(
+            Some(openai.id),
+            "OpenAI data breach",
+            None,
+            IncidentSource::Nvd,
+        );
         let issuers = vec![openai.clone(), stripe.clone()];
         let credentials = vec![cred1.clone(), cred2.clone(), cred3.clone()];
 
@@ -247,14 +255,14 @@ mod tests {
     fn test_keyword_display_name_substring_matches() {
         let github = make_issuer("github", "GitHub");
         let cred = make_credential(&github, "GitHub Token");
-        let incident = make_incident(
-            None,
-            "GitHub API outage",
-            None,
-            IncidentSource::Rss,
-        );
+        let incident = make_incident(None, "GitHub API outage", None, IncidentSource::Rss);
 
-        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[github], fixed_now());
+        let matches = match_incident_at(
+            &incident,
+            std::slice::from_ref(&cred),
+            &[github],
+            fixed_now(),
+        );
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].credential_id, cred.id);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
@@ -274,7 +282,12 @@ mod tests {
             IncidentSource::Ghsa,
         );
 
-        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[stripe], fixed_now());
+        let matches = match_incident_at(
+            &incident,
+            std::slice::from_ref(&cred),
+            &[stripe],
+            fixed_now(),
+        );
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].credential_id, cred.id);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
@@ -289,7 +302,12 @@ mod tests {
         let cred = make_credential(&openai, "OpenAI Key");
         let incident = make_incident(None, "OPENAI DOWN", None, IncidentSource::Rss);
 
-        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[openai], fixed_now());
+        let matches = match_incident_at(
+            &incident,
+            std::slice::from_ref(&cred),
+            &[openai],
+            fixed_now(),
+        );
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
     }
@@ -309,9 +327,18 @@ mod tests {
             IncidentSource::Ghsa,
         );
 
-        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[github], fixed_now());
+        let matches = match_incident_at(
+            &incident,
+            std::slice::from_ref(&cred),
+            &[github],
+            fixed_now(),
+        );
         assert_eq!(matches.len(), 1, "credential 이 중복 없이 1개여야 한다");
-        assert_eq!(matches[0].reason, MatchReason::IssuerMatch, "IssuerMatch 가 우선해야 한다");
+        assert_eq!(
+            matches[0].reason,
+            MatchReason::IssuerMatch,
+            "IssuerMatch 가 우선해야 한다"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -328,7 +355,12 @@ mod tests {
             IncidentSource::Rss,
         );
 
-        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[vercel], fixed_now());
+        let matches = match_incident_at(
+            &incident,
+            std::slice::from_ref(&cred),
+            &[vercel],
+            fixed_now(),
+        );
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].credential_id, cred.id);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
@@ -420,12 +452,7 @@ mod tests {
     fn test_matched_at_uses_provided_now() {
         let openai = make_issuer("openai", "OpenAI");
         let cred = make_credential(&openai, "OpenAI Key");
-        let incident = make_incident(
-            Some(openai.id),
-            "OpenAI breach",
-            None,
-            IncidentSource::Nvd,
-        );
+        let incident = make_incident(Some(openai.id), "OpenAI breach", None, IncidentSource::Nvd);
         let custom_now = OffsetDateTime::from_unix_timestamp(1_700_000_000).unwrap();
 
         let matches = match_incident_at(&incident, &[cred], &[openai], custom_now);
@@ -447,7 +474,8 @@ mod tests {
             IncidentSource::Nvd,
         );
 
-        let matches = match_incident_at(&incident, std::slice::from_ref(&cred), &[aws], fixed_now());
+        let matches =
+            match_incident_at(&incident, std::slice::from_ref(&cred), &[aws], fixed_now());
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].reason, MatchReason::Keyword);
     }

@@ -267,10 +267,8 @@ mod tests {
 
         for (slug, file) in &slug_to_file {
             let bytes = load_fixture(file);
-            let entries =
-                parse_feed_bytes(&bytes, slug).unwrap_or_else(|e| {
-                    panic!("parse failed for '{file}': {e}")
-                });
+            let entries = parse_feed_bytes(&bytes, slug)
+                .unwrap_or_else(|e| panic!("parse failed for '{file}': {e}"));
             assert_eq!(
                 entries.len(),
                 2,
@@ -296,8 +294,16 @@ mod tests {
         assert_eq!(slugs.len(), 10, "all slugs must be unique");
 
         let expected = [
-            "openai", "stripe", "aws", "vercel", "supabase", "github", "cloudflare",
-            "anthropic", "gcp", "paddle",
+            "openai",
+            "stripe",
+            "aws",
+            "vercel",
+            "supabase",
+            "github",
+            "cloudflare",
+            "anthropic",
+            "gcp",
+            "paddle",
         ];
         for slug in &expected {
             assert!(slugs.contains(slug), "missing expected slug: {slug}");
@@ -328,7 +334,9 @@ mod tests {
     fn test_chrono_to_time_conversion() {
         use chrono::TimeZone;
 
-        let chrono_dt = chrono::Utc.with_ymd_and_hms(2026, 4, 21, 10, 30, 0).unwrap();
+        let chrono_dt = chrono::Utc
+            .with_ymd_and_hms(2026, 4, 21, 10, 30, 0)
+            .unwrap();
         let odt = chrono_to_time(chrono_dt).expect("conversion must succeed");
 
         assert_eq!(odt.unix_timestamp(), chrono_dt.timestamp());

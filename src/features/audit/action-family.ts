@@ -3,14 +3,7 @@
  */
 
 /** Action family — derived from the action string prefix for color-coding. */
-export type ActionFamily =
-  | "create"
-  | "update"
-  | "delete"
-  | "reveal"
-  | "lock"
-  | "feed"
-  | "default";
+export type ActionFamily = "create" | "update" | "delete" | "reveal" | "lock" | "feed" | "default";
 
 /** Derive a color family from an action string. */
 export function actionFamily(action: string): ActionFamily {

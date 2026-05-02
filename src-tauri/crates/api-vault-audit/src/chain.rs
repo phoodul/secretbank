@@ -68,8 +68,7 @@ fn canonical_bytes(
         None => buf.push(0x00),
         Some(s) => {
             let bytes = s.as_bytes();
-            let len = u16::try_from(bytes.len())
-                .expect("device_id exceeds u16::MAX bytes");
+            let len = u16::try_from(bytes.len()).expect("device_id exceeds u16::MAX bytes");
             buf.push(0x01);
             buf.extend_from_slice(&len.to_be_bytes());
             buf.extend_from_slice(bytes);
@@ -78,29 +77,25 @@ fn canonical_bytes(
 
     // actor (u8 len + utf8)
     let actor_bytes = actor.as_str().as_bytes();
-    let actor_len = u8::try_from(actor_bytes.len())
-        .expect("actor string exceeds u8::MAX bytes");
+    let actor_len = u8::try_from(actor_bytes.len()).expect("actor string exceeds u8::MAX bytes");
     buf.push(actor_len);
     buf.extend_from_slice(actor_bytes);
 
     // action (u16 BE len + utf8)
     let action_bytes = action.as_bytes();
-    let action_len = u16::try_from(action_bytes.len())
-        .expect("action exceeds u16::MAX bytes");
+    let action_len = u16::try_from(action_bytes.len()).expect("action exceeds u16::MAX bytes");
     buf.extend_from_slice(&action_len.to_be_bytes());
     buf.extend_from_slice(action_bytes);
 
     // subject_kind (u8 len + utf8)
     let sk_bytes = subject_kind.as_bytes();
-    let sk_len = u8::try_from(sk_bytes.len())
-        .expect("subject_kind exceeds u8::MAX bytes");
+    let sk_len = u8::try_from(sk_bytes.len()).expect("subject_kind exceeds u8::MAX bytes");
     buf.push(sk_len);
     buf.extend_from_slice(sk_bytes);
 
     // subject_id (u16 BE len + utf8)
     let si_bytes = subject_id.as_bytes();
-    let si_len = u16::try_from(si_bytes.len())
-        .expect("subject_id exceeds u16::MAX bytes");
+    let si_len = u16::try_from(si_bytes.len()).expect("subject_id exceeds u16::MAX bytes");
     buf.extend_from_slice(&si_len.to_be_bytes());
     buf.extend_from_slice(si_bytes);
 
@@ -109,8 +104,7 @@ fn canonical_bytes(
         None => buf.push(0x00),
         Some(s) => {
             let bytes = s.as_bytes();
-            let len = u32::try_from(bytes.len())
-                .expect("payload_json exceeds u32::MAX bytes");
+            let len = u32::try_from(bytes.len()).expect("payload_json exceeds u32::MAX bytes");
             buf.push(0x01);
             buf.extend_from_slice(&len.to_be_bytes());
             buf.extend_from_slice(bytes);
@@ -119,8 +113,8 @@ fn canonical_bytes(
 
     // created_at_unix_ms (i64 BE, 8 bytes) — `unix_timestamp()` 는 이미 i64 (초) 이므로
     // `nanos / 1_000_000` 의 i128→i64 캐스팅 없이 직접 곱한다.
-    let unix_ms = created_at.unix_timestamp() * 1_000
-        + i64::from(created_at.nanosecond() / 1_000_000);
+    let unix_ms =
+        created_at.unix_timestamp() * 1_000 + i64::from(created_at.nanosecond() / 1_000_000);
     buf.extend_from_slice(&unix_ms.to_be_bytes());
 
     // prev_hash (32 bytes)
@@ -272,15 +266,19 @@ mod tests {
     }
 
     fn fixed_now(offset_secs: i64) -> OffsetDateTime {
-        OffsetDateTime::from_unix_timestamp(1_700_000_000 + offset_secs)
-            .expect("valid timestamp")
+        OffsetDateTime::from_unix_timestamp(1_700_000_000 + offset_secs).expect("valid timestamp")
     }
 
     #[test]
     fn append_first_entry_has_genesis_prev_hash() {
         let sk = test_signing_key();
-        let entry = append(make_input("credential.create", None), None, &sk, fixed_now(0))
-            .expect("append succeeded");
+        let entry = append(
+            make_input("credential.create", None),
+            None,
+            &sk,
+            fixed_now(0),
+        )
+        .expect("append succeeded");
 
         assert_eq!(entry.seq, 0);
         assert_eq!(entry.prev_hash, GENESIS_PREV_HASH);
@@ -289,10 +287,20 @@ mod tests {
     #[test]
     fn append_chains_prev_hash() {
         let sk = test_signing_key();
-        let e0 = append(make_input("credential.create", None), None, &sk, fixed_now(0))
-            .expect("e0");
-        let e1 = append(make_input("credential.update", None), Some(&e0), &sk, fixed_now(1))
-            .expect("e1");
+        let e0 = append(
+            make_input("credential.create", None),
+            None,
+            &sk,
+            fixed_now(0),
+        )
+        .expect("e0");
+        let e1 = append(
+            make_input("credential.update", None),
+            Some(&e0),
+            &sk,
+            fixed_now(1),
+        )
+        .expect("e1");
 
         assert_eq!(e1.seq, 1);
         assert_eq!(e1.prev_hash, e0.entry_hash);
@@ -423,7 +431,12 @@ mod tests {
             created_at: fixed_now(0),
         };
 
-        let result = append(make_input("overflow.test", None), Some(&fake_prev), &sk, fixed_now(1));
+        let result = append(
+            make_input("overflow.test", None),
+            Some(&fake_prev),
+            &sk,
+            fixed_now(1),
+        );
         assert!(
             matches!(result, Err(AuditError::SeqOverflow)),
             "expected SeqOverflow when prev.seq == i64::MAX, got: {result:?}"

@@ -174,11 +174,7 @@ export function IntegrationsSection() {
             </button>
           </div>
 
-          <Button
-            size="sm"
-            disabled={saveDisabled}
-            onClick={() => void handleSave()}
-          >
+          <Button size="sm" disabled={saveDisabled} onClick={() => void handleSave()}>
             {t("settings.saveKey")}
           </Button>
 
@@ -196,9 +192,7 @@ export function IntegrationsSection() {
         <button
           type="button"
           className="text-primary text-xs underline-offset-4 hover:underline"
-          onClick={() =>
-            openExternal("https://nvd.nist.gov/developers/request-an-api-key")
-          }
+          onClick={() => openExternal("https://nvd.nist.gov/developers/request-an-api-key")}
         >
           {t("settings.nvdApiKeyRequestLink")}
         </button>

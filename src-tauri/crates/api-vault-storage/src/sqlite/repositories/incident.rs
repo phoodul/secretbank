@@ -370,7 +370,10 @@ impl<'a> IncidentRepo<'a> {
                     detected_at: ms_to_dt(detected_ms)?,
                     published_at: ms_to_dt_opt(published_ms)?,
                 };
-                entries.push(IncidentListEntry { incident, matches: Vec::new() });
+                entries.push(IncidentListEntry {
+                    incident,
+                    matches: Vec::new(),
+                });
             }
 
             // Append match detail if a match row exists (LEFT JOIN may produce NULL).
@@ -489,7 +492,10 @@ impl<'a> IncidentRepo<'a> {
                     detected_at: ms_to_dt(detected_ms)?,
                     published_at: ms_to_dt_opt(published_ms)?,
                 };
-                entries.push(IncidentListEntry { incident, matches: Vec::new() });
+                entries.push(IncidentListEntry {
+                    incident,
+                    matches: Vec::new(),
+                });
             }
 
             let match_id_str: Option<String> = row.try_get("match_id")?;
@@ -675,10 +681,10 @@ fn str_to_reason(s: &str) -> Result<MatchReason, StorageError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use api_vault_core::{CredentialId, IncidentId, IssuerId};
     use crate::sqlite::init_pool;
     use crate::sqlite::repositories::credential::CredentialRepo;
     use crate::sqlite::repositories::issuer::IssuerRepo;
+    use api_vault_core::{CredentialId, IncidentId, IssuerId};
     use api_vault_core::{CredentialInput, Env, IssuerInput};
     use tempfile::tempdir;
     use time::OffsetDateTime;
@@ -790,15 +796,30 @@ mod tests {
         let (_dir, pool) = make_pool().await;
         let repo = IncidentRepo::new(&pool);
 
-        repo.insert(&make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "nvd"))
-            .await
-            .unwrap();
-        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "rss1"))
-            .await
-            .unwrap();
-        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "rss2"))
-            .await
-            .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Nvd,
+            IncidentSeverity::High,
+            None,
+            "nvd",
+        ))
+        .await
+        .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::Low,
+            None,
+            "rss1",
+        ))
+        .await
+        .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::Low,
+            None,
+            "rss2",
+        ))
+        .await
+        .unwrap();
 
         let filter = IncidentFilter {
             source: Some(IncidentSource::Nvd),
@@ -818,12 +839,22 @@ mod tests {
         let (_dir, pool) = make_pool().await;
         let repo = IncidentRepo::new(&pool);
 
-        repo.insert(&make_incident(IncidentSource::Nvd, IncidentSeverity::Critical, None, "crit"))
-            .await
-            .unwrap();
-        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "low"))
-            .await
-            .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Nvd,
+            IncidentSeverity::Critical,
+            None,
+            "crit",
+        ))
+        .await
+        .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::Low,
+            None,
+            "low",
+        ))
+        .await
+        .unwrap();
 
         let filter = IncidentFilter {
             severity: Some(IncidentSeverity::Critical),
@@ -846,18 +877,38 @@ mod tests {
         let issuer_a = insert_issuer(&pool, "stripe").await;
         let issuer_b = insert_issuer(&pool, "openai").await;
 
-        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_a), "a1"))
-            .await
-            .unwrap();
-        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_a), "a2"))
-            .await
-            .unwrap();
-        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_b), "b1"))
-            .await
-            .unwrap();
-        repo.insert(&make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "none"))
-            .await
-            .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::High,
+            Some(issuer_a),
+            "a1",
+        ))
+        .await
+        .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::High,
+            Some(issuer_a),
+            "a2",
+        ))
+        .await
+        .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::High,
+            Some(issuer_b),
+            "b1",
+        ))
+        .await
+        .unwrap();
+        repo.insert(&make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::Low,
+            None,
+            "none",
+        ))
+        .await
+        .unwrap();
 
         let filter = IncidentFilter {
             issuer_id: Some(issuer_a),
@@ -886,15 +937,23 @@ mod tests {
         // Incident A: match 2개 모두 dismissed
         let inc_a = make_incident(IncidentSource::Rss, IncidentSeverity::High, None, "A");
         repo.insert(&inc_a).await.unwrap();
-        let m1 = repo.insert_match(inc_a.id, cred_id, MatchReason::IssuerMatch).await.unwrap();
-        let m2 = repo.insert_match(inc_a.id, cred_id, MatchReason::Keyword).await.unwrap();
+        let m1 = repo
+            .insert_match(inc_a.id, cred_id, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
+        let m2 = repo
+            .insert_match(inc_a.id, cred_id, MatchReason::Keyword)
+            .await
+            .unwrap();
         repo.dismiss_match(m1).await.unwrap();
         repo.dismiss_match(m2).await.unwrap();
 
         // Incident B: match 1개 활성
         let inc_b = make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "B");
         repo.insert(&inc_b).await.unwrap();
-        repo.insert_match(inc_b.id, cred_id, MatchReason::Keyword).await.unwrap();
+        repo.insert_match(inc_b.id, cred_id, MatchReason::Keyword)
+            .await
+            .unwrap();
 
         // include_dismissed = false (default) → B 만
         let filter_default = IncidentFilter::default();
@@ -949,9 +1008,15 @@ mod tests {
         repo.insert(&inc2).await.unwrap();
         repo.insert(&inc3).await.unwrap();
 
-        repo.insert_match(inc1.id, cred_x, MatchReason::IssuerMatch).await.unwrap();
-        repo.insert_match(inc2.id, cred_x, MatchReason::Keyword).await.unwrap();
-        repo.insert_match(inc3.id, cred_y, MatchReason::IssuerMatch).await.unwrap();
+        repo.insert_match(inc1.id, cred_x, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
+        repo.insert_match(inc2.id, cred_x, MatchReason::Keyword)
+            .await
+            .unwrap();
+        repo.insert_match(inc3.id, cred_y, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
 
         let results = repo.list_incidents_for_credential(cred_x).await.unwrap();
         assert_eq!(results.len(), 2);
@@ -977,10 +1042,15 @@ mod tests {
         repo.insert(&inc2).await.unwrap();
 
         // inc1 의 match: dismissed
-        let m = repo.insert_match(inc1.id, cred_x, MatchReason::Keyword).await.unwrap();
+        let m = repo
+            .insert_match(inc1.id, cred_x, MatchReason::Keyword)
+            .await
+            .unwrap();
         repo.dismiss_match(m).await.unwrap();
         // inc2 의 match: active
-        repo.insert_match(inc2.id, cred_x, MatchReason::Keyword).await.unwrap();
+        repo.insert_match(inc2.id, cred_x, MatchReason::Keyword)
+            .await
+            .unwrap();
 
         let results = repo.list_incidents_for_credential(cred_x).await.unwrap();
         assert_eq!(results.len(), 1);
@@ -1004,10 +1074,17 @@ mod tests {
         repo.insert(&inc).await.unwrap();
 
         // match 3개: cred_a 이미 dismissed, cred_b/cred_c active
-        let m_a = repo.insert_match(inc.id, cred_a, MatchReason::Keyword).await.unwrap();
+        let m_a = repo
+            .insert_match(inc.id, cred_a, MatchReason::Keyword)
+            .await
+            .unwrap();
         repo.dismiss_match(m_a).await.unwrap();
-        repo.insert_match(inc.id, cred_b, MatchReason::Keyword).await.unwrap();
-        repo.insert_match(inc.id, cred_c, MatchReason::Keyword).await.unwrap();
+        repo.insert_match(inc.id, cred_b, MatchReason::Keyword)
+            .await
+            .unwrap();
+        repo.insert_match(inc.id, cred_c, MatchReason::Keyword)
+            .await
+            .unwrap();
 
         let updated = repo.dismiss_matches_for_incident(inc.id).await.unwrap();
         assert_eq!(updated, 2, "활성 2개만 업데이트되어야 함");
@@ -1042,7 +1119,10 @@ mod tests {
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].incident.source_id, "CVE-TEST-nomatch");
-        assert!(entries[0].matches.is_empty(), "match 없는 incident 의 matches 는 빈 배열이어야 함");
+        assert!(
+            entries[0].matches.is_empty(),
+            "match 없는 incident 의 matches 는 빈 배열이어야 함"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -1059,8 +1139,12 @@ mod tests {
 
         let inc = make_incident(IncidentSource::Rss, IncidentSeverity::High, None, "multi");
         repo.insert(&inc).await.unwrap();
-        repo.insert_match(inc.id, cred_a, MatchReason::IssuerMatch).await.unwrap();
-        repo.insert_match(inc.id, cred_b, MatchReason::Keyword).await.unwrap();
+        repo.insert_match(inc.id, cred_a, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
+        repo.insert_match(inc.id, cred_b, MatchReason::Keyword)
+            .await
+            .unwrap();
 
         let filter = IncidentFilter::default();
         let entries = repo.list_with_matches(&filter).await.unwrap();
@@ -1070,13 +1154,21 @@ mod tests {
         assert_eq!(entry.incident.source_id, "CVE-TEST-multi");
         assert_eq!(entry.matches.len(), 2);
 
-        let labels: Vec<&str> = entry.matches.iter().map(|m| m.credential_label.as_str()).collect();
+        let labels: Vec<&str> = entry
+            .matches
+            .iter()
+            .map(|m| m.credential_label.as_str())
+            .collect();
         assert!(labels.contains(&"stripe-live"));
         assert!(labels.contains(&"stripe-test"));
 
         // issuer_display_name 이 채워져 있어야 함
         for m in &entry.matches {
-            assert_eq!(m.issuer_display_name.as_deref(), Some("stripe"), "issuer display_name 은 'stripe' 이어야 함");
+            assert_eq!(
+                m.issuer_display_name.as_deref(),
+                Some("stripe"),
+                "issuer display_name 은 'stripe' 이어야 함"
+            );
         }
     }
 
@@ -1096,18 +1188,30 @@ mod tests {
         let inc1 = make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "T13-A");
         let inc2 = make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "T13-B");
         // inc3 matches only cred_y — must NOT appear for cred_x
-        let inc3 = make_incident(IncidentSource::Rss, IncidentSeverity::Critical, None, "T13-C");
+        let inc3 = make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::Critical,
+            None,
+            "T13-C",
+        );
         repo.insert(&inc1).await.unwrap();
         repo.insert(&inc2).await.unwrap();
         repo.insert(&inc3).await.unwrap();
 
         // inc1 → cred_x (active)
-        repo.insert_match(inc1.id, cred_x, MatchReason::IssuerMatch).await.unwrap();
+        repo.insert_match(inc1.id, cred_x, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
         // inc2 → cred_x (dismissed)
-        let m2 = repo.insert_match(inc2.id, cred_x, MatchReason::Keyword).await.unwrap();
+        let m2 = repo
+            .insert_match(inc2.id, cred_x, MatchReason::Keyword)
+            .await
+            .unwrap();
         repo.dismiss_match(m2).await.unwrap();
         // inc3 → cred_y only
-        repo.insert_match(inc3.id, cred_y, MatchReason::IssuerMatch).await.unwrap();
+        repo.insert_match(inc3.id, cred_y, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
 
         let entries = repo
             .list_incidents_with_matches_for_credential(&cred_x)
@@ -1117,7 +1221,10 @@ mod tests {
         // Both inc1 (active) and inc2 (dismissed) are returned
         assert_eq!(entries.len(), 2, "cred_x の incidents は2件であるべき");
 
-        let ids: Vec<&str> = entries.iter().map(|e| e.incident.source_id.as_str()).collect();
+        let ids: Vec<&str> = entries
+            .iter()
+            .map(|e| e.incident.source_id.as_str())
+            .collect();
         assert!(ids.contains(&"CVE-TEST-T13-A"), "inc1 が含まれること");
         assert!(ids.contains(&"CVE-TEST-T13-B"), "inc2 が含まれること");
 
@@ -1128,11 +1235,23 @@ mod tests {
         }
 
         // Check dismissed_at semantics
-        let inc1_entry = entries.iter().find(|e| e.incident.source_id == "CVE-TEST-T13-A").unwrap();
-        assert!(inc1_entry.matches[0].dismissed_at.is_none(), "active match은 dismissed_at이 None");
+        let inc1_entry = entries
+            .iter()
+            .find(|e| e.incident.source_id == "CVE-TEST-T13-A")
+            .unwrap();
+        assert!(
+            inc1_entry.matches[0].dismissed_at.is_none(),
+            "active match은 dismissed_at이 None"
+        );
 
-        let inc2_entry = entries.iter().find(|e| e.incident.source_id == "CVE-TEST-T13-B").unwrap();
-        assert!(inc2_entry.matches[0].dismissed_at.is_some(), "dismissed match은 dismissed_at이 Some");
+        let inc2_entry = entries
+            .iter()
+            .find(|e| e.incident.source_id == "CVE-TEST-T13-B")
+            .unwrap();
+        assert!(
+            inc2_entry.matches[0].dismissed_at.is_some(),
+            "dismissed match은 dismissed_at이 Some"
+        );
 
         // cred_y should have 1 entry (inc3 only)
         let entries_y = repo
@@ -1158,7 +1277,9 @@ mod tests {
         let cred_other = insert_credential(&pool, issuer_id, "other-key").await;
         let inc = make_incident(IncidentSource::Nvd, IncidentSeverity::High, None, "T14");
         repo.insert(&inc).await.unwrap();
-        repo.insert_match(inc.id, cred_other, MatchReason::Explicit).await.unwrap();
+        repo.insert_match(inc.id, cred_other, MatchReason::Explicit)
+            .await
+            .unwrap();
 
         let entries = repo
             .list_incidents_with_matches_for_credential(&cred_no_match)
@@ -1186,7 +1307,10 @@ mod tests {
         let original_id = inc.id;
         inc.id = IncidentId::new();
         let id2 = repo.insert(&inc).await.unwrap();
-        assert_eq!(id2, original_id, "두 번째 삽입은 기존 canonical id를 반환해야 함");
+        assert_eq!(
+            id2, original_id,
+            "두 번째 삽입은 기존 canonical id를 반환해야 함"
+        );
 
         // The table must contain exactly one row for this (source, source_id).
         let filter = IncidentFilter {
@@ -1194,7 +1318,10 @@ mod tests {
             ..Default::default()
         };
         let rows = repo.list(&filter).await.unwrap();
-        let dup_rows: Vec<_> = rows.iter().filter(|r| r.source_id == "CVE-TEST-DUP").collect();
+        let dup_rows: Vec<_> = rows
+            .iter()
+            .filter(|r| r.source_id == "CVE-TEST-DUP")
+            .collect();
         assert_eq!(dup_rows.len(), 1, "중복 삽입 후에도 행은 1개여야 함");
     }
 
@@ -1213,14 +1340,22 @@ mod tests {
         // Incident A: match 하나 active, 하나 dismissed → default filter 에 포함됨
         let inc_a = make_incident(IncidentSource::Rss, IncidentSeverity::Medium, None, "DA");
         repo.insert(&inc_a).await.unwrap();
-        repo.insert_match(inc_a.id, cred_a, MatchReason::IssuerMatch).await.unwrap();
-        let m_b = repo.insert_match(inc_a.id, cred_b, MatchReason::Keyword).await.unwrap();
+        repo.insert_match(inc_a.id, cred_a, MatchReason::IssuerMatch)
+            .await
+            .unwrap();
+        let m_b = repo
+            .insert_match(inc_a.id, cred_b, MatchReason::Keyword)
+            .await
+            .unwrap();
         repo.dismiss_match(m_b).await.unwrap();
 
         // Incident B: match 모두 dismissed → default filter 에서 제외됨
         let inc_b = make_incident(IncidentSource::Rss, IncidentSeverity::Low, None, "DB");
         repo.insert(&inc_b).await.unwrap();
-        let m_c = repo.insert_match(inc_b.id, cred_b, MatchReason::Keyword).await.unwrap();
+        let m_c = repo
+            .insert_match(inc_b.id, cred_b, MatchReason::Keyword)
+            .await
+            .unwrap();
         repo.dismiss_match(m_c).await.unwrap();
 
         // default filter: inc_A 만 포함, inc_B 제외
@@ -1232,7 +1367,10 @@ mod tests {
         assert_eq!(entries[0].matches.len(), 2);
 
         // include_dismissed = true: 둘 다 포함
-        let filter_all = IncidentFilter { include_dismissed: true, ..Default::default() };
+        let filter_all = IncidentFilter {
+            include_dismissed: true,
+            ..Default::default()
+        };
         let entries_all = repo.list_with_matches(&filter_all).await.unwrap();
         assert_eq!(entries_all.len(), 2);
     }
@@ -1253,7 +1391,12 @@ mod tests {
 
         let issuer_id = insert_issuer(&pool, "openai").await;
         let cred_id = insert_credential(&pool, issuer_id, "key-1").await;
-        let inc = make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_id), "H1");
+        let inc = make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::High,
+            Some(issuer_id),
+            "H1",
+        );
         repo.insert(&inc).await.unwrap();
 
         let id1 = repo
@@ -1270,7 +1413,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(id1, id2, "second insert must reuse the existing id");
-        assert_eq!(id1, id3, "subsequent inserts must keep returning the same id");
+        assert_eq!(
+            id1, id3,
+            "subsequent inserts must keep returning the same id"
+        );
 
         let count: i64 = sqlx::query_scalar(
             "SELECT COUNT(*) FROM incident_match WHERE incident_id = ? AND credential_id = ?",
@@ -1280,7 +1426,10 @@ mod tests {
         .fetch_one(&pool)
         .await
         .unwrap();
-        assert_eq!(count, 1, "exactly one row must survive after repeated inserts");
+        assert_eq!(
+            count, 1,
+            "exactly one row must survive after repeated inserts"
+        );
     }
 
     #[tokio::test]
@@ -1290,7 +1439,12 @@ mod tests {
 
         let issuer_id = insert_issuer(&pool, "openai").await;
         let cred_id = insert_credential(&pool, issuer_id, "key-1").await;
-        let inc = make_incident(IncidentSource::Rss, IncidentSeverity::High, Some(issuer_id), "H1b");
+        let inc = make_incident(
+            IncidentSource::Rss,
+            IncidentSeverity::High,
+            Some(issuer_id),
+            "H1b",
+        );
         repo.insert(&inc).await.unwrap();
 
         // The matcher in api-vault-feeds dedupes by credential, but the
@@ -1306,7 +1460,10 @@ mod tests {
             .await
             .unwrap();
 
-        assert_ne!(id_issuer, id_keyword, "different reason must allocate a new row");
+        assert_ne!(
+            id_issuer, id_keyword,
+            "different reason must allocate a new row"
+        );
 
         let count: i64 = sqlx::query_scalar(
             "SELECT COUNT(*) FROM incident_match WHERE incident_id = ? AND credential_id = ?",

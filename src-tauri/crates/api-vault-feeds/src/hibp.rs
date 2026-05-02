@@ -3,8 +3,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use governor::{DefaultDirectRateLimiter, Quota, RateLimiter};
-use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -286,13 +286,10 @@ mod tests {
         let mock_server = MockServer::start().await;
 
         Mock::given(method("GET"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(serde_json::json!([
-                        make_breach("Adobe"),
-                        make_breach("LinkedIn"),
-                    ])),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                make_breach("Adobe"),
+                make_breach("LinkedIn"),
+            ])))
             .mount(&mock_server)
             .await;
 
@@ -380,9 +377,7 @@ mod tests {
         let mock_server = MockServer::start().await;
 
         Mock::given(method("GET"))
-            .respond_with(
-                ResponseTemplate::new(429).insert_header("retry-after", "60"),
-            )
+            .respond_with(ResponseTemplate::new(429).insert_header("retry-after", "60"))
             .mount(&mock_server)
             .await;
 
@@ -429,9 +424,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(header("hibp-api-key", "my-key-123"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!([])),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
             .mount(&mock_server)
             .await;
 
@@ -452,9 +445,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(query_param("truncateResponse", "false"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!([])),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
             .mount(&mock_server)
             .await;
 
@@ -474,9 +465,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path("/breachedaccount/user%2Btest%40example.com"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!([])),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
             .mount(&mock_server)
             .await;
 
@@ -527,7 +516,10 @@ mod tests {
 
         assert_eq!(result.len(), 1);
         assert!(result[0].attribution.is_none(), "attribution must be None");
-        assert!(result[0].disclosure_url.is_none(), "disclosure_url must be None");
+        assert!(
+            result[0].disclosure_url.is_none(),
+            "disclosure_url must be None"
+        );
         assert_eq!(result[0].is_stealer_log, Some(true));
         assert_eq!(result[0].pwn_count, 26_105_473);
     }

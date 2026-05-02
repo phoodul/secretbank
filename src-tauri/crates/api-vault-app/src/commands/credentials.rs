@@ -114,7 +114,8 @@ pub async fn credential_create(
     let id = CredentialId::new();
     let vault_ref = format!("credentials/{id}");
 
-    repo.insert_with_id(Some(id), &args.input, vault_ref.clone()).await?;
+    repo.insert_with_id(Some(id), &args.input, vault_ref.clone())
+        .await?;
 
     let secret_bytes = SecretBytes::new(args.value.as_bytes().to_vec());
     {
@@ -218,15 +219,33 @@ pub async fn credential_update(
 
     // Record which fields were touched — values are never logged.
     let mut updated_fields: Vec<&str> = Vec::new();
-    if patch.name.is_some() { updated_fields.push("name"); }
-    if patch.env.is_some() { updated_fields.push("env"); }
-    if patch.scope.is_some() { updated_fields.push("scope"); }
-    if patch.rotation_policy_days.is_some() { updated_fields.push("rotation_policy_days"); }
-    if patch.rotation_runbook_id.is_some() { updated_fields.push("rotation_runbook_id"); }
-    if patch.expires_at.is_some() { updated_fields.push("expires_at"); }
-    if patch.owner.is_some() { updated_fields.push("owner"); }
-    if patch.status.is_some() { updated_fields.push("status"); }
-    if patch.hash_hint.is_some() { updated_fields.push("hash_hint"); }
+    if patch.name.is_some() {
+        updated_fields.push("name");
+    }
+    if patch.env.is_some() {
+        updated_fields.push("env");
+    }
+    if patch.scope.is_some() {
+        updated_fields.push("scope");
+    }
+    if patch.rotation_policy_days.is_some() {
+        updated_fields.push("rotation_policy_days");
+    }
+    if patch.rotation_runbook_id.is_some() {
+        updated_fields.push("rotation_runbook_id");
+    }
+    if patch.expires_at.is_some() {
+        updated_fields.push("expires_at");
+    }
+    if patch.owner.is_some() {
+        updated_fields.push("owner");
+    }
+    if patch.status.is_some() {
+        updated_fields.push("status");
+    }
+    if patch.hash_hint.is_some() {
+        updated_fields.push("hash_hint");
+    }
     let payload = if updated_fields.is_empty() {
         None
     } else {
@@ -376,17 +395,15 @@ pub async fn credential_rotate_value(
     // 4. Update hash_hint + last_rotated_at in SQLite.
     let now_ms = OffsetDateTime::now_utc().unix_timestamp() * 1_000
         + i64::from(OffsetDateTime::now_utc().millisecond());
-    sqlx::query(
-        "UPDATE credential SET hash_hint = ?, last_rotated_at = ? WHERE id = ?",
-    )
-    .bind(&input.hash_hint)
-    .bind(now_ms)
-    .bind(input.id.to_string())
-    .execute(state.pool.as_ref())
-    .await
-    .map_err(|e| CredentialCommandError::Internal {
-        message: e.to_string(),
-    })?;
+    sqlx::query("UPDATE credential SET hash_hint = ?, last_rotated_at = ? WHERE id = ?")
+        .bind(&input.hash_hint)
+        .bind(now_ms)
+        .bind(input.id.to_string())
+        .execute(state.pool.as_ref())
+        .await
+        .map_err(|e| CredentialCommandError::Internal {
+            message: e.to_string(),
+        })?;
 
     // 5. Audit.
     let payload = serde_json::json!({ "manual": true }).to_string();
@@ -438,7 +455,7 @@ pub async fn credential_rotate_value(
 mod tests {
     use std::sync::Arc;
 
-    use api_vault_core::{CredentialId, CredentialInput, Env, IssuerInput, IssuerId};
+    use api_vault_core::{CredentialId, CredentialInput, Env, IssuerId, IssuerInput};
     use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
     use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
     use api_vault_storage::vault::mock::MockVaultStorage;
@@ -524,8 +541,7 @@ mod tests {
         let vault_box: Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync> =
             Box::new(vault);
         let vault_arc = Arc::new(RwLock::new(vault_box));
-        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> =
-            Arc::new(RwLock::new(None));
+        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
         let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));
         AppContext {
             vault: vault_arc,
@@ -624,28 +640,33 @@ mod tests {
     // -----------------------------------------------------------------------
     #[tokio::test]
     async fn credential_rotate_value_records_audit_credential_rotate() {
-        use api_vault_audit::AuditActor;
-        use api_vault_storage::AuditRepo;
-        use api_vault_core::DevicePlatform;
         use crate::services::device_identity::ensure_device_keys;
+        use api_vault_audit::AuditActor;
+        use api_vault_core::DevicePlatform;
+        use api_vault_storage::AuditRepo;
 
         let (_dir, pool) = make_pool().await;
         let pool = Arc::new(pool);
         let mut vault = make_unlocked_vault().await;
 
-        let cred_id =
-            seed_credential_with_value(&pool, &mut vault, "old-val", Some("l-va")).await;
+        let cred_id = seed_credential_with_value(&pool, &mut vault, "old-val", Some("l-va")).await;
 
         // Provide device identity so audit.record() can sign entries.
-        let vault_for_identity: Arc<RwLock<Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync>>> = {
+        let vault_for_identity: Arc<
+            RwLock<Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync>>,
+        > = {
             let mut v = MockVaultStorage::new("pw");
             v.unlock(SecretString::from("pw".to_owned())).await.unwrap();
             Arc::new(RwLock::new(Box::new(v)))
         };
-        let identity =
-            ensure_device_keys(vault_for_identity, pool.as_ref(), "test-device", DevicePlatform::Linux)
-                .await
-                .expect("ensure_device_keys");
+        let identity = ensure_device_keys(
+            vault_for_identity,
+            pool.as_ref(),
+            "test-device",
+            DevicePlatform::Linux,
+        )
+        .await
+        .expect("ensure_device_keys");
 
         let vault_box: Box<dyn api_vault_storage::vault::VaultStorage + Send + Sync> =
             Box::new(vault);
@@ -681,8 +702,7 @@ mod tests {
         let cred = repo.get_by_id(cred_id).await.unwrap().unwrap();
         {
             let mut v = ctx.vault.write().await;
-            let bytes =
-                api_vault_storage::vault::SecretBytes::new("new-val".as_bytes().to_vec());
+            let bytes = api_vault_storage::vault::SecretBytes::new("new-val".as_bytes().to_vec());
             v.put_secret(&cred.vault_ref, bytes).await.unwrap();
             v.flush().await.unwrap();
         }
@@ -735,7 +755,10 @@ mod tests {
 
         let filter = api_vault_core::CredentialFilter::default();
         let vault_guard = ctx.vault.read().await;
-        assert!(!vault_guard.is_unlocked().await, "vault must be locked for this test");
+        assert!(
+            !vault_guard.is_unlocked().await,
+            "vault must be locked for this test"
+        );
         drop(vault_guard);
 
         // Call the list logic directly (mirrors what the command does).
@@ -752,7 +775,10 @@ mod tests {
         } else {
             repo.list(&filter).await.unwrap()
         };
-        assert!(list.is_empty(), "credential_list must return empty vec when vault is locked");
+        assert!(
+            list.is_empty(),
+            "credential_list must return empty vec when vault is locked"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -782,6 +808,10 @@ mod tests {
         } else {
             repo.list(&filter).await.unwrap()
         };
-        assert_eq!(list.len(), 1, "credential_list must return 1 item when vault is unlocked");
+        assert_eq!(
+            list.len(),
+            1,
+            "credential_list must return 1 item when vault is unlocked"
+        );
     }
 }

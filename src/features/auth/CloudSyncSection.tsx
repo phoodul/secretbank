@@ -41,14 +41,10 @@ export function CloudSyncSection() {
           <h2 id="cloud-sync-heading" className="text-base font-medium">
             {t("auth.cloudSync.heading")}
           </h2>
-          <p className="text-muted-foreground text-xs">
-            {t("auth.cloudSync.description")}
-          </p>
+          <p className="text-muted-foreground text-xs">{t("auth.cloudSync.description")}</p>
         </div>
         <Badge variant={session ? "default" : "outline"} className="shrink-0">
-          {session
-            ? t("auth.cloudSync.connected")
-            : t("auth.cloudSync.notConnected")}
+          {session ? t("auth.cloudSync.connected") : t("auth.cloudSync.notConnected")}
         </Badge>
       </div>
 
@@ -59,9 +55,10 @@ export function CloudSyncSection() {
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground font-mono text-xs">
               {t("auth.cloudSync.userId", {
-                id: session.user_id.length > 12
-                  ? `${session.user_id.slice(0, 12)}…`
-                  : session.user_id,
+                id:
+                  session.user_id.length > 12
+                    ? `${session.user_id.slice(0, 12)}…`
+                    : session.user_id,
               })}
             </span>
             <div className="flex items-center gap-2">
@@ -87,11 +84,7 @@ export function CloudSyncSection() {
           </div>
         </div>
       ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate("/auth/sign-in")}
-        >
+        <Button variant="outline" size="sm" onClick={() => navigate("/auth/sign-in")}>
           <Cloud className="h-4 w-4 mr-2" />
           {t("auth.cloudSync.signIn")}
         </Button>

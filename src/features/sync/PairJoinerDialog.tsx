@@ -110,19 +110,13 @@ export function PairJoinerDialog({
                 autoFocus
                 data-testid="pair-link-input"
               />
-              {parseError && (
-                <p className="text-destructive text-xs">{parseError}</p>
-              )}
+              {parseError && <p className="text-destructive text-xs">{parseError}</p>}
               {status === "error" && errorMessage && (
                 <p className="text-destructive text-xs">{errorMessage}</p>
               )}
             </div>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={!linkInput.trim()}>
@@ -148,11 +142,7 @@ export function PairJoinerDialog({
               {status === "applying" && t("sync.pairJoin.applying")}
             </div>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                 {t("common.cancel")}
               </Button>
             </DialogFooter>

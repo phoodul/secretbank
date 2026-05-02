@@ -94,9 +94,7 @@ function extractErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-export function useBulkKillSwitch(
-  issuerId: string | null,
-): UseBulkKillSwitchResult {
+export function useBulkKillSwitch(issuerId: string | null): UseBulkKillSwitchResult {
   const [state, setState] = useState<BulkKillSwitchState>(BULK_INITIAL);
   const unlistenRef = useRef<UnlistenFn | null>(null);
 

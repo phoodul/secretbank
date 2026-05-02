@@ -96,9 +96,7 @@ export function BulkRevokeDialog({
   const isDone = phase === "done";
 
   const progressValue =
-    progress && progress.total > 0
-      ? Math.round((progress.revoked / progress.total) * 100)
-      : 0;
+    progress && progress.total > 0 ? Math.round((progress.revoked / progress.total) * 100) : 0;
 
   const handleContinue = useCallback(async () => {
     await requestConfirm();

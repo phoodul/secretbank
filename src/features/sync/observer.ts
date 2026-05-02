@@ -18,11 +18,7 @@
 import type * as Y from "yjs";
 
 import { reconcileCredentialRow } from "./conflict";
-import {
-  ENTITY_MAPPERS,
-  isSyncableSettingKey,
-  type SyncEntity,
-} from "./mapping";
+import { ENTITY_MAPPERS, isSyncableSettingKey, type SyncEntity } from "./mapping";
 import { isSyncOrigin, ORIGIN_LOCAL_DB, runWithOrigin } from "./origin";
 
 // ---------------------------------------------------------------------------
@@ -50,11 +46,7 @@ export function observeMapWithOriginGuard<T>(
     const changes: YMapChange[] = [];
     for (const [key, change] of event.keys) {
       const action: YMapChange["action"] =
-        change.action === "add"
-          ? "add"
-          : change.action === "delete"
-            ? "delete"
-            : "update";
+        change.action === "add" ? "add" : change.action === "delete" ? "delete" : "update";
       changes.push({ key, action });
     }
     if (changes.length > 0) handler(changes);

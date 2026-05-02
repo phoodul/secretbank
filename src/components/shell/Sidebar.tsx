@@ -55,11 +55,13 @@ export function Sidebar() {
           aria-hidden
           className="surface-gold flex size-9 items-center justify-center rounded-md"
         >
-          <KeyRound className="size-4" strokeWidth={2.25} style={{ color: "oklch(0.18 0.05 50)" }} />
+          <KeyRound
+            className="size-4"
+            strokeWidth={2.25}
+            style={{ color: "oklch(0.18 0.05 50)" }}
+          />
         </div>
-        <span className="text-sm font-semibold tracking-wide accent-gold">
-          {t("app.title")}
-        </span>
+        <span className="text-sm font-semibold tracking-wide accent-gold">{t("app.title")}</span>
       </div>
 
       {/* Nav — each item is a brass-key plate when active */}
@@ -144,9 +146,7 @@ export function Sidebar() {
                   )}
                   aria-hidden
                 />
-                <span className={cn("relative", isActive && "tracking-wide")}>
-                  {t(labelKey)}
-                </span>
+                <span className={cn("relative", isActive && "tracking-wide")}>{t(labelKey)}</span>
               </>
             )}
           </NavLink>

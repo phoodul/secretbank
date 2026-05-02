@@ -54,12 +54,25 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "apivault",
         "icon": "$(shield)",
-        "tags": ["secrets", "discovery"],
+        "tags": [
+          "secrets",
+          "discovery"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
-            "issuer": { "type": "string", "description": "Filter by issuer slug (e.g. 'openai')" },
-            "env": { "type": "string", "enum": ["dev", "staging", "prod"] }
+            "issuer": {
+              "type": "string",
+              "description": "Filter by issuer slug (e.g. 'openai')"
+            },
+            "env": {
+              "type": "string",
+              "enum": [
+                "dev",
+                "staging",
+                "prod"
+              ]
+            }
           }
         }
       },
@@ -70,13 +83,20 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "supplyrisk",
         "icon": "$(package)",
-        "tags": ["supply-chain", "security"],
+        "tags": [
+          "supply-chain",
+          "security"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
             "category_filter": {
               "type": "string",
-              "enum": ["secret_leak", "supply_chain", "any"],
+              "enum": [
+                "secret_leak",
+                "supply_chain",
+                "any"
+              ],
               "description": "Restrict to a specific advisory category. 'any' returns all (default)."
             }
           }

@@ -14,10 +14,7 @@ pub struct RepoRef {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Auth {
     /// GitHub App installation token (릴레이 경유 발급, 1시간 TTL).
-    GithubInstallation {
-        installation_id: u64,
-        token: String,
-    },
+    GithubInstallation { installation_id: u64, token: String },
     /// 단순 bearer / PAT 스타일 — AWS IAM key, Stripe secret, OpenAI API key 등.
     Bearer { token: String },
     /// 인증 불필요 (공개 피드 등).
@@ -27,12 +24,12 @@ pub enum Auth {
 /// 원격 공급자에서 조회한 key (API Vault 내부 credential 과 매칭 시 사용).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RemoteKey {
-    pub id: String,                      // provider-native id, e.g. GitHub alert number
-    pub provider: String,                // provider_id of the emitting connector
-    pub secret_type: String,             // e.g. "aws_access_key_id"
+    pub id: String,          // provider-native id, e.g. GitHub alert number
+    pub provider: String,    // provider_id of the emitting connector
+    pub secret_type: String, // e.g. "aws_access_key_id"
     pub first_detected: Option<OffsetDateTime>,
     pub locations_count: u32,
-    pub url: Option<String>,             // human-visible deep link if any
+    pub url: Option<String>, // human-visible deep link if any
 }
 
 /// 회전 (rotation) 지원 수준.

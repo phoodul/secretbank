@@ -72,12 +72,7 @@ export function AuditPage() {
       <AuditFilterBar filter={filter} onChange={handleFilterChange} />
 
       {/* Timeline */}
-      <AuditTimeline
-        entries={entries}
-        loading={loading}
-        error={error}
-        onRetry={refresh}
-      />
+      <AuditTimeline entries={entries} loading={loading} error={error} onRetry={refresh} />
 
       {/* Load more */}
       {!loading && error === null && hasMore && (

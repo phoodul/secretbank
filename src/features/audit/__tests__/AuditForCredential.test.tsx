@@ -80,9 +80,7 @@ describe("AuditForCredential", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("audit-for-credential-empty"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("audit-for-credential-empty")).toBeInTheDocument();
     });
   });
 
@@ -98,16 +96,18 @@ describe("AuditForCredential", () => {
       "project.update",
     ];
     const entries = actions.map((action, i) =>
-      makeEntry({ id: `01J000000000000000000000${i.toString(16).toUpperCase()}`, seq: i + 1, action }),
+      makeEntry({
+        id: `01J000000000000000000000${i.toString(16).toUpperCase()}`,
+        seq: i + 1,
+        action,
+      }),
     );
     mockInvoke.mockResolvedValue(entries);
 
     renderComponent();
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("audit-for-credential-list"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("audit-for-credential-list")).toBeInTheDocument();
     });
 
     const rows = screen.getAllByTestId("audit-for-credential-row");
@@ -147,12 +147,8 @@ describe("AuditForCredential", () => {
   it("(d) credentialId 가 null 이면 아무것도 렌더링하지 않는다", () => {
     renderComponent(null);
 
-    expect(
-      screen.queryByTestId("audit-for-credential-loading"),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId("audit-for-credential-empty"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("audit-for-credential-loading")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("audit-for-credential-empty")).not.toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
@@ -164,9 +160,7 @@ describe("AuditForCredential", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("audit-for-credential-error"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("audit-for-credential-error")).toBeInTheDocument();
     });
   });
 });

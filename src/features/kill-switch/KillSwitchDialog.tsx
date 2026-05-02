@@ -118,9 +118,7 @@ export function KillSwitchDialog({
             <ShieldOff className="h-5 w-5 text-destructive" aria-hidden />
             {t("killSwitch.dialog.title")}
           </DialogTitle>
-          <DialogDescription className="sr-only">
-            {t("killSwitch.dialog.title")}
-          </DialogDescription>
+          <DialogDescription className="sr-only">{t("killSwitch.dialog.title")}</DialogDescription>
         </DialogHeader>
 
         {/* ---- Step 1: name confirmation ---- */}

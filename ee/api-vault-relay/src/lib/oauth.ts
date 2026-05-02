@@ -119,7 +119,11 @@ export async function exchangeCode(
 // ────────────────────────────────────────────────────────────
 // GitHub
 // ────────────────────────────────────────────────────────────
-async function exchangeGithub(env: Env, code: string, redirectUri: string): Promise<ExchangeResult> {
+async function exchangeGithub(
+  env: Env,
+  code: string,
+  redirectUri: string,
+): Promise<ExchangeResult> {
   const cfg = configFor("github", env);
 
   const tokenResp = await fetch(cfg.tokenUrl, {
@@ -133,7 +137,11 @@ async function exchangeGithub(env: Env, code: string, redirectUri: string): Prom
     }),
   });
   if (!tokenResp.ok) {
-    throw new OAuthError(`github token exchange failed: ${tokenResp.status}`, "token_exchange_failed", 502);
+    throw new OAuthError(
+      `github token exchange failed: ${tokenResp.status}`,
+      "token_exchange_failed",
+      502,
+    );
   }
   const tokenJson = (await tokenResp.json()) as { access_token?: string; error?: string };
   if (!tokenJson.access_token) {
@@ -170,7 +178,11 @@ async function exchangeGithub(env: Env, code: string, redirectUri: string): Prom
       },
     });
     if (emailsResp.ok) {
-      const emails = (await emailsResp.json()) as Array<{ email: string; primary: boolean; verified: boolean }>;
+      const emails = (await emailsResp.json()) as Array<{
+        email: string;
+        primary: boolean;
+        verified: boolean;
+      }>;
       const primary = emails.find((e) => e.primary && e.verified) ?? emails.find((e) => e.verified);
       email = primary?.email ?? null;
     }
@@ -182,7 +194,11 @@ async function exchangeGithub(env: Env, code: string, redirectUri: string): Prom
 // ────────────────────────────────────────────────────────────
 // Google
 // ────────────────────────────────────────────────────────────
-async function exchangeGoogle(env: Env, code: string, redirectUri: string): Promise<ExchangeResult> {
+async function exchangeGoogle(
+  env: Env,
+  code: string,
+  redirectUri: string,
+): Promise<ExchangeResult> {
   const cfg = configFor("google", env);
 
   const tokenForm = new URLSearchParams({
@@ -198,7 +214,11 @@ async function exchangeGoogle(env: Env, code: string, redirectUri: string): Prom
     body: tokenForm.toString(),
   });
   if (!tokenResp.ok) {
-    throw new OAuthError(`google token exchange failed: ${tokenResp.status}`, "token_exchange_failed", 502);
+    throw new OAuthError(
+      `google token exchange failed: ${tokenResp.status}`,
+      "token_exchange_failed",
+      502,
+    );
   }
   const tokenJson = (await tokenResp.json()) as { access_token?: string; id_token?: string };
   if (!tokenJson.access_token) {
@@ -211,7 +231,11 @@ async function exchangeGoogle(env: Env, code: string, redirectUri: string): Prom
   if (!userResp.ok) {
     throw new OAuthError(`google userinfo failed: ${userResp.status}`, "user_fetch_failed", 502);
   }
-  const userJson = (await userResp.json()) as { id?: string; email?: string; verified_email?: boolean };
+  const userJson = (await userResp.json()) as {
+    id?: string;
+    email?: string;
+    verified_email?: boolean;
+  };
   if (!userJson.id) {
     throw new OAuthError("google userinfo missing id", "user_missing_id", 502);
   }

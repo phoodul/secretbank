@@ -1,12 +1,6 @@
 import { useCallback, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type {
-  ApplyMode,
-  RenderContext,
-  RuleFileApplied,
-  RuleFilePreview,
-  RuleKind,
-} from "./types";
+import type { ApplyMode, RenderContext, RuleFileApplied, RuleFilePreview, RuleKind } from "./types";
 
 // ---------------------------------------------------------------------------
 // State shape

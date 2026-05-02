@@ -34,13 +34,7 @@ pub fn words() -> &'static [&'static str] {
 
 /// Return the wordlist index (0..7775) of `word`, case-insensitive.
 pub fn index_of(word: &str) -> Option<usize> {
-    let map = WORD_INDEX.get_or_init(|| {
-        words()
-            .iter()
-            .enumerate()
-            .map(|(i, w)| (*w, i))
-            .collect()
-    });
+    let map = WORD_INDEX.get_or_init(|| words().iter().enumerate().map(|(i, w)| (*w, i)).collect());
     let lower = word.trim().to_lowercase();
     map.get(lower.as_str()).copied()
 }

@@ -30,14 +30,7 @@ describe("OAuthButton", () => {
 
     const onStart = vi.fn();
     const onError = vi.fn();
-    render(
-      <OAuthButton
-        provider="github"
-        busy={false}
-        onStart={onStart}
-        onError={onError}
-      />,
-    );
+    render(<OAuthButton provider="github" busy={false} onStart={onStart} onError={onError} />);
 
     expect(screen.getByRole("button")).toHaveTextContent(/GitHub/i);
     await userEvent.click(screen.getByRole("button"));
@@ -57,14 +50,7 @@ describe("OAuthButton", () => {
 
     const onStart = vi.fn();
     const onError = vi.fn();
-    render(
-      <OAuthButton
-        provider="google"
-        busy={false}
-        onStart={onStart}
-        onError={onError}
-      />,
-    );
+    render(<OAuthButton provider="google" busy={false} onStart={onStart} onError={onError} />);
 
     await userEvent.click(screen.getByRole("button"));
 
@@ -73,14 +59,7 @@ describe("OAuthButton", () => {
   });
 
   it("disabled when busy", () => {
-    render(
-      <OAuthButton
-        provider="github"
-        busy
-        onStart={vi.fn()}
-        onError={vi.fn()}
-      />,
-    );
+    render(<OAuthButton provider="github" busy onStart={vi.fn()} onError={vi.fn()} />);
     expect(screen.getByRole("button")).toBeDisabled();
   });
 });

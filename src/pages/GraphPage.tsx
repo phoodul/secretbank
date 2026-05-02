@@ -1,1 +1,1 @@
-export { GraphPage } from '@/features/graph/GraphPage';
+export { GraphPage } from "@/features/graph/GraphPage";

@@ -29,9 +29,7 @@ export function IncidentsForCredential({
   const { entries, loading, error, refresh } = useIncidentsForCredential(credentialId);
 
   // Active = at least one match that is not dismissed
-  const activeEntries = entries.filter((e) =>
-    e.matches.some((m) => m.dismissed_at === null),
-  );
+  const activeEntries = entries.filter((e) => e.matches.some((m) => m.dismissed_at === null));
 
   // ---- loading ----
   if (loading) {
@@ -63,10 +61,7 @@ export function IncidentsForCredential({
   // ---- empty ----
   if (entries.length === 0) {
     return (
-      <p
-        className="text-xs text-muted-foreground"
-        data-testid="incidents-for-credential-empty"
-      >
+      <p className="text-xs text-muted-foreground" data-testid="incidents-for-credential-empty">
         {t("incidents.credentialSection.empty")}
       </p>
     );

@@ -50,10 +50,7 @@ const mockInvoke = vi.mocked(invoke);
 // Fixtures
 // ---------------------------------------------------------------------------
 
-function makeEntry(
-  id: string,
-  dismissedAt: string | null = null,
-): IncidentListEntry {
+function makeEntry(id: string, dismissedAt: string | null = null): IncidentListEntry {
   return {
     incident: {
       id,
@@ -118,24 +115,17 @@ describe("IncidentsForCredential", () => {
     renderSection();
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("incidents-for-credential-empty"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("incidents-for-credential-empty")).toBeInTheDocument();
     });
 
-    expect(
-      screen.queryByTestId("incidents-for-credential-list"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("incidents-for-credential-list")).not.toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
   // (b) 2개 mock incident 카드 렌더링
   // -------------------------------------------------------------------------
   it("(b) 2개의 mock incident 카드를 렌더링한다", async () => {
-    const entries: IncidentListEntry[] = [
-      makeEntry("id-001"),
-      makeEntry("id-002"),
-    ];
+    const entries: IncidentListEntry[] = [makeEntry("id-001"), makeEntry("id-002")];
     mockInvoke.mockResolvedValue(entries);
 
     renderSection();
@@ -192,9 +182,7 @@ describe("IncidentsForCredential", () => {
     });
 
     // No banner when all dismissed
-    expect(
-      screen.queryByTestId("incidents-warning-banner"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("incidents-warning-banner")).not.toBeInTheDocument();
 
     unmount();
   });
@@ -209,9 +197,7 @@ describe("IncidentsForCredential", () => {
 
     // Wait for initial empty state
     await waitFor(() => {
-      expect(
-        screen.getByTestId("incidents-for-credential-empty"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("incidents-for-credential-empty")).toBeInTheDocument();
     });
 
     // Wait for listener to be registered
@@ -239,9 +225,7 @@ describe("IncidentsForCredential", () => {
     renderSection(null);
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("incidents-for-credential-empty"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("incidents-for-credential-empty")).toBeInTheDocument();
     });
 
     expect(mockInvoke).not.toHaveBeenCalledWith(

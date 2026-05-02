@@ -20,7 +20,12 @@ use crate::services::feed_scheduler::{FeedSchedulerConfig, TauriEmitter};
 // ---------------------------------------------------------------------------
 
 /// 허용된 vault settings 키 목록.
-const ALLOWED_KEYS: &[&str] = &["nvd_api_key", "ghsa_token", "github_installations", "pro_until"];
+const ALLOWED_KEYS: &[&str] = &[
+    "nvd_api_key",
+    "ghsa_token",
+    "github_installations",
+    "pro_until",
+];
 
 /// 일반 설정 최대 바이트 길이 (API 키 등).
 const DEFAULT_MAX_VALUE_LEN: usize = 256;
@@ -115,13 +120,11 @@ pub(crate) async fn reconfigure_feed_scheduler(
     let (nvd_key, ghsa_token) = {
         let vault = ctx.vault.read().await;
         let nvd = match vault.get_secret("settings/nvd_api_key").await {
-            Ok(v) => Some(
-                String::from_utf8(v.expose_secret().clone()).map_err(|e| {
-                    VaultSettingError::Internal {
-                        message: format!("nvd_api_key UTF-8 decode: {e}"),
-                    }
-                })?,
-            ),
+            Ok(v) => Some(String::from_utf8(v.expose_secret().clone()).map_err(|e| {
+                VaultSettingError::Internal {
+                    message: format!("nvd_api_key UTF-8 decode: {e}"),
+                }
+            })?),
             Err(VaultError::NotFound { .. }) | Err(VaultError::NotUnlocked) => None,
             Err(e) => {
                 return Err(VaultSettingError::Internal {
@@ -130,13 +133,11 @@ pub(crate) async fn reconfigure_feed_scheduler(
             }
         };
         let ghsa = match vault.get_secret("settings/ghsa_token").await {
-            Ok(v) => Some(
-                String::from_utf8(v.expose_secret().clone()).map_err(|e| {
-                    VaultSettingError::Internal {
-                        message: format!("ghsa_token UTF-8 decode: {e}"),
-                    }
-                })?,
-            ),
+            Ok(v) => Some(String::from_utf8(v.expose_secret().clone()).map_err(|e| {
+                VaultSettingError::Internal {
+                    message: format!("ghsa_token UTF-8 decode: {e}"),
+                }
+            })?),
             Err(VaultError::NotFound { .. }) | Err(VaultError::NotUnlocked) => None,
             Err(e) => {
                 return Err(VaultSettingError::Internal {
@@ -161,7 +162,8 @@ pub(crate) async fn reconfigure_feed_scheduler(
         old.shutdown().await;
     }
 
-    let new_handle = crate::services::feed_scheduler::spawn_feed_scheduler(ctx.pool.clone(), config);
+    let new_handle =
+        crate::services::feed_scheduler::spawn_feed_scheduler(ctx.pool.clone(), config);
     *guard = Some(new_handle);
 
     Ok(())
@@ -274,7 +276,9 @@ pub async fn vault_setting_set(
 
 #[cfg(test)]
 mod tests {
-    use api_vault_storage::vault::{mock::MockVaultStorage, SecretBytes, VaultError, VaultStorage as _};
+    use api_vault_storage::vault::{
+        mock::MockVaultStorage, SecretBytes, VaultError, VaultStorage as _,
+    };
     use secrecy::ExposeSecret;
 
     use super::*;
@@ -327,7 +331,9 @@ mod tests {
 
         // put_secret + flush
         let bytes = SecretBytes::new(b"test-nvd-key-value".to_vec());
-        mock.put_secret("settings/nvd_api_key", bytes).await.unwrap();
+        mock.put_secret("settings/nvd_api_key", bytes)
+            .await
+            .unwrap();
         mock.flush().await.unwrap(); // mock no-op, should succeed
 
         // get_secret → 값 확인

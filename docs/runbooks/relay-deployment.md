@@ -143,6 +143,7 @@ cp .dev.vars.example .dev.vars
 `relay.api-vault.app` 도메인을 릴레이에 연결하는 방법:
 
 **방법 A — Cloudflare 대시보드:**
+
 1. Workers & Pages → `api-vault-relay` → Settings → Triggers
 2. Custom Domains → `relay.api-vault.app` 추가
 

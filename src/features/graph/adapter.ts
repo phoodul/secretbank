@@ -1,10 +1,10 @@
-import type { Edge, Node } from '@xyflow/react';
-import type { GraphEdge, GraphNode, GraphPayload, NodeKind } from './types';
-import { getLayoutedElements, type LayoutDirection } from './layout';
-import type { NodePositionMap } from './use-graph-node-positions';
+import type { Edge, Node } from "@xyflow/react";
+import type { GraphEdge, GraphNode, GraphPayload, NodeKind } from "./types";
+import { getLayoutedElements, type LayoutDirection } from "./layout";
+import type { NodePositionMap } from "./use-graph-node-positions";
 
 /** Visual status assigned to a node when a blast-radius selection is active. */
-export type NodeSelectionStatus = 'primary' | 'secondary' | 'tertiary' | 'dimmed';
+export type NodeSelectionStatus = "primary" | "secondary" | "tertiary" | "dimmed";
 
 export interface GraphNodeData extends Record<string, unknown> {
   label: string;
@@ -43,7 +43,7 @@ function toFlowEdge(edge: GraphEdge): Edge {
     target: edge.target,
     label: edge.kind,
     animated: false,
-    type: 'default',
+    type: "default",
     data: { kind: edge.kind },
   };
 }

@@ -15,9 +15,9 @@ use crate::audit_ctx::AuditCtx;
 use crate::commands::kill_switch::{ConfirmTokenStore, IssuerConfirmTokenStore};
 use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
+use crate::services::pairing::PairingSessionLock;
 use crate::services::relay_client::RelayClient;
 use crate::services::session::AuthSession;
-use crate::services::pairing::PairingSessionLock;
 use crate::services::sync_emit::SharedDbChangeEmitter;
 
 /// Application-wide shared state, managed by Tauri.
@@ -149,8 +149,7 @@ impl AppContext {
         let vault: Box<dyn VaultStorage + Send + Sync> = Box::new(age_vault);
 
         // Device identity starts as None — populated after vault_unlock.
-        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> =
-            Arc::new(RwLock::new(None));
+        let device_identity: Arc<RwLock<Option<DeviceIdentity>>> = Arc::new(RwLock::new(None));
 
         // Audit context — shares pool and device_identity.
         let audit = Arc::new(AuditCtx::new(pool.clone(), device_identity.clone()));

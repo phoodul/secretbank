@@ -29,9 +29,7 @@ struct PackageJson {
 /// Parse a `package.json` file path. Returns one [`DependencyDeclaration`]
 /// per direct dependency. version 은 매니페스트에 적힌 그대로 (range 등
 /// 그대로 — caller 가 lockfile resolve 가능).
-pub fn parse_package_json(
-    path: &Path,
-) -> Result<Vec<DependencyDeclaration>, SupplyError> {
+pub fn parse_package_json(path: &Path) -> Result<Vec<DependencyDeclaration>, SupplyError> {
     let raw = std::fs::read_to_string(path)?;
     let pkg: PackageJson = serde_json::from_str(&raw)
         .map_err(|e| SupplyError::Manifest(format!("package.json: {e}")))?;
@@ -43,16 +41,40 @@ pub fn parse_package_json(
 
     let mut out = Vec::new();
     for (name, version) in pkg.dependencies {
-        out.push(decl(Ecosystem::Npm, &name, &version, DependencyKind::Prod, &manifest_path));
+        out.push(decl(
+            Ecosystem::Npm,
+            &name,
+            &version,
+            DependencyKind::Prod,
+            &manifest_path,
+        ));
     }
     for (name, version) in pkg.dev_dependencies {
-        out.push(decl(Ecosystem::Npm, &name, &version, DependencyKind::Dev, &manifest_path));
+        out.push(decl(
+            Ecosystem::Npm,
+            &name,
+            &version,
+            DependencyKind::Dev,
+            &manifest_path,
+        ));
     }
     for (name, version) in pkg.optional_dependencies {
-        out.push(decl(Ecosystem::Npm, &name, &version, DependencyKind::Optional, &manifest_path));
+        out.push(decl(
+            Ecosystem::Npm,
+            &name,
+            &version,
+            DependencyKind::Optional,
+            &manifest_path,
+        ));
     }
     for (name, version) in pkg.peer_dependencies {
-        out.push(decl(Ecosystem::Npm, &name, &version, DependencyKind::Peer, &manifest_path));
+        out.push(decl(
+            Ecosystem::Npm,
+            &name,
+            &version,
+            DependencyKind::Peer,
+            &manifest_path,
+        ));
     }
     Ok(out)
 }
@@ -72,8 +94,8 @@ struct CargoToml {
 /// 표시 — OSV query 는 version 이 있어야 의미.
 pub fn parse_cargo_toml(path: &Path) -> Result<Vec<DependencyDeclaration>, SupplyError> {
     let raw = std::fs::read_to_string(path)?;
-    let cargo: CargoToml = toml::from_str(&raw)
-        .map_err(|e| SupplyError::Manifest(format!("Cargo.toml: {e}")))?;
+    let cargo: CargoToml =
+        toml::from_str(&raw).map_err(|e| SupplyError::Manifest(format!("Cargo.toml: {e}")))?;
     let manifest_path = path
         .file_name()
         .and_then(|s| s.to_str())
@@ -81,9 +103,24 @@ pub fn parse_cargo_toml(path: &Path) -> Result<Vec<DependencyDeclaration>, Suppl
         .to_owned();
 
     let mut out = Vec::new();
-    push_cargo_section(&cargo.dependencies, DependencyKind::Prod, &manifest_path, &mut out);
-    push_cargo_section(&cargo.dev_dependencies, DependencyKind::Dev, &manifest_path, &mut out);
-    push_cargo_section(&cargo.build_dependencies, DependencyKind::Optional, &manifest_path, &mut out);
+    push_cargo_section(
+        &cargo.dependencies,
+        DependencyKind::Prod,
+        &manifest_path,
+        &mut out,
+    );
+    push_cargo_section(
+        &cargo.dev_dependencies,
+        DependencyKind::Dev,
+        &manifest_path,
+        &mut out,
+    );
+    push_cargo_section(
+        &cargo.build_dependencies,
+        DependencyKind::Optional,
+        &manifest_path,
+        &mut out,
+    );
     Ok(out)
 }
 
@@ -157,9 +194,15 @@ mod tests {
         let dir = write_tmp("package.json", json);
         let deps = parse_package_json(&dir.path().join("package.json")).unwrap();
         assert_eq!(deps.len(), 4);
-        assert!(deps.iter().any(|d| d.name == "axios" && d.kind == DependencyKind::Prod));
-        assert!(deps.iter().any(|d| d.name == "vitest" && d.kind == DependencyKind::Dev));
-        assert!(deps.iter().any(|d| d.name == "fsevents" && d.kind == DependencyKind::Optional));
+        assert!(deps
+            .iter()
+            .any(|d| d.name == "axios" && d.kind == DependencyKind::Prod));
+        assert!(deps
+            .iter()
+            .any(|d| d.name == "vitest" && d.kind == DependencyKind::Dev));
+        assert!(deps
+            .iter()
+            .any(|d| d.name == "fsevents" && d.kind == DependencyKind::Optional));
         for d in &deps {
             assert_eq!(d.ecosystem, Ecosystem::Npm);
             assert_eq!(d.manifest_path, "package.json");
