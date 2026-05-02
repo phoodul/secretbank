@@ -125,40 +125,18 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      # Real release path — uses tauri-action to upload artifacts to a draft Release.
-      - name: Build Tauri bundle (release upload)
-        if: ${{ !inputs.dry_run }}
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 코드 서명 — secrets 가 없으면 skip 되고 unsigned 로 빌드.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # macOS notarization
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # Windows EV cert
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-        with:
-          releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: ${{ matrix.args }}
-          tagName: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
-
-      # Dry-run path — calls `pnpm tauri build` directly so we get raw logs and
-      # don't need a GitHub Release to exist. Same signing secrets, no upload.
-      - name: Build Tauri bundle (dry run — no upload)
-        if: ${{ inputs.dry_run }}
+      # Build — dry-run / real release 모두 동일한 직접 호출.
+      # tauri-action 을 우회하는 이유: APPLE_*/WINDOWS_CERTIFICATE secrets 가
+      # 미등록 (빈 문자열) 일 때 tauri-action 이 빈 identity 로 codesign 시도하다
+      # 실패. 직접 pnpm tauri build 호출하면 unset env 로 안전하게 unsigned 빌드.
+      - name: Build Tauri bundle
         shell: bash
         run: pnpm tauri build ${{ matrix.args }}
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
+      # Dry-run path — workflow artifacts 로만 캡처
       - name: Upload bundle artifacts (dry run)
         if: ${{ inputs.dry_run }}
         uses: actions/upload-artifact@v4
@@ -169,8 +147,143 @@ jobs:
             src-tauri/target/universal-apple-darwin/release/bundle/**/*
           if-no-files-found: warn
 
+      # Real release path — bundle 들 + .sig 파일들을 GitHub Release 에 직접 upload.
+      # macOS 는 universal-apple-darwin 경로 추가 처리.
+      - name: Upload bundles to GitHub Release
+        if: ${{ !inputs.dry_run }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob globstar
+
+          BUNDLE_DIR="src-tauri/target/release/bundle"
+          UNIVERSAL_DIR="src-tauri/target/universal-apple-darwin/release/bundle"
+
+          # 모든 가능한 산출물 경로
+          declare -a CANDIDATES=(
+            "$BUNDLE_DIR"/dmg/*.dmg
+            "$BUNDLE_DIR"/macos/*.app.tar.gz
+            "$BUNDLE_DIR"/macos/*.app.tar.gz.sig
+            "$BUNDLE_DIR"/nsis/*.exe
+            "$BUNDLE_DIR"/nsis/*.nsis.zip
+            "$BUNDLE_DIR"/nsis/*.nsis.zip.sig
+            "$BUNDLE_DIR"/msi/*.msi
+            "$BUNDLE_DIR"/msi/*.msi.zip
+            "$BUNDLE_DIR"/msi/*.msi.zip.sig
+            "$BUNDLE_DIR"/deb/*.deb
+            "$BUNDLE_DIR"/appimage/*.AppImage
+            "$BUNDLE_DIR"/appimage/*.AppImage.sig
+            "$BUNDLE_DIR"/rpm/*.rpm
+            "$UNIVERSAL_DIR"/dmg/*.dmg
+            "$UNIVERSAL_DIR"/macos/*.app.tar.gz
+            "$UNIVERSAL_DIR"/macos/*.app.tar.gz.sig
+          )
+
+          UPLOADED=0
+          for f in "${CANDIDATES[@]}"; do
+            [ -e "$f" ] || continue
+            echo "Uploading: $f"
+            gh release upload "$TAG" "$f" --clobber
+            UPLOADED=$((UPLOADED + 1))
+          done
+
+          echo "[upload] $UPLOADED files uploaded"
+          if [ "$UPLOADED" -eq 0 ]; then
+            echo "::error::No bundle artifacts found to upload"
+            ls -laR "$BUNDLE_DIR" "$UNIVERSAL_DIR" 2>/dev/null || true
+            exit 1
+          fi
+
+  # Tauri updater manifest 생성 — bundle 들의 .sig 파일을 모아 latest.json 합성.
+  # auto-updater 가 이 파일을 polling 해서 새 버전 감지.
+  publish-updater-manifest:
+    needs: build-tauri
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate and upload latest.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          VERSION="${TAG#v}"
+          BASE="https://github.com/${{ github.repository }}/releases/download/$TAG"
+          WORK=$(mktemp -d)
+
+          # 모든 .sig 파일 다운로드 (tag 의 release 에서)
+          gh release download "$TAG" --pattern "*.sig" --dir "$WORK" 2>&1 || true
+          ls -la "$WORK" || true
+
+          # asset 목록 가져와서 platform 별 분류
+          ASSETS_JSON=$(gh release view "$TAG" --json assets)
+          pick() { echo "$ASSETS_JSON" | jq -r ".assets[].name | select(test(\"$1\"))" | head -1; }
+
+          DARWIN_TAR=$(pick "\\.app\\.tar\\.gz$")
+          DARWIN_SIG_NAME=$(pick "\\.app\\.tar\\.gz\\.sig$")
+          WINDOWS_NSIS=$(pick "\\.nsis\\.zip$")
+          WINDOWS_SIG_NAME=$(pick "\\.nsis\\.zip\\.sig$")
+          LINUX_APPIMAGE=$(pick "\\.AppImage$")
+          LINUX_SIG_NAME=$(pick "\\.AppImage\\.sig$")
+
+          read_sig() {
+            local f="$WORK/$1"
+            if [ -n "$1" ] && [ -f "$f" ]; then
+              cat "$f"
+            else
+              echo ""
+            fi
+          }
+          DARWIN_SIG=$(read_sig "$DARWIN_SIG_NAME")
+          WINDOWS_SIG=$(read_sig "$WINDOWS_SIG_NAME")
+          LINUX_SIG=$(read_sig "$LINUX_SIG_NAME")
+
+          # platform 객체 동적 구성 — bundle 이 없는 플랫폼은 빠짐
+          PLATFORMS=$(jq -n \
+            --arg darwin_url    "${DARWIN_TAR:+$BASE/$DARWIN_TAR}" \
+            --arg darwin_sig    "$DARWIN_SIG" \
+            --arg windows_url   "${WINDOWS_NSIS:+$BASE/$WINDOWS_NSIS}" \
+            --arg windows_sig   "$WINDOWS_SIG" \
+            --arg linux_url     "${LINUX_APPIMAGE:+$BASE/$LINUX_APPIMAGE}" \
+            --arg linux_sig     "$LINUX_SIG" \
+            '
+            ($darwin_url  | length > 0) as $hasDarwin |
+            ($windows_url | length > 0) as $hasWindows |
+            ($linux_url   | length > 0) as $hasLinux |
+            {} +
+            (if $hasDarwin then {
+                "darwin-x86_64":  {url: $darwin_url,  signature: $darwin_sig},
+                "darwin-aarch64": {url: $darwin_url,  signature: $darwin_sig}
+              } else {} end) +
+            (if $hasWindows then {
+                "windows-x86_64": {url: $windows_url, signature: $windows_sig}
+              } else {} end) +
+            (if $hasLinux then {
+                "linux-x86_64":   {url: $linux_url,   signature: $linux_sig}
+              } else {} end)
+            ')
+
+          jq -n \
+            --arg version  "$VERSION" \
+            --arg pub_date "$PUB_DATE" \
+            --arg notes    "API Vault $TAG — see CHANGELOG.md" \
+            --argjson platforms "$PLATFORMS" \
+            '{version: $version, notes: $notes, pub_date: $pub_date, platforms: $platforms}' \
+            > latest.json
+
+          echo "==== Generated latest.json ===="
+          cat latest.json
+          echo "================================"
+
+          gh release upload "$TAG" latest.json --clobber
+
   publish-release:
-    needs: [create-release, build-tauri]
+    needs: [create-release, build-tauri, publish-updater-manifest]
     if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     steps:
