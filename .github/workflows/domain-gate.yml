@@ -39,7 +39,7 @@ jobs:
       - name: Run platform-bridge-debugger
         uses: anthropics/claude-code-base-action@beta
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_tools: "Bash,Read,Grep,Glob,Write,Edit"
           timeout_minutes: 25
           claude_args: "--max-turns 12"
