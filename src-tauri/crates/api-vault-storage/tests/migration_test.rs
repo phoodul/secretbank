@@ -2,7 +2,8 @@
 /// Uses `#[sqlx::test]` which spins up a temporary in-memory database,
 /// applies all migrations automatically, and tears down after each test.
 ///
-/// Verify that all 11 expected tables are created by the migration.
+/// Verify that all expected tables are created by the migration.
+/// (M0 11 tables + M20 supply chain 3 tables = 14 total.)
 #[sqlx::test(migrations = "./migrations")]
 async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     let tables: Vec<(String,)> = sqlx::query_as(
@@ -26,6 +27,10 @@ async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
         "incident",
         "incident_match",
         "issuer",
+        // M20 — supply chain risk graph (0005_supply.sql)
+        "package",
+        "package_advisory",
+        "package_usage",
         "project",
         "settings",
         "sync_state",

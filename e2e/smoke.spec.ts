@@ -65,8 +65,8 @@ test.describe("smoke", () => {
 
     await page.goto("/");
     // Inventory page: header `h1` "Inventory" or similar — locale-dependent.
-    // Use a more resilient assertion: the AppShell sidebar should be visible.
-    await expect(page.locator("main, [role='main'], body")).toBeVisible();
+    // Use a more resilient assertion: the <main> region rendered by AppShell.
+    await expect(page.getByRole("main")).toBeVisible();
 
     await page.goto("/settings");
     await expect(page.getByRole("heading", { name: /settings/i })).toBeVisible({
