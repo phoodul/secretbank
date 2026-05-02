@@ -17,6 +17,22 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      # Tauri / wry 가 link 하는 Linux native libraries.
+      # 없으면 glib-sys / webkit2gtk-sys 가 pkg-config 단계에서 fail.
+      - name: Install Linux system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
       - name: Cache cargo target
         uses: actions/cache@v4
         with:
