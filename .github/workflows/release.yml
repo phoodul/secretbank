@@ -147,6 +147,17 @@ jobs:
             src-tauri/target/universal-apple-darwin/release/bundle/**/*
           if-no-files-found: warn
 
+      # 빌드 산출물 진단 — 어느 파일이 실제로 만들어졌는지 명시적으로 표시.
+      # Windows 의 .nsis.zip / .nsis.zip.sig 가 누락되는 원인 파악 위해 추가됨.
+      - name: List bundle artifacts (diagnostic)
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          echo "==== src-tauri/target/release/bundle/ ===="
+          ls -laR src-tauri/target/release/bundle/ 2>&1 || echo "[diag] bundle dir not present"
+          echo "==== src-tauri/target/universal-apple-darwin/release/bundle/ ===="
+          ls -laR src-tauri/target/universal-apple-darwin/release/bundle/ 2>&1 || echo "[diag] universal bundle dir not present"
+
       # Real release path — bundle 들 + .sig 파일들을 GitHub Release 에 직접 upload.
       # macOS 는 universal-apple-darwin 경로 추가 처리.
       - name: Upload bundles to GitHub Release
@@ -163,20 +174,25 @@ jobs:
           BUNDLE_DIR="src-tauri/target/release/bundle"
           UNIVERSAL_DIR="src-tauri/target/universal-apple-darwin/release/bundle"
 
-          # 모든 가능한 산출물 경로
+          # 모든 가능한 산출물 경로 (확장된 패턴 — Tauri v2 의 다양한 updater
+          # 출력 형식 모두 포함: .nsis.zip / .exe.sig / .msi.sig 등).
           declare -a CANDIDATES=(
             "$BUNDLE_DIR"/dmg/*.dmg
             "$BUNDLE_DIR"/macos/*.app.tar.gz
             "$BUNDLE_DIR"/macos/*.app.tar.gz.sig
             "$BUNDLE_DIR"/nsis/*.exe
+            "$BUNDLE_DIR"/nsis/*.exe.sig
             "$BUNDLE_DIR"/nsis/*.nsis.zip
             "$BUNDLE_DIR"/nsis/*.nsis.zip.sig
             "$BUNDLE_DIR"/msi/*.msi
+            "$BUNDLE_DIR"/msi/*.msi.sig
             "$BUNDLE_DIR"/msi/*.msi.zip
             "$BUNDLE_DIR"/msi/*.msi.zip.sig
             "$BUNDLE_DIR"/deb/*.deb
             "$BUNDLE_DIR"/appimage/*.AppImage
             "$BUNDLE_DIR"/appimage/*.AppImage.sig
+            "$BUNDLE_DIR"/appimage/*.AppImage.tar.gz
+            "$BUNDLE_DIR"/appimage/*.AppImage.tar.gz.sig
             "$BUNDLE_DIR"/rpm/*.rpm
             "$UNIVERSAL_DIR"/dmg/*.dmg
             "$UNIVERSAL_DIR"/macos/*.app.tar.gz
