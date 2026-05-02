@@ -31,7 +31,7 @@ RP_NAME = "API Vault"
 RP_ORIGINS = "tauri://localhost,http://localhost:1420,http://localhost:8787"
 
 # OAuth public 메타 — client_id 는 시크릿 아님 (검색해도 OK)
-GITHUB_OAUTH_CLIENT_ID = ""
+GITHUB_OAUTH_CLIENT_ID = "Ov23liEmEgn4idIvCFqb"
 GOOGLE_OAUTH_CLIENT_ID = ""
 
 # secrets (wrangler secret put 으로 주입) — production
