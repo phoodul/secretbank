@@ -52,6 +52,7 @@
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / v3 Cargo.toml hover + ManifestCodeLens — risky deps inline) |
 | M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + apivault blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). |
 | **M23** | **Vault Charter (recovery 메커니즘) — 출시 블로커** | T-23-A~E | 5 (+1 hotfix) | ✅ **M23 완료 — 마일스톤 클로즈** (A codec crate / B-1 vault format v2 / B-2 initialize_with_charter / B-3 recover_with_charter / B-4 Tauri 커맨드 + audit / C 발급 UI + PDF / D recovery flow UI / E-1 cooldown sidecar / E-2 cooldown UI / unlock anim hotfix). sync 알림은 M9 audit 확장으로 분리. |
+| **M24** | **General password vault (1Password 류 일반 비밀번호) — 베타 종료 조건** | T-24-A~E | 5 | ⏳ **신설 (2026-05-03)** — credential.kind 확장 (api_key/password) + UI tabs + 브라우저 autofill + import. dogfooding + 법적 자문 + M24 + 첫 100~500 사용자 피드백 후 Pro 가격 도입. |
 
 ---
 
@@ -2029,6 +2030,80 @@
   - 수동 rotation (T122) 은 Free 도 가능 (가이드만 제공)
 - **Files Touched**: `crates/api-vault-app/src/commands/rotation.rs`, `src/features/rotation/RotationsPage.tsx`
 - **Tests**: Rust — Free/Pro 분기 / Vitest — 잠금 UI
+
+---
+
+## M24 — General Password Vault (1Password 류 일반 비밀번호)
+
+**배경 (2026-05-03 결정):** 출시 시 paid Pro 도입을 위한 베타 종료 조건 4개 중 1개. API key 만 다루는 현재 vault 는 1Password 와 정면 비교 시 일반 사용자에게 매력 약함. 일반 비밀번호 vault 추가 후에야 paid 가격 정당화 가능.
+
+**핵심 설계 — credential.kind 확장**: 기존 `credential` 테이블에 `kind` enum 컬럼 추가 (`"api_key"` | `"password"`). 두 종류 모두 같은 storage / 같은 그래프 / 같은 charter recovery / 같은 audit log 공유. UI 만 분기.
+
+### T-24-A. credential.kind enum + 마이그레이션
+
+- **Milestone**: M24
+- **Priority**: Must
+- **Depends on**: M1 (vault core)
+- **Goal**: credential 테이블에 `kind` 컬럼 추가, 기본값 `"api_key"` (기존 데이터 호환).
+- **DoD**:
+  - `0006_credential_kind.sql` 마이그레이션 — `ALTER TABLE credential ADD COLUMN kind TEXT NOT NULL DEFAULT 'api_key'`
+  - `CredentialKind` Rust enum (`api_key`, `password`)
+  - `CredentialDto` 에 `kind` 필드 노출
+  - 기존 통합 테스트가 모두 `kind: "api_key"` 로 통과
+- **Files Touched**: `src-tauri/crates/api-vault-storage/migrations/0006_credential_kind.sql`, `crates/api-vault-core/src/credential.rs`
+- **Tests**: Rust — 기존 데이터의 default 적용 / 새 password kind 저장·조회
+
+### T-24-B. password-specific 필드 (URL · username)
+
+- **Milestone**: M24
+- **Priority**: Must
+- **Depends on**: T-24-A
+- **Goal**: password kind 의 부가 필드 — `url`, `username`, `notes`. 모두 평문 metadata 가 아닌 vault encryption 안.
+- **DoD**:
+  - `credential_metadata` 테이블 또는 JSON 컬럼에 추가 필드 (`{ url, username, notes }`)
+  - 평문 username 도 vault 에 저장 — graph 노드 라벨 수준은 사용자 선택
+  - URL 자동 normalize (`https://example.com/login` → `example.com`)
+- **Files Touched**: `crates/api-vault-storage/repositories/credential.rs`, schema
+- **Tests**: Rust — URL normalize · metadata round-trip
+
+### T-24-C. UI — Inventory tabs + Password form
+
+- **Milestone**: M24
+- **Priority**: Must
+- **Depends on**: T-24-B
+- **Goal**: Inventory 페이지에 `[All] [API Keys] [Passwords]` 탭 + password 전용 입력 폼 (URL / Username / Password / Notes).
+- **DoD**:
+  - 사이드바 또는 inventory 상단 tab UI
+  - `<NewCredentialDialog>` 가 kind 선택 → form 분기 렌더
+  - password 필드는 자동 mask + reveal 버튼 + zxcvbn 강도 미터 (기존 zxcvbn 재사용)
+  - 그래프 노드 — password kind 는 다른 색 (보라 등) 으로 visual 구분
+- **Files Touched**: `src/features/inventory/InventoryPage.tsx`, `NewCredentialDialog.tsx`, `PasswordForm.tsx`, `src/features/graph/nodes/CredentialNode.tsx`
+- **Tests**: Vitest — kind tab 필터링 / password form validation
+
+### T-24-D. CSV import (1Password / Bitwarden / LastPass / Chrome)
+
+- **Milestone**: M24
+- **Priority**: Should
+- **Depends on**: T-24-C
+- **Goal**: 기존 패스워드 매니저에서 CSV export 한 데이터를 vault 로 import.
+- **DoD**:
+  - 4 형식 자동 인식 (header 패턴): 1Password / Bitwarden / LastPass / Chrome
+  - 충돌 시 — skip / overwrite / merge 선택
+  - import 결과 audit log 1건 (개수 + source)
+- **Files Touched**: `crates/api-vault-core/src/import.rs`, `src/features/inventory/ImportDialog.tsx`
+- **Tests**: Rust — 4 형식 sample 파일 round-trip
+
+### T-24-E. 브라우저 autofill 확장 (스켈레톤 only — 실 구현 후속)
+
+- **Milestone**: M24
+- **Priority**: Should
+- **Depends on**: T-24-A, T-24-B
+- **Goal**: Chrome / Firefox / Safari 확장의 manifest + IPC 채널 스켈레톤. 실제 autofill 구현은 별도 마일스톤 (M24 v2).
+- **DoD**:
+  - `browser-extension/` 디렉토리 + manifest v3 (Chrome) / WebExtension (Firefox)
+  - 데스크톱 앱과 IPC: 로컬 named pipe 또는 native messaging
+  - "Sign in with API Vault" 버튼만 동작 — 실 autofill 은 v2 (M24 v2)
+- **Files Touched**: `browser-extension/manifest.json`, `browser-extension/src/background.ts`, native messaging host
 
 ---
 

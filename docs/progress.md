@@ -2,6 +2,45 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-03 — **출시 production 인프라 100% 완성 + 무료 베타 정책 결정**
+- **Phase:** Phase 3 — Implementation 종료. **사용자 액션 3 (DNS) 완료**, 4–7 (Apple cert / Windows cert / 데모영상 / HN+PH) 은 다음 세션.
+- **이번 세션 (2026-05-02 ~ 05-03) 핵심 마일스톤:**
+  - **Repo public 전환 ✅** (`phoodul/api-vault` 공개) — anonymous .dmg / latest.json 다운로드 검증 완료
+  - **Cloudflare Workers Relay 배포 ✅** — `api-vault-relay.phoodul.workers.dev` 라이브, JWT_SIGNING_KEY + GitHub OAuth + Google OAuth secrets 등록
+  - **Cloudflare Pages 배포 + Custom domain ✅** — `api-vault.app` Active + SSL, 새 landing page 디자인 (bento grid + glassmorphism + light/dark + VaultMechanism 로고)
+  - **무료 베타 가격 정책 결정 ✅** — Pro $2 즉시 도입 안 함, dogfooding + 법적 자문 + 일반 비밀번호 기능 + 첫 100~500 사용자 피드백 후 가격 재결정
+  - **Issue templates + Discussions 6 categories ✅** — Bug / Feature / Q&A / Ideas / Show & Tell / Announcements / Polls / General
+  - **첫 valid prerelease v0.1.0-pre8 ✅** — 12 assets + latest.json (4 platform), 누적 7 fix 후 안정화
+  - **CI green ✅** — Rust fmt/clippy/test (Linux deps) + frontend lint/format/typecheck/vitest + e2e + EE relay
+- **이번 세션 commit 시리즈 (총 ~15 commits):**
+  - prerelease 시리즈: pre1 → pre8 (7개 fix lap, e848a75 → abc0baf)
+  - CI 복구: 3b6cc36 fmt/lint/format + 28bcc89 migration/e2e + aadef9f Linux deps + e4e7bbb shamir + 7e89cd0 deploy-relay gating
+  - Landing: bento grid + glassmorphism + 무료 베타 정책 + VaultMechanism logo + Issue templates (b546fea)
+- **사용자가 직접 진행한 사용자 액션:**
+  - GitHub Secrets — TAURI_SIGNING_PRIVATE_KEY + PASSWORD ✅
+  - GitHub Variables — RELAY_DEPLOY_ENABLED=true ✅
+  - Cloudflare API token + GitHub Secret ✅
+  - Cloudflare Pages 도메인 연결 ✅ (UI 마이그레이션 우회 후 성공)
+  - GitHub OAuth App 등록 + secret ✅
+  - Google OAuth App 등록 + secret ✅
+  - Repo Features 토글 (Wikis OFF / Issues+Discussions+Sponsorships+Preserve ON / Projects OFF) ✅
+  - PR 옵션 (Squash ON / Merge commit OFF / Auto-delete branches ON) ✅
+  - **Repo public 전환** ✅
+  - Discussions 6 카테고리 setup ✅
+- **남은 사용자 액션 (다음 세션):**
+  - **#4** macOS notarization — Apple Developer $99/yr (2주 정도 dogfooding 후)
+  - **#5** Windows OV cert — Sectigo / SSL.com ~$150/yr (대량 사용자 발생 시)
+  - **#6** 데모 영상 — `pnpm capture:demo` 디버깅 (dialog locator 실패) + ffmpeg 변환 + edit
+  - **#7** Hacker News "Show HN" + Product Hunt 게시
+- **새 마일스톤 신설 — M24 일반 비밀번호 vault** (베타 종료 조건):
+  - 사용자 결정 (2026-05-03 project-decisions.md): 일반 비밀번호 (1Password 류) 기능 추가 후에야 paid 가격 정당화 가능
+  - phase: schema 확장 (`credential.kind: "api_key" | "password"`) → backend → UI tabs → 브라우저 autofill
+  - launch 직후 dogfooding 결과 따라 next priority 결정
+
+---
+
+## Previous checkpoint (2026-05-01 ~ 2026-05-02 — 출시 launch 인프라 5 자율 lap)
+
 - **Time:** 2026-05-01 ~ 2026-05-02 (Night mode 자율 lap — **출시 launch 인프라 5개 lap 완주**)
 - **세션 개요:** 사용자 자는 동안 (option A 풀 진행 승인) 자율 모드로 5 lap 연속 진행. 모두 push 완료. 최종 commit `b391ebe` (origin/main).
 - **이번 세션 5 lap 누적 commits (이전 세션 + 이번 turn):**

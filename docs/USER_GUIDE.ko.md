@@ -606,7 +606,19 @@ Charter 는 **내용** (6 단어) + **검증자** (옆에 인쇄된 4 자리 숫
 A. 그들은 "자격증명 보관소"입니다. 우리는 보관 + **의존성 그래프** + **블래스트 반경 시뮬레이션** + **Supply chain 스캔** + **RAILGUARD** 까지 한 화면에. 키가 어떤 코드·배포·URL 에 쓰이고, 폐기 시 무엇이 깨지는지 한눈에 보입니다.
 
 **Q. 무료로 어디까지 쓰나요?**
-A. 로컬 볼트 / 그래프 / Incident Feed / Kill Switch / RAILGUARD / Supply chain 스캔 / CLI / MCP 서버 / VS Code 확장 — **전부 AGPL 오픈소스이고 무제한**. Pro ($2/월 또는 $15/년) 는 멀티 디바이스 E2EE 동기화 + auto-revoke + 자동 rotation.
+A. **현재 베타 기간 동안 모든 기능 무료** — 멀티 디바이스 E2EE 동기화, auto-revoke, 자동 rotation 까지 포함. Pro 도입은 다음 4 조건 충족 후: (1) 우리도 1주 이상 직접 써보고 워크플로우 익히기, (2) 변호사 검토 (약관 / 개인정보 / 결제), (3) **일반 비밀번호 vault 기능 추가 (M24)**, (4) 첫 100~500 사용자 피드백. 그때까지 **$0 / 카드 등록 불필요 / 로컬 vault 는 계정 없이 사용**.
+
+**Q. 향후 추가될 기능은?**
+A. 로드맵 (확정 일자 없음):
+- **일반 비밀번호 vault** (1Password 류) — M24, 설계 진행 중
+- Auto-revoke (Stripe / GitHub / AWS API 키)
+- Provider 별 자동 rotation hook
+- 브라우저 확장 (Chrome / Firefox / Safari)
+- 팀 / org / 공유 vault (RBAC + SSO)
+- 모바일 앱 (iOS / Android — Tauri Mobile)
+
+**Q. Pro 가격은 언제 시작?**
+A. 확정 일자 없습니다. 트리거는 위 4 조건. 시행 30일 전 사전 공지. 기존 데이터는 영향 없음 — 로컬 vault 는 영구 AGPL-3.0 무료.
 
 **Q. 회사가 망하면 데이터는?**
 A. 로컬 SQLite 에 그대로 남습니다. CLI 와 데스크톱 앱은 AGPL 이니 여러분이 직접 빌드해 계속 쓸 수 있습니다.
@@ -622,4 +634,4 @@ A. security@api-vault.app 으로 PGP 암호화 메일. 90일 책임 공개.
 
 ---
 
-마지막 갱신: 2026-05-02 — M23 Vault Charter 클로즈 + 첫 prerelease 인프라 시점.
+마지막 갱신: 2026-05-03 — v0.1.0-pre8 첫 valid prerelease + 무료 베타 가격 정책 결정 + M24 (일반 비밀번호) 마일스톤 신설.

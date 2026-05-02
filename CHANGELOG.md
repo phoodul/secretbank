@@ -7,9 +7,114 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-First public release of API Vault — a desktop secrets manager that maps how API
-keys relate to your projects, deployments, and URLs, so you always know the blast
-radius before you rotate or revoke a key.
+Continuing development beyond v0.1.0-pre8. Major upcoming work: M24 (general-password vault), browser autofill, automation hooks, mobile.
+
+## [0.1.0-pre8] - 2026-05-03
+
+First valid prerelease — every install / update channel exercised end-to-end.
+
+### Added — launch infrastructure
+
+- **Public GitHub repository** (`phoodul/api-vault`) — open-sourced under AGPL-3.0
+  with `/ee/` carved out as Enterprise License. Anonymous artifact downloads and
+  Tauri auto-updater verified.
+- **First valid prerelease** v0.1.0-pre8 — 12 GitHub release assets:
+  - macOS: `*_universal.dmg` + `*.app.tar.gz` + `.app.tar.gz.sig`
+  - Windows: `*_x64-setup.exe` + `*.exe.sig` + `*_x64_en-US.msi` + `*.msi.sig`
+  - Linux: `*_amd64.deb` + `*_amd64.AppImage` + `*.AppImage.sig` + `*-1.x86_64.rpm`
+  - `latest.json` — Tauri auto-updater manifest with darwin-x86_64 / darwin-aarch64 /
+    windows-x86_64 / linux-x86_64 entries
+- **`api-vault.app` landing page live** — Cloudflare Pages with custom-domain SSL.
+  New design: bento-grid + glassmorphism + light/dark toggle + animated gradient
+  mesh background. Logo is an SVG recreation of the desktop app's VaultMechanism
+  unlock scene (hexagonal frame + brass reactor disc + cardinal reticle + rotating
+  sweep arc + halo bloom + reactor core pulse).
+- **`api-vault-relay.phoodul.workers.dev` live** — Cloudflare Workers relay
+  deployed; secrets registered (`JWT_SIGNING_KEY`, `GITHUB_OAUTH_CLIENT_SECRET`,
+  `GOOGLE_OAUTH_CLIENT_SECRET`); GitHub & Google OAuth client IDs in
+  `wrangler.toml`. The `/ee/` enterprise license boundary is intact.
+- **Issue templates + Discussions** — `.github/ISSUE_TEMPLATE/` with bug-report
+  and feature-request forms plus a `config.yml` redirecting Q&A and Ideas to
+  Discussions, security to `SECURITY.md`. Six default Discussions categories
+  (Announcements / General / Ideas / Polls / Q&A / Show and tell) created.
+- **GitHub Actions release pipeline** — `release.yml` builds all 3 platforms,
+  uploads bundles + `.sig` files, then synthesizes `latest.json` for the auto
+  updater. CI workflow (`ci.yml`) covers Rust fmt/clippy/test, frontend
+  typecheck/lint/format/vitest, E2E smoke (Playwright), and EE Relay
+  typecheck/test. Node 22 LTS across all workflows.
+- **Demo capture infrastructure** — `scripts/capture-demo.ts` + `e2e/demo.spec.ts`
+  + `e2e/playwright.demo.config.ts`. Records three webm scenes (lock-screen /
+  charter-issuance / recovery-flow) for marketing assets. `pnpm capture:demo`.
+
+### Changed — pricing & roadmap
+
+- **Pricing reset to free beta** — Pro $2/month / $15/year is **not** introduced
+  at launch. All features (including multi-device E2EE sync, auto-revoke,
+  auto-rotation) remain free until four conditions are met: (1) author
+  dogfooding ≥ 1 week, (2) legal review of terms / privacy / payment policies,
+  (3) **M24 general-password vault feature ships**, (4) feedback from the first
+  100–500 users. See `docs/project-decisions.md` (2026-05-03 entry) and
+  `docs/architecture.md` §9.1.
+- **M24 — General Password Vault** added as a new milestone (T-24-A through
+  T-24-E). Extends `credential.kind` to `"api_key" | "password"`; reuses the
+  same vault, charter recovery, audit log, and dependency graph. Browser
+  autofill is deferred to M24 v2.
+
+### Fixed — prerelease iteration (pre1 → pre8, 7 fixes)
+
+- **pre1 → pre2** — macOS build failed because `tauri-action` passed empty
+  `APPLE_*` env vars (codesign with empty identity). Replaced with direct
+  `pnpm tauri build` invocation; signing only the auto-updater key. (`e848a75`)
+- **pre2 → pre3** — `shopt -s globstar` unsupported on macOS bash 3.2. Replaced
+  with `nullglob` only. (`eb44be1`)
+- **pre3 → pre4** — `jq | head` SIGPIPE on pipe close fired `pipefail` and
+  failed the manifest job. Removed `pipefail` for that step; rewrote `pick()`
+  to use `[...][0] // empty` inside jq. (`124435f`)
+- **pre4 → pre5** — `gh` CLI on a fresh runner without `actions/checkout` could
+  not detect the repo. Injected `GH_REPO` env var. (`cd7911a`)
+- **pre5 → pre6** — `.sig` files were not produced because Tauri v2 needs
+  `bundle.createUpdaterArtifacts: true` opt-in. Set it; rewrote the manifest
+  picker to use `endswith()`. (`699a0e3`)
+- **pre6 → pre7** — Windows `.nsis.zip` never appeared because Tauri v2 signs
+  the NSIS `.exe` directly (no zip wrapper). Added a diagnostic step to list
+  bundle output and broadened the upload glob. (`6fa1722`)
+- **pre7 → pre8** — `latest.json` had no `windows-x86_64` entry because the
+  manifest picker still searched for `.nsis.zip`. Switched the suffix to
+  `-setup.exe` / `-setup.exe.sig`. (`abc0baf`)
+
+### Fixed — CI green restoration
+
+- **Rust** — workspace cargo fmt drift, missing Linux native deps
+  (`libwebkit2gtk-4.1-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`,
+  etc.) for clippy/test, and `migration_test` expected-table list updated for
+  M20 supply-chain tables.
+- **Frontend** — prettier wrote 164 files; ESLint config now ignores
+  `vscode-extension/out/`, recognises `^_` as intentionally unused, downgrades
+  `react-hooks/set-state-in-effect` and `react-hooks/refs` to warnings,
+  introduces a Node-globals override for `scripts/` and `e2e/`, and a
+  vscode-extension override.
+- **EE Relay** — `pair.test.ts` response type narrowed to include
+  `joiner_pub_b64`.
+- **E2E smoke** — strict-mode locator collision fixed by switching to
+  `getByRole("main")`.
+- **Shamir parser** — flaky `parse_tolerates_alternate_formats` finally
+  reproducible: the EFF wordlist contains four hyphen words (`drop-down`,
+  `t-shirt`, `yo-yo`, `felt-tip`) which the input cleaner was splitting on
+  `-`. Cleaner now preserves intra-word `-` when whitespace is present and
+  filters standalone `-` tokens after split. Same fix in
+  `charter::parse`. (`e4e7bbb`)
+- **Node 20 deprecation** — bumped all `actions/setup-node@v4` to Node 22 LTS.
+
+### Security
+
+- Tauri updater keypair generated locally, public key embedded in
+  `tauri.conf.json`, private key + password registered as GitHub Secrets.
+- Cloudflare API token uses the `Edit Cloudflare Workers` template plus
+  explicit `D1: Edit` permission (D1 was missing from the template).
+- All wrangler `secret put` invocations stay client-side; no secret has been
+  committed to the repo.
+
+
 
 ### Added
 
@@ -384,4 +489,5 @@ radius before you rotate or revoke a key.
   infrastructure are planned for M13; this release is unsigned and must be
   installed manually.
 
-[Unreleased]: https://github.com/phoodul/api-vault/commits/main
+[Unreleased]: https://github.com/phoodul/api-vault/compare/v0.1.0-pre8...HEAD
+[0.1.0-pre8]: https://github.com/phoodul/api-vault/releases/tag/v0.1.0-pre8

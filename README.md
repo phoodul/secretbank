@@ -12,20 +12,34 @@ It maps how API keys relate to your projects, deployments, and URLs — so you a
 blast radius before you rotate or revoke a key. When a provider reports a breach, API Vault
 matches it to your vault automatically and surfaces exactly which services are at risk.
 
-## Features (MVP)
+## Features
 
+> **Status: v0.1.0-pre8 (free beta)** — every feature listed below is enabled. We will keep the
+> entire app free until we (1) finish dogfooding, (2) ship the general-password vault, (3) get
+> legal review of payment terms, and (4) collect feedback from the first 100–500 users.
+> See [docs/project-decisions.md](./docs/project-decisions.md) for the full rationale.
+
+### Available now
 - **Zero-Knowledge vault** — secrets are encrypted on-device; the relay server never sees plaintext
 - **Vault Charter recovery** — Diceware 6-word + 4-digit verifier with optional Shamir 2-of-3 split. Lose your passphrase, not your vault.
 - **Dependency graph** — visual map of Issuer → Credential → Usage → Project → Deployment → URL
 - **Blast radius preview** — simulate what breaks before you revoke a key
 - **Supply chain risk graph** — match `package.json` / `Cargo.toml` deps against the OSV.dev advisory feed
 - **Incident feed** — auto-match NVD / GitHub Advisory alerts to credentials in your vault
-- **Kill Switch** — one-click revoke with two-step confirmation (free tier)
+- **Kill Switch** — one-click revoke with two-step confirmation
 - **RAILGUARD** — auto-generate `.cursorrules` / `CLAUDE.md` / Copilot instructions for AI editors
 - **CLI + MCP** — `apivault run -- cmd` (Doppler-style env injection from your dependency graph) and a stdio MCP server for Claude / Cursor / Copilot
 - **VS Code + JetBrains plugins** — package hover, supply-chain diagnostics, blast-radius graph
 - **Multi-device E2EE sync** — Yjs CRDT + XChaCha20-Poly1305 over a Cloudflare Workers relay
-- **Open Core** — local vault and graph engine are AGPL-3.0; premium connectors and relay are EE
+- **Open Core** — local vault and graph engine are AGPL-3.0; relay and premium connectors are EE
+
+### Roadmap (no committed dates)
+- **General password vault** (1Password-style URL/username/password) — M24, in active design
+- **Auto-revoke** for Stripe / GitHub / AWS keys
+- **Auto-rotation** with provider hooks
+- **Browser extension** (Chrome / Firefox / Safari)
+- **Team / org / shared vault** (RBAC + SSO)
+- **Mobile apps** (iOS / Android via Tauri Mobile)
 
 ## Tech Stack
 
@@ -119,6 +133,11 @@ can be merged. When you open a PR, the CLA bot will guide you through the proces
 
 API Vault는 API 키를 단순 보관하는 것을 넘어 **의존성 그래프**를 통해 "어떤 키가 어느 프로젝트·배포 환경에 쓰이고,
 폐기 시 무엇이 깨지는지"를 추적합니다. 로컬 볼트는 `age` 암호화로 보호되며, 서버는 암호문만 릴레이하는
-**Zero-Knowledge 아키텍처**를 사용합니다. 데스크톱(Windows/macOS/Linux)과 모바일(iOS/Android)을 동시 지원하고,
-**월 $1 / 년 $10** Pro 플랜으로 멀티 디바이스 E2EE 동기화 + 자동 rotation 을 제공합니다. 코어는 **AGPL-3.0 오픈소스**이며,
-프리미엄 커넥터·자동 rotation 등은 EE 독점 라이선스로 별도 제공됩니다.
+**Zero-Knowledge 아키텍처**를 사용합니다. 데스크톱(Windows/macOS/Linux)을 우선 지원하고, 모바일(iOS/Android)은 Tauri Mobile 로드맵으로 진행 예정.
+
+**현재 v0.1.0-pre8 무료 베타** — 멀티 디바이스 E2EE 동기화 / auto-revoke / 자동 rotation 까지 모든 기능이 무료입니다.
+유료 Pro 도입은 (1) 직접 dogfooding 1주 이상, (2) 약관/개인정보/결제 법적 자문, (3) **일반 비밀번호 vault 기능 추가 (M24)**,
+(4) 첫 100~500 사용자 피드백 수집 후 결정합니다. 핵심 데스크톱 앱과 그래프 엔진은 영구 **AGPL-3.0 오픈소스**이며,
+릴레이 서버 등 일부는 EE 라이선스로 별도 제공됩니다 (Open Core).
+
+자세한 결정 근거: [docs/project-decisions.md](./docs/project-decisions.md) (2026-05-03 항목).

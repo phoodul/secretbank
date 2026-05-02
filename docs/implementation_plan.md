@@ -1559,4 +1559,45 @@ end
 
 ---
 
+## M24. General Password Vault (베타 종료 조건)
+
+**배경 (2026-05-03 결정):** v0.1.0-pre8 출시 후 paid Pro 도입을 위한 4 조건 중 1개. API key 만 다루는 vault 는 1Password 와 정면 비교 시 일반 사용자에게 매력 약함. 일반 비밀번호 기능 추가 후 paid 가격 정당화 가능.
+
+### 핵심 디자인 원칙
+
+1. **Single vault, two kinds** — credential 테이블에 `kind` enum 추가 (`api_key | password`). 둘 다 같은 storage / 같은 charter recovery / 같은 audit log / 같은 graph 공유.
+2. **Reuse existing** — Diceware charter / blast radius / supply chain 은 password kind 에도 그대로 적용 (사용자가 password 만 vault 에 넣어도 1Password 동급 + 그래프 보너스).
+3. **Browser autofill 은 v2** — M24 v1 은 manual entry + import 만. autofill native messaging host 는 별도 마일스톤.
+
+### Phase 분해
+
+| Phase | Sub-task | 산출물 |
+|:--|:--|:--|
+| **24-A** schema | T-24-A | `0006_credential_kind.sql` 마이그레이션 + `CredentialKind` enum + `CredentialDto.kind` |
+| **24-B** metadata | T-24-B | `url`, `username`, `notes` 필드 (vault encrypted) + URL normalize 헬퍼 |
+| **24-C** UI | T-24-C | Inventory tabs (`All / API Keys / Passwords`) + `<PasswordForm>` + 그래프 노드 색상 분기 |
+| **24-D** import | T-24-D | CSV import (1Password / Bitwarden / LastPass / Chrome) + 충돌 처리 |
+| **24-E** browser ext skeleton | T-24-E | `browser-extension/` manifest v3 + native messaging IPC (실 autofill 은 v2) |
+
+### Migration 안전성
+
+- 기존 credential (모두 api_key) 가 영향 없음 — `kind DEFAULT 'api_key'` 로 backward compat
+- 그래프 layout 영향 없음 — credential 노드 그대로
+- charter recovery — kind 무관하게 모두 한 번에 복구
+- supply chain — api_key 에만 의미 (password 는 OSV 매칭 안 함)
+
+### 의존성
+
+- **선행**: M1 (vault core) — 완료
+- **병행 가능**: T-24-A ~ E 는 phase 순차 (A → B → C → D → E)
+- **launch 영향**: M24 v1 (autofill 제외) 은 1주~2주 작업. dogfooding 기간 안에 완료 가능.
+
+### 의도된 한계 (post-M24)
+
+- 브라우저 autofill 은 별도 마일스톤 (M25 또는 M24 v2)
+- TOTP / OTP 코드 저장 — Phase 2 백로그
+- Form-fill 자동화 (passkey alternative) — long-term
+
+---
+
 _문서 끝._

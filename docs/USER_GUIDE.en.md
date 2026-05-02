@@ -658,10 +658,27 @@ see which code, deployments, and URLs depend on each key — and what breaks
 when you revoke one.
 
 **Q. What's free?**
-A. Local vault, graph, incident feed, kill switch, RAILGUARD, supply-chain
-scan, CLI, MCP server, VS Code extension — **all AGPL open source, all
-unlimited**. Pro ($2/month or $15/year) adds multi-device E2EE sync,
-auto-revoke, and auto-rotation.
+A. **Currently everything is free during beta** — including multi-device
+E2EE sync, auto-revoke, and auto-rotation. We will introduce a Pro tier
+only after: (1) we ourselves have used the app for a week to learn the
+real workflows, (2) lawyers have reviewed our terms / privacy / payment
+policies, (3) we ship the general-password vault feature (M24), and (4)
+we have ~100–500 users worth of feedback. Until then, **$0 / no credit
+card / no account required for local vault**.
+
+**Q. What's coming next?**
+A. Roadmap (no committed dates):
+- **General password vault** (1Password style) — M24, in active design
+- Auto-revoke for Stripe / GitHub / AWS API keys
+- Auto-rotation hooks per provider
+- Browser extension (Chrome / Firefox / Safari)
+- Team / org / shared vault (RBAC + SSO)
+- Mobile apps (iOS / Android — Tauri Mobile)
+
+**Q. When will Pro pricing start?**
+A. We do not commit to a date. Trigger is the four conditions above. We
+will announce 30 days in advance. Existing data is not affected — the
+local vault stays AGPL-3.0 forever.
 
 **Q. What if your company shuts down?**
 A. Your data stays on disk in plain SQLite (encrypted at rest). The CLI and
@@ -681,4 +698,4 @@ disclosure.
 
 ---
 
-Last updated: 2026-05-02 — at M23 Vault Charter close + first prerelease infra.
+Last updated: 2026-05-03 — at v0.1.0-pre8 first valid prerelease + free beta pricing decision + M24 (general password) milestone added.

@@ -1522,6 +1522,64 @@ M4 UI (T056 Incidents 페이지) 완성 이후에는 `/incidents` 목록 + `inci
 
 ### M3 Dependency Graph & Blast Radius — 8/8 ✅ 종료
 
+## 2026-05-02 ~ 2026-05-03 — 출시 production 인프라 풀 가동 + 무료 베타 정책 결정
+
+이번 세션이 사용자에게 가장 큰 무게의 launch 인프라 통합 작업.
+
+### prerelease 시리즈 (pre1 → pre8, 누적 7 fix)
+- pre1 macOS 실패 (tauri-action 빈 APPLE_* env 처리 버그) → tauri-action 우회 (`e848a75`)
+- pre2 macOS upload bash 3.2 globstar 미지원 → globstar 제거 (`eb44be1`)
+- pre3 jq | head SIGPIPE → pipefail 제거 + `[...][0] // empty` (`124435f`)
+- pre4 gh CLI "not a git repository" → GH_REPO env 주입 (`cd7911a`)
+- pre5 .sig 파일 미생성 → `bundle.createUpdaterArtifacts: true` + jq endswith (`699a0e3`)
+- pre6 Windows .nsis.zip 누락 진단 step + 추가 패턴 (`6fa1722`)
+- pre7 Tauri v2 Windows 는 .nsis.zip 안 만들고 .exe 자체에 .sig → pick suffix `-setup.exe` (`abc0baf`)
+- **pre8 = 첫 valid prerelease** — 12 assets + latest.json (darwin x2 + windows + linux)
+
+### CI green 복구 시리즈
+- shamir test flaky (EFF wordlist 의 4 hyphen 단어 — drop-down/t-shirt/yo-yo/felt-tip 이 share 에 등장 시 parser fail) → 입력에 공백 있으면 `-` 보존, standalone `-` 만 filter (`e4e7bbb`)
+- Rust glib-sys missing — CI rust job 에 webkit2gtk 등 Linux native deps 설치 (`aadef9f`)
+- migration test M20 supply chain 테이블 expected list 갱신 (`28bcc89`)
+- E2E smoke locator strict mode 충돌 fix (`28bcc89`)
+- Frontend lint/format/typecheck/vitest 모두 green (`3b6cc36`)
+- deploy-relay 의 deploy job 을 `RELAY_DEPLOY_ENABLED` var 로 gating (`7e89cd0`)
+- Node 20 deprecation 경고 → Node 22 LTS 로 bump (`e4e7bbb`)
+
+### Cloudflare 인프라 풀 가동
+- Cloudflare Workers Relay 배포 — `api-vault-relay.phoodul.workers.dev` (JWT_SIGNING_KEY + GitHub OAuth + Google OAuth)
+- Cloudflare Pages site 배포 + custom domain `api-vault.app` Active (SSL 자동 발급)
+- API token 발급 + GitHub Secret/Variable 등록 + wrangler login + secret put 모두 사용자 직접
+
+### Landing page 새 디자인
+- 검은색 + 초록색 톤 폐기 → Lapis 청금석 + 황동 (M22.5 디자인 토큰 일관성)
+- Bento grid (6-column asymmetric) + Glassmorphism (frosted blur + gradient borders)
+- Light/Dark mode toggle (localStorage)
+- Logo: VaultMechanism unlock 장면 SVG 재현 (육각형 frame + 황동 reactor + cardinal reticle + 회전 sweep arc + halo bloom + reactor core pulse)
+- Animated gradient mesh 배경 + 데모 영상 placeholder
+
+### 가격 정책 변경 — 무료 베타 (2026-05-03 결정)
+- Pro $2 즉시 도입 안 함, 베타 종료 4 조건:
+  1. 사용자 본인 dogfooding 완료
+  2. 법적 자문 (약관 / 개인정보 / 결제)
+  3. 일반 비밀번호 기능 추가 (M24 신설)
+  4. 첫 100~500 사용자 피드백
+- landing page 의 Pricing 섹션 → "Everything Free during beta" + "Coming later" 로드맵 카드로 재구성
+- project-decisions.md 에 결정 기록
+
+### Repo public 전환
+- secret 스캔 (test dummy + RAILGUARD 검출 정규식만, 진짜 secret 없음)
+- About 메타 (description / website / topics 15개)
+- Issue templates (Bug / Feature + 3 redirect via config.yml)
+- Discussions 6 카테고리 setup
+- Features ON/OFF 권장값 적용
+- PR 옵션 (Squash + Auto-delete) 적용
+- Anonymous .dmg / latest.json 다운로드 검증 통과
+
+### 차별화 4축 + Open Core 라이선스 정착
+- AGPL (`/`) — 데스크톱 앱 + graph + supply chain + RAILGUARD + charter
+- EE (`/ee/`) — Workers relay + 미래 자동 rotation + sync 백엔드
+- 유료화 가능성: Open Core SaaS 모델 (사용자가 self-host 하려면 EE 라이선스 별도)
+
 ## 2026-05-02 — Night mode 자율 5 lap (출시 launch 인프라 풀 패키지)
 
 사용자가 자는 동안 option A 풀 진행 승인. 5 lap 연속 자율 진행.
