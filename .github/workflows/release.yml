@@ -157,7 +157,8 @@ jobs:
           TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
         run: |
           set -euo pipefail
-          shopt -s nullglob globstar
+          # macOS 의 bash 3.2 는 globstar 미지원. 본 스크립트는 **/ 안 쓰니 nullglob 만.
+          shopt -s nullglob
 
           BUNDLE_DIR="src-tauri/target/release/bundle"
           UNIVERSAL_DIR="src-tauri/target/universal-apple-darwin/release/bundle"
