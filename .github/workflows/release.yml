@@ -211,19 +211,32 @@ jobs:
           TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
         shell: bash
         run: |
-          set -euo pipefail
+          set -eu
+          # NOTE: pipefail 의도적으로 비활성화 — jq | head 조합에서 SIGPIPE 로
+          # 가짜 실패 트리거 가능. 본 step 은 빈 출력에 관대.
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           VERSION="${TAG#v}"
           BASE="https://github.com/${{ github.repository }}/releases/download/$TAG"
           WORK=$(mktemp -d)
 
-          # 모든 .sig 파일 다운로드 (tag 의 release 에서)
-          gh release download "$TAG" --pattern "*.sig" --dir "$WORK" 2>&1 || true
-          ls -la "$WORK" || true
+          echo "[manifest] tag=$TAG version=$VERSION work=$WORK"
 
-          # asset 목록 가져와서 platform 별 분류
-          ASSETS_JSON=$(gh release view "$TAG" --json assets)
-          pick() { echo "$ASSETS_JSON" | jq -r ".assets[].name | select(test(\"$1\"))" | head -1; }
+          # 모든 .sig 파일 다운로드 (tag 의 release 에서)
+          gh release download "$TAG" --pattern "*.sig" --dir "$WORK" 2>&1 || echo "[manifest] no .sig files (or download failed)"
+          echo "[manifest] downloaded files:"
+          ls -la "$WORK" 2>/dev/null || true
+
+          # asset 목록 가져와서 platform 별 분류 (jq 안에서 first/// empty 사용)
+          ASSETS_JSON=$(gh release view "$TAG" --json assets 2>&1) || {
+            echo "[manifest] gh release view failed: $ASSETS_JSON"
+            exit 1
+          }
+          echo "[manifest] assets:"
+          echo "$ASSETS_JSON" | jq -r '.assets[].name' || true
+
+          pick() {
+            echo "$ASSETS_JSON" | jq -r "[.assets[].name | select(test(\"$1\"))][0] // empty"
+          }
 
           DARWIN_TAR=$(pick "\\.app\\.tar\\.gz$")
           DARWIN_SIG_NAME=$(pick "\\.app\\.tar\\.gz\\.sig$")
@@ -231,6 +244,11 @@ jobs:
           WINDOWS_SIG_NAME=$(pick "\\.nsis\\.zip\\.sig$")
           LINUX_APPIMAGE=$(pick "\\.AppImage$")
           LINUX_SIG_NAME=$(pick "\\.AppImage\\.sig$")
+
+          echo "[manifest] picked:"
+          echo "  darwin_tar=$DARWIN_TAR  sig=$DARWIN_SIG_NAME"
+          echo "  windows_nsis=$WINDOWS_NSIS  sig=$WINDOWS_SIG_NAME"
+          echo "  linux_appimage=$LINUX_APPIMAGE  sig=$LINUX_SIG_NAME"
 
           read_sig() {
             local f="$WORK/$1"
