@@ -208,6 +208,9 @@ jobs:
       - name: Generate and upload latest.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # checkout step 없이 gh CLI 가 repo 를 알아낼 수 있도록.
+          # 없으면 "fatal: not a git repository" 로 실패.
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
         shell: bash
         run: |
