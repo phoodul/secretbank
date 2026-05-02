@@ -237,16 +237,17 @@ jobs:
           echo "[manifest] assets:"
           echo "$ASSETS_JSON" | jq -r '.assets[].name' || true
 
+          # endswith() 사용 — regex 의 backslash escape 지옥 회피.
           pick() {
-            echo "$ASSETS_JSON" | jq -r "[.assets[].name | select(test(\"$1\"))][0] // empty"
+            echo "$ASSETS_JSON" | jq -r --arg suffix "$1" '[.assets[].name | select(endswith($suffix))][0] // empty'
           }
 
-          DARWIN_TAR=$(pick "\\.app\\.tar\\.gz$")
-          DARWIN_SIG_NAME=$(pick "\\.app\\.tar\\.gz\\.sig$")
-          WINDOWS_NSIS=$(pick "\\.nsis\\.zip$")
-          WINDOWS_SIG_NAME=$(pick "\\.nsis\\.zip\\.sig$")
-          LINUX_APPIMAGE=$(pick "\\.AppImage$")
-          LINUX_SIG_NAME=$(pick "\\.AppImage\\.sig$")
+          DARWIN_TAR=$(pick ".app.tar.gz")
+          DARWIN_SIG_NAME=$(pick ".app.tar.gz.sig")
+          WINDOWS_NSIS=$(pick ".nsis.zip")
+          WINDOWS_SIG_NAME=$(pick ".nsis.zip.sig")
+          LINUX_APPIMAGE=$(pick ".AppImage")
+          LINUX_SIG_NAME=$(pick ".AppImage.sig")
 
           echo "[manifest] picked:"
           echo "  darwin_tar=$DARWIN_TAR  sig=$DARWIN_SIG_NAME"
