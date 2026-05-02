@@ -1,0 +1,87 @@
+# Desktop Domain Gate (Tauri v2)
+# - platform-bridge-debugger: IPC + capability + 플랫폼별 + 코드사인 특화
+# - 크로스플랫폼 검증
+# - 코드사인은 release PR만 (별도)
+
+name: Domain Gate (desktop)
+
+on:
+  pull_request_target:
+    types: [labeled, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: domain-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    if: |
+      github.event.sender.type != 'Bot' &&
+      contains(github.event.pull_request.labels.*.name, 'claude-review') &&
+      (
+        github.event.pull_request.head.repo.full_name == github.repository ||
+        contains(github.event.pull_request.labels.*.name, 'safe-to-review')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Run platform-bridge-debugger
+        uses: anthropics/claude-code-base-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_tools: "Bash,Read,Grep,Glob,Write,Edit"
+          timeout_minutes: 25
+          claude_args: "--max-turns 12"
+          prompt: |
+            ## Secret Safety (필수)
+            diff에 키체인 / 코드사인 인증서 / Tauri identifier 비밀 발견 시
+            값 인용 금지, 라인 번호만 보고. 즉시 rotation 요청.
+
+            ## Desktop (Tauri v2) Domain Gate
+            1. **변경 영향 분석**: src-tauri/ commands / capabilities /
+               permissions / native plugin / frontend ↔ backend IPC 중 어디?
+            2. **platform-bridge-debugger 위임**:
+               `.claude/agents/platform-bridge-debugger.md` 규칙에 따라
+               IPC contract / capability 정합 / 플랫폼 분기 검증
+            3. **Capability 검증**: 새 capability 추가 시 최소 권한 원칙 검토
+            4. **크로스플랫폼**: Windows/macOS/Linux 분기 코드 누락 검사
+            5. **코드사인 영향**: tauri.conf.json identifier / signing 변경 시
+               🟡 release PR로만 변경 권장
+
+            결과를 `comment.md`에 한국어로:
+            ```
+            ## Desktop Domain Gate
+
+            ### 변경 영향
+            ...
+
+            ### IPC / Capability
+            ...
+
+            ### 크로스플랫폼 분기
+            ...
+
+            ### 판정
+            🔴 / 🟡 / 🟢
+            ```
+
+      - name: Post comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f comment.md ]; then
+            gh pr comment "$PR_NUMBER" --body-file comment.md
+          fi

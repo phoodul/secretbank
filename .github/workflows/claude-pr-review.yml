@@ -1,0 +1,74 @@
+# Claude Code AI PR Review (opt-in via `claude-review` label)
+#
+# 트리거 정책:
+#   - 동일 레포 PR: `claude-review` 라벨만 필요
+#   - Fork PR:     `claude-review` + `safe-to-review` 라벨 둘 다 필요
+#                  (메인테이너가 코드 안전성 확인 후 수동 부착)
+
+name: Claude PR Review
+
+on:
+  pull_request_target:
+    types: [labeled, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: |
+      github.event.sender.type != 'Bot' &&
+      contains(github.event.pull_request.labels.*.name, 'claude-review') &&
+      (
+        github.event.pull_request.head.repo.full_name == github.repository ||
+        contains(github.event.pull_request.labels.*.name, 'safe-to-review')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Run Claude review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--max-turns 5"
+          prompt: |
+            ## Secret Safety (필수, 다른 모든 규칙보다 우선)
+            diff에 다음 패턴이 발견되면:
+            - `.env*` 파일 내용
+            - API key / token / password / secret
+            - `DATABASE_URL`, `POSTGRES_*`, `AWS_*_KEY`, `ANTHROPIC_API_KEY` 등
+
+            행동:
+            1. 값 자체를 절대 인용·코멘트·요약하지 말 것
+            2. 라인 번호와 파일 경로만 보고 (예: "L42 of src/.env에 API key가 노출됨")
+            3. 작성자에게 즉시 제거 + key rotation 요청
+            4. secret-scanning 알림 확인을 권장
+
+            ## 리뷰 규칙
+            이 PR을 검토하라. 다음 항목을 한국어로 코멘트:
+            1. 변경 요약 (3줄 이내)
+            2. 잠재적 버그·엣지 케이스·논리 오류
+            3. main 브랜치와의 호환성 (breaking change 여부)
+            4. 보안·성능 우려
+            5. 테스트 커버리지 평가
+            6. 머지 전 작성자에게 요청할 액션 아이템 (체크박스)
+
+            severity 태그: 🔴 blocker / 🟡 caution / 🟢 nit
+            blocker는 머지 차단 사유.
+
+            기존 인간 리뷰어 워크플로우를 대체하지 말고 보조하라.
+            자동 approve/block 금지 — 코멘트만.
+
+            # 도메인 게이트(domain-gate.yml)는 Tauri IPC/capability 전담.
+            # 여기서는 코드 품질·보안·논리 오류·테스트 커버리지만.
