@@ -32,7 +32,7 @@ RP_ORIGINS = "tauri://localhost,http://localhost:1420,http://localhost:8787"
 
 # OAuth public 메타 — client_id 는 시크릿 아님 (검색해도 OK)
 GITHUB_OAUTH_CLIENT_ID = "Ov23liEmEgn4idIvCFqb"
-GOOGLE_OAUTH_CLIENT_ID = ""
+GOOGLE_OAUTH_CLIENT_ID = "112705184289-8urc35jb0g9gsaa5pp0ukn6347qkkhns.apps.googleusercontent.com"
 
 # secrets (wrangler secret put 으로 주입) — production
 # GITHUB_APP_PRIVATE_KEY        RS256 PEM
