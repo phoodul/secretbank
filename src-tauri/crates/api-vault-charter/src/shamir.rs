@@ -79,10 +79,18 @@ impl ShamirShare {
 
     /// Parse permissive input — `"Share 1 of 3: ..."`, `"#1 ..."`, `"1: ..."` 모두 허용.
     pub fn parse(input: &str) -> Result<Self, ShamirError> {
-        let cleaned = input
-            .replace(['#', ':', '-', '_', '\t', '\n', '\r', ','], " ")
-            .to_lowercase();
-        let tokens: Vec<&str> = cleaned.split_whitespace().collect();
+        // Format 1 (공백 있음): 단어 내부의 hyphen 보존 ("drop-down" 등 EFF
+        // wordlist 의 4개 hyphen 단어). 단어 사이의 standalone "-" 는 filter
+        // 단계에서 제거.
+        // Format 2 (공백 없음 — dash-only style): 모든 dash 가 separator.
+        let has_space = input.chars().any(char::is_whitespace);
+        let cleaned = if has_space {
+            input.replace(['#', ':', '_', '\t', '\n', '\r', ','], " ")
+        } else {
+            input.replace(['#', ':', '-', '_', '\t', '\n', '\r', ','], " ")
+        }
+        .to_lowercase();
+        let tokens: Vec<&str> = cleaned.split_whitespace().filter(|t| *t != "-").collect();
 
         // Find the share index. Strategy: first integer in 1..=TOTAL_SHARES that is followed by
         // either "of" or by a wordlist word (start of body).
@@ -390,6 +398,28 @@ mod tests {
         let parsed = ShamirShare::parse(&alt).expect("alt format must parse");
         assert_eq!(parsed.words, sh.words);
         assert_eq!(parsed.index, sh.index);
+    }
+
+    /// EFF wordlist 의 hyphen 단어 (drop-down / t-shirt / yo-yo / felt-tip) 가
+    /// share words 로 들어와도 parse 가 단어 내부 hyphen 을 separator 로
+    /// 잘못 split 하지 말아야 함. tokenize 단계만 검증하므로 verifier
+    /// mismatch (ChecksumMismatch) 는 OK — WrongWordCount 면 안 됨.
+    #[test]
+    fn parse_preserves_hyphen_words_in_tokens() {
+        let input = "Share 1 of 3: drop-down harbor flint t-shirt opal cascade neutral - 1234";
+        let result = ShamirShare::parse(input);
+        match result {
+            Err(ShamirError::WrongWordCount { .. }) => {
+                panic!("hyphen 단어가 split 됨 — tokens count 어긋남")
+            }
+            // ChecksumMismatch 는 verifier 가 임의값이라 발생할 수 있음 — 통과
+            Err(ShamirError::ChecksumMismatch { .. }) => {}
+            // UnknownWord 도 임의 단어가 wordlist 안에 있을 때 통과
+            Err(ShamirError::UnknownWord { .. }) => {}
+            // 우연히 verifier 가 맞아도 통과
+            Ok(_) => {}
+            other => panic!("unexpected error: {other:?}"),
+        }
     }
 
     #[test]

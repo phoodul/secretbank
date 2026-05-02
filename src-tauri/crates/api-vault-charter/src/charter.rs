@@ -126,9 +126,19 @@ impl Charter {
     /// `"tundra-harbor-flint-moth-opal-cascade-7042"`
     /// `"tundra harbor flint moth opal cascade 7042"`
     pub fn parse(input: &str) -> Result<Self, CharterError> {
-        let normalized: Vec<String> = input
-            .replace(['-', '_', '\t', '\n', '\r'], " ")
+        // 공백 있으면 단어 내부 hyphen 보존 (drop-down / t-shirt / yo-yo /
+        // felt-tip — EFF wordlist 의 4개 hyphen 단어). standalone "-" 는 후속
+        // filter 단계에서 제거.
+        // 공백 없으면 dash-only style 로 간주, 모든 "-" 가 separator.
+        let has_space = input.chars().any(char::is_whitespace);
+        let cleaned = if has_space {
+            input.replace(['_', '\t', '\n', '\r'], " ")
+        } else {
+            input.replace(['-', '_', '\t', '\n', '\r'], " ")
+        };
+        let normalized: Vec<String> = cleaned
             .split_whitespace()
+            .filter(|s| *s != "-")
             .map(|s| s.to_lowercase())
             .collect();
 
