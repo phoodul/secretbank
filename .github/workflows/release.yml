@@ -260,8 +260,10 @@ jobs:
 
           DARWIN_TAR=$(pick ".app.tar.gz")
           DARWIN_SIG_NAME=$(pick ".app.tar.gz.sig")
-          WINDOWS_NSIS=$(pick ".nsis.zip")
-          WINDOWS_SIG_NAME=$(pick ".nsis.zip.sig")
+          # Tauri v2 Windows 는 .nsis.zip 안 만들고 .exe 자체에 .sig 만 추가.
+          # NSIS installer (-setup.exe) 가 곧 updater payload.
+          WINDOWS_NSIS=$(pick "-setup.exe")
+          WINDOWS_SIG_NAME=$(pick "-setup.exe.sig")
           LINUX_APPIMAGE=$(pick ".AppImage")
           LINUX_SIG_NAME=$(pick ".AppImage.sig")
 
