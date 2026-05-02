@@ -1069,3 +1069,23 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - Tauri updater endpoint, homebrew tap (`phoodul/homebrew-api-vault`), CLA bot, CI badge 등 모두 갱신.
   - **보존:** `docs/project-decisions.md:472` 의 historical "GitHub Organization 이름은 api-vault" 결정은 그대로 — 본 항목이 이를 갱신함을 기록.
   - **별도 식별자:** vscode-extension `publisher: api-vault`, winget `PackageIdentifier: api-vault.api-vault`, snap `name: api-vault`, homebrew cask `api-vault` 는 GitHub 와 무관한 채널별 ID 라 그대로 유지.
+
+
+## 2026-05-03 — 출시 가격 정책 재고: 무료 베타 + 일반 비밀번호 기능 추가
+
+- **결정:** 출시 시점에는 **모든 기능 무료** (Pro $2/월 즉시 도입 안 함). 무료 베타 기간은 다음 조건들 충족 시까지:
+  1. **사용자 본인 dogfooding 완료** — 일주일 이상 실사용, 핵심 기능 (vault / graph / blast radius / supply chain / charter recovery) 사용법 숙지
+  2. **법적 자문 완료** — 약관 / 개인정보 처리방침 / 결제 처리 (Stripe) 의 PG 사 약관 검토
+  3. **일반 비밀번호 (general password) 기능 추가** — 현재는 API key 중심. 일반 사용자에게 매력적이려면 1Password 류 기본 비밀번호 vault 도 필요
+  4. **첫 100~500 사용자 피드백 누적** — 어떤 기능이 진짜 paid 가치인지 검증
+- **이유:**
+  - 만든 사람도 사용법을 정확히 모르는 상태에서 돈 받기 어려움. 본인 검증 필요.
+  - 법적 리스크 — 결제 받기 시작하면 소비자 보호법 / 환불 정책 / VAT / GDPR / 데이터 처리 등 법적 노출 증가. 변호사 검토 전 risky.
+  - 무료 베타 → 사용자 피드백 + 본인 dogfooding 으로 진짜 paid 가치 발견. 처음부터 가격 박으면 사용자가 안 쓰고 떠남.
+  - 일반 비밀번호 기능 미구현 상태에서 1Password 와 정면 비교 불리. 차별화 (graph / supply chain / charter) 는 보너스 — 기본 vault 가 우선.
+- **영향:**
+  - **landing page**: "Pro $2 / 년 $15" 카드 제거 또는 "Coming soon" 표시. Free 만 강조. "All features free during beta" 메시지.
+  - **README / CHANGELOG**: 가격 표기 점진 갱신 (당장은 landing 만, 나머지는 다음 release 때).
+  - **project_vision.md (memory)**: "월 $2 / 년 $15 글로벌 SaaS" 비전은 유지 (장기 목표). 단, 무료 베타 단계 명시.
+  - **새 마일스톤 후보**: M24 (또는 M16 재정의) — 일반 비밀번호 기능. 1Password 류 web/app 비밀번호 저장 + autofill + 브라우저 확장.
+- **검토 시점:** 위 조건 4개 충족 시 가격 정책 재결정. 그때까지는 베타 = 무료.

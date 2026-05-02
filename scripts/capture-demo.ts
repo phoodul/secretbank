@@ -38,16 +38,9 @@ const SCENES: Record<string, string> = {
 
 function runPlaywright(): number {
   console.log("[capture-demo] Running Playwright on e2e/demo.spec.ts ...");
-  const args = [
-    "playwright",
-    "test",
-    "e2e/demo.spec.ts",
-    "--config=e2e/playwright.config.ts",
-    "--reporter=list",
-    // demo.spec.ts 는 testIgnore 에 잡혀있으므로 명시 파일 + grep 으로 강제 매치
-    "--grep",
-    "demo:",
-  ];
+  // 별도 config (e2e/playwright.demo.config.ts) — base config 의 testIgnore 를
+  // 우회. demo 만 testMatch 로 매칭, video on, sequential workers.
+  const args = ["playwright", "test", "--config=e2e/playwright.demo.config.ts"];
   const result = spawnSync("npx", args, {
     cwd: REPO_ROOT,
     stdio: "inherit",

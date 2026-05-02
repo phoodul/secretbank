@@ -1,0 +1,102 @@
+name: 🐞 Bug report
+description: 재현 가능한 버그 / 정상 동작 안 함 / crash / data loss
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        감사합니다. 신고 전 확인:
+        - 🔐 **보안 취약점**은 [SECURITY.md](https://github.com/phoodul/api-vault/blob/main/SECURITY.md) 의 PGP 이메일로 (public issue 금지)
+        - 사용법 / 설정 질문은 [Discussions Q&A](https://github.com/phoodul/api-vault/discussions/categories/q-a) 로
+
+  - type: input
+    id: version
+    attributes:
+      label: API Vault 버전
+      description: "Settings → About 또는 `apivault --version` 출력"
+      placeholder: "v0.1.0-pre8"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: OS
+      multiple: false
+      options:
+        - Windows 10
+        - Windows 11
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Linux (Ubuntu / Debian)
+        - Linux (Fedora / RHEL)
+        - Linux (Arch)
+        - Linux (other)
+        - 기타
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: 어디서 발생?
+      multiple: false
+      options:
+        - Desktop app (GUI)
+        - CLI (apivault command)
+        - MCP server (Claude / Cursor / Copilot Chat)
+        - VS Code extension
+        - JetBrains plugin
+        - Auto-updater
+        - Sync (multi-device)
+        - 기타
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 단계
+      description: 1, 2, 3 형식으로 정확하게. 매번 재현되는지 / 가끔인지 명시.
+      placeholder: |
+        1. App 실행
+        2. Credentials → New 클릭
+        3. Issuer "OpenAI" 선택
+        4. Save 클릭
+        5. → 앱이 freeze 됨
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+      placeholder: 자격증명이 list 에 추가되어야 함
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 동작
+      placeholder: 5초 freeze 후 빈 화면, error toast 없음
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 로그 / 에러 메시지
+      description: 가능하면 첨부. 시크릿 (API key / passphrase) 마스킹 후 붙여넣기.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: data-loss
+    attributes:
+      label: 데이터 영향
+      options:
+        - label: 이 버그로 vault 데이터 손실 / 손상이 의심됩니다 (즉시 triage 우선)
+        - label: 영향 없음 (데이터는 안전)
