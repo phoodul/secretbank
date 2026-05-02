@@ -44,6 +44,11 @@ jobs:
   deploy:
     name: Deploy to Cloudflare Workers
     needs: test
+    # Cloudflare 계정 + API token 등록 전까지 skip.
+    # 활성화 시: GitHub repo Settings → Secrets and variables → Actions →
+    #   Variables 탭 → "RELAY_DEPLOY_ENABLED" = "true" 설정.
+    # 그리고 Secrets 탭에 CLOUDFLARE_API_TOKEN 등록.
+    if: ${{ vars.RELAY_DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
