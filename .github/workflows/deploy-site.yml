@@ -32,6 +32,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # wrangler-action 이 repo root 의 pnpm-lock.yaml 을 검출하여 pnpm 으로
+      # wrangler 를 실행하려 한다. runner 기본에 pnpm 이 없어 setup 필요.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Deploy site/ to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
