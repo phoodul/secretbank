@@ -30,15 +30,15 @@ jobs:
     if: ${{ vars.SITE_DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # wrangler-action 이 repo root 의 pnpm-lock.yaml 을 검출하여 pnpm 으로
       # wrangler 를 실행하려 한다. runner 기본에 pnpm 이 없어 setup 필요.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 9
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
 
