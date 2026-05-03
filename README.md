@@ -20,6 +20,7 @@ matches it to your vault automatically and surfaces exactly which services are a
 > See [docs/project-decisions.md](./docs/project-decisions.md) for the full rationale.
 
 ### Available now
+
 - **Zero-Knowledge vault** — secrets are encrypted on-device; the relay server never sees plaintext
 - **Vault Charter recovery** — Diceware 6-word + 4-digit verifier with optional Shamir 2-of-3 split. Lose your passphrase, not your vault.
 - **Dependency graph** — visual map of Issuer → Credential → Usage → Project → Deployment → URL
@@ -34,6 +35,7 @@ matches it to your vault automatically and surfaces exactly which services are a
 - **Open Core** — local vault and graph engine are AGPL-3.0; relay and premium connectors are EE
 
 ### Roadmap (no committed dates)
+
 - **General password vault** (1Password-style URL/username/password) — M24, in active design
 - **Auto-revoke** for Stripe / GitHub / AWS keys
 - **Auto-rotation** with provider hooks

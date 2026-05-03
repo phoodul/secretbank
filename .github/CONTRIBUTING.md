@@ -12,6 +12,7 @@
 ## 커밋 메시지 규칙
 
 `type: 한글 제목` 형식. 72자 이내.
+
 - type: `feat` / `fix` / `docs` / `refactor` / `test` / `chore` / `perf` / `ci` / `build`
 - 예: `feat: 사용자 인증 플로우 추가`
 
@@ -43,6 +44,7 @@
 ## 시크릿 안전
 
 PR diff에 다음을 포함하지 마세요:
+
 - `.env*`, API key, password, token, `DATABASE_URL`
 - 발견 시 즉시 제거 + key rotation
 

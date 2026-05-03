@@ -56,7 +56,7 @@
       [data-theme="dark"] {
         --bg: #050810;
         --bg-mesh-1: rgba(74, 108, 247, 0.18);
-        --bg-mesh-2: rgba(212, 175, 55, 0.10);
+        --bg-mesh-2: rgba(212, 175, 55, 0.1);
         --bg-mesh-3: rgba(56, 189, 248, 0.08);
         --fg: #f0f4ff;
         --fg-muted: #94a3b8;
@@ -70,7 +70,7 @@
 
         --glass-bg: rgba(255, 255, 255, 0.04);
         --glass-bg-strong: rgba(255, 255, 255, 0.08);
-        --glass-border: rgba(255, 255, 255, 0.10);
+        --glass-border: rgba(255, 255, 255, 0.1);
         --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         --glass-shadow-hover: 0 12px 48px rgba(74, 108, 247, 0.25);
 
@@ -469,7 +469,9 @@
         cursor: pointer;
         font-size: 0.8rem;
         line-height: 1;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
       }
       .download-toggle:hover {
         transform: translateY(-2px);
@@ -494,7 +496,9 @@
         opacity: 0;
         transform: translateY(-6px);
         pointer-events: none;
-        transition: opacity 0.18s ease, transform 0.18s ease;
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease;
       }
       .download-menu.open {
         opacity: 1;
@@ -698,11 +702,21 @@
       }
 
       /* span helpers */
-      .col-2 { grid-column: span 2; }
-      .col-3 { grid-column: span 3; }
-      .col-4 { grid-column: span 4; }
-      .col-6 { grid-column: span 6; }
-      .row-2 { grid-row: span 2; }
+      .col-2 {
+        grid-column: span 2;
+      }
+      .col-3 {
+        grid-column: span 3;
+      }
+      .col-4 {
+        grid-column: span 4;
+      }
+      .col-6 {
+        grid-column: span 6;
+      }
+      .row-2 {
+        grid-row: span 2;
+      }
 
       @media (max-width: 900px) {
         .bento {
@@ -1127,7 +1141,14 @@
             <ellipse cx="19" cy="19" rx="1.1" ry="0.7" fill="#fef9c3" opacity="0.7" />
 
             <!-- Bright reactor core (white-hot pulse) -->
-            <circle cx="20" cy="20" r="1.4" fill="#fef3c7" class="core-pulse" filter="url(#vault-glow)" />
+            <circle
+              cx="20"
+              cy="20"
+              r="1.4"
+              fill="#fef3c7"
+              class="core-pulse"
+              filter="url(#vault-glow)"
+            />
             <circle cx="20" cy="20" r="0.5" fill="#ffffff" />
           </svg>
           API <span style="color: var(--lapis)">Vault</span>
@@ -1157,8 +1178,8 @@
         </h1>
         <p class="lede">
           Stores API keys. But also tells you who uses them, where, and what breaks if you revoke.
-          Auto-matches NVD/GHSA incidents. Scans npm/Cargo deps for known secret-leak history.
-          All on your laptop.
+          Auto-matches NVD/GHSA incidents. Scans npm/Cargo deps for known secret-leak history. All
+          on your laptop.
         </p>
         <div class="cta">
           <div class="download-group">
@@ -1189,9 +1210,7 @@
               aria-labelledby="download-toggle"
             ></div>
           </div>
-          <a class="btn btn-ghost" href="https://github.com/phoodul/api-vault">
-            View source
-          </a>
+          <a class="btn btn-ghost" href="https://github.com/phoodul/api-vault"> View source </a>
         </div>
       </section>
 
@@ -1218,9 +1237,10 @@
             <div class="icon">🕸</div>
             <h3>Dependency graph</h3>
             <p>
-              Visual map of <strong>Issuer → Credential → Usage → Project → Deployment → URL</strong>.
-              Filter by env, search by usage, simulate revocations. The vault speaks the language
-              of your codebase, not just key/value pairs.
+              Visual map of
+              <strong>Issuer → Credential → Usage → Project → Deployment → URL</strong>. Filter by
+              env, search by usage, simulate revocations. The vault speaks the language of your
+              codebase, not just key/value pairs.
             </p>
             <div class="badges">
               <span class="badge">M3</span>
@@ -1234,8 +1254,8 @@
             <div class="icon">💥</div>
             <h3>Blast radius preview</h3>
             <p>
-              "What breaks if I revoke this?" — answered before you click. Highlights every
-              service, deployment, and URL that depends on the key. No production accidents.
+              "What breaks if I revoke this?" — answered before you click. Highlights every service,
+              deployment, and URL that depends on the key. No production accidents.
             </p>
           </div>
 
@@ -1300,15 +1320,17 @@
                 </div>
               </div>
               <div style="flex: 1.2; min-width: 280px">
-                <pre style="
-                  margin: 0;
-                  background: var(--code-bg);
-                  color: var(--code-fg);
-                  border-radius: 12px;
-                  padding: 1rem 1.25rem;
-                  font-size: 0.85rem;
-                  overflow-x: auto;
-                "><span style="color: #64748b">$</span> <span style="color: #93c5fd">apivault</span> <span style="color: #fcd34d">list</span> --json
+                <pre
+                  style="
+                    margin: 0;
+                    background: var(--code-bg);
+                    color: var(--code-fg);
+                    border-radius: 12px;
+                    padding: 1rem 1.25rem;
+                    font-size: 0.85rem;
+                    overflow-x: auto;
+                  "
+                ><span style="color: #64748b">$</span> <span style="color: #93c5fd">apivault</span> <span style="color: #fcd34d">list</span> --json
 <span style="color: #64748b">$</span> <span style="color: #93c5fd">apivault</span> <span style="color: #fcd34d">scan</span> supply-chain --project .
 <span style="color: #64748b">$</span> <span style="color: #93c5fd">apivault</span> <span style="color: #fcd34d">run</span> --project &lt;id&gt; -- npm run deploy</pre>
               </div>
@@ -1331,9 +1353,7 @@
           <div class="glass price-card pro">
             <div class="pro-badge">BETA · FREE</div>
             <div class="tier">Everything</div>
-            <div class="amount">
-              $0 <small>/ no credit card</small>
-            </div>
+            <div class="amount">$0 <small>/ no credit card</small></div>
             <p class="description">
               Open source AGPL-3.0. Includes every feature. No account required for local vault.
             </p>
@@ -1353,8 +1373,8 @@
             <div class="tier">Coming later</div>
             <div class="amount roadmap">Roadmap</div>
             <p class="description">
-              사용자 피드백 + dogfooding 후 도입할 추가 기능들.
-              가격 정책은 베타 종료 시점에 사용자와 함께 결정.
+              사용자 피드백 + dogfooding 후 도입할 추가 기능들. 가격 정책은 베타 종료 시점에
+              사용자와 함께 결정.
             </p>
             <ul>
               <li>일반 비밀번호 vault (general passwords + autofill)</li>
@@ -1438,12 +1458,45 @@
         // Each entry: { os, arch, kind, label, match: RegExp, recommended: boolean }
         // `recommended` = primary candidate when nothing more specific applies.
         const PATTERNS = [
-          { os: "windows", arch: "x64", kind: "exe", label: "Installer (.exe)", match: /_x64-setup\.exe$/i, recommended: true },
+          {
+            os: "windows",
+            arch: "x64",
+            kind: "exe",
+            label: "Installer (.exe)",
+            match: /_x64-setup\.exe$/i,
+            recommended: true,
+          },
           { os: "windows", arch: "x64", kind: "msi", label: "MSI (.msi)", match: /_x64_.+\.msi$/i },
-          { os: "macos", arch: "universal", kind: "dmg", label: "Universal (.dmg)", match: /_universal\.dmg$/i, recommended: true },
-          { os: "linux", arch: "x64", kind: "appimage", label: "AppImage", match: /_amd64\.AppImage$/i, recommended: true },
-          { os: "linux", arch: "x64", kind: "deb", label: "Debian/Ubuntu (.deb)", match: /_amd64\.deb$/i },
-          { os: "linux", arch: "x64", kind: "rpm", label: "Fedora/RHEL (.rpm)", match: /\.x86_64\.rpm$/i },
+          {
+            os: "macos",
+            arch: "universal",
+            kind: "dmg",
+            label: "Universal (.dmg)",
+            match: /_universal\.dmg$/i,
+            recommended: true,
+          },
+          {
+            os: "linux",
+            arch: "x64",
+            kind: "appimage",
+            label: "AppImage",
+            match: /_amd64\.AppImage$/i,
+            recommended: true,
+          },
+          {
+            os: "linux",
+            arch: "x64",
+            kind: "deb",
+            label: "Debian/Ubuntu (.deb)",
+            match: /_amd64\.deb$/i,
+          },
+          {
+            os: "linux",
+            arch: "x64",
+            kind: "rpm",
+            label: "Fedora/RHEL (.rpm)",
+            match: /\.x86_64\.rpm$/i,
+          },
         ];
         const OS_LABEL = { windows: "Windows", macos: "macOS", linux: "Linux" };
 
@@ -1457,7 +1510,13 @@
           }
           const ua = (navigator.userAgent || "").toLowerCase();
           if (ua.includes("windows")) return "windows";
-          if (ua.includes("mac os x") || ua.includes("macintosh") || ua.includes("iphone") || ua.includes("ipad")) return "macos";
+          if (
+            ua.includes("mac os x") ||
+            ua.includes("macintosh") ||
+            ua.includes("iphone") ||
+            ua.includes("ipad")
+          )
+            return "macos";
           if (ua.includes("linux") || ua.includes("android")) return "linux";
           return null;
         }
@@ -1472,7 +1531,11 @@
         function classify(asset) {
           for (const p of PATTERNS) {
             if (p.match.test(asset.name)) {
-              return Object.assign({}, p, { name: asset.name, url: asset.browser_download_url, size: asset.size });
+              return Object.assign({}, p, {
+                name: asset.name,
+                url: asset.browser_download_url,
+                size: asset.size,
+              });
             }
           }
           return null;
@@ -1501,16 +1564,23 @@
             parts.push('<div class="menu-heading">' + OS_LABEL[os] + "</div>");
             for (const it of items) {
               parts.push(
-                '<a class="menu-item" role="menuitem" href="' + it.url + '">' +
-                  '<span class="item-name">' + it.label + "</span>" +
-                  '<span class="item-size">' + fmtSize(it.size) + "</span>" +
+                '<a class="menu-item" role="menuitem" href="' +
+                  it.url +
+                  '">' +
+                  '<span class="item-name">' +
+                  it.label +
+                  "</span>" +
+                  '<span class="item-size">' +
+                  fmtSize(it.size) +
+                  "</span>" +
                   "</a>",
               );
             }
             parts.push("</div>");
           }
           // Note about ARM coverage
-          const hasArmHint = (byOS.windows && byOS.windows.length) || (byOS.linux && byOS.linux.length);
+          const hasArmHint =
+            (byOS.windows && byOS.windows.length) || (byOS.linux && byOS.linux.length);
           if (hasArmHint) {
             parts.push(
               '<div class="menu-note">' +
@@ -1521,7 +1591,11 @@
           }
           parts.push(
             '<div class="menu-foot">' +
-              '<a href="' + RELEASES_PAGE + '">All releases (' + tag + ") →</a>" +
+              '<a href="' +
+              RELEASES_PAGE +
+              '">All releases (' +
+              tag +
+              ") →</a>" +
               "</div>",
           );
           menuEl.innerHTML = parts.join("");
@@ -1588,9 +1662,11 @@
             const labelEl = primary.querySelector(".download-label");
             if (labelEl) {
               labelEl.textContent =
-                "Download for " + OS_LABEL[pick.os] +
+                "Download for " +
+                OS_LABEL[pick.os] +
                 (pick.arch && pick.arch !== "x64" ? " · " + pick.arch : "") +
-                " · " + fmtSize(pick.size);
+                " · " +
+                fmtSize(pick.size);
             }
           }
 

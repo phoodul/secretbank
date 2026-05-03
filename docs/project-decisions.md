@@ -1070,7 +1070,6 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - **보존:** `docs/project-decisions.md:472` 의 historical "GitHub Organization 이름은 api-vault" 결정은 그대로 — 본 항목이 이를 갱신함을 기록.
   - **별도 식별자:** vscode-extension `publisher: api-vault`, winget `PackageIdentifier: api-vault.api-vault`, snap `name: api-vault`, homebrew cask `api-vault` 는 GitHub 와 무관한 채널별 ID 라 그대로 유지.
 
-
 ## 2026-05-03 — 출시 가격 정책 재고: 무료 베타 + 일반 비밀번호 기능 추가
 
 - **결정:** 출시 시점에는 **모든 기능 무료** (Pro $2/월 즉시 도입 안 함). 무료 베타 기간은 다음 조건들 충족 시까지:

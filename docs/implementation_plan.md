@@ -1571,13 +1571,13 @@ end
 
 ### Phase 분해
 
-| Phase | Sub-task | 산출물 |
-|:--|:--|:--|
-| **24-A** schema | T-24-A | `0006_credential_kind.sql` 마이그레이션 + `CredentialKind` enum + `CredentialDto.kind` |
-| **24-B** metadata | T-24-B | `url`, `username`, `notes` 필드 (vault encrypted) + URL normalize 헬퍼 |
-| **24-C** UI | T-24-C | Inventory tabs (`All / API Keys / Passwords`) + `<PasswordForm>` + 그래프 노드 색상 분기 |
-| **24-D** import | T-24-D | CSV import (1Password / Bitwarden / LastPass / Chrome) + 충돌 처리 |
-| **24-E** browser ext skeleton | T-24-E | `browser-extension/` manifest v3 + native messaging IPC (실 autofill 은 v2) |
+| Phase                         | Sub-task | 산출물                                                                                   |
+| :---------------------------- | :------- | :--------------------------------------------------------------------------------------- |
+| **24-A** schema               | T-24-A   | `0006_credential_kind.sql` 마이그레이션 + `CredentialKind` enum + `CredentialDto.kind`   |
+| **24-B** metadata             | T-24-B   | `url`, `username`, `notes` 필드 (vault encrypted) + URL normalize 헬퍼                   |
+| **24-C** UI                   | T-24-C   | Inventory tabs (`All / API Keys / Passwords`) + `<PasswordForm>` + 그래프 노드 색상 분기 |
+| **24-D** import               | T-24-D   | CSV import (1Password / Bitwarden / LastPass / Chrome) + 충돌 처리                       |
+| **24-E** browser ext skeleton | T-24-E   | `browser-extension/` manifest v3 + native messaging IPC (실 autofill 은 v2)              |
 
 ### Migration 안전성
 

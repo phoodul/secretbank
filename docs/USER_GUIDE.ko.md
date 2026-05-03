@@ -610,6 +610,7 @@ A. **현재 베타 기간 동안 모든 기능 무료** — 멀티 디바이스 
 
 **Q. 향후 추가될 기능은?**
 A. 로드맵 (확정 일자 없음):
+
 - **일반 비밀번호 vault** (1Password 류) — M24, 설계 진행 중
 - Auto-revoke (Stripe / GitHub / AWS API 키)
 - Provider 별 자동 rotation hook

@@ -1031,27 +1031,29 @@ matrix:
 
 ## 9. 오픈 이슈 (planner가 확정 불가능한 것들)
 
-| 항목                                   | 설명                                  | 제안                                                    |
-| :------------------------------------- | :------------------------------------ | :------------------------------------------------------ |
-| ~~도메인 확보~~                        | ~~`apivault.app` 가용 여부~~          | ✅ **`api-vault.app` 확보 완료 (2026-04-25)** + Cloudflare Pages 배포 (2026-05-03)   |
-| ~~GitHub Organization~~                | ~~OSS/EE repo 분리를 위한 org 이름~~  | ✅ **`phoodul/api-vault` 단일 repo 결정 (2026-05-01)**                |
-| Apple Developer Program / Play Console | $99/년 + $25 등록비                   | dogfooding 후 launch 시 결제 (사용자 액션 #4)                                        |
-| Paddle 계정 승인                       | 소프트웨어 벤더 검증 기간 1~2주       | **무료 베타 종료 시점에 진행** (사용자 결정 2026-05-03 — Pro 즉시 도입 안 함)                                       |
-| RevenueCat 프로젝트                    | 무료 시작, $2.5K ARR 이후 유료        | **무료 베타 종료 시점에 생성**                                            |
-| ~~Cloudflare 계정~~                    | ~~Workers Paid ($5/월) M9 직전 활성화~~ | ✅ **계정 active + relay 배포 완료 (2026-05-03)**                                        |
-| GitHub App registration                | 릴레이에서 hosting 필요               | M5 secret scanning 통합 사용 시 (현재 OAuth App 만 등록됨)                                             |
+| 항목                                   | 설명                                    | 제안                                                                               |
+| :------------------------------------- | :-------------------------------------- | :--------------------------------------------------------------------------------- |
+| ~~도메인 확보~~                        | ~~`apivault.app` 가용 여부~~            | ✅ **`api-vault.app` 확보 완료 (2026-04-25)** + Cloudflare Pages 배포 (2026-05-03) |
+| ~~GitHub Organization~~                | ~~OSS/EE repo 분리를 위한 org 이름~~    | ✅ **`phoodul/api-vault` 단일 repo 결정 (2026-05-01)**                             |
+| Apple Developer Program / Play Console | $99/년 + $25 등록비                     | dogfooding 후 launch 시 결제 (사용자 액션 #4)                                      |
+| Paddle 계정 승인                       | 소프트웨어 벤더 검증 기간 1~2주         | **무료 베타 종료 시점에 진행** (사용자 결정 2026-05-03 — Pro 즉시 도입 안 함)      |
+| RevenueCat 프로젝트                    | 무료 시작, $2.5K ARR 이후 유료          | **무료 베타 종료 시점에 생성**                                                     |
+| ~~Cloudflare 계정~~                    | ~~Workers Paid ($5/월) M9 직전 활성화~~ | ✅ **계정 active + relay 배포 완료 (2026-05-03)**                                  |
+| GitHub App registration                | 릴레이에서 hosting 필요                 | M5 secret scanning 통합 사용 시 (현재 OAuth App 만 등록됨)                         |
 
 ### 9.1 가격 정책 — 무료 베타 (2026-05-03 결정)
 
 **현재 상태:** v0.1.0-pre8 prerelease 출시. 모든 기능 무료. Pro $2 즉시 도입 **안 함**.
 
 **베타 종료 4 조건** (모두 충족 시 paid 도입):
+
 1. 사용자 본인 dogfooding 완료 (1주 이상 실사용)
 2. 법적 자문 (약관 / 개인정보 / 결제 PG 사 약관 검토)
 3. **M24 — 일반 비밀번호 vault 기능 추가** (1Password 류 — credential.kind 확장)
 4. 첫 100~500 사용자 피드백 누적 (어떤 기능이 진짜 paid 가치인지 검증)
 
 **Open Core 보호 매커니즘** (paid 도입 후에도 OSS 유지):
+
 - `/` (root) → AGPL-3.0 — 코어 데스크톱 앱 + graph + supply chain + RAILGUARD + charter (모두 무료 OSS)
 - `/ee/` → API Vault Enterprise License v1.0 — Cloudflare Workers relay + 자동 rotation + sync 백엔드 (paid)
 - AGPL copyleft → 제3자 SaaS fork 시 소스 공개 의무 → commercial fork 사실상 차단

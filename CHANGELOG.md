@@ -43,8 +43,8 @@ First valid prerelease — every install / update channel exercised end-to-end.
   typecheck/lint/format/vitest, E2E smoke (Playwright), and EE Relay
   typecheck/test. Node 22 LTS across all workflows.
 - **Demo capture infrastructure** — `scripts/capture-demo.ts` + `e2e/demo.spec.ts`
-  + `e2e/playwright.demo.config.ts`. Records three webm scenes (lock-screen /
-  charter-issuance / recovery-flow) for marketing assets. `pnpm capture:demo`.
+  - `e2e/playwright.demo.config.ts`. Records three webm scenes (lock-screen /
+    charter-issuance / recovery-flow) for marketing assets. `pnpm capture:demo`.
 
 ### Changed — pricing & roadmap
 
@@ -113,8 +113,6 @@ First valid prerelease — every install / update channel exercised end-to-end.
   explicit `D1: Edit` permission (D1 was missing from the template).
 - All wrangler `secret put` invocations stay client-side; no secret has been
   committed to the repo.
-
-
 
 ### Added
 

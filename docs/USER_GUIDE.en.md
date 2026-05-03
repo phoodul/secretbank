@@ -668,6 +668,7 @@ card / no account required for local vault**.
 
 **Q. What's coming next?**
 A. Roadmap (no committed dates):
+
 - **General password vault** (1Password style) — M24, in active design
 - Auto-revoke for Stripe / GitHub / AWS API keys
 - Auto-rotation hooks per provider
