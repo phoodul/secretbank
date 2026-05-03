@@ -1089,3 +1089,18 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - **project_vision.md (memory)**: "월 $2 / 년 $15 글로벌 SaaS" 비전은 유지 (장기 목표). 단, 무료 베타 단계 명시.
   - **새 마일스톤 후보**: M24 (또는 M16 재정의) — 일반 비밀번호 기능. 1Password 류 web/app 비밀번호 저장 + autofill + 브라우저 확장.
 - **검토 시점:** 위 조건 4개 충족 시 가격 정책 재결정. 그때까지는 베타 = 무료.
+
+## 2026-05-03 (오후) — GitHub Cowork (Claude AI 협업) 인프라 도입
+
+- **결정:** autoevolvingapp 도구가 추가한 GitHub Cowork (Claude AI 자동 PR 리뷰 + @claude 멘션 + desktop 도메인 게이트) 인프라 채택. Anthropic 의 `claude-code-action@v1` 기반.
+- **이유:**
+  - 1인 maintainer + 외부 PR 시작 시점 — Claude AI 리뷰가 보조 reviewer 역할 (auto approve/block 없음, 코멘트만)
+  - desktop 특화 게이트 (Tauri v2 IPC + capability) — 사용자가 실수로 capability 과대 권한 부여 시 잡아줌
+  - 보안 review 별도 워크플로우 — public OSS 의 보안 hygiene
+  - Fork PR 은 `safe-to-review` 라벨로 메인테이너 검증 후 트리거 (악성 코드 방지)
+- **영향:**
+  - 새 워크플로우 4개 + CODEOWNERS + CONTRIBUTING.md (commits a033da3, 112c916, 7d94f98, 71e8a4e)
+  - 사용자 액션 필요 — `CLAUDE_CODE_OAUTH_TOKEN`, `ANTHROPIC_API_KEY` secrets + branch protection rule + `claude-review` / `safe-to-review` 라벨 생성
+  - branch protection 의 Required status checks: Rust / Frontend / E2E smoke / EE Relay 4개 (CONTRIBUTING.md 가 강제)
+  - AI 리뷰는 인간 reviewer 대체가 아닌 보조 — 자동 approve/block 금지 (claude-pr-review.yml prompt 에 명시)
+- **비용**: 동일 repo PR 만 트리거되도록 라벨 정책으로 제한 — Anthropic API 비용 폭증 방지.

@@ -1522,6 +1522,38 @@ M4 UI (T056 Incidents 페이지) 완성 이후에는 `/incidents` 목록 + `inci
 
 ### M3 Dependency Graph & Blast Radius — 8/8 ✅ 종료
 
+## 2026-05-03 (오후) — GitHub Cowork (Claude AI 협업) 인프라 추가
+
+autoevolvingapp (별도 프로젝트) 도구가 api-vault 에 GitHub Cowork 패키지를 추가. 4 commits:
+- `a033da3` feat: GitHub Cowork 통합 (Claude AI PR 리뷰 + desktop 도메인 게이트)
+- `112c916` fix: Cowork 워크플로우 인증을 OAuth 토큰으로 전환
+- `7d94f98` feat: @claude 멘션 트리거 워크플로우 추가
+- `71e8a4e` fix: Cowork 워크플로우에 id-token write 권한 추가
+
+### 신규 6 인프라
+
+- `.github/CODEOWNERS` — `*` → `@phoodul`
+- `.github/CONTRIBUTING.md` — fork 워크플로우 / Conventional commits / branch protection 강제 4 CI / Claude 라벨 정책 / secret safety
+- `.github/workflows/claude.yml` — `@claude` 멘션 트리거 (issue/PR 코멘트)
+- `.github/workflows/claude-pr-review.yml` — `claude-review` 라벨 시 자동 리뷰 (한국어, 🔴 blocker / 🟡 caution / 🟢 nit, 보조 수단 — 자동 approve/block 안 함)
+- `.github/workflows/claude-security-review.yml` — anthropics/claude-code-security-review 사용, 보안 전담
+- `.github/workflows/domain-gate.yml` — Tauri v2 desktop 게이트 (IPC contract + capability + 크로스플랫폼 분기 + tauri.conf.json signing 영향)
+
+### Fork PR 보안
+
+- 동일 repo PR: `claude-review` 라벨만 트리거
+- Fork PR: `claude-review` + `safe-to-review` 둘 다 필요 (악성 코드 방지 — 메인테이너가 코드 안전성 확인 후 부착)
+- `pull_request_target` 사용 (fork 의 secrets 접근 가능, secret-safety 규칙 prompt 에 강제)
+
+### 다음 세션 사용자 액션
+
+1. `CLAUDE_CODE_OAUTH_TOKEN` secret 등록 — Anthropic OAuth (https://console.anthropic.com)
+2. `ANTHROPIC_API_KEY` secret 등록 — security review 용
+3. Branch protection rule (main) — Required CI 4개 + linear history + no force push + no deletion
+4. 라벨 2개 생성 — `claude-review`, `safe-to-review`
+
+이 4 액션 완료 시 풀 OSS 협업 환경 완성.
+
 ## 2026-05-02 ~ 2026-05-03 — 출시 production 인프라 풀 가동 + 무료 베타 정책 결정
 
 이번 세션이 사용자에게 가장 큰 무게의 launch 인프라 통합 작업.

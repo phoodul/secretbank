@@ -2,6 +2,37 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-03 (오후) — **GitHub Cowork (Claude AI) 인프라 추가 + 다음 세션 진입 대기**
+- **세션 종료 직전 변경 (autoevolvingapp 도구가 4 commits 추가):**
+  - `a033da3` feat: GitHub Cowork 통합 (Claude AI PR 리뷰 + desktop 도메인 게이트)
+  - `112c916` fix: Cowork 워크플로우 인증을 OAuth 토큰으로 전환
+  - `7d94f98` feat: @claude 멘션 트리거 워크플로우 추가
+  - `71e8a4e` fix: Cowork 워크플로우에 id-token write 권한 추가
+- **새 인프라 6개 (GitHub Cowork = Claude AI 자동 협업):**
+  - `.github/CODEOWNERS` — 모든 파일 default reviewer = `@phoodul`
+  - `.github/CONTRIBUTING.md` — 외부 기여자 가이드 (CLA + PR + secret safety + Claude 라벨 정책)
+  - `.github/workflows/claude.yml` — `@claude` 멘션 시 응답
+  - `.github/workflows/claude-pr-review.yml` — `claude-review` 라벨 시 자동 PR 리뷰 (한국어, 🔴/🟡/🟢)
+  - `.github/workflows/claude-security-review.yml` — 보안 전담 리뷰 (anthropics/claude-code-security-review)
+  - `.github/workflows/domain-gate.yml` — Tauri v2 desktop 특화 게이트 (IPC + capability + 크로스플랫폼)
+- **Fork PR 보안**: 동일 repo = `claude-review` 만, fork = `claude-review` + `safe-to-review` (악성 코드 방지)
+- **새 세션에서 사용자 액션 4개 필요**:
+  1. **`CLAUDE_CODE_OAUTH_TOKEN`** secret 등록 — claude.yml / claude-pr-review.yml / domain-gate.yml 사용
+  2. **`ANTHROPIC_API_KEY`** secret 등록 — claude-security-review.yml 사용
+  3. **Branch protection rule** 설정 (main) — Required status checks (Rust + Frontend + E2E + EE Relay 4개) + linear history + no force push (CONTRIBUTING.md:22 가 강제)
+  4. **라벨 2개 생성** — `claude-review` (메인테이너 트리거), `safe-to-review` (fork PR 안전성 검증 후)
+- **이전 세션 (2026-05-02 ~ 05-03 오전) 완료된 것**: 출시 production 인프라 100% — repo public + Cloudflare Pages + custom domain + Workers Relay + first valid prerelease v0.1.0-pre8 + 무료 베타 정책 + Issue templates + Discussions + M24 (일반 비밀번호 vault) 마일스톤 신설.
+- **다음 세션 우선순위 큐 (사용자 결정)**:
+  - **A. GitHub Cowork 활성화** — 위 4 액션 처리 (가장 작은 작업, 즉시 OSS 협업 환경 완성)
+  - **B. 본인 dogfooding** — Windows/macOS 에 v0.1.0-pre8 직접 설치, 1주 사용 (M24 진입 전 워크플로우 익히기)
+  - **C. M24 v1 진행** — T-24-A (`credential.kind` 마이그레이션) 부터 phase 순차
+  - **D. Demo capture 디버깅** — `pnpm capture:demo` 의 dialog locator 실패 원인
+  - **E. 사용자 액션 #4-7** (Apple cert / Windows cert / 데모 영상 / HN+PH)
+
+---
+
+## Previous checkpoint (2026-05-03 오전 — 출시 production 인프라 완성)
+
 - **Time:** 2026-05-03 — **출시 production 인프라 100% 완성 + 무료 베타 정책 결정**
 - **Phase:** Phase 3 — Implementation 종료. **사용자 액션 3 (DNS) 완료**, 4–7 (Apple cert / Windows cert / 데모영상 / HN+PH) 은 다음 세션.
 - **이번 세션 (2026-05-02 ~ 05-03) 핵심 마일스톤:**
