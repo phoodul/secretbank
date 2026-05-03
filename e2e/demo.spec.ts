@@ -41,8 +41,9 @@ test("demo: lock-screen", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(lockedVaultWithCharter) });
   await page.goto("/");
 
-  // LockScreen render 확인 (role=dialog 의 첫 번째)
-  await expect(page.getByRole("dialog").first()).toBeVisible({ timeout: 10_000 });
+  // LockScreen 은 motion.section + aria-labelledby="lockscreen-title" → ARIA role=region.
+  // (Radix Dialog 가 아니므로 role=dialog 로는 못 잡는다. passphrase input 으로 대기)
+  await expect(page.locator("#unlock-passphrase")).toBeVisible({ timeout: 10_000 });
 
   // 마우스를 화면 중앙 근처로 천천히 움직여서 mouse gloss 효과 시연
   // (LockScreenAtmosphere 의 조명이 마우스를 따라 움직임)
@@ -64,7 +65,8 @@ test("demo: lock-screen", async ({ page }) => {
 // ────────────────────────────────────────────────────────────────────
 
 const noVault: CommandMap = {
-  vault_status: { kind: "ok", value: { state: "needs_init" } },
+  // Rust serde tag = "state", rename_all = "snake_case" → "uninitialized" (NOT "needs_init")
+  vault_status: { kind: "ok", value: { state: "uninitialized" } },
   vault_has_charter: { kind: "ok", value: false },
   vault_charter_cooldown_status: {
     kind: "ok",
@@ -90,9 +92,17 @@ test("demo: charter-issuance", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(noVault) });
   await page.goto("/");
 
-  // CreateVaultDialog 자동 열림 (vault_status === needs_init)
+  // uninitialized 상태에서는 LockScreen 이 "First time? Create a new vault" 링크를 노출.
+  // CreateVaultDialog 는 자동 열리지 않으므로 사용자가 클릭하는 것을 흉내낸다.
+  // (i18n key: vault.createVaultLink — en: "First time? Create a new vault" / ko: "처음이신가요? 새 볼트 만들기")
+  const createLink = page.getByRole("button", { name: /create a new vault|새 볼트 만들기/i });
+  await expect(createLink).toBeVisible({ timeout: 10_000 });
+  await page.waitForTimeout(600);
+  await createLink.click();
+
+  // 이제 CreateVaultDialog (Radix Dialog → role=dialog) 가 마운트됨
   const dialog = page.getByRole("dialog");
-  await expect(dialog.first()).toBeVisible({ timeout: 10_000 });
+  await expect(dialog.first()).toBeVisible({ timeout: 5_000 });
   await page.waitForTimeout(800);
 
   // passphrase 입력 — 키보드 이벤트로 자연스럽게
@@ -107,8 +117,9 @@ test("demo: charter-issuance", async ({ page }) => {
   await page.waitForTimeout(800);
 
   // Single charter 라디오는 default — 따로 클릭 불필요
-  // submit
-  const submit = page.getByRole("button", { name: /create vault|볼트 생성/i });
+  // submit (i18n vault.createButton — en: "Create Vault" / ko: "볼트 만들기")
+  // dialog scope 로 좁혀 LockScreen 의 createVaultLink 와 충돌 방지
+  const submit = dialog.getByRole("button", { name: /^create vault$|^볼트 만들기$/i });
   await submit.click();
 
   // CharterDisplay 가 phase=issued 에서 마운트됨 — Lapis tone + 황동 봉인
@@ -126,14 +137,18 @@ test("demo: recovery-flow", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(lockedVaultWithCharter) });
   await page.goto("/");
 
-  await expect(page.getByRole("dialog").first()).toBeVisible({ timeout: 10_000 });
+  // LockScreen 은 region — passphrase input 으로 mount 확인
+  await expect(page.locator("#unlock-passphrase")).toBeVisible({ timeout: 10_000 });
+
+  // Forgot link 는 vault_has_charter=true 이후 비동기로 렌더되므로 Locator 자체로 대기
+  const forgot = page.getByTestId("lockscreen-forgot-link");
+  await expect(forgot).toBeVisible({ timeout: 5_000 });
   await page.waitForTimeout(2_000);
 
-  // Forgot passphrase 링크 클릭 → RecoveryDialog
-  const forgot = page.getByTestId("lockscreen-forgot-link");
   await forgot.click();
 
-  // RecoveryDialog 가 마운트
+  // RecoveryDialog (Radix Dialog → role=dialog) 가 마운트되는 것까지 명시적으로 대기
+  await expect(page.getByRole("dialog").first()).toBeVisible({ timeout: 5_000 });
   await page.waitForTimeout(800);
 
   // 첫 단어 input 에 charter words 입력 — 시각적으로 cinematic 한 typing

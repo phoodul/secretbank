@@ -2,7 +2,23 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-03 (오후) — **GitHub Cowork (Claude AI) 인프라 추가 + 다음 세션 진입 대기**
+- **Time:** 2026-05-03 (오후 후반) — **D. Demo capture 디버깅 완료** (3 scene 모두 통과, media/ 에 webm 3개 생성)
+- **이번 turn 변경 (e2e/demo.spec.ts 만):**
+  - Scene 1 (lock-screen) — `getByRole("dialog")` → `#unlock-passphrase` (LockScreen 은 `motion.section + aria-labelledby` 으로 ARIA `region`, dialog 아님)
+  - Scene 2 (charter-issuance) — 두 버그 수정:
+    1. mock `vault_status` 의 `state: "needs_init"` → `"uninitialized"` (Rust serde 직렬화는 후자 — 잘못된 값이라 어떤 화면도 안 떴음)
+    2. CreateVaultDialog 자동 안 열리므로 LockScreen 의 "Create a new vault" 링크 click 추가 (regex `/create a new vault|새 볼트 만들기/i`). submit 버튼은 dialog scope 로 좁혀 LockScreen 링크와 충돌 방지
+  - Scene 3 (recovery-flow) — 첫 번째 dialog 대기 라인을 region(input) 으로, forgot-link 도 명시적 visibility 대기 (vault_has_charter 비동기 후 렌더). RecoveryDialog 마운트 후 진짜 dialog visibility 추가 검증
+- **검증:** `pnpm capture:demo` 풀 통과, 산출물 `media/lock-screen.webm` (1442 KB) / `charter-issuance.webm` (1338 KB) / `recovery-flow.webm` (752 KB) — ffmpeg 변환만 남음 (사용자 액션 #6)
+- **이전 세션 종료 직전 변경 (autoevolvingapp 도구가 4 commits 추가):**
+  - `a033da3` feat: GitHub Cowork 통합 (Claude AI PR 리뷰 + desktop 도메인 게이트)
+  - `112c916` fix: Cowork 워크플로우 인증을 OAuth 토큰으로 전환
+  - `7d94f98` feat: @claude 멘션 트리거 워크플로우 추가
+  - `71e8a4e` fix: Cowork 워크플로우에 id-token write 권한 추가
+
+---
+
+## Previous checkpoint (2026-05-03 오후 — GitHub Cowork 인프라)
 - **세션 종료 직전 변경 (autoevolvingapp 도구가 4 commits 추가):**
   - `a033da3` feat: GitHub Cowork 통합 (Claude AI PR 리뷰 + desktop 도메인 게이트)
   - `112c916` fix: Cowork 워크플로우 인증을 OAuth 토큰으로 전환
@@ -26,7 +42,7 @@
   - **A. GitHub Cowork 활성화** — 위 4 액션 처리 (가장 작은 작업, 즉시 OSS 협업 환경 완성)
   - **B. 본인 dogfooding** — Windows/macOS 에 v0.1.0-pre8 직접 설치, 1주 사용 (M24 진입 전 워크플로우 익히기)
   - **C. M24 v1 진행** — T-24-A (`credential.kind` 마이그레이션) 부터 phase 순차
-  - **D. Demo capture 디버깅** — `pnpm capture:demo` 의 dialog locator 실패 원인
+  - ~~**D. Demo capture 디버깅** — `pnpm capture:demo` 의 dialog locator 실패 원인~~ ✅ 완료 (2026-05-03 오후 후반)
   - **E. 사용자 액션 #4-7** (Apple cert / Windows cert / 데모 영상 / HN+PH)
 
 ---
