@@ -56,4 +56,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           # accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}  # 필요 시 활성화
-          command: pages deploy site --project-name=api-vault-site --branch=main --commit-dirty=true
+          # --commit-message 는 영문 SHA 로 명시. Cloudflare Pages API 가
+          # 한글 commit message 를 "Invalid UTF-8" (code 8000111) 로 reject.
+          command: pages deploy site --project-name=api-vault-site --branch=main --commit-hash=${{ github.sha }} --commit-message=${{ github.sha }}
