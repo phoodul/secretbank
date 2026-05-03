@@ -3,10 +3,11 @@
 //! 각 share = (index 1..3, 88-bit packed payload, 4-digit verifier) → 7 Diceware 단어.
 //! 단일 Charter (6 단어) 와의 차이: share 는 secret + share index 를 함께 담아야 하므로 한 단어 더 길다.
 //!
-//! 정보 이론적 보안: 1 장만 가져도 secret 비트 0개 노출 (sharks crate, GF(2⁸) byte-wise).
+//! 정보 이론적 보안: 1 장만 가져도 secret 비트 0개 노출 (blahaj crate, GF(2⁸) byte-wise).
+//! blahaj = sharks fork with RUSTSEC-2024-0398 (random_polynomial bias) fixed.
 
+use blahaj::{Share, Sharks};
 use sha2::{Digest, Sha256};
-use sharks::{Share, Sharks};
 use thiserror::Error;
 use zeroize::Zeroize;
 
