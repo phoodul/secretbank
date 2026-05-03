@@ -24,8 +24,9 @@ export default defineConfig({
   testDir: ".",
   testMatch: /.*\.spec\.ts$/,
   // demo.spec.ts 는 marketing 영상 캡처 전용 — 일반 E2E 흐름에서 제외.
-  // 별도 실행: `pnpm capture:demo` (scripts/capture-demo.ts)
-  testIgnore: /.*demo\.spec\.ts$/,
+  // site-download.spec.ts 는 site/ landing 의 GitHub API 호출을 검증 — 별도
+  // http-server + playwright.site.config.ts 로만 실행 (CI 의 일반 E2E 에서는 제외).
+  testIgnore: /.*(demo|site-download)\.spec\.ts$/,
   timeout: 30_000,
   expect: { timeout: 5_000 },
   fullyParallel: true,
