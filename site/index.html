@@ -434,7 +434,7 @@
         transform: translateX(3px);
       }
 
-      /* ─────────────────── Download dropdown ─────────────────── */
+      /* ─────────────────── Download grid (3 columns) ─────────────────── */
       .visually-hidden {
         position: absolute;
         width: 1px;
@@ -446,123 +446,160 @@
         white-space: nowrap;
         border: 0;
       }
-      .download-group {
-        position: relative;
-        display: inline-flex;
-        align-items: stretch;
+      .download-section {
+        margin: 3rem 0 4rem;
+        scroll-margin-top: 6rem;
       }
-      #download-primary {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
+      .download-section .section-eyebrow {
+        text-align: center;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        opacity: 0.55;
+        margin-bottom: 0.8rem;
       }
-      .download-toggle {
-        background: var(--gradient-1);
-        color: white;
-        box-shadow: 0 8px 28px rgba(74, 108, 247, 0.4);
-        padding: 0 0.75rem;
-        border: 1px solid transparent;
-        border-left: 1px solid rgba(255, 255, 255, 0.25);
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        border-top-right-radius: 12px;
-        border-bottom-right-radius: 12px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        line-height: 1;
+      .download-section h2 {
+        text-align: center;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.4rem;
+      }
+      .download-section .lede {
+        text-align: center;
+        opacity: 0.7;
+        margin: 0 auto 2rem;
+        max-width: 560px;
+        font-size: 0.95rem;
+      }
+      .download-section .download-version {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.25rem;
+      }
+      @media (max-width: 900px) {
+        .download-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .download-card {
+        padding: 1.5rem 1.4rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
         transition:
           transform 0.2s,
           box-shadow 0.2s;
       }
-      .download-toggle:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 36px rgba(74, 108, 247, 0.55);
+      .download-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--glass-shadow-hover);
       }
-      .download-toggle .caret {
-        display: inline-block;
-        transition: transform 0.2s;
+      .download-card .card-head {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
       }
-      .download-toggle[aria-expanded="true"] .caret {
-        transform: rotate(180deg);
+      .download-card .os-icon {
+        width: 36px;
+        height: 36px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--glass-bg-strong);
+        font-size: 1.4rem;
+        line-height: 1;
+        flex-shrink: 0;
       }
-      .download-menu {
-        position: absolute;
-        top: calc(100% + 0.5rem);
-        right: 0;
-        min-width: 320px;
-        max-width: 90vw;
-        padding: 0.5rem;
-        z-index: 30;
-        text-align: left;
-        opacity: 0;
-        transform: translateY(-6px);
-        pointer-events: none;
-        transition:
-          opacity 0.18s ease,
-          transform 0.18s ease;
-      }
-      .download-menu.open {
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto;
-      }
-      .download-menu .menu-section + .menu-section {
-        margin-top: 0.25rem;
-        padding-top: 0.5rem;
-        border-top: 1px solid var(--glass-border);
-      }
-      .download-menu .menu-heading {
-        font-size: 0.72rem;
+      .download-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
         font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        opacity: 0.65;
-        padding: 0.35rem 0.75rem 0.2rem;
+        letter-spacing: -0.01em;
       }
-      .download-menu a.menu-item {
+      .download-card .card-sub {
+        font-size: 0.78rem;
+        opacity: 0.6;
+        margin-top: 0.15rem;
+      }
+      .download-card .card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .download-card .card-list a {
         display: flex;
         align-items: center;
         gap: 0.6rem;
-        padding: 0.55rem 0.75rem;
+        padding: 0.65rem 0.8rem;
         border-radius: 10px;
         color: var(--fg);
         text-decoration: none;
         font-size: 0.9rem;
-        transition: background 0.12s;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        transition:
+          background 0.15s,
+          transform 0.15s,
+          border-color 0.15s;
       }
-      .download-menu a.menu-item:hover,
-      .download-menu a.menu-item:focus-visible {
+      .download-card .card-list a:hover,
+      .download-card .card-list a:focus-visible {
         background: var(--glass-bg-strong);
+        transform: translateX(2px);
       }
-      .download-menu a.menu-item .item-name {
+      .download-card .card-list a.recommended {
+        background: linear-gradient(
+          135deg,
+          rgba(74, 108, 247, 0.15) 0%,
+          rgba(212, 175, 55, 0.1) 100%
+        );
+        border-color: rgba(74, 108, 247, 0.3);
+        font-weight: 600;
+      }
+      .download-card .card-list a.recommended::before {
+        content: "★";
+        color: var(--gold-bright);
+        font-size: 0.85rem;
+        margin-right: -0.15rem;
+      }
+      .download-card .card-list a .item-label {
         flex: 1;
-        font-weight: 500;
       }
-      .download-menu a.menu-item .item-size {
-        opacity: 0.6;
+      .download-card .card-list a .item-size {
+        opacity: 0.55;
         font-size: 0.78rem;
         font-variant-numeric: tabular-nums;
       }
-      .download-menu .menu-note {
-        padding: 0.35rem 0.75rem 0.5rem;
-        font-size: 0.75rem;
+      .download-card .card-foot {
+        margin-top: auto;
+        padding-top: 0.6rem;
+        font-size: 0.74rem;
         opacity: 0.55;
-        line-height: 1.4;
-      }
-      .download-menu .menu-foot {
-        margin-top: 0.4rem;
-        padding-top: 0.5rem;
+        line-height: 1.5;
         border-top: 1px solid var(--glass-border);
+      }
+      .download-card.unsupported .card-list {
+        opacity: 0.5;
+      }
+      .download-fallback,
+      .download-error {
         text-align: center;
-      }
-      .download-menu .menu-foot a {
-        color: var(--fg);
+        padding: 1.5rem;
         opacity: 0.7;
-        font-size: 0.8rem;
-        text-decoration: none;
+        font-size: 0.9rem;
       }
-      .download-menu .menu-foot a:hover {
-        opacity: 1;
+      .download-error a {
         text-decoration: underline;
+        color: var(--lapis-bright);
       }
 
       /* ─────────────────── Glass card primitive ─────────────────── */
@@ -1182,35 +1219,28 @@
           on your laptop.
         </p>
         <div class="cta">
-          <div class="download-group">
-            <a
-              id="download-primary"
-              class="btn btn-primary"
-              href="https://github.com/phoodul/api-vault/releases"
-            >
-              <span class="download-label">Download</span>
-              <span class="arrow">→</span>
-            </a>
-            <button
-              id="download-toggle"
-              class="download-toggle"
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded="false"
-              aria-controls="download-menu"
-              title="Other platforms"
-            >
-              <span class="caret" aria-hidden="true">▾</span>
-              <span class="visually-hidden">Other platforms</span>
-            </button>
-            <div
-              id="download-menu"
-              class="glass download-menu"
-              role="menu"
-              aria-labelledby="download-toggle"
-            ></div>
-          </div>
+          <a class="btn btn-primary" href="#download">
+            Download
+            <span class="arrow">→</span>
+          </a>
           <a class="btn btn-ghost" href="https://github.com/phoodul/api-vault"> View source </a>
+        </div>
+      </section>
+
+      <!-- ─────────── Download — 3 column grid (Windows / macOS / Linux) ─────────── -->
+      <section id="download" class="download-section reveal">
+        <div class="section-eyebrow">Download</div>
+        <h2>Choose your platform</h2>
+        <p class="lede">
+          Latest release: <span class="download-version" id="download-version">loading…</span> ·
+          Free · AGPL-3.0 · Works offline
+        </p>
+        <div class="download-grid" id="download-grid">
+          <!-- 3 cards (Windows / macOS / Linux) populated by JS -->
+          <div class="download-fallback">
+            Loading the latest release… If this doesn't update, see
+            <a href="https://github.com/phoodul/api-vault/releases">all releases on GitHub</a>.
+          </div>
         </div>
       </section>
 
@@ -1554,123 +1584,122 @@
           return list[0];
         }
 
-        function buildMenu(menuEl, byOS, tag) {
-          const order = ["windows", "macos", "linux"];
+        // OS 별 카드 표시 정보 — heading + icon (현지화된 emoji) + 짧은 sub.
+        const CARDS = [
+          { os: "windows", icon: "⊞", sub: "Windows 10 / 11 · x64" },
+          { os: "macos", icon: "", sub: "macOS · Universal (Intel + Apple Silicon)" },
+          { os: "linux", icon: "🐧", sub: "Ubuntu / Debian / Fedora · x64" },
+        ];
+
+        function escapeHtml(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        function renderGrid(gridEl, byOS, detectedOS, tag) {
           const parts = [];
-          for (const os of order) {
+          for (const card of CARDS) {
+            const os = card.os;
             const items = byOS[os] || [];
-            if (items.length === 0) continue;
-            parts.push('<div class="menu-section">');
-            parts.push('<div class="menu-heading">' + OS_LABEL[os] + "</div>");
-            for (const it of items) {
+            const isDetected = os === detectedOS;
+            const cardClass =
+              items.length === 0 ? "glass download-card unsupported" : "glass download-card";
+            parts.push('<div class="' + cardClass + '">');
+            parts.push('<div class="card-head">');
+            parts.push('<span class="os-icon" aria-hidden="true">' + card.icon + "</span>");
+            parts.push("<div>");
+            parts.push("<h3>" + OS_LABEL[os] + (isDetected ? " — your system" : "") + "</h3>");
+            parts.push('<div class="card-sub">' + card.sub + "</div>");
+            parts.push("</div>");
+            parts.push("</div>");
+
+            if (items.length === 0) {
               parts.push(
-                '<a class="menu-item" role="menuitem" href="' +
-                  it.url +
-                  '">' +
-                  '<span class="item-name">' +
-                  it.label +
+                '<div class="card-foot">No build for this platform yet. ARM64 / other variants planned.</div>',
+              );
+              parts.push("</div>");
+              continue;
+            }
+
+            // recommended 가 첫 번째로 오도록 정렬, 그다음 나머지 패턴 정의 순서.
+            items.sort((a, b) => (a.recommended ? -1 : 0) - (b.recommended ? -1 : 0));
+
+            parts.push('<ul class="card-list">');
+            for (const it of items) {
+              parts.push("<li>");
+              parts.push(
+                '<a href="' +
+                  escapeHtml(it.url) +
+                  '"' +
+                  (it.recommended ? ' class="recommended"' : "") +
+                  ">" +
+                  '<span class="item-label">' +
+                  escapeHtml(it.label) +
                   "</span>" +
                   '<span class="item-size">' +
                   fmtSize(it.size) +
                   "</span>" +
                   "</a>",
               );
+              parts.push("</li>");
             }
+            parts.push("</ul>");
+
+            // 카드 footer — OS 별 추가 안내
+            let foot = "";
+            if (os === "macos") {
+              foot = "Single Universal binary covers Intel + Apple Silicon (M1/M2/M3/M4).";
+            } else if (os === "windows") {
+              foot = "Installer (.exe) recommended. MSI for managed deployment (group policy).";
+            } else if (os === "linux") {
+              foot = "AppImage runs portable. Pick .deb (apt) or .rpm (dnf) for system install.";
+            }
+            if (foot) parts.push('<div class="card-foot">' + foot + "</div>");
             parts.push("</div>");
           }
-          // Note about ARM coverage
-          const hasArmHint =
-            (byOS.windows && byOS.windows.length) || (byOS.linux && byOS.linux.length);
-          if (hasArmHint) {
-            parts.push(
-              '<div class="menu-note">' +
-                "macOS build is universal (Intel + Apple Silicon). " +
-                "Windows/Linux ARM64 builds are not yet published." +
-                "</div>",
-            );
-          }
-          parts.push(
-            '<div class="menu-foot">' +
-              '<a href="' +
-              RELEASES_PAGE +
-              '">All releases (' +
-              tag +
-              ") →</a>" +
-              "</div>",
-          );
-          menuEl.innerHTML = parts.join("");
-        }
-
-        function setupToggle(toggleEl, menuEl) {
-          function open() {
-            menuEl.classList.add("open");
-            toggleEl.setAttribute("aria-expanded", "true");
-          }
-          function close() {
-            menuEl.classList.remove("open");
-            toggleEl.setAttribute("aria-expanded", "false");
-          }
-          function toggle() {
-            if (menuEl.classList.contains("open")) close();
-            else open();
-          }
-          toggleEl.addEventListener("click", function (e) {
-            e.stopPropagation();
-            toggle();
-          });
-          document.addEventListener("click", function (e) {
-            if (!menuEl.contains(e.target) && e.target !== toggleEl) close();
-          });
-          document.addEventListener("keydown", function (e) {
-            if (e.key === "Escape") close();
-          });
+          gridEl.innerHTML = parts.join("");
         }
 
         async function init() {
-          const primary = document.getElementById("download-primary");
-          const toggle = document.getElementById("download-toggle");
-          const menu = document.getElementById("download-menu");
-          if (!primary || !toggle || !menu) return;
-          setupToggle(toggle, menu);
+          const grid = document.getElementById("download-grid");
+          const versionEl = document.getElementById("download-version");
+          if (!grid) return;
 
           let release;
           try {
             release = await fetchLatest();
           } catch (err) {
-            // Fallback: keep static GitHub releases link, hide menu toggle.
-            toggle.style.display = "none";
+            grid.innerHTML =
+              '<div class="download-error">' +
+              "Couldn't reach GitHub Releases API. " +
+              '<a href="' +
+              RELEASES_PAGE +
+              '">View all releases on GitHub →</a>' +
+              "</div>";
+            if (versionEl) versionEl.textContent = "—";
             return;
           }
 
           const items = (release.assets || []).map(classify).filter(Boolean);
+          if (versionEl) versionEl.textContent = release.tag_name;
           if (items.length === 0) {
-            toggle.style.display = "none";
+            grid.innerHTML =
+              '<div class="download-error">' +
+              "No build artifacts in the latest release. " +
+              '<a href="' +
+              RELEASES_PAGE +
+              '">View all releases →</a>' +
+              "</div>";
             return;
           }
 
           const byOS = { windows: [], macos: [], linux: [] };
           for (const it of items) byOS[it.os].push(it);
 
-          const detectedOS = detectOS();
-          // Pick primary asset: detected OS's `recommended` if exists, else first item of detected OS.
-          let pick = null;
-          if (detectedOS && byOS[detectedOS].length > 0) {
-            pick = byOS[detectedOS].find((it) => it.recommended) || byOS[detectedOS][0];
-          }
-          if (pick) {
-            primary.href = pick.url;
-            const labelEl = primary.querySelector(".download-label");
-            if (labelEl) {
-              labelEl.textContent =
-                "Download for " +
-                OS_LABEL[pick.os] +
-                (pick.arch && pick.arch !== "x64" ? " · " + pick.arch : "") +
-                " · " +
-                fmtSize(pick.size);
-            }
-          }
-
-          buildMenu(menu, byOS, release.tag_name);
+          renderGrid(grid, byOS, detectOS(), release.tag_name);
         }
 
         if (document.readyState === "loading") {

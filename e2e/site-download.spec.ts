@@ -1,65 +1,55 @@
 /**
- * site/index.html download UI smoke — verifies OS-detected primary button
- * label change after live GitHub API fetch + dropdown menu populated with
- * 6 expected items (Windows .exe/.msi, macOS .dmg, Linux AppImage/.deb/.rpm).
+ * site/index.html download grid smoke — verifies the 3-column download
+ * section under the hero (Windows / macOS / Linux cards) is populated
+ * by live GitHub Releases API.
  *
  * This spec is opt-in. Excluded from regular E2E in playwright.config.ts.
- * Run only via: pnpm exec playwright test --config=e2e/playwright.site.config.ts
+ * Run only via:
+ *   npx http-server site -p 4173 -c-1 --silent &
+ *   pnpm exec playwright test --config=e2e/playwright.site.config.ts
  */
 import { test, expect } from "@playwright/test";
 
 test.use({ viewport: { width: 1280, height: 800 } });
 
-test("site download UI: primary updated + dropdown populated", async ({ page }) => {
+test("site download grid: 3 cards populated + recommended item highlighted", async ({ page }) => {
   await page.goto("http://localhost:4173/");
 
-  const primary = page.locator("#download-primary");
-  const toggle = page.locator("#download-toggle");
-  const menu = page.locator("#download-menu");
+  // hero 의 Download 버튼은 단순 anchor 로 #download 섹션을 가리킨다.
+  const heroBtn = page.locator(".hero a.btn-primary");
+  await expect(heroBtn).toBeVisible();
+  await expect(heroBtn).toHaveAttribute("href", "#download");
 
-  await expect(primary).toBeVisible();
-  await expect(toggle).toBeVisible();
+  // download section 마운트 확인
+  const section = page.locator("#download");
+  await expect(section).toBeVisible();
+  await expect(section.locator("h2")).toHaveText(/Choose your platform/i);
 
-  // 초기 라벨은 "Download". JS 가 GitHub API fetch 후 OS-specific 라벨로 갱신.
-  // headless chromium 은 보통 Linux 로 잡힘.
-  await expect(primary.locator(".download-label")).toHaveText(/Download for /, { timeout: 15_000 });
+  // 버전 텍스트가 GitHub API fetch 후 "loading…" → "v0.1.0-pre…" 로 갱신
+  await expect(page.locator("#download-version")).toHaveText(/^v\d/, { timeout: 15_000 });
 
-  // primary href 가 GitHub releases asset URL 로 바뀐다.
-  await expect(primary).toHaveAttribute(
-    "href",
-    /github\.com\/phoodul\/api-vault\/releases\/download\//,
-    { timeout: 5_000 },
-  );
+  // 3 카드 모두 마운트 (Windows / macOS / Linux)
+  const cards = page.locator("#download-grid .download-card");
+  await expect(cards).toHaveCount(3);
+  await expect(cards.nth(0).locator("h3")).toContainText("Windows");
+  await expect(cards.nth(1).locator("h3")).toContainText("macOS");
+  await expect(cards.nth(2).locator("h3")).toContainText("Linux");
 
-  // 처음엔 menu 가 닫혀있음 (CSS .open 클래스 없음 → opacity 0 + pointer-events none).
-  await expect(menu).not.toHaveClass(/open/);
-
-  // toggle 클릭 → menu open
-  await toggle.click();
-  await expect(menu).toHaveClass(/open/);
-  await expect(toggle).toHaveAttribute("aria-expanded", "true");
-
-  // menu 안에 OS 별 heading 3개 (Windows / macOS / Linux)
-  await expect(menu.locator(".menu-heading", { hasText: "Windows" })).toBeVisible();
-  await expect(menu.locator(".menu-heading", { hasText: "macOS" })).toBeVisible();
-  await expect(menu.locator(".menu-heading", { hasText: "Linux" })).toBeVisible();
-
-  // 6 개 item (Windows 2 + macOS 1 + Linux 3)
-  const items = menu.locator("a.menu-item");
-  await expect(items).toHaveCount(6);
-
-  // 모든 item 이 GitHub release download URL
-  const hrefs = await items.evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href));
+  // 모든 download link 가 GitHub release URL 패턴
+  const links = page.locator("#download-grid .card-list a");
+  const count = await links.count();
+  expect(count).toBeGreaterThanOrEqual(6); // Windows 2 + macOS 1 + Linux 3
+  const hrefs = await links.evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href));
   for (const href of hrefs) {
     expect(href).toMatch(/github\.com\/phoodul\/api-vault\/releases\/download\//);
   }
 
-  // ARM 안내 note + All releases footer
-  await expect(menu.locator(".menu-note")).toBeVisible();
-  await expect(menu.locator(".menu-foot a")).toContainText(/All releases/);
+  // 각 카드에 recommended item 1개씩 (★ marker)
+  const recommended = page.locator("#download-grid .card-list a.recommended");
+  await expect(recommended).toHaveCount(3);
 
-  // Escape 닫기
-  await page.keyboard.press("Escape");
-  await expect(menu).not.toHaveClass(/open/);
-  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  // 감지된 OS (headless chromium = Linux) 의 카드에 "your system" 표시
+  await expect(
+    page.locator("#download-grid .download-card h3", { hasText: "your system" }),
+  ).toHaveCount(1);
 });
