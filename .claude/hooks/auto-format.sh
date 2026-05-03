@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-FILE_PATH=$(jq -r '.tool_input.file_path // empty' < /dev/stdin)
+FILE_PATH=$(jq -r '.tool_input.file_path // empty')
 [ -z "$FILE_PATH" ] && exit 0
 [ ! -f "$FILE_PATH" ] && exit 0
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-COMMAND=$(jq -r '.tool_input.command // empty' < /dev/stdin)
+COMMAND=$(jq -r '.tool_input.command // empty')
 
 if echo "$COMMAND" | grep -qE '^(rm -rf /|rm -rf \*|dd |mkfs)'; then
   jq -n '{ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "Destructive command blocked" } }'
