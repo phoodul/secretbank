@@ -102,7 +102,8 @@ Builds: https://github.com/phoodul/api-vault/releases
 
 1. ⋮ menu on a credential → **Rotate**.
 2. Paste the new value — the old one moves to history.
-3. Toggle **Verify with provider** (Pro) to ping the issuer's healthcheck.
+3. Toggle **Verify with provider** (free during beta — see §13 FAQ; Pro tier
+   not active yet) to ping the issuer's healthcheck.
 
 ---
 
@@ -261,7 +262,8 @@ PyPI / GoMod / Maven: manifest only for now (lockfile parsing is planned).
 
 ## 8. Desktop — multi-device sync
 
-Pro feature. Read and write the same vault from a second device.
+> **Beta status:** Free for everyone right now (Pro tier not active during beta —
+> see §13 FAQ). Read and write the same vault from a second device.
 
 ### 8.1 Pair
 

@@ -104,7 +104,7 @@ pnpm tauri build
 
 Architecture and task details: [`docs/architecture.md`](./docs/architecture.md) · [`docs/task.md`](./docs/task.md)
 
-User guide: [`docs/USER_GUIDE.en.md`](./docs/USER_GUIDE.en.md) · [`docs/USER_GUIDE.ko.md`](./docs/USER_GUIDE.ko.md)
+User guide: **[api-vault.app/guide.html](https://api-vault.app/guide.html)** (English / 한국어 / 简体中文 — print to PDF in-browser) · raw markdown: [`USER_GUIDE.en.md`](./docs/USER_GUIDE.en.md) · [`USER_GUIDE.ko.md`](./docs/USER_GUIDE.ko.md) · [`USER_GUIDE.zh.md`](./docs/USER_GUIDE.zh.md)
 
 Release / policy: [`docs/RELEASE_GUIDE.md`](./docs/RELEASE_GUIDE.md) · [`docs/PRIVACY.md`](./docs/PRIVACY.md) · [`docs/TERMS.md`](./docs/TERMS.md) · [`SECURITY.md`](./SECURITY.md)
 

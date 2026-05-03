@@ -179,9 +179,9 @@ Issuer ─▶ Credential ─▶ Usage (코드 위치) ─▶ Project ─▶ Depl
 2. 확인 다이얼로그: 영향 범위 (Blast Radius) + 패스프레이즈 재입력.
 3. 폐기 후 audit log 에 자동 기록 + Incident Feed 에 self-incident 로 추가.
 
-### 5.3 Pro 기능 — Auto-revoke
+### 5.3 Auto-revoke (베타 무료, Pro 도입 전까지 모두 사용 가능)
 
-API 가 `revoke` 엔드포인트를 제공하는 issuer (Stripe, GitHub PAT 등) 는 폐기와 동시에 외부 API 호출까지 자동.
+API 가 `revoke` 엔드포인트를 제공하는 issuer (Stripe, GitHub PAT 등) 는 폐기와 동시에 외부 API 호출까지 자동. **현재 v0.1.0-pre8 무료 베타 기간 동안 모든 사용자에게 열려있다** (§14 FAQ).
 
 ---
 
@@ -246,7 +246,7 @@ PyPI / GoMod / Maven 은 매니페스트만 (정확한 버전 해석은 후속).
 
 ## 8. 데스크톱 앱 — 멀티 디바이스 동기화
 
-Pro 기능. 두 번째 기기에서 같은 볼트를 읽고 쓴다.
+> **베타 상태**: 현재 모든 사용자에게 무료 (Pro 도입 전 — §14 FAQ 참조). 두 번째 기기에서 같은 볼트를 읽고 쓴다.
 
 ### 8.1 페어링
 
