@@ -1,0 +1,40 @@
+name: Deploy Site
+
+# site/ (Cloudflare Pages 의 api-vault-site project) 자동 배포.
+# 이 project 는 Direct Upload 모드로 만들어졌기에 GitHub git integration
+# 으로는 자동 배포가 안 된다 — wrangler pages deploy 로 push 한다.
+#
+# 활성화 조건:
+# - secrets.CLOUDFLARE_API_TOKEN : 등록 완료 (Workers Pages:Edit 권한 포함 필요)
+# - vars.SITE_DEPLOY_ENABLED == "true" : 안전 게이트 (실패 가시화 위해 명시 opt-in)
+#
+# Account ID 가 명시 안 됐을 때 wrangler 가 token 으로부터 추론 못하면
+# CLOUDFLARE_ACCOUNT_ID secret 추가 필요. 그 경우 wrangler-action 의
+# accountId 옵션 활성화한다 (주석 참고).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/deploy-site.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare Pages
+    if: ${{ vars.SITE_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy site/ to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}  # 필요 시 활성화
+          command: pages deploy site --project-name=api-vault-site --branch=main --commit-dirty=true
