@@ -2,7 +2,24 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-03 (저녁) — **F. Dependabot alerts 처리 1차 — drizzle-orm 패치 완료**
+- **Time:** 2026-05-03 (밤) — **F1+F2+F3 Dependabot 처리 풀 완주 — 14 alert 중 11 close (78.6%)**
+- **최종 상태:** HIGH 4→**0** (100% 해소) / MEDIUM 7→2 / LOW 3→1 → **총 5 commit, 5 push**
+- **commit 시리즈 (오늘 저녁):**
+  - `35fac1b` F1 — drizzle-orm 0.36.4 → 0.45.2 (HIGH #1/#15 SQL 인젝션)
+  - `54a11fa` F2-1 — vitest-pool-workers 0.5 → 0.8.71 (HIGH #5/#3 wrangler+devalue transitive)
+  - `8da1aef` F2-2 — pnpm overrides wrangler ^4.59.1 (HIGH #19 새 advisory)
+  - `28dd8bf` F3 — vitest 2→3 + overrides vite ^6.4.2 + esbuild ^0.25.0 (MEDIUM #14/#2)
+  - `37793c1` docs(progress) F1 정리
+- **잔여 3건 (모두 src-tauri Cargo, runtime 영향 없음):**
+  - #16 sharks (medium, fix=none): M23 Vault Charter Shamir 의 random_polynomial 계수 편향. 공격 조건은 같은 secret 500~1500회 share. **1-share 모델이라 영향 0.** 권장 마이그레이션: blahaj fork (별도 작업)
+  - #17 glib (medium, fix 0.20.0): webkit2gtk/wry transitive (Linux only). **Tauri 2.11+ minor upgrade 필요** (별도 작업)
+  - #18 rand 0.7.3 (low, fix 0.8.6): phf_generator → kuchikiki → tauri-utils 2.8.3 transitive. **build-dependencies only — 런타임 영향 0.** Tauri minor upgrade 시 자동 해소
+- **이전 turn (D. Demo capture, commit `e7a3446`):** 3 scene 모두 통과, media/ 에 lock-screen.webm (1442 KB) / charter-issuance.webm (1338 KB) / recovery-flow.webm (752 KB)
+- **이전 turn (chore hooks, commit `c771383`):** Windows jq stdin 호환성 정리
+
+---
+
+## Previous checkpoint (2026-05-03 저녁 — F1 drizzle-orm)
 - **이번 turn:**
   - GitHub Dependabot 14 alert 전체 분류 (gh api): HIGH 4 / MEDIUM 7 / LOW 3
   - drizzle-orm 0.36.4 → 0.45.2 + drizzle-kit 0.28.1 → 0.31.10 업그레이드 (commit `35fac1b`)
