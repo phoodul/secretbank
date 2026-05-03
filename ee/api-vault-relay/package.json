@@ -22,12 +22,14 @@
     "@cloudflare/workers-types": "^4.0.0",
     "drizzle-kit": "^0.31.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.0",
+    "vitest": "^3.2.0",
     "wrangler": "^4.0.0"
   },
   "pnpm": {
     "overrides": {
-      "wrangler": "^4.59.1"
+      "wrangler": "^4.59.1",
+      "vite": "^6.4.2",
+      "esbuild": "^0.25.0"
     }
   }
 }
