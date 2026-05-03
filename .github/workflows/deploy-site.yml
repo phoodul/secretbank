@@ -42,6 +42,15 @@ jobs:
         with:
           node-version: 22
 
+      # media/*.webm 은 repo root 의 media/ 에 commit 됨 (3 demo 시나리오, 합 ~3.5 MB).
+      # wrangler pages deploy 는 site/ 만 업로드하므로 site/media/ 로 stage 한다.
+      # site/index.html 의 video src="/media/<scene>.webm" 가 그대로 작동.
+      - name: Stage demo videos into site/media/
+        run: |
+          mkdir -p site/media
+          cp -v media/*.webm site/media/ 2>/dev/null || echo "no webm found"
+          ls -la site/media/
+
       - name: Deploy site/ to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
