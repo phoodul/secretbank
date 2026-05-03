@@ -2,8 +2,19 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-03 (오후 후반) — **D. Demo capture 디버깅 완료** (3 scene 모두 통과, media/ 에 webm 3개 생성)
-- **이번 turn 변경 (e2e/demo.spec.ts 만):**
+- **Time:** 2026-05-03 (저녁) — **F. Dependabot alerts 처리 1차 — drizzle-orm 패치 완료**
+- **이번 turn:**
+  - GitHub Dependabot 14 alert 전체 분류 (gh api): HIGH 4 / MEDIUM 7 / LOW 3
+  - drizzle-orm 0.36.4 → 0.45.2 + drizzle-kit 0.28.1 → 0.31.10 업그레이드 (commit `35fac1b`)
+  - 영향: HIGH #1/#15 (SQL injection) 직접 close. typecheck + 71 tests 통과
+  - vitest-pool-workers 0.5 → 0.15 시도 했으나 vitest 4 + cloudflare types 동기화 필요 — 별도 마이그레이션 commit 으로 분리
+- **Dependabot 잔여 정리 (다음 작업):**
+  - HIGH #5 (wrangler dev-only transitive 3.100), #3 (devalue dev-only transitive) — `@cloudflare/vitest-pool-workers` 0.15 + vitest 4 마이그레이션 필요. dev tooling 만이라 runtime 영향 0
+  - MEDIUM 7 / LOW 3 — 대부분 위 마이그레이션으로 자동 해소 예상
+  - **MEDIUM #16 sharks (fix=none)**: M23 Vault Charter Shamir 의 random_polynomial 계수 편향 — 공격 조건은 같은 secret 500~1500회 share. 우리 모델은 charter 1회 발급=1회 share → 영향 없음. 권장: blahaj fork 로 추후 마이그레이션
+- **이전 turn (D. Demo capture, commit `e7a3446`):** 3 scene 모두 통과, media/ 에 lock-screen.webm (1442 KB) / charter-issuance.webm (1338 KB) / recovery-flow.webm (752 KB)
+- **이전 turn (chore hooks, commit `c771383`):** Windows jq stdin 호환성 정리
+- **이전 turn 변경 (e2e/demo.spec.ts 만):**
   - Scene 1 (lock-screen) — `getByRole("dialog")` → `#unlock-passphrase` (LockScreen 은 `motion.section + aria-labelledby` 으로 ARIA `region`, dialog 아님)
   - Scene 2 (charter-issuance) — 두 버그 수정:
     1. mock `vault_status` 의 `state: "needs_init"` → `"uninitialized"` (Rust serde 직렬화는 후자 — 잘못된 값이라 어떤 화면도 안 떴음)
