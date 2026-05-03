@@ -81,6 +81,8 @@ jetbrains-plugin/gradle/
 jetbrains-plugin/gradlew
 jetbrains-plugin/gradlew.bat
 
-# Marketing 영상 — 큰 binary, 필요 시 `pnpm capture:demo` 로 재생성
-media/*.webm
+# Marketing 영상 — landing site 의 demo 섹션이 직접 host (api-vault.app/demo/*.webm).
+# 3개 demo (lock-screen / charter-issuance / recovery-flow) 합 ~3.5 MB → commit 가능.
+# 새로 만들 때: `pnpm capture:demo` 로 재생성 (Playwright + tauri mock)
+# media/*.webm
 media/*.mp4

@@ -782,64 +782,91 @@
       }
 
       /* ─────────────────── Demo placeholder ─────────────────── */
+      /* ─────────────────── Demo player (3-tab video) ─────────────────── */
       .demo-card {
         padding: 0;
         overflow: hidden;
         position: relative;
       }
-      .demo-placeholder {
-        aspect-ratio: 16 / 9;
+      .demo-tabs {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        background: linear-gradient(
-          135deg,
-          rgba(74, 108, 247, 0.15) 0%,
-          rgba(212, 175, 55, 0.08) 100%
-        );
-        position: relative;
+        gap: 0.25rem;
+        padding: 0.6rem 0.6rem 0;
+        background: var(--glass-bg-strong);
+        border-bottom: 1px solid var(--glass-border);
       }
-      .demo-placeholder::before {
+      .demo-tab {
+        flex: 1;
+        padding: 0.6rem 0.5rem;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        color: var(--fg);
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 500;
+        opacity: 0.6;
+        border-radius: 8px 8px 0 0;
+        position: relative;
+        transition:
+          opacity 0.15s,
+          background 0.15s;
+      }
+      .demo-tab:hover {
+        opacity: 0.85;
+        background: var(--glass-bg);
+      }
+      .demo-tab[aria-selected="true"] {
+        opacity: 1;
+        background: var(--glass-bg);
+      }
+      .demo-tab[aria-selected="true"]::after {
         content: "";
         position: absolute;
-        inset: 0;
-        background:
-          radial-gradient(circle at 30% 40%, rgba(74, 108, 247, 0.25) 0%, transparent 40%),
-          radial-gradient(circle at 70% 60%, rgba(212, 175, 55, 0.2) 0%, transparent 45%);
-        animation: meshDrift 15s ease-in-out infinite alternate;
-      }
-      .demo-play {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
+        left: 12%;
+        right: 12%;
+        bottom: -1px;
+        height: 2px;
         background: var(--gradient-1);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.5rem;
-        box-shadow: 0 12px 40px rgba(74, 108, 247, 0.5);
-        position: relative;
-        z-index: 1;
-        cursor: pointer;
-        transition: transform 0.3s;
+        border-radius: 2px;
       }
-      .demo-play:hover {
-        transform: scale(1.08);
+      .demo-tab .tab-sub {
+        display: block;
+        font-size: 0.72rem;
+        opacity: 0.65;
+        font-weight: 400;
+        margin-top: 0.15rem;
       }
-      .demo-label {
+      .demo-stage {
         position: relative;
-        z-index: 1;
-        font-weight: 600;
-        color: var(--fg);
+        aspect-ratio: 16 / 10;
+        background:
+          radial-gradient(circle at 30% 40%, rgba(74, 108, 247, 0.18) 0%, transparent 45%),
+          radial-gradient(circle at 70% 60%, rgba(212, 175, 55, 0.12) 0%, transparent 50%), #050810;
       }
-      .demo-sublabel {
-        position: relative;
-        z-index: 1;
-        color: var(--fg-muted);
+      .demo-stage video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .demo-stage video.active {
+        opacity: 1;
+      }
+      .demo-caption {
+        padding: 0.9rem 1.1rem;
+        background: var(--glass-bg);
+        border-top: 1px solid var(--glass-border);
         font-size: 0.85rem;
+        color: var(--fg-muted);
+        line-height: 1.5;
+      }
+      .demo-caption strong {
+        color: var(--fg);
+        font-weight: 600;
       }
 
       /* ─────────────────── Code block ─────────────────── */
@@ -1244,13 +1271,78 @@
         </div>
       </section>
 
-      <!-- ─────────── Demo placeholder ─────────── -->
-      <section class="reveal">
+      <!-- ─────────── Demo player (3-tab) ─────────── -->
+      <section id="demo" class="reveal">
         <div class="glass demo-card">
-          <div class="demo-placeholder">
-            <div class="demo-play">▶</div>
-            <div class="demo-label">Watch the 60-second demo</div>
-            <div class="demo-sublabel">LockScreen → Charter issuance → Recovery flow</div>
+          <div class="demo-tabs" role="tablist" aria-label="Demo scenarios">
+            <button
+              class="demo-tab"
+              role="tab"
+              type="button"
+              data-demo="lock-screen"
+              aria-selected="true"
+              aria-controls="demo-video-lock"
+            >
+              Lock screen
+              <span class="tab-sub">sci-fi HUD + 15 languages</span>
+            </button>
+            <button
+              class="demo-tab"
+              role="tab"
+              type="button"
+              data-demo="charter-issuance"
+              aria-selected="false"
+              aria-controls="demo-video-charter"
+            >
+              Charter issuance
+              <span class="tab-sub">Lapis vault recovery setup</span>
+            </button>
+            <button
+              class="demo-tab"
+              role="tab"
+              type="button"
+              data-demo="recovery-flow"
+              aria-selected="false"
+              aria-controls="demo-video-recovery"
+            >
+              Recovery flow
+              <span class="tab-sub">Forgot passphrase → restore</span>
+            </button>
+          </div>
+          <div class="demo-stage">
+            <video
+              id="demo-video-lock"
+              class="active"
+              src="/media/lock-screen.webm"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="metadata"
+              aria-labelledby="demo-caption"
+            ></video>
+            <video
+              id="demo-video-charter"
+              src="/media/charter-issuance.webm"
+              loop
+              muted
+              playsinline
+              preload="none"
+              aria-labelledby="demo-caption"
+            ></video>
+            <video
+              id="demo-video-recovery"
+              src="/media/recovery-flow.webm"
+              loop
+              muted
+              playsinline
+              preload="none"
+              aria-labelledby="demo-caption"
+            ></video>
+          </div>
+          <div id="demo-caption" class="demo-caption">
+            <strong>Lock screen.</strong> The unlock surface — sci-fi vault HUD, 15-language
+            switcher, mouse-driven gloss. Designed so a security tool feels like one.
           </div>
         </div>
       </section>
@@ -1706,6 +1798,82 @@
           document.addEventListener("DOMContentLoaded", init);
         } else {
           init();
+        }
+      })();
+
+      // ─────────── Demo player tabs ───────────
+      (function () {
+        const tabs = document.querySelectorAll(".demo-tab");
+        const videos = document.querySelectorAll(".demo-stage video");
+        const caption = document.getElementById("demo-caption");
+        if (tabs.length === 0 || videos.length === 0) return;
+
+        const COPY = {
+          "lock-screen":
+            "<strong>Lock screen.</strong> The unlock surface — sci-fi vault HUD, 15-language switcher, mouse-driven gloss. Designed so a security tool feels like one.",
+          "charter-issuance":
+            "<strong>Charter issuance.</strong> Pick a passphrase and a printable Vault Charter is issued — 6 Diceware words plus a 4-digit verifier on a Lapis-toned card. Print, store offline, you can never lose the vault again.",
+          "recovery-flow":
+            "<strong>Recovery flow.</strong> Forgot the passphrase? Click Forgot, type the 6 charter words, set a new passphrase. Old charter is auto-invalidated and a new one offered.",
+        };
+
+        function activate(id) {
+          for (const t of tabs) {
+            const match = t.dataset.demo === id;
+            t.setAttribute("aria-selected", match ? "true" : "false");
+          }
+          for (const v of videos) {
+            const match =
+              v.id ===
+              "demo-video-" +
+                (id === "lock-screen"
+                  ? "lock"
+                  : id === "charter-issuance"
+                    ? "charter"
+                    : "recovery");
+            if (match) {
+              v.classList.add("active");
+              if (v.preload === "none") v.preload = "metadata";
+              const playPromise = v.play();
+              if (playPromise && typeof playPromise.catch === "function") {
+                playPromise.catch(() => {
+                  /* autoplay denied — fine */
+                });
+              }
+            } else {
+              v.classList.remove("active");
+              v.pause();
+            }
+          }
+          if (caption && COPY[id]) caption.innerHTML = COPY[id];
+        }
+
+        for (const tab of tabs) {
+          tab.addEventListener("click", function () {
+            activate(this.dataset.demo);
+          });
+        }
+
+        // Pause every video when the demo section leaves viewport (CPU + battery).
+        if ("IntersectionObserver" in window) {
+          const stage = document.querySelector(".demo-stage");
+          if (stage) {
+            const io = new IntersectionObserver(
+              function (entries) {
+                for (const e of entries) {
+                  for (const v of videos) {
+                    if (e.isIntersecting && v.classList.contains("active")) {
+                      v.play().catch(() => {});
+                    } else if (!e.isIntersecting) {
+                      v.pause();
+                    }
+                  }
+                }
+              },
+              { threshold: 0.2 },
+            );
+            io.observe(stage);
+          }
         }
       })();
 
