@@ -186,48 +186,38 @@ const ISSUERS = [
   { id: "issuer-aws", slug: "aws", name: "AWS", icon: "☁️", base_pattern: null },
 ];
 
+// CredentialSummary (src/features/inventory/types.ts) — env (not environment),
+// score is ScoreBreakdown object (not number), expires_at in ms.
 const CREDENTIALS = [
   {
     id: "cred-openai-prod",
-    name: "prod-openai-billing",
-    issuer_slug: "openai",
     issuer_id: "issuer-openai",
-    environment: "prod",
+    name: "prod-openai-billing",
+    env: "prod" as const,
     status: "active" as const,
-    created_at: NOW - 30 * DAY,
-    last_rotated_at: NOW - 30 * DAY,
-    rotation_policy_days: 90,
     expires_at: null,
-    notes: null,
-    score: 72,
+    hash_hint: "AbCd",
+    score: { total: 72, level: "safe" as const, factors: [] },
   },
   {
     id: "cred-stripe-prod",
-    name: "prod-stripe-secret",
-    issuer_slug: "stripe",
     issuer_id: "issuer-stripe",
-    environment: "prod",
+    name: "prod-stripe-secret",
+    env: "prod" as const,
     status: "active" as const,
-    created_at: NOW - 60 * DAY,
-    last_rotated_at: NOW - 14 * DAY,
-    rotation_policy_days: 90,
     expires_at: null,
-    notes: null,
-    score: 88,
+    hash_hint: "wXyZ",
+    score: { total: 88, level: "safe" as const, factors: [] },
   },
   {
     id: "cred-github-pat",
-    name: "github-deploy-pat",
-    issuer_slug: "github",
     issuer_id: "issuer-github",
-    environment: "prod",
+    name: "github-deploy-pat",
+    env: "prod" as const,
     status: "active" as const,
-    created_at: NOW - 90 * DAY,
-    last_rotated_at: NOW - 90 * DAY,
-    rotation_policy_days: 60,
-    expires_at: NOW + 30 * DAY,
-    notes: null,
-    score: 55,
+    expires_at: (NOW + 30 * DAY) * 1000,
+    hash_hint: "Q3rT",
+    score: { total: 55, level: "warn" as const, factors: [] },
   },
 ];
 
@@ -478,60 +468,65 @@ const onboardingDoneSettings = {
 };
 
 // ────────────────────────────────────────────────────────────────────
-// Scene 4 — Save credential (가장 자주 쓰는 워크플로우)
+// Scene 4 — Save credential (drop a project folder, auto-detect .env keys)
 // ────────────────────────────────────────────────────────────────────
+const DETECTED_KEYS = [
+  {
+    file_path: "apps/billing/.env.production",
+    line: 3,
+    env_var_name: "OPENAI_API_KEY",
+    issuer_slug: "openai",
+    value_hint: "AbCd",
+    confidence: 0.97,
+  },
+  {
+    file_path: "apps/billing/.env.production",
+    line: 7,
+    env_var_name: "STRIPE_SECRET_KEY",
+    issuer_slug: "stripe",
+    value_hint: "wXyZ",
+    confidence: 0.95,
+  },
+  {
+    file_path: "apps/checkout/server/.env",
+    line: 2,
+    env_var_name: "DATABASE_URL",
+    issuer_slug: null,
+    value_hint: "f9e2",
+    confidence: 0.62,
+  },
+  {
+    file_path: ".github/workflows/deploy.yml",
+    line: 22,
+    env_var_name: "GITHUB_TOKEN",
+    issuer_slug: "github",
+    value_hint: "Q3rT",
+    confidence: 0.88,
+  },
+];
+
 test("demo: save-credential", async ({ page }) => {
+  // Drop-zone 시나리오 — `/onboarding/scan?path=...` 가 env_scan_folder 호출 →
+  // DetectedKeysReview 가 발견된 키들을 보여줌. 사용자가 매핑하고 import.
   const map: CommandMap = {
     ...makeUnlockedBase(),
-    credential_list: { kind: "ok", value: [] }, // 빈 inventory 부터 시작
+    credential_list: { kind: "ok", value: [] },
     credential_create: { kind: "ok", value: "cred-new-id" },
+    env_scan_folder: { kind: "ok", value: DETECTED_KEYS },
+    railguard_preview: { kind: "ok", value: { sites: [] } },
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
-  await page.goto("/");
+  await page.goto("/onboarding/scan?path=" + encodeURIComponent("/Users/demo/Projects/billing"));
 
-  // Inventory 페이지 마운트 — empty state 가 잠시 보임
+  // 페이지 마운트 + scan progress → done → DetectedKeysReview 렌더
+  await page.waitForTimeout(3_500);
+
+  // 마우스로 검출된 키들 위 hover (시각적 강조)
+  await page.mouse.move(640, 320, { steps: 25 });
+  await page.waitForTimeout(1_000);
+  await page.mouse.move(640, 420, { steps: 25 });
   await page.waitForTimeout(1_500);
-
-  // "+ New" 같은 primary action 버튼 — 라벨 다양 가능성, 광범위 매칭
-  const newBtn = page
-    .getByRole("button", { name: /add credential|new credential|새 자격증명|\+ new|new$/i })
-    .first();
-  if (await newBtn.isVisible().catch(() => false)) {
-    await newBtn.click();
-    await page.waitForTimeout(800);
-  }
-
-  // CreateCredentialDialog 가 열림 — 진짜 Radix Dialog
-  const dialog = page.getByRole("dialog").first();
-  if (await dialog.isVisible().catch(() => false)) {
-    // Issuer combobox — 첫 번째 선택지
-    const issuerInput = page.getByRole("combobox").first();
-    if (await issuerInput.isVisible().catch(() => false)) {
-      await issuerInput.click();
-      await page.waitForTimeout(400);
-      // OpenAI option — 라벨 매칭
-      const opt = page.getByRole("option", { name: /openai/i }).first();
-      if (await opt.isVisible().catch(() => false)) {
-        await opt.click();
-        await page.waitForTimeout(400);
-      }
-    }
-    // name + value 입력 — placeholder 또는 label 기반
-    const nameInput = dialog.getByLabel(/name|이름/i).first();
-    if (await nameInput.isVisible().catch(() => false)) {
-      await nameInput.click();
-      await nameInput.pressSequentially("prod-openai-billing", { delay: 65 });
-      await page.waitForTimeout(300);
-    }
-    const valueInput = dialog.getByLabel(/value|값|secret|key/i).first();
-    if (await valueInput.isVisible().catch(() => false)) {
-      await valueInput.click();
-      await valueInput.pressSequentially("sk-proj-AbCdEfGhIjKlMnOpQrStUvWx", { delay: 50 });
-      await page.waitForTimeout(500);
-    }
-  }
-
-  // 마지막 frame 잠시
+  await page.mouse.move(640, 520, { steps: 25 });
   await page.waitForTimeout(2_500);
 });
 
@@ -543,19 +538,29 @@ test("demo: dependency-graph", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/graph");
 
+  // React Flow 의 우하단 attribution badge 가 deployment 노드를 가린다 — 영상에서만 숨김.
+  await page.addStyleTag({
+    content: `
+      .react-flow__attribution,
+      .react-flow__minimap,
+      .react-flow__controls { display: none !important; }
+    `,
+  });
+
   // GraphPage 마운트 + React Flow 초기 layout
-  await page.waitForTimeout(2_500);
+  await page.waitForTimeout(3_000);
 
-  // 마우스를 그래프 위로 부드럽게 — pan/zoom 효과
-  await page.mouse.move(640, 400, { steps: 25 });
-  await page.waitForTimeout(800);
-  await page.mouse.move(740, 350, { steps: 25 });
-  await page.waitForTimeout(800);
-  await page.mouse.move(540, 450, { steps: 25 });
-  await page.waitForTimeout(800);
+  // credential 노드 클릭 (data-testid 또는 label 기반)
+  const credNode = page.getByText(/prod-openai-billing/i).first();
+  if (await credNode.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await credNode.click();
+    await page.waitForTimeout(2_000); // blast radius highlight 적용
+  }
 
-  // 노드 클릭 시도 — credential 노드의 일반적 위치
-  await page.mouse.click(640, 400);
+  // 마우스를 천천히 — graph 가 살아있다는 인상
+  await page.mouse.move(740, 380, { steps: 30 });
+  await page.waitForTimeout(1_200);
+  await page.mouse.move(540, 460, { steps: 30 });
   await page.waitForTimeout(2_500);
 });
 
@@ -595,53 +600,65 @@ test("demo: rotate-credential", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/");
 
-  // Inventory 마운트 + 카드 1번 클릭 시도
-  await page.waitForTimeout(1_800);
+  // Inventory 마운트 + 카드 1번 클릭
+  await page.waitForTimeout(2_500);
   const firstCard = page.getByText(/prod-openai-billing/i).first();
-  if (await firstCard.isVisible().catch(() => false)) {
+  if (await firstCard.isVisible({ timeout: 4_000 }).catch(() => false)) {
     await firstCard.click();
-    await page.waitForTimeout(1_200);
+    await page.waitForTimeout(2_500); // drawer slide-in 완료
   }
 
   // Rotate 버튼 (i18n inventory.rotate = "Rotate")
   const rotateBtn = page.getByRole("button", { name: /^rotate$|회전|rotate value/i }).first();
-  if (await rotateBtn.isVisible().catch(() => false)) {
+  if (await rotateBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
     await rotateBtn.click();
-    await page.waitForTimeout(1_000);
+    await page.waitForTimeout(2_000); // rotate dialog mount
 
-    // new value 입력
+    // new value 입력 — 천천히 타이핑 (사용자가 보는 효과)
     const valueInput = page.getByLabel(/new value|new secret|새 값|new key/i).first();
-    if (await valueInput.isVisible().catch(() => false)) {
+    if (await valueInput.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await valueInput.click();
-      await valueInput.pressSequentially("sk-proj-RoTaTeD2026MayNewSecretKey", { delay: 50 });
-      await page.waitForTimeout(800);
+      await valueInput.pressSequentially("sk-proj-RoTaTeD2026MayNewSecretKey", { delay: 80 });
+      await page.waitForTimeout(2_000);
     }
   }
 
-  await page.waitForTimeout(2_500);
+  // 마지막 frame — rotate 완료 화면 충분히 보여줌
+  await page.waitForTimeout(4_000);
 });
 
 // ────────────────────────────────────────────────────────────────────
 // Scene 8 — Stale references (rotate 후 graph 의 사용처 추적)
 // ────────────────────────────────────────────────────────────────────
 test("demo: stale-references", async ({ page }) => {
-  // rotate 직후 — credential 의 last_rotated_at 이 NOW (방금) 인 상태
+  // rotate 직후 — credential 의 last_rotated_at 이 NOW (방금) 인 상태.
+  // graph 에 credential 클릭 → blast radius 활성화 → "이 곳들이 아직 옛 키를 참조"
+  // 시각적 강조 (red/orange highlight). dependency-graph 시나리오와 차별화.
   const rotatedCredentials = [
-    { ...CREDENTIALS[0], last_rotated_at: NOW - 60 }, // 1분 전 rotate
+    { ...CREDENTIALS[0], last_rotated_at: NOW - 60 },
     ...CREDENTIALS.slice(1),
   ];
   const map: CommandMap = {
     ...makeUnlockedBase(),
     credential_list: { kind: "ok", value: rotatedCredentials },
-    graph_fetch: {
-      kind: "ok",
-      value: { ...GRAPH_PAYLOAD, credentials: rotatedCredentials },
-    },
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/graph");
 
-  await page.waitForTimeout(2_500);
+  await page.addStyleTag({
+    content: `
+      .react-flow__attribution { display: none !important; }
+    `,
+  });
+
+  await page.waitForTimeout(3_000);
+
+  // credential 노드 클릭 → blast radius highlight (mock 결과로 primary/secondary/tertiary)
+  const credNode = page.getByText(/prod-openai-billing/i).first();
+  if (await credNode.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await credNode.click();
+    await page.waitForTimeout(3_000); // 강조 시각 + 사용처 명확히 보이게
+  }
 
   // 그래프 위 마우스 — 사용처가 그대로 남아있다는 점 강조 (여러 노드 위 hover)
   await page.mouse.move(540, 360, { steps: 25 });

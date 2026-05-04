@@ -28,6 +28,12 @@ export const tauriMockScript = `
           return Promise.resolve(settingMap[args.key]);
         }
       }
+      // Tauri plugin IPC (event listen/unlisten, dialog, deep-link 등) 은 우리 mock
+      // 에 등록되지 않은 cmd. reject 하면 listen-using 컴포넌트가 catch → "Scan failed"
+      // 같은 false-error 표시. plugin: 접두사 호출은 모두 no-op resolve (handler id 0).
+      if (typeof cmd === "string" && cmd.indexOf("plugin:") === 0) {
+        return Promise.resolve(0);
+      }
       const r = map[cmd];
       if (!r) {
         return Promise.reject({

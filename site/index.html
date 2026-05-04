@@ -1421,7 +1421,7 @@
               autoplay
               muted
               playsinline
-              preload="metadata"
+              preload="auto"
               aria-labelledby="demo-caption"
             ></video>
             <video
@@ -1429,7 +1429,7 @@
               src="/media/dependency-graph.webm"
               muted
               playsinline
-              preload="metadata"
+              preload="auto"
               aria-labelledby="demo-caption"
             ></video>
             <video
@@ -1437,7 +1437,7 @@
               src="/media/incident-alert.webm"
               muted
               playsinline
-              preload="metadata"
+              preload="auto"
               aria-labelledby="demo-caption"
             ></video>
             <video
@@ -1445,7 +1445,7 @@
               src="/media/rotate-credential.webm"
               muted
               playsinline
-              preload="metadata"
+              preload="auto"
               aria-labelledby="demo-caption"
             ></video>
             <video
@@ -1453,7 +1453,7 @@
               src="/media/stale-references.webm"
               muted
               playsinline
-              preload="metadata"
+              preload="auto"
               aria-labelledby="demo-caption"
             ></video>
             <video
@@ -1461,7 +1461,7 @@
               src="/media/lock-screen.webm"
               muted
               playsinline
-              preload="metadata"
+              preload="auto"
               aria-labelledby="demo-caption"
             ></video>
             <video
@@ -1469,7 +1469,7 @@
               src="/media/charter-issuance.webm"
               muted
               playsinline
-              preload="metadata"
+              preload="auto"
               aria-labelledby="demo-caption"
             ></video>
             <video
@@ -1477,7 +1477,7 @@
               src="/media/recovery-flow.webm"
               muted
               playsinline
-              preload="metadata"
+              preload="auto"
               aria-labelledby="demo-caption"
             ></video>
           </div>
@@ -2009,8 +2009,19 @@
           return ORDER[(i + 1) % ORDER.length];
         }
 
+        // 각 시나리오 최소 시청 시간 보장 — video 가 5초 미만이면 carousel 이
+        // 너무 빨리 다음으로 넘어가 사용자가 화면을 못 보게 된다.
+        const MIN_SHOW_MS = 5000;
+        let activatedAt = 0;
+        let pendingNextTimer = null;
+
         function activate(id) {
           currentId = id;
+          activatedAt = Date.now();
+          if (pendingNextTimer) {
+            clearTimeout(pendingNextTimer);
+            pendingNextTimer = null;
+          }
           for (const t of tabs) {
             t.setAttribute("aria-selected", t.dataset.demo === id ? "true" : "false");
           }
@@ -2018,13 +2029,13 @@
           for (const v of videos) {
             if (v === target) {
               v.classList.add("active");
-              v.loop = userPinned; // pinned 면 무한 loop, 아니면 1회 후 carousel 다음
+              v.loop = userPinned;
               v.currentTime = 0;
-              v.load(); // metadata + 첫 frame 강제 로드 (preload 한계 회피)
+              v.load();
               const playPromise = v.play();
               if (playPromise && typeof playPromise.catch === "function") {
                 playPromise.catch(() => {
-                  /* autoplay denied — 사용자가 음소거 조건 만족이라 거의 발생 안 함 */
+                  /* autoplay denied — 거의 발생 안 함 (muted+playsinline) */
                 });
               }
             } else {
@@ -2035,7 +2046,11 @@
           if (caption && COPY[id]) caption.innerHTML = COPY[id];
         }
 
-        // 사용자가 tab 클릭 → carousel 정지 + 그 video 무한 loop
+        function advanceToNext() {
+          if (userPinned) return;
+          activate(nextId(currentId));
+        }
+
         for (const tab of tabs) {
           tab.addEventListener("click", function () {
             userPinned = true;
@@ -2043,13 +2058,19 @@
           });
         }
 
-        // 각 video 의 ended 시점 → 다음 시나리오 (carousel 모드에만)
+        // video ended 시점이 MIN_SHOW_MS 미만이면 추가 대기 후 next.
         for (const v of videos) {
           v.addEventListener("ended", function () {
-            if (userPinned) return; // pinned 면 그 video 만 — 단 loop=true 면 ended 자체 발화 안 함
-            // 현재 활성 video 가 끝났을 때만 다음으로
+            if (userPinned) return;
             if (!v.classList.contains("active")) return;
-            activate(nextId(currentId));
+            const elapsed = Date.now() - activatedAt;
+            const remaining = Math.max(0, MIN_SHOW_MS - elapsed);
+            if (remaining > 0) {
+              // 마지막 frame 그대로 두고 (loop=false 라 멈춰있음) 잠시 후 next
+              pendingNextTimer = setTimeout(advanceToNext, remaining);
+            } else {
+              advanceToNext();
+            }
           });
         }
 
