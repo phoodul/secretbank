@@ -359,7 +359,12 @@ function makeUnlockedBase(): CommandMap {
   };
 }
 
-const onboardingDoneSettings = { "onboarding-done": "true", "demo-mode": "true" };
+// useOnboardingDone 의 실제 key (src/features/onboarding/use-onboarding.ts).
+// 잘못 적으면 RequireOnboarding 가드가 /welcome 으로 redirect 해 모든 demo 가
+// "Welcome to API Vault" 화면에 머문다.
+const onboardingDoneSettings = {
+  "apivault.settings.onboarding.done": "true",
+};
 
 // ────────────────────────────────────────────────────────────────────
 // Scene 4 — Save credential (가장 자주 쓰는 워크플로우)
