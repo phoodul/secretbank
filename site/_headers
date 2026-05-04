@@ -1,0 +1,21 @@
+# Cloudflare Pages 헤더 정책 (https://developers.cloudflare.com/pages/configuration/headers/)
+#
+# 우리 demo webm 들이 자주 갱신되는데 default cache-control 이 length 라
+# 사용자 브라우저가 옛 영상 캐시 → 새 deploy 후에도 옛 화면 노출 문제 발생.
+# 짧은 max-age + must-revalidate 로 매 5분마다 If-None-Match 로 ETag 검증.
+
+/media/*
+  Cache-Control: public, max-age=300, must-revalidate
+
+# index.html 도 짧게 — 새 video src / JS 변경이 즉시 반영되도록
+/
+  Cache-Control: public, max-age=60, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=60, must-revalidate
+
+/guide
+  Cache-Control: public, max-age=300, must-revalidate
+
+/guide.html
+  Cache-Control: public, max-age=300, must-revalidate
