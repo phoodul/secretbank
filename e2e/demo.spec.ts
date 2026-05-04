@@ -361,10 +361,23 @@ function makeUnlockedBase(): CommandMap {
 
 // useOnboardingDone 의 실제 key (src/features/onboarding/use-onboarding.ts).
 // 잘못 적으면 RequireOnboarding 가드가 /welcome 으로 redirect 해 모든 demo 가
-// "Welcome to API Vault" 화면에 머문다.
+// "Welcome to API Vault" 화면에 머문다. 이게 mock 매칭 실패 시를 대비해
+// dismissWelcomeIfPresent() 로 한 번 더 우회 (skip 버튼 클릭).
 const onboardingDoneSettings = {
   "apivault.settings.onboarding.done": "true",
 };
+
+/**
+ * 첫 진입 시 Welcome ("Step 1 of 3") 가 떠 있으면 Skip for now 클릭으로 dismiss.
+ * 그 후 navigate 가 다시 가드를 건드릴 수 있어 한 번 더 짧게 대기.
+ */
+async function dismissWelcomeIfPresent(page: import("@playwright/test").Page) {
+  const skip = page.getByRole("button", { name: /skip for now|나중에 하기/i }).first();
+  if (await skip.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await skip.click();
+    await page.waitForTimeout(800);
+  }
+}
 
 // ────────────────────────────────────────────────────────────────────
 // Scene 4 — Save credential (가장 자주 쓰는 워크플로우)
@@ -377,6 +390,9 @@ test("demo: save-credential", async ({ page }) => {
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/");
+
+  // Welcome 가드 우회 (mock 매칭 실패 fallback)
+  await dismissWelcomeIfPresent(page);
 
   // Inventory 페이지 마운트 — empty state 가 잠시 보임
   await page.waitForTimeout(1_500);
@@ -432,6 +448,10 @@ test("demo: dependency-graph", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/graph");
 
+  // Welcome 가드가 /graph 도 /welcome 으로 redirect 시킬 수 있다 — skip
+  await dismissWelcomeIfPresent(page);
+  await page.goto("/graph"); // skip 후 한 번 더 정확히 /graph 로
+
   // GraphPage 마운트 + React Flow 초기 layout
   await page.waitForTimeout(2_500);
 
@@ -454,6 +474,9 @@ test("demo: dependency-graph", async ({ page }) => {
 test("demo: incident-alert", async ({ page }) => {
   const map = makeUnlockedBase();
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
+  await page.goto("/incidents");
+
+  await dismissWelcomeIfPresent(page);
   await page.goto("/incidents");
 
   // IncidentsPage 마운트 + 카드 렌더
@@ -483,6 +506,8 @@ test("demo: rotate-credential", async ({ page }) => {
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/");
+
+  await dismissWelcomeIfPresent(page);
 
   // Inventory 마운트 + 카드 1번 클릭 시도
   await page.waitForTimeout(1_800);
@@ -528,6 +553,9 @@ test("demo: stale-references", async ({ page }) => {
     },
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
+  await page.goto("/graph");
+
+  await dismissWelcomeIfPresent(page);
   await page.goto("/graph");
 
   await page.waitForTimeout(2_500);
