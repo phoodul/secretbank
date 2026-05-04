@@ -1,11 +1,11 @@
 /**
  * Demo capture 전용 Playwright config — `pnpm capture:demo` 가 사용.
  *
- * playwright.config.ts 와 분리한 이유:
- * - 일반 E2E 는 demo.spec.ts 를 testIgnore 로 제외
- * - demo capture 는 demo.spec.ts 만 실행, video 자동 녹화
+ * webServer 는 vite preview (production build) — Vite dev server 의 cold start
+ * 가 14초+ 걸려 영상 첫 frame 까지 흰 화면이 길게 나오던 문제 해결. preview
+ * 모드는 미리 build 된 chunks 를 serve 하므로 첫 mount < 1초.
  *
- * webServer 는 base config 와 동일 (vite dev server).
+ * 사전 조건: capture-demo.ts 가 vite build 를 먼저 실행한다.
  */
 import { defineConfig, devices } from "@playwright/test";
 import path from "node:path";
@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, "..");
 
-const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 5173);
+const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4174);
 
 export default defineConfig({
   testDir: ".",
@@ -41,7 +41,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `node ${path.join("node_modules", "vite", "bin", "vite.js")} --port ${PORT} --strictPort`,
+    // production build 의 chunks 를 serve. capture-demo.ts 가 build 보장.
+    command: `node ${path.join("node_modules", "vite", "bin", "vite.js")} preview --port ${PORT} --strictPort`,
     cwd: REPO_ROOT,
     port: PORT,
     reuseExistingServer: !process.env.CI,

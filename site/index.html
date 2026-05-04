@@ -2009,11 +2009,15 @@
           return ORDER[(i + 1) % ORDER.length];
         }
 
-        // 각 시나리오 최소 시청 시간 보장 — video 가 5초 미만이면 carousel 이
-        // 너무 빨리 다음으로 넘어가 사용자가 화면을 못 보게 된다.
+        // 각 시나리오 시청 시간 정책:
+        // - MIN_SHOW_MS: 너무 짧은 영상도 5초는 보여줌
+        // - MAX_SHOW_MS: 너무 긴 영상 (e.g. spec timeout 으로 2분짜리) 이 carousel
+        //   진행을 막지 않게 강제 cap. 지나면 자동으로 다음 시나리오로.
         const MIN_SHOW_MS = 5000;
+        const MAX_SHOW_MS = 10000;
         let activatedAt = 0;
         let pendingNextTimer = null;
+        let maxCapTimer = null;
 
         function activate(id) {
           currentId = id;
@@ -2021,6 +2025,16 @@
           if (pendingNextTimer) {
             clearTimeout(pendingNextTimer);
             pendingNextTimer = null;
+          }
+          if (maxCapTimer) {
+            clearTimeout(maxCapTimer);
+            maxCapTimer = null;
+          }
+          // userPinned 가 false 면 MAX_SHOW_MS 후 강제 다음 (영상 길이 무관)
+          if (!userPinned) {
+            maxCapTimer = setTimeout(() => {
+              if (!userPinned) advanceToNext();
+            }, MAX_SHOW_MS);
           }
           for (const t of tabs) {
             t.setAttribute("aria-selected", t.dataset.demo === id ? "true" : "false");

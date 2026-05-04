@@ -41,10 +41,22 @@ const SCENES: Record<string, string> = {
   "demo stale-references": "stale-references.webm",
 };
 
+function ensureViteBuild(): boolean {
+  console.log("[capture-demo] Building vite (production) for fast page mount...");
+  const r = spawnSync("npx", ["vite", "build"], {
+    cwd: REPO_ROOT,
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
+  if (r.status !== 0) {
+    console.error("[capture-demo] vite build failed");
+    return false;
+  }
+  return true;
+}
+
 function runPlaywright(): number {
-  console.log("[capture-demo] Running Playwright on e2e/demo.spec.ts ...");
-  // 별도 config (e2e/playwright.demo.config.ts) — base config 의 testIgnore 를
-  // 우회. demo 만 testMatch 로 매칭, video on, sequential workers.
+  console.log("[capture-demo] Running Playwright on e2e/demo.spec.ts (preview mode)...");
   const args = ["playwright", "test", "--config=e2e/playwright.demo.config.ts"];
   const result = spawnSync("npx", args, {
     cwd: REPO_ROOT,
@@ -74,15 +86,25 @@ function findRecentWebm(testDir: string, sceneTitle: string): string | null {
  * 약 1.5초 동안 흰 frame 들이 webm 앞에 붙는다. ffmpeg 로 trim + reencode 해서
  * 첫 1.5초 cut. ffmpeg 없으면 silent fallback (단순 copy).
  */
+/**
+ * Playwright 가 page.goto 직후부터 record 시작 — React mount + 첫 paint 까지
+ * 약 3초 흰 frame. 그리고 spec 마지막 wait 후 추가로 약 2초 정적 frame.
+ * → 앞 3초 trim + 영상 길이 12초로 cap (carousel 의 MAX_SHOW_MS 와 매칭).
+ *
+ * `-ss` 를 input 앞에 두면 fast seek (keyframe), 정확하지 않을 수 있음.
+ * 정확한 trim 위해 `-ss` 를 input 뒤에 두고 reencode + cfr (constant frame
+ * rate) 강제 — 결과 webm 의 duration 이 정확히 (원본 - 3) 초.
+ */
 function trimLeadingWhite(src: string, dst: string): boolean {
   const trimmed = dst + ".tmp.webm";
-  // -ss 1.5 (input seek) + reencode (vp9 빠른 preset) — keyframe 정렬 무관 정확 trim
   const args = [
     "-y",
-    "-ss",
-    "1.5",
     "-i",
     src,
+    "-ss",
+    "1.5", // prod build 는 mount 빠르므로 1.5s 만 cut
+    "-t",
+    "10.0", // carousel MAX_SHOW_MS=10s 와 매칭
     "-c:v",
     "libvpx-vp9",
     "-b:v",
@@ -91,6 +113,10 @@ function trimLeadingWhite(src: string, dst: string): boolean {
     "realtime",
     "-cpu-used",
     "5",
+    "-r",
+    "25",
+    "-fps_mode",
+    "cfr",
     "-an",
     trimmed,
   ];
@@ -137,6 +163,7 @@ function copyArtifacts() {
   }
 }
 
+if (!ensureViteBuild()) process.exit(2);
 const code = runPlaywright();
 if (code !== 0) {
   console.error(`[capture-demo] Playwright exited with code ${code}`);

@@ -46,23 +46,19 @@ test("demo: lock-screen", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(lockedVaultWithCharter) });
   await page.goto("/");
 
-  // LockScreen 은 motion.section + aria-labelledby="lockscreen-title" → ARIA role=region.
-  // (Radix Dialog 가 아니므로 role=dialog 로는 못 잡는다. passphrase input 으로 대기)
+  // LockScreen mount 대기 (passphrase input visible) — React 첫 paint 보장
   await expect(page.locator("#unlock-passphrase")).toBeVisible({ timeout: 10_000 });
 
-  // 마우스를 화면 중앙 근처로 천천히 움직여서 mouse gloss 효과 시연
-  // (LockScreenAtmosphere 의 조명이 마우스를 따라 움직임)
+  // 짧은 mouse cycle (4 cycle x 0.6s = 2.4s) — 영상 길이 줄임
   const cx = 640;
   const cy = 400;
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2;
-    await page.mouse.move(cx + Math.cos(angle) * 200, cy + Math.sin(angle) * 120, { steps: 25 });
-    await page.waitForTimeout(800);
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2;
+    await page.mouse.move(cx + Math.cos(angle) * 200, cy + Math.sin(angle) * 120, { steps: 20 });
+    await page.waitForTimeout(600);
   }
-
-  // 마지막에는 가운데로 복귀해서 vault mechanism 이 잘 보이게
-  await page.mouse.move(cx, cy, { steps: 30 });
-  await page.waitForTimeout(2_000);
+  await page.mouse.move(cx, cy, { steps: 25 });
+  await page.waitForTimeout(1_000);
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -595,31 +591,23 @@ test("demo: rotate-credential", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/");
 
-  // Inventory 마운트 + 카드 1번 클릭
+  // Inventory 마운트 + 카드 1번 클릭. timeout 짧게 (영상 길이 cap).
   await page.waitForTimeout(2_500);
   const firstCard = page.getByText(/prod-openai-billing/i).first();
-  if (await firstCard.isVisible({ timeout: 4_000 }).catch(() => false)) {
-    await firstCard.click();
-    await page.waitForTimeout(2_500); // drawer slide-in 완료
-  }
+  await firstCard.click({ timeout: 5_000 }).catch(() => {
+    /* selector 못 찾으면 skip — 영상은 inventory + drawer 까지 캡처 */
+  });
+  await page.waitForTimeout(2_500); // drawer slide-in
 
-  // Rotate 버튼 (i18n inventory.rotate = "Rotate")
+  // Rotate 버튼 시도 — fail 해도 timeout 안 발생 (영상 길어지지 않게)
   const rotateBtn = page.getByRole("button", { name: /^rotate$|회전|rotate value/i }).first();
-  if (await rotateBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await rotateBtn.click();
-    await page.waitForTimeout(2_000); // rotate dialog mount
+  await rotateBtn.click({ timeout: 4_000 }).catch(() => {
+    /* skip */
+  });
+  await page.waitForTimeout(1_500);
 
-    // new value 입력 — 천천히 타이핑 (사용자가 보는 효과)
-    const valueInput = page.getByLabel(/new value|new secret|새 값|new key/i).first();
-    if (await valueInput.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await valueInput.click();
-      await valueInput.pressSequentially("sk-proj-RoTaTeD2026MayNewSecretKey", { delay: 80 });
-      await page.waitForTimeout(2_000);
-    }
-  }
-
-  // 마지막 frame — rotate 완료 화면 충분히 보여줌
-  await page.waitForTimeout(4_000);
+  // 마지막 frame — rotate detail 화면 충분히 보여줌. 전체 spec 약 11초.
+  await page.waitForTimeout(2_500);
 });
 
 // ────────────────────────────────────────────────────────────────────
