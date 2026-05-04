@@ -40,6 +40,8 @@ const lockedVaultWithCharter: CommandMap = {
     kind: "ok",
     value: { enabled: true, cooldown_active: false, cooldown_until: null },
   },
+  // unlock 성공 mock — Unlock 버튼 클릭 시 verifying → unlocking 애니메이션 트리거
+  vault_unlock: { kind: "ok", value: null },
 };
 
 test("demo: lock-screen", async ({ page }) => {
@@ -47,18 +49,33 @@ test("demo: lock-screen", async ({ page }) => {
   await page.goto("/");
 
   // LockScreen mount 대기 (passphrase input visible) — React 첫 paint 보장
-  await expect(page.locator("#unlock-passphrase")).toBeVisible({ timeout: 10_000 });
+  const pw = page.locator("#unlock-passphrase");
+  await expect(pw).toBeVisible({ timeout: 10_000 });
 
-  // 짧은 mouse cycle (4 cycle x 0.6s = 2.4s) — 영상 길이 줄임
+  // 짧은 mouse cycle (분위기 — 2 cycle x 0.5s = 1s)
   const cx = 640;
   const cy = 400;
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2;
-    await page.mouse.move(cx + Math.cos(angle) * 200, cy + Math.sin(angle) * 120, { steps: 20 });
-    await page.waitForTimeout(600);
+  for (let i = 0; i < 2; i++) {
+    const angle = (i / 2) * Math.PI * 2;
+    await page.mouse.move(cx + Math.cos(angle) * 180, cy + Math.sin(angle) * 100, { steps: 20 });
+    await page.waitForTimeout(500);
   }
-  await page.mouse.move(cx, cy, { steps: 25 });
-  await page.waitForTimeout(1_000);
+
+  // passphrase 타이핑 — 사용자가 보이도록 천천히 (delay 95ms x 30chars ≈ 2.85s)
+  await pw.click();
+  await page.waitForTimeout(300);
+  await pw.pressSequentially("correct horse battery staple", { delay: 95 });
+  await page.waitForTimeout(700);
+
+  // Unlock 버튼 click — verifying → unlocking 애니메이션 트리거
+  // (i18n vault.unlockButton — en: "Unlock" / ko: "잠금 해제")
+  const unlockBtn = page.getByRole("button", { name: /^unlock$|^잠금 해제$/i }).first();
+  await unlockBtn.click({ timeout: 3_000 }).catch(() => {
+    /* 못 찾아도 계속 — 영상은 타이핑까지 캡처됨 */
+  });
+
+  // unlock 애니메이션 (UNLOCK_ANIMATION_MS = 1.4s spring → success ring) 보여주기
+  await page.waitForTimeout(2_500);
 });
 
 // ────────────────────────────────────────────────────────────────────
