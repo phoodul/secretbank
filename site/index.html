@@ -790,10 +790,53 @@
       }
       .demo-tabs {
         display: flex;
-        gap: 0.25rem;
-        padding: 0.6rem 0.6rem 0;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.7rem 0.7rem 0;
         background: var(--glass-bg-strong);
         border-bottom: 1px solid var(--glass-border);
+      }
+      .demo-group {
+        display: flex;
+        align-items: stretch;
+        gap: 0.25rem;
+      }
+      .demo-group .group-label {
+        flex-shrink: 0;
+        align-self: center;
+        padding: 0.25rem 0.65rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        opacity: 0.55;
+        border-right: 1px solid var(--glass-border);
+        margin-right: 0.4rem;
+      }
+      .demo-group .group-tabs {
+        flex: 1;
+        display: flex;
+        gap: 0.2rem;
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+      .demo-group .group-tabs::-webkit-scrollbar {
+        height: 4px;
+      }
+      .demo-group .group-tabs::-webkit-scrollbar-thumb {
+        background: var(--glass-border);
+        border-radius: 2px;
+      }
+      @media (max-width: 700px) {
+        .demo-group {
+          flex-direction: column;
+        }
+        .demo-group .group-label {
+          border-right: 0;
+          margin-right: 0;
+          align-self: flex-start;
+          padding: 0.15rem 0.4rem 0;
+        }
       }
       .demo-tab {
         flex: 1;
@@ -1271,54 +1314,164 @@
         </div>
       </section>
 
-      <!-- ─────────── Demo player (3-tab) ─────────── -->
+      <!-- ─────────── Demo player (8 tabs, 2 groups) ─────────── -->
       <section id="demo" class="reveal">
         <div class="glass demo-card">
           <div class="demo-tabs" role="tablist" aria-label="Demo scenarios">
-            <button
-              class="demo-tab"
-              role="tab"
-              type="button"
-              data-demo="lock-screen"
-              aria-selected="true"
-              aria-controls="demo-video-lock"
-            >
-              Lock screen
-              <span class="tab-sub">sci-fi HUD + 15 languages</span>
-            </button>
-            <button
-              class="demo-tab"
-              role="tab"
-              type="button"
-              data-demo="charter-issuance"
-              aria-selected="false"
-              aria-controls="demo-video-charter"
-            >
-              Charter issuance
-              <span class="tab-sub">Lapis vault recovery setup</span>
-            </button>
-            <button
-              class="demo-tab"
-              role="tab"
-              type="button"
-              data-demo="recovery-flow"
-              aria-selected="false"
-              aria-controls="demo-video-recovery"
-            >
-              Recovery flow
-              <span class="tab-sub">Forgot passphrase → restore</span>
-            </button>
+            <div class="demo-group">
+              <span class="group-label" aria-hidden="true">Daily workflow</span>
+              <div class="group-tabs">
+                <button
+                  class="demo-tab"
+                  role="tab"
+                  type="button"
+                  data-demo="save-credential"
+                  aria-selected="true"
+                  aria-controls="demo-video-save"
+                >
+                  Save credential
+                  <span class="tab-sub">+ New → issuer + value</span>
+                </button>
+                <button
+                  class="demo-tab"
+                  role="tab"
+                  type="button"
+                  data-demo="dependency-graph"
+                  aria-selected="false"
+                  aria-controls="demo-video-graph"
+                >
+                  Dependency graph
+                  <span class="tab-sub">Issuer → Credential → Usage</span>
+                </button>
+                <button
+                  class="demo-tab"
+                  role="tab"
+                  type="button"
+                  data-demo="incident-alert"
+                  aria-selected="false"
+                  aria-controls="demo-video-incident"
+                >
+                  Incident alert
+                  <span class="tab-sub">NVD/GHSA matched</span>
+                </button>
+                <button
+                  class="demo-tab"
+                  role="tab"
+                  type="button"
+                  data-demo="rotate-credential"
+                  aria-selected="false"
+                  aria-controls="demo-video-rotate"
+                >
+                  Rotate
+                  <span class="tab-sub">Detail → new value → save</span>
+                </button>
+                <button
+                  class="demo-tab"
+                  role="tab"
+                  type="button"
+                  data-demo="stale-references"
+                  aria-selected="false"
+                  aria-controls="demo-video-stale"
+                >
+                  Stale references
+                  <span class="tab-sub">Where to update next</span>
+                </button>
+              </div>
+            </div>
+            <div class="demo-group">
+              <span class="group-label" aria-hidden="true">Security &amp; recovery</span>
+              <div class="group-tabs">
+                <button
+                  class="demo-tab"
+                  role="tab"
+                  type="button"
+                  data-demo="lock-screen"
+                  aria-selected="false"
+                  aria-controls="demo-video-lock"
+                >
+                  Lock screen
+                  <span class="tab-sub">sci-fi HUD + 15 languages</span>
+                </button>
+                <button
+                  class="demo-tab"
+                  role="tab"
+                  type="button"
+                  data-demo="charter-issuance"
+                  aria-selected="false"
+                  aria-controls="demo-video-charter"
+                >
+                  Charter issuance
+                  <span class="tab-sub">Lapis vault recovery setup</span>
+                </button>
+                <button
+                  class="demo-tab"
+                  role="tab"
+                  type="button"
+                  data-demo="recovery-flow"
+                  aria-selected="false"
+                  aria-controls="demo-video-recovery"
+                >
+                  Recovery flow
+                  <span class="tab-sub">Forgot passphrase → restore</span>
+                </button>
+              </div>
+            </div>
           </div>
           <div class="demo-stage">
             <video
-              id="demo-video-lock"
+              id="demo-video-save"
               class="active"
-              src="/media/lock-screen.webm"
+              src="/media/save-credential.webm"
               autoplay
               loop
               muted
               playsinline
               preload="metadata"
+              aria-labelledby="demo-caption"
+            ></video>
+            <video
+              id="demo-video-graph"
+              src="/media/dependency-graph.webm"
+              loop
+              muted
+              playsinline
+              preload="none"
+              aria-labelledby="demo-caption"
+            ></video>
+            <video
+              id="demo-video-incident"
+              src="/media/incident-alert.webm"
+              loop
+              muted
+              playsinline
+              preload="none"
+              aria-labelledby="demo-caption"
+            ></video>
+            <video
+              id="demo-video-rotate"
+              src="/media/rotate-credential.webm"
+              loop
+              muted
+              playsinline
+              preload="none"
+              aria-labelledby="demo-caption"
+            ></video>
+            <video
+              id="demo-video-stale"
+              src="/media/stale-references.webm"
+              loop
+              muted
+              playsinline
+              preload="none"
+              aria-labelledby="demo-caption"
+            ></video>
+            <video
+              id="demo-video-lock"
+              src="/media/lock-screen.webm"
+              loop
+              muted
+              playsinline
+              preload="none"
               aria-labelledby="demo-caption"
             ></video>
             <video
@@ -1341,8 +1494,9 @@
             ></video>
           </div>
           <div id="demo-caption" class="demo-caption">
-            <strong>Lock screen.</strong> The unlock surface — sci-fi vault HUD, 15-language
-            switcher, mouse-driven gloss. Designed so a security tool feels like one.
+            <strong>Save credential.</strong> Click + New, pick the issuer (OpenAI / Stripe / GitHub
+            / AWS / custom), give it a name and the value. Stored encrypted in your local SQLite —
+            plaintext is zeroized from RAM the moment Save returns.
           </div>
         </div>
       </section>
@@ -1809,6 +1963,16 @@
         if (tabs.length === 0 || videos.length === 0) return;
 
         const COPY = {
+          "save-credential":
+            "<strong>Save credential.</strong> Click + New, pick the issuer (OpenAI / Stripe / GitHub / AWS / custom), give it a name and the value. Stored encrypted in your local SQLite — plaintext is zeroized from RAM the moment Save returns.",
+          "dependency-graph":
+            "<strong>Dependency graph.</strong> The map of <em>Issuer → Credential → Usage → Project → Deployment</em>. Hover anything to highlight neighbors, click a credential to preview its blast radius before you revoke.",
+          "incident-alert":
+            "<strong>Incident alert.</strong> Background polling of NVD / GHSA / vendor RSS. The instant an advisory matches one of your issuers, the affected credentials light up and you get a one-click <em>Rotate</em>.",
+          "rotate-credential":
+            "<strong>Rotate.</strong> Detail panel → Rotate → paste the new value. Old value moves to history (last 5 generations kept), new value is encrypted on save, audit log records the event automatically.",
+          "stale-references":
+            "<strong>Stale references.</strong> Right after rotation, the graph still shows every code site, deployment and URL that pointed to the old key — your manual checklist of where to update next.",
           "lock-screen":
             "<strong>Lock screen.</strong> The unlock surface — sci-fi vault HUD, 15-language switcher, mouse-driven gloss. Designed so a security tool feels like one.",
           "charter-issuance":
@@ -1817,20 +1981,26 @@
             "<strong>Recovery flow.</strong> Forgot the passphrase? Click Forgot, type the 6 charter words, set a new passphrase. Old charter is auto-invalidated and a new one offered.",
         };
 
+        // demo data-attribute → video element id suffix
+        const VIDEO_ID = {
+          "save-credential": "save",
+          "dependency-graph": "graph",
+          "incident-alert": "incident",
+          "rotate-credential": "rotate",
+          "stale-references": "stale",
+          "lock-screen": "lock",
+          "charter-issuance": "charter",
+          "recovery-flow": "recovery",
+        };
+
         function activate(id) {
           for (const t of tabs) {
             const match = t.dataset.demo === id;
             t.setAttribute("aria-selected", match ? "true" : "false");
           }
+          const targetId = "demo-video-" + (VIDEO_ID[id] || id);
           for (const v of videos) {
-            const match =
-              v.id ===
-              "demo-video-" +
-                (id === "lock-screen"
-                  ? "lock"
-                  : id === "charter-issuance"
-                    ? "charter"
-                    : "recovery");
+            const match = v.id === targetId;
             if (match) {
               v.classList.add("active");
               if (v.preload === "none") v.preload = "metadata";

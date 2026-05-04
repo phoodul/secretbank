@@ -34,6 +34,11 @@ const SCENES: Record<string, string> = {
   "demo lock-screen": "lock-screen.webm",
   "demo charter-issuance": "charter-issuance.webm",
   "demo recovery-flow": "recovery-flow.webm",
+  "demo save-credential": "save-credential.webm",
+  "demo dependency-graph": "dependency-graph.webm",
+  "demo incident-alert": "incident-alert.webm",
+  "demo rotate-credential": "rotate-credential.webm",
+  "demo stale-references": "stale-references.webm",
 };
 
 function runPlaywright(): number {
