@@ -2030,8 +2030,13 @@
             if (v === target) {
               v.classList.add("active");
               v.loop = userPinned;
-              v.currentTime = 0;
-              v.load();
+              // v.load() 호출 안 함 — preload="auto" 가 이미 fetch 했고, load() 가
+              // reset 하면 첫 frame 까지 재 fetch → 흰 화면 잠시 노출.
+              try {
+                v.currentTime = 0;
+              } catch (_) {
+                /* readyState 부족 — fine */
+              }
               const playPromise = v.play();
               if (playPromise && typeof playPromise.catch === "function") {
                 playPromise.catch(() => {

@@ -19,7 +19,7 @@
  * 만들지 않으므로 안전하게 반복 가능.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, copyFileSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, copyFileSync, statSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -69,9 +69,43 @@ function findRecentWebm(testDir: string, sceneTitle: string): string | null {
   return null;
 }
 
+/**
+ * Playwright 가 page.goto 직후부터 record 시작 — React mount + 첫 paint 까지
+ * 약 1.5초 동안 흰 frame 들이 webm 앞에 붙는다. ffmpeg 로 trim + reencode 해서
+ * 첫 1.5초 cut. ffmpeg 없으면 silent fallback (단순 copy).
+ */
+function trimLeadingWhite(src: string, dst: string): boolean {
+  const trimmed = dst + ".tmp.webm";
+  // -ss 1.5 (input seek) + reencode (vp9 빠른 preset) — keyframe 정렬 무관 정확 trim
+  const args = [
+    "-y",
+    "-ss",
+    "1.5",
+    "-i",
+    src,
+    "-c:v",
+    "libvpx-vp9",
+    "-b:v",
+    "1.2M",
+    "-deadline",
+    "realtime",
+    "-cpu-used",
+    "5",
+    "-an",
+    trimmed,
+  ];
+  const r = spawnSync("ffmpeg", args, { stdio: "pipe" });
+  if (r.status !== 0) {
+    return false;
+  }
+  copyFileSync(trimmed, dst);
+  unlinkSync(trimmed);
+  return true;
+}
+
 function copyArtifacts() {
   if (!existsSync(MEDIA_DIR)) mkdirSync(MEDIA_DIR, { recursive: true });
-  const summary: { scene: string; output: string; size_kb: number }[] = [];
+  const summary: { scene: string; output: string; size_kb: number; trimmed: boolean }[] = [];
   for (const [sceneTitle, outName] of Object.entries(SCENES)) {
     const src = findRecentWebm(TEST_RESULTS, sceneTitle);
     if (!src) {
@@ -79,13 +113,23 @@ function copyArtifacts() {
       continue;
     }
     const dst = path.join(MEDIA_DIR, outName);
-    copyFileSync(src, dst);
+    const trimmed = trimLeadingWhite(src, dst);
+    if (!trimmed) {
+      copyFileSync(src, dst);
+      console.warn(`[capture-demo] ffmpeg unavailable — copied raw for "${sceneTitle}"`);
+    }
     const size = Math.round(statSync(dst).size / 1024);
-    summary.push({ scene: sceneTitle, output: path.relative(REPO_ROOT, dst), size_kb: size });
+    summary.push({
+      scene: sceneTitle,
+      output: path.relative(REPO_ROOT, dst),
+      size_kb: size,
+      trimmed,
+    });
   }
-  console.log("\n[capture-demo] Output:");
+  console.log("\n[capture-demo] Output (1.5s leading-white trimmed):");
   for (const row of summary) {
-    console.log(`  ${row.scene.padEnd(28)} → ${row.output}  (${row.size_kb} KB)`);
+    const tag = row.trimmed ? "✂" : "·";
+    console.log(`  ${tag} ${row.scene.padEnd(28)} → ${row.output}  (${row.size_kb} KB)`);
   }
   if (summary.length === 0) {
     console.error("[capture-demo] No artifacts produced. Did Playwright actually run?");

@@ -538,7 +538,6 @@ test("demo: dependency-graph", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/graph");
 
-  // React Flow 의 우하단 attribution badge 가 deployment 노드를 가린다 — 영상에서만 숨김.
   await page.addStyleTag({
     content: `
       .react-flow__attribution,
@@ -548,19 +547,15 @@ test("demo: dependency-graph", async ({ page }) => {
   });
 
   // GraphPage 마운트 + React Flow 초기 layout
-  await page.waitForTimeout(3_000);
+  await page.waitForTimeout(3_500);
 
-  // credential 노드 클릭 (data-testid 또는 label 기반)
-  const credNode = page.getByText(/prod-openai-billing/i).first();
-  if (await credNode.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await credNode.click();
-    await page.waitForTimeout(2_000); // blast radius highlight 적용
-  }
-
-  // 마우스를 천천히 — graph 가 살아있다는 인상
+  // 그래프 전체가 보이는 상태에서 마우스만 천천히 — pan/zoom 효과만 (no click)
+  // stale-references 와 차별화: dependency-graph 는 "구조 보여주기", stale 은 "rotate 후 영향".
   await page.mouse.move(740, 380, { steps: 30 });
-  await page.waitForTimeout(1_200);
+  await page.waitForTimeout(1_500);
   await page.mouse.move(540, 460, { steps: 30 });
+  await page.waitForTimeout(1_500);
+  await page.mouse.move(640, 360, { steps: 30 });
   await page.waitForTimeout(2_500);
 });
 
@@ -647,18 +642,48 @@ test("demo: stale-references", async ({ page }) => {
 
   await page.addStyleTag({
     content: `
-      .react-flow__attribution { display: none !important; }
+      .react-flow__attribution,
+      .react-flow__minimap,
+      .react-flow__controls { display: none !important; }
     `,
   });
 
   await page.waitForTimeout(3_000);
 
-  // credential 노드 클릭 → blast radius highlight (mock 결과로 primary/secondary/tertiary)
+  // credential 노드 클릭 → blast radius highlight
   const credNode = page.getByText(/prod-openai-billing/i).first();
   if (await credNode.isVisible({ timeout: 3_000 }).catch(() => false)) {
     await credNode.click();
-    await page.waitForTimeout(3_000); // 강조 시각 + 사용처 명확히 보이게
+    await page.waitForTimeout(2_000);
   }
+
+  // 차별화 핵심: 큰 overlay 텍스트 — "Old key still wired into these usages"
+  // dependency-graph 는 그래프 구조 자체, stale-references 는 rotate 후 "어디 남았나" 강조.
+  await page.evaluate(() => {
+    const el = document.createElement("div");
+    el.id = "demo-stale-overlay";
+    el.style.cssText = `
+      position: fixed; left: 50%; top: 8%; transform: translateX(-50%);
+      z-index: 9999; pointer-events: none;
+      padding: 10px 18px; border-radius: 12px;
+      background: linear-gradient(135deg, rgba(220,38,38,0.92), rgba(234,88,12,0.92));
+      color: #fff; font-family: Inter, system-ui, sans-serif;
+      font-weight: 600; font-size: 14px; letter-spacing: 0.01em;
+      box-shadow: 0 8px 32px rgba(220,38,38,0.45);
+      display: flex; align-items: center; gap: 10px;
+    `;
+    el.innerHTML = `
+      <span style="font-size:18px">⚠</span>
+      <div>
+        <div>Old key still referenced in 1 project / 1 deployment</div>
+        <div style="font-size:11px; opacity:0.85; font-weight:400; margin-top:2px">
+          Rotate finished — manually update these call sites
+        </div>
+      </div>
+    `;
+    document.body.appendChild(el);
+  });
+  await page.waitForTimeout(3_000);
 
   // 그래프 위 마우스 — 사용처가 그대로 남아있다는 점 강조 (여러 노드 위 hover)
   await page.mouse.move(540, 360, { steps: 25 });
