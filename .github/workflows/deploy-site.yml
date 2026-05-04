@@ -52,6 +52,16 @@ jobs:
           cp -v media/*.webm site/media/ 2>/dev/null || echo "no webm found"
           ls -la site/media/
 
+      # Cache-busting — site/index.html 의 video src 에 commit SHA query 추가.
+      # _headers 파일이 wrangler pages deploy 에서 인식 안 되어 Cloudflare default
+      # max-age=14400 적용 → 사용자 브라우저가 옛 webm 4시간 캐시. SHA query 변경
+      # 으로 매 deploy 마다 다른 URL → 강제 새 fetch.
+      - name: Cache-bust video src with commit SHA
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+          sed -i "s|/media/\([a-z-]*\)\.webm|/media/\1.webm?v=${SHORT_SHA}|g" site/index.html
+          grep -c "?v=${SHORT_SHA}" site/index.html || true
+
       - name: Deploy site/ to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
