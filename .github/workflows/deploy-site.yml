@@ -17,6 +17,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "media/**" # demo videos 가 repo root 의 media/ 에 있고 deploy 시 site/media/ 로 stage
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:
 
