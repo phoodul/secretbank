@@ -284,42 +284,151 @@ const USAGES = [
   },
 ];
 
+// 실제 GraphPayload type = { nodes: GraphNode[], edges: GraphEdge[] }
+// (src/features/graph/types.ts) — 이전엔 { issuers, credentials, ... } 로
+// 잘못 mock 해서 React 가 nodes.length 에서 throw → 페이지 빈 화면이 됐다.
 const GRAPH_PAYLOAD = {
-  issuers: ISSUERS,
-  credentials: CREDENTIALS,
-  projects: PROJECTS,
-  deployments: DEPLOYMENTS,
-  usages: USAGES,
+  nodes: [
+    { id: "issuer-openai", kind: "issuer", label: "OpenAI", meta_json: {} },
+    { id: "issuer-stripe", kind: "issuer", label: "Stripe", meta_json: {} },
+    { id: "issuer-github", kind: "issuer", label: "GitHub", meta_json: {} },
+    {
+      id: "cred-openai-prod",
+      kind: "credential",
+      label: "prod-openai-billing",
+      meta_json: { issuer_slug: "openai", env: "prod", status: "active" },
+    },
+    {
+      id: "cred-stripe-prod",
+      kind: "credential",
+      label: "prod-stripe-secret",
+      meta_json: { issuer_slug: "stripe", env: "prod", status: "active" },
+    },
+    {
+      id: "cred-github-pat",
+      kind: "credential",
+      label: "github-deploy-pat",
+      meta_json: { issuer_slug: "github", env: "prod", status: "active" },
+    },
+    { id: "proj-billing", kind: "project", label: "Billing API", meta_json: {} },
+    { id: "proj-checkout", kind: "project", label: "Checkout Service", meta_json: {} },
+    {
+      id: "dep-billing-prod",
+      kind: "deployment",
+      label: "billing.prod",
+      meta_json: { platform: "vercel", url: "https://api-billing.example.com" },
+    },
+    {
+      id: "dep-checkout-prod",
+      kind: "deployment",
+      label: "checkout.prod",
+      meta_json: { platform: "aws", url: "https://checkout.example.com" },
+    },
+  ],
+  edges: [
+    {
+      id: "issuer-openai->cred-openai-prod:issues",
+      source: "issuer-openai",
+      target: "cred-openai-prod",
+      kind: "issues",
+    },
+    {
+      id: "issuer-stripe->cred-stripe-prod:issues",
+      source: "issuer-stripe",
+      target: "cred-stripe-prod",
+      kind: "issues",
+    },
+    {
+      id: "issuer-github->cred-github-pat:issues",
+      source: "issuer-github",
+      target: "cred-github-pat",
+      kind: "issues",
+    },
+    {
+      id: "cred-openai-prod->proj-billing:used_by",
+      source: "cred-openai-prod",
+      target: "proj-billing",
+      kind: "used_by",
+    },
+    {
+      id: "cred-stripe-prod->proj-checkout:used_by",
+      source: "cred-stripe-prod",
+      target: "proj-checkout",
+      kind: "used_by",
+    },
+    {
+      id: "cred-github-pat->proj-billing:used_by",
+      source: "cred-github-pat",
+      target: "proj-billing",
+      kind: "used_by",
+    },
+    {
+      id: "proj-billing->dep-billing-prod:deployed_as",
+      source: "proj-billing",
+      target: "dep-billing-prod",
+      kind: "deployed_as",
+    },
+    {
+      id: "proj-checkout->dep-checkout-prod:deployed_as",
+      source: "proj-checkout",
+      target: "dep-checkout-prod",
+      kind: "deployed_as",
+    },
+  ],
 };
 
+// IncidentListEntry = { incident: Incident, matches: IncidentMatchDetail[] }
+// (src/features/incidents/types.ts) — Rust enum + nested 구조. timestamps 는 ms.
 const INCIDENT_ENTRIES = [
   {
-    id: "inc-1",
-    title: "OpenAI API key abuse via leaked .env in popular npm package",
-    summary:
-      "GHSA-2026-04-29: An OpenAI key embedded in node_modules has been mass-scanned. Affected accounts may see anomalous usage spikes.",
-    source: "ghsa",
-    source_id: "GHSA-2026-0429-openai",
-    url: "https://github.com/advisories/GHSA-2026-0429-openai",
-    issuer_slug: "openai",
-    severity: "high",
-    published_at: NOW - 2 * DAY,
-    matched_credential_ids: ["cred-openai-prod"],
-    dismissed: false,
+    incident: {
+      id: "inc-1",
+      source: "ghsa",
+      source_id: "GHSA-2026-0429-openai",
+      issuer_id: "issuer-openai",
+      severity: "high",
+      title: "OpenAI API key abuse via leaked .env in popular npm package",
+      body: "GHSA-2026-04-29: An OpenAI key embedded in node_modules has been mass-scanned. Affected accounts may see anomalous usage spikes.",
+      url: "https://github.com/advisories/GHSA-2026-0429-openai",
+      detected_at: (NOW - 2 * DAY) * 1000,
+      published_at: (NOW - 2 * DAY) * 1000,
+    },
+    matches: [
+      {
+        id: "match-1-1",
+        credential_id: "cred-openai-prod",
+        credential_label: "prod-openai-billing",
+        issuer_display_name: "OpenAI",
+        reason: "issuer_match",
+        matched_at: (NOW - 2 * DAY) * 1000,
+        dismissed_at: null,
+      },
+    ],
   },
   {
-    id: "inc-2",
-    title: "GitHub PAT scope inflation — fine-grained tokens leaked via supply chain",
-    summary:
-      "Affected: repos with admin PAT older than 60 days. Rotate to keep deploy pipelines safe.",
-    source: "ghsa",
-    source_id: "GHSA-2026-0428-github",
-    url: "https://github.com/advisories/GHSA-2026-0428-github",
-    issuer_slug: "github",
-    severity: "medium",
-    published_at: NOW - 4 * DAY,
-    matched_credential_ids: ["cred-github-pat"],
-    dismissed: false,
+    incident: {
+      id: "inc-2",
+      source: "ghsa",
+      source_id: "GHSA-2026-0428-github",
+      issuer_id: "issuer-github",
+      severity: "medium",
+      title: "GitHub PAT scope inflation — fine-grained tokens leaked via supply chain",
+      body: "Affected: repos with admin PAT older than 60 days. Rotate to keep deploy pipelines safe.",
+      url: "https://github.com/advisories/GHSA-2026-0428-github",
+      detected_at: (NOW - 4 * DAY) * 1000,
+      published_at: (NOW - 4 * DAY) * 1000,
+    },
+    matches: [
+      {
+        id: "match-2-1",
+        credential_id: "cred-github-pat",
+        credential_label: "github-deploy-pat",
+        issuer_display_name: "GitHub",
+        reason: "issuer_match",
+        matched_at: (NOW - 4 * DAY) * 1000,
+        dismissed_at: null,
+      },
+    ],
   },
 ];
 
@@ -341,11 +450,13 @@ function makeUnlockedBase(): CommandMap {
     graph_fetch: { kind: "ok", value: GRAPH_PAYLOAD },
     blast_radius_for_credential: {
       kind: "ok",
+      // BlastRadius type = { primary, secondary, tertiary, unaffected }
+      // 각 항목은 BlastRadiusNode { kind, id } 형식 (string 아님)
       value: {
-        primary: ["cred-openai-prod"],
-        secondary: ["usage-1"],
-        tertiary: ["proj-billing", "dep-billing-prod"],
-        unaffected: ["cred-stripe-prod", "cred-github-pat"],
+        primary: [{ kind: "credential", id: "cred-openai-prod" }],
+        secondary: [{ kind: "project", id: "proj-billing" }],
+        tertiary: [{ kind: "deployment", id: "dep-billing-prod" }],
+        unaffected: [],
       },
     },
     incident_list: { kind: "ok", value: INCIDENT_ENTRIES },
@@ -361,23 +472,10 @@ function makeUnlockedBase(): CommandMap {
 
 // useOnboardingDone 의 실제 key (src/features/onboarding/use-onboarding.ts).
 // 잘못 적으면 RequireOnboarding 가드가 /welcome 으로 redirect 해 모든 demo 가
-// "Welcome to API Vault" 화면에 머문다. 이게 mock 매칭 실패 시를 대비해
-// dismissWelcomeIfPresent() 로 한 번 더 우회 (skip 버튼 클릭).
+// "Welcome to API Vault" 화면에 머문다.
 const onboardingDoneSettings = {
   "apivault.settings.onboarding.done": "true",
 };
-
-/**
- * 첫 진입 시 Welcome ("Step 1 of 3") 가 떠 있으면 Skip for now 클릭으로 dismiss.
- * 그 후 navigate 가 다시 가드를 건드릴 수 있어 한 번 더 짧게 대기.
- */
-async function dismissWelcomeIfPresent(page: import("@playwright/test").Page) {
-  const skip = page.getByRole("button", { name: /skip for now|나중에 하기/i }).first();
-  if (await skip.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await skip.click();
-    await page.waitForTimeout(800);
-  }
-}
 
 // ────────────────────────────────────────────────────────────────────
 // Scene 4 — Save credential (가장 자주 쓰는 워크플로우)
@@ -390,9 +488,6 @@ test("demo: save-credential", async ({ page }) => {
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/");
-
-  // Welcome 가드 우회 (mock 매칭 실패 fallback)
-  await dismissWelcomeIfPresent(page);
 
   // Inventory 페이지 마운트 — empty state 가 잠시 보임
   await page.waitForTimeout(1_500);
@@ -448,10 +543,6 @@ test("demo: dependency-graph", async ({ page }) => {
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/graph");
 
-  // Welcome 가드가 /graph 도 /welcome 으로 redirect 시킬 수 있다 — skip
-  await dismissWelcomeIfPresent(page);
-  await page.goto("/graph"); // skip 후 한 번 더 정확히 /graph 로
-
   // GraphPage 마운트 + React Flow 초기 layout
   await page.waitForTimeout(2_500);
 
@@ -474,9 +565,6 @@ test("demo: dependency-graph", async ({ page }) => {
 test("demo: incident-alert", async ({ page }) => {
   const map = makeUnlockedBase();
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
-  await page.goto("/incidents");
-
-  await dismissWelcomeIfPresent(page);
   await page.goto("/incidents");
 
   // IncidentsPage 마운트 + 카드 렌더
@@ -506,8 +594,6 @@ test("demo: rotate-credential", async ({ page }) => {
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
   await page.goto("/");
-
-  await dismissWelcomeIfPresent(page);
 
   // Inventory 마운트 + 카드 1번 클릭 시도
   await page.waitForTimeout(1_800);
@@ -553,9 +639,6 @@ test("demo: stale-references", async ({ page }) => {
     },
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });
-  await page.goto("/graph");
-
-  await dismissWelcomeIfPresent(page);
   await page.goto("/graph");
 
   await page.waitForTimeout(2_500);
