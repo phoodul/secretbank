@@ -37,7 +37,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          # Cargo.lock 은 .gitignore — Cargo.toml hash 로 key 생성 (version bump 시 자동 invalidate)
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: cargo fmt --check
