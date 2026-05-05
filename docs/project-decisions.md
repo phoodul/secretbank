@@ -5,6 +5,50 @@
 
 ---
 
+## [2026-05-05] M24 Phase 1.5 — credential value pair 모델 + 카드 hover mini-graph
+
+### A. value pair 모델링 — Option D (secondary_value_ref + 자유 라벨)
+
+- **결정:** credential 1 row 에 secret 1~2개 보유. 새 컬럼 4개 추가:
+  - `secondary_value_ref TEXT NULL` — 두 번째 secret 의 vault entry 참조 (없으면 null = 단일 secret)
+  - `primary_label TEXT NULL` — primary 의 라벨 (예: `"API Key"`, `"Public Key"`, `"Password"`). null 이면 type 별 fallback (api_key→"API Key:", password→"PW:")
+  - `secondary_label TEXT NULL` — secondary 의 라벨 (예: `"Secret Key"`, `"Client Secret"`). secondary_value_ref 와 항상 같이 채워짐
+  - issuer preset 에 default 라벨 묶음: Supabase → `["Public Key", "Secret Key"]`, AWS IAM → `["Access Key", "Secret Key"]`, OAuth → `["Client ID", "Client Secret"]`, 기본 → `["API Key", null]`
+- **이유:**
+  - 사용자 케이스 (Cloudflare 단일 / Supabase pair / AWS access+secret / OAuth client+secret) 모두 1 row 로 자연스럽게 표현
+  - "1 row = 1 카드 = 1 rotate 단위 = 1 blast radius 단위" 모델 유지 — 기존 graph / dependency / kill-switch 로직 변경 0
+  - 라벨 자유 문자열로 issuer 가 부르는 호칭 그대로 (1Password 의 hardcoded "Username/Password" 보다 직관적)
+  - 3개 이상 secret 가진 provider 는 사실상 없음 (있어도 sibling credential 2개로 표현 가능)
+- **대안 비교:**
+  - Option A (sub_kind enum 확장): enum 추가마다 코드 변경, 자유도 낮음
+  - Option B (sibling group_id): 한 카드 = 여러 row 묶기 로직 복잡, rotate 단위 모호
+  - Option C (JSON envelope): crypto layer 변경, 부분 reveal 어려움
+- **영향:**
+  - migration `0007_credential_value_pair.sql` 추가
+  - `credential_create` Tauri command — secondary 가 Some 이면 vault 에 두 번째 entry 별도 암호화 후 secondary_value_ref 채움
+  - `credential_reveal` — `slot: "primary" | "secondary"` 옵션 파라미터 추가 (default "primary", backward compat)
+  - audit log: secondary reveal 도 기록
+  - 기존 데이터 100% 호환 (secondary 는 모두 null = 단일 secret)
+
+### B. 카드 hover expand → mini dependency graph
+
+- **결정:** BentoCard hover 시 카드 자동 expand → 미니 dependency graph 시각화 (이 credential 을 중심으로 사용 중인 project 들이 엣지로 연결).
+- **이유:**
+  - 사용자 비전: "API 키가 어느 project 에 사용되었는지가 등록이 되어서 dependency graph 를 알 수 있고" — 카드 자체가 사용처를 즉시 보여주는 게 직관적
+  - 기존 GraphPage 는 전체 그래프 (모든 credential) — 단일 credential 중심 미니뷰는 카드에 inline 으로 보여주는 게 인지 부하 낮음
+  - 1Password / Bitwarden 차별점: 그들은 단순 텍스트 "Used in N items", 우리는 시각적 그래프
+- **구현:**
+  - hover (또는 focus) 시 카드 height auto-expand (CSS transition, prefers-reduced-motion 시 즉시 표시)
+  - 미니 SVG 또는 react-flow miniature: 중앙 credential 노드 + 사용처 (project / deployment) 노드 + 엣지
+  - 데이터 소스: 기존 `credential_get` 의 usages 배열 → project_id 들을 lookup → ProjectsPage / GraphPage 와 동일 데이터
+  - 클릭 시 GraphPage 로 navigate (전체 그래프 + 해당 credential focus)
+  - usages 가 0 이면 "Not used in any project yet" placeholder
+- **영향:**
+  - BentoCard 에 expand state + mini-graph subcomponent
+  - card height 가변 → BentoGrid 의 auto-fill 레이아웃 그대로 (rowspan 자동)
+
+---
+
 ## [2026-04-28] M9 Sync 진입 — 5건 결정 (Free 2대 / Auto-derive / 화이트리스트 / SecSync / Phased Expansion)
 
 ### A. Free 디바이스 정책 — 종류 무관 2대 (Open Issue 1 결정)
