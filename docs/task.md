@@ -52,7 +52,7 @@
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / v3 Cargo.toml hover + ManifestCodeLens — risky deps inline) |
 | M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + apivault blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). |
 | **M23** | **Vault Charter (recovery 메커니즘) — 출시 블로커** | T-23-A~E | 5 (+1 hotfix) | ✅ **M23 완료 — 마일스톤 클로즈** (A codec crate / B-1 vault format v2 / B-2 initialize_with_charter / B-3 recover_with_charter / B-4 Tauri 커맨드 + audit / C 발급 UI + PDF / D recovery flow UI / E-1 cooldown sidecar / E-2 cooldown UI / unlock anim hotfix). sync 알림은 M9 audit 확장으로 분리. |
-| **M24** | **General password vault (1Password 류 일반 비밀번호) — 베타 종료 조건** | T-24-A~E | 5 | ⏳ **신설 (2026-05-03)** — credential.kind 확장 (api_key/password) + UI tabs + 브라우저 autofill + import. dogfooding + 법적 자문 + M24 + 첫 100~500 사용자 피드백 후 Pro 가격 도입. |
+| **M24** | **General password vault — Unified Bento Inventory** | T-24-A~E + Phase 1/1.5 | 5 + sub | 🔄 **Phase 1 ✅ + Phase 1.5 ✅ (2026-05-06)** — type-agnostic bento card + value pair (Option D) + hover mini-graph. 다음: Phase 2 (URL auto-detect / HIBP / import). |
 
 ---
 
@@ -2353,9 +2353,10 @@ api-vault 의 두 갈래 통합:
 | Phase 1.5-A | credential value pair 모델 — migration 0007 + DTO 확장 | 2026-05-05 | `938d968` |
 | Phase 1.5-B | pair credential repo/command + reveal slot 파라미터 | 2026-05-05 | `63334c4` |
 | Phase 1.5-C | issuer default pair labels — migration 0008 + preset 시드 4종 | 2026-05-06 | `d39fc5c` |
-| Phase 1.5-D | frontend types sync (CredentialSummary has_secondary/primary_label/secondary_label) | 2026-05-06 | (1.5-D 이전 세션) |
+| Phase 1.5-D | frontend types sync (CredentialSummary has_secondary/primary_label/secondary_label + Issuer default labels) | 2026-05-06 | `e96a22f` |
 | Phase 1.5-E | BentoCard pair row + clipboard slot 파라미터 | 2026-05-06 | `a6ae705` |
 | Phase 1.5-F | CreateCredentialDialog pair 토글 + issuer 라벨 자동 채움 | 2026-05-06 | `9b57ff4` |
+| Phase 1.5-G | BentoCard hover MiniGraph (순수 SVG, project fan-out + prefers-reduced-motion) | 2026-05-06 | `2e2226b` |
 
 ---
 

@@ -2,6 +2,39 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-06 (Night mode) — **M24 Phase 1.5 완전 완료 + 16 commits push (origin/main)**
+- **Phase:** Phase 3 — Implementation. **M24 v1 Phase 1 + Phase 1.5 모두 ✅**. 다음은 Phase 2 (URL auto-detect / HIBP / 1Password import) 또는 사용자 결정 큐.
+- **이번 세션 결과:**
+  - **이전 세션 11 commits push** — `5a957c0..efce9d1` origin/main 으로 (admin bypass)
+  - **Phase 1.5-C** (`d39fc5c`) — issuer pair labels (migration 0008 + DTO + IssuerRepo CRUD + preset 시드 4종)
+  - **Phase 1.5-D** (`e96a22f`) — frontend types sync (`CredentialSummary` / `CredentialFull` / `Issuer` 인터페이스)
+  - **Phase 1.5-E** (`a6ae705`) — BentoCard pair row + clipboard `slot` 옵션 + i18n 4 로케일
+  - **Phase 1.5-F** (`9b57ff4`) — CreateCredentialDialog pair 토글 + issuer 라벨 자동 채움
+  - **Phase 1.5-G** (`2e2226b`) — BentoCard hover MiniGraph (순수 SVG, project fan-out)
+- **누적 검증 (Phase 1.5 종료):**
+  - `pnpm typecheck` ✅
+  - `pnpm vitest run` 전체 ✅ **494/494 passed**
+  - `cargo test --workspace --lib --tests` ✅ **27 crates 모두 ok, 0 failed**
+- **5 sub-tasks 모두 1 implementator = 1 commit 룰 준수.** 1.5-G 만 SendMessage 도구 부재로 새 implementator 가 마무리.
+- **stash@{0}** (이전 세션 1.5-C WIP) — 새 commit 검증 통과 후 drop 완료.
+- **memory 룰 보정** — `feedback_powershell.md` 두 갈래 (사용자 안내 PowerShell vs Bash 도구 내부 POSIX) 로 분리.
+
+### 다음 세션 시작점 — M24 Phase 2 또는 사용자 결정
+
+남은 사용자 결정 큐 (이전 세션부터 누적):
+
+1. **M24 Phase 2 (사용자 비전 기반):**
+   - URL 입력 시 auto-detect (issuer 추측)
+   - HIBP breach alert 통합 (password kind 전용)
+   - 1Password / Bitwarden CSV import
+2. **사용자 액션 #4-7** (Apple cert / Windows cert / 데모 영상 / HN+PH)
+3. **본인 dogfooding** — Windows/macOS 에 v0.1.0-pre8 직접 설치
+4. **GitHub Cowork 활성화 4 액션** (CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY / Branch protection / 라벨 2개)
+
+---
+
+## Previous checkpoint (2026-05-05 — M24 Phase 1 완료 + Phase 1.5 절반)
+
 - **Time:** 2026-05-05 — **M24 Phase 1 완료 + Phase 1.5 (Option D pair 모델) 절반 진행 후 정리 종료**
 - **Phase:** Phase 3 — Implementation. M24 v1 진행 중.
 - **세션 결과:**
