@@ -209,6 +209,7 @@
       "idLabel": "ID:",
       "pwLabel": "PW:",
       "keyLabel": "API Key:",
+      "secondaryLabel": "Secret",
       "show": "Show",
       "hide": "Hide"
     }

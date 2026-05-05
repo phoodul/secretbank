@@ -196,7 +196,16 @@
     "auditEmpty": "まだ監査エントリがありません。",
     "auditViewAll": "すべて表示 →",
     "auditError": "監査エントリの読み込みに失敗しました",
-    "hideRevoked": "失効済みを非表示"
+    "hideRevoked": "失効済みを非表示",
+    "card": {
+      "urlLabel": "URL:",
+      "idLabel": "ID:",
+      "pwLabel": "PW:",
+      "keyLabel": "APIキー:",
+      "secondaryLabel": "セカンダリ",
+      "show": "表示",
+      "hide": "非表示"
+    }
   },
   "vault": {
     "unlockTitle": "ボールトのロック解除",

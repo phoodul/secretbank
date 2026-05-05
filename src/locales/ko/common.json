@@ -209,6 +209,7 @@
       "idLabel": "ID:",
       "pwLabel": "PW:",
       "keyLabel": "API Key:",
+      "secondaryLabel": "보조 키",
       "show": "보기",
       "hide": "숨김"
     }

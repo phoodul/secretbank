@@ -22,7 +22,7 @@ use tokio::task::JoinHandle;
 
 use api_vault_core::CredentialId;
 
-use crate::commands::credentials::{reveal_secret, CredentialCommandError};
+use crate::commands::credentials::{reveal_secret, CredentialCommandError, RevealSlot};
 use crate::context::AppContext;
 
 // ---------------------------------------------------------------------------
@@ -94,20 +94,17 @@ pub async fn run_clipboard_timer<F, G>(
 
 /// 자격증명의 비밀값을 클립보드에 복사하고, 30초 후 자동으로 초기화한다.
 ///
+/// `slot` 이 `None` 이면 Primary (기본값). Secondary 를 지정하면 보조 시크릿을 복사.
 /// 이전 타이머가 실행 중이면 취소(`abort`)하고 새 타이머로 교체한다.
 #[tauri::command]
 pub async fn credential_copy_to_clipboard(
     id: CredentialId,
+    slot: Option<RevealSlot>,
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
 ) -> Result<(), ClipboardCommandError> {
     // ── 1. 볼트에서 평문 조회 ──────────────────────────────────────────────
-    let plaintext = reveal_secret(
-        id,
-        crate::commands::credentials::RevealSlot::Primary,
-        &state,
-    )
-    .await?;
+    let plaintext = reveal_secret(id, slot.unwrap_or_default(), &state).await?;
 
     // ── 2. 클립보드에 쓰기 ────────────────────────────────────────────────
     app.clipboard()
@@ -362,6 +359,27 @@ mod tests {
             clear_count.load(Ordering::SeqCst),
             1,
             "첫 번째 타이머 abort 후 두 번째만 clear 호출"
+        );
+    }
+
+    /// `RevealSlot` serde 역직렬화 검증:
+    /// JSON `"secondary"` → `RevealSlot::Secondary`,
+    /// 필드 자체가 없으면 `Default` → `RevealSlot::Primary`.
+    #[test]
+    fn reveal_slot_deserializes_secondary() {
+        use crate::commands::credentials::RevealSlot;
+
+        let slot: RevealSlot = serde_json::from_str("\"secondary\"").unwrap();
+        assert!(
+            matches!(slot, RevealSlot::Secondary),
+            "\"secondary\" 는 RevealSlot::Secondary 로 역직렬화돼야 한다"
+        );
+
+        // Option<RevealSlot>이 None이면 unwrap_or_default() → Primary
+        let none_slot: Option<RevealSlot> = None;
+        assert!(
+            matches!(none_slot.unwrap_or_default(), RevealSlot::Primary),
+            "None.unwrap_or_default() 는 Primary 여야 한다"
         );
     }
 }

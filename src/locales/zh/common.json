@@ -196,7 +196,16 @@
     "auditEmpty": "暂无审计条目。",
     "auditViewAll": "查看全部 →",
     "auditError": "加载审计条目失败",
-    "hideRevoked": "隐藏已撤销"
+    "hideRevoked": "隐藏已撤销",
+    "card": {
+      "urlLabel": "URL:",
+      "idLabel": "ID:",
+      "pwLabel": "密码:",
+      "keyLabel": "API 密钥:",
+      "secondaryLabel": "副密钥",
+      "show": "显示",
+      "hide": "隐藏"
+    }
   },
   "vault": {
     "unlockTitle": "解锁保险库",

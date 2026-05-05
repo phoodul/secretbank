@@ -1,16 +1,16 @@
 /**
- * BentoCard — M24 Unified Bento Inventory 카드 컴포넌트 (C-2 정정)
+ * BentoCard — M24 Unified Bento Inventory 카드 컴포넌트 (C-2 정정, 1.5-E 확장)
  *
- * 레이아웃 (정정):
+ * 레이아웃:
  *   Row 1 — name (라벨 없이 평문) + ⋮ 메뉴
  *   Row 2 — "URL:" 라벨 + 값 (password only, 평문)
  *   Row 3 — "ID:" 라벨 + 마스킹/평문 + [보기] 토글 (password: username 마스킹, api_key: issuer name 평문)
- *   Row 4 — "PW:" 또는 "API Key:" 라벨 + 마스킹/평문 + [보기] + [복사]
+ *   Row 4 — primary_label ?? ("PW:" | "API Key:") + 마스킹/평문 + [보기] + [복사]
+ *   Row 5 — (has_secondary 일 때) secondary_label ?? "Secret" + 마스킹/평문 + [보기] + [복사]
  *
  * - ID reveal: client-side useState toggle (Tauri 호출 없음), 30s 후 자동 마스킹
- * - PW reveal: credential_reveal Tauri command + 30s 자동 마스킹
- * - ID/PW reveal 타이머는 독립 동작
- * - api_key 의 경우 ID 자리에 issuer name 평문 (reveal 버튼 없음)
+ * - PW/SK reveal: credential_reveal Tauri command + 30s 자동 마스킹 (독립 타이머)
+ * - slot: "primary" / "secondary" 로 Tauri 호출 시 명시
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -66,13 +66,17 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
   const { t } = useTranslation("common");
   const { issuers } = useIssuers();
 
-  // PW reveal state (Tauri command)
+  // PW reveal state (Tauri command, primary slot)
   const [revealedPw, setRevealedPw] = useState<string | null>(null);
   const pwTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ID reveal state (client-side toggle, password only)
   const [idRevealed, setIdRevealed] = useState(false);
   const idTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Secondary reveal state (Tauri command, secondary slot)
+  const [revealedSk, setRevealedSk] = useState<string | null>(null);
+  const skTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Issuer lookup
   const issuer = issuers.find((i) => i.id === credential.issuer_id);
@@ -85,6 +89,7 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
     return () => {
       if (pwTimerRef.current !== null) clearTimeout(pwTimerRef.current);
       if (idTimerRef.current !== null) clearTimeout(idTimerRef.current);
+      if (skTimerRef.current !== null) clearTimeout(skTimerRef.current);
     };
   }, []);
 
@@ -118,7 +123,10 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
     }
 
     try {
-      const value = await invoke<string>("credential_reveal", { id: credential.id });
+      const value = await invoke<string>("credential_reveal", {
+        id: credential.id,
+        slot: "primary",
+      });
       setRevealedPw(value);
 
       pwTimerRef.current = setTimeout(() => {
@@ -131,12 +139,47 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
   }, [revealedPw, credential.id, t]);
 
   // ---------------------------------------------------------------------------
+  // Secondary Key Show / Hide (Tauri command)
+  // ---------------------------------------------------------------------------
+
+  const handleSkShow = useCallback(async () => {
+    if (revealedSk !== null) {
+      if (skTimerRef.current !== null) clearTimeout(skTimerRef.current);
+      setRevealedSk(null);
+      return;
+    }
+
+    try {
+      const value = await invoke<string>("credential_reveal", {
+        id: credential.id,
+        slot: "secondary",
+      });
+      setRevealedSk(value);
+
+      skTimerRef.current = setTimeout(() => {
+        setRevealedSk(null);
+        skTimerRef.current = null;
+      }, REVEAL_TIMEOUT_MS);
+    } catch {
+      toast.error(t("inventory.loadDetailFailed"));
+    }
+  }, [revealedSk, credential.id, t]);
+
+  // ---------------------------------------------------------------------------
   // Copy
   // ---------------------------------------------------------------------------
 
   const handleCopy = useCallback(async () => {
     try {
-      await invoke("credential_copy_to_clipboard", { id: credential.id });
+      await invoke("credential_copy_to_clipboard", { id: credential.id, slot: "primary" });
+    } catch {
+      toast.error(t("inventory.copyFailed"));
+    }
+  }, [credential.id, t]);
+
+  const handleSkCopy = useCallback(async () => {
+    try {
+      await invoke("credential_copy_to_clipboard", { id: credential.id, slot: "secondary" });
     } catch {
       toast.error(t("inventory.copyFailed"));
     }
@@ -147,10 +190,15 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
   // ---------------------------------------------------------------------------
 
   const isPwRevealed = revealedPw !== null;
+  const isSkRevealed = revealedSk !== null;
 
-  // PW row 라벨: api_key → "API Key:", password → "PW:"
+  // PW row 라벨: primary_label 우선, 없으면 kind fallback
   const pwLabel =
-    credential.kind === "api_key" ? t("inventory.card.keyLabel") : t("inventory.card.pwLabel");
+    credential.primary_label ??
+    (credential.kind === "api_key" ? t("inventory.card.keyLabel") : t("inventory.card.pwLabel"));
+
+  // Secondary row 라벨: secondary_label 우선, 없으면 "Secret" fallback
+  const skLabel = credential.secondary_label ?? t("inventory.card.secondaryLabel");
 
   // ID row: password → username 마스킹, api_key → issuer name 평문
   const hasIdRow =
@@ -322,7 +370,7 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
           </div>
         )}
 
-        {/* ── Row 4: PW / Key + reveal + copy ── */}
+        {/* ── Row 4: PW / Key + reveal + copy (primary slot) ── */}
         <div className="flex items-center gap-1 min-w-0" onClick={(e) => e.stopPropagation()}>
           <span className="shrink-0 text-xs font-medium text-muted-foreground">{pwLabel}</span>
           <span className="flex-1 truncate font-mono text-xs text-muted-foreground">
@@ -351,6 +399,38 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
             <Copy className="h-3.5 w-3.5" aria-hidden />
           </Button>
         </div>
+
+        {/* ── Row 5: Secondary key + reveal + copy (secondary slot, has_secondary only) ── */}
+        {credential.has_secondary && (
+          <div className="flex items-center gap-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">{skLabel}</span>
+            <span className="flex-1 truncate font-mono text-xs text-muted-foreground">
+              {isSkRevealed ? revealedSk : MASKED}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={handleSkShow}
+              aria-label={isSkRevealed ? t("inventory.card.hide") : t("inventory.card.show")}
+            >
+              {isSkRevealed ? (
+                <EyeOff className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <Eye className="h-3.5 w-3.5" aria-hidden />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={handleSkCopy}
+              aria-label={t("inventory.copyValue")}
+            >
+              <Copy className="h-3.5 w-3.5" aria-hidden />
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

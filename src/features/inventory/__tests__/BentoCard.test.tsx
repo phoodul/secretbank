@@ -259,7 +259,7 @@ describe("BentoCard", () => {
 
   // ── PW Show / reveal ───────────────────────────────────────────────────────
 
-  it("PW Show 클릭 시 credential_reveal Tauri 커맨드를 호출한다", async () => {
+  it("PW Show 클릭 시 credential_reveal Tauri 커맨드를 slot: primary 로 호출한다", async () => {
     const user = userEvent.setup();
     mockInvoke.mockResolvedValue("sk-test-secret-value");
     renderCard(makeApiKey());
@@ -270,6 +270,7 @@ describe("BentoCard", () => {
 
     expect(mockInvoke).toHaveBeenCalledWith("credential_reveal", {
       id: "01HZAAAAAAAAAAAAAAAAAAAAAA",
+      slot: "primary",
     });
   });
 
@@ -329,7 +330,7 @@ describe("BentoCard", () => {
 
   // ── Copy ──────────────────────────────────────────────────────────────────
 
-  it("Copy 클릭 시 credential_copy_to_clipboard 커맨드를 호출한다", async () => {
+  it("Copy 클릭 시 credential_copy_to_clipboard 커맨드를 slot: primary 로 호출한다", async () => {
     const user = userEvent.setup();
     renderCard(makeApiKey());
 
@@ -338,6 +339,68 @@ describe("BentoCard", () => {
 
     expect(mockInvoke).toHaveBeenCalledWith("credential_copy_to_clipboard", {
       id: "01HZAAAAAAAAAAAAAAAAAAAAAA",
+      slot: "primary",
+    });
+  });
+
+  // ── has_secondary pair row ─────────────────────────────────────────────────
+
+  it("has_secondary: true 일 때 두 번째 reveal/copy row 가 렌더된다", () => {
+    renderCard(
+      makeApiKey({
+        has_secondary: true,
+        secondary_label: "Secret Key",
+      }),
+    );
+
+    // "Secret Key" 라벨이 노출됨
+    expect(screen.getByText("Secret Key")).toBeInTheDocument();
+
+    // Show 버튼 2개 (primary + secondary), Copy 버튼 2개
+    const showBtns = screen.getAllByRole("button", { name: /show/i });
+    expect(showBtns.length).toBeGreaterThanOrEqual(2);
+
+    const copyBtns = screen.getAllByRole("button", { name: /copy/i });
+    expect(copyBtns).toHaveLength(2);
+  });
+
+  it("secondary reveal 클릭 시 credential_reveal 이 slot: secondary 로 호출된다", async () => {
+    const user = userEvent.setup();
+    mockInvoke.mockResolvedValue("sk-secret-secondary");
+
+    renderCard(
+      makeApiKey({
+        has_secondary: true,
+        secondary_label: "Secret Key",
+      }),
+    );
+
+    // Show 버튼들 중 두 번째 = secondary row
+    const showBtns = screen.getAllByRole("button", { name: /show/i });
+    await user.click(showBtns[showBtns.length - 1]);
+
+    expect(mockInvoke).toHaveBeenCalledWith("credential_reveal", {
+      id: "01HZAAAAAAAAAAAAAAAAAAAAAA",
+      slot: "secondary",
+    });
+  });
+
+  it("secondary copy 클릭 시 credential_copy_to_clipboard 이 slot: secondary 로 호출된다", async () => {
+    const user = userEvent.setup();
+    renderCard(
+      makeApiKey({
+        has_secondary: true,
+        secondary_label: "Secret Key",
+      }),
+    );
+
+    // Copy 버튼 2개 중 두 번째 = secondary row
+    const copyBtns = screen.getAllByRole("button", { name: /copy/i });
+    await user.click(copyBtns[copyBtns.length - 1]);
+
+    expect(mockInvoke).toHaveBeenCalledWith("credential_copy_to_clipboard", {
+      id: "01HZAAAAAAAAAAAAAAAAAAAAAA",
+      slot: "secondary",
     });
   });
 
