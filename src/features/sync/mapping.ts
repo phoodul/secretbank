@@ -120,6 +120,9 @@ export const credentialMapper: EntityMapper<CredentialFull, CredentialYValue> = 
       kind: "api_key", // device-local default; overwritten by caller from SQLite
       url: null, // device-local
       username: null, // device-local
+      secondary_value_ref: null, // device-local
+      primary_label: null, // device-local
+      secondary_label: null, // device-local
     };
   },
 };
@@ -168,6 +171,8 @@ export const issuerMapper: EntityMapper<Issuer, IssuerYValue> = {
       security_feed_url: value.security_feed_url,
       connector_id: value.connector_id,
       icon_key: value.icon_key,
+      default_primary_label: null, // not synced — device-local fallback
+      default_secondary_label: null, // not synced — device-local fallback
       created_at: value.created_at,
       updated_at: value.updated_at,
     };

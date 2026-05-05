@@ -50,6 +50,12 @@ export interface CredentialSummary {
   url: string | null;
   /** Password-only — login identifier. null for API keys. */
   username: string | null;
+  /** `true` when secondary_value_ref is set. Indicates a pair-secret credential. */
+  has_secondary: boolean;
+  /** Display label for the primary value. null = type-based fallback. */
+  primary_label: string | null;
+  /** Display label for the secondary value. null when no secondary exists. */
+  secondary_label: string | null;
 }
 
 /** credential_list 커맨드에 전달하는 필터 */
@@ -108,4 +114,10 @@ export interface CredentialFull {
   url: string | null;
   /** Password-only — login identifier. null for API keys. */
   username: string | null;
+  /** Vault entry reference for the secondary secret. null = single-secret. */
+  secondary_value_ref: string | null;
+  /** Display label for the primary value. null = type-based fallback. */
+  primary_label: string | null;
+  /** Display label for the secondary value. null when no secondary exists. */
+  secondary_label: string | null;
 }

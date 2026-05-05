@@ -11,6 +11,10 @@ export interface Issuer {
   security_feed_url: string | null;
   connector_id: string | null;
   icon_key: string | null;
+  /** Default label for primary value slot (e.g. "Public Key"). null = "API Key" fallback. */
+  default_primary_label: string | null;
+  /** Default label for secondary value slot. null = single-secret issuer. */
+  default_secondary_label: string | null;
   created_at: number; // ms
   updated_at: number; // ms
 }

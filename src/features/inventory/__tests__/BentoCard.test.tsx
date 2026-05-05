@@ -80,6 +80,9 @@ function makeApiKey(overrides: Partial<CredentialSummary> = {}): CredentialSumma
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
     ...overrides,
   };
 }
@@ -97,6 +100,9 @@ function makePassword(overrides: Partial<CredentialSummary> = {}): CredentialSum
     kind: "password",
     url: "https://gmail.com",
     username: "user@gmail.com",
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
     ...overrides,
   };
 }

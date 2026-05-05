@@ -24,6 +24,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAB",
@@ -41,6 +44,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAC",
@@ -54,6 +60,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAD",
@@ -71,6 +80,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAE",
@@ -88,6 +100,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAF",
@@ -101,6 +116,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAG",
@@ -118,6 +136,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAH",
@@ -135,6 +156,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAI",
@@ -152,6 +176,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAJ",
@@ -165,6 +192,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
   },
 ];
 
@@ -189,4 +219,7 @@ export const MOCK_CREDENTIAL_FULL: CredentialFull = {
   kind: "api_key",
   url: null,
   username: null,
+  secondary_value_ref: null,
+  primary_label: null,
+  secondary_label: null,
 };

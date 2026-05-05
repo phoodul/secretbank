@@ -57,6 +57,9 @@ function makeItem(id: string, overrides: Partial<CredentialSummary> = {}): Crede
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
     ...overrides,
   };
 }

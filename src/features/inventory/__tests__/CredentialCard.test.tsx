@@ -22,6 +22,9 @@ function makeCredential(overrides: Partial<CredentialSummary> = {}): CredentialS
     kind: "api_key",
     url: null,
     username: null,
+    has_secondary: false,
+    primary_label: null,
+    secondary_label: null,
     ...overrides,
   };
 }
