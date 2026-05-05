@@ -21,6 +21,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     expires_at: NOW + 60 * DAY,
     hash_hint: "aaaa",
     score: MOCK_SAFE_SCORE,
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAB",
@@ -35,6 +38,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
       level: "safe",
       factors: [{ code: "expiring_soon", severity: "warn", penalty: 20, days: 10 }],
     },
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAC",
@@ -45,6 +51,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     expires_at: null,
     hash_hint: null,
     score: MOCK_SAFE_SCORE,
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAD",
@@ -59,6 +68,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
       level: "warn",
       factors: [{ code: "expired", severity: "danger", penalty: 50, days: 5 }],
     },
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAE",
@@ -73,6 +85,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
       level: "danger",
       factors: [{ code: "revoked", severity: "danger", penalty: 100, days: null }],
     },
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAF",
@@ -83,6 +98,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     expires_at: NOW + 90 * DAY,
     hash_hint: null,
     score: MOCK_SAFE_SCORE,
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAG",
@@ -97,6 +115,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
       level: "danger",
       factors: [{ code: "compromised", severity: "danger", penalty: 100, days: null }],
     },
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAH",
@@ -111,6 +132,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
       level: "safe",
       factors: [{ code: "expiring_soon", severity: "warn", penalty: 20, days: 20 }],
     },
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAI",
@@ -125,6 +149,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
       level: "danger",
       factors: [{ code: "revoked", severity: "danger", penalty: 100, days: null }],
     },
+    kind: "api_key",
+    url: null,
+    username: null,
   },
   {
     id: "01HZAAAAAAAAAAAAAAAAAAAAAJ",
@@ -135,6 +162,9 @@ export const MOCK_CREDENTIALS: CredentialSummary[] = [
     expires_at: NOW + 120 * DAY,
     hash_hint: null,
     score: MOCK_SAFE_SCORE,
+    kind: "api_key",
+    url: null,
+    username: null,
   },
 ];
 
@@ -156,4 +186,7 @@ export const MOCK_CREDENTIAL_FULL: CredentialFull = {
   hash_hint: "abc1",
   usages: [],
   score: MOCK_SAFE_SCORE,
+  kind: "api_key",
+  url: null,
+  username: null,
 };

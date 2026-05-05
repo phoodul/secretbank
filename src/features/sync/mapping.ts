@@ -117,6 +117,9 @@ export const credentialMapper: EntityMapper<CredentialFull, CredentialYValue> = 
       hash_hint: null, // device-local
       usages: [], // separate mapper (usageMapper)
       score: { total: 0, level: "safe", factors: [] }, // recomputed locally
+      kind: "api_key", // device-local default; overwritten by caller from SQLite
+      url: null, // device-local
+      username: null, // device-local
     };
   },
 };

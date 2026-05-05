@@ -1,5 +1,7 @@
 export type Env = "dev" | "staging" | "prod";
 export type CredentialStatus = "active" | "revoked" | "compromised";
+/** Rust CredentialKind (serde rename_all = "snake_case") */
+export type CredentialKind = "api_key" | "password";
 
 // ---------------------------------------------------------------------------
 // Security score (T040) — mirrors api_vault_core::security_score
@@ -42,6 +44,12 @@ export interface CredentialSummary {
   hash_hint: string | null;
   /** Server-computed security score (T040). */
   score: ScoreBreakdown;
+  /** API key (default) or general password (M24). Rust default = "api_key". */
+  kind: CredentialKind;
+  /** Password-only — origin URL for autofill matching. null for API keys. */
+  url: string | null;
+  /** Password-only — login identifier. null for API keys. */
+  username: string | null;
 }
 
 /** credential_list 커맨드에 전달하는 필터 */
@@ -50,6 +58,8 @@ export interface CredentialFilter {
   env?: Env;
   status?: CredentialStatus;
   expiring_within_days?: number;
+  /** Filter by kind. undefined = all kinds. */
+  kind?: CredentialKind;
 }
 
 export type UsageWhereKind = "env_var" | "file_path" | "code_ref";
@@ -92,4 +102,10 @@ export interface CredentialFull {
   usages: Usage[];
   /** Server-computed security score (T040). */
   score: ScoreBreakdown;
+  /** API key (default) or general password (M24). Rust default = "api_key". */
+  kind: CredentialKind;
+  /** Password-only — origin URL for autofill matching. null for API keys. */
+  url: string | null;
+  /** Password-only — login identifier. null for API keys. */
+  username: string | null;
 }

@@ -58,6 +58,9 @@ function fixture(): CredentialFull {
       },
     ],
     score: { total: 80, level: "safe", factors: [] },
+    kind: "api_key",
+    url: null,
+    username: null,
   };
 }
 
