@@ -119,7 +119,10 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src-tauri/target
-          key: ${{ matrix.platform }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          # Cargo.lock 은 .gitignore 라 hashFiles 가 비어 stale cache 공유 → 모든
+          # version bump 후 prerelease "api-vault-charter ^0.1.0" 매칭 fail.
+          # Cargo.toml 들의 hash 로 key 생성 → version bump 시 자동 invalidate.
+          key: ${{ matrix.platform }}-cargo-${{ hashFiles('src-tauri/**/Cargo.toml') }}
           restore-keys: ${{ matrix.platform }}-cargo-
 
       - name: Install frontend dependencies
