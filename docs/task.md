@@ -2355,6 +2355,7 @@ api-vault 의 두 갈래 통합:
 | Phase 1.5-C | issuer default pair labels — migration 0008 + preset 시드 4종 | 2026-05-06 | `d39fc5c` |
 | Phase 1.5-D | frontend types sync (CredentialSummary has_secondary/primary_label/secondary_label) | 2026-05-06 | (1.5-D 이전 세션) |
 | Phase 1.5-E | BentoCard pair row + clipboard slot 파라미터 | 2026-05-06 | `a6ae705` |
+| Phase 1.5-F | CreateCredentialDialog pair 토글 + issuer 라벨 자동 채움 | 2026-05-06 | `9b57ff4` |
 
 ---
 
