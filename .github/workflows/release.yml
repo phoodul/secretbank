@@ -332,6 +332,8 @@ jobs:
       - name: Mirror latest.json to site/ + commit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
         run: |
           git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" repo
           cd repo
