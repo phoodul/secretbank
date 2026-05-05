@@ -602,6 +602,119 @@
         color: var(--lapis-bright);
       }
 
+      /* ─────── Previous releases — same lapis tone, smaller scale ─────── */
+      .previous-toggle {
+        margin: 2rem auto 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 1.1rem;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 999px;
+        color: var(--fg);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition:
+          background 0.15s,
+          transform 0.15s;
+      }
+      .previous-toggle:hover {
+        background: var(--glass-bg-strong);
+        transform: translateY(-1px);
+      }
+      .previous-toggle .caret {
+        display: inline-block;
+        transition: transform 0.2s;
+      }
+      .previous-toggle[aria-expanded="true"] .caret {
+        transform: rotate(180deg);
+      }
+      .previous-section {
+        margin-top: 1.5rem;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      .previous-section.open {
+        max-height: 4000px;
+      }
+      .previous-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .previous-row {
+        display: grid;
+        grid-template-columns: 1.4fr 0.9fr 1fr 1fr 1fr;
+        gap: 0.75rem;
+        padding: 0.85rem 1.1rem;
+        align-items: center;
+      }
+      .previous-row .row-version {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+      .previous-row .row-version .ver {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .previous-row .row-version .ver-tag {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.6;
+      }
+      .previous-row .row-date {
+        font-size: 0.82rem;
+        opacity: 0.65;
+        font-variant-numeric: tabular-nums;
+      }
+      .previous-row .row-os {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .previous-row .row-os a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.55rem;
+        border-radius: 6px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--fg);
+        text-decoration: none;
+        font-size: 0.78rem;
+        transition: background 0.15s;
+      }
+      .previous-row .row-os a:hover {
+        background: var(--glass-bg-strong);
+      }
+      .previous-row .row-os .none {
+        opacity: 0.35;
+        font-size: 0.78rem;
+      }
+      .previous-foot {
+        margin-top: 1rem;
+        text-align: center;
+        font-size: 0.8rem;
+        opacity: 0.55;
+      }
+      .previous-foot a {
+        color: var(--lapis-bright);
+      }
+      @media (max-width: 720px) {
+        .previous-row {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
       /* ─────────────────── Glass card primitive ─────────────────── */
       .glass {
         background: var(--glass-bg);
@@ -1308,6 +1421,31 @@
             <a href="https://github.com/phoodul/api-vault/releases">all releases on GitHub</a>.
           </div>
         </div>
+
+        <!-- Previous releases — same data source, collapsed by default -->
+        <div style="text-align: center">
+          <button
+            id="previous-toggle"
+            class="previous-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="previous-section"
+            hidden
+          >
+            <span class="caret" aria-hidden="true">▾</span>
+            <span class="toggle-label">Show previous versions</span>
+          </button>
+        </div>
+        <div id="previous-section" class="previous-section">
+          <div class="glass" style="padding: 1.25rem">
+            <div class="previous-list" id="previous-list"></div>
+            <div class="previous-foot">
+              Older releases are kept for reproducibility. Production users should always pick the
+              latest above.
+              <a href="https://github.com/phoodul/api-vault/releases">Full history on GitHub →</a>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ─────────── Demo player (8 tabs, 2 groups) ─────────── -->
@@ -1801,9 +1939,9 @@
           return null;
         }
 
-        async function fetchLatest() {
+        async function fetchReleases() {
           const res = await fetch(
-            "https://api.github.com/repos/" + REPO + "/releases?per_page=10",
+            "https://api.github.com/repos/" + REPO + "/releases?per_page=20",
             { headers: { Accept: "application/vnd.github+json" } },
           );
           if (!res.ok) throw new Error("GitHub API " + res.status);
@@ -1811,7 +1949,67 @@
           if (!Array.isArray(list) || list.length === 0) throw new Error("no releases");
           // Sort by created_at desc — newest first (incl. prereleases).
           list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-          return list[0];
+          return list;
+        }
+
+        // Previous-release row: 1 release × 3 OS download buttons (recommended only).
+        // Same `classify()` patterns + `OS_LABEL` 재사용.
+        function renderPreviousReleases(listEl, releases) {
+          const parts = [];
+          for (const release of releases) {
+            const items = (release.assets || []).map(classify).filter(Boolean);
+            const byOS = { windows: [], macos: [], linux: [] };
+            for (const it of items) byOS[it.os].push(it);
+
+            const date = new Date(release.published_at || release.created_at);
+            const dateStr = date.toISOString().slice(0, 10);
+            const tagName = release.tag_name;
+
+            parts.push('<div class="glass previous-row">');
+            parts.push('<div class="row-version">');
+            parts.push('<span class="ver">' + escapeHtml(tagName) + "</span>");
+            parts.push(
+              '<span class="ver-tag">' + (release.prerelease ? "Prerelease" : "Stable") + "</span>",
+            );
+            parts.push("</div>");
+            parts.push('<div class="row-date">' + dateStr + "</div>");
+
+            for (const os of ["windows", "macos", "linux"]) {
+              parts.push('<div class="row-os">');
+              const recommended =
+                (byOS[os] || []).find((it) => it.recommended) || (byOS[os] || [])[0];
+              if (recommended) {
+                parts.push(
+                  '<a href="' +
+                    escapeHtml(recommended.url) +
+                    '" title="' +
+                    escapeHtml(recommended.label) +
+                    '">' +
+                    OS_LABEL[os] +
+                    " · " +
+                    fmtSize(recommended.size) +
+                    "</a>",
+                );
+              } else {
+                parts.push('<span class="none">—</span>');
+              }
+              parts.push("</div>");
+            }
+            parts.push("</div>");
+          }
+          listEl.innerHTML = parts.join("");
+        }
+
+        function setupPreviousToggle() {
+          const btn = document.getElementById("previous-toggle");
+          const sec = document.getElementById("previous-section");
+          const lbl = btn && btn.querySelector(".toggle-label");
+          if (!btn || !sec) return;
+          btn.addEventListener("click", function () {
+            const open = sec.classList.toggle("open");
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+            if (lbl) lbl.textContent = open ? "Hide previous versions" : "Show previous versions";
+          });
         }
 
         // OS 별 카드 표시 정보 — heading + icon (현지화된 emoji) + 짧은 sub.
@@ -1898,9 +2096,9 @@
           const versionEl = document.getElementById("download-version");
           if (!grid) return;
 
-          let release;
+          let releases;
           try {
-            release = await fetchLatest();
+            releases = await fetchReleases();
           } catch (err) {
             grid.innerHTML =
               '<div class="download-error">' +
@@ -1913,6 +2111,7 @@
             return;
           }
 
+          const release = releases[0];
           const items = (release.assets || []).map(classify).filter(Boolean);
           if (versionEl) versionEl.textContent = release.tag_name;
           if (items.length === 0) {
@@ -1928,8 +2127,21 @@
 
           const byOS = { windows: [], macos: [], linux: [] };
           for (const it of items) byOS[it.os].push(it);
-
           renderGrid(grid, byOS, detectOS(), release.tag_name);
+
+          // Previous releases — render only those with at least one asset.
+          const previous = releases
+            .slice(1)
+            .filter((r) => (r.assets || []).some((a) => classify(a)));
+          const previousList = document.getElementById("previous-list");
+          const previousToggle = document.getElementById("previous-toggle");
+          if (previous.length > 0 && previousList && previousToggle) {
+            renderPreviousReleases(previousList, previous);
+            previousToggle.hidden = false;
+            previousToggle.querySelector(".toggle-label").textContent =
+              "Show " + previous.length + " previous version" + (previous.length === 1 ? "" : "s");
+            setupPreviousToggle();
+          }
         }
 
         if (document.readyState === "loading") {
