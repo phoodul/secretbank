@@ -17,6 +17,8 @@ fn credential_input_serde_roundtrip() {
         kind: Default::default(),
         url: None,
         username: None,
+        primary_label: None,
+        secondary_label: None,
     };
 
     let json = serde_json::to_string(&input).expect("serialize");
@@ -65,6 +67,9 @@ fn datetime_unix_ms_roundtrip() {
         kind: Default::default(),
         url: None,
         username: None,
+        secondary_value_ref: None,
+        primary_label: None,
+        secondary_label: None,
     };
 
     let json = serde_json::to_string(&cred).expect("serialize");

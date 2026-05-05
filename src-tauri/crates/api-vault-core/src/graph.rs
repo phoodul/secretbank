@@ -258,6 +258,9 @@ mod tests {
             kind: crate::CredentialKind::ApiKey,
             url: None,
             username: None,
+            secondary_value_ref: None,
+            primary_label: None,
+            secondary_label: None,
         }
     }
 

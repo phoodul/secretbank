@@ -102,7 +102,12 @@ pub async fn credential_copy_to_clipboard(
     state: State<'_, AppContext>,
 ) -> Result<(), ClipboardCommandError> {
     // ── 1. 볼트에서 평문 조회 ──────────────────────────────────────────────
-    let plaintext = reveal_secret(id, &state).await?;
+    let plaintext = reveal_secret(
+        id,
+        crate::commands::credentials::RevealSlot::Primary,
+        &state,
+    )
+    .await?;
 
     // ── 2. 클립보드에 쓰기 ────────────────────────────────────────────────
     app.clipboard()

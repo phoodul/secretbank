@@ -82,6 +82,20 @@ pub struct CredentialCreateArgs {
     pub input: CredentialInput,
     /// The actual API key value (will be stored in the age vault).
     pub value: String,
+    /// Optional second secret value (e.g. Secret Key for Supabase, Client Secret for OAuth).
+    /// When `Some`, it is encrypted and stored at `credentials/<id>/secondary` and
+    /// `secondary_value_ref` is set on the credential row.
+    #[serde(default)]
+    pub secondary_value: Option<String>,
+}
+
+/// Which value slot to reveal.
+#[derive(Debug, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum RevealSlot {
+    #[default]
+    Primary,
+    Secondary,
 }
 
 /// Arguments for `credential_rotate_value`.
@@ -114,9 +128,24 @@ pub async fn credential_create(
     let id = CredentialId::new();
     let vault_ref = format!("credentials/{id}");
 
-    repo.insert_with_id(Some(id), &args.input, vault_ref.clone())
+    // When a secondary value is provided, pre-compute the ref so we can store
+    // it in the row at insert time (avoids a separate UPDATE).
+    let secondary_ref: Option<String> = args
+        .secondary_value
+        .as_ref()
+        .map(|_| format!("credentials/{id}/secondary"));
+
+    // Build the input with secondary_value_ref filled in.
+    let input_with_secondary = api_vault_core::CredentialInput {
+        secondary_label: args.input.secondary_label.clone(),
+        primary_label: args.input.primary_label.clone(),
+        ..args.input.clone()
+    };
+
+    repo.insert_with_id(Some(id), &input_with_secondary, vault_ref.clone())
         .await?;
 
+    // Write primary secret.
     let secret_bytes = SecretBytes::new(args.value.as_bytes().to_vec());
     {
         let mut vault = state.vault.write().await;
@@ -124,6 +153,27 @@ pub async fn credential_create(
             let _ = repo.delete(id).await;
             return Err(CredentialCommandError::from(vault_err));
         }
+
+        // Write secondary secret (if provided).
+        if let (Some(sec_val), Some(ref sec_ref)) = (&args.secondary_value, &secondary_ref) {
+            let sec_bytes = SecretBytes::new(sec_val.as_bytes().to_vec());
+            if let Err(vault_err) = vault.put_secret(sec_ref, sec_bytes).await {
+                // Rollback: remove primary and the DB row.
+                let _ = vault.delete_secret(&vault_ref).await;
+                let _ = repo.delete(id).await;
+                return Err(CredentialCommandError::from(vault_err));
+            }
+        }
+    }
+
+    // Persist secondary_value_ref in the DB row (patch after insert).
+    if let Some(ref sec_ref) = secondary_ref {
+        use api_vault_core::CredentialPatch;
+        let patch = CredentialPatch {
+            secondary_value_ref: Some(sec_ref.clone()),
+            ..Default::default()
+        };
+        repo.update(id, &patch).await?;
     }
 
     let payload = serde_json::json!({
@@ -315,8 +365,12 @@ pub async fn credential_delete(
 }
 
 /// `credential_reveal` 의 핵심 로직을 분리한 순수 헬퍼.
+///
+/// `slot` — `RevealSlot::Primary` (default) 는 `vault_ref` 를 decrypt 하고,
+/// `RevealSlot::Secondary` 는 `secondary_value_ref` 를 decrypt 한다.
 pub async fn reveal_secret(
     id: CredentialId,
+    slot: RevealSlot,
     ctx: &AppContext,
 ) -> Result<String, CredentialCommandError> {
     let vault = ctx.vault.read().await;
@@ -331,14 +385,27 @@ pub async fn reveal_secret(
         .await?
         .ok_or(CredentialCommandError::NotFound)?;
 
-    let secret_bytes = vault.get_secret(&credential.vault_ref).await?;
+    let vault_path = match slot {
+        RevealSlot::Primary => credential.vault_ref.clone(),
+        RevealSlot::Secondary => credential
+            .secondary_value_ref
+            .clone()
+            .ok_or(CredentialCommandError::NotFound)?,
+    };
+
+    let secret_bytes = vault.get_secret(&vault_path).await?;
     let value = String::from_utf8(secret_bytes.expose_secret().clone())
         .map_err(|_| CredentialCommandError::InvalidUtf8)?;
+
+    let audit_action = match slot {
+        RevealSlot::Primary => "credential.reveal-primary",
+        RevealSlot::Secondary => "credential.reveal-secondary",
+    };
 
     ctx.audit
         .record(
             AuditActor::LocalUser,
-            "credential.reveal",
+            audit_action,
             "credential",
             id.to_string(),
             None,
@@ -351,9 +418,10 @@ pub async fn reveal_secret(
 #[tauri::command]
 pub async fn credential_reveal(
     id: CredentialId,
+    #[allow(unused_variables)] slot: Option<RevealSlot>,
     state: State<'_, AppContext>,
 ) -> Result<String, CredentialCommandError> {
-    reveal_secret(id, &state).await
+    reveal_secret(id, slot.unwrap_or_default(), &state).await
 }
 
 /// Replace the vault secret for an existing credential without changing its
@@ -527,6 +595,8 @@ mod tests {
             kind: Default::default(),
             url: None,
             username: None,
+            primary_label: None,
+            secondary_label: None,
         };
         let vault_ref = format!("credentials/{id}");
         repo.insert_with_id(Some(id), &input, vault_ref.clone())

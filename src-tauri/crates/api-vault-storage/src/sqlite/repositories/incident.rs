@@ -731,6 +731,8 @@ mod tests {
                 kind: Default::default(),
                 url: None,
                 username: None,
+                primary_label: None,
+                secondary_label: None,
             },
             format!("vault/credentials/{name}"),
         )

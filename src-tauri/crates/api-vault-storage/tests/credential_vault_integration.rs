@@ -108,6 +108,16 @@ fn test_input(issuer_id: api_vault_core::IssuerId) -> CredentialInput {
         kind: Default::default(),
         url: None,
         username: None,
+        primary_label: None,
+        secondary_label: None,
+    }
+}
+
+fn test_input_pair(issuer_id: api_vault_core::IssuerId) -> CredentialInput {
+    CredentialInput {
+        primary_label: Some("Public Key".to_owned()),
+        secondary_label: Some("Secret Key".to_owned()),
+        ..test_input(issuer_id)
     }
 }
 
@@ -258,4 +268,107 @@ impl VaultStorage for FaultyVaultStorage {
     async fn flush(&mut self) -> Result<(), api_vault_storage::vault::VaultError> {
         self.inner.flush().await
     }
+}
+
+// ---------------------------------------------------------------------------
+// M24 1.5-B — pair credential tests
+// ---------------------------------------------------------------------------
+
+/// Pair credential create: secondary_value_ref null 이면 단일, Some 이면 pair.
+#[sqlx::test(migrations = "./migrations")]
+async fn pair_create_then_read_both_slots(pool: RawPool) {
+    let issuer_id = make_issuer(&pool).await;
+    let mut vault = MockVaultStorage::new("pass");
+    vault
+        .unlock(SecretString::new("pass".to_owned().into()))
+        .await
+        .unwrap();
+
+    let input = test_input_pair(issuer_id);
+    let id = credential_create(&pool, &mut vault, &input, "public-key-value")
+        .await
+        .expect("create should succeed");
+
+    // 직접 secondary vault entry 작성 (command layer 가 하는 일을 여기선 수동으로 수행)
+    let sec_ref = format!("credentials/{id}/secondary");
+    let sec_bytes = SecretBytes::new("secret-key-value".as_bytes().to_vec());
+    vault.put_secret(&sec_ref, sec_bytes).await.unwrap();
+
+    // DB row 에 secondary_value_ref 업데이트
+    let repo = CredentialRepo::new(&pool);
+    use api_vault_core::CredentialPatch;
+    repo.update(
+        id,
+        &CredentialPatch {
+            secondary_value_ref: Some(sec_ref.clone()),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    // get_by_id → secondary_value_ref 채워짐 확인
+    let cred = repo.get_by_id(id).await.unwrap().unwrap();
+    assert_eq!(
+        cred.secondary_value_ref.as_deref(),
+        Some(sec_ref.as_str()),
+        "secondary_value_ref must be set after update"
+    );
+    assert_eq!(
+        cred.primary_label.as_deref(),
+        Some("Public Key"),
+        "primary_label must persist"
+    );
+    assert_eq!(
+        cred.secondary_label.as_deref(),
+        Some("Secret Key"),
+        "secondary_label must persist"
+    );
+
+    // list → has_secondary = true
+    let list = repo
+        .list(&api_vault_core::CredentialFilter::default())
+        .await
+        .unwrap();
+    assert_eq!(list.len(), 1);
+    assert!(list[0].has_secondary, "has_secondary must be true in list");
+
+    // Reveal primary
+    let primary = vault.get_secret(&cred.vault_ref).await.unwrap();
+    let primary_str = String::from_utf8(primary.expose_secret().clone()).unwrap();
+    assert_eq!(primary_str, "public-key-value");
+
+    // Reveal secondary
+    let secondary = vault.get_secret(&sec_ref).await.unwrap();
+    let secondary_str = String::from_utf8(secondary.expose_secret().clone()).unwrap();
+    assert_eq!(secondary_str, "secret-key-value");
+}
+
+/// 기존 단일 credential (secondary null) 은 migration 후에도 정상 동작.
+#[sqlx::test(migrations = "./migrations")]
+async fn single_credential_has_secondary_false(pool: RawPool) {
+    let issuer_id = make_issuer(&pool).await;
+    let mut vault = MockVaultStorage::new("pass");
+    vault
+        .unlock(SecretString::new("pass".to_owned().into()))
+        .await
+        .unwrap();
+
+    let input = test_input(issuer_id);
+    let id = credential_create(&pool, &mut vault, &input, "single-secret")
+        .await
+        .expect("create should succeed");
+
+    let repo = CredentialRepo::new(&pool);
+    let cred = repo.get_by_id(id).await.unwrap().unwrap();
+    assert!(
+        cred.secondary_value_ref.is_none(),
+        "secondary_value_ref must be None for single credential"
+    );
+
+    let list = repo
+        .list(&api_vault_core::CredentialFilter::default())
+        .await
+        .unwrap();
+    assert!(!list[0].has_secondary, "has_secondary must be false");
 }

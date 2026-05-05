@@ -175,6 +175,9 @@ mod tests {
             kind: api_vault_core::CredentialKind::ApiKey,
             url: None,
             username: None,
+            secondary_value_ref: None,
+            primary_label: None,
+            secondary_label: None,
         }
     }
 

@@ -41,6 +41,8 @@ async fn credential_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError>
         kind: Default::default(),
         url: None,
         username: None,
+        primary_label: None,
+        secondary_label: None,
     };
 
     // insert
@@ -107,6 +109,8 @@ async fn credential_filter_by_env(pool: SqlitePool) -> Result<(), StorageError> 
         kind: Default::default(),
         url: None,
         username: None,
+        primary_label: None,
+        secondary_label: None,
     };
     let dev_input = CredentialInput {
         issuer_id,
