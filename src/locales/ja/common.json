@@ -209,7 +209,9 @@
       "keyLabel": "APIキー:",
       "secondaryLabel": "セカンダリ",
       "show": "表示",
-      "hide": "非表示"
+      "hide": "非表示",
+      "miniGraphEmpty": "まだどのプロジェクトでも使用されていません",
+      "miniGraphMore": "他 {{count}} 件"
     }
   },
   "vault": {

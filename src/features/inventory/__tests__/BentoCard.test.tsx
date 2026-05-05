@@ -410,4 +410,59 @@ describe("BentoCard", () => {
     renderCard(makeApiKey());
     expect(screen.getByRole("button", { name: /more options/i })).toBeInTheDocument();
   });
+
+  // ── hover → MiniGraph ────────────────────────────────────────────────────
+
+  it("mouseEnter 시 MiniGraph 가 DOM 에 나타난다", async () => {
+    const user = userEvent.setup();
+
+    // MiniGraph invoke: credential_get + project_list
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "credential_get")
+        return Promise.resolve({
+          id: "01HZAAAAAAAAAAAAAAAAAAAAAA",
+          issuer_id: "01HZBBBBBBBBBBBBBBBBBBBBBB",
+          name: "OpenAI Production",
+          env: "prod",
+          scope: null,
+          vault_ref: "vault://abc",
+          created_at: Date.now(),
+          last_rotated_at: null,
+          expires_at: null,
+          owner: null,
+          rotation_policy_days: null,
+          rotation_runbook_id: null,
+          status: "active",
+          hash_hint: "ab12",
+          usages: [],
+          score: { total: 100, level: "safe", factors: [] },
+          kind: "api_key",
+          url: null,
+          username: null,
+          secondary_value_ref: null,
+          primary_label: null,
+          secondary_label: null,
+        });
+      if (cmd === "project_list") return Promise.resolve([]);
+      return Promise.resolve(undefined);
+    });
+
+    const { container } = renderCard(makeApiKey());
+
+    // hover 전: MiniGraph 없음
+    expect(container.querySelector("[aria-label='Dependency graph']")).toBeNull();
+    expect(container.querySelector("[aria-label='Loading graph']")).toBeNull();
+
+    // Card 에 mouseEnter
+    const card = container.firstElementChild!;
+    await user.hover(card);
+
+    // hover 후: loading skeleton 또는 최종 결과가 나타남
+    await waitFor(() => {
+      const hasGraph = container.querySelector("[aria-label='Dependency graph']");
+      const hasLoading = container.querySelector("[aria-label='Loading graph']");
+      const hasEmpty = screen.queryByText(/not used in any project yet/i);
+      expect(hasGraph ?? hasLoading ?? hasEmpty).toBeTruthy();
+    });
+  });
 });

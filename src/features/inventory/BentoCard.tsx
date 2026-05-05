@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useIssuers } from "./use-issuers";
+import { MiniGraph } from "./MiniGraph";
 import type { CredentialSummary } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -77,6 +78,13 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
   // Secondary reveal state (Tauri command, secondary slot)
   const [revealedSk, setRevealedSk] = useState<string | null>(null);
   const skTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Hover state for mini-graph expand
+  const [hovered, setHovered] = useState(false);
+  const reducedMotion =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // Issuer lookup
   const issuer = issuers.find((i) => i.id === credential.issuer_id);
@@ -222,6 +230,10 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
       role={onSelect !== undefined ? "button" : undefined}
       tabIndex={onSelect !== undefined ? 0 : undefined}
       onClick={handleCardClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
       onKeyDown={
         onSelect !== undefined
           ? (e) => {
@@ -429,6 +441,16 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
             >
               <Copy className="h-3.5 w-3.5" aria-hidden />
             </Button>
+          </div>
+        )}
+
+        {/* ── Mini dependency graph (hover/focus expand) ── */}
+        {hovered && (
+          <div
+            className={reducedMotion ? "" : "overflow-hidden transition-all duration-200"}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MiniGraph credentialId={credential.id} credentialName={credential.name} />
           </div>
         )}
       </CardContent>

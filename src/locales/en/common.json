@@ -216,7 +216,9 @@
       "keyLabel": "API Key:",
       "secondaryLabel": "Secret",
       "show": "Show",
-      "hide": "Hide"
+      "hide": "Hide",
+      "miniGraphEmpty": "Not used in any project yet",
+      "miniGraphMore": "+{{count}} more"
     }
   },
   "vault": {

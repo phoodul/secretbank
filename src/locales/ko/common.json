@@ -216,7 +216,9 @@
       "keyLabel": "API Key:",
       "secondaryLabel": "보조 키",
       "show": "보기",
-      "hide": "숨김"
+      "hide": "숨김",
+      "miniGraphEmpty": "아직 어느 프로젝트에도 사용되지 않음",
+      "miniGraphMore": "외 {{count}}개"
     }
   },
   "vault": {

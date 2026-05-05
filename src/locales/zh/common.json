@@ -209,7 +209,9 @@
       "keyLabel": "API 密钥:",
       "secondaryLabel": "副密钥",
       "show": "显示",
-      "hide": "隐藏"
+      "hide": "隐藏",
+      "miniGraphEmpty": "尚未在任何项目中使用",
+      "miniGraphMore": "其他 {{count}} 项"
     }
   },
   "vault": {
