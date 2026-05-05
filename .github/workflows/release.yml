@@ -323,6 +323,27 @@ jobs:
 
           gh release upload "$TAG" latest.json --clobber
 
+      # Mirror to site/latest.json so the Tauri updater can fetch a stable URL
+      # (https://api-vault.app/latest.json) regardless of stable/prerelease tag.
+      # GitHub's `releases/latest/` redirect skips prereleases → 404 → updater panic.
+      - name: Mirror latest.json to site/ + commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" repo
+          cd repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p site
+          cp ../latest.json site/latest.json
+          git add site/latest.json
+          if git diff --cached --quiet; then
+            echo "[mirror] site/latest.json unchanged"
+          else
+            git commit -m "chore(release): site/latest.json → ${TAG} [skip ci]"
+            git push origin main
+          fi
+
   publish-release:
     needs: [create-release, build-tauri, publish-updater-manifest]
     if: ${{ !inputs.dry_run }}
