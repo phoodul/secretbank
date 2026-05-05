@@ -2350,6 +2350,9 @@ api-vault 의 두 갈래 통합:
 | C-2 fix | BentoCard 디자인 정정 — ID 마스킹 + URL/ID/PW/API Key 라벨 + i18n + 테스트 22개 | 2026-05-05 | `d54121c` |
 | C-3     | BentoGrid 컴포넌트 — responsive auto-fill + empty/skeleton + 테스트 10개 | 2026-05-05 | `cb395a1` |
 | C-4     | BentoCard ⋮ 메뉴 type별 분기 + "API Key:" 라벨 정정 (keyLabel i18n en/ko) | 2026-05-05 | `2bfc180` |
+| Phase 1.5-A | credential value pair 모델 — migration 0007 + DTO 확장 | 2026-05-05 | `938d968` |
+| Phase 1.5-B | pair credential repo/command + reveal slot 파라미터 | 2026-05-05 | `63334c4` |
+| Phase 1.5-C | issuer default pair labels — migration 0008 + preset 시드 4종 | 2026-05-06 | `d39fc5c` |
 
 ---
 
