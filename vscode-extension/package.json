@@ -2,7 +2,7 @@
   "name": "api-vault",
   "displayName": "API Vault",
   "description": "Dependency-graph-aware secrets manager with supply-chain risk detection — list / reveal credentials and scan dependencies for known secret-exfil history without leaving your editor.",
-  "version": "0.1.0-pre9",
+  "version": "0.1.0-pre10",
   "publisher": "api-vault",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://github.com/phoodul/api-vault",

@@ -5,7 +5,7 @@
 # `sha256` for both arm64 and x86_64 builds.
 
 cask "api-vault" do
-  version "0.1.0-pre9"
+  version "0.1.0-pre10"
 
   # Universal dmg (arm64 + x86_64) preferred. Until the universal pipeline
   # is in place, ship per-arch.
