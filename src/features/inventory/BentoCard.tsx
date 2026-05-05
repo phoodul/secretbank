@@ -5,7 +5,7 @@
  *   Row 1 — name (라벨 없이 평문) + ⋮ 메뉴
  *   Row 2 — "URL:" 라벨 + 값 (password only, 평문)
  *   Row 3 — "ID:" 라벨 + 마스킹/평문 + [보기] 토글 (password: username 마스킹, api_key: issuer name 평문)
- *   Row 4 — "PW:" 또는 "Key:" 라벨 + 마스킹/평문 + [보기] + [복사]
+ *   Row 4 — "PW:" 또는 "API Key:" 라벨 + 마스킹/평문 + [보기] + [복사]
  *
  * - ID reveal: client-side useState toggle (Tauri 호출 없음), 30s 후 자동 마스킹
  * - PW reveal: credential_reveal Tauri command + 30s 자동 마스킹
@@ -17,13 +17,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { MoreHorizontal, Eye, EyeOff, Copy } from "lucide-react";
+import {
+  ExternalLink,
+  GitFork,
+  MoreHorizontal,
+  Eye,
+  EyeOff,
+  Copy,
+  Crosshair,
+  ShieldAlert,
+  User,
+} from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -136,7 +148,7 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
 
   const isPwRevealed = revealedPw !== null;
 
-  // PW row 라벨: api_key → "Key:", password → "PW:"
+  // PW row 라벨: api_key → "API Key:", password → "PW:"
   const pwLabel =
     credential.kind === "api_key" ? t("inventory.card.keyLabel") : t("inventory.card.pwLabel");
 
@@ -189,8 +201,80 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
                 <MoreHorizontal className="h-4 w-4" aria-hidden />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              {/* Sub-task 4에서 채워짐 */}
+            <DropdownMenuContent align="end" className="w-52">
+              {/* ── 공통 ── */}
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect?.(credential.id);
+                }}
+              >
+                <ExternalLink className="mr-2 h-3.5 w-3.5" aria-hidden />
+                {t("inventory.bentoViewDetail")}
+              </DropdownMenuItem>
+
+              {/* ── password 전용 ── */}
+              {credential.kind === "password" && credential.username !== null && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void navigator.clipboard.writeText(credential.username!);
+                  }}
+                >
+                  <User className="mr-2 h-3.5 w-3.5" aria-hidden />
+                  {t("inventory.bentoCopyUsername")}
+                </DropdownMenuItem>
+              )}
+              {credential.kind === "password" && credential.url !== null && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void navigator.clipboard.writeText(credential.url!);
+                  }}
+                >
+                  <Copy className="mr-2 h-3.5 w-3.5" aria-hidden />
+                  {t("inventory.bentoCopyUrl")}
+                </DropdownMenuItem>
+              )}
+              {credential.kind === "password" && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toast.info(t("inventory.m7ComingSoon"));
+                    }}
+                  >
+                    <ShieldAlert className="mr-2 h-3.5 w-3.5" aria-hidden />
+                    {t("inventory.bentoCheckBreach")}
+                  </DropdownMenuItem>
+                </>
+              )}
+
+              {/* ── api_key 전용 ── */}
+              {credential.kind === "api_key" && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toast.info(t("inventory.m7ComingSoon"));
+                    }}
+                  >
+                    <GitFork className="mr-2 h-3.5 w-3.5" aria-hidden />
+                    {t("inventory.bentoViewGraph")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toast.info(t("inventory.m7ComingSoon"));
+                    }}
+                  >
+                    <Crosshair className="mr-2 h-3.5 w-3.5" aria-hidden />
+                    {t("inventory.bentoBlastRadius")}
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

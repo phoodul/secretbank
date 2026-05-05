@@ -2339,4 +2339,18 @@ api-vault 의 두 갈래 통합:
 
 ---
 
+## M24 진행 현황 (Unified Bento Inventory — C-1~C-4)
+
+매 sub-task 완료 시 commiter 가 커밋을 만든 직후 한 줄 추가.
+
+| Task ID | 제목 | 완료일 | 커밋 해시 |
+| :------ | :--- | :----- | :-------- |
+| C-1     | credential kind/url/username 타입 sync (CredentialSummary 확장 + Rust DTO + 마이그레이션) | 2026-05-05 | `966ea42` |
+| C-2     | BentoCard 컴포넌트 최초 구현 (30s reveal/copy) | 2026-05-05 | `44b37f2` |
+| C-2 fix | BentoCard 디자인 정정 — ID 마스킹 + URL/ID/PW/API Key 라벨 + i18n + 테스트 22개 | 2026-05-05 | `d54121c` |
+| C-3     | BentoGrid 컴포넌트 — responsive auto-fill + empty/skeleton + 테스트 10개 | 2026-05-05 | `cb395a1` |
+| C-4     | BentoCard ⋮ 메뉴 type별 분기 + "API Key:" 라벨 정정 (keyLabel i18n en/ko) | 2026-05-05 | TBD |
+
+---
+
 _문서 끝._

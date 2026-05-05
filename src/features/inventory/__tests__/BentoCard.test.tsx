@@ -180,9 +180,9 @@ describe("BentoCard", () => {
     expect(screen.getByText("PW:")).toBeInTheDocument();
   });
 
-  it("api_key: 'Key:' 라벨을 표시한다 (PW 대신)", () => {
+  it("api_key: 'API Key:' 라벨을 표시한다 (PW 대신)", () => {
     renderCard(makeApiKey());
-    expect(screen.getByText("Key:")).toBeInTheDocument();
+    expect(screen.getByText("API Key:")).toBeInTheDocument();
     expect(screen.queryByText("PW:")).toBeNull();
   });
 

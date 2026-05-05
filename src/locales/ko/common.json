@@ -208,7 +208,7 @@
       "urlLabel": "URL:",
       "idLabel": "ID:",
       "pwLabel": "PW:",
-      "keyLabel": "Key:",
+      "keyLabel": "API Key:",
       "show": "보기",
       "hide": "숨김"
     }
