@@ -261,7 +261,10 @@ describe("CreateCredentialDialog", () => {
           scope: undefined,
           expires_at: undefined,
           hash_hint: "1234", // "sk-testkey1234".slice(-4)
+          primary_label: undefined,
+          secondary_label: undefined,
           value: "sk-testkey1234",
+          secondary_value: undefined,
         },
       });
     });
@@ -449,6 +452,71 @@ describe("CreateCredentialDialog", () => {
       const args = calls[0][1] as { args: { expires_at?: number } };
       expect(typeof args.args.expires_at).toBe("number");
       expect(args.args.expires_at).toBeGreaterThan(0);
+    });
+  });
+
+  it("secondary 토글 ON 후 submit → secondary_value + secondary_label + primary_label 포함", async () => {
+    const user = userEvent.setup();
+
+    // Supabase-like issuer with default_secondary_label set
+    const SUPABASE_ISSUER = {
+      id: "01HZBBBBBBBBBBBBBBBBBBBBBS",
+      slug: "supabase",
+      display_name: "Supabase",
+      docs_url: null,
+      issue_url: null,
+      status_url: null,
+      security_feed_url: null,
+      connector_id: null,
+      icon_key: "supabase",
+      default_primary_label: "Public Key",
+      default_secondary_label: "Secret Key",
+      created_at: 1700000000000,
+      updated_at: 1700000000000,
+    };
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "issuer_list") return Promise.resolve([...MOCK_ISSUERS, SUPABASE_ISSUER]);
+      return Promise.resolve("01HZNEWCREDID00000000001");
+    });
+
+    renderDialog();
+
+    // issuer 선택 (Supabase)
+    const issuerBtn = await screen.findByRole("combobox", { name: /issuer/i });
+    await user.click(issuerBtn);
+    const supabaseItem = await screen.findByText("Supabase");
+    await user.click(supabaseItem);
+
+    // secondary 필드가 자동으로 나타나야 함 (default_secondary_label != null → has_secondary = true)
+    expect(await screen.findByText("Secondary label")).toBeInTheDocument();
+    expect(screen.getByText("Secondary value")).toBeInTheDocument();
+
+    // name, value 입력
+    const nameInput = screen.getByPlaceholderText("e.g. Production key");
+    await user.type(nameInput, "Pair Key");
+
+    const valueInput = screen.getByPlaceholderText("Paste your API key");
+    await user.type(valueInput, "pk-public-1234");
+
+    // secondary_value 입력 (type=password 이므로 password inputs 중 두 번째)
+    const passwordInputs = document.querySelectorAll('input[type="password"]');
+    const secondaryValueInput = passwordInputs[1] as HTMLInputElement;
+    await user.type(secondaryValueInput, "sk-secret-5678");
+
+    const submitBtn = screen.getByRole("button", { name: /save credential/i });
+    await user.click(submitBtn);
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith(
+        "credential_create",
+        expect.objectContaining({
+          args: expect.objectContaining({
+            primary_label: "Public Key",
+            secondary_label: "Secret Key",
+            secondary_value: "sk-secret-5678",
+          }),
+        }),
+      );
     });
   });
 });

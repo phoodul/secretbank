@@ -42,6 +42,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { useIssuers } from "./use-issuers";
 import { findPreset } from "./issuer-presets";
@@ -50,18 +51,44 @@ import { findPreset } from "./issuer-presets";
 // Zod schema
 // ---------------------------------------------------------------------------
 
-const schema = z.object({
-  issuer_id: z.string().min(1),
-  name: z.string().min(1).max(100),
-  env: z.enum(["dev", "staging", "prod"]),
-  scope: z
-    .string()
-    .max(200)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  expires_at: z.string().optional(),
-  value: z.string().min(1),
-});
+const schema = z
+  .object({
+    issuer_id: z.string().min(1),
+    name: z.string().min(1).max(100),
+    env: z.enum(["dev", "staging", "prod"]),
+    scope: z
+      .string()
+      .max(200)
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    expires_at: z.string().optional(),
+    value: z.string().min(1),
+    primary_label: z
+      .string()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    has_secondary: z.boolean(),
+    secondary_value: z.string().optional(),
+    secondary_label: z.string().optional(),
+  })
+  .refine(
+    (data) =>
+      !data.has_secondary ||
+      (data.secondary_value !== undefined && data.secondary_value.length > 0),
+    {
+      message: "Secondary value required when secondary enabled",
+      path: ["secondary_value"],
+    },
+  )
+  .refine(
+    (data) =>
+      !data.has_secondary ||
+      (data.secondary_label !== undefined && data.secondary_label.length > 0),
+    {
+      message: "Secondary label required when secondary enabled",
+      path: ["secondary_label"],
+    },
+  );
 
 type FormValues = z.infer<typeof schema>;
 
@@ -87,6 +114,7 @@ export function CreateCredentialDialog({
   const { t } = useTranslation("common");
   const { issuers } = useIssuers();
   const [showValue, setShowValue] = useState(false);
+  const [showSecondaryValue, setShowSecondaryValue] = useState(false);
   const [issuerPopoverOpen, setIssuerPopoverOpen] = useState(false);
 
   const form = useForm<FormValues>({
@@ -98,10 +126,15 @@ export function CreateCredentialDialog({
       scope: "",
       expires_at: "",
       value: "",
+      primary_label: "",
+      has_secondary: false,
+      secondary_value: "",
+      secondary_label: "",
     },
   });
 
   const isSubmitting = form.formState.isSubmitting;
+  const hasSecondary = form.watch("has_secondary");
 
   async function onSubmit(values: FormValues) {
     const expiresAtMs =
@@ -113,6 +146,11 @@ export function CreateCredentialDialog({
 
     const hashHint = values.value.slice(-4);
 
+    const primaryLabelVal =
+      values.primary_label === "" || values.primary_label === undefined
+        ? undefined
+        : values.primary_label;
+
     try {
       await invoke<string>("credential_create", {
         args: {
@@ -122,13 +160,17 @@ export function CreateCredentialDialog({
           scope: scopeVal,
           expires_at: expiresAtMs,
           hash_hint: hashHint,
+          primary_label: primaryLabelVal,
+          secondary_label: values.has_secondary ? values.secondary_label : undefined,
           value: values.value,
+          secondary_value: values.has_secondary ? values.secondary_value : undefined,
         },
       });
 
       toast.success(t("inventory.credentialSaved"));
       form.reset();
       setShowValue(false);
+      setShowSecondaryValue(false);
       onOpenChange(false);
       onSuccess();
     } catch (err) {
@@ -141,6 +183,7 @@ export function CreateCredentialDialog({
     if (!next) {
       form.reset();
       setShowValue(false);
+      setShowSecondaryValue(false);
       setIssuerPopoverOpen(false);
     }
     onOpenChange(next);
@@ -206,6 +249,18 @@ export function CreateCredentialDialog({
                                       value={issuer.display_name}
                                       onSelect={() => {
                                         field.onChange(issuer.id);
+                                        form.setValue(
+                                          "primary_label",
+                                          issuer.default_primary_label ?? "",
+                                        );
+                                        form.setValue(
+                                          "secondary_label",
+                                          issuer.default_secondary_label ?? "",
+                                        );
+                                        form.setValue(
+                                          "has_secondary",
+                                          issuer.default_secondary_label !== null,
+                                        );
                                         setIssuerPopoverOpen(false);
                                       }}
                                     >
@@ -286,6 +341,102 @@ export function CreateCredentialDialog({
                 </FormItem>
               )}
             />
+
+            {/* Primary label (optional) */}
+            <FormField
+              control={form.control}
+              name="primary_label"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("inventory.fieldPrimaryLabel")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t("inventory.fieldPrimaryLabelPlaceholder")}
+                      autoComplete="off"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* has_secondary toggle */}
+            <FormField
+              control={form.control}
+              name="has_secondary"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center gap-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="has_secondary"
+                    />
+                  </FormControl>
+                  <FormLabel htmlFor="has_secondary" className="cursor-pointer font-normal">
+                    {t("inventory.toggleSecondary")}
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
+
+            {/* Secondary fields — shown only when has_secondary is true */}
+            {hasSecondary && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="secondary_label"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("inventory.fieldSecondaryLabel")}</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="off" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="secondary_value"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("inventory.fieldSecondaryValue")}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showSecondaryValue ? "text" : "password"}
+                            autoComplete="new-password"
+                            aria-autocomplete="none"
+                            className="pr-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            aria-label={
+                              showSecondaryValue
+                                ? t("inventory.hideValue")
+                                : t("inventory.showValue")
+                            }
+                            onClick={() => setShowSecondaryValue((v) => !v)}
+                          >
+                            {showSecondaryValue ? (
+                              <EyeOff className="size-4" aria-hidden />
+                            ) : (
+                              <Eye className="size-4" aria-hidden />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             {/* Environment */}
             <FormField
