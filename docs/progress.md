@@ -2,6 +2,57 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-05 — **M24 Phase 1 완료 + Phase 1.5 (Option D pair 모델) 절반 진행 후 정리 종료**
+- **Phase:** Phase 3 — Implementation. M24 v1 진행 중.
+- **세션 결과:**
+  - **Cargo.lock untrack** (`0fbeb27`) — `.gitignore` 등록되어 있었으나 추적 중이던 잔재 정리
+  - **M24 Phase 1 (C-1 ~ C-4)** — types sync + BentoCard + BentoGrid + ⋮ 메뉴 type별 분기 + ID 마스킹 정정 + "API Key:" 라벨
+  - **M24 Phase 1.5-A** (`938d968`) — migration 0007 (`secondary_value_ref` + `primary_label` + `secondary_label`) + Rust DTO 확장
+  - **M24 Phase 1.5-B** (`63334c4`) — pair credential repo/command + `credential_reveal` 의 `slot` 옵션 파라미터
+  - **결정 기록** (`93fd796`) — docs/project-decisions.md 의 [2026-05-05] M24 Phase 1.5 항목 (Option D + hover mini-graph)
+- **commits 누적 (이번 세션):**
+  - `0fbeb27` chore: untrack Cargo.lock per .gitignore
+  - `966ea42` feat(inventory): credential kind/url/username 타입 sync (M24 C-1)
+  - `44b37f2` feat(inventory): BentoCard 컴포넌트 + 30s reveal/copy (M24 C-2)
+  - `d54121c` fix(inventory): BentoCard 디자인 정정 — ID 마스킹 + URL/ID/PW 라벨 (M24 C-2 정정)
+  - `cb395a1` feat(inventory): BentoGrid 컴포넌트 — responsive auto-fill + empty/skeleton (M24 C-3)
+  - `2bfc180` fix(inventory): BentoCard ⋮ 메뉴 type별 분기 + API Key 라벨 (M24 C-4)
+  - `f81cde8` docs(task): M24 C-4 커밋 해시 갱신
+  - `938d968` feat(storage): credential value pair 모델 — migration 0007 + DTO 확장 (M24 1.5-A)
+  - `63334c4` feat(backend): pair credential repo/command + reveal slot 파라미터 (M24 1.5-B)
+  - `93fd796` docs(decisions): M24 Phase 1.5 — Option D + hover mini-graph 결정 기록
+- **push 안 됨** — 10 commits ahead of origin/main. 다음 세션이 검증 후 push 결정.
+- **WIP stash 보관** — `git stash list` 의 `stash@{0}`:
+  - 제목: `WIP: M24 1.5-C in progress — issuer preset default 라벨 (migration 0008 + issuer 모델/repo/test 변경, 미완성, 새 세션에서 재검토)`
+  - 내용: Sub-task 1.5-C (issuer preset 의 default_primary_label / default_secondary_label) 진행 중 미완성 상태
+    - 새 파일: `src-tauri/crates/api-vault-storage/migrations/0008_issuer_pair_labels.sql` (untracked)
+    - 수정: `models/issuer.rs`, `repositories/issuer.rs`, `repositories/incident.rs`, `commands/credentials.rs`, `commands/kill_switch.rs`, `services/feed_normalize.rs`, `core/blast_radius.rs`, `core/graph.rs`, `feeds/matcher.rs` + 테스트 4개
+  - **새 세션 결정 사항:** stash pop 후 검증 (typecheck/clippy/test 통과 여부) → 통과면 commit, 실패면 stash drop 후 1.5-C 재시작
+
+### 다음 세션 시작점 — M24 Phase 1.5 이어서
+
+남은 sub-tasks (예상 4-5h):
+
+1. **1.5-C** (이어서) — issuer preset default 라벨 — stash pop 후 검증, 또는 처음부터 재구현
+   - Supabase: `("Public Key", "Secret Key")`
+   - AWS IAM: `("Access Key", "Secret Key")`
+   - GitHub OAuth App: `("Client ID", "Client Secret")`
+   - 기본: `("API Key", null)`
+2. **1.5-D** — Frontend types.ts sync (primary_label / secondary_label / has_secondary)
+3. **1.5-E** — BentoCard pair UI (두 번째 row 렌더 + 30s 타이머 독립 + slot="secondary" reveal)
+4. **1.5-F** — CreateCredentialDialog 라벨 자동 + secondary 토글
+5. **1.5-G** — BentoCard hover expand → mini dependency graph (순수 SVG 권장)
+
+### 세션 조기 종료 사유
+
+- implementator 한 번에 7 sub-tasks 위임이 무리였음. token 한계로 79 tool_uses 도달 후 멈춤
+- SendMessage 로 이어서 한 번 더 진행했으나 사용자가 진행 속도에 답답함을 표현 → 세션 종료 + 새 세션 재시작 결정
+- **재발 방지 룰:** Phase 단위가 아닌 **sub-task 1~2 개 단위로 implementator 위임**. 1 implementator 호출 = 1~2 commit 목표
+
+---
+
+## Previous checkpoint (2026-05-03 밤 — Dependabot 처리 풀 완주)
+
 - **Time:** 2026-05-03 (밤) — **F1+F2+F3 Dependabot 처리 풀 완주 — 14 alert 중 11 close (78.6%)**
 - **최종 상태:** HIGH 4→**0** (100% 해소) / MEDIUM 7→2 / LOW 3→1 → **총 5 commit, 5 push**
 - **commit 시리즈 (오늘 저녁):**

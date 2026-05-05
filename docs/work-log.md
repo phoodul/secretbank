@@ -1,5 +1,54 @@
 # Work Log
 
+## 2026-05-05 — M24 Phase 1 + Phase 1.5 절반 (10 commits, push 안 됨)
+
+이번 세션의 핵심 진전: **type-agnostic bento card UI 완성** + **credential value pair (Option D) backend 절반**.
+
+### Phase 1 (bento grid) — 완료
+
+사용자 비전 명확화: 모든 credential 을 통합 bento card 로. password / api_key 같은 디자인, 다른 액션. 1Password/Bitwarden 보다 직관적.
+
+카드 레이아웃 (사용자가 직접 정정해서 확정):
+```
+cloudflare              ← name (라벨 없이)
+URL: cloudflare.com     ← 평문
+ID:  ••••••• [보기]     ← username 도 마스킹 + client-side reveal (30s)
+PW:  ••••••• [보기][복사] ← Tauri credential_reveal + 30s
+```
+
+핵심 결정: **ID(username) 도 마스킹** — shoulder-surfing 방어 (1Password 보다 강한 privacy).
+
+- C-1 (`966ea42`): types.ts 에 `kind`/`url`/`username` 추가, Rust DTO 와 sync
+- C-2 (`44b37f2`): BentoCard 컴포넌트 (Tauri reveal + 30s 자동 마스킹 + clipboard)
+- C-2 정정 (`d54121c`): ID 도 마스킹 + URL/ID/PW 라벨 통일
+- C-3 (`cb395a1`): BentoGrid responsive auto-fill (minmax 280px) + empty/skeleton
+- C-4 (`2bfc180`, `f81cde8`): ⋮ 메뉴 type 별 분기 (api_key→Rotate/Graph/Blast, password→HIBP placeholder) + "API Key:" 라벨
+
+테스트: BentoCard 22 + BentoGrid 10 = 32 통과.
+
+### Phase 1.5 (Option D — value pair) — 절반 진행
+
+추가 사용자 비전: API key 의 라벨 자유화 + Public/Secret pair (Supabase/AWS/OAuth) + 카드 hover 시 dependency graph 시각화.
+
+모델링 결정 (`93fd796`):
+- **Option D** — `secondary_value_ref` + `primary_label` + `secondary_label` 3 컬럼 추가, 1 row = 1 카드 모델 유지
+- 라벨 자유 문자열 (issuer preset 의 default 묶음으로 자동 채움)
+- hover 시 카드 expand → 미니 dependency graph (project/deployment 노드 + 엣지)
+
+진행 상태:
+- 1.5-A (`938d968`): migration 0007 + Credential* DTO 확장 ✅
+- 1.5-B (`63334c4`): pair credential repo/command + `credential_reveal` 의 `slot` 옵션 파라미터 ✅
+- 1.5-C ~ 1.5-G: 미완 — 1.5-C (issuer preset default 라벨) 만 진행 중 미완성 상태로 `stash@{0}` 보관
+
+### 세션 조기 종료 — implementator 위임 단위 lesson
+
+implementator 한 번에 7 sub-tasks 위임은 token 한계 + 사용자 체감 진행 속도 문제로 비효율.
+**다음 세션 룰: implementator 호출 = sub-task 1~2개 단위. 1 호출 = 1~2 commit 목표.**
+
+push 없음 (10 commits ahead). 다음 세션이 1.5-C 마무리 + push 검증.
+
+---
+
 ## 2026-04-30 Night mode 18 — LockScreen 글로벌 LanguageSwitcher (2 commits, 11 → 15 언어)
 
 ### 세션 개요
