@@ -69,6 +69,18 @@ pub struct Credential {
     /// Password-only — login identifier (e.g. "user@gmail.com"). `None` for API keys.
     #[serde(default)]
     pub username: Option<String>,
+    /// Vault entry reference for the secondary secret (e.g. Secret Key, Client Secret).
+    /// `None` = single-secret credential. Always set/cleared together with `secondary_label`.
+    #[serde(default)]
+    pub secondary_value_ref: Option<String>,
+    /// Display label for the primary value (e.g. "API Key", "Public Key", "Password").
+    /// `None` = type-based fallback in the UI (api_key→"API Key", password→"PW").
+    #[serde(default)]
+    pub primary_label: Option<String>,
+    /// Display label for the secondary value (e.g. "Secret Key", "Client Secret").
+    /// `None` iff `secondary_value_ref` is `None`.
+    #[serde(default)]
+    pub secondary_label: Option<String>,
 }
 
 /// Input for creating a new credential (no id, vault_ref, or timestamps).
@@ -90,6 +102,12 @@ pub struct CredentialInput {
     pub url: Option<String>,
     #[serde(default)]
     pub username: Option<String>,
+    /// Display label for the primary value. `None` = type-based fallback.
+    #[serde(default)]
+    pub primary_label: Option<String>,
+    /// Display label for the secondary value. Required when `secondary_value` is provided.
+    #[serde(default)]
+    pub secondary_label: Option<String>,
 }
 
 /// Lightweight summary used in list views.
@@ -115,6 +133,15 @@ pub struct CredentialSummary {
     pub url: Option<String>,
     #[serde(default)]
     pub username: Option<String>,
+    /// `true` when `secondary_value_ref` is set — avoids leaking vault paths in list responses.
+    #[serde(default)]
+    pub has_secondary: bool,
+    /// Display label for the primary value. `None` = type-based fallback.
+    #[serde(default)]
+    pub primary_label: Option<String>,
+    /// Display label for the secondary value. `None` when no secondary exists.
+    #[serde(default)]
+    pub secondary_label: Option<String>,
 }
 
 /// Partial update — all fields optional.
@@ -131,6 +158,10 @@ pub struct CredentialPatch {
     pub hash_hint: Option<String>,
     pub url: Option<String>,
     pub username: Option<String>,
+    pub primary_label: Option<String>,
+    pub secondary_label: Option<String>,
+    /// When `Some`, updates the secondary vault ref (use empty string to clear).
+    pub secondary_value_ref: Option<String>,
 }
 
 /// Filter parameters for listing credentials.

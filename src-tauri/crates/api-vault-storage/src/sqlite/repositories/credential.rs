@@ -48,8 +48,8 @@ impl<'a> CredentialRepo<'a> {
             r#"INSERT INTO credential
                (id, issuer_id, name, env, scope, vault_ref, created_at, expires_at,
                 owner, rotation_policy_days, rotation_runbook_id, status, hash_hint,
-                kind, url, username)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)"#,
+                kind, url, username, primary_label, secondary_label)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?)"#,
         )
         .bind(&id_str)
         .bind(&issuer_id_str)
@@ -66,6 +66,8 @@ impl<'a> CredentialRepo<'a> {
         .bind(kind_to_str(input.kind))
         .bind(&input.url)
         .bind(&input.username)
+        .bind(&input.primary_label)
+        .bind(&input.secondary_label)
         .execute(self.pool)
         .await?;
 
@@ -77,7 +79,8 @@ impl<'a> CredentialRepo<'a> {
         let row = sqlx::query(
             r#"SELECT id, issuer_id, name, env, scope, vault_ref, created_at,
                       last_rotated_at, expires_at, owner, rotation_policy_days,
-                      rotation_runbook_id, status, hash_hint, kind, url, username
+                      rotation_runbook_id, status, hash_hint, kind, url, username,
+                      secondary_value_ref, primary_label, secondary_label
                FROM credential WHERE id = ?"#,
         )
         .bind(&id_str)
@@ -95,7 +98,8 @@ impl<'a> CredentialRepo<'a> {
         let mut qb = sqlx::QueryBuilder::new(
             "SELECT id, issuer_id, name, env, scope, vault_ref, created_at, last_rotated_at, \
              expires_at, owner, rotation_policy_days, rotation_runbook_id, status, hash_hint, \
-             kind, url, username FROM credential WHERE 1=1",
+             kind, url, username, secondary_value_ref, primary_label, secondary_label \
+             FROM credential WHERE 1=1",
         );
 
         if let Some(issuer_id) = &filter.issuer_id {
@@ -140,6 +144,9 @@ impl<'a> CredentialRepo<'a> {
                     kind: cred.kind,
                     url: cred.url,
                     username: cred.username,
+                    has_secondary: cred.secondary_value_ref.is_some(),
+                    primary_label: cred.primary_label,
+                    secondary_label: cred.secondary_label,
                 })
             })
             .collect()
@@ -199,6 +206,21 @@ impl<'a> CredentialRepo<'a> {
         if let Some(ref username) = patch.username {
             push_field!("username", username.clone());
         }
+        if let Some(ref label) = patch.primary_label {
+            push_field!("primary_label", label.clone());
+        }
+        if let Some(ref label) = patch.secondary_label {
+            push_field!("secondary_label", label.clone());
+        }
+        if let Some(ref vault_ref) = patch.secondary_value_ref {
+            // Empty string = clear the secondary value.
+            let val: Option<String> = if vault_ref.is_empty() {
+                None
+            } else {
+                Some(vault_ref.clone())
+            };
+            push_field!("secondary_value_ref", val);
+        }
 
         if first {
             return Ok(());
@@ -218,7 +240,8 @@ impl<'a> CredentialRepo<'a> {
         let rows = sqlx::query(
             r#"SELECT id, issuer_id, name, env, scope, vault_ref, created_at,
                       last_rotated_at, expires_at, owner, rotation_policy_days,
-                      rotation_runbook_id, status, hash_hint, kind, url, username
+                      rotation_runbook_id, status, hash_hint, kind, url, username,
+                      secondary_value_ref, primary_label, secondary_label
                FROM credential ORDER BY id ASC"#,
         )
         .fetch_all(self.pool)
@@ -247,6 +270,7 @@ fn row_to_credential(r: &sqlx::sqlite::SqliteRow) -> Result<Credential, StorageE
     let expires_ms: Option<i64> = r.try_get("expires_at")?;
     let rotation_days: Option<i64> = r.try_get("rotation_policy_days")?;
     let kind_str: String = r.try_get("kind")?;
+    let secondary_value_ref: Option<String> = r.try_get("secondary_value_ref")?;
 
     Ok(Credential {
         id: id_str
@@ -270,6 +294,9 @@ fn row_to_credential(r: &sqlx::sqlite::SqliteRow) -> Result<Credential, StorageE
         kind: str_to_kind(&kind_str)?,
         url: r.try_get("url")?,
         username: r.try_get("username")?,
+        secondary_value_ref,
+        primary_label: r.try_get("primary_label")?,
+        secondary_label: r.try_get("secondary_label")?,
     })
 }
 
