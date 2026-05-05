@@ -203,7 +203,15 @@
     "bentoCopyUrl": "Copy URL",
     "bentoCheckBreach": "Check breach",
     "bentoViewGraph": "View dependency graph",
-    "bentoBlastRadius": "Blast radius"
+    "bentoBlastRadius": "Blast radius",
+    "card": {
+      "urlLabel": "URL:",
+      "idLabel": "ID:",
+      "pwLabel": "PW:",
+      "keyLabel": "Key:",
+      "show": "Show",
+      "hide": "Hide"
+    }
   },
   "vault": {
     "unlockTitle": "Unlock Vault",

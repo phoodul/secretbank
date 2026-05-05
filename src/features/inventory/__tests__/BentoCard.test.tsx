@@ -1,5 +1,11 @@
 /**
- * BentoCard — M24 C-2 TDD 테스트
+ * BentoCard — M24 C-2 정정 TDD 테스트
+ *
+ * 정정된 레이아웃:
+ *   Row 1 — name (라벨 없이)
+ *   Row 2 — "URL:" 라벨 + 값
+ *   Row 3 — "ID:" 라벨 + (password: 마스킹 + reveal) | (api_key: issuer 평문)
+ *   Row 4 — "PW:" / "Key:" 라벨 + 마스킹 + reveal + copy
  */
 
 import { render, screen, waitFor, act } from "@testing-library/react";
@@ -124,15 +130,17 @@ describe("BentoCard", () => {
     expect(screen.getByText("My API Key")).toBeInTheDocument();
   });
 
-  it("마스킹된 dots를 렌더링한다", () => {
+  it("PW 행에 마스킹된 dots를 렌더링한다", () => {
     renderCard(makeApiKey());
-    // 마스킹 표시: ••••••••••••• 혹은 유사 패턴
-    expect(screen.getByText(/•+/)).toBeInTheDocument();
+    // 마스킹 표시: ••••••••••••• 패턴 (여러 개 있을 수 있음)
+    const masked = screen.getAllByText(/•+/);
+    expect(masked.length).toBeGreaterThan(0);
   });
 
-  it("Show 버튼을 렌더링한다", () => {
+  it("Show 버튼을 렌더링한다 (aria-label 기준)", () => {
     renderCard(makeApiKey());
-    expect(screen.getByRole("button", { name: /show/i })).toBeInTheDocument();
+    // PW 행의 Show 버튼 (aria-label = "Show")
+    expect(screen.getAllByRole("button", { name: /show/i }).length).toBeGreaterThan(0);
   });
 
   it("Copy 버튼을 렌더링한다", () => {
@@ -140,38 +148,117 @@ describe("BentoCard", () => {
     expect(screen.getByRole("button", { name: /copy/i })).toBeInTheDocument();
   });
 
-  // ── kind 별 표시 ───────────────────────────────────────────────────────────
+  // ── 라벨 표시 ─────────────────────────────────────────────────────────────
 
-  it("api_key: issuer display_name을 표시한다", () => {
-    renderCard(makeApiKey({ issuer_id: "01HZBBBBBBBBBBBBBBBBBBBBBB" }));
-    // useIssuers mock이 OpenAI를 반환하므로 OpenAI가 표시되어야 함
-    expect(screen.getByText("OpenAI")).toBeInTheDocument();
+  it("URL이 있으면 'URL:' 라벨을 표시한다", () => {
+    renderCard(makePassword({ url: "https://gmail.com" }));
+    expect(screen.getByText("URL:")).toBeInTheDocument();
   });
 
-  it("password: username을 표시한다", () => {
-    renderCard(makePassword());
-    expect(screen.getByText("user@gmail.com")).toBeInTheDocument();
-  });
-
-  // ── URL ───────────────────────────────────────────────────────────────────
-
-  it("url이 있으면 렌더링한다", () => {
+  it("URL 값이 'URL:' 라벨 옆에 표시된다", () => {
     renderCard(makePassword({ url: "https://gmail.com" }));
     expect(screen.getByText("https://gmail.com")).toBeInTheDocument();
   });
 
-  it("url이 null이면 URL 요소를 렌더링하지 않는다", () => {
+  it("URL이 null이면 URL 라벨을 렌더링하지 않는다", () => {
     renderCard(makeApiKey({ url: null }));
-    expect(screen.queryByText("https://")).toBeNull();
+    expect(screen.queryByText("URL:")).toBeNull();
   });
 
-  // ── Show / reveal ──────────────────────────────────────────────────────────
+  it("password: 'ID:' 라벨을 표시한다", () => {
+    renderCard(makePassword());
+    expect(screen.getByText("ID:")).toBeInTheDocument();
+  });
 
-  it("Show 클릭 시 credential_reveal Tauri 커맨드를 호출한다", async () => {
+  it("api_key: 'ID:' 라벨을 표시한다 (issuer name 옆에)", () => {
+    renderCard(makeApiKey({ issuer_id: "01HZBBBBBBBBBBBBBBBBBBBBBB" }));
+    expect(screen.getByText("ID:")).toBeInTheDocument();
+  });
+
+  it("password: 'PW:' 라벨을 표시한다", () => {
+    renderCard(makePassword());
+    expect(screen.getByText("PW:")).toBeInTheDocument();
+  });
+
+  it("api_key: 'Key:' 라벨을 표시한다 (PW 대신)", () => {
+    renderCard(makeApiKey());
+    expect(screen.getByText("Key:")).toBeInTheDocument();
+    expect(screen.queryByText("PW:")).toBeNull();
+  });
+
+  // ── ID 행 — kind 별 동작 ───────────────────────────────────────────────────
+
+  it("api_key: ID 행에 issuer display_name을 평문으로 표시한다", () => {
+    renderCard(makeApiKey({ issuer_id: "01HZBBBBBBBBBBBBBBBBBBBBBB" }));
+    expect(screen.getByText("OpenAI")).toBeInTheDocument();
+  });
+
+  it("api_key: ID 행에 reveal 버튼이 없다", () => {
+    renderCard(makeApiKey({ issuer_id: "01HZBBBBBBBBBBBBBBBBBBBBBB" }));
+    // Show 버튼은 PW 행 하나만 존재해야 함
+    const showBtns = screen.getAllByRole("button", { name: /show/i });
+    // api_key 에는 ID reveal 버튼이 없으므로 PW 행 1개만
+    expect(showBtns).toHaveLength(1);
+  });
+
+  it("password: ID 행의 username이 마스킹되어 표시된다", () => {
+    renderCard(makePassword({ username: "user@gmail.com" }));
+    // ID 행과 PW 행 모두 마스킹 — username 평문은 보이지 않음
+    expect(screen.queryByText("user@gmail.com")).toBeNull();
+    const masked = screen.getAllByText(/•+/);
+    expect(masked.length).toBeGreaterThanOrEqual(2); // ID행 + PW행
+  });
+
+  it("password: ID [보기] 클릭 시 username이 노출된다 (Tauri 호출 없음)", async () => {
+    const user = userEvent.setup();
+    renderCard(makePassword({ username: "user@gmail.com" }));
+
+    // Show 버튼이 2개 (ID + PW) — ID 행의 첫 번째 버튼
+    const showBtns = screen.getAllByRole("button", { name: /show/i });
+    await user.click(showBtns[0]);
+
+    // Tauri invoke 호출 없음
+    expect(mockInvoke).not.toHaveBeenCalledWith("credential_reveal", expect.anything());
+
+    // username 노출
+    await waitFor(() => {
+      expect(screen.getByText("user@gmail.com")).toBeInTheDocument();
+    });
+  });
+
+  it("password: ID reveal 후 30초 지나면 다시 마스킹된다 (fake timer)", async () => {
+    vi.useFakeTimers();
+    try {
+      renderCard(makePassword({ username: "user@gmail.com" }));
+
+      const showBtns = screen.getAllByRole("button", { name: /show/i });
+
+      await act(async () => {
+        showBtns[0].click();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(screen.getByText("user@gmail.com")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(30_000);
+      });
+
+      expect(screen.queryByText("user@gmail.com")).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // ── PW Show / reveal ───────────────────────────────────────────────────────
+
+  it("PW Show 클릭 시 credential_reveal Tauri 커맨드를 호출한다", async () => {
     const user = userEvent.setup();
     mockInvoke.mockResolvedValue("sk-test-secret-value");
     renderCard(makeApiKey());
 
+    // api_key는 Show 버튼이 PW 행 하나뿐
     const showBtn = screen.getByRole("button", { name: /show/i });
     await user.click(showBtn);
 
@@ -180,7 +267,7 @@ describe("BentoCard", () => {
     });
   });
 
-  it("reveal 성공 시 실제 값이 표시된다", async () => {
+  it("PW reveal 성공 시 실제 값이 표시된다", async () => {
     const user = userEvent.setup();
     mockInvoke.mockResolvedValue("sk-test-secret-value");
     renderCard(makeApiKey());
@@ -193,7 +280,7 @@ describe("BentoCard", () => {
     });
   });
 
-  it("reveal 후 Hide 버튼이 나타난다", async () => {
+  it("PW reveal 후 Hide 버튼이 나타난다", async () => {
     const user = userEvent.setup();
     mockInvoke.mockResolvedValue("sk-test-secret-value");
     renderCard(makeApiKey());
@@ -206,37 +293,29 @@ describe("BentoCard", () => {
     });
   });
 
-  it("reveal 후 30초가 지나면 다시 마스킹된다 (fake timer)", async () => {
-    // fake timer 환경: Promise microtask 를 flush 하기 위해
-    // vi.runAllMicrotasks() + act 패턴을 사용한다
+  it("PW reveal 후 30초가 지나면 다시 마스킹된다 (fake timer)", async () => {
     vi.useFakeTimers();
     try {
-      // invoke 는 즉시 resolve 되는 Promise 반환
       mockInvoke.mockImplementation(() => Promise.resolve("sk-test-secret-value"));
 
       renderCard(makeApiKey());
 
       const showBtn = screen.getByRole("button", { name: /show/i });
 
-      // act 안에서 클릭 + microtask flush
       await act(async () => {
         showBtn.click();
-        // microtask (Promise resolution) 를 drain 한다
         await Promise.resolve();
         await Promise.resolve();
       });
 
-      // reveal 값이 표시되어야 함
       expect(screen.getByText("sk-test-secret-value")).toBeInTheDocument();
 
-      // 30초 진행
       act(() => {
         vi.advanceTimersByTime(30_000);
       });
 
-      // 마스킹으로 복귀해야 함
       expect(screen.queryByText("sk-test-secret-value")).not.toBeInTheDocument();
-      expect(screen.getByText(/•+/)).toBeInTheDocument();
+      expect(screen.getAllByText(/•+/).length).toBeGreaterThan(0);
     } finally {
       vi.useRealTimers();
     }

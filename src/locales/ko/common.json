@@ -203,7 +203,15 @@
     "bentoCopyUrl": "URL 복사",
     "bentoCheckBreach": "침해 확인",
     "bentoViewGraph": "의존성 그래프 보기",
-    "bentoBlastRadius": "블래스트 반경"
+    "bentoBlastRadius": "블래스트 반경",
+    "card": {
+      "urlLabel": "URL:",
+      "idLabel": "ID:",
+      "pwLabel": "PW:",
+      "keyLabel": "Key:",
+      "show": "보기",
+      "hide": "숨김"
+    }
   },
   "vault": {
     "unlockTitle": "볼트 잠금 해제",

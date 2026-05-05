@@ -1,12 +1,16 @@
 /**
- * BentoCard — M24 Unified Bento Inventory 카드 컴포넌트 (C-2)
+ * BentoCard — M24 Unified Bento Inventory 카드 컴포넌트 (C-2 정정)
  *
- * 모든 credential(api_key / password)을 동일한 카드 레이아웃으로 표시한다.
- * - api_key: issuer display_name 표시
- * - password: username 표시 + URL autofill 표시
- * - 30s reveal timer (Show/Hide 토글)
- * - Copy → credential_copy_to_clipboard
- * - ⋮ DropdownMenu (Sub-task 4에서 채워짐)
+ * 레이아웃 (정정):
+ *   Row 1 — name (라벨 없이 평문) + ⋮ 메뉴
+ *   Row 2 — "URL:" 라벨 + 값 (password only, 평문)
+ *   Row 3 — "ID:" 라벨 + 마스킹/평문 + [보기] 토글 (password: username 마스킹, api_key: issuer name 평문)
+ *   Row 4 — "PW:" 또는 "Key:" 라벨 + 마스킹/평문 + [보기] + [복사]
+ *
+ * - ID reveal: client-side useState toggle (Tauri 호출 없음), 30s 후 자동 마스킹
+ * - PW reveal: credential_reveal Tauri command + 30s 자동 마스킹
+ * - ID/PW reveal 타이머는 독립 동작
+ * - api_key 의 경우 ID 자리에 issuer name 평문 (reveal 버튼 없음)
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -50,52 +54,69 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
   const { t } = useTranslation("common");
   const { issuers } = useIssuers();
 
-  // Reveal state
-  const [revealed, setRevealed] = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // PW reveal state (Tauri command)
+  const [revealedPw, setRevealedPw] = useState<string | null>(null);
+  const pwTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Issuer lookup for api_key kind
+  // ID reveal state (client-side toggle, password only)
+  const [idRevealed, setIdRevealed] = useState(false);
+  const idTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Issuer lookup
   const issuer = issuers.find((i) => i.id === credential.issuer_id);
 
-  // Subtitle line: issuer name for api_key, username for password
-  const subtitle =
-    credential.kind === "password" ? (credential.username ?? null) : (issuer?.display_name ?? null);
-
   // ---------------------------------------------------------------------------
-  // Cleanup timer on unmount
+  // Cleanup timers on unmount
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
     return () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
+      if (pwTimerRef.current !== null) clearTimeout(pwTimerRef.current);
+      if (idTimerRef.current !== null) clearTimeout(idTimerRef.current);
     };
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Show / Hide
+  // ID reveal (client-side, password only)
   // ---------------------------------------------------------------------------
 
-  const handleShow = useCallback(async () => {
-    if (revealed !== null) {
-      // Already revealed — hide
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-      setRevealed(null);
+  const handleIdReveal = useCallback(() => {
+    if (idRevealed) {
+      if (idTimerRef.current !== null) clearTimeout(idTimerRef.current);
+      setIdRevealed(false);
+      return;
+    }
+
+    setIdRevealed(true);
+    idTimerRef.current = setTimeout(() => {
+      setIdRevealed(false);
+      idTimerRef.current = null;
+    }, REVEAL_TIMEOUT_MS);
+  }, [idRevealed]);
+
+  // ---------------------------------------------------------------------------
+  // PW Show / Hide (Tauri command)
+  // ---------------------------------------------------------------------------
+
+  const handlePwShow = useCallback(async () => {
+    if (revealedPw !== null) {
+      if (pwTimerRef.current !== null) clearTimeout(pwTimerRef.current);
+      setRevealedPw(null);
       return;
     }
 
     try {
       const value = await invoke<string>("credential_reveal", { id: credential.id });
-      setRevealed(value);
+      setRevealedPw(value);
 
-      // Auto-mask after 30s
-      timerRef.current = setTimeout(() => {
-        setRevealed(null);
-        timerRef.current = null;
+      pwTimerRef.current = setTimeout(() => {
+        setRevealedPw(null);
+        pwTimerRef.current = null;
       }, REVEAL_TIMEOUT_MS);
     } catch {
       toast.error(t("inventory.loadDetailFailed"));
     }
-  }, [revealed, credential.id, t]);
+  }, [revealedPw, credential.id, t]);
 
   // ---------------------------------------------------------------------------
   // Copy
@@ -110,12 +131,27 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
   }, [credential.id, t]);
 
   // ---------------------------------------------------------------------------
-  // Render
+  // Derived values
   // ---------------------------------------------------------------------------
 
-  const isRevealed = revealed !== null;
+  const isPwRevealed = revealedPw !== null;
 
-  // Card-level click opens Detail — individual buttons stop propagation
+  // PW row 라벨: api_key → "Key:", password → "PW:"
+  const pwLabel =
+    credential.kind === "api_key" ? t("inventory.card.keyLabel") : t("inventory.card.pwLabel");
+
+  // ID row: password → username 마스킹, api_key → issuer name 평문
+  const hasIdRow =
+    credential.kind === "password"
+      ? credential.username !== null
+      : issuer?.display_name !== undefined;
+
+  const idPlainText = credential.kind === "api_key" ? (issuer?.display_name ?? null) : null;
+
+  // password username (평문이지만 표시용으로만; 값은 credential.username)
+  const usernameValue = credential.kind === "password" ? (credential.username ?? null) : null;
+
+  // Card-level click opens Detail
   const handleCardClick = () => {
     onSelect?.(credential.id);
   };
@@ -138,7 +174,7 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
       }
     >
       <CardContent className="flex flex-col gap-2 p-4">
-        {/* ── Row 1: name + menu ── */}
+        {/* ── Row 1: name + ⋮ menu ── */}
         <div className="flex items-start justify-between gap-2">
           <span className="truncate text-sm font-medium leading-tight">{credential.name}</span>
           <DropdownMenu>
@@ -159,24 +195,63 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
           </DropdownMenu>
         </div>
 
-        {/* ── Row 2: subtitle (issuer or username) ── */}
-        {subtitle !== null && (
-          <span className="truncate text-xs text-muted-foreground">{subtitle}</span>
+        {/* ── Row 2: URL (password only, when present) ── */}
+        {credential.url !== null && (
+          <div className="flex items-center gap-1 min-w-0">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">
+              {t("inventory.card.urlLabel")}
+            </span>
+            <span className="truncate text-xs text-muted-foreground">{credential.url}</span>
+          </div>
         )}
 
-        {/* ── Row 3: masked value + Show + Copy ── */}
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {/* ── Row 3: ID (username masked / issuer plain) ── */}
+        {hasIdRow && (
+          <div className="flex items-center gap-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">
+              {t("inventory.card.idLabel")}
+            </span>
+            {credential.kind === "api_key" ? (
+              /* api_key: issuer name 평문 — reveal 버튼 없음 */
+              <span className="truncate text-xs text-muted-foreground">{idPlainText}</span>
+            ) : (
+              /* password: username 마스킹 + reveal 토글 */
+              <>
+                <span className="flex-1 truncate font-mono text-xs text-muted-foreground">
+                  {idRevealed ? usernameValue : MASKED}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                  onClick={handleIdReveal}
+                  aria-label={idRevealed ? t("inventory.card.hide") : t("inventory.card.show")}
+                >
+                  {idRevealed ? (
+                    <EyeOff className="h-3.5 w-3.5" aria-hidden />
+                  ) : (
+                    <Eye className="h-3.5 w-3.5" aria-hidden />
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── Row 4: PW / Key + reveal + copy ── */}
+        <div className="flex items-center gap-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+          <span className="shrink-0 text-xs font-medium text-muted-foreground">{pwLabel}</span>
           <span className="flex-1 truncate font-mono text-xs text-muted-foreground">
-            {isRevealed ? revealed : MASKED}
+            {isPwRevealed ? revealedPw : MASKED}
           </span>
           <Button
             variant="ghost"
             size="icon"
             className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
-            onClick={handleShow}
-            aria-label={isRevealed ? t("inventory.hideValue") : t("inventory.showValue")}
+            onClick={handlePwShow}
+            aria-label={isPwRevealed ? t("inventory.card.hide") : t("inventory.card.show")}
           >
-            {isRevealed ? (
+            {isPwRevealed ? (
               <EyeOff className="h-3.5 w-3.5" aria-hidden />
             ) : (
               <Eye className="h-3.5 w-3.5" aria-hidden />
@@ -192,11 +267,6 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
             <Copy className="h-3.5 w-3.5" aria-hidden />
           </Button>
         </div>
-
-        {/* ── Row 4: URL (password only, when present) ── */}
-        {credential.url !== null && (
-          <span className="truncate text-xs text-muted-foreground">{credential.url}</span>
-        )}
       </CardContent>
     </Card>
   );
