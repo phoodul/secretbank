@@ -268,6 +268,7 @@ async fn cmd_list(
         env: env_filter,
         status: None,
         expiring_within_days: None,
+        kind: None,
     };
     let creds = cred_repo
         .list(&filter)

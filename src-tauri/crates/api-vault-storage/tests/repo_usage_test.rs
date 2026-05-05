@@ -35,6 +35,9 @@ async fn usage_insert_list_roundtrip(pool: SqlitePool) -> Result<(), StorageErro
                 expires_at: None,
                 owner: None,
                 hash_hint: None,
+                kind: Default::default(),
+                url: None,
+                username: None,
             },
             "credentials/gh-pat".to_string(),
         )

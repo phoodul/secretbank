@@ -728,6 +728,9 @@ mod tests {
                 rotation_runbook_id: None,
                 expires_at: None,
                 hash_hint: None,
+                kind: Default::default(),
+                url: None,
+                username: None,
             },
             format!("vault/credentials/{name}"),
         )

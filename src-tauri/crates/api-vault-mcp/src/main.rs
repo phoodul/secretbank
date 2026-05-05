@@ -576,6 +576,7 @@ async fn tool_list_credentials(state: &ServerState, args: &Value) -> Result<Valu
             env: env_filter,
             status: None,
             expiring_within_days: None,
+            kind: None,
         })
         .await
         .map_err(|e| RpcError::internal(format!("credential list: {e}")))?;

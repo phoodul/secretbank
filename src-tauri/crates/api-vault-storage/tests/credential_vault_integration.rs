@@ -105,6 +105,9 @@ fn test_input(issuer_id: api_vault_core::IssuerId) -> CredentialInput {
         expires_at: None,
         owner: None,
         hash_hint: None,
+        kind: Default::default(),
+        url: None,
+        username: None,
     }
 }
 

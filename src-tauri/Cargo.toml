@@ -89,7 +89,7 @@ tauri-plugin-opener = "2"
 
 [package]
 name = "api-vault"
-version = "0.1.0"
+version = "0.1.0-pre9"
 edition = "2021"
 description = "API Vault — Bitwarden for APIs with dependency graph"
 authors = ["api-vault contributors"]

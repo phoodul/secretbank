@@ -172,6 +172,9 @@ mod tests {
             rotation_runbook_id: None,
             status: CredentialStatus::Active,
             hash_hint: None,
+            kind: api_vault_core::CredentialKind::ApiKey,
+            url: None,
+            username: None,
         }
     }
 

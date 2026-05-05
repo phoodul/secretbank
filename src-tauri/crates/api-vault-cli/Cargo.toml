@@ -1,6 +1,6 @@
 [package]
 name = "api-vault-cli"
-version = "0.1.0"
+version = "0.1.0-pre9"
 edition = "2021"
 description = "API Vault CLI — apivault list/reveal/run for terminal use"
 

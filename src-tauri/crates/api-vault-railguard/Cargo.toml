@@ -1,6 +1,6 @@
 [package]
 name = "api-vault-railguard"
-version = "0.1.0"
+version = "0.1.0-pre9"
 edition = "2021"
 
 [dependencies]

@@ -183,6 +183,9 @@ mod tests {
             rotation_runbook_id: None,
             status: CredentialStatus::Active,
             hash_hint: None,
+            kind: crate::CredentialKind::ApiKey,
+            url: None,
+            username: None,
         }
     }
 

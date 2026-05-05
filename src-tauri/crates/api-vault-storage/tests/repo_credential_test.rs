@@ -38,6 +38,9 @@ async fn credential_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError>
         expires_at: None,
         owner: Some("alice@example.com".to_string()),
         hash_hint: Some("kE9x".to_string()),
+        kind: Default::default(),
+        url: None,
+        username: None,
     };
 
     // insert
@@ -61,6 +64,7 @@ async fn credential_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError>
             env: Some(Env::Prod),
             status: None,
             expiring_within_days: None,
+            kind: None,
         })
         .await?;
     assert_eq!(summaries.len(), 1);
@@ -100,6 +104,9 @@ async fn credential_filter_by_env(pool: SqlitePool) -> Result<(), StorageError> 
         expires_at: None,
         owner: None,
         hash_hint: None,
+        kind: Default::default(),
+        url: None,
+        username: None,
     };
     let dev_input = CredentialInput {
         issuer_id,

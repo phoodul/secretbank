@@ -221,6 +221,9 @@ mod tests {
             rotation_runbook_id: None,
             status,
             hash_hint: Some("abcd".into()),
+            kind: crate::CredentialKind::ApiKey,
+            url: None,
+            username: None,
         }
     }
 

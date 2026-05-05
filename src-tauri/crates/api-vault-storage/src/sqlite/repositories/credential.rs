@@ -1,6 +1,6 @@
 use api_vault_core::{
-    score_credential, Credential, CredentialFilter, CredentialId, CredentialInput, CredentialPatch,
-    CredentialStatus, CredentialSummary, Env,
+    score_credential, Credential, CredentialFilter, CredentialId, CredentialInput, CredentialKind,
+    CredentialPatch, CredentialStatus, CredentialSummary, Env,
 };
 use sqlx::{Row, SqlitePool};
 use time::OffsetDateTime;
@@ -47,8 +47,9 @@ impl<'a> CredentialRepo<'a> {
         sqlx::query(
             r#"INSERT INTO credential
                (id, issuer_id, name, env, scope, vault_ref, created_at, expires_at,
-                owner, rotation_policy_days, rotation_runbook_id, status, hash_hint)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)"#,
+                owner, rotation_policy_days, rotation_runbook_id, status, hash_hint,
+                kind, url, username)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)"#,
         )
         .bind(&id_str)
         .bind(&issuer_id_str)
@@ -62,6 +63,9 @@ impl<'a> CredentialRepo<'a> {
         .bind(input.rotation_policy_days)
         .bind(&input.rotation_runbook_id)
         .bind(&input.hash_hint)
+        .bind(kind_to_str(input.kind))
+        .bind(&input.url)
+        .bind(&input.username)
         .execute(self.pool)
         .await?;
 
@@ -73,7 +77,7 @@ impl<'a> CredentialRepo<'a> {
         let row = sqlx::query(
             r#"SELECT id, issuer_id, name, env, scope, vault_ref, created_at,
                       last_rotated_at, expires_at, owner, rotation_policy_days,
-                      rotation_runbook_id, status, hash_hint
+                      rotation_runbook_id, status, hash_hint, kind, url, username
                FROM credential WHERE id = ?"#,
         )
         .bind(&id_str)
@@ -90,8 +94,8 @@ impl<'a> CredentialRepo<'a> {
         // T040: full columns required so we can compute the security score.
         let mut qb = sqlx::QueryBuilder::new(
             "SELECT id, issuer_id, name, env, scope, vault_ref, created_at, last_rotated_at, \
-             expires_at, owner, rotation_policy_days, rotation_runbook_id, status, hash_hint \
-             FROM credential WHERE 1=1",
+             expires_at, owner, rotation_policy_days, rotation_runbook_id, status, hash_hint, \
+             kind, url, username FROM credential WHERE 1=1",
         );
 
         if let Some(issuer_id) = &filter.issuer_id {
@@ -111,6 +115,10 @@ impl<'a> CredentialRepo<'a> {
             qb.push(" AND expires_at IS NOT NULL AND expires_at <= ");
             qb.push_bind(cutoff);
         }
+        if let Some(kind) = filter.kind {
+            qb.push(" AND kind = ");
+            qb.push_bind(kind_to_str(kind).to_string());
+        }
 
         qb.push(" ORDER BY name ASC");
 
@@ -129,6 +137,9 @@ impl<'a> CredentialRepo<'a> {
                     expires_at: cred.expires_at,
                     hash_hint: cred.hash_hint,
                     score,
+                    kind: cred.kind,
+                    url: cred.url,
+                    username: cred.username,
                 })
             })
             .collect()
@@ -182,6 +193,12 @@ impl<'a> CredentialRepo<'a> {
         if let Some(ref hint) = patch.hash_hint {
             push_field!("hash_hint", hint.clone());
         }
+        if let Some(ref url) = patch.url {
+            push_field!("url", url.clone());
+        }
+        if let Some(ref username) = patch.username {
+            push_field!("username", username.clone());
+        }
 
         if first {
             return Ok(());
@@ -201,7 +218,7 @@ impl<'a> CredentialRepo<'a> {
         let rows = sqlx::query(
             r#"SELECT id, issuer_id, name, env, scope, vault_ref, created_at,
                       last_rotated_at, expires_at, owner, rotation_policy_days,
-                      rotation_runbook_id, status, hash_hint
+                      rotation_runbook_id, status, hash_hint, kind, url, username
                FROM credential ORDER BY id ASC"#,
         )
         .fetch_all(self.pool)
@@ -229,6 +246,7 @@ fn row_to_credential(r: &sqlx::sqlite::SqliteRow) -> Result<Credential, StorageE
     let last_rotated_ms: Option<i64> = r.try_get("last_rotated_at")?;
     let expires_ms: Option<i64> = r.try_get("expires_at")?;
     let rotation_days: Option<i64> = r.try_get("rotation_policy_days")?;
+    let kind_str: String = r.try_get("kind")?;
 
     Ok(Credential {
         id: id_str
@@ -249,7 +267,25 @@ fn row_to_credential(r: &sqlx::sqlite::SqliteRow) -> Result<Credential, StorageE
         rotation_runbook_id: r.try_get("rotation_runbook_id")?,
         status: str_to_status(&status_str)?,
         hash_hint: r.try_get("hash_hint")?,
+        kind: str_to_kind(&kind_str)?,
+        url: r.try_get("url")?,
+        username: r.try_get("username")?,
     })
+}
+
+pub(crate) fn kind_to_str(kind: CredentialKind) -> &'static str {
+    match kind {
+        CredentialKind::ApiKey => "api_key",
+        CredentialKind::Password => "password",
+    }
+}
+
+pub(crate) fn str_to_kind(s: &str) -> Result<CredentialKind, StorageError> {
+    match s {
+        "api_key" => Ok(CredentialKind::ApiKey),
+        "password" => Ok(CredentialKind::Password),
+        other => Err(StorageError::Parse(format!("invalid kind: {other}"))),
+    }
 }
 
 // ---------------------------------------------------------------------------

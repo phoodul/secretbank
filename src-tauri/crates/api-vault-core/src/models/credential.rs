@@ -22,6 +22,20 @@ pub enum CredentialStatus {
     Compromised,
 }
 
+/// Credential kind — API key (default, M0) vs. general password (M24).
+///
+/// API keys carry only `name` + opaque `value`. Passwords additionally use
+/// `url` (for autofill matching) and `username` (login identifier). Migration
+/// 0006 adds `kind` column with default `'api_key'` so existing rows are
+/// classified correctly without backfill.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum CredentialKind {
+    #[default]
+    ApiKey,
+    Password,
+}
+
 /// Full credential record as stored in the database.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Credential {
@@ -44,6 +58,17 @@ pub struct Credential {
     pub status: CredentialStatus,
     /// Last 4 characters of the secret, for display only.
     pub hash_hint: Option<String>,
+    /// API key (default) or general password (M24).
+    #[serde(default)]
+    pub kind: CredentialKind,
+    /// Password-only — origin URL for autofill matching (e.g. "https://gmail.com").
+    /// Cleartext in DB so the browser extension / autofill can match without
+    /// unlocking the vault. `None` for API keys.
+    #[serde(default)]
+    pub url: Option<String>,
+    /// Password-only — login identifier (e.g. "user@gmail.com"). `None` for API keys.
+    #[serde(default)]
+    pub username: Option<String>,
 }
 
 /// Input for creating a new credential (no id, vault_ref, or timestamps).
@@ -59,6 +84,12 @@ pub struct CredentialInput {
     pub expires_at: Option<OffsetDateTime>,
     pub owner: Option<String>,
     pub hash_hint: Option<String>,
+    #[serde(default)]
+    pub kind: CredentialKind,
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub username: Option<String>,
 }
 
 /// Lightweight summary used in list views.
@@ -77,6 +108,13 @@ pub struct CredentialSummary {
     pub hash_hint: Option<String>,
     /// Risk score computed on the server (T040).
     pub score: ScoreBreakdown,
+    #[serde(default)]
+    pub kind: CredentialKind,
+    /// Password-only — host displayed in card (e.g. "gmail.com" stripped from url).
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub username: Option<String>,
 }
 
 /// Partial update — all fields optional.
@@ -91,6 +129,8 @@ pub struct CredentialPatch {
     pub owner: Option<String>,
     pub status: Option<CredentialStatus>,
     pub hash_hint: Option<String>,
+    pub url: Option<String>,
+    pub username: Option<String>,
 }
 
 /// Filter parameters for listing credentials.
@@ -100,4 +140,6 @@ pub struct CredentialFilter {
     pub env: Option<Env>,
     pub status: Option<CredentialStatus>,
     pub expiring_within_days: Option<i32>,
+    /// Filter by credential kind (api_key vs. password). `None` = all kinds.
+    pub kind: Option<CredentialKind>,
 }

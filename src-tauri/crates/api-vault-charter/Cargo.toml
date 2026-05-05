@@ -1,6 +1,6 @@
 [package]
 name = "api-vault-charter"
-version = "0.1.0"
+version = "0.1.0-pre9"
 edition = "2021"
 description = "Vault Charter — Diceware-based recovery codec + Shamir 2-of-3 split for API Vault"
 

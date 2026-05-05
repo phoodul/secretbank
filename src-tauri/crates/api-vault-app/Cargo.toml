@@ -1,6 +1,6 @@
 [package]
 name = "api-vault-app"
-version = "0.1.0"
+version = "0.1.0-pre9"
 description = "API Vault runtime — Tauri builder and command registration"
 authors = ["api-vault contributors"]
 edition = "2021"

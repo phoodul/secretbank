@@ -662,6 +662,9 @@ mod tests {
             rotation_runbook_id: None,
             expires_at: None,
             hash_hint: None,
+            kind: Default::default(),
+            url: None,
+            username: None,
         };
         repo.insert_with_id(Some(cred_id), &input, format!("credentials/{cred_id}"))
             .await
@@ -920,6 +923,9 @@ mod tests {
                 rotation_runbook_id: None,
                 expires_at: None,
                 hash_hint: None,
+                kind: Default::default(),
+                url: None,
+                username: None,
             };
             cred_repo
                 .insert_with_id(Some(cred_id), &input, format!("credentials/{cred_id}"))
@@ -942,6 +948,9 @@ mod tests {
                 rotation_runbook_id: None,
                 expires_at: None,
                 hash_hint: None,
+                kind: Default::default(),
+                url: None,
+                username: None,
             };
             cred_repo
                 .insert_with_id(Some(cred_id), &input, format!("credentials/{cred_id}"))
@@ -1036,6 +1045,9 @@ mod tests {
                         rotation_runbook_id: None,
                         expires_at: None,
                         hash_hint: None,
+                        kind: Default::default(),
+                        url: None,
+                        username: None,
                     },
                     format!("credentials/{cred_id}"),
                 )
@@ -1162,6 +1174,9 @@ mod tests {
                 rotation_runbook_id: None,
                 expires_at: None,
                 hash_hint: None,
+                kind: Default::default(),
+                url: None,
+                username: None,
             };
             repo.insert_with_id(Some(c), &input, format!("credentials/{c}"))
                 .await
@@ -1250,6 +1265,9 @@ mod tests {
             rotation_runbook_id: None,
             expires_at: None,
             hash_hint: None,
+            kind: Default::default(),
+            url: None,
+            username: None,
         };
         let repo = CredentialRepo::new(&pool);
         repo.insert_with_id(Some(cred_id), &input, vault_ref.clone())

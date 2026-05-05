@@ -12,8 +12,8 @@ pub use id::{
 };
 pub use models::audit_log::{AuditAction, AuditActor, AuditLog};
 pub use models::credential::{
-    Credential, CredentialFilter, CredentialInput, CredentialPatch, CredentialStatus,
-    CredentialSummary, Env,
+    Credential, CredentialFilter, CredentialInput, CredentialKind, CredentialPatch,
+    CredentialStatus, CredentialSummary, Env,
 };
 pub use models::deployment::{Deployment, DeploymentInput, DeploymentPatch, DeploymentPlatform};
 pub use models::device::{Device, DeviceInput, DevicePlatform, DeviceStatus};

@@ -524,6 +524,9 @@ mod tests {
             expires_at: None,
             owner: None,
             hash_hint: hash_hint.map(|s| s.to_string()),
+            kind: Default::default(),
+            url: None,
+            username: None,
         };
         let vault_ref = format!("credentials/{id}");
         repo.insert_with_id(Some(id), &input, vault_ref.clone())

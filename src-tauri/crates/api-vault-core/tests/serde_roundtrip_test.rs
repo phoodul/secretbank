@@ -14,6 +14,9 @@ fn credential_input_serde_roundtrip() {
         expires_at: None,
         owner: Some("alice@example.com".to_string()),
         hash_hint: Some("k9aX".to_string()),
+        kind: Default::default(),
+        url: None,
+        username: None,
     };
 
     let json = serde_json::to_string(&input).expect("serialize");
@@ -59,6 +62,9 @@ fn datetime_unix_ms_roundtrip() {
         rotation_runbook_id: None,
         status: CredentialStatus::Active,
         hash_hint: None,
+        kind: Default::default(),
+        url: None,
+        username: None,
     };
 
     let json = serde_json::to_string(&cred).expect("serialize");
