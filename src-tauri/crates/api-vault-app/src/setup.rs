@@ -19,6 +19,8 @@ struct PresetSeed {
     status_url: Option<&'static str>,
     security_feed_url: Option<&'static str>,
     icon_key: &'static str,
+    default_primary_label: Option<&'static str>,
+    default_secondary_label: Option<&'static str>,
 }
 
 static PRESETS: [PresetSeed; 10] = [
@@ -30,6 +32,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://status.openai.com"),
         security_feed_url: None,
         icon_key: "openai",
+        default_primary_label: Some("API Key"),
+        default_secondary_label: None,
     },
     PresetSeed {
         slug: "stripe",
@@ -39,6 +43,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://status.stripe.com"),
         security_feed_url: Some("https://stripe.com/blog/rss.xml"),
         icon_key: "stripe",
+        default_primary_label: Some("API Key"),
+        default_secondary_label: None,
     },
     PresetSeed {
         slug: "github",
@@ -48,6 +54,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://www.githubstatus.com"),
         security_feed_url: Some("https://github.blog/category/security/feed/"),
         icon_key: "github",
+        default_primary_label: Some("Client ID"),
+        default_secondary_label: Some("Client Secret"),
     },
     PresetSeed {
         slug: "aws",
@@ -57,6 +65,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://health.aws.amazon.com/health/status"),
         security_feed_url: Some("https://aws.amazon.com/security/security-bulletins/rss/"),
         icon_key: "aws",
+        default_primary_label: Some("Access Key"),
+        default_secondary_label: Some("Secret Key"),
     },
     PresetSeed {
         slug: "vercel",
@@ -66,6 +76,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://www.vercel-status.com"),
         security_feed_url: None,
         icon_key: "vercel",
+        default_primary_label: Some("API Key"),
+        default_secondary_label: None,
     },
     PresetSeed {
         slug: "supabase",
@@ -75,6 +87,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://status.supabase.com"),
         security_feed_url: None,
         icon_key: "supabase",
+        default_primary_label: Some("Public Key"),
+        default_secondary_label: Some("Secret Key"),
     },
     PresetSeed {
         slug: "google",
@@ -84,6 +98,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://status.cloud.google.com"),
         security_feed_url: None,
         icon_key: "google",
+        default_primary_label: Some("API Key"),
+        default_secondary_label: None,
     },
     PresetSeed {
         slug: "anthropic",
@@ -93,6 +109,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://status.anthropic.com"),
         security_feed_url: None,
         icon_key: "anthropic",
+        default_primary_label: Some("API Key"),
+        default_secondary_label: None,
     },
     PresetSeed {
         slug: "paddle",
@@ -102,6 +120,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://status.paddle.com"),
         security_feed_url: None,
         icon_key: "paddle",
+        default_primary_label: Some("API Key"),
+        default_secondary_label: None,
     },
     PresetSeed {
         slug: "cloudflare",
@@ -111,6 +131,8 @@ static PRESETS: [PresetSeed; 10] = [
         status_url: Some("https://www.cloudflarestatus.com"),
         security_feed_url: Some("https://www.cloudflarestatus.com/history.rss"),
         icon_key: "cloudflare",
+        default_primary_label: Some("API Key"),
+        default_secondary_label: None,
     },
 ];
 
@@ -134,8 +156,10 @@ pub async fn seed_issuer_presets(pool: &SqlitePool) -> Result<u64, StorageError>
         let res = sqlx::query(
             r#"INSERT OR IGNORE INTO issuer
                (id, slug, display_name, docs_url, issue_url, status_url,
-                security_feed_url, connector_id, icon_key, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)"#,
+                security_feed_url, connector_id, icon_key,
+                default_primary_label, default_secondary_label,
+                created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)"#,
         )
         .bind(&id)
         .bind(p.slug)
@@ -145,6 +169,8 @@ pub async fn seed_issuer_presets(pool: &SqlitePool) -> Result<u64, StorageError>
         .bind(p.status_url)
         .bind(p.security_feed_url)
         .bind(p.icon_key)
+        .bind(p.default_primary_label)
+        .bind(p.default_secondary_label)
         .bind(now)
         .bind(now)
         .execute(pool)

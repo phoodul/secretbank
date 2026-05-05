@@ -3,6 +3,35 @@ use api_vault_storage::sqlite::{repositories::issuer::IssuerRepo, StorageError};
 use sqlx::SqlitePool;
 
 #[sqlx::test(migrations = "./migrations")]
+async fn issuer_default_primary_label_roundtrip(pool: SqlitePool) -> Result<(), StorageError> {
+    let repo = IssuerRepo::new(&pool);
+
+    let input = IssuerInput {
+        slug: "supabase".to_string(),
+        display_name: "Supabase".to_string(),
+        docs_url: None,
+        issue_url: None,
+        status_url: None,
+        security_feed_url: None,
+        connector_id: None,
+        icon_key: None,
+        default_primary_label: Some("Public Key".to_string()),
+        default_secondary_label: Some("Secret Key".to_string()),
+    };
+
+    let id = repo.insert(&input).await?;
+    let issuer = repo.get_by_id(id).await?.expect("issuer should exist");
+
+    assert_eq!(issuer.default_primary_label, Some("Public Key".to_string()));
+    assert_eq!(
+        issuer.default_secondary_label,
+        Some("Secret Key".to_string())
+    );
+
+    Ok(())
+}
+
+#[sqlx::test(migrations = "./migrations")]
 async fn issuer_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError> {
     let repo = IssuerRepo::new(&pool);
 
@@ -15,6 +44,8 @@ async fn issuer_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError> {
         security_feed_url: None,
         connector_id: None,
         icon_key: Some("openai".to_string()),
+        default_primary_label: None,
+        default_secondary_label: None,
     };
 
     // insert
@@ -45,6 +76,8 @@ async fn issuer_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError> {
         security_feed_url: None,
         connector_id: None,
         icon_key: None,
+        default_primary_label: None,
+        default_secondary_label: None,
     };
     repo.update(id, &updated_input).await?;
     let updated = repo.get_by_id(id).await?.expect("should still exist");

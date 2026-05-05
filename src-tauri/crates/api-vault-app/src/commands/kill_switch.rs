@@ -643,6 +643,8 @@ mod tests {
             security_feed_url: None,
             connector_id: None,
             icon_key: None,
+            default_primary_label: None,
+            default_secondary_label: None,
         })
         .await
         .expect("issuer insert")
@@ -890,6 +892,8 @@ mod tests {
                 security_feed_url: None,
                 connector_id: None,
                 icon_key: None,
+                default_primary_label: None,
+                default_secondary_label: None,
             })
             .await
             .expect("issuer A insert");
@@ -905,6 +909,8 @@ mod tests {
                 security_feed_url: None,
                 connector_id: None,
                 icon_key: None,
+                default_primary_label: None,
+                default_secondary_label: None,
             })
             .await
             .expect("issuer B insert");
@@ -1028,6 +1034,8 @@ mod tests {
                 security_feed_url: None,
                 connector_id: None,
                 icon_key: None,
+                default_primary_label: None,
+                default_secondary_label: None,
             })
             .await
             .expect("issuer insert");

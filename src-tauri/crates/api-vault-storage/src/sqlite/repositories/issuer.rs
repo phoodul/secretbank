@@ -21,8 +21,10 @@ impl<'a> IssuerRepo<'a> {
         sqlx::query(
             r#"INSERT INTO issuer
                (id, slug, display_name, docs_url, issue_url, status_url,
-                security_feed_url, connector_id, icon_key, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
+                security_feed_url, connector_id, icon_key,
+                default_primary_label, default_secondary_label,
+                created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
         )
         .bind(&id_str)
         .bind(&input.slug)
@@ -33,6 +35,8 @@ impl<'a> IssuerRepo<'a> {
         .bind(&input.security_feed_url)
         .bind(&input.connector_id)
         .bind(&input.icon_key)
+        .bind(&input.default_primary_label)
+        .bind(&input.default_secondary_label)
         .bind(now)
         .bind(now)
         .execute(self.pool)
@@ -45,7 +49,9 @@ impl<'a> IssuerRepo<'a> {
         let id_str = id.to_string();
         let row = sqlx::query(
             r#"SELECT id, slug, display_name, docs_url, issue_url, status_url,
-                      security_feed_url, connector_id, icon_key, created_at, updated_at
+                      security_feed_url, connector_id, icon_key,
+                      default_primary_label, default_secondary_label,
+                      created_at, updated_at
                FROM issuer WHERE id = ?"#,
         )
         .bind(&id_str)
@@ -58,7 +64,9 @@ impl<'a> IssuerRepo<'a> {
     pub async fn list(&self) -> Result<Vec<Issuer>, StorageError> {
         let rows = sqlx::query(
             r#"SELECT id, slug, display_name, docs_url, issue_url, status_url,
-                      security_feed_url, connector_id, icon_key, created_at, updated_at
+                      security_feed_url, connector_id, icon_key,
+                      default_primary_label, default_secondary_label,
+                      created_at, updated_at
                FROM issuer ORDER BY display_name ASC"#,
         )
         .fetch_all(self.pool)
@@ -74,6 +82,7 @@ impl<'a> IssuerRepo<'a> {
         sqlx::query(
             r#"UPDATE issuer SET slug = ?, display_name = ?, docs_url = ?, issue_url = ?,
                status_url = ?, security_feed_url = ?, connector_id = ?, icon_key = ?,
+               default_primary_label = ?, default_secondary_label = ?,
                updated_at = ?
                WHERE id = ?"#,
         )
@@ -85,6 +94,8 @@ impl<'a> IssuerRepo<'a> {
         .bind(&input.security_feed_url)
         .bind(&input.connector_id)
         .bind(&input.icon_key)
+        .bind(&input.default_primary_label)
+        .bind(&input.default_secondary_label)
         .bind(now)
         .bind(&id_str)
         .execute(self.pool)
@@ -120,6 +131,8 @@ fn row_to_issuer(r: &sqlx::sqlite::SqliteRow) -> Result<Issuer, StorageError> {
         security_feed_url: r.try_get("security_feed_url")?,
         connector_id: r.try_get("connector_id")?,
         icon_key: r.try_get("icon_key")?,
+        default_primary_label: r.try_get("default_primary_label")?,
+        default_secondary_label: r.try_get("default_secondary_label")?,
         created_at: ms_to_dt(created_at_ms)?,
         updated_at: ms_to_dt(updated_at_ms)?,
     })

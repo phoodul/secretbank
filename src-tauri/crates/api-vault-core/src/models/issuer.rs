@@ -15,6 +15,10 @@ pub struct Issuer {
     pub security_feed_url: Option<String>,
     pub connector_id: Option<String>,
     pub icon_key: Option<String>,
+    /// Default label for the primary credential value (e.g. "API Key", "Public Key").
+    pub default_primary_label: Option<String>,
+    /// Default label for the secondary credential value (e.g. "Secret Key", "Client Secret").
+    pub default_secondary_label: Option<String>,
     #[serde(with = "time::serde::timestamp::milliseconds")]
     pub created_at: OffsetDateTime,
     #[serde(with = "time::serde::timestamp::milliseconds")]
@@ -22,7 +26,7 @@ pub struct Issuer {
 }
 
 /// Input for creating a new issuer.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct IssuerInput {
     pub slug: String,
     pub display_name: String,
@@ -32,4 +36,10 @@ pub struct IssuerInput {
     pub security_feed_url: Option<String>,
     pub connector_id: Option<String>,
     pub icon_key: Option<String>,
+    /// Default label for the primary credential value.
+    #[serde(default)]
+    pub default_primary_label: Option<String>,
+    /// Default label for the secondary credential value.
+    #[serde(default)]
+    pub default_secondary_label: Option<String>,
 }

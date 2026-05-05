@@ -20,6 +20,8 @@ async fn usage_insert_list_roundtrip(pool: SqlitePool) -> Result<(), StorageErro
             security_feed_url: None,
             connector_id: None,
             icon_key: None,
+            default_primary_label: None,
+            default_secondary_label: None,
         })
         .await?;
 

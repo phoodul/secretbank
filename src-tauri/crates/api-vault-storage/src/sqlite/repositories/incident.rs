@@ -709,6 +709,8 @@ mod tests {
             security_feed_url: None,
             connector_id: None,
             icon_key: None,
+            default_primary_label: None,
+            default_secondary_label: None,
         })
         .await
         .unwrap()
