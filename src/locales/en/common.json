@@ -196,7 +196,14 @@
     "auditEmpty": "No audit entries yet.",
     "auditViewAll": "View all →",
     "auditError": "Failed to load audit entries",
-    "hideRevoked": "Hide revoked"
+    "hideRevoked": "Hide revoked",
+    "bentoMoreOptions": "More options",
+    "bentoViewDetail": "View detail",
+    "bentoCopyUsername": "Copy username",
+    "bentoCopyUrl": "Copy URL",
+    "bentoCheckBreach": "Check breach",
+    "bentoViewGraph": "View dependency graph",
+    "bentoBlastRadius": "Blast radius"
   },
   "vault": {
     "unlockTitle": "Unlock Vault",

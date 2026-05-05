@@ -196,7 +196,14 @@
     "auditEmpty": "아직 감사 항목이 없습니다.",
     "auditViewAll": "전체 보기 →",
     "auditError": "감사 항목을 불러오지 못했습니다",
-    "hideRevoked": "폐기된 항목 숨기기"
+    "hideRevoked": "폐기된 항목 숨기기",
+    "bentoMoreOptions": "더 보기",
+    "bentoViewDetail": "상세 보기",
+    "bentoCopyUsername": "사용자 이름 복사",
+    "bentoCopyUrl": "URL 복사",
+    "bentoCheckBreach": "침해 확인",
+    "bentoViewGraph": "의존성 그래프 보기",
+    "bentoBlastRadius": "블래스트 반경"
   },
   "vault": {
     "unlockTitle": "볼트 잠금 해제",
