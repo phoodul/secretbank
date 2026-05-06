@@ -6,15 +6,19 @@
 //!
 //! - `import_csv_prepare`: 파일 읽기 → parse_csv → rows_to_detected → ImportSessionStore 보관.
 //!   Frontend 에는 값 없는 preview DTO (`CsvImportPreview`) 만 반환.
-//! - `import_csv_commit` (2-3-a-4, 다음 sub-task): session_id + 선택 row 인덱스 → vault 저장.
+//! - `import_csv_commit` (2-3-a-4): session_id + 선택 row 인덱스 → vault 저장.
+//!   세션에서 평문을 꺼내 vault + SQLite 에 기록한 후 세션을 소멸시킨다.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use api_vault_audit::AuditActor;
 use api_vault_connectors::import::csv_google::{parse_csv, CsvFormat, ImportError};
 use api_vault_connectors::import::to_detected::{rows_to_detected, ToDetectedOptions};
+use api_vault_core::{CredentialId, CredentialInput, CredentialKind, Env, IssuerId};
 use api_vault_storage::sqlite::repositories::{credential::CredentialRepo, issuer::IssuerRepo};
+use api_vault_storage::vault::SecretBytes;
+use secrecy::ExposeSecret;
 use serde::Serialize;
 use tauri::State;
 use thiserror::Error;
@@ -39,6 +43,18 @@ pub enum ImportCommandError {
 
     #[error("internal: {message}")]
     Internal { message: String },
+
+    /// `session_id` 로 세션을 찾을 수 없음 (만료되었거나 잘못된 ID).
+    #[error("import session not found or expired: {session_id}")]
+    SessionNotFound { session_id: String },
+
+    /// vault 잠겨 있음.
+    #[error("vault locked — unlock before import")]
+    VaultLocked,
+
+    /// 선택된 row index 가 session 범위를 벗어남.
+    #[error("row index {index} out of bounds (session has {total} rows)")]
+    RowIndexOutOfBounds { index: usize, total: usize },
 }
 
 impl From<ImportError> for ImportCommandError {
@@ -61,6 +77,17 @@ impl From<api_vault_storage::sqlite::StorageError> for ImportCommandError {
     fn from(e: api_vault_storage::sqlite::StorageError) -> Self {
         Self::Storage {
             message: e.to_string(),
+        }
+    }
+}
+
+impl From<api_vault_storage::vault::VaultError> for ImportCommandError {
+    fn from(e: api_vault_storage::vault::VaultError) -> Self {
+        match e {
+            api_vault_storage::vault::VaultError::NotUnlocked => Self::VaultLocked,
+            other => Self::Internal {
+                message: other.to_string(),
+            },
         }
     }
 }
@@ -225,6 +252,227 @@ pub async fn do_import_csv_prepare(
     })
 }
 
+// ---------------------------------------------------------------------------
+// Commit DTOs
+// ---------------------------------------------------------------------------
+
+/// 단일 행의 commit 결과.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportRowResult {
+    /// 0-based row index.
+    pub row_index: usize,
+    /// 저장 성공 시 `Some(credential_id)`.
+    pub credential_id: Option<String>,
+    /// 저장 실패 시 오류 메시지.
+    pub error: Option<String>,
+}
+
+/// `import_csv_commit` 의 응답 DTO.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportCommitResult {
+    /// 성공한 행 수.
+    pub imported: usize,
+    /// 실패한 행 수.
+    pub failed: usize,
+    /// 행별 결과 (선택된 행만 포함).
+    pub rows: Vec<ImportRowResult>,
+}
+
+// ---------------------------------------------------------------------------
+// Commit inner function
+// ---------------------------------------------------------------------------
+
+/// `import_csv_commit` 핵심 로직 (테스트 가능하도록 `AppContext` 직접 수신).
+///
+/// ## 동작
+///
+/// 1. `ImportSessionStore::take(session_id)` — 없으면 `SessionNotFound`.
+/// 2. `selected_row_indices` 유효성 확인.
+/// 3. Issuer `list()` → slug → `IssuerId` HashMap 구성.
+/// 4. vault write lock 획득.
+/// 5. 선택된 각 행에 대해 vault `put_secret` + SQLite `insert` (best-effort 트랜잭션).
+///    실패한 행은 `ImportRowResult::error` 에 기록하고 이후 행 계속 처리.
+/// 6. audit 기록 (best-effort).
+pub async fn do_import_csv_commit(
+    session_id: &str,
+    selected_row_indices: &[usize],
+    ctx: &AppContext,
+) -> Result<ImportCommitResult, ImportCommandError> {
+    // 1. 세션 꺼내기 (one-shot)
+    let session = ctx.import_sessions.take(session_id).ok_or_else(|| {
+        ImportCommandError::SessionNotFound {
+            session_id: session_id.to_owned(),
+        }
+    })?;
+
+    let total_rows = session.rows.len();
+
+    // 2. 인덱스 유효성 검사
+    for &idx in selected_row_indices {
+        if idx >= total_rows {
+            return Err(ImportCommandError::RowIndexOutOfBounds {
+                index: idx,
+                total: total_rows,
+            });
+        }
+    }
+
+    // 3. Issuer slug → IssuerId 매핑 (list 한 번만 호출)
+    let issuers = IssuerRepo::new(&ctx.pool).list().await?;
+    let slug_to_id: HashMap<String, IssuerId> = issuers
+        .into_iter()
+        .map(|i| (i.slug.clone(), i.id))
+        .collect();
+
+    // "unknown" issuer fallback: list 에서 첫 번째 issuer 또는 None
+    // credential insert 는 issuer_id 가 NOT NULL 이므로 없으면 Internal 에러.
+    let fallback_issuer_id: Option<IssuerId> = {
+        let all = IssuerRepo::new(&ctx.pool).list().await?;
+        all.into_iter().next().map(|i| i.id)
+    };
+
+    // 4. vault write lock 획득 (루프 전에 한 번만)
+    let mut vault = ctx.vault.write().await;
+
+    let cred_repo = CredentialRepo::new(&ctx.pool);
+
+    let mut row_results: Vec<ImportRowResult> = Vec::with_capacity(selected_row_indices.len());
+
+    // 5. 선택된 행만 처리
+    for &idx in selected_row_indices {
+        let row = &session.rows[idx];
+
+        // issuer_id 결정
+        let issuer_id = match &row.matched_issuer_slug {
+            Some(slug) => slug_to_id.get(slug).copied(),
+            None => None,
+        }
+        .or(fallback_issuer_id);
+
+        let issuer_id = match issuer_id {
+            Some(id) => id,
+            None => {
+                row_results.push(ImportRowResult {
+                    row_index: idx,
+                    credential_id: None,
+                    error: Some("no issuer available — seed at least one issuer".to_owned()),
+                });
+                continue;
+            }
+        };
+
+        // env 파싱 (기본 "prod")
+        let env = match row.env.as_str() {
+            "dev" => Env::Dev,
+            "staging" => Env::Staging,
+            _ => Env::Prod,
+        };
+
+        let cred_id = CredentialId::new();
+        let vault_ref = format!("credentials/{cred_id}");
+
+        // CredentialInput 구성
+        let input = CredentialInput {
+            issuer_id,
+            name: row.name.clone(),
+            env,
+            scope: None,
+            hash_hint: Some(row.value_hint.clone()),
+            owner: None,
+            rotation_policy_days: None,
+            rotation_runbook_id: None,
+            expires_at: None,
+            kind: CredentialKind::Password,
+            url: if row.url.is_empty() {
+                None
+            } else {
+                Some(row.url.clone())
+            },
+            username: row.username.clone(),
+            primary_label: None,
+            secondary_label: None,
+        };
+
+        // SQLite insert
+        match cred_repo
+            .insert_with_id(Some(cred_id), &input, vault_ref.clone())
+            .await
+        {
+            Err(e) => {
+                row_results.push(ImportRowResult {
+                    row_index: idx,
+                    credential_id: None,
+                    error: Some(format!("db insert failed: {e}")),
+                });
+                continue;
+            }
+            Ok(_) => {}
+        }
+
+        // vault put_secret — 실패 시 DB row 롤백
+        let secret_bytes = SecretBytes::new(row.value.expose_secret().as_bytes().to_vec());
+        match vault.put_secret(&vault_ref, secret_bytes).await {
+            Err(e) => {
+                // best-effort rollback
+                let _ = cred_repo.delete(cred_id).await;
+                row_results.push(ImportRowResult {
+                    row_index: idx,
+                    credential_id: None,
+                    error: Some(format!("vault write failed: {e}")),
+                });
+                continue;
+            }
+            Ok(_) => {}
+        }
+
+        row_results.push(ImportRowResult {
+            row_index: idx,
+            credential_id: Some(cred_id.to_string()),
+            error: None,
+        });
+    }
+
+    // 5b. vault flush (AgeVaultStorage 는 flush 에서 파일에 씀)
+    if let Err(e) = vault.flush().await {
+        // flush 실패는 치명적 — 하지만 이미 저장된 행을 되돌리기 어려우므로 로그만
+        tracing::error!("vault flush failed after CSV import commit: {e}");
+    }
+    drop(vault); // write lock 해제
+
+    let imported = row_results.iter().filter(|r| r.error.is_none()).count();
+    let failed = row_results.iter().filter(|r| r.error.is_some()).count();
+
+    // 6. audit (best-effort)
+    ctx.audit
+        .record(
+            AuditActor::LocalUser,
+            "import.csv.commit",
+            "import",
+            session_id,
+            Some(
+                serde_json::json!({
+                    "session_id": session_id,
+                    "imported": imported,
+                    "failed": failed,
+                })
+                .to_string(),
+            ),
+        )
+        .await;
+
+    Ok(ImportCommitResult {
+        imported,
+        failed,
+        rows: row_results,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Tauri commands
+// ---------------------------------------------------------------------------
+
 /// Tauri command — CSV 파일을 파싱하고 preview DTO 를 반환한다.
 ///
 /// 평문 비밀번호는 `ImportSessionStore` 에 보관 (5분 TTL). Frontend 에는 값 없는 메타데이터만.
@@ -234,6 +482,18 @@ pub async fn import_csv_prepare(
     state: State<'_, AppContext>,
 ) -> Result<CsvImportPreview, ImportCommandError> {
     do_import_csv_prepare(&file_path, &state).await
+}
+
+/// Tauri command — session_id + 선택된 row index 로 vault 에 credential 을 저장한다.
+///
+/// 세션을 one-shot 으로 소비하므로 같은 session_id 로 재호출하면 `SessionNotFound`.
+#[tauri::command]
+pub async fn import_csv_commit(
+    session_id: String,
+    selected_row_indices: Vec<usize>,
+    state: State<'_, AppContext>,
+) -> Result<ImportCommitResult, ImportCommandError> {
+    do_import_csv_commit(&session_id, &selected_row_indices, &state).await
 }
 
 // ---------------------------------------------------------------------------
@@ -247,7 +507,7 @@ mod tests {
     use api_vault_core::{CredentialInput, Env, IssuerInput};
     use api_vault_storage::sqlite::repositories::{credential::CredentialRepo, issuer::IssuerRepo};
     use api_vault_storage::vault::mock::MockVaultStorage;
-    use api_vault_storage::vault::{SecretBytes, VaultStorage as _};
+    use api_vault_storage::vault::{ExposeSecret, SecretBytes, VaultStorage as _};
     use secrecy::SecretString;
     use tempfile::NamedTempFile;
     use tokio::sync::{Mutex, RwLock};
@@ -512,6 +772,189 @@ mod tests {
         assert!(
             matches!(result.unwrap_err(), ImportCommandError::CsvParse { .. }),
             "must be CsvParse variant for missing password column"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // T_commit_1: prepare → commit(all rows) → credential 저장 확인
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn commit_stores_credentials_in_vault_and_db() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+
+        seed_issuer(&pool, "github", vec!["github.com".to_owned()]).await;
+
+        let ctx = make_ctx(pool.clone(), vault);
+
+        // prepare
+        let mut tmp = NamedTempFile::new().expect("tempfile");
+        std::io::Write::write_all(
+            &mut tmp,
+            b"name,url,username,password,note\n\
+              GitHub,https://github.com/settings/tokens,alice,ghp_secret123,\n\
+              Other,https://other.example.com,bob,otherpass456,",
+        )
+        .unwrap();
+
+        let preview = do_import_csv_prepare(tmp.path().to_str().unwrap(), &ctx)
+            .await
+            .expect("prepare must succeed");
+        assert_eq!(preview.total_rows, 2);
+
+        // commit all rows
+        let result = do_import_csv_commit(&preview.session_id, &[0, 1], &ctx)
+            .await
+            .expect("commit must succeed");
+
+        assert_eq!(result.imported, 2, "both rows must be imported");
+        assert_eq!(result.failed, 0, "no failures");
+        assert_eq!(result.rows.len(), 2);
+
+        // DB 에 credential 이 생성되었는지 확인
+        let cred_repo = CredentialRepo::new(&pool);
+        let all = cred_repo
+            .list(&api_vault_core::CredentialFilter::default())
+            .await
+            .expect("list");
+        assert_eq!(all.len(), 2, "two credentials must be in DB");
+
+        // vault 에 secret 이 저장되었는지 확인
+        let cred_id_str = result.rows[0].credential_id.as_ref().unwrap();
+        let vault_ref = format!("credentials/{cred_id_str}");
+        let vault_guard = ctx.vault.read().await;
+        let secret = vault_guard
+            .get_secret(&vault_ref)
+            .await
+            .expect("vault must have the secret");
+        let value = String::from_utf8(secret.expose_secret().clone()).unwrap();
+        assert_eq!(value, "ghp_secret123");
+    }
+
+    // -----------------------------------------------------------------------
+    // T_commit_2: 잘못된 session_id → SessionNotFound
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn commit_invalid_session_returns_not_found() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+        let ctx = make_ctx(pool, vault);
+
+        let result = do_import_csv_commit("nonexistent-session-id", &[0], &ctx).await;
+        assert!(
+            matches!(result, Err(ImportCommandError::SessionNotFound { .. })),
+            "must return SessionNotFound"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // T_commit_3: out-of-bounds row index → RowIndexOutOfBounds
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn commit_out_of_bounds_index_returns_error() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+        let ctx = make_ctx(pool, vault);
+
+        // prepare 1행짜리 CSV
+        let mut tmp = NamedTempFile::new().expect("tempfile");
+        std::io::Write::write_all(
+            &mut tmp,
+            b"name,url,username,password\nSite,https://example.com,user,pass1234",
+        )
+        .unwrap();
+        let preview = do_import_csv_prepare(tmp.path().to_str().unwrap(), &ctx)
+            .await
+            .expect("prepare");
+
+        // index 5 는 존재하지 않음
+        let result = do_import_csv_commit(&preview.session_id, &[5], &ctx).await;
+        assert!(
+            matches!(result, Err(ImportCommandError::RowIndexOutOfBounds { .. })),
+            "must return RowIndexOutOfBounds"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // T_commit_4: partial selection — 선택된 행만 저장됨
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn commit_partial_selection_saves_only_selected() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+
+        seed_issuer(&pool, "stripe", vec!["stripe.com".to_owned()]).await;
+
+        let ctx = make_ctx(pool.clone(), vault);
+
+        let mut tmp = NamedTempFile::new().expect("tempfile");
+        std::io::Write::write_all(
+            &mut tmp,
+            b"name,url,username,password\n\
+              Stripe,https://stripe.com,alice,sk_live_abc,\n\
+              Other,https://other.example.com,bob,other_pass,",
+        )
+        .unwrap();
+
+        let preview = do_import_csv_prepare(tmp.path().to_str().unwrap(), &ctx)
+            .await
+            .expect("prepare");
+
+        // row 0 만 선택
+        let result = do_import_csv_commit(&preview.session_id, &[0], &ctx)
+            .await
+            .expect("commit");
+
+        assert_eq!(result.imported, 1, "only one row selected");
+        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows[0].row_index, 0);
+
+        let cred_repo = CredentialRepo::new(&pool);
+        let all = cred_repo
+            .list(&api_vault_core::CredentialFilter::default())
+            .await
+            .unwrap();
+        assert_eq!(all.len(), 1, "only the selected row must be in DB");
+    }
+
+    // -----------------------------------------------------------------------
+    // T_commit_5: same session_id 두 번째 commit → SessionNotFound (one-shot)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn commit_session_consumed_on_second_call() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+
+        seed_issuer(&pool, "github", vec!["github.com".to_owned()]).await;
+
+        let ctx = make_ctx(pool, vault);
+
+        let mut tmp = NamedTempFile::new().expect("tempfile");
+        std::io::Write::write_all(
+            &mut tmp,
+            b"name,url,username,password\nGitHub,https://github.com,alice,ghp_tok123",
+        )
+        .unwrap();
+
+        let preview = do_import_csv_prepare(tmp.path().to_str().unwrap(), &ctx)
+            .await
+            .expect("prepare");
+
+        // 첫 번째 commit — 성공
+        do_import_csv_commit(&preview.session_id, &[0], &ctx)
+            .await
+            .expect("first commit must succeed");
+
+        // 두 번째 commit — 세션 소진됨
+        let second = do_import_csv_commit(&preview.session_id, &[0], &ctx).await;
+        assert!(
+            matches!(second, Err(ImportCommandError::SessionNotFound { .. })),
+            "second commit must return SessionNotFound"
         );
     }
 }

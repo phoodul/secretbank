@@ -30,7 +30,7 @@ use commands::github::{
     github_save_installation, github_scan_repo,
 };
 use commands::graph::{blast_radius_for_credential, graph_fetch};
-use commands::import::import_csv_prepare;
+use commands::import::{import_csv_commit, import_csv_prepare};
 use commands::incidents::{
     incident_dismiss, incident_feed_refresh, incident_list, incident_matches_for_credential,
 };
@@ -181,6 +181,7 @@ pub fn run(context: tauri::Context) {
             credential_rotate_value,
             credential_copy_to_clipboard,
             import_csv_prepare,
+            import_csv_commit,
             issuer_list,
             issuer_get,
             project_create,
@@ -269,6 +270,7 @@ pub fn run(context: tauri::Context) {
             credential_reveal,
             credential_rotate_value,
             import_csv_prepare,
+            import_csv_commit,
             issuer_list,
             issuer_get,
             project_create,
