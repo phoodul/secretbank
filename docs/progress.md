@@ -2,8 +2,10 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-06 (낮 — **Phase 2-2A 풀 완료**)
-- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅, 2-2A 5 sub-task ALL ✅. 다음은 2-2C (다국가 RSS) — [project-decisions 2026-05-06] 옵션 가.
+- **Time:** 2026-05-06 (낮 — **Phase 2-2A + 2-2C-a 완료**)
+- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅, 2-2A 5 sub-task ALL ✅, 2-2C-a ✅. 다음은 2-2C-b (KISA/ENISA/JVN URL 검증 후 추가) 또는 2-2B (HIBP password check).
+- **2-2C-a 결과**: `2b42bcb` + `ae89b6f` — CISA (`https://www.cisa.gov/cybersecurity-advisories/all.xml`) + NCSC UK (`https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml`) RSS 프리셋 추가. default_presets() 10 → 12. 5 신규 테스트.
+- **2-2C-b 진입 조건**: KISA / ENISA / JVN / JPCERT 의 정확한 RSS URL 사용자 확인 또는 별도 WebFetch 검증 필요. 후보 URL 들이 직접 fetch 시 403/404 — 사이트별 RSS 페이지 직접 visit 가 가장 확실.
 - **Phase 2-2A 풀체인 완성**: HIBP `/breaches` 폴링 → Incident.domain → matcher Domain 매칭 → IncidentCard UI 까지.
   - 2-2A-3b: `cefbfb3` + `1e3a40c` — Incident.domain + matcher 도메인 매칭 + MatchReason::Domain (마이그레이션 0010, subdomain-safe `evil-supabase.com` 차단 검증)
   - 2-2A-4: `b1953c3` + `0c229bf` — IncidentCard reason 아이콘 (Globe/Tag/Search/Pin) + HIBP description + domain 라인 + 15 로케일 i18n
