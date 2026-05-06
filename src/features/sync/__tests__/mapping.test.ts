@@ -173,6 +173,7 @@ describe("issuerMapper (Phase D-2a)", () => {
       icon_key: "openai",
       default_primary_label: null,
       default_secondary_label: null,
+      domains: ["openai.com"],
       created_at: 1_700_000_000_000,
       updated_at: 1_710_000_000_000,
     };

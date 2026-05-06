@@ -711,6 +711,7 @@ mod tests {
             icon_key: None,
             default_primary_label: None,
             default_secondary_label: None,
+            domains: vec![],
         })
         .await
         .unwrap()

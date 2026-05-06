@@ -15,6 +15,8 @@ export interface Issuer {
   default_primary_label: string | null;
   /** Default label for secondary value slot. null = single-secret issuer. */
   default_secondary_label: string | null;
+  /** Domain mappings used for HIBP breach matching (M24 2-2A). [] = no mapping. */
+  domains: string[];
   created_at: number; // ms
   updated_at: number; // ms
 }

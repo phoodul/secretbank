@@ -645,6 +645,7 @@ mod tests {
             icon_key: None,
             default_primary_label: None,
             default_secondary_label: None,
+            domains: vec![],
         })
         .await
         .expect("issuer insert")
@@ -894,6 +895,7 @@ mod tests {
                 icon_key: None,
                 default_primary_label: None,
                 default_secondary_label: None,
+                domains: vec![],
             })
             .await
             .expect("issuer A insert");
@@ -911,6 +913,7 @@ mod tests {
                 icon_key: None,
                 default_primary_label: None,
                 default_secondary_label: None,
+                domains: vec![],
             })
             .await
             .expect("issuer B insert");
@@ -1036,6 +1039,7 @@ mod tests {
                 icon_key: None,
                 default_primary_label: None,
                 default_secondary_label: None,
+                domains: vec![],
             })
             .await
             .expect("issuer insert");

@@ -224,6 +224,7 @@ mod tests {
             icon_key: None,
             default_primary_label: None,
             default_secondary_label: None,
+            domains: vec![],
             created_at: now,
             updated_at: now,
         }
@@ -406,6 +407,7 @@ mod tests {
             icon_key: None,
             default_primary_label: None,
             default_secondary_label: None,
+            domains: vec![],
             created_at: fixed_now(),
             updated_at: fixed_now(),
         };

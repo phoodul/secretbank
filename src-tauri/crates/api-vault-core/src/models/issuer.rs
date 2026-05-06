@@ -19,6 +19,9 @@ pub struct Issuer {
     pub default_primary_label: Option<String>,
     /// Default label for the secondary credential value (e.g. "Secret Key", "Client Secret").
     pub default_secondary_label: Option<String>,
+    /// Domain mappings used for HIBP breach matching (M24 2-2A). Empty = no mapping.
+    #[serde(default)]
+    pub domains: Vec<String>,
     #[serde(with = "time::serde::timestamp::milliseconds")]
     pub created_at: OffsetDateTime,
     #[serde(with = "time::serde::timestamp::milliseconds")]
@@ -42,4 +45,7 @@ pub struct IssuerInput {
     /// Default label for the secondary credential value.
     #[serde(default)]
     pub default_secondary_label: Option<String>,
+    /// Domain mappings used for HIBP breach matching (M24 2-2A). Empty = no mapping.
+    #[serde(default)]
+    pub domains: Vec<String>,
 }

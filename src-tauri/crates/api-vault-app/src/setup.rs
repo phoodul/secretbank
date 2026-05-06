@@ -21,6 +21,7 @@ struct PresetSeed {
     icon_key: &'static str,
     default_primary_label: Option<&'static str>,
     default_secondary_label: Option<&'static str>,
+    domains: &'static [&'static str],
 }
 
 static PRESETS: [PresetSeed; 10] = [
@@ -34,6 +35,7 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "openai",
         default_primary_label: Some("API Key"),
         default_secondary_label: None,
+        domains: &["openai.com"],
     },
     PresetSeed {
         slug: "stripe",
@@ -45,6 +47,7 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "stripe",
         default_primary_label: Some("API Key"),
         default_secondary_label: None,
+        domains: &["stripe.com"],
     },
     PresetSeed {
         slug: "github",
@@ -56,6 +59,7 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "github",
         default_primary_label: Some("Client ID"),
         default_secondary_label: Some("Client Secret"),
+        domains: &["github.com", "github.io"],
     },
     PresetSeed {
         slug: "aws",
@@ -67,6 +71,7 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "aws",
         default_primary_label: Some("Access Key"),
         default_secondary_label: Some("Secret Key"),
+        domains: &["aws.amazon.com", "amazonaws.com"],
     },
     PresetSeed {
         slug: "vercel",
@@ -78,6 +83,7 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "vercel",
         default_primary_label: Some("API Key"),
         default_secondary_label: None,
+        domains: &["vercel.com", "vercel.app"],
     },
     PresetSeed {
         slug: "supabase",
@@ -89,6 +95,7 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "supabase",
         default_primary_label: Some("Public Key"),
         default_secondary_label: Some("Secret Key"),
+        domains: &["supabase.com", "supabase.io", "supabase.co"],
     },
     PresetSeed {
         slug: "google",
@@ -100,6 +107,11 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "google",
         default_primary_label: Some("API Key"),
         default_secondary_label: None,
+        domains: &[
+            "googleapis.com",
+            "googleusercontent.com",
+            "cloud.google.com",
+        ],
     },
     PresetSeed {
         slug: "anthropic",
@@ -111,6 +123,7 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "anthropic",
         default_primary_label: Some("API Key"),
         default_secondary_label: None,
+        domains: &["anthropic.com", "claude.ai"],
     },
     PresetSeed {
         slug: "paddle",
@@ -122,6 +135,7 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "paddle",
         default_primary_label: Some("API Key"),
         default_secondary_label: None,
+        domains: &["paddle.com"],
     },
     PresetSeed {
         slug: "cloudflare",
@@ -133,6 +147,12 @@ static PRESETS: [PresetSeed; 10] = [
         icon_key: "cloudflare",
         default_primary_label: Some("API Key"),
         default_secondary_label: None,
+        domains: &[
+            "cloudflare.com",
+            "cloudflare.dev",
+            "workers.dev",
+            "pages.dev",
+        ],
     },
 ];
 
@@ -153,13 +173,14 @@ pub async fn seed_issuer_presets(pool: &SqlitePool) -> Result<u64, StorageError>
     for p in &PRESETS {
         let id = IssuerId::new().to_string();
 
+        let domains_json = serde_json::to_string(p.domains).unwrap_or_else(|_| "[]".to_string());
         let res = sqlx::query(
             r#"INSERT OR IGNORE INTO issuer
                (id, slug, display_name, docs_url, issue_url, status_url,
                 security_feed_url, connector_id, icon_key,
                 default_primary_label, default_secondary_label,
-                created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)"#,
+                domains, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)"#,
         )
         .bind(&id)
         .bind(p.slug)
@@ -171,6 +192,7 @@ pub async fn seed_issuer_presets(pool: &SqlitePool) -> Result<u64, StorageError>
         .bind(p.icon_key)
         .bind(p.default_primary_label)
         .bind(p.default_secondary_label)
+        .bind(domains_json)
         .bind(now)
         .bind(now)
         .execute(pool)

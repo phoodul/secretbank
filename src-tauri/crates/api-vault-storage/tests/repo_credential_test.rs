@@ -20,6 +20,7 @@ async fn make_issuer(pool: &SqlitePool) -> api_vault_core::IssuerId {
         icon_key: None,
         default_primary_label: None,
         default_secondary_label: None,
+        domains: vec![],
     })
     .await
     .expect("issuer insert failed")

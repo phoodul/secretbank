@@ -17,6 +17,7 @@ async fn issuer_default_primary_label_roundtrip(pool: SqlitePool) -> Result<(), 
         icon_key: None,
         default_primary_label: Some("Public Key".to_string()),
         default_secondary_label: Some("Secret Key".to_string()),
+        domains: vec![],
     };
 
     let id = repo.insert(&input).await?;
@@ -46,6 +47,7 @@ async fn issuer_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError> {
         icon_key: Some("openai".to_string()),
         default_primary_label: None,
         default_secondary_label: None,
+        domains: vec![],
     };
 
     // insert
@@ -78,6 +80,7 @@ async fn issuer_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError> {
         icon_key: None,
         default_primary_label: None,
         default_secondary_label: None,
+        domains: vec![],
     };
     repo.update(id, &updated_input).await?;
     let updated = repo.get_by_id(id).await?.expect("should still exist");

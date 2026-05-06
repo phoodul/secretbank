@@ -1,0 +1,1 @@
+ALTER TABLE issuer ADD COLUMN domains TEXT NULL;

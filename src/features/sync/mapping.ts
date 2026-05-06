@@ -140,6 +140,8 @@ export interface IssuerYValue extends Record<string, unknown> {
   security_feed_url: string | null;
   connector_id: string | null;
   icon_key: string | null;
+  /** Domain mappings for HIBP breach matching (M24 2-2A). */
+  domains: string[];
   created_at: number;
   updated_at: number;
 }
@@ -156,6 +158,7 @@ export const issuerMapper: EntityMapper<Issuer, IssuerYValue> = {
       security_feed_url: row.security_feed_url,
       connector_id: row.connector_id,
       icon_key: row.icon_key,
+      domains: row.domains,
       created_at: row.created_at,
       updated_at: row.updated_at,
     };
@@ -173,6 +176,7 @@ export const issuerMapper: EntityMapper<Issuer, IssuerYValue> = {
       icon_key: value.icon_key,
       default_primary_label: null, // not synced — device-local fallback
       default_secondary_label: null, // not synced — device-local fallback
+      domains: value.domains ?? [],
       created_at: value.created_at,
       updated_at: value.updated_at,
     };
