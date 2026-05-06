@@ -41,6 +41,13 @@
   - M25 Breach Broadcast (이메일 / 모바일 푸시) — 앱을 열도록 유도하는 채널
   - USER_GUIDE / Settings 한 줄: "주 1회 이상 앱을 열어주세요. 또는 Breach Broadcast (Pro / 추후) 를 켜주세요."
 
+### F. 도메인 매칭 디자인 (2-2A-3, 2026-05-06 확정)
+
+- **Issuer 테이블에 `domains` 컬럼 추가** (마이그레이션 0009, JSON array text). 백엔드가 source of truth — frontend `issuer-presets.ts` 의 domains[] (Phase 2-1) 와 일치.
+- **Credential.url 직접 매칭 포함** — 사용자가 입력한 URL host 와 breach.domain 직접 비교. 1Password 와 동일 방식.
+- **`MatchReason::Domain` 신규 variant** — IssuerMatch / Keyword 와 별도. UI 에서 "Vercel 도메인 매칭됨" 명확히 표현.
+- **subdomain-safe match**: `host === domain || host.endsWith("." + domain)` (Phase 2-1 의 matchIssuerByUrl 과 동일 정책). evil-stripe.com 차단.
+
 ### E. 수동 검사 = vault 전체 일괄 (per-card 메뉴 아님)
 
 - **결정:** "유출 검사" 버튼은 Inventory 페이지 헤더 + Settings 양쪽에 1개. 모든 password kind credential 일괄 검사 (병렬 N=8, scan:progress 이벤트 패턴). per-card 메뉴 없음.

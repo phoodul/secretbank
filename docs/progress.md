@@ -2,8 +2,12 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-06 (낮 — Phase 2-2A 진입, 2-2A-1 완료)
-- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅, Phase 2-2A-1 ✅. 다음은 2-2A-2 (IncidentFeed 통합).
+- **Time:** 2026-05-06 (낮 — Phase 2-2A 두 sub-task 완료)
+- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅, 2-2A-1 ✅, 2-2A-2 ✅. 다음은 2-2A-3 (도메인 매칭) — 디자인 결정 큐.
+- **Phase 2-2A-2 결과**: `f1c05bb` feat(feeds): HIBP breach normalize + IncidentFeed 통합 + `72d4983` docs(task) 갱신.
+  - `normalize_hibp_breach()` 추가 (severity 계층 매핑: malware/stealer_log → Critical / sensitive → High / spam_list → Low / 기본 Medium)
+  - `feed_scheduler` 에 HIBP poller (24h, hibp_breaches_enabled=true default) + `FeedSchedulerError::Hibp` variant + `trigger_once` hibp 분기
+  - 회귀 +9 (normalize 7 + scheduler integration 2). cargo test 전체 0 failed.
 - **사용자 결정 (옵션 가)**: 2-2A (HIBP Breaches feed) → 2-2C (다국가 RSS) → 2-2B (Password check) → M25 placeholder. project-decisions [2026-05-06] 기록.
 - **Phase 2-2A-1 결과**: `84602bb` feat(feeds): HibpClient::list_breaches — 글로벌 breach catalog 조회. 기존 `check_email` 옆에 메서드 추가. 회귀 +5 (T11~T15). cargo test 53 passed.
 - **사전 조사 (2-2A-2 위해)**:
