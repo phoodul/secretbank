@@ -2382,7 +2382,7 @@ api-vault 의 두 갈래 통합:
 | Phase 2-2A-2 | normalize_hibp_breach + FeedScheduler HIBP poller 통합 | 2026-05-06 | `f1c05bb` |
 | Phase 2-2A-3a | issuer.domains 컬럼 + preset seed + frontend Issuer 타입 sync | 2026-05-06 | `9bac675` |
 | Phase 2-2A-3b | Incident.domain + MatchReason::Domain + subdomain-safe 매칭 | 2026-05-06 | `cefbfb3` |
-| Phase 2-2A-4 | IncidentCard reason 아이콘 + HIBP description + domain 라인 + i18n 15개 로케일 | 2026-05-06 | TBD |
+| Phase 2-2A-4 | IncidentCard reason 아이콘 + HIBP description + domain 라인 + i18n 15개 로케일 | 2026-05-06 | `b1953c3` |
 
 ---
 
