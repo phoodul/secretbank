@@ -189,6 +189,46 @@ impl HibpClient {
         }
     }
 
+    /// Query the HIBP `/breaches` endpoint.
+    ///
+    /// Returns the global breach catalog (~800+ entries) — no email required.
+    /// `hibp-api-key` is sent for consistency even though the endpoint is publicly accessible.
+    pub async fn list_breaches(&self) -> Result<Vec<HibpBreach>, HibpError> {
+        self.limiter.until_ready().await;
+
+        let url = format!("{}/breaches", self.base_url);
+
+        let resp = self
+            .http
+            .get(&url)
+            .header("hibp-api-key", &self.api_key)
+            .send()
+            .await?;
+
+        match resp.status().as_u16() {
+            200 => {
+                let body = resp.bytes().await?;
+                let raws: Vec<RawBreach> = serde_json::from_slice(&body)?;
+                let breaches: Result<Vec<_>, _> = raws.into_iter().map(raw_to_breach).collect();
+                Ok(breaches?)
+            }
+            401 => Err(HibpError::Unauthorized),
+            403 => Err(HibpError::Forbidden),
+            429 => {
+                let retry_after = resp
+                    .headers()
+                    .get("retry-after")
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|s| s.parse::<u64>().ok())
+                    .map(Duration::from_secs)
+                    .unwrap_or(Duration::from_secs(60));
+                Err(HibpError::RateLimited { retry_after })
+            }
+            s if (500..=599).contains(&s) => Err(HibpError::Server { status: s }),
+            s => Err(HibpError::BadRequest(format!("unexpected status {s}"))),
+        }
+    }
+
     /// Query the HIBP `breachedaccount/{email}` endpoint.
     ///
     /// Returns `Ok(Vec::new())` when the email has **no** known breaches (HTTP 404).
@@ -522,5 +562,122 @@ mod tests {
         );
         assert_eq!(result[0].is_stealer_log, Some(true));
         assert_eq!(result[0].pwn_count, 26_105_473);
+    }
+
+    // ------------------------------------------------------------------
+    // T11: list_breaches 200 → Vec<HibpBreach> 2개
+    // ------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn test_list_breaches_200_returns_breaches() {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/breaches"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                make_breach("Adobe"),
+                make_breach("LinkedIn"),
+            ])))
+            .mount(&mock_server)
+            .await;
+
+        let client = HibpClient::with_base_url(mock_server.uri(), "test-key");
+        let result = client.list_breaches().await.unwrap();
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].name, "Adobe");
+        assert_eq!(result[0].pwn_count, 100_000);
+        assert!(result[0].attribution.is_none());
+    }
+
+    // ------------------------------------------------------------------
+    // T12: list_breaches 200 + 빈 배열 → Ok(vec![])
+    // ------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn test_list_breaches_200_empty_array() {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/breaches"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
+            .mount(&mock_server)
+            .await;
+
+        let client = HibpClient::with_base_url(mock_server.uri(), "test-key");
+        let result = client.list_breaches().await.unwrap();
+
+        assert!(result.is_empty());
+    }
+
+    // ------------------------------------------------------------------
+    // T13: list_breaches 401 → HibpError::Unauthorized
+    // ------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn test_list_breaches_401_returns_unauthorized() {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/breaches"))
+            .respond_with(ResponseTemplate::new(401))
+            .mount(&mock_server)
+            .await;
+
+        let client = HibpClient::with_base_url(mock_server.uri(), "bad-key");
+        let err = client.list_breaches().await.unwrap_err();
+
+        assert!(
+            matches!(err, HibpError::Unauthorized),
+            "expected Unauthorized, got: {err:?}"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // T14: list_breaches 429 + retry-after:120 → HibpError::RateLimited { 120s }
+    // ------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn test_list_breaches_429_returns_rate_limited() {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/breaches"))
+            .respond_with(ResponseTemplate::new(429).insert_header("retry-after", "120"))
+            .mount(&mock_server)
+            .await;
+
+        let client = HibpClient::with_base_url(mock_server.uri(), "test-key");
+        let err = client.list_breaches().await.unwrap_err();
+
+        match err {
+            HibpError::RateLimited { retry_after } => {
+                assert_eq!(retry_after, Duration::from_secs(120));
+            }
+            other => panic!("expected RateLimited, got: {other:?}"),
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // T15: list_breaches 503 → HibpError::Server { status: 503 }
+    // ------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn test_list_breaches_503_returns_server() {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/breaches"))
+            .respond_with(ResponseTemplate::new(503))
+            .mount(&mock_server)
+            .await;
+
+        let client = HibpClient::with_base_url(mock_server.uri(), "test-key");
+        let err = client.list_breaches().await.unwrap_err();
+
+        match err {
+            HibpError::Server { status } => assert_eq!(status, 503),
+            other => panic!("expected Server, got: {other:?}"),
+        }
     }
 }
