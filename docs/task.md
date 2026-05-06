@@ -52,7 +52,7 @@
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / v3 Cargo.toml hover + ManifestCodeLens — risky deps inline) |
 | M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + apivault blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). |
 | **M23** | **Vault Charter (recovery 메커니즘) — 출시 블로커** | T-23-A~E | 5 (+1 hotfix) | ✅ **M23 완료 — 마일스톤 클로즈** (A codec crate / B-1 vault format v2 / B-2 initialize_with_charter / B-3 recover_with_charter / B-4 Tauri 커맨드 + audit / C 발급 UI + PDF / D recovery flow UI / E-1 cooldown sidecar / E-2 cooldown UI / unlock anim hotfix). sync 알림은 M9 audit 확장으로 분리. |
-| **M24** | **General password vault — Unified Bento Inventory** | T-24-A~E + Phase 1/1.5/2/3 | 5 + sub | 🔄 **Phase 1 ✅ + 1.5 ✅ + 2-1 ✅ + 2-2A ✅ + 2-2C ✅ + 2-3-a-1 ✅ + 2-3-a-2 ✅ + 2-3-a-3 ✅ + 2-3-a-4 ✅ + 2-3-a-5 ✅ (2026-05-07)** — type-agnostic bento card + value pair + hover mini-graph + URL auto-detect + HibpClient::list_breaches + normalize_hibp_breach + HIBP poller 통합 + issuer.domains 컬럼 + preset seed + Incident.domain 컬럼 + MatchReason::Domain + subdomain-safe 매칭 + IncidentCard reason 아이콘 + KISA 5 RSS 프리셋 + Google CSV 파서 + DetectedFromCsv 변환 + `import_csv_prepare` 커맨드 + `import_csv_commit` 커맨드 + **CSVImportDialog UI (Bento 카드 preview / TTL 카운트다운 / alreadyExists 자동 해제 / 원본 CSV 삭제 버튼) + DropZone .csv 분기 + i18n 4 로케일 + Vitest 7 PASS**. 다음: **Phase 2-3-a-6** (docs 마무리). |
+| **M24** | **General password vault — Unified Bento Inventory** | T-24-A~E + Phase 1/1.5/2/3 | 5 + sub | 🔄 **Phase 1 ✅ + 1.5 ✅ + 2-1 ✅ + 2-2A ✅ + 2-2C ✅ + 2-3-a ✅ + 2-4-a ✅ (2026-05-07)** — type-agnostic bento card + value pair + hover mini-graph + URL auto-detect + HibpClient::list_breaches + normalize_hibp_breach + HIBP poller 통합 + issuer.domains 컬럼 + preset seed + Incident.domain 컬럼 + MatchReason::Domain + subdomain-safe 매칭 + IncidentCard reason 아이콘 + KISA 5 RSS 프리셋 + Google CSV 파서 + DetectedFromCsv 변환 + `import_csv_prepare` 커맨드 + `import_csv_commit` 커맨드 + CSVImportDialog UI + **QuickAddDialog (5필드 경량 폼 / 클립보드 prefill / issuer 자동 감지 / 전체 옵션 전환 / i18n 4 로케일 / Vitest 7 PASS) + `action.quick-add` Cmd+K 액션**. 다음: **Phase 2-4-d (CLI quick-add)** 또는 dogfooding. |
 | **M25** | **Breach Broadcast (EE relay → 이메일/푸시 fanout)** | TBD | TBD | ⏳ placeholder (M11 모바일 전 v1 = 이메일, M11 후 v2 = 모바일 푸시 합류). 메타데이터 broadcast (Zero-Knowledge 와 양립). [project-decisions 2026-05-06] |
 
 ---
@@ -267,6 +267,12 @@
 | 주제 | 커밋 해시 |
 | :--- | :-------- |
 | **Phase 2-3-a-5** `CSVImportDialog.tsx` 신규 (Bento 카드 preview + 5분 TTL 카운트다운 + alreadyExists 자동 해제 + per-row 결과 + 원본 CSV plugin-fs::remove 확인 후 삭제) + `DropZone.tsx` .csv 분기 (.env/폴더 회귀 없음) + i18n 4 로케일 (en/ko/ja/zh) `import.csv.*` 17키 + `fs:allow-remove` capability + `@tauri-apps/plugin-fs 2.5.1` 추가 + Vitest 7 PASS (528 → 535). typecheck / lint / format:check 전원 통과. | `b2048e4` |
+
+### M24 Phase 2-4-a (2026-05-07, Cmd+K Quick Add 다이얼로그 + 클립보드 prefill)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **Phase 2-4-a** `actions.ts` `action.quick-add` 추가 (Zap 아이콘) + `QuickAddDialog.tsx` 신규 (5필드 경량 폼: URL/username/password/name/kind 토글 / mount 시 readText() → URL 패턴 일치 시 자동 채움 + "Auto-filled" 표시 / URL onChange → matchIssuerByUrl → issuer 이름 + api_key 자동 전환 / "전체 옵션 보기" onShowFullForm prefill 전달 / submit 직후 password state 비움) + `InventoryPage` `?action=quick-add` 파라미터 감지 + i18n `quickAdd.*` 22키 × 4 로케일 (en/ko/ja/zh) + Vitest 7 PASS (535 → 542). typecheck / lint / format:check / cargo 전원 통과. | `dfb9a57` |
 
 ---
 
