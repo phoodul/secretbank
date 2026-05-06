@@ -5,6 +5,81 @@
 
 ---
 
+## [2026-05-07] M24 Phase 2-3 / 2-4 — Import 범위 확장 + "마찰 없는 등록 UX" 신설
+
+### 사용자 결정 요지 (2026-05-07)
+
+> "Import 에서 Bitwarden / 1Password 안 쓰는 사람은 그냥 Google 비번을 import 해올 수 있어야 한다.
+> 그리고 사용자가 id/pw, api key, token 등을 입력할 때마다 api-vault 에 등록하는 게 쉬워야 하고, 직관적으로 보여야 한다."
+
+### A. Phase 2-3 (Import) 의 범위 확장
+
+이전 plan: 1pux + Bitwarden JSON 만 (m24_vision.md). **갱신**: Google 비밀번호 (Chrome / Edge 가 export 하는 Google 계정 동기화 CSV) 를 **1순위 import** 로 승격.
+
+| 우선순위 | 포맷 | 근거 |
+| :--- | :--- | :--- |
+| **1차** | **Google CSV** (Chrome / Edge / Brave 의 `chrome://password-manager/passwords` export) | 1P/Bitwarden 비사용자가 가장 많이 쓰는 비번 저장소. 표준 4 컬럼 (`name,url,username,password`) |
+| 2차 | Bitwarden JSON | OSS, 사용자층 두꺼움 |
+| 3차 | 1Password 1pux (8.x) | 유료 사용자, 마이그레이션 동기 큼 |
+| 4차 | Firefox CSV / KeePass XML / Safari CSV | nice-to-have, 우선순위 낮음 |
+
+- **공통 import 파이프라인**: drag-drop 단일 파일 → 형식 감지 → preview (행 수 / 충돌 / 새 issuer 자동 추출) → confirm. 모두 같은 UI 흐름.
+- 모든 import 는 **client-side parsing only**, 평문이 vault DB 들어가기 전에 keyring 으로 암호화 (기존 AgeVaultStorage 그대로).
+
+### B. Phase 2-4 (신설) — "마찰 없는 등록 UX"
+
+매번 사이트에 가입할 때마다 vault 에 등록하는 마찰을 줄이는 게 목표. **dogfooding 의 daily-driver 화** 의 핵심.
+
+후보 (구체적 형태는 별도 결정 필요 — 아래 큐 참조):
+
+| 후보 | 작업량 | 효과 |
+| :--- | :--- | :--- |
+| **a. Cmd+K Quick Add 강화** | 작음 | 글로벌 hotkey → 모달 → URL/ID/PW 3 필드 + 클립보드 자동 채움 (사용자 액션 1회) |
+| **b. System tray + 글로벌 hotkey** | 중간 | OS 단축키 (e.g. Ctrl+Shift+V) → tray 메뉴 → 빠른 등록. Tauri tray API 사용 |
+| **c. Browser extension** (M24-E placeholder) | 큼 (별도 마일스톤) | 사이트에서 입력 시 "Save to API Vault?" 토스트 (1P/Bitwarden 동등) |
+| **d. CLI quick-add** (`apivault add --url ... --user ...`) | 작음 | 개발자 친화 + 스크립트화 가능 |
+| **e. 클립보드 monitor (자동 감지)** | 보안 위험 | 패스. 명시적 사용자 의도 없는 캡처는 우리 정책 위반 |
+
+### C. "직관적으로 보여야 한다" — 이미 만든 것 + 추가 요구
+
+- ✅ 이미 만든 차별화: Bento Card 통합 디자인 / hover mini-graph / URL auto-detect / IncidentCard 도메인 매칭 reason 아이콘
+- ⏳ Phase 2-3/2-4 에서 강화할 것:
+  - Import preview 화면이 **시각적으로** 충돌/신규/중복을 한눈에 보여줘야 함 (텍스트 리스트 ❌, 색상 배지 + 아이콘 ✅)
+  - Quick Add 가 **최소 3 클릭 / 최대 5 초** 이내 완료
+  - 등록 직후 BentoGrid 에 새 카드가 **slide-in 애니메이션** (prefers-reduced-motion 지키면서)
+
+### D. M24 Phase 우선순위 갱신 (2026-05-07)
+
+[2026-05-06] 결정 (옵션 가) 의 **2-2B (HIBP Password check) 진입을 후순위로 미룸**. 사용자 비전: "daily driver 화" 가 더 시급.
+
+**갱신된 순서**:
+
+1. ✅ 2-1 (URL auto-detect) — 완료
+2. ✅ 2-2A (HIBP Breaches feed + 매칭) — 완료
+3. ✅ 2-2C-a/b (CISA + NCSC + KISA RSS) — 완료
+4. **다음 → 2-3 (Import: Google CSV 1차)** — 새 결정
+5. **그 다음 → 2-4 (마찰 없는 등록 UX: 구체 형태 결정 후 진입)**
+6. 후순위로 밀림: 2-2B (HIBP Password check), 2-2C-c (ENISA / JVN / JPCERT), 2-3-2nd~4th (Bitwarden/1pux/Firefox)
+
+### E. 사용자 결정 — 진입 순서 + Quick Add 형태 (2026-05-07 확정)
+
+**Gate 1 응답:**
+- 진입 순서: **(가) 2-3 Import 먼저** → 이후 2-4 Quick Add → 2-4 CLI
+- Quick Add 형태: **(a) Cmd+K Quick Add 강화 + (d) CLI quick-add**. (b) Tray + hotkey 는 보류, (c) 브라우저 확장은 별도 마일스톤 (M24-E placeholder).
+- 권고대로 진행 = 하나씩 순서대로 1 implementator = 1 commit 룰 유지.
+
+**확정된 sub-task 순서**:
+
+1. **2-3-a Google CSV import (1차)** — Chrome / Edge / Brave 가 export 하는 표준 4-컬럼 (`name,url,username,password`) CSV → drag-drop → preview → confirm → BentoGrid 등록.
+2. **2-3-b Bitwarden JSON import** — 2차.
+3. **2-3-c 1Password 1pux import** — 3차.
+4. **2-4-a Cmd+K Quick Add** — 글로벌 hotkey (이미 있는 Cmd+K 팔레트에 "Add credential" 액션 + URL/ID/PW 3 필드 + 클립보드 자동 채움).
+5. **2-4-d CLI quick-add** — `apivault add --url ... --user ... --pw ...` (CLI 크레이트가 이미 있으니 subcommand 추가).
+
+**HIBP Password check (2-2B) 의 미래**: M24 v2 로 미룸. v1 = "쉬운 등록 + 직관" 까지가 dogfooding 의 최소 조건. v2 = Pro 진입 직전 합류 후보.
+
+---
+
 ## [2026-05-06] M24 Phase 2 — Breach awareness 4 갈래 분기 + 진행 순서
 
 ### A. Phase 2-2 (HIBP) 가 두 갈래로 분기 — Breaches feed + Password check

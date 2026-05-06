@@ -2,6 +2,21 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-07 — **M24 Phase 2-3-a 진입 (Google CSV import)**
+- **Phase:** Phase 3 — Implementation. **Phase 2-3-a 6 sub-task 분해 + Gate 2 사용자 승인 완료**. 다음 → 2-3-a-1 (csv_google.rs 파서 + csv crate 의존성 + 단위 테스트).
+- **사용자 비전 갱신 (2026-05-07)**: Import 1순위를 Google CSV (Chrome/Edge/Brave) 로 승격. 1pux/Bitwarden 은 후순위. + Phase 2-4 신설 = 마찰 없는 등록 UX (Cmd+K Quick Add + CLI quick-add). HIBP Password check (2-2B) 는 M24 v2 로 미룸.
+- **Researcher 결과 (`docs/research_phase2_3a_google_csv.md`)**: Chrome/Brave 5컬럼 (`name,url,username,password,note`, note 는 feature flag 누락 가능) / Edge 3컬럼 (`url,username,password`) / UTF-8 BOM 방어 / RFC 4180 escape / `csv` crate 신규 추가 / `secrecy::SecretBox` 즉시 래핑 (이미 워크스페이스 보유) / 차별화 = preview UI + 원본 CSV 직접 삭제 버튼.
+- **Phase 2-3-a sub-task 정의 (Gate 2 승인 2026-05-07)**:
+  1. **2-3-a-1**: `api-vault-connectors/src/import/csv_google.rs` 파서 (Chrome/Edge/Brave header-based, BOM 방어, RFC 4180) + 단위 테스트 6~8 + `csv` crate 워크스페이스 추가
+  2. **2-3-a-2**: CSV row → `DetectedKey` 변환 (URL → issuer 자동 매핑 backend, env=prod default) + 테스트
+  3. **2-3-a-3**: Tauri command `import_google_csv` (파일 경로 → DetectedKey[] 반환) + AuditCtx + 통합 테스트
+  4. **2-3-a-4**: `CredentialRepo::bulk_insert_with_usage()` SQLite transaction + 부분 실패 rollback + 테스트
+  5. **2-3-a-5**: `DropZone.tsx` `.csv` 분기 + `CSVImportDialog.tsx` 신규 (Bento 카드 preview + 원본 삭제 버튼) + i18n 4 로케일 + Vitest 5~7
+  6. **2-3-a-6**: docs(task) + docs(progress) 갱신
+- **Explore 사전 조사 (재사용 가능 자산)**: `use-import-detected.ts:43` (신규/교체 의사결정 + 부분 실패 처리 그대로 재사용) / `DetectedKeysReview.tsx:52` / `DropZone.tsx:26` (Tauri native drag-drop) / Cmd+K `actions.ts:87` / CLI `main.rs:54` (clap derive)
+
+### 이전 — Phase 2-2A + 2-2C 완료 (2026-05-06)
+
 - **Time:** 2026-05-06 (낮 — **Phase 2-2A + 2-2C-a 완료**)
 - **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅, 2-2A 5 sub-task ALL ✅, 2-2C-a ✅. 다음은 2-2C-b (KISA/ENISA/JVN URL 검증 후 추가) 또는 2-2B (HIBP password check).
 - **2-2C-a 결과**: `2b42bcb` + `ae89b6f` — CISA (`https://www.cisa.gov/cybersecurity-advisories/all.xml`) + NCSC UK (`https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml`) RSS 프리셋 추가. default_presets() 10 → 12. 5 신규 테스트.
