@@ -29,5 +29,9 @@ rpassword = { workspace = true }
 directories = { workspace = true }
 arboard = { workspace = true }
 
+# URL parsing (apivault add — URL → host 추출)
+url = "2.5"
+time = { workspace = true }
+
 [dev-dependencies]
 tempfile = "3"
