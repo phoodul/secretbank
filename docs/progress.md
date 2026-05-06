@@ -2,6 +2,35 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-06 (낮 — Phase 2 첫 sub-task 완료)
+- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅. 다음은 Phase 2-2 (HIBP).
+- **사용자 결정 (이번 세션):** Phase 2 sub-task 우선순위 = **권고대로 1 → 2 → 3 → 4 → 5** (URL auto-detect → HIBP → 1Password CSV → Bitwarden JSON → browser autofill).
+- **Phase 2-1 결과 (URL auto-detect + Password UI 통합):** 3 commits (1 implementator)
+  - `5473437` feat(inventory): issuer URL 도메인 매핑 + matchIssuerByUrl 헬퍼 (M24 2-1a) — 10 preset 모두 domains[] 추가, subdomain-safe 매칭 (`evil-stripe.com` 차단), protocol-less URL 자동 보정
+  - `48d067c` feat(inventory): CreateCredentialDialog kind/url/username 필드 + URL auto-detect (M24 2-1b) — kind 토글 (api_key/password) + URL onChange auto-select + issuer lock 추적 + i18n 4 로케일
+  - `e638b0d` docs(task): Phase 2-1 커밋 해시 매핑 갱신
+- **누적 검증:**
+  - `pnpm typecheck` ✅
+  - `pnpm vitest run` ✅ **494 → 522 (+28)** — `match-issuer-by-url.test.ts` 24 신규 + `CreateCredentialDialog.test.tsx` +4 (URL auto-detect / issuer lock / kind 토글 ×2)
+  - `pnpm lint` ✅ (pre-existing 경고 18 개만, 신규 0)
+  - `cargo test` 변경 없음 (백엔드 미수정)
+- **사전 조사로 단축**: 백엔드 `CredentialInput` 에 `kind`/`url`/`username` 필드 이미 존재 (M24 Phase 1) — UI 입력 + issuer-presets domains 추가만 필요.
+- **소소한 정정 (implementator 보고)**: zod `.default()` 가 `useForm` resolver 와 타입 충돌 → `defaultValues` 로 옮김. Radix Select 옵션 다중 DOM 매칭 → `findByRole("option", ...)` 로 변경.
+
+### 다음 단계 — Phase 2-2 (HIBP breach alert) 진입 전 사용자 확인 큐
+
+implementator 가 제기한 두 가지 정책 결정:
+
+1. **HIBP 체크 트리거**: 수동(버튼) only vs 저장 시 자동도 포함 — 자동이면 저장 UX 에 약간의 딜레이 체감 가능
+2. **결과 저장 위치**: `CredentialSummary` 에 `hibp_count: Option<u32>` 컬럼 추가 (재시작 후에도 유지) vs 세션 메모리만
+
+후순위:
+- 사용자 액션 #4-7 / dogfooding / GitHub Cowork 4 액션 (Phase 2 와 병행 가능)
+
+---
+
+## Previous Checkpoint (2026-05-06 Night mode)
+
 - **Time:** 2026-05-06 (Night mode) — **M24 Phase 1.5 완전 완료 + 16 commits push (origin/main)**
 - **Phase:** Phase 3 — Implementation. **M24 v1 Phase 1 + Phase 1.5 모두 ✅**. 다음은 Phase 2 (URL auto-detect / HIBP / 1Password import) 또는 사용자 결정 큐.
 - **이번 세션 결과:**
