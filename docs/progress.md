@@ -2,8 +2,21 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-06 (낮 — Phase 2-2A 두 sub-task 완료)
-- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅, 2-2A-1 ✅, 2-2A-2 ✅. 다음은 2-2A-3 (도메인 매칭) — 디자인 결정 큐.
+- **Time:** 2026-05-06 (낮 — **Phase 2-2A 풀 완료**)
+- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅, 2-2A 5 sub-task ALL ✅. 다음은 2-2C (다국가 RSS) — [project-decisions 2026-05-06] 옵션 가.
+- **Phase 2-2A 풀체인 완성**: HIBP `/breaches` 폴링 → Incident.domain → matcher Domain 매칭 → IncidentCard UI 까지.
+  - 2-2A-3b: `cefbfb3` + `1e3a40c` — Incident.domain + matcher 도메인 매칭 + MatchReason::Domain (마이그레이션 0010, subdomain-safe `evil-supabase.com` 차단 검증)
+  - 2-2A-4: `b1953c3` + `0c229bf` — IncidentCard reason 아이콘 (Globe/Tag/Search/Pin) + HIBP description + domain 라인 + 15 로케일 i18n
+  - 누적: 9 commits (2-2A-1 / 2 / 3a / 3b / 4 + 각 docs(task))
+- **누적 검증**: cargo test 0 failed / clippy 0 warning / typecheck / vitest **528 (+34 from baseline 494)**.
+- **다음 (2-2C)**: KISA / 개인정보보호위 / ENISA / CISA RSS 프리셋 추가 — RSS 클라이언트 (T051) 이미 존재, sources.rs 에 프리셋만 추가하면 됨. 작은 작업 (1~2 commits 예상).
+- **Phase 2-2A-3a 결과**: `9bac675` + `d96e838`. 마이그레이션 0009 + Issuer.domains: Vec<String> + IssuerRepo JSON 직렬화 + 10 preset 시드 + frontend Issuer 인터페이스 + 8 픽스처 + Yjs mapping.ts 동기화. 19 파일 +174 줄. 검증 27 suites 0 failed / vitest 522 0 failed.
+- **2-2A-3b 진입 전 사양 메모**:
+  - `MatchReason::Domain` variant 추가 (audit/UI 에서 매칭 근거 명확화)
+  - `Incident` 모델에 `domain: Option<String>` 필드 추가 (마이그레이션 0010) — HIBP breach.domain 을 incident 에 보존
+  - `normalize_hibp_breach` 에서 incident.domain 채움
+  - `matcher.rs` 의 `match_incident` 확장: incident.domain 이 Some 이면 issuer.domains[] / credential.url host 양쪽과 subdomain-safe 매칭
+  - subdomain-safe match: `host == domain || host.ends_with(&format!(".{domain}"))` — Phase 2-1 frontend matchIssuerByUrl 와 동일 정책
 - **Phase 2-2A-2 결과**: `f1c05bb` feat(feeds): HIBP breach normalize + IncidentFeed 통합 + `72d4983` docs(task) 갱신.
   - `normalize_hibp_breach()` 추가 (severity 계층 매핑: malware/stealer_log → Critical / sensitive → High / spam_list → Low / 기본 Medium)
   - `feed_scheduler` 에 HIBP poller (24h, hibp_breaches_enabled=true default) + `FeedSchedulerError::Hibp` variant + `trigger_once` hibp 분기
