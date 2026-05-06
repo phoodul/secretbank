@@ -29,6 +29,12 @@ export interface IssuerPreset {
    * These are approximate patterns — precision will be re-validated in T033.
    */
   key_pattern_regex: string;
+  /**
+   * Canonical domains for URL-based issuer auto-detection (M24 2-1a).
+   * Subdomain matching is applied: `host === domain || host.endsWith("." + domain)`.
+   * Use specific enough domains — avoid overly broad entries like "google.com".
+   */
+  domains: string[];
 }
 
 export const ISSUER_PRESETS: IssuerPreset[] = [
@@ -42,6 +48,7 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon_key: "openai",
     icon: KeyRound,
     key_pattern_regex: "^sk-(proj-)?[A-Za-z0-9_-]{20,}$",
+    domains: ["openai.com"],
   },
   {
     slug: "stripe",
@@ -53,6 +60,7 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon_key: "stripe",
     icon: KeyRound,
     key_pattern_regex: "^(sk|rk|pk)_(test|live)_[A-Za-z0-9]{24,}$",
+    domains: ["stripe.com"],
   },
   {
     slug: "github",
@@ -64,6 +72,7 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon_key: "github",
     icon: KeyRound,
     key_pattern_regex: "^(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{82})$",
+    domains: ["github.com", "github.io"],
   },
   {
     slug: "aws",
@@ -76,6 +85,8 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon: Cloud,
     // Access Key ID pattern
     key_pattern_regex: "^AKIA[0-9A-Z]{16}$",
+    // amazon.com itself is too broad; match AWS-specific subdomains only
+    domains: ["aws.amazon.com", "amazonaws.com"],
   },
   {
     slug: "vercel",
@@ -87,6 +98,7 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon_key: "vercel",
     icon: Cloud,
     key_pattern_regex: "^[A-Za-z0-9]{24}$",
+    domains: ["vercel.com", "vercel.app"],
   },
   {
     slug: "supabase",
@@ -99,6 +111,7 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon: KeyRound,
     // JWT pattern (service role / anon key)
     key_pattern_regex: "^eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+    domains: ["supabase.com", "supabase.io", "supabase.co"],
   },
   {
     slug: "google",
@@ -110,6 +123,8 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon_key: "google",
     icon: Cloud,
     key_pattern_regex: "^AIza[0-9A-Za-z_-]{35}$",
+    // google.com itself is too broad; match API/cloud-specific domains
+    domains: ["googleapis.com", "googleusercontent.com", "cloud.google.com"],
   },
   {
     slug: "anthropic",
@@ -121,6 +136,7 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon_key: "anthropic",
     icon: KeyRound,
     key_pattern_regex: "^sk-ant-api03-[A-Za-z0-9_-]{90,}$",
+    domains: ["anthropic.com", "claude.ai"],
   },
   {
     slug: "paddle",
@@ -132,6 +148,7 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon_key: "paddle",
     icon: KeyRound,
     key_pattern_regex: "^[A-Za-z0-9]{40,}$",
+    domains: ["paddle.com"],
   },
   {
     slug: "cloudflare",
@@ -143,6 +160,7 @@ export const ISSUER_PRESETS: IssuerPreset[] = [
     icon_key: "cloudflare",
     icon: Cloud,
     key_pattern_regex: "^[A-Za-z0-9_-]{40}$",
+    domains: ["cloudflare.com", "cloudflare.dev", "workers.dev", "pages.dev"],
   },
 ];
 
