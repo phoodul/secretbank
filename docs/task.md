@@ -236,7 +236,7 @@
 
 | 주제 | 커밋 해시 |
 | :--- | :-------- |
-| **Phase 2-2A-3b** 마이그레이션 0010 incident.domain + Incident struct domain 필드 + MatchReason::Domain + incident repo INSERT/SELECT/JOIN 갱신 + normalize_hibp_breach domain 채우기 + matcher.rs Rule 2 도메인 매칭 (issuer.domains[] + credential.url host, subdomain-safe) + 9개 신규 테스트 (F1~F9) + frontend types.ts domain/MatchReason sync | TBD |
+| **Phase 2-2A-3b** 마이그레이션 0010 incident.domain + Incident struct domain 필드 + MatchReason::Domain + incident repo INSERT/SELECT/JOIN 갱신 + normalize_hibp_breach domain 채우기 + matcher.rs Rule 2 도메인 매칭 (issuer.domains[] + credential.url host, subdomain-safe) + 9개 신규 테스트 (F1~F9) + frontend types.ts domain/MatchReason sync | `cefbfb3` |
 
 ---
 
