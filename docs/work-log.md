@@ -1,5 +1,34 @@
 # Work Log
 
+## 2026-05-07 — M24 Phase 2-4-d ✅ `apivault add` CLI 서브커맨드
+
+이전 세션 끝점 (Phase 2-4-a `dfb9a57`) 에서 진입.
+
+### Phase 2-4-d — CLI quick-add
+
+| 변경 | 커밋 |
+| :--- | :--- |
+| `Command::Add` variant + `cmd_add()` + `get_passphrase()` 헬퍼 + 신규 테스트 14개 | `c041ee2` |
+| docs(task/progress/work-log) 갱신 | (이 커밋) |
+
+**주요 구현 사항:**
+- `Command::Add { url, user, pw, name, kind, env, json }` — clap `value_parser` 로 `kind`/`env` 유효하지 않은 값 즉시 거부
+- `get_passphrase()` — `APIVAULT_PASSPHRASE` 환경변수 우선, 읽은 후 `remove_var`(child process 누수 방지), 없으면 rpassword stdin
+- `open_vault()` 도 동일 헬퍼 재사용 (기존 rpassword 직접 호출 제거)
+- URL→host 추출 (scheme 없으면 `https://` 보정) + subdomain-safe issuer 자동 매칭
+- `issuer_id NOT NULL` 제약 → 매칭 실패 시 첫 번째 issuer 폴백 (import.rs 동일 패턴)
+- `--json` 플래그: `{"id","name","issuer_id","kind","env"}` 출력 (스크립트 파이프용)
+- password 빈 문자열 → exit code 2 / vault unlock 실패 → exit code 1
+
+**테스트 14개 PASS:**
+- 기존 3 (truncate, status_label)
+- 신규 clap 파싱 4 (minimal/full/kind validation/env validation)
+- extract_host_from_url 3 (full url/no scheme/empty)
+- host_matches_issuer 3 (exact/subdomain/evil domain)
+- get_passphrase env var 1 (set→expose→remove_var 확인)
+
+---
+
 ## 2026-05-07 (Night mode) — M24 Phase 2-3-a 풀체인 ✅ Google CSV import 완성 (15 commits push)
 
 이전 세션 끝점 (origin/main `611625a`) 에서 시작. 사용자 결정으로 Phase 2-3 (Import) 의 1순위를 **Google CSV (Chrome/Edge/Brave)** 로 승격하고 Phase 2-4 (Cmd+K Quick Add + CLI quick-add) 신설. Phase 2-3-a 6 sub-task 모두 완료. 15 commits push (`611625a..84536a7`, branch protection admin bypass).

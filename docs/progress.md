@@ -2,14 +2,14 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-07 — **M24 Phase 2-4-a ✅ — Cmd+K Quick Add 다이얼로그 + 클립보드 prefill**
-- **Phase:** Phase 3 — Implementation. **Phase 2-3-a ✅ + Phase 2-4-a ✅**. 다음 → **Phase 2-4-d (CLI quick-add)** 또는 **dogfooding** (사용자 결정).
-- **Phase 2-4-a 결과** (`dfb9a57`): `action.quick-add` Cmd+K 액션 + `QuickAddDialog.tsx` 5필드 경량 폼 + 클립보드 prefill (`readText()` 1회) + URL→issuer 자동 감지 + "전체 옵션 보기" → CreateCredentialDialog 전환 + i18n 22키 × 4 로케일 + Vitest 7 PASS (535 → 542).
-- **누적 검증 (Phase 2-4-a 종료 시점)**: `pnpm typecheck` ✅ / `pnpm vitest run` **542 (+7 from 535 baseline)** / `pnpm lint` 신규 0 / `pnpm format:check` ✅ / cargo 미수정.
+- **Time:** 2026-05-07 — **M24 Phase 2-4-d ✅ — `apivault add` CLI 서브커맨드 + APIVAULT_PASSPHRASE**
+- **Phase:** Phase 3 — Implementation. **Phase 2-3-a ✅ + Phase 2-4-a ✅ + Phase 2-4-d ✅**. M24 "마찰 없는 등록 UX" 풀체인 완료. 다음 → **dogfooding** 권장.
+- **Phase 2-4-d 결과** (`c041ee2`): `Command::Add` 서브커맨드 (7개 옵션) + `cmd_add()` 구현 + `get_passphrase()` 헬퍼 추출 (APIVAULT_PASSPHRASE env 우선 + remove_var) + `open_vault()` 헬퍼 재사용 + URL→host 추출 + subdomain-safe issuer 매칭 + issuer_id NOT NULL 폴백 + kind/env/name fallback chain + CredentialRepo::insert + vault.put_secret + flush + text/JSON 출력. 신규 테스트 11개 (총 14 PASS). 서브커맨드 6 → 7.
+- **누적 검증 (Phase 2-4-d 종료 시점)**: `cargo test -p api-vault-cli` **14 PASS** / `cargo clippy -p api-vault-cli -- -D warnings` 0 warning / `cargo fmt --check` 통과 / workspace 전체 0 failed (api-vault Tauri 앱 build script 기존 이슈 제외).
 - **다음 진입 전 큐**:
-  1. **Phase 2-4-d (CLI quick-add)** — `apivault add --url ... --user ... --pw ...` + `APIVAULT_PASSPHRASE` 환경변수.
-  2. **Dogfooding** — 본인 크롬 비번 export → CSV import → Quick Add 실사용 검증.
-  3. **Phase 2-3-b (Bitwarden JSON import)** — 후순위.
+  1. **Dogfooding** — 본인 크롬 비번 export → CSV import → Quick Add 실사용 검증. UX 이슈 발견 후 fix.
+  2. **Phase 2-3-b (Bitwarden JSON import)** — 후순위.
+  3. **Phase 2-2B (HIBP Password check)** — M24 v2 로 미룸.
 - **풀체인 commit 매핑**:
   - 2-3-a-1 (`15d2cc1` + `58df540`) — Chrome/Edge/Brave CSV 파서 (9 단위 테스트, csv crate workspace dep)
   - 2-3-a-2 (`e7449a8` + `662dd3e`) — CSV row → `DetectedFromCsv` 변환 + URL host → issuer 도메인 매칭 (10 테스트, url crate)
