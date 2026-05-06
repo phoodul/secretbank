@@ -151,7 +151,8 @@ pub fn run(context: tauri::Context) {
             .plugin(tauri_plugin_os::init())
             .plugin(tauri_plugin_notification::init())
             .plugin(tauri_plugin_deep_link::init())
-            .plugin(tauri_plugin_http::init());
+            .plugin(tauri_plugin_http::init())
+            .plugin(tauri_plugin_fs::init());
     }
 
     // tauri-plugins feature 에 따라 등록하는 커맨드가 달라진다.
