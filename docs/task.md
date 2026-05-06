@@ -250,6 +250,12 @@
 | :--- | :-------- |
 | **Phase 2-3-a-2** `import/to_detected.rs` 신규 — `rows_to_detected()` + `DetectedFromCsv` + `ToDetectedOptions`. URL host 추출 (url crate, scheme 없으면 https:// 보정), subdomain-safe issuer 매칭 (evil-domain 차단, Phase 2-1 정책 동일), name 우선순위 (CSV name > host > "Imported credential"), SecretBox 유지, value_hint 마지막 4자. `url = { workspace = true }` 추가. 테스트 10개 PASS (csv_google 9 + to_detected 10 = 19 총합). clippy 0 / fmt 통과. | `e7449a8` |
 
+### M24 Phase 2-3-a-3 (2026-05-07, import_csv_prepare 커맨드 + ImportSessionStore)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **Phase 2-3-a-3** `import/mod.rs` (ImportSessionStore 16바이트 hex TTL 파라미터화 / lazy sweep / SecretBox drop zeroize) + `commands/import.rs` (do_import_csv_prepare 내부 함수 + import_csv_prepare Tauri command) + AppContext.import_sessions 필드 + 9개 테스트 픽스처 파일 갱신 + Tauri generate_handler 양쪽 등록. preview DTO: 평문 절대 미포함, already_exists HashSet 중복 감지. 신규 테스트 11개 PASS (ImportSessionStore 6 + prepare command 5). clippy 0 / fmt 통과. | `eea3657` |
+
 ---
 
 ## M0 — Foundation
