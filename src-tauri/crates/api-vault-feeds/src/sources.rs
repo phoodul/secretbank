@@ -23,7 +23,8 @@ pub enum FeedFormat {
     Atom,
 }
 
-/// Returns the 10 preset SaaS status page sources (as of 2026-04-24).
+/// Returns the 12 preset sources (10 SaaS status pages + 2 government CSIRT advisories,
+/// as of 2026-05-06).
 ///
 /// URLs have been verified to respond with parseable RSS 2.0 or Atom 1.0 feeds.
 /// Redirect-prone aliases (e.g. `status.stripe.com`, `status.paddle.com`) are
@@ -90,5 +91,68 @@ pub fn default_presets() -> Vec<RssSource> {
             url: "https://paddlestatus.com/history.rss".into(),
             format: FeedFormat::Rss,
         },
+        // Government CSIRT advisory feeds (2026-05-06, M24 2-2C-a)
+        RssSource {
+            slug: "cisa".into(),
+            display_name: "CISA".into(),
+            url: "https://www.cisa.gov/cybersecurity-advisories/all.xml".into(),
+            format: FeedFormat::Rss,
+        },
+        RssSource {
+            slug: "ncsc-uk".into(),
+            display_name: "NCSC UK".into(),
+            url: "https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml".into(),
+            format: FeedFormat::Rss,
+        },
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn test_default_presets_count() {
+        assert_eq!(default_presets().len(), 12);
+    }
+
+    #[test]
+    fn test_default_presets_includes_cisa() {
+        assert!(
+            default_presets().iter().any(|s| s.slug == "cisa"),
+            "CISA preset missing from default_presets()"
+        );
+    }
+
+    #[test]
+    fn test_default_presets_includes_ncsc_uk() {
+        assert!(
+            default_presets().iter().any(|s| s.slug == "ncsc-uk"),
+            "NCSC UK preset missing from default_presets()"
+        );
+    }
+
+    #[test]
+    fn test_default_presets_unique_slugs() {
+        let presets = default_presets();
+        let unique: HashSet<&str> = presets.iter().map(|s| s.slug.as_str()).collect();
+        assert_eq!(
+            unique.len(),
+            presets.len(),
+            "duplicate slug detected in default_presets()"
+        );
+    }
+
+    #[test]
+    fn test_default_presets_https_only() {
+        for source in default_presets() {
+            assert!(
+                source.url.starts_with("https://"),
+                "non-HTTPS URL found: slug={} url={}",
+                source.slug,
+                source.url
+            );
+        }
+    }
 }

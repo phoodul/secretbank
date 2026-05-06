@@ -282,16 +282,17 @@ mod tests {
     }
 
     // ------------------------------------------------------------------
-    // Unit test 4: default_presets returns exactly 10 unique slugs
+    // Unit test 4: default_presets returns exactly 12 unique slugs
+    // (10 SaaS status pages + 2 government CSIRT advisories, M24 2-2C-a)
     // ------------------------------------------------------------------
 
     #[test]
     fn test_default_presets_has_10() {
         let presets = default_presets();
-        assert_eq!(presets.len(), 10, "must have exactly 10 presets");
+        assert_eq!(presets.len(), 12, "must have exactly 12 presets");
 
         let slugs: HashSet<&str> = presets.iter().map(|p| p.slug.as_str()).collect();
-        assert_eq!(slugs.len(), 10, "all slugs must be unique");
+        assert_eq!(slugs.len(), 12, "all slugs must be unique");
 
         let expected = [
             "openai",
@@ -304,6 +305,8 @@ mod tests {
             "anthropic",
             "gcp",
             "paddle",
+            "cisa",
+            "ncsc-uk",
         ];
         for slug in &expected {
             assert!(slugs.contains(slug), "missing expected slug: {slug}");
