@@ -52,7 +52,7 @@
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / v3 Cargo.toml hover + ManifestCodeLens — risky deps inline) |
 | M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + apivault blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). |
 | **M23** | **Vault Charter (recovery 메커니즘) — 출시 블로커** | T-23-A~E | 5 (+1 hotfix) | ✅ **M23 완료 — 마일스톤 클로즈** (A codec crate / B-1 vault format v2 / B-2 initialize_with_charter / B-3 recover_with_charter / B-4 Tauri 커맨드 + audit / C 발급 UI + PDF / D recovery flow UI / E-1 cooldown sidecar / E-2 cooldown UI / unlock anim hotfix). sync 알림은 M9 audit 확장으로 분리. |
-| **M24** | **General password vault — Unified Bento Inventory** | T-24-A~E + Phase 1/1.5 | 5 + sub | 🔄 **Phase 1 ✅ + Phase 1.5 ✅ (2026-05-06)** — type-agnostic bento card + value pair (Option D) + hover mini-graph. 다음: Phase 2 (URL auto-detect / HIBP / import). |
+| **M24** | **General password vault — Unified Bento Inventory** | T-24-A~E + Phase 1/1.5/2 | 5 + sub | 🔄 **Phase 1 ✅ + Phase 1.5 ✅ (2026-05-06) + Phase 2-1 ✅ (2026-05-06)** — type-agnostic bento card + value pair (Option D) + hover mini-graph + URL auto-detect + kind/url/username 필드. 다음: Phase 2-2 (HIBP). |
 
 ---
 
@@ -217,6 +217,13 @@
 | **I3 hotfix** — `useGithubIntegration` deep-link listener 표준화. `deep-link://github-callback` (lib.rs 가 emit 안 함, dead path) → `deep-link` 이벤트 + `apivault://github/callback` URL prefix 매칭. parseGithubCallbackUrl 헬퍼 + Vitest +8 + Setup URL 운영 가이드 강화 | `340e72c` |
 | **Playwright browser-mode E2E 인프라** — `e2e/` 디렉토리 + `tauri-mock.ts` invoke polyfill + smoke 3 case (LockScreen / 라우팅 / SignInPage) + CI `e2e` 잡 + frontend 잡에 Vitest 통합 (이전 누락). Desktop binary E2E (tauri-driver) 는 진입 트리거 3가지 명시 후 deferred | `8672555` |
 | **5건 결정 + Phased Expansion 기록** — Free 종류 무관 2대 / Auto-derive on unlock / SQLite 화이트리스트 / SecSync 잠정 / MVP API 특화 + v1.1 General Secrets + v1.2 자동입력. project-decisions.md + m9-phase-plan.md Open Issues Resolved 갱신 | `0593cc7` |
+
+### M24 Phase 2-1 (2026-05-06, URL auto-detect + kind/url/username 필드)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **Phase 2-1a** issuer URL 도메인 매핑 + matchIssuerByUrl 헬퍼 — IssuerPreset.domains[] 10개 preset / matchIssuerByUrl (subdomain-safe, www-strip, case-insensitive, protocol-less 재시도) / 단위 테스트 24건 | `5473437` |
+| **Phase 2-1b** CreateCredentialDialog kind/url/username 필드 + URL auto-detect — kind 토글, url 전 kind 공통, username password 전용, issuer lock, invoke args 확장, i18n 4 로케일, 통합 테스트 4건 | `48d067c` |
 
 ---
 
