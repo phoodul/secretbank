@@ -74,6 +74,9 @@ regex = "1"
 ignore = "0.4"
 once_cell = "1"
 
+# CSV parsing (M24 import)
+csv = "1"
+
 # Manifest parsing (M20)
 toml = "0.8"
 semver = { version = "1", features = ["serde"] }

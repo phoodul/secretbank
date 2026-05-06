@@ -17,6 +17,8 @@ tracing = { workspace = true }
 async-trait = { workspace = true }
 time = { workspace = true }
 reqwest = { workspace = true }
+secrecy = { workspace = true }
+csv = { workspace = true }
 api-vault-core = { path = "../api-vault-core" }
 
 [dev-dependencies]
