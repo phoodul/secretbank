@@ -10,7 +10,7 @@ export type IncidentSource = "nvd" | "ghsa" | "rss" | "hibp";
 
 export type IncidentSeverity = "info" | "low" | "medium" | "high" | "critical";
 
-export type MatchReason = "issuer_match" | "keyword" | "explicit";
+export type MatchReason = "issuer_match" | "domain" | "keyword" | "explicit";
 
 /** Mirrors Rust `Incident`. Timestamps are Unix milliseconds (i64). */
 export interface Incident {
@@ -22,6 +22,8 @@ export interface Incident {
   title: string;
   body: string | null;
   url: string | null;
+  /** Breach domain for HIBP incidents; null for NVD/GHSA/RSS. */
+  domain: string | null;
   /** Unix timestamp in milliseconds */
   detected_at: number;
   /** Unix timestamp in milliseconds, or null */

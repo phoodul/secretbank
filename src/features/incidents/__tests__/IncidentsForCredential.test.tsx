@@ -61,6 +61,7 @@ function makeEntry(id: string, dismissedAt: string | null = null): IncidentListE
       title: `Incident ${id}`,
       body: null,
       url: null,
+      domain: null,
       detected_at: 1700000000000,
       published_at: null,
     },

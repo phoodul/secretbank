@@ -130,6 +130,7 @@ mod tests {
             title: "Test incident".to_owned(),
             body: None,
             url: None,
+            domain: None,
             detected_at: OffsetDateTime::now_utc(),
             published_at: None,
         }

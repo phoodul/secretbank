@@ -84,6 +84,7 @@ pub fn normalize_nvd(cve: &NvdCve, now: OffsetDateTime) -> Incident {
         title: cve.id.clone(),
         body: cve.description_en.clone(),
         url: cve.references.first().cloned(),
+        domain: None,
         detected_at: now,
         published_at: Some(cve.published),
     }
@@ -107,6 +108,7 @@ pub fn normalize_ghsa(adv: &GhsaAdvisory, now: OffsetDateTime) -> Incident {
         title: adv.summary.clone(),
         body: adv.description.clone(),
         url: Some(adv.html_url.clone()),
+        domain: None,
         detected_at: now,
         published_at: Some(adv.published_at),
     }
@@ -155,6 +157,11 @@ pub fn normalize_hibp_breach(breach: &HibpBreach, now: OffsetDateTime) -> Incide
         title: breach.title.clone(),
         body: Some(breach.description.clone()),
         url,
+        domain: if breach.domain.is_empty() {
+            None
+        } else {
+            Some(breach.domain.clone())
+        },
         detected_at: now,
         published_at: Some(breach.added_date),
     }
@@ -189,6 +196,7 @@ pub fn normalize_rss(
             .unwrap_or_else(|| "(no title)".to_string()),
         body: entry.summary.clone(),
         url: entry.link.clone(),
+        domain: None,
         detected_at: now,
         published_at: entry.published_at.or(entry.updated_at),
     }
@@ -295,6 +303,7 @@ mod tests {
             incident.url.as_deref(),
             Some("https://example.com/advisory")
         );
+        assert!(incident.domain.is_none());
     }
 
     // -----------------------------------------------------------------------
@@ -327,6 +336,7 @@ mod tests {
         );
         assert_eq!(incident.detected_at, now);
         assert_eq!(incident.published_at, Some(adv.published_at));
+        assert!(incident.domain.is_none());
     }
 
     // -----------------------------------------------------------------------
@@ -342,6 +352,7 @@ mod tests {
 
         assert_eq!(incident.source, IncidentSource::Rss);
         assert_eq!(incident.issuer_id, Some(openai.id));
+        assert!(incident.domain.is_none());
     }
 
     // -----------------------------------------------------------------------
@@ -494,6 +505,8 @@ mod tests {
             incident.url.as_deref(),
             Some("https://haveibeenpwned.com/PwnedWebsites#Adobe")
         );
+        // domain = "adobe.com" (fixture의 format!("{}.com", name.to_lowercase()))
+        assert_eq!(incident.domain.as_deref(), Some("adobe.com"));
     }
 
     #[test]

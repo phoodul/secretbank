@@ -60,8 +60,8 @@ impl<'a> IncidentRepo<'a> {
 
         sqlx::query(
             r#"INSERT OR IGNORE INTO incident
-               (id, source, source_id, issuer_id, severity, title, body, url, detected_at, published_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
+               (id, source, source_id, issuer_id, severity, title, body, url, domain, detected_at, published_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
         )
         .bind(&id_str)
         .bind(source_str)
@@ -71,6 +71,7 @@ impl<'a> IncidentRepo<'a> {
         .bind(&incident.title)
         .bind(&incident.body)
         .bind(&incident.url)
+        .bind(&incident.domain)
         .bind(detected_ms)
         .bind(published_ms)
         .execute(self.pool)
@@ -92,7 +93,7 @@ impl<'a> IncidentRepo<'a> {
     pub async fn get_by_id(&self, id: IncidentId) -> Result<Option<Incident>, StorageError> {
         let id_str = id.to_string();
         let row = sqlx::query(
-            r#"SELECT id, source, source_id, issuer_id, severity, title, body, url,
+            r#"SELECT id, source, source_id, issuer_id, severity, title, body, url, domain,
                       detected_at, published_at
                FROM incident WHERE id = ?"#,
         )
@@ -223,7 +224,7 @@ impl<'a> IncidentRepo<'a> {
         let include_dismissed: i64 = if filter.include_dismissed { 1 } else { 0 };
 
         let rows = sqlx::query(
-            r#"SELECT id, source, source_id, issuer_id, severity, title, body, url,
+            r#"SELECT id, source, source_id, issuer_id, severity, title, body, url, domain,
                       detected_at, published_at
                FROM incident
                WHERE
@@ -261,7 +262,7 @@ impl<'a> IncidentRepo<'a> {
         let cid_str = credential_id.to_string();
         let rows = sqlx::query(
             r#"SELECT DISTINCT i.id, i.source, i.source_id, i.issuer_id, i.severity,
-                      i.title, i.body, i.url, i.detected_at, i.published_at
+                      i.title, i.body, i.url, i.domain, i.detected_at, i.published_at
                FROM incident i
                INNER JOIN incident_match m ON m.incident_id = i.id
                WHERE m.credential_id = ? AND m.dismissed_at IS NULL
@@ -300,6 +301,7 @@ impl<'a> IncidentRepo<'a> {
                  i.title       AS inc_title,
                  i.body        AS inc_body,
                  i.url         AS inc_url,
+                 i.domain      AS inc_domain,
                  i.detected_at AS inc_detected_at,
                  i.published_at AS inc_published_at,
                  im.id          AS match_id,
@@ -367,6 +369,7 @@ impl<'a> IncidentRepo<'a> {
                     title: row.try_get("inc_title")?,
                     body: row.try_get("inc_body")?,
                     url: row.try_get("inc_url")?,
+                    domain: row.try_get("inc_domain")?,
                     detected_at: ms_to_dt(detected_ms)?,
                     published_at: ms_to_dt_opt(published_ms)?,
                 };
@@ -439,6 +442,7 @@ impl<'a> IncidentRepo<'a> {
                  i.title        AS inc_title,
                  i.body         AS inc_body,
                  i.url          AS inc_url,
+                 i.domain       AS inc_domain,
                  i.detected_at  AS inc_detected_at,
                  i.published_at AS inc_published_at,
                  im.id          AS match_id,
@@ -489,6 +493,7 @@ impl<'a> IncidentRepo<'a> {
                     title: row.try_get("inc_title")?,
                     body: row.try_get("inc_body")?,
                     url: row.try_get("inc_url")?,
+                    domain: row.try_get("inc_domain")?,
                     detected_at: ms_to_dt(detected_ms)?,
                     published_at: ms_to_dt_opt(published_ms)?,
                 };
@@ -581,6 +586,7 @@ fn row_to_incident(r: &sqlx::sqlite::SqliteRow) -> Result<Incident, StorageError
         title: r.try_get("title")?,
         body: r.try_get("body")?,
         url: r.try_get("url")?,
+        domain: r.try_get("domain")?,
         detected_at: ms_to_dt(detected_ms)?,
         published_at: ms_to_dt_opt(published_ms)?,
     })
@@ -660,6 +666,7 @@ fn str_to_severity(s: &str) -> Result<IncidentSeverity, StorageError> {
 fn reason_to_str(r: MatchReason) -> &'static str {
     match r {
         MatchReason::IssuerMatch => "issuer_match",
+        MatchReason::Domain => "domain",
         MatchReason::Keyword => "keyword",
         MatchReason::Explicit => "explicit",
     }
@@ -668,6 +675,7 @@ fn reason_to_str(r: MatchReason) -> &'static str {
 fn str_to_reason(s: &str) -> Result<MatchReason, StorageError> {
     match s {
         "issuer_match" => Ok(MatchReason::IssuerMatch),
+        "domain" => Ok(MatchReason::Domain),
         "keyword" => Ok(MatchReason::Keyword),
         "explicit" => Ok(MatchReason::Explicit),
         other => Err(StorageError::Parse(format!("unknown reason: {other}"))),
@@ -760,6 +768,7 @@ mod tests {
             title: format!("Test incident {suffix}"),
             body: None,
             url: None,
+            domain: None,
             detected_at: now,
             published_at: None,
         }

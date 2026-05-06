@@ -36,6 +36,7 @@ pub struct Incident {
     pub title: String,
     pub body: Option<String>,
     pub url: Option<String>,
+    pub domain: Option<String>,
     #[serde(with = "time::serde::timestamp::milliseconds")]
     pub detected_at: OffsetDateTime,
     #[serde(default, with = "time::serde::timestamp::milliseconds::option")]
@@ -43,10 +44,13 @@ pub struct Incident {
 }
 
 /// How an incident was matched to a credential.
+///
+/// Ordered by priority (highest first): IssuerMatch > Domain > Keyword > Explicit.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MatchReason {
     IssuerMatch,
+    Domain,
     Keyword,
     Explicit,
 }
