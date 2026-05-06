@@ -19,17 +19,25 @@
 - **stash@{0}** (이전 세션 1.5-C WIP) — 새 commit 검증 통과 후 drop 완료.
 - **memory 룰 보정** — `feedback_powershell.md` 두 갈래 (사용자 안내 PowerShell vs Bash 도구 내부 POSIX) 로 분리.
 
-### 다음 세션 시작점 — M24 Phase 2 또는 사용자 결정
+### 다음 세션 시작점 — **M24 Phase 2 (확정, 2026-05-06)**
 
-남은 사용자 결정 큐 (이전 세션부터 누적):
+사용자가 세션 종료 시 명시적으로 결정. Phase 2 = "Unified Bento Inventory" 의 차별화 마무리.
 
-1. **M24 Phase 2 (사용자 비전 기반):**
-   - URL 입력 시 auto-detect (issuer 추측)
-   - HIBP breach alert 통합 (password kind 전용)
-   - 1Password / Bitwarden CSV import
-2. **사용자 액션 #4-7** (Apple cert / Windows cert / 데모 영상 / HN+PH)
-3. **본인 dogfooding** — Windows/macOS 에 v0.1.0-pre8 직접 설치
-4. **GitHub Cowork 활성화 4 액션** (CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY / Branch protection / 라벨 2개)
+**Phase 2 sub-task 후보 (다음 세션 첫 implementator 호출 전 사용자와 정렬 필요):**
+
+1. **URL auto-detect** — Create dialog 의 URL 입력에서 issuer 자동 추측 (e.g. `https://supabase.com/...` → Supabase issuer 자동 선택). issuer slug ↔ domain 매핑 테이블 + URL 파싱.
+2. **HIBP breach alert** — `password` kind 전용 자동 검사 (이미 `kill_switch` UI 자리에 placeholder 있음). T052 의 HibpClient 재사용. password 등록/저장 시 검사 + Inventory 카드에 경고 뱃지.
+3. **1Password CSV import** — 1Password 8 export `.1pux` 또는 csv 파싱 → BentoCard 등록. 마이그레이션 마법사 1단계.
+4. **Bitwarden JSON import** — Bitwarden export json 파싱.
+5. **browser autofill (longer-term)** — Phase 3 후보, 우선순위 낮음.
+
+**다음 세션 첫 액션 — sub-task 우선순위 정하기**: 1 ~ 4 를 한꺼번에 안 가고, 사용자가 "1 부터 진행" 또는 "2 가 더 시급" 같이 결정한 뒤 1 implementator = 1~2 commit 룰로 진행.
+
+### 큐에 보류 중인 결정 (다음 세션에서 다룰 수 있음)
+
+- **사용자 액션 #4-7** (Apple cert / Windows cert / 데모 영상 / HN+PH) — Phase 2 와 병행 가능
+- **본인 dogfooding** — Windows/macOS 에 v0.1.0-pre10 직접 설치
+- **GitHub Cowork 활성화 4 액션** (CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY / Branch protection / 라벨 2개)
 
 ---
 
