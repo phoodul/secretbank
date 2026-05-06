@@ -722,10 +722,34 @@
     "navigation": "导航",
     "actions": "操作",
     "createCredential": "创建凭证",
+    "quickAdd": "快速添加",
     "lockVault": "锁定保险库",
     "themeLight": "切换到浅色主题",
     "themeDark": "切换到深色主题",
     "themeSystem": "使用系统主题"
+  },
+  "quickAdd": {
+    "title": "快速添加",
+    "description": "几秒内添加凭证",
+    "fromClipboard": "已从剪贴板自动填充",
+    "issuerDetected": "已检测到 {{issuer}}",
+    "fields": {
+      "url": "URL",
+      "username": "用户名 / ID",
+      "password": "密码 / API 密钥",
+      "name": "名称（可选）"
+    },
+    "kindToggle": {
+      "apiKey": "API 密钥",
+      "password": "密码"
+    },
+    "submit": "添加凭证",
+    "cancel": "取消",
+    "fullOptions": "显示全部选项",
+    "success": "✓ 已添加 {{name}}",
+    "errors": {
+      "required": "密码 / API 密钥为必填项"
+    }
   },
   "githubIntegration": {
     "sectionTitle": "GitHub 集成",

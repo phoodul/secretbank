@@ -729,10 +729,34 @@
     "navigation": "탐색",
     "actions": "작업",
     "createCredential": "자격증명 생성",
+    "quickAdd": "빠른 추가",
     "lockVault": "볼트 잠금",
     "themeLight": "라이트 테마로 전환",
     "themeDark": "다크 테마로 전환",
     "themeSystem": "시스템 테마 사용"
+  },
+  "quickAdd": {
+    "title": "빠른 추가",
+    "description": "몇 초 만에 자격증명 추가",
+    "fromClipboard": "클립보드에서 자동 입력됨",
+    "issuerDetected": "{{issuer}} 자동 감지됨",
+    "fields": {
+      "url": "URL",
+      "username": "사용자명 / ID",
+      "password": "비밀번호 / API 키",
+      "name": "이름 (선택)"
+    },
+    "kindToggle": {
+      "apiKey": "API 키",
+      "password": "비밀번호"
+    },
+    "submit": "자격증명 추가",
+    "cancel": "취소",
+    "fullOptions": "전체 옵션 보기",
+    "success": "✓ {{name}} 등록됨",
+    "errors": {
+      "required": "비밀번호 / API 키는 필수입니다"
+    }
   },
   "githubIntegration": {
     "sectionTitle": "GitHub 통합",

@@ -722,10 +722,34 @@
     "navigation": "ナビゲーション",
     "actions": "アクション",
     "createCredential": "認証情報を作成",
+    "quickAdd": "クイック追加",
     "lockVault": "ボールトをロック",
     "themeLight": "ライトテーマに切り替え",
     "themeDark": "ダークテーマに切り替え",
     "themeSystem": "システムテーマを使用"
+  },
+  "quickAdd": {
+    "title": "クイック追加",
+    "description": "数秒で認証情報を追加",
+    "fromClipboard": "クリップボードから自動入力",
+    "issuerDetected": "{{issuer}} を自動検出",
+    "fields": {
+      "url": "URL",
+      "username": "ユーザー名 / ID",
+      "password": "パスワード / API キー",
+      "name": "名前 (任意)"
+    },
+    "kindToggle": {
+      "apiKey": "API キー",
+      "password": "パスワード"
+    },
+    "submit": "認証情報を追加",
+    "cancel": "キャンセル",
+    "fullOptions": "全オプションを表示",
+    "success": "✓ {{name}} を追加しました",
+    "errors": {
+      "required": "パスワード / API キーは必須です"
+    }
   },
   "githubIntegration": {
     "sectionTitle": "GitHub 統合",

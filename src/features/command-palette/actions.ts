@@ -9,6 +9,7 @@ import {
   ScrollText,
   Settings,
   Sun,
+  Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { TFunction } from "i18next";
@@ -90,6 +91,16 @@ export const ACTIONS: CommandAction[] = [
     icon: Plus,
     run: ({ navigate, closePalette }) => {
       navigate("/?action=create");
+      closePalette();
+    },
+  },
+  {
+    id: "action.quick-add",
+    category: "action",
+    labelKey: "commandPalette.quickAdd",
+    icon: Zap,
+    run: ({ navigate, closePalette }) => {
+      navigate("/?action=quick-add");
       closePalette();
     },
   },

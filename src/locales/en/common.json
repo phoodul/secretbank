@@ -729,10 +729,34 @@
     "navigation": "Navigation",
     "actions": "Actions",
     "createCredential": "Create credential",
+    "quickAdd": "Quick Add credential",
     "lockVault": "Lock vault",
     "themeLight": "Switch to light theme",
     "themeDark": "Switch to dark theme",
     "themeSystem": "Use system theme"
+  },
+  "quickAdd": {
+    "title": "Quick Add",
+    "description": "Add a credential in seconds",
+    "fromClipboard": "Auto-filled from clipboard",
+    "issuerDetected": "{{issuer}} detected",
+    "fields": {
+      "url": "URL",
+      "username": "Username / ID",
+      "password": "Password / API Key",
+      "name": "Name (optional)"
+    },
+    "kindToggle": {
+      "apiKey": "API Key",
+      "password": "Password"
+    },
+    "submit": "Add credential",
+    "cancel": "Cancel",
+    "fullOptions": "Show full options",
+    "success": "✓ {{name}} added",
+    "errors": {
+      "required": "Password / API Key is required"
+    }
   },
   "githubIntegration": {
     "sectionTitle": "GitHub Integration",

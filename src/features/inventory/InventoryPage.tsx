@@ -18,6 +18,7 @@ import { CredentialList } from "./CredentialList";
 import { useInventory } from "./use-inventory";
 import { useIssuers } from "./use-issuers";
 import { CreateCredentialDialog } from "./CreateCredentialDialog";
+import { QuickAddDialog } from "./QuickAddDialog";
 import { BulkRevokeDialog } from "@/features/kill-switch/BulkRevokeDialog";
 import { useEntitlement } from "@/features/billing/use-entitlement";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -75,15 +76,29 @@ export function InventoryPage() {
   // Command Palette "Create credential" — navigate("/?action=create")로 트리거.
   // 초기 렌더에서 쿼리를 읽어 dialogOpen 초기값으로 사용하고, 즉시 query를 제거한다.
   const hasCreateAction = searchParams.get("action") === "create";
+  const hasQuickAddAction = searchParams.get("action") === "quick-add";
   const [dialogOpen, setDialogOpen] = useState(() => {
     if (hasCreateAction) {
-      // setSearchParams는 렌더 외부에서 직접 호출할 수 없으므로
-      // setTimeout 0으로 micro-task에서 제거한다 (setState가 아닌 router 상태 변경)
       setTimeout(() => setSearchParams({}, { replace: true }), 0);
       return true;
     }
     return false;
   });
+  const [quickAddOpen, setQuickAddOpen] = useState(() => {
+    if (hasQuickAddAction) {
+      setTimeout(() => setSearchParams({}, { replace: true }), 0);
+      return true;
+    }
+    return false;
+  });
+  // "전체 옵션 보기" 에서 QuickAdd → CreateCredential 전환 시 prefill 값 보관 (향후 CreateCredentialDialog prefill prop 연동 예정)
+  const [, setFullFormPrefill] = useState<{
+    url?: string;
+    username?: string;
+    value?: string;
+    name?: string;
+    kind: "api_key" | "password";
+  } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const handleEnvChange = (value: string) => {
@@ -250,8 +265,20 @@ export function InventoryPage() {
       {/* 목록 */}
       <CredentialList items={items} loading={loading} onSelect={setSelectedId} />
 
-      {/* Credential 등록 다이얼로그 */}
+      {/* Credential 등록 다이얼로그 (풀 폼) */}
       <CreateCredentialDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={refresh} />
+
+      {/* Quick Add 다이얼로그 */}
+      <QuickAddDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        onSuccess={refresh}
+        onShowFullForm={(prefill) => {
+          setFullFormPrefill(prefill);
+          setQuickAddOpen(false);
+          setDialogOpen(true);
+        }}
+      />
 
       {/* Credential 상세 Drawer */}
       <CredentialDetail
