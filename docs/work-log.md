@@ -1,5 +1,68 @@
 # Work Log
 
+## 2026-05-06 (낮 — Phase 2 본격 진입) — M24 Phase 2-1 + 2-2A + 2-2C 완료 + 22 commits push
+
+이전 세션 끝점 (origin/main `0ebc078`) 에서 시작. Phase 2-1 (URL auto-detect / Password vault UI) → Phase 2-2A (HIBP Breaches feed + 도메인 매칭 + UI 풀체인 5 sub-task) → Phase 2-2C (영어권/한국 정부 CSIRT RSS 2 sub-task) 까지 한 세션에 처리. 22 commits push (`0ebc078..f1a6925`, branch protection admin bypass).
+
+### 사용자 결정 (이번 세션)
+
+- **Phase 2 sub-task 우선순위 = 권고대로 1 → 2 → 3 → 4 → 5** (URL auto-detect → HIBP → 1Password CSV → Bitwarden JSON → browser autofill)
+- **Phase 2-2 4갈래 분기 + 옵션 가**: 2-2A (HIBP Breaches feed) → 2-2C (다국가 RSS) → 2-2B (Password check) → M25 placeholder. project-decisions [2026-05-06] 기록.
+- **HIBP 검사 정책**: 자동 (저장 시) + 24h 주기 + 수동 일괄 + DB 저장. 수동은 vault 전체 일괄 (per-card 메뉴 아님). Inventory 헤더에 stale 표시 (24h 녹색 / 7일 노랑 / 7일+ 빨강).
+- **Zero-Knowledge 경계 명확화**: breach 메타데이터 (사이트명/날짜/유출종류) 는 broadcast OK, "어떤 사용자의 어떤 비번이 leak 됐는지" 만 사적.
+- **도메인 매칭 디자인**: Issuer.domains 컬럼 추가 + credential.url 직접 매칭 + MatchReason::Domain 신규 + subdomain-safe (evil-stripe.com 차단).
+- **KISA 5 RSS URL 사용자 직접 검증 후 제공**: 보안공지 / 보고서·가이드 / 공지사항 / 취약점 / 경보단계 (`bbsId=B0000133/127/132/302/342`).
+
+### Phase 2-1 — URL auto-detect (3 commits)
+
+| Sub-task | Commit | 변경 |
+| :--- | :--- | :--- |
+| 2-1a: domain 매핑 + matchIssuerByUrl 헬퍼 | `5473437` | issuer-presets.ts 10 preset 의 domains[] + match-issuer-by-url.ts (subdomain-safe) + 24 단위 테스트 |
+| 2-1b: CreateCredentialDialog 확장 | `48d067c` | kind/url/username 필드 추가 + URL onChange auto-select (issuer lock) + i18n 4 로케일 + 4 통합 테스트 |
+| docs | `e638b0d` + `c45534f` | task / progress 갱신 |
+
+### Phase 2-2A — HIBP Breaches feed + 매칭 + UI (5 sub-task / 9 commits)
+
+| Sub-task | Commit | 변경 |
+| :--- | :--- | :--- |
+| 2-2A-1: HibpClient::list_breaches | `84602bb` | `/breaches` 엔드포인트 메서드 + 5 wiremock 테스트 |
+| 2-2A-2: normalize + IncidentFeed 통합 | `f1c05bb` + `72d4983` | `normalize_hibp_breach` (severity 계층: malware/stealer→Critical, sensitive→High, spam→Low, default→Medium) + 24h poller (`hibp_breaches_enabled` default true) + `FeedSchedulerError::Hibp` + 9 신규 테스트 |
+| 2-2A-3a: Issuer.domains 컬럼 + 시드 | `9bac675` + `d96e838` | 마이그레이션 0009 + `Issuer.domains: Vec<String>` (JSON 직렬화) + 10 preset 도메인 시드 + frontend `Issuer.domains` + 8 테스트 픽스처 + Yjs `mapping.ts` |
+| 2-2A-3b: Incident.domain + matcher 매칭 | `cefbfb3` + `1e3a40c` | 마이그레이션 0010 + `Incident.domain: Option<String>` + `MatchReason::Domain` (신규 variant) + matcher subdomain-safe 매칭 (issuer.domains[] / credential.url host 양쪽) + `evil-supabase.com` / `supabase.com.attacker.io` 차단 검증 + 9 회귀 |
+| 2-2A-4: IncidentCard UI | `b1953c3` + `0c229bf` | reason 별 lucide 아이콘 (Globe/Tag/Search/Pin) + HIBP description body 표시 + domain 라인 + 15 로케일 i18n (`incidents.match.reason.domain`) + 6 회귀 |
+
+**누적 검증 (Phase 2-2A 종료):**
+- `cargo test --workspace --lib --tests`: 0 failed
+- `cargo clippy --workspace --all-targets -- -D warnings`: 0 warning
+- `pnpm typecheck`: 통과
+- `pnpm vitest run`: 522 passed
+
+### Phase 2-2C — 다국가 정부 CSIRT RSS (2 sub-task / 4 commits)
+
+| Sub-task | Commit | 변경 |
+| :--- | :--- | :--- |
+| 2-2C-a: CISA + NCSC UK | `2b42bcb` + `ae89b6f` | `default_presets()` 10 → 12 + 5 신규 테스트 (count / slug 존재 / unique / https-only). URL 사전 WebSearch 검증. |
+| 2-2C-b: KISA 5 RSS | `6eea2a1` + `cb35f39` | KISA 보안공지/보고서·가이드/공지사항/취약점/경보단계 5 추가. `default_presets()` 12 → 17. 사용자 직접 검증한 URL. 7 신규 테스트. |
+
+**노이즈 평가 큐**: kisa-report / kisa-notice 는 advisory 가 아니라 일반 운영 정보 — dogfooding 후 제거 또는 카테고리 분리 권고.
+
+### 누적 (이번 세션 22 commits)
+
+- vitest **494 → 528 (+34)** 신규 / cargo test 0 failed / clippy 0 warning / typecheck OK
+- 1 implementator = 1~2 commit 룰 준수 (8 implementator 호출, 평균 2.6 commits/호출)
+- 1 implementator 호출이 응답 도중 끊긴 사례 1회 (2-2A-3a) — 새 implementator 가 누락 부분 보충 후 단일 commit 으로 마무리
+- 사용자 페이스: 큰 결정 단계마다 직접 컨펌. 권고대로 진행. 옵션 (가) 정렬 후 4 sub-task 자율 진행.
+
+### 보류 큐 (다음 세션)
+
+- **dogfooding** — 본인 환경에서 IncidentsPage 진입 / Vercel·AWS·KISA breach 실제 매칭 검증 / KISA report·notice 노이즈 평가
+- **Phase 2-2B** (HIBP Password check, 1Password Watchtower 동등) — 7~8 commits 큰 작업
+- **Phase 2-2C-c** (ENISA / JVN / JPCERT URL 검증 후 추가)
+- **사용자 액션 #4-7** (Apple cert / Windows cert / 데모 영상 / HN+PH)
+- **GitHub Cowork 활성화 4 액션**
+
+---
+
 ## 2026-05-06 (Night mode) — M24 Phase 1.5 완료 + 11 commits push
 
 이전 세션의 누적 11 commits 를 push 한 뒤, Phase 1.5 의 남은 5 sub-tasks (C ~ G) 를 Night mode 로 연속 진행. 1 implementator = 1~2 commit 룰 준수.
