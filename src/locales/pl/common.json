@@ -13,5 +13,15 @@
     "wrongPassword": "Nieprawidłowe hasło. Spróbuj ponownie.",
     "tooManyAttempts": "Zbyt wiele prób. Spróbuj ponownie za {{count}} s…",
     "internalError": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+  },
+  "incidents": {
+    "match": {
+      "reason": {
+        "issuer_match": "Dopasowanie wystawcy",
+        "domain": "Dopasowanie domeny",
+        "keyword": "Dopasowanie słowa kluczowego",
+        "explicit": "Dopasowanie jawne"
+      }
+    }
   }
 }

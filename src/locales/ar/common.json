@@ -13,5 +13,15 @@
     "wrongPassword": "عبارة مرور غير صحيحة. حاول مرة أخرى.",
     "tooManyAttempts": "محاولات كثيرة جداً. أعد المحاولة بعد {{count}} ث…",
     "internalError": "حدث خطأ غير متوقع. حاول مرة أخرى."
+  },
+  "incidents": {
+    "match": {
+      "reason": {
+        "issuer_match": "Issuer match",
+        "domain": "Domain match",
+        "keyword": "Keyword match",
+        "explicit": "Explicit match"
+      }
+    }
   }
 }

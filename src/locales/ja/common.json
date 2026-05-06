@@ -550,6 +550,7 @@
     "match": {
       "reason": {
         "issuer_match": "発行者マッチ",
+        "domain": "ドメイン一致",
         "keyword": "キーワードマッチ",
         "explicit": "明示的マッチ"
       }

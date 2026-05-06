@@ -557,6 +557,7 @@
     "match": {
       "reason": {
         "issuer_match": "Issuer match",
+        "domain": "Domain match",
         "keyword": "Keyword match",
         "explicit": "Explicit match"
       }

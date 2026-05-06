@@ -557,6 +557,7 @@
     "match": {
       "reason": {
         "issuer_match": "발급처 매치",
+        "domain": "도메인 매칭",
         "keyword": "키워드 매치",
         "explicit": "직접 매치"
       }

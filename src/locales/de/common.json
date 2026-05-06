@@ -13,5 +13,15 @@
     "wrongPassword": "Falsche Passphrase. Bitte erneut versuchen.",
     "tooManyAttempts": "Zu viele Versuche. Erneut versuchen in {{count}} s…",
     "internalError": "Ein unerwarteter Fehler ist aufgetreten. Bitte erneut versuchen."
+  },
+  "incidents": {
+    "match": {
+      "reason": {
+        "issuer_match": "Aussteller-Treffer",
+        "domain": "Domain-Treffer",
+        "keyword": "Schlüsselwort-Treffer",
+        "explicit": "Expliziter Treffer"
+      }
+    }
   }
 }

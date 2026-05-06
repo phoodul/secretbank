@@ -13,5 +13,15 @@
     "wrongPassword": "Passphrase errata. Riprova.",
     "tooManyAttempts": "Troppi tentativi. Riprova tra {{count}} s…",
     "internalError": "Si è verificato un errore imprevisto. Riprova."
+  },
+  "incidents": {
+    "match": {
+      "reason": {
+        "issuer_match": "Corrispondenza emittente",
+        "domain": "Corrispondenza dominio",
+        "keyword": "Corrispondenza parola chiave",
+        "explicit": "Corrispondenza esplicita"
+      }
+    }
   }
 }

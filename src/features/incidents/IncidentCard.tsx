@@ -1,14 +1,36 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "@tauri-apps/api/core";
-import { ExternalLink, ShieldAlert, ShieldCheck, ShieldOff, ShieldX, Info } from "lucide-react";
+import {
+  ExternalLink,
+  Globe,
+  Info,
+  Pin,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldOff,
+  ShieldX,
+  Tag,
+} from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { IncidentListEntry, IncidentSeverity, IncidentSource } from "./types";
+import type { IncidentListEntry, IncidentSeverity, IncidentSource, MatchReason } from "./types";
+
+// ---------------------------------------------------------------------------
+// Reason icon map
+// ---------------------------------------------------------------------------
+
+const REASON_ICONS: Record<MatchReason, React.ElementType> = {
+  issuer_match: Tag,
+  domain: Globe,
+  keyword: Search,
+  explicit: Pin,
+};
 
 interface IncidentCardProps {
   entry: IncidentListEntry;
@@ -81,6 +103,7 @@ export function IncidentCard({ entry, onDismissed }: IncidentCardProps) {
             const label = m.issuer_display_name
               ? `${m.issuer_display_name} / ${m.credential_label}`
               : m.credential_label;
+            const ReasonIcon = REASON_ICONS[m.reason] ?? Pin;
             return (
               <span
                 key={m.id}
@@ -92,6 +115,7 @@ export function IncidentCard({ entry, onDismissed }: IncidentCardProps) {
                 )}
                 title={t(`incidents.match.reason.${m.reason}`, { defaultValue: m.reason })}
               >
+                <ReasonIcon className="mr-1 h-2.5 w-2.5 shrink-0" aria-hidden />
                 {label}
               </span>
             );
@@ -101,6 +125,19 @@ export function IncidentCard({ entry, onDismissed }: IncidentCardProps) {
 
       {matches.length === 0 && (
         <p className="text-muted-foreground mt-2 text-xs">{t("incidents.card.noMatches")}</p>
+      )}
+
+      {/* HIBP description */}
+      {incident.source === "hibp" && incident.body && (
+        <p className="text-muted-foreground mt-2 line-clamp-2 text-xs">{incident.body}</p>
+      )}
+
+      {/* Domain line */}
+      {incident.domain && (
+        <p className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+          <Globe className="h-3 w-3 shrink-0" aria-hidden />
+          {incident.domain}
+        </p>
       )}
 
       {/* Actions */}

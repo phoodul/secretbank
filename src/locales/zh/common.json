@@ -550,6 +550,7 @@
     "match": {
       "reason": {
         "issuer_match": "发行者匹配",
+        "domain": "域名匹配",
         "keyword": "关键字匹配",
         "explicit": "精确匹配"
       }

@@ -13,5 +13,15 @@
     "wrongPassword": "Cụm từ mật khẩu không đúng. Vui lòng thử lại.",
     "tooManyAttempts": "Quá nhiều lần thử. Thử lại sau {{count}} giây…",
     "internalError": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại."
+  },
+  "incidents": {
+    "match": {
+      "reason": {
+        "issuer_match": "Domain match",
+        "domain": "Domain match",
+        "keyword": "Keyword match",
+        "explicit": "Explicit match"
+      }
+    }
   }
 }

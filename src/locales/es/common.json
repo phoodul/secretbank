@@ -13,5 +13,15 @@
     "wrongPassword": "Frase de contraseña incorrecta. Inténtalo de nuevo.",
     "tooManyAttempts": "Demasiados intentos. Reintenta en {{count}} s…",
     "internalError": "Se produjo un error inesperado. Inténtalo de nuevo."
+  },
+  "incidents": {
+    "match": {
+      "reason": {
+        "issuer_match": "Coincidencia de emisor",
+        "domain": "Coincidencia de dominio",
+        "keyword": "Coincidencia de palabra clave",
+        "explicit": "Coincidencia explícita"
+      }
+    }
   }
 }

@@ -13,5 +13,15 @@
     "wrongPassword": "Senha incorreta. Tente novamente.",
     "tooManyAttempts": "Tentativas em excesso. Tente em {{count}} s…",
     "internalError": "Ocorreu um erro inesperado. Tente novamente."
+  },
+  "incidents": {
+    "match": {
+      "reason": {
+        "issuer_match": "Correspondência de emissor",
+        "domain": "Correspondência de domínio",
+        "keyword": "Correspondência de palavra-chave",
+        "explicit": "Correspondência explícita"
+      }
+    }
   }
 }
