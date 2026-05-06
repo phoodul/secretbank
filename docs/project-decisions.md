@@ -5,6 +5,49 @@
 
 ---
 
+## [2026-05-06] M24 Phase 2 — Breach awareness 4 갈래 분기 + 진행 순서
+
+### A. Phase 2-2 (HIBP) 가 두 갈래로 분기 — Breaches feed + Password check
+
+이전 단일 sub-task ("HIBP breach alert") 였던 항목을 두 갈래로 분리.
+
+| 갈래 | 내용 | 차별 가치 |
+| :--- | :--- | :--- |
+| **2-2A: HIBP Breaches feed + 매칭** | HIBP `/breaches` API → IncidentFeed 통합. breach.Domain ↔ credential.url / issuer.domains[] 매칭 | "Vercel 털림 → 내 vault 의 Vercel 키 영향" 즉시 인지 |
+| **2-2B: HIBP Password check** | 비밀번호 자체가 leak 됐는지 k-Anonymity 검사 (저장 시 자동 + 24h 주기 + 수동 일괄) | 1Password Watchtower 동등 |
+| **2-2C: 다국가 breach RSS** | KISA / 개인정보보호위 / ENISA / CISA RSS 프리셋 추가 | 한국·EU·미국 사용자 커버리지 (HIBP 는 글로벌·영어권 위주) |
+| **M25 (별도 마일스톤): Breach Broadcast** | Relay 가 새 breach 폴링 → 사용자에게 이메일 (즉시) / 모바일 푸시 (M11 후) fanout | 앱 안 열어도 알림 — Zero-Knowledge 와 양립 (메타데이터만 broadcast) |
+
+### B. 진행 순서 — 옵션 (가): 2-2A → 2-2C → 2-2B → M25
+
+- **이유:**
+  - 작업량 / 사용자 가치 비율로 2-2A 가 가장 높음 — M4 IncidentFeed (T049~T058) 인프라 그대로 재사용
+  - 2-2A 가 끝나면 dogfooding / 시연에서 즉시 가치 체감 ("Vercel 유출 사고 → 내 키 영향" 라인 표시)
+  - 2-2B 의 Password check 는 1Password 동등성 도달이 목표 — 작업량 큼 (DB 마이그레이션 + 백그라운드 스케줄러 + per-credential 검사). 가치도 크지만 후순위.
+  - 2-2C 는 가벼워서 2-2A 직후 합류 — 한국 사용자 (쿠팡 / SK텔레콤 / 카카오 등) 커버리지 확보
+  - M25 는 EE relay 영역, 별도 마일스톤. 우선 placeholder 등록만.
+
+### C. Zero-Knowledge 와 알림의 경계 — 명확화
+
+- **공개 OK** (알림 / 푸시 / 이메일에 포함 가능): breach 메타데이터 — 사이트명, 날짜, 영향 계정 수, 유출 데이터 종류
+- **사적** (Zero-Knowledge 보호 — 클라이언트 측에서만 매칭): "이 사용자가 그 사이트의 키를 가지고 있는지", "이 사용자의 어떤 비밀번호가 leak 됐는지"
+- → M25 broadcast 는 generic 이 아니라 **breach 메타데이터까지 포함** 해도 안전. 클라이언트가 받아서 자기 vault 와 매칭.
+
+### D. 한계 정직 공개
+
+- **Zero-Knowledge 트레이드오프**: 앱이 닫혀 있는 동안엔 새 leak 을 detect 불가. 1Password (SaaS, 서버에서 검사) 와의 본질적 차이.
+- **격차 좁히는 UX**:
+  - Inventory 헤더에 "마지막 유출 검사: N일 전" 표시 (24h 녹색 / 7일 노랑 / 7일+ 빨강 + 검사 CTA 강조)
+  - M25 Breach Broadcast (이메일 / 모바일 푸시) — 앱을 열도록 유도하는 채널
+  - USER_GUIDE / Settings 한 줄: "주 1회 이상 앱을 열어주세요. 또는 Breach Broadcast (Pro / 추후) 를 켜주세요."
+
+### E. 수동 검사 = vault 전체 일괄 (per-card 메뉴 아님)
+
+- **결정:** "유출 검사" 버튼은 Inventory 페이지 헤더 + Settings 양쪽에 1개. 모든 password kind credential 일괄 검사 (병렬 N=8, scan:progress 이벤트 패턴). per-card 메뉴 없음.
+- **이유:** 사용자 의도 — "각 카드가 아니라 vault 에 저장된 모든 번호를 한꺼번에 검사".
+
+---
+
 ## [2026-05-05] M24 Phase 1.5 — credential value pair 모델 + 카드 hover mini-graph
 
 ### A. value pair 모델링 — Option D (secondary_value_ref + 자유 라벨)
