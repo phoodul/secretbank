@@ -13,6 +13,7 @@ use api_vault_storage::vault::{VaultError, VaultStorage};
 
 use crate::audit_ctx::AuditCtx;
 use crate::commands::kill_switch::{ConfirmTokenStore, IssuerConfirmTokenStore};
+use crate::import::ImportSessionStore;
 use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
 use crate::services::pairing::PairingSessionLock;
@@ -74,6 +75,13 @@ pub struct AppContext {
     /// `kill_switch_request_confirm_issuer` 가 발급하고
     /// `kill_switch_revoke_issuer` 가 소비(one-shot)한다.
     pub issuer_kill_switch_tokens: Arc<IssuerConfirmTokenStore>,
+
+    /// CSV import 세션 저장소 (M24 Phase 2-3-a).
+    ///
+    /// `import_csv_prepare` 가 평문 DetectedFromCsv 행을 5분 TTL 로 보관한다.
+    /// `import_csv_commit` 이 session_id 로 꺼내서 vault 에 저장한다.
+    /// SecretBox<String> 들은 세션 drop 시 자동 zeroize.
+    pub import_sessions: Arc<ImportSessionStore>,
 
     /// Cloudflare Workers 릴레이 HTTP 클라이언트 (M8 Auth · M9 Sync 공유).
     ///
@@ -169,6 +177,7 @@ impl AppContext {
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
+            import_sessions: Arc::new(ImportSessionStore::new()),
             relay_client,
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),

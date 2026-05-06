@@ -691,6 +691,7 @@ mod tests {
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
+            import_sessions: Arc::new(crate::import::ImportSessionStore::new()),
             relay_client,
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),

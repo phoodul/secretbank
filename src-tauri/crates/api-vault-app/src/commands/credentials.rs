@@ -630,6 +630,7 @@ mod tests {
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
+            import_sessions: Arc::new(crate::import::ImportSessionStore::new()),
             relay_client: Arc::new(
                 crate::services::relay_client::RelayClient::new(
                     url::Url::parse("http://localhost").unwrap(),
@@ -761,6 +762,7 @@ mod tests {
             audit,
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
+            import_sessions: Arc::new(crate::import::ImportSessionStore::new()),
             relay_client: Arc::new(
                 crate::services::relay_client::RelayClient::new(
                     url::Url::parse("http://localhost").unwrap(),

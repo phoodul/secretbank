@@ -6,6 +6,7 @@ pub mod deployments;
 pub mod entitlement;
 pub mod github;
 pub mod graph;
+pub mod import;
 pub mod incidents;
 pub mod issuer;
 pub mod kill_switch;
