@@ -52,7 +52,7 @@
 | M21 | VS Code / JetBrains plugin      | TBD         | TBD       | ✅ M21 v3 완료 (v1 commands+statusbar+diagnostic / v2 LM tools + package.json hover / v3 Cargo.toml hover + ManifestCodeLens — risky deps inline) |
 | M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + apivault blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). |
 | **M23** | **Vault Charter (recovery 메커니즘) — 출시 블로커** | T-23-A~E | 5 (+1 hotfix) | ✅ **M23 완료 — 마일스톤 클로즈** (A codec crate / B-1 vault format v2 / B-2 initialize_with_charter / B-3 recover_with_charter / B-4 Tauri 커맨드 + audit / C 발급 UI + PDF / D recovery flow UI / E-1 cooldown sidecar / E-2 cooldown UI / unlock anim hotfix). sync 알림은 M9 audit 확장으로 분리. |
-| **M24** | **General password vault — Unified Bento Inventory** | T-24-A~E + Phase 1/1.5/2 | 5 + sub | 🔄 **Phase 1 ✅ + Phase 1.5 ✅ + Phase 2-1 ✅ + Phase 2-2A-1 ✅ + Phase 2-2A-2 ✅ (2026-05-06)** — type-agnostic bento card + value pair + hover mini-graph + URL auto-detect + HibpClient::list_breaches + normalize_hibp_breach + HIBP poller 통합. 다음: **Phase 2-2A-3** (도메인 매칭 확장) → 2-2C → 2-2B. |
+| **M24** | **General password vault — Unified Bento Inventory** | T-24-A~E + Phase 1/1.5/2 | 5 + sub | 🔄 **Phase 1 ✅ + Phase 1.5 ✅ + Phase 2-1 ✅ + Phase 2-2A-1 ✅ + Phase 2-2A-2 ✅ + Phase 2-2A-3a ✅ (2026-05-06)** — type-agnostic bento card + value pair + hover mini-graph + URL auto-detect + HibpClient::list_breaches + normalize_hibp_breach + HIBP poller 통합 + issuer.domains 컬럼 + preset seed. 다음: **Phase 2-2A-3b** (도메인 매칭 로직) → 2-2C → 2-2B. |
 | **M25** | **Breach Broadcast (EE relay → 이메일/푸시 fanout)** | TBD | TBD | ⏳ placeholder (M11 모바일 전 v1 = 이메일, M11 후 v2 = 모바일 푸시 합류). 메타데이터 broadcast (Zero-Knowledge 와 양립). [project-decisions 2026-05-06] |
 
 ---
@@ -225,6 +225,12 @@
 | :--- | :-------- |
 | **Phase 2-1a** issuer URL 도메인 매핑 + matchIssuerByUrl 헬퍼 — IssuerPreset.domains[] 10개 preset / matchIssuerByUrl (subdomain-safe, www-strip, case-insensitive, protocol-less 재시도) / 단위 테스트 24건 | `5473437` |
 | **Phase 2-1b** CreateCredentialDialog kind/url/username 필드 + URL auto-detect — kind 토글, url 전 kind 공통, username password 전용, issuer lock, invoke args 확장, i18n 4 로케일, 통합 테스트 4건 | `48d067c` |
+
+### M24 Phase 2-2A-3a (2026-05-06, issuer.domains 컬럼 + preset seed)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **Phase 2-2A-3a** 마이그레이션 0009 + Issuer/IssuerInput.domains Vec<String> + IssuerRepo CRUD JSON 직렬화 + 10 preset domain 매핑 + frontend Issuer/IssuerYValue/issuerMapper sync + 전체 테스트 픽스처 보완 | `9bac675` |
 
 ---
 
