@@ -23,8 +23,8 @@ pub enum FeedFormat {
     Atom,
 }
 
-/// Returns the 12 preset sources (10 SaaS status pages + 2 government CSIRT advisories,
-/// as of 2026-05-06).
+/// Returns the 17 preset sources (10 SaaS status pages + 2 government CSIRT advisories
+/// + 5 KISA 보호나라 advisory feeds, as of 2026-05-06).
 ///
 /// URLs have been verified to respond with parseable RSS 2.0 or Atom 1.0 feeds.
 /// Redirect-prone aliases (e.g. `status.stripe.com`, `status.paddle.com`) are
@@ -104,6 +104,37 @@ pub fn default_presets() -> Vec<RssSource> {
             url: "https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml".into(),
             format: FeedFormat::Rss,
         },
+        // KISA 보호나라 advisory feeds (2026-05-06, M24 2-2C-b)
+        RssSource {
+            slug: "kisa-security-notice".into(),
+            display_name: "KISA 보안공지".into(),
+            url: "https://www.boho.or.kr/kr/rss.do?bbsId=B0000133".into(),
+            format: FeedFormat::Rss,
+        },
+        RssSource {
+            slug: "kisa-report".into(),
+            display_name: "KISA 보고서/가이드".into(),
+            url: "https://www.boho.or.kr/kr/rss.do?bbsId=B0000127".into(),
+            format: FeedFormat::Rss,
+        },
+        RssSource {
+            slug: "kisa-notice".into(),
+            display_name: "KISA 공지사항".into(),
+            url: "https://www.boho.or.kr/kr/rss.do?bbsId=B0000132".into(),
+            format: FeedFormat::Rss,
+        },
+        RssSource {
+            slug: "kisa-vuln".into(),
+            display_name: "KISA 취약점 정보".into(),
+            url: "https://www.boho.or.kr/kr/rss.do?bbsId=B0000302".into(),
+            format: FeedFormat::Rss,
+        },
+        RssSource {
+            slug: "kisa-alert".into(),
+            display_name: "KISA 경보단계".into(),
+            url: "https://www.boho.or.kr/kr/rss.do?bbsId=B0000342".into(),
+            format: FeedFormat::Rss,
+        },
     ]
 }
 
@@ -114,7 +145,7 @@ mod tests {
 
     #[test]
     fn test_default_presets_count() {
-        assert_eq!(default_presets().len(), 12);
+        assert_eq!(default_presets().len(), 17);
     }
 
     #[test]
@@ -130,6 +161,48 @@ mod tests {
         assert!(
             default_presets().iter().any(|s| s.slug == "ncsc-uk"),
             "NCSC UK preset missing from default_presets()"
+        );
+    }
+
+    #[test]
+    fn test_default_presets_includes_kisa_security_notice() {
+        assert!(
+            default_presets()
+                .iter()
+                .any(|s| s.slug == "kisa-security-notice"),
+            "KISA 보안공지 preset missing from default_presets()"
+        );
+    }
+
+    #[test]
+    fn test_default_presets_includes_kisa_report() {
+        assert!(
+            default_presets().iter().any(|s| s.slug == "kisa-report"),
+            "KISA 보고서/가이드 preset missing from default_presets()"
+        );
+    }
+
+    #[test]
+    fn test_default_presets_includes_kisa_notice() {
+        assert!(
+            default_presets().iter().any(|s| s.slug == "kisa-notice"),
+            "KISA 공지사항 preset missing from default_presets()"
+        );
+    }
+
+    #[test]
+    fn test_default_presets_includes_kisa_vuln() {
+        assert!(
+            default_presets().iter().any(|s| s.slug == "kisa-vuln"),
+            "KISA 취약점 정보 preset missing from default_presets()"
+        );
+    }
+
+    #[test]
+    fn test_default_presets_includes_kisa_alert() {
+        assert!(
+            default_presets().iter().any(|s| s.slug == "kisa-alert"),
+            "KISA 경보단계 preset missing from default_presets()"
         );
     }
 
