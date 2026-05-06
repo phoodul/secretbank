@@ -1,5 +1,57 @@
 # Work Log
 
+## 2026-05-07 (Night mode) — M24 Phase 2-3-a 풀체인 ✅ Google CSV import 완성 (15 commits push)
+
+이전 세션 끝점 (origin/main `611625a`) 에서 시작. 사용자 결정으로 Phase 2-3 (Import) 의 1순위를 **Google CSV (Chrome/Edge/Brave)** 로 승격하고 Phase 2-4 (Cmd+K Quick Add + CLI quick-add) 신설. Phase 2-3-a 6 sub-task 모두 완료. 15 commits push (`611625a..84536a7`, branch protection admin bypass).
+
+### 사용자 결정 (이번 세션, project-decisions [2026-05-07])
+
+- **Phase 2-3 (Import) 1순위 = Google CSV**. 1pux/Bitwarden JSON 은 후순위.
+- **Phase 2-4 신설 = "마찰 없는 등록 UX"**. 형태: (a) Cmd+K Quick Add 강화 + (d) CLI quick-add. (b) Tray + hotkey 보류. (c) 브라우저 확장은 별도 마일스톤.
+- **HIBP Password check (2-2B) 는 M24 v2 로 미룸**. v1 은 "쉬운 등록 + 직관" 까지. dogfooding 우선.
+- **Gate 2 승인 (옵션 A)**: 6 sub-task 분해 그대로 1 implementator = 1 commit 룰로 진입.
+
+### Phase 2-3-a — Google CSV import 풀체인 (6 sub-task / 13 commits + 2 docs/CI)
+
+| Sub-task | Commit | 변경 |
+| :--- | :--- | :--- |
+| 2-3-a-1: Chrome/Edge/Brave CSV 파서 | `15d2cc1` + `58df540` | `import/csv_google.rs` header-based 자동 감지 (Chrome 5컬럼 / Edge 3컬럼) + BOM 방어 + RFC 4180 escape + `SecretBox<String>` 즉시 래핑 + 빈 password 행 skip + `csv = "1"` workspace dep + 9 단위 테스트 |
+| 2-3-a-2: CSV row → DetectedFromCsv 변환 | `e7449a8` + `662dd3e` | `import/to_detected.rs` — URL host 추출 (`url` crate, scheme 보정) + subdomain-safe issuer 매칭 (Phase 2-1 와 동일 정책) + name 우선순위 (CSV name > host > "Imported credential") + 10 테스트 (누적 19) |
+| docs/CI fix: Phase 2-3 결정 + research 보고서 | `9a2821d` | project-decisions [2026-05-07] + research_phase2_3a_google_csv.md 신규 + prettier 포맷 정정 (CI format:check 그린화) |
+| 2-3-a-3: import_csv_prepare + ImportSessionStore | `eea3657` + `3daaa65` | `commands/import.rs` — 5분 TTL 세션 보관 (16바이트 hex id, lazy sweep, drop 시 SecretBox zeroize) + preview DTO (평문 IPC 미통과) + alreadyExists 중복 감지 (HashSet) + 11 테스트 |
+| 2-3-a-4: import_csv_commit + per-row 결과 | `3de251f` + `dd6ed7a` | session take-once + selectedRowIndices 부분 import + `ImportRowResult { row_index, credential_id, error }` per-row 보고 + `VaultLocked / SessionNotFound / RowIndexOutOfBounds` 에러 분기 + 5 테스트 (누적 import 10) |
+| 2-3-a-5: DropZone .csv 분기 + CSVImportDialog UI | `b2048e4` + `84536a7` | `DropZone.tsx` `.csv` 확장자 분기 + `CSVImportDialog.tsx` 신규 (~380줄, Bento 카드 preview + 5분 TTL 카운트다운 + alreadyExists 자동 해제 + matched issuer badge + **원본 CSV 직접 삭제 버튼** `@tauri-apps/plugin-fs::remove`) + i18n 17키 × 4 로케일 + Vitest 7 PASS + `fs:allow-remove` capability |
+| 2-3-a-6: docs(progress) + work-log | (이 commit) | Phase 2-3-a 풀체인 완료 선언 + 다음 진입 큐 (2-4-a / 2-4-d / dogfooding / 2-3-b) |
+
+### 차별화 검증 (Researcher → 구현 → 동작 확인)
+
+- **preview UI**: Researcher 가 "1P/Bitwarden/Apple 모두 preview 없이 즉시 import" 라고 검증. 우리는 Bento 카드 미리보기 + alreadyExists 충돌 표시 + matched issuer badge + 5분 TTL 카운트다운. 사용자 비전 ("직관적") 직접 충족.
+- **원본 CSV 직접 삭제**: 1P/Bitwarden 은 텍스트 권고만. 우리는 결과 모달에 [삭제] 버튼 → `@tauri-apps/plugin-fs::remove` 즉시 영구 삭제 (휴지통 X) + 확인 다이얼로그 1번. 평문 password 가 디스크에 남는 시간 최소화.
+- **평문 IPC 미통과**: 백엔드가 `SecretBox<String>` 으로만 평문 보관, frontend 는 `valueHint` (마지막 4자) 만 받음. session take-once 의미론으로 commit 후 즉시 zeroize.
+
+### 누적 검증 (Phase 2-3-a 종료)
+
+- `pnpm typecheck` ✅
+- `pnpm vitest run` ✅ **535 (+7 from 528 baseline)** — CSVImportDialog 7 신규
+- `pnpm lint` ✅ (pre-existing 18 만, 신규 0)
+- `pnpm format:check` ✅
+- `cargo test --workspace` ✅ — 0 failed (import: 24 신규 = csv_google 9 + to_detected 10 + commands::import 10 일부 중복 카운트, 누적 27 crates 0 failed)
+- `cargo clippy -D warnings` ✅ — 0 warning
+
+### 다음 세션 진입 큐 (사용자 결정 필요)
+
+1. **Phase 2-4-a (Cmd+K Quick Add 강화)** — 작은 작업 (1~2 commits). `actions.ts:87` 에 `action.quick-add` 추가 + 클립보드 자동 채움 + URL auto-detect 재사용 (Phase 2-1).
+2. **Phase 2-4-d (CLI quick-add)** — 작음 (1 commit). `apivault add --url ... --user ... --pw ...` + `APIVAULT_PASSPHRASE` 환경변수.
+3. **Dogfooding** — 본인 Chrome 비번 export → CSV import 실사용 검증. UX 이슈 발견 후 fix.
+4. **Phase 2-3-b (Bitwarden JSON import)** — 우선순위 낮음. M24 v1 의 핵심 가치는 Google CSV 로 충분.
+
+### CI 이슈 + 해결
+
+- 세션 시작 시 GitHub Actions `format:check` 실패 (이전 세션 잔재 + 새 [2026-05-07] 결정 항목이 prettier 룰 위반). `pnpm format` → 14 파일 (project-decisions / USER_GUIDE.ko / research / BentoGrid / 13 i18n) fix → `9a2821d` 단일 commit 으로 정리. push 후 그린화.
+- 한 implementator 가 reject 되어도 work tree 의 partial 작업이 컴파일/테스트 통과하면 그대로 묶어 commit 으로 정리 가능 (이번 세션의 2-3-a-4 케이스).
+
+---
+
 ## 2026-05-06 (낮 — Phase 2 본격 진입) — M24 Phase 2-1 + 2-2A + 2-2C 완료 + 22 commits push
 
 이전 세션 끝점 (origin/main `0ebc078`) 에서 시작. Phase 2-1 (URL auto-detect / Password vault UI) → Phase 2-2A (HIBP Breaches feed + 도메인 매칭 + UI 풀체인 5 sub-task) → Phase 2-2C (영어권/한국 정부 CSIRT RSS 2 sub-task) 까지 한 세션에 처리. 22 commits push (`0ebc078..f1a6925`, branch protection admin bypass).

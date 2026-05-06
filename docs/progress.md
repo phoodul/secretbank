@@ -2,18 +2,31 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-07 — **M24 Phase 2-3-a 진입 (Google CSV import)**
-- **Phase:** Phase 3 — Implementation. **Phase 2-3-a 6 sub-task 분해 + Gate 2 사용자 승인 완료**. 다음 → 2-3-a-1 (csv_google.rs 파서 + csv crate 의존성 + 단위 테스트).
+- **Time:** 2026-05-07 (Night mode) — **M24 Phase 2-3-a 풀체인 ✅ — Google CSV import end-to-end 완성**
+- **Phase:** Phase 3 — Implementation. **Phase 2-3-a 6 sub-task 모두 완료 (15 commits push, `611625a..84536a7`)**. 다음 → **Phase 2-4-a (Cmd+K Quick Add)** 또는 **dogfooding** (사용자 결정 큐).
+- **풀체인 commit 매핑**:
+  - 2-3-a-1 (`15d2cc1` + `58df540`) — Chrome/Edge/Brave CSV 파서 (9 단위 테스트, csv crate workspace dep)
+  - 2-3-a-2 (`e7449a8` + `662dd3e`) — CSV row → `DetectedFromCsv` 변환 + URL host → issuer 도메인 매칭 (10 테스트, url crate)
+  - 2-3-a-3 (`eea3657` + `3daaa65`) — Tauri `import_csv_prepare` + ImportSessionStore 5분 TTL + preview DTO (평문 IPC 미통과)
+  - 2-3-a-4 (`3de251f` + `dd6ed7a`) — Tauri `import_csv_commit` + per-row 결과 + take-once session
+  - **CI fix** (`9a2821d`) — prettier 포맷 정정 + Phase 2-3 결정 기록 + Researcher 보고서
+  - 2-3-a-5 (`b2048e4` + `84536a7`) — DropZone `.csv` 분기 + `CSVImportDialog` 신규 (Bento 카드 preview + 5분 TTL 카운트다운 + alreadyExists 자동 해제 + 원본 CSV 삭제 버튼) + i18n 17키 × 4 로케일 + Vitest 7 PASS
+- **누적 검증 (Phase 2-3-a 종료 시점)**: `pnpm typecheck` ✅ / `pnpm vitest run` **535 (+7 from 528 baseline)** / `pnpm lint` 신규 0 / `pnpm format:check` ✅ / cargo test 0 failed / clippy 0 warning.
+- **차별화 포인트 검증됨**: 
+  - **preview UI** — 1P/Bitwarden/Apple 모두 preview 없이 즉시 import (Researcher 확인). 우리는 Bento 카드 미리보기 + alreadyExists 충돌 표시 + matched issuer badge.
+  - **원본 CSV 직접 삭제 버튼** — `@tauri-apps/plugin-fs::remove` + 확인 다이얼로그. "텍스트 권고만" 인 경쟁사와 차별화.
 - **사용자 비전 갱신 (2026-05-07)**: Import 1순위를 Google CSV (Chrome/Edge/Brave) 로 승격. 1pux/Bitwarden 은 후순위. + Phase 2-4 신설 = 마찰 없는 등록 UX (Cmd+K Quick Add + CLI quick-add). HIBP Password check (2-2B) 는 M24 v2 로 미룸.
-- **Researcher 결과 (`docs/research_phase2_3a_google_csv.md`)**: Chrome/Brave 5컬럼 (`name,url,username,password,note`, note 는 feature flag 누락 가능) / Edge 3컬럼 (`url,username,password`) / UTF-8 BOM 방어 / RFC 4180 escape / `csv` crate 신규 추가 / `secrecy::SecretBox` 즉시 래핑 (이미 워크스페이스 보유) / 차별화 = preview UI + 원본 CSV 직접 삭제 버튼.
-- **Phase 2-3-a sub-task 정의 (Gate 2 승인 2026-05-07)**:
-  1. **2-3-a-1**: `api-vault-connectors/src/import/csv_google.rs` 파서 (Chrome/Edge/Brave header-based, BOM 방어, RFC 4180) + 단위 테스트 6~8 + `csv` crate 워크스페이스 추가
-  2. **2-3-a-2**: CSV row → `DetectedKey` 변환 (URL → issuer 자동 매핑 backend, env=prod default) + 테스트
-  3. **2-3-a-3**: Tauri command `import_google_csv` (파일 경로 → DetectedKey[] 반환) + AuditCtx + 통합 테스트
-  4. **2-3-a-4**: `CredentialRepo::bulk_insert_with_usage()` SQLite transaction + 부분 실패 rollback + 테스트
-  5. **2-3-a-5**: `DropZone.tsx` `.csv` 분기 + `CSVImportDialog.tsx` 신규 (Bento 카드 preview + 원본 삭제 버튼) + i18n 4 로케일 + Vitest 5~7
-  6. **2-3-a-6**: docs(task) + docs(progress) 갱신
-- **Explore 사전 조사 (재사용 가능 자산)**: `use-import-detected.ts:43` (신규/교체 의사결정 + 부분 실패 처리 그대로 재사용) / `DetectedKeysReview.tsx:52` / `DropZone.tsx:26` (Tauri native drag-drop) / Cmd+K `actions.ts:87` / CLI `main.rs:54` (clap derive)
+- **Researcher 결과 (`docs/research_phase2_3a_google_csv.md`)**: Chrome/Brave 5컬럼 (note feature flag 누락 가능) / Edge 3컬럼 / UTF-8 BOM 방어 / RFC 4180 escape / `secrecy::SecretBox` 즉시 래핑 / 차별화 정합성 검증.
+- **신규 파일 (frontend)**: `src/features/onboarding/CSVImportDialog.tsx` (~380줄), `src/features/onboarding/__tests__/CSVImportDialog.test.tsx` (~195줄)
+- **신규 파일 (backend)**: `src-tauri/crates/api-vault-connectors/src/import/{mod,csv_google,to_detected}.rs`, `src-tauri/crates/api-vault-app/src/import/mod.rs` (ImportSessionStore), `src-tauri/crates/api-vault-app/src/commands/import.rs`
+- **신규 의존성**: `csv = "1"` + `url = "2.5"` (workspace), `@tauri-apps/plugin-fs = 2.5.1` (frontend npm), `fs:allow-remove` capability.
+- **다음 진입 전 큐 (사용자 결정 필요)**:
+  1. **Phase 2-4-a (Cmd+K Quick Add 강화)** — `actions.ts` 에 `action.quick-add` 추가 + 클립보드 자동 채움 + URL auto-detect 재사용. 작은 작업 (1~2 commits).
+  2. **Phase 2-4-d (CLI quick-add)** — `apivault add --url ... --user ... --pw ...` + `APIVAULT_PASSPHRASE` 환경변수. 작음 (1 commit).
+  3. **Dogfooding** — 본인 Chrome 비번 export → CSV import 실사용 검증. UX 이슈 발견 후 fix.
+  4. **Phase 2-3-b (Bitwarden JSON import)** — 후순위, 우선순위 낮음.
+
+### 이전 — Phase 2-2A + 2-2C 완료 (2026-05-06)
 
 ### 이전 — Phase 2-2A + 2-2C 완료 (2026-05-06)
 
