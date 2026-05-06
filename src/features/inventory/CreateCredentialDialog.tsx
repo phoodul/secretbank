@@ -46,6 +46,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { useIssuers } from "./use-issuers";
 import { findPreset } from "./issuer-presets";
+import { matchIssuerByUrl } from "./match-issuer-by-url";
 
 // ---------------------------------------------------------------------------
 // Zod schema
@@ -53,8 +54,17 @@ import { findPreset } from "./issuer-presets";
 
 const schema = z
   .object({
+    kind: z.enum(["api_key", "password"]),
     issuer_id: z.string().min(1),
     name: z.string().min(1).max(100),
+    url: z
+      .string()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    username: z
+      .string()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
     env: z.enum(["dev", "staging", "prod"]),
     scope: z
       .string()
@@ -116,12 +126,17 @@ export function CreateCredentialDialog({
   const [showValue, setShowValue] = useState(false);
   const [showSecondaryValue, setShowSecondaryValue] = useState(false);
   const [issuerPopoverOpen, setIssuerPopoverOpen] = useState(false);
+  // Track whether the user manually selected an issuer — when true, URL auto-detect is disabled.
+  const [issuerLockedByUser, setIssuerLockedByUser] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      kind: "api_key",
       issuer_id: "",
       name: "",
+      url: "",
+      username: "",
       env: "prod",
       scope: "",
       expires_at: "",
@@ -135,6 +150,7 @@ export function CreateCredentialDialog({
 
   const isSubmitting = form.formState.isSubmitting;
   const hasSecondary = form.watch("has_secondary");
+  const kind = form.watch("kind");
 
   async function onSubmit(values: FormValues) {
     const expiresAtMs =
@@ -143,6 +159,9 @@ export function CreateCredentialDialog({
         : undefined;
 
     const scopeVal = values.scope === "" || values.scope === undefined ? undefined : values.scope;
+    const urlVal = values.url === "" || values.url === undefined ? undefined : values.url;
+    const usernameVal =
+      values.username === "" || values.username === undefined ? undefined : values.username;
 
     const hashHint = values.value.slice(-4);
 
@@ -154,8 +173,11 @@ export function CreateCredentialDialog({
     try {
       await invoke<string>("credential_create", {
         args: {
+          kind: values.kind,
           issuer_id: values.issuer_id,
           name: values.name,
+          url: urlVal,
+          username: usernameVal,
           env: values.env,
           scope: scopeVal,
           expires_at: expiresAtMs,
@@ -171,6 +193,7 @@ export function CreateCredentialDialog({
       form.reset();
       setShowValue(false);
       setShowSecondaryValue(false);
+      setIssuerLockedByUser(false);
       onOpenChange(false);
       onSuccess();
     } catch (err) {
@@ -185,8 +208,29 @@ export function CreateCredentialDialog({
       setShowValue(false);
       setShowSecondaryValue(false);
       setIssuerPopoverOpen(false);
+      setIssuerLockedByUser(false);
     }
     onOpenChange(next);
+  }
+
+  /** Handle URL field change — auto-select issuer when not locked by user. */
+  function handleUrlChange(rawUrl: string) {
+    form.setValue("url", rawUrl);
+    if (issuerLockedByUser) return;
+
+    const matched = matchIssuerByUrl(rawUrl);
+    if (!matched) return;
+
+    const matchedIssuer = issuers.find((i) => i.slug === matched.slug);
+    if (!matchedIssuer) return;
+
+    // Only update if it actually changes to avoid unnecessary re-renders
+    if (form.getValues("issuer_id") === matchedIssuer.id) return;
+
+    form.setValue("issuer_id", matchedIssuer.id);
+    form.setValue("primary_label", matchedIssuer.default_primary_label ?? "");
+    form.setValue("secondary_label", matchedIssuer.default_secondary_label ?? "");
+    form.setValue("has_secondary", matchedIssuer.default_secondary_label !== null);
   }
 
   return (
@@ -199,6 +243,53 @@ export function CreateCredentialDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            {/* Kind (api_key / password) */}
+            <FormField
+              control={form.control}
+              name="kind"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("inventory.fieldKind")}</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full" aria-label={t("inventory.fieldKind")}>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="api_key">{t("inventory.kindApiKey")}</SelectItem>
+                      <SelectItem value="password">{t("inventory.kindPassword")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* URL (all kinds) */}
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("inventory.fieldUrl")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={
+                        kind === "password"
+                          ? t("inventory.fieldUrlPlaceholderPassword")
+                          : t("inventory.fieldUrlPlaceholderApiKey")
+                      }
+                      autoComplete="url"
+                      {...field}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Issuer combobox */}
             <FormField
               control={form.control}
@@ -261,6 +352,8 @@ export function CreateCredentialDialog({
                                           "has_secondary",
                                           issuer.default_secondary_label !== null,
                                         );
+                                        // Lock issuer — user made an explicit choice
+                                        setIssuerLockedByUser(true);
                                         setIssuerPopoverOpen(false);
                                       }}
                                     >
@@ -286,6 +379,27 @@ export function CreateCredentialDialog({
                 );
               }}
             />
+
+            {/* Username — only visible when kind=password */}
+            {kind === "password" && (
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("inventory.fieldUsername")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t("inventory.fieldUsernamePlaceholder")}
+                        autoComplete="username"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Name */}
             <FormField

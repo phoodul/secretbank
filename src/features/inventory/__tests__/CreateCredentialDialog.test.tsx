@@ -81,6 +81,21 @@ const MOCK_ISSUERS: Issuer[] = [
     created_at: 1700000000000,
     updated_at: 1700000000000,
   },
+  {
+    id: "01HZBBBBBBBBBBBBBBBBBBBBBS",
+    slug: "supabase",
+    display_name: "Supabase",
+    docs_url: "https://supabase.com/docs/reference",
+    issue_url: "https://supabase.com/dashboard/account/tokens",
+    status_url: null,
+    security_feed_url: null,
+    connector_id: null,
+    icon_key: "supabase",
+    default_primary_label: null,
+    default_secondary_label: null,
+    created_at: 1700000000000,
+    updated_at: 1700000000000,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -246,8 +261,7 @@ describe("CreateCredentialDialog", () => {
     const valueInput = screen.getByPlaceholderText("Paste your API key");
     await user.type(valueInput, "sk-testkey1234");
 
-    // scope 비워둠 (optional)
-    // expires_at 비워둠 (optional)
+    // url, username, scope, expires_at 비워둠 (optional)
 
     const submitBtn = screen.getByRole("button", { name: /save credential/i });
     await user.click(submitBtn);
@@ -255,8 +269,11 @@ describe("CreateCredentialDialog", () => {
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("credential_create", {
         args: {
+          kind: "api_key",
           issuer_id: "01HZBBBBBBBBBBBBBBBBBBBBBB",
           name: "Prod Key",
+          url: undefined,
+          username: undefined,
           env: "prod",
           scope: undefined,
           expires_at: undefined,
@@ -455,11 +472,103 @@ describe("CreateCredentialDialog", () => {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // URL auto-detect 테스트 (M24 2-1b)
+  // ---------------------------------------------------------------------------
+
+  it("URL 입력 → issuer 콤보박스가 자동으로 Supabase 로 변경된다", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    // issuer_list 로드 대기
+    await screen.findByRole("combobox", { name: /issuer/i });
+
+    // URL 입력
+    const urlInput = screen.getByPlaceholderText("https://api.example.com (optional)");
+    await user.type(urlInput, "https://supabase.com/dashboard");
+
+    // issuer 콤보박스에 Supabase 가 표시되어야 함
+    await waitFor(() => {
+      expect(screen.getByRole("combobox", { name: /issuer/i })).toHaveTextContent("Supabase");
+    });
+  });
+
+  it("사용자가 issuer 명시 선택 후 URL 변경 → issuer 변경되지 않음 (lock)", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    // issuer 직접 선택 (GitHub)
+    const issuerBtn = await screen.findByRole("combobox", { name: /issuer/i });
+    await user.click(issuerBtn);
+    const githubItem = await screen.findByText("GitHub");
+    await user.click(githubItem);
+
+    // GitHub 선택 확인
+    await waitFor(() => {
+      expect(screen.getByRole("combobox", { name: /issuer/i })).toHaveTextContent("GitHub");
+    });
+
+    // URL 에 Supabase 도메인 입력
+    const urlInput = screen.getByPlaceholderText("https://api.example.com (optional)");
+    await user.type(urlInput, "https://supabase.com/dashboard");
+
+    // issuer가 GitHub 그대로여야 함 (lock 이 걸렸으므로)
+    await waitFor(() => {
+      expect(screen.getByRole("combobox", { name: /issuer/i })).toHaveTextContent("GitHub");
+    });
+  });
+
+  it("kind=password 선택 → username 필드 표시", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await screen.findByRole("combobox", { name: /issuer/i });
+
+    // 초기: username 필드 없음
+    expect(screen.queryByPlaceholderText("e.g. user@example.com")).not.toBeInTheDocument();
+
+    // kind=password 선택 — SelectItem은 listbox role 로 렌더됨, getAllByRole 로 접근
+    const kindSelect = screen.getByRole("combobox", { name: /credential type/i });
+    await user.click(kindSelect);
+    // listbox 내 "Password" option 클릭
+    const passwordOption = await screen.findByRole("option", { name: "Password" });
+    await user.click(passwordOption);
+
+    // username 필드 표시
+    expect(await screen.findByPlaceholderText("e.g. user@example.com")).toBeInTheDocument();
+  });
+
+  it("kind=password → api_key 로 되돌리면 username 필드 숨김", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await screen.findByRole("combobox", { name: /issuer/i });
+
+    // kind=password 선택
+    const kindSelect = screen.getByRole("combobox", { name: /credential type/i });
+    await user.click(kindSelect);
+    const passwordOption = await screen.findByRole("option", { name: "Password" });
+    await user.click(passwordOption);
+
+    // username 필드 보임
+    expect(await screen.findByPlaceholderText("e.g. user@example.com")).toBeInTheDocument();
+
+    // kind=api_key 로 되돌리기
+    await user.click(kindSelect);
+    const apiKeyOption = await screen.findByRole("option", { name: "API Key" });
+    await user.click(apiKeyOption);
+
+    // username 필드 숨김
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText("e.g. user@example.com")).not.toBeInTheDocument();
+    });
+  });
+
   it("secondary 토글 ON 후 submit → secondary_value + secondary_label + primary_label 포함", async () => {
     const user = userEvent.setup();
 
-    // Supabase-like issuer with default_secondary_label set
-    const SUPABASE_ISSUER = {
+    // Replace MOCK_ISSUERS Supabase entry with one that has default labels set
+    const SUPABASE_WITH_LABELS = {
       id: "01HZBBBBBBBBBBBBBBBBBBBBBS",
       slug: "supabase",
       display_name: "Supabase",
@@ -474,8 +583,12 @@ describe("CreateCredentialDialog", () => {
       created_at: 1700000000000,
       updated_at: 1700000000000,
     };
+    const issuersWithLabels = [
+      ...MOCK_ISSUERS.filter((i) => i.slug !== "supabase"),
+      SUPABASE_WITH_LABELS,
+    ];
     mockInvoke.mockImplementation((cmd: string) => {
-      if (cmd === "issuer_list") return Promise.resolve([...MOCK_ISSUERS, SUPABASE_ISSUER]);
+      if (cmd === "issuer_list") return Promise.resolve(issuersWithLabels);
       return Promise.resolve("01HZNEWCREDID00000000001");
     });
 
