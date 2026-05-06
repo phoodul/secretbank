@@ -2,8 +2,16 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-06 (낮 — Phase 2 첫 sub-task 완료)
-- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅. 다음은 Phase 2-2 (HIBP).
+- **Time:** 2026-05-06 (낮 — Phase 2-2A 진입, 2-2A-1 완료)
+- **Phase:** Phase 3 — Implementation. M24 Phase 2-1 ✅, Phase 2-2A-1 ✅. 다음은 2-2A-2 (IncidentFeed 통합).
+- **사용자 결정 (옵션 가)**: 2-2A (HIBP Breaches feed) → 2-2C (다국가 RSS) → 2-2B (Password check) → M25 placeholder. project-decisions [2026-05-06] 기록.
+- **Phase 2-2A-1 결과**: `84602bb` feat(feeds): HibpClient::list_breaches — 글로벌 breach catalog 조회. 기존 `check_email` 옆에 메서드 추가. 회귀 +5 (T11~T15). cargo test 53 passed.
+- **사전 조사 (2-2A-2 위해)**:
+  - `IncidentSource::Hibp` enum 값 이미 존재 (`incident.rs:13`) — 추가 변경 불필요
+  - `feed_normalize.rs` 에 `normalize_<source>()` 헬퍼 패턴 — `normalize_hibp_breach()` 추가만 하면 됨
+  - `feed_scheduler.rs` 에 `run_<source>_poller` + `poll_<source>_once` 패턴 — 그대로 따라가면 됨
+  - `FeedSchedulerConfig` 에 새 필드 추가
+  - `trigger_once()` 에 hibp 분기 추가
 - **사용자 결정 (이번 세션):** Phase 2 sub-task 우선순위 = **권고대로 1 → 2 → 3 → 4 → 5** (URL auto-detect → HIBP → 1Password CSV → Bitwarden JSON → browser autofill).
 - **Phase 2-1 결과 (URL auto-detect + Password UI 통합):** 3 commits (1 implementator)
   - `5473437` feat(inventory): issuer URL 도메인 매핑 + matchIssuerByUrl 헬퍼 (M24 2-1a) — 10 preset 모두 domains[] 추가, subdomain-safe 매칭 (`evil-stripe.com` 차단), protocol-less URL 자동 보정
