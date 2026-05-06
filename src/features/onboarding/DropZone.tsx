@@ -5,12 +5,15 @@ import { toast } from "sonner";
 import { FolderDown } from "lucide-react";
 
 import { usePlatform } from "@/lib/platform";
+import { CSVImportDialog } from "./CSVImportDialog";
 
 export function DropZone() {
   const platform = usePlatform();
   const navigate = useNavigate();
   const { t } = useTranslation("common");
   const [isDragging, setIsDragging] = useState(false);
+  // csvPath is set when a .csv file is dropped — triggers CSVImportDialog
+  const [csvPath, setCsvPath] = useState<string | null>(null);
 
   // Tauri native drag-drop subscription
   useEffect(() => {
@@ -33,8 +36,14 @@ export function DropZone() {
             setIsDragging(false);
             if (p.paths.length > 0) {
               const path = p.paths[0];
-              toast.info(t("onboarding.scanning", { path }));
-              navigate(`/onboarding/scan?path=${encodeURIComponent(path)}`);
+              if (path.toLowerCase().endsWith(".csv")) {
+                // CSV 분기 — CSVImportDialog 열기
+                setCsvPath(path);
+              } else {
+                // 기존 .env / 폴더 스캔 분기 — 회귀 금지
+                toast.info(t("onboarding.scanning", { path }));
+                navigate(`/onboarding/scan?path=${encodeURIComponent(path)}`);
+              }
             }
           }
         });
@@ -68,19 +77,25 @@ export function DropZone() {
 
   if (platform !== "desktop") return null;
 
-  if (!isDragging) return null;
-
   return (
-    <div
-      role="dialog"
-      aria-label={t("onboarding.dropToScan")}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none animate-in fade-in"
-    >
-      <div className="rounded-2xl border-2 border-dashed border-primary bg-card p-12 text-center">
-        <FolderDown className="mx-auto h-16 w-16 text-primary" aria-hidden="true" />
-        <p className="mt-4 text-lg font-medium">{t("onboarding.dropToScan")}</p>
-        <p className="mt-2 text-sm text-muted-foreground">{t("onboarding.dropHint")}</p>
-      </div>
-    </div>
+    <>
+      {isDragging ? (
+        <div
+          role="dialog"
+          aria-label={t("onboarding.dropToScan")}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none animate-in fade-in"
+        >
+          <div className="rounded-2xl border-2 border-dashed border-primary bg-card p-12 text-center">
+            <FolderDown className="mx-auto h-16 w-16 text-primary" aria-hidden="true" />
+            <p className="mt-4 text-lg font-medium">{t("onboarding.dropToScan")}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{t("onboarding.dropHint")}</p>
+          </div>
+        </div>
+      ) : null}
+
+      {csvPath !== null ? (
+        <CSVImportDialog csvPath={csvPath} onDone={() => setCsvPath(null)} />
+      ) : null}
+    </>
   );
 }

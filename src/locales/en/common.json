@@ -418,6 +418,27 @@
       "action": "Preview rules"
     }
   },
+  "import": {
+    "csv": {
+      "title": "Import passwords from Google",
+      "summary": "{{format}} format — {{total}} rows ({{skipped}} skipped)",
+      "expiresIn": "Expires in {{minutes}}:{{seconds}}",
+      "alreadyExists": "Already in vault",
+      "selectAll": "Select all",
+      "unselectAll": "Unselect all",
+      "excludeDuplicates": "Exclude duplicates",
+      "importNSelected": "Import {{count}} selected",
+      "successHeader": "Imported {{count}} credentials",
+      "failureLine": "{{name}}: {{error}}",
+      "deleteOriginalCsv": "Delete original CSV file",
+      "deleteConfirmBody": "The CSV contains plaintext passwords. Permanently delete now? (Not sent to trash — deleted immediately)",
+      "errors": {
+        "vaultLocked": "Vault is locked. Unlock the vault and try again.",
+        "sessionExpired": "Session expired. Please drop the CSV file again.",
+        "invalidFormat": "CSV format not recognized. Make sure this is a Chrome or Edge password export."
+      }
+    }
+  },
   "projects": {
     "title": "Projects",
     "searchPlaceholder": "Search projects…",

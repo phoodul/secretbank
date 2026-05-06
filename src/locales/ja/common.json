@@ -411,6 +411,27 @@
       "action": "ルールをプレビュー"
     }
   },
+  "import": {
+    "csv": {
+      "title": "Google パスワードを取り込む",
+      "summary": "{{format}} 形式 — {{total}} 件 ({{skipped}} 件スキップ)",
+      "expiresIn": "{{minutes}}:{{seconds}} で期限切れ",
+      "alreadyExists": "vault に既存",
+      "selectAll": "すべて選択",
+      "unselectAll": "すべて解除",
+      "excludeDuplicates": "重複を除外",
+      "importNSelected": "選択した {{count}} 件をインポート",
+      "successHeader": "{{count}} 件をインポートしました",
+      "failureLine": "{{name}}: {{error}}",
+      "deleteOriginalCsv": "元の CSV ファイルを削除",
+      "deleteConfirmBody": "元の CSV ファイルにパスワードが平文で含まれています。今すぐ完全に削除しますか？（ゴミ箱ではなく即時削除）",
+      "errors": {
+        "vaultLocked": "vault がロックされています。ロックを解除してから再試行してください。",
+        "sessionExpired": "セッションが期限切れです。CSV ファイルを再度ドロップしてください。",
+        "invalidFormat": "CSV 形式を認識できません。Chrome または Edge のパスワードエクスポートファイルを確認してください。"
+      }
+    }
+  },
   "projects": {
     "title": "プロジェクト",
     "searchPlaceholder": "プロジェクトを検索…",

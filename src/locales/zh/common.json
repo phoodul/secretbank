@@ -411,6 +411,27 @@
       "action": "预览规则"
     }
   },
+  "import": {
+    "csv": {
+      "title": "导入 Google 密码",
+      "summary": "{{format}} 格式 — 共 {{total}} 条（已跳过 {{skipped}} 条）",
+      "expiresIn": "{{minutes}}:{{seconds}} 后过期",
+      "alreadyExists": "vault 中已存在",
+      "selectAll": "全选",
+      "unselectAll": "取消全选",
+      "excludeDuplicates": "排除重复",
+      "importNSelected": "导入已选 {{count}} 条",
+      "successHeader": "已导入 {{count}} 个凭据",
+      "failureLine": "{{name}}: {{error}}",
+      "deleteOriginalCsv": "删除原始 CSV 文件",
+      "deleteConfirmBody": "原始 CSV 文件包含明文密码，是否立即永久删除？（不移入回收站，直接删除）",
+      "errors": {
+        "vaultLocked": "vault 已锁定，请解锁后重试。",
+        "sessionExpired": "会话已过期，请重新拖入 CSV 文件。",
+        "invalidFormat": "无法识别 CSV 格式，请确认是否为 Chrome 或 Edge 的密码导出文件。"
+      }
+    }
+  },
   "projects": {
     "title": "项目",
     "searchPlaceholder": "搜索项目…",
