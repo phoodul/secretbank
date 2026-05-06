@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use api_vault_core::id::{IncidentId, IssuerId};
 use api_vault_core::models::incident::{Incident, IncidentSeverity, IncidentSource};
 use api_vault_core::models::issuer::Issuer;
-use api_vault_feeds::{GhsaAdvisory, NvdCve, RssEntry};
+use api_vault_feeds::{GhsaAdvisory, HibpBreach, NvdCve, RssEntry};
 use time::OffsetDateTime;
 
 // ---------------------------------------------------------------------------
@@ -113,6 +113,54 @@ pub fn normalize_ghsa(adv: &GhsaAdvisory, now: OffsetDateTime) -> Incident {
 }
 
 // ---------------------------------------------------------------------------
+// HIBP Breach → Incident
+// ---------------------------------------------------------------------------
+
+/// `HibpBreach` DTO 를 `Incident` 도메인 모델로 변환한다.
+///
+/// - `source_id` = `breach.name` (HIBP 카탈로그 고유키, e.g. `"Adobe"`)
+/// - `issuer_id` = None (도메인 매칭은 2-2A-3 에서 추가 예정)
+/// - `severity` 계층 매핑:
+///   - `is_malware` → Critical
+///   - `is_stealer_log == Some(true)` → Critical
+///   - `is_sensitive` → High
+///   - `is_spam_list` → Low
+///   - 그 외 → Medium
+/// - `published_at` = `breach.added_date` (HIBP catalog 추가 시점)
+/// - `url` = `disclosure_url` 우선; 없으면 HIBP 카탈로그 앵커 URL
+pub fn normalize_hibp_breach(breach: &HibpBreach, now: OffsetDateTime) -> Incident {
+    let severity = if breach.is_malware || breach.is_stealer_log == Some(true) {
+        IncidentSeverity::Critical
+    } else if breach.is_sensitive {
+        IncidentSeverity::High
+    } else if breach.is_spam_list {
+        IncidentSeverity::Low
+    } else {
+        IncidentSeverity::Medium
+    };
+
+    let url = breach.disclosure_url.clone().or_else(|| {
+        Some(format!(
+            "https://haveibeenpwned.com/PwnedWebsites#{}",
+            breach.name
+        ))
+    });
+
+    Incident {
+        id: IncidentId::new(),
+        source: IncidentSource::Hibp,
+        source_id: breach.name.clone(),
+        issuer_id: None,
+        severity,
+        title: breach.title.clone(),
+        body: Some(breach.description.clone()),
+        url,
+        detected_at: now,
+        published_at: Some(breach.added_date),
+    }
+}
+
+// ---------------------------------------------------------------------------
 // RSS → Incident
 // ---------------------------------------------------------------------------
 
@@ -155,6 +203,7 @@ mod tests {
     use super::*;
     use api_vault_core::id::IssuerId;
     use api_vault_core::models::issuer::Issuer;
+    use api_vault_feeds::HibpBreach;
     use time::OffsetDateTime;
 
     fn fixed_now() -> OffsetDateTime {
@@ -388,6 +437,116 @@ mod tests {
         assert_eq!(incident.title, "(no title)");
         // published_at 없으면 updated_at fallback
         assert_eq!(incident.published_at, Some(fixed_now()));
+    }
+
+    // -----------------------------------------------------------------------
+    // HIBP helpers + tests
+    // -----------------------------------------------------------------------
+
+    fn make_hibp_breach(
+        name: &str,
+        is_malware: bool,
+        is_sensitive: bool,
+        is_stealer_log: Option<bool>,
+        is_spam_list: bool,
+        disclosure_url: Option<&str>,
+    ) -> HibpBreach {
+        HibpBreach {
+            name: name.to_string(),
+            title: format!("{name} Breach"),
+            domain: format!("{}.com", name.to_lowercase()),
+            breach_date: "2023-01-01".to_string(),
+            added_date: fixed_now(),
+            modified_date: fixed_now(),
+            pwn_count: 100_000,
+            description: "Test breach description.".to_string(),
+            data_classes: vec!["Email addresses".to_string(), "Passwords".to_string()],
+            is_verified: true,
+            is_fabricated: false,
+            is_sensitive,
+            is_retired: false,
+            is_spam_list,
+            is_malware,
+            is_subscription_free: false,
+            is_stealer_log,
+            logo_path: None,
+            attribution: None,
+            disclosure_url: disclosure_url.map(|s| s.to_string()),
+        }
+    }
+
+    #[test]
+    fn test_normalize_hibp_breach_basic() {
+        let breach = make_hibp_breach("Adobe", false, false, Some(false), false, None);
+        let now = fixed_now();
+        let incident = normalize_hibp_breach(&breach, now);
+
+        assert_eq!(incident.source, IncidentSource::Hibp);
+        assert_eq!(incident.source_id, "Adobe");
+        assert_eq!(incident.title, "Adobe Breach");
+        assert_eq!(incident.severity, IncidentSeverity::Medium);
+        assert!(incident.issuer_id.is_none());
+        assert_eq!(incident.detected_at, now);
+        assert_eq!(incident.published_at, Some(breach.added_date));
+        assert_eq!(
+            incident.url.as_deref(),
+            Some("https://haveibeenpwned.com/PwnedWebsites#Adobe")
+        );
+    }
+
+    #[test]
+    fn test_normalize_hibp_breach_malware_critical() {
+        let breach = make_hibp_breach("MalwareTest", true, false, None, false, None);
+        let incident = normalize_hibp_breach(&breach, fixed_now());
+        assert_eq!(incident.severity, IncidentSeverity::Critical);
+    }
+
+    #[test]
+    fn test_normalize_hibp_breach_stealer_log_critical() {
+        let breach = make_hibp_breach("StealerTest", false, false, Some(true), false, None);
+        let incident = normalize_hibp_breach(&breach, fixed_now());
+        assert_eq!(incident.severity, IncidentSeverity::Critical);
+    }
+
+    #[test]
+    fn test_normalize_hibp_breach_sensitive_high() {
+        let breach = make_hibp_breach("SensitiveData", false, true, Some(false), false, None);
+        let incident = normalize_hibp_breach(&breach, fixed_now());
+        assert_eq!(incident.severity, IncidentSeverity::High);
+    }
+
+    #[test]
+    fn test_normalize_hibp_breach_spam_low() {
+        let breach = make_hibp_breach("SpamList", false, false, Some(false), true, None);
+        let incident = normalize_hibp_breach(&breach, fixed_now());
+        assert_eq!(incident.severity, IncidentSeverity::Low);
+    }
+
+    #[test]
+    fn test_normalize_hibp_breach_disclosure_url_preferred() {
+        let breach = make_hibp_breach(
+            "Vercel",
+            false,
+            false,
+            None,
+            false,
+            Some("https://disclosure.example/vercel"),
+        );
+        let incident = normalize_hibp_breach(&breach, fixed_now());
+        assert_eq!(
+            incident.url.as_deref(),
+            Some("https://disclosure.example/vercel")
+        );
+    }
+
+    #[test]
+    fn test_normalize_hibp_breach_default_url_fallback() {
+        let breach = make_hibp_breach("LinkedIn", false, false, None, false, None);
+        let incident = normalize_hibp_breach(&breach, fixed_now());
+        assert_eq!(
+            incident.url.as_deref(),
+            Some("https://haveibeenpwned.com/PwnedWebsites#LinkedIn")
+        );
     }
 
     // GHSA severity 매핑 추가 케이스

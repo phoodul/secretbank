@@ -10,7 +10,9 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use api_vault_feeds::{default_presets, match_incident, GhsaClient, NvdClient, RssClient};
+use api_vault_feeds::{
+    default_presets, match_incident, GhsaClient, HibpClient, NvdClient, RssClient,
+};
 use api_vault_storage::sqlite::repositories::credential::CredentialRepo;
 use api_vault_storage::sqlite::repositories::incident::IncidentRepo;
 use api_vault_storage::sqlite::repositories::issuer::IssuerRepo;
@@ -20,7 +22,7 @@ use tokio::task::JoinSet;
 use tokio_util::sync::CancellationToken;
 
 use crate::services::feed_normalize::{
-    build_issuer_index, normalize_ghsa, normalize_nvd, normalize_rss,
+    build_issuer_index, normalize_ghsa, normalize_hibp_breach, normalize_nvd, normalize_rss,
 };
 
 // ---------------------------------------------------------------------------
@@ -76,6 +78,9 @@ pub enum FeedSchedulerError {
 
     #[error("Ghsa feed error: {0}")]
     Ghsa(#[from] api_vault_feeds::GhsaError),
+
+    #[error("Hibp feed error: {0}")]
+    Hibp(#[from] api_vault_feeds::HibpError),
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +126,7 @@ impl Breaker {
 
 /// 폴링 주기 및 API 키 설정.
 ///
-/// `Default::default()` = NVD/GHSA 비활성, RSS 만 5분 간격.
+/// `Default::default()` = NVD/GHSA 비활성, RSS + HIBP Breaches 활성.
 /// `emitter` 는 폴러가 새 incident 를 저장한 후 이벤트를 방출하는 데 사용된다.
 #[derive(Clone)]
 pub struct FeedSchedulerConfig {
@@ -132,6 +137,11 @@ pub struct FeedSchedulerConfig {
     pub nvd_interval: Duration,
     pub ghsa_interval: Duration,
     pub rss_interval: Duration,
+    /// HIBP `/breaches` 엔드포인트 폴러 활성화 여부 (default `true`).
+    /// 키 없이도 동작하는 공개 엔드포인트.
+    pub hibp_breaches_enabled: bool,
+    /// HIBP breaches 폴링 주기 (default 24시간).
+    pub hibp_breaches_interval: Duration,
     /// 새 incident 가 저장될 때 방출할 이벤트 에미터. None 이면 이벤트 없음.
     pub emitter: Option<Arc<dyn IncidentEventEmitter>>,
 }
@@ -144,6 +154,8 @@ impl Default for FeedSchedulerConfig {
             nvd_interval: Duration::from_secs(2 * 60 * 60),
             ghsa_interval: Duration::from_secs(24 * 60 * 60),
             rss_interval: Duration::from_secs(5 * 60),
+            hibp_breaches_enabled: true,
+            hibp_breaches_interval: Duration::from_secs(24 * 60 * 60),
             emitter: None,
         }
     }
@@ -193,6 +205,12 @@ impl FeedSchedulerHandle {
             let ghsa_client = GhsaClient::new(token.clone());
             let since = OffsetDateTime::now_utc() - time::Duration::hours(24);
             total += poll_ghsa_once(&self.pool, &ghsa_client, since).await?;
+        }
+
+        // HIBP breaches 는 enabled 일 때 (키 불필요)
+        if self.config.hibp_breaches_enabled {
+            let hibp_client = build_hibp_client_for_breaches();
+            total += poll_hibp_breaches_once(&self.pool, &hibp_client).await?;
         }
 
         if total > 0 {
@@ -245,6 +263,16 @@ pub fn spawn_feed_scheduler(
             pool.clone(),
             token,
             config.ghsa_interval,
+            cancel.clone(),
+            emitter.clone(),
+        ));
+    }
+
+    // HIBP breaches 는 enabled 일 때 (키 불필요)
+    if config.hibp_breaches_enabled {
+        join_set.spawn(run_hibp_breaches_poller(
+            pool.clone(),
+            config.hibp_breaches_interval,
             cancel.clone(),
             emitter.clone(),
         ));
@@ -527,6 +555,98 @@ async fn poll_ghsa_once(
 }
 
 // ---------------------------------------------------------------------------
+// HIBP Breaches 폴러
+// ---------------------------------------------------------------------------
+
+/// `/breaches` 엔드포인트는 인증 키 없이도 동작한다.
+/// 빈 키를 전달해 HibpClient를 생성하는 모듈 전용 헬퍼.
+fn build_hibp_client_for_breaches() -> HibpClient {
+    HibpClient::new(String::new())
+}
+
+async fn run_hibp_breaches_poller(
+    pool: Arc<SqlitePool>,
+    interval: Duration,
+    cancel: CancellationToken,
+    emitter: Option<Arc<dyn IncidentEventEmitter>>,
+) {
+    let mut ticker = tokio::time::interval(interval);
+    ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+    let mut breaker = Breaker::new();
+    let hibp_client = build_hibp_client_for_breaches();
+
+    loop {
+        tokio::select! {
+            _ = cancel.cancelled() => break,
+            _ = ticker.tick() => {
+                let now_instant = tokio::time::Instant::now();
+                if breaker.is_open(now_instant) {
+                    tracing::debug!("hibp breaches poller breaker open, skipping tick");
+                    continue;
+                }
+                match poll_hibp_breaches_once(&pool, &hibp_client).await {
+                    Ok(count) => {
+                        tracing::info!(count, "hibp breaches poll complete");
+                        breaker.on_success();
+                        if count > 0 {
+                            if let Some(e) = emitter.as_ref() {
+                                e.emit_incidents_updated();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        tracing::warn!(error = %e, "hibp breaches poll failed");
+                        breaker.on_failure(now_instant);
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub(crate) async fn poll_hibp_breaches_once(
+    pool: &Arc<SqlitePool>,
+    hibp_client: &HibpClient,
+) -> Result<usize, FeedSchedulerError> {
+    let issuer_repo = IssuerRepo::new(pool);
+    let credential_repo = CredentialRepo::new(pool);
+    let incident_repo = IncidentRepo::new(pool);
+
+    let issuers = issuer_repo.list().await?;
+    let credentials = credential_repo.list_all().await?;
+
+    let breaches = hibp_client.list_breaches().await?;
+    let now = OffsetDateTime::now_utc();
+
+    let mut stored = 0usize;
+    for breach in &breaches {
+        let incident = normalize_hibp_breach(breach, now);
+        let canonical_id = match incident_repo.insert(&incident).await {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::warn!(?e, source_id = %incident.source_id, "hibp breach incident insert failed");
+                continue;
+            }
+        };
+        if canonical_id == incident.id {
+            stored += 1;
+        }
+
+        let matches = match_incident(&incident, &credentials, &issuers);
+        for m in matches {
+            if let Err(e) = incident_repo
+                .insert_match(canonical_id, m.credential_id, m.reason)
+                .await
+            {
+                tracing::debug!(?e, "hibp breach incident_match insert skipped");
+            }
+        }
+    }
+
+    Ok(stored)
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -610,7 +730,7 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Test: FeedSchedulerConfig::default() — NVD/GHSA 키 없음
+    // Test: FeedSchedulerConfig::default() — NVD/GHSA 키 없음, HIBP 활성
     // -----------------------------------------------------------------------
     #[test]
     fn test_feed_scheduler_config_default_has_no_keys() {
@@ -620,15 +740,20 @@ mod tests {
         assert_eq!(cfg.rss_interval, Duration::from_secs(5 * 60));
         assert_eq!(cfg.nvd_interval, Duration::from_secs(2 * 60 * 60));
         assert_eq!(cfg.ghsa_interval, Duration::from_secs(24 * 60 * 60));
+        assert!(cfg.hibp_breaches_enabled);
+        assert_eq!(
+            cfg.hibp_breaches_interval,
+            Duration::from_secs(24 * 60 * 60)
+        );
     }
 
     // -----------------------------------------------------------------------
-    // Test: spawn + immediate shutdown (RSS 만 활성, 실제 HTTP 없음)
+    // Test: spawn + immediate shutdown (RSS + HIBP 활성, 실제 HTTP 없음)
     // -----------------------------------------------------------------------
     #[tokio::test]
     async fn test_scheduler_spawn_and_shutdown_immediately() {
         // 실제 DB 없이 종료 경로만 검증한다.
-        // pool 생성 없이 테스트하기 위해 interval 을 매우 길게 설정해 tick 이 안 오도록 함.
+        // interval 을 매우 길게 설정해 tick 이 안 오도록 함.
         use api_vault_storage::sqlite::init_pool;
         use tempfile::tempdir;
 
@@ -643,11 +768,174 @@ mod tests {
             rss_interval: Duration::from_secs(9999),
             nvd_interval: Duration::from_secs(9999),
             ghsa_interval: Duration::from_secs(9999),
+            hibp_breaches_enabled: false, // 실제 네트워크 차단
+            hibp_breaches_interval: Duration::from_secs(9999),
             emitter: Some(Arc::new(NoopEmitter)),
         };
 
         let handle = spawn_feed_scheduler(pool_arc, config);
         // 즉시 shutdown → deadlock 없이 완료되어야 함
         handle.shutdown().await;
+    }
+
+    // -----------------------------------------------------------------------
+    // Test: poll_hibp_breaches_once — 2건 삽입
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_poll_hibp_breaches_once_persists_incidents() {
+        use api_vault_feeds::HibpClient;
+        use api_vault_storage::sqlite::init_pool;
+        use tempfile::tempdir;
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let mock_server = MockServer::start().await;
+
+        let breach_json = serde_json::json!([
+            {
+                "Name": "Adobe",
+                "Title": "Adobe",
+                "Domain": "adobe.com",
+                "BreachDate": "2013-10-04",
+                "AddedDate": "2013-12-04T00:00:00Z",
+                "ModifiedDate": "2022-05-15T23:52:49Z",
+                "PwnCount": 152445165u64,
+                "Description": "In October 2013, Adobe suffered a massive data breach.",
+                "DataClasses": ["Email addresses", "Password hints", "Passwords"],
+                "IsVerified": true,
+                "IsFabricated": false,
+                "IsSensitive": false,
+                "IsRetired": false,
+                "IsSpamList": false,
+                "IsMalware": false,
+                "IsSubscriptionFree": false,
+                "IsStealerLog": false,
+                "LogoPath": "https://logos.haveibeenpwned.com/Adobe.png",
+                "Attribution": null,
+                "DisclosureUrl": null
+            },
+            {
+                "Name": "LinkedIn",
+                "Title": "LinkedIn",
+                "Domain": "linkedin.com",
+                "BreachDate": "2012-05-05",
+                "AddedDate": "2016-05-22T21:35:40Z",
+                "ModifiedDate": "2023-11-22T07:04:48Z",
+                "PwnCount": 164611595u64,
+                "Description": "In May 2016, LinkedIn had 164 million email addresses and passwords exposed.",
+                "DataClasses": ["Email addresses", "Passwords"],
+                "IsVerified": true,
+                "IsFabricated": false,
+                "IsSensitive": false,
+                "IsRetired": false,
+                "IsSpamList": false,
+                "IsMalware": false,
+                "IsSubscriptionFree": false,
+                "IsStealerLog": false,
+                "LogoPath": "https://logos.haveibeenpwned.com/LinkedIn.png",
+                "Attribution": null,
+                "DisclosureUrl": null
+            }
+        ]);
+
+        Mock::given(method("GET"))
+            .and(path("/breaches"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(breach_json))
+            .mount(&mock_server)
+            .await;
+
+        let dir = tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let pool = init_pool(&db_path).await.unwrap();
+        let pool_arc = Arc::new(pool);
+
+        let hibp_client = HibpClient::with_base_url(mock_server.uri(), "");
+        let count = poll_hibp_breaches_once(&pool_arc, &hibp_client)
+            .await
+            .unwrap();
+
+        assert_eq!(count, 2, "2건이 새로 저장되어야 함");
+
+        // DB 에 실제로 삽입됐는지 확인
+        use api_vault_core::models::incident::{IncidentFilter, IncidentSource};
+        use api_vault_storage::sqlite::repositories::incident::IncidentRepo;
+        let incident_repo = IncidentRepo::new(&pool_arc);
+        let stored = incident_repo
+            .list_with_matches(&IncidentFilter {
+                source: Some(IncidentSource::Hibp),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(stored.len(), 2);
+
+        let source_ids: Vec<&str> = stored
+            .iter()
+            .map(|e| e.incident.source_id.as_str())
+            .collect();
+        assert!(source_ids.contains(&"Adobe"));
+        assert!(source_ids.contains(&"LinkedIn"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Test: poll_hibp_breaches_once — 멱등성 (두 번 폴링 → 두 번째는 0)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn test_poll_hibp_breaches_once_idempotent() {
+        use api_vault_feeds::HibpClient;
+        use api_vault_storage::sqlite::init_pool;
+        use tempfile::tempdir;
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let mock_server = MockServer::start().await;
+
+        let breach_json = serde_json::json!([{
+            "Name": "Vercel",
+            "Title": "Vercel",
+            "Domain": "vercel.com",
+            "BreachDate": "2023-01-01",
+            "AddedDate": "2023-06-15T20:40:48Z",
+            "ModifiedDate": "2024-03-04T02:06:27Z",
+            "PwnCount": 50000u64,
+            "Description": "Test breach.",
+            "DataClasses": ["Email addresses"],
+            "IsVerified": true,
+            "IsFabricated": false,
+            "IsSensitive": false,
+            "IsRetired": false,
+            "IsSpamList": false,
+            "IsMalware": false,
+            "IsSubscriptionFree": false,
+            "IsStealerLog": false,
+            "LogoPath": null,
+            "Attribution": null,
+            "DisclosureUrl": null
+        }]);
+
+        // 동일 응답을 2회 반환
+        Mock::given(method("GET"))
+            .and(path("/breaches"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(breach_json))
+            .expect(2)
+            .mount(&mock_server)
+            .await;
+
+        let dir = tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let pool = init_pool(&db_path).await.unwrap();
+        let pool_arc = Arc::new(pool);
+
+        let hibp_client = HibpClient::with_base_url(mock_server.uri(), "");
+
+        let first = poll_hibp_breaches_once(&pool_arc, &hibp_client)
+            .await
+            .unwrap();
+        assert_eq!(first, 1, "첫 번째 폴링: 1건 저장");
+
+        let second = poll_hibp_breaches_once(&pool_arc, &hibp_client)
+            .await
+            .unwrap();
+        assert_eq!(second, 0, "두 번째 폴링: UNIQUE 제약으로 0건 (멱등)");
     }
 }

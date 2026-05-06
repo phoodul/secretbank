@@ -375,11 +375,10 @@ mod tests {
             "\"secondary\" 는 RevealSlot::Secondary 로 역직렬화돼야 한다"
         );
 
-        // Option<RevealSlot>이 None이면 unwrap_or_default() → Primary
-        let none_slot: Option<RevealSlot> = None;
+        // RevealSlot::default() 는 Primary 여야 한다
         assert!(
-            matches!(none_slot.unwrap_or_default(), RevealSlot::Primary),
-            "None.unwrap_or_default() 는 Primary 여야 한다"
+            matches!(RevealSlot::default(), RevealSlot::Primary),
+            "RevealSlot::default() 는 Primary 여야 한다"
         );
     }
 }
