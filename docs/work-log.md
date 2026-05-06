@@ -1,5 +1,42 @@
 # Work Log
 
+## 2026-05-07 (Night mode 후반) — Phase 2-4-a + 2-4-d + tauri-plugin-fs fix (5 commits)
+
+이번 세션 후반에서 처리한 항목들 — Phase 2-3-a 풀체인 직후 자연 진입으로 Phase 2-4 마무리 + 2-3-a-5 회귀 fix.
+
+### Phase 2-4-a — Cmd+K Quick Add (`dfb9a57` + `0355a5d`)
+
+- `actions.ts` 에 `action.quick-add` (Zap 아이콘) 추가, 기존 `action.create-credential` 유지
+- `QuickAddDialog.tsx` 신규 (~455줄, 5 필드 경량 폼: URL/Username/Password/Name/Kind)
+- `InventoryPage` 가 `?action=quick-add` 라우트 감지 시 마운트
+- `@tauri-apps/plugin-clipboard-manager::readText` mount-once prefill (URL 패턴만, watch 폴링 X)
+- Phase 2-1 의 `matchIssuerByUrl` 재사용 → "{issuer} 자동 감지됨" 표시
+- "전체 옵션 보기" → CreateCredentialDialog (full form) 로 prefill 상태 전환
+- i18n 22키 × en/ko/ja/zh 4 로케일
+- Vitest 7 PASS (전체 535 → 542)
+
+### tauri-plugin-fs Rust 등록 fix (`d4f99a5`)
+
+- 발견: cargo build -p api-vault 가 빌드 스크립트에서 `Permission fs:allow-remove not found` 에러
+- 원인: Phase 2-3-a-5 (CSVImportDialog 의 원본 삭제 버튼) 에서 `fs:allow-remove` capability 만 추가하고 Rust 측 plugin 등록 누락. implementator 가 frontend 변경 시 cargo build 검증을 안 돌렸음
+- fix: `src-tauri/Cargo.toml` + `crates/api-vault-app/Cargo.toml` features+dep + `lib.rs` `.plugin(tauri_plugin_fs::init())` 3곳 보정
+- **세션 학습**: Tauri capability 추가 시 frontend npm + Rust crate 양쪽 모두 등록 필수. implementator 사양에 명시 필요
+
+### 누적 검증 (전체 세션 종료 시점)
+
+- vitest **542** (528 → 542, +14, 0 failed)
+- typecheck / lint / format:check ✅
+- cargo test -p api-vault-cli 14 PASS / cargo build -p api-vault ✅ (fix 후) / clippy 0 warning
+- 17 commits push (`611625a..d4f99a5`)
+
+### 다음 세션 큐
+
+- **Dogfooding** (사용자 직접 작업, 가장 자연스러운 다음 단계) — 본인 Chrome 비번 export → CSV import → Quick Add → CLI quick-add 풀체인 실사용 검증. UX 이슈 발견 시 즉시 fix
+- Phase 2-3-b (Bitwarden JSON import) — 후순위
+- Phase 2-2B (HIBP Password check) — M24 v2 로 미룸
+
+---
+
 ## 2026-05-07 — M24 Phase 2-4-d ✅ `apivault add` CLI 서브커맨드
 
 이전 세션 끝점 (Phase 2-4-a `dfb9a57`) 에서 진입.
