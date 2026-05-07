@@ -2457,7 +2457,7 @@ api-vault 의 두 갈래 통합:
 | Phase 2-2A-4 | IncidentCard reason 아이콘 + HIBP description + domain 라인 + i18n 15개 로케일 | 2026-05-06 | `b1953c3` |
 | Phase 2-2C-a | CISA + NCSC UK RSS 프리셋 2개 추가 (12개 total) + sources.rs 5 테스트 + rss.rs 기존 테스트 12 기준 갱신 | 2026-05-06 | `2b42bcb` |
 | Phase 2-2C-b | KISA 보호나라 5 RSS 프리셋 추가 (17개 total) + sources.rs 5 테스트 + rss.rs 기존 테스트 17 기준 갱신 | 2026-05-06 | `6eea2a1` |
-
+| Phase 3-A-1 | CreditCard kind + migration 0012 + Repo (secrecy/zeroize 검증, B.1-3/B.5-1/B.5-3/B.5-4 GATE 2-1 구현) | 2026-05-07 | `af2e802` |
 ---
 
 _문서 끝._
