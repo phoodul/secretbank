@@ -15,6 +15,9 @@ pub use models::credential::{
     Credential, CredentialFilter, CredentialInput, CredentialKind, CredentialPatch,
     CredentialStatus, CredentialSummary, Env,
 };
+pub use models::credit_card::{
+    CardBrand, CreditCardInput, CreditCardMeta, CreditCardSecret, CreditCardSummary,
+};
 pub use models::deployment::{Deployment, DeploymentInput, DeploymentPatch, DeploymentPlatform};
 pub use models::device::{Device, DeviceInput, DevicePlatform, DeviceStatus};
 pub use models::incident::{

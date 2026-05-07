@@ -1,5 +1,6 @@
 pub mod audit_log;
 pub mod credential;
+pub mod credit_card;
 pub mod deployment;
 pub mod device;
 pub mod incident;

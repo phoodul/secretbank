@@ -22,18 +22,22 @@ pub enum CredentialStatus {
     Compromised,
 }
 
-/// Credential kind — API key (default, M0) vs. general password (M24).
+/// Credential kind — API key (default, M0) vs. general password (M24) vs. credit card (M24 Phase 3-A).
 ///
 /// API keys carry only `name` + opaque `value`. Passwords additionally use
 /// `url` (for autofill matching) and `username` (login identifier). Migration
 /// 0006 adds `kind` column with default `'api_key'` so existing rows are
 /// classified correctly without backfill.
+/// Credit cards use `credit_card_meta` table (migration 0012) for plaintext
+/// metadata and store card_number/CVC in the age vault (migration 0012).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum CredentialKind {
     #[default]
     ApiKey,
     Password,
+    /// Payment card — metadata in `credit_card_meta`, secret in age vault.
+    CreditCard,
 }
 
 /// Full credential record as stored in the database.

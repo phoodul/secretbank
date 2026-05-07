@@ -3,7 +3,7 @@
 /// applies all migrations automatically, and tears down after each test.
 ///
 /// Verify that all expected tables are created by the migration.
-/// (M0 11 tables + M20 supply chain 3 tables + 0011 security 2 tables = 16 total.)
+/// (M0 11 tables + M20 supply chain 3 tables + 0011 security 2 tables + 0012 credit card 1 table = 17 total.)
 #[sqlx::test(migrations = "./migrations")]
 async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     let tables: Vec<(String,)> = sqlx::query_as(
@@ -22,6 +22,8 @@ async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     let expected = [
         "audit_log",
         "credential",
+        // 0012 — Credit Card meta (plaintext brand/expiry/last_4)
+        "credit_card_meta",
         "deployment",
         "device",
         "incident",
@@ -56,7 +58,8 @@ async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     Ok(())
 }
 
-/// Verify that all 8 required indexes are present after migration.
+/// Verify that all 19 required indexes are present after migration.
+/// (M0 core 5 + 0006 kind/url 2 + M20 supply 5 + 0011 security 2 + 0012 credit_card 1 = total verified 19)
 #[sqlx::test(migrations = "./migrations")]
 async fn indexes_created(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     let indexes: Vec<(String,)> = sqlx::query_as(
@@ -73,10 +76,21 @@ async fn indexes_created(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
         "idx_audit_seq",
         "idx_credential_expires",
         "idx_credential_issuer",
+        // 0006 — kind / url 인덱스
+        "idx_credential_kind",
         "idx_credential_status",
+        "idx_credential_url",
+        // 0012 — credit_card_meta brand 필터
+        "idx_credit_card_meta_brand",
         "idx_incident_issuer_detected",
         "idx_incident_match_unique",
         "idx_match_credential",
+        // M20 — supply chain 인덱스
+        "idx_package_advisory_pkg",
+        "idx_package_advisory_severity_category",
+        "idx_package_ecosystem_name",
+        "idx_package_usage_package",
+        "idx_package_usage_project",
         // 0011 — security_alerts 인덱스
         "idx_security_alerts_credential_id",
         "idx_security_alerts_kind",
@@ -90,6 +104,12 @@ async fn indexes_created(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
             "missing index: {idx}; found: {idx_names:?}"
         );
     }
+
+    assert_eq!(
+        idx_names.len(),
+        expected_idx.len(),
+        "unexpected extra indexes: {idx_names:?}"
+    );
 
     Ok(())
 }

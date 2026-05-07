@@ -1071,13 +1071,14 @@ async fn cmd_add(
     let kind = match kind_str {
         Some("api_key") => CredentialKind::ApiKey,
         Some("password") => CredentialKind::Password,
+        Some("credit_card") => CredentialKind::CreditCard,
         None => {
             // issuer 타입 힌트 없음 — 기본 Password
             CredentialKind::Password
         }
         Some(other) => {
             return Err(anyhow!(
-                "unknown kind {other:?} — expected api_key or password"
+                "unknown kind {other:?} — expected api_key, password, or credit_card"
             ))
         }
     };
@@ -1175,7 +1176,11 @@ async fn cmd_add(
                 "id": cred_id.to_string(),
                 "name": display_name,
                 "issuer_id": issuer_id.to_string(),
-                "kind": if matches!(kind, CredentialKind::ApiKey) { "api_key" } else { "password" },
+                "kind": match kind {
+                    CredentialKind::ApiKey => "api_key",
+                    CredentialKind::Password => "password",
+                    CredentialKind::CreditCard => "credit_card",
+                },
                 "env": match env {
                     Env::Dev => "dev",
                     Env::Staging => "staging",

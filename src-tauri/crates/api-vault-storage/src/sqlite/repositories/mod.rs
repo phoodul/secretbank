@@ -1,5 +1,6 @@
 pub mod audit;
 pub mod credential;
+pub mod credit_card;
 pub mod deployment;
 pub mod device;
 pub mod incident;
@@ -10,4 +11,5 @@ pub mod settings;
 pub mod supply;
 pub mod usage;
 
+pub use credit_card::CreditCardMetaRepo;
 pub use security_alert::{SecurityAlertRecord, SecurityAlertRepo, TwoFaDirectoryCacheRepo};

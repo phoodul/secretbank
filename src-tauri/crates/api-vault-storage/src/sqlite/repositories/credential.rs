@@ -304,6 +304,7 @@ pub(crate) fn kind_to_str(kind: CredentialKind) -> &'static str {
     match kind {
         CredentialKind::ApiKey => "api_key",
         CredentialKind::Password => "password",
+        CredentialKind::CreditCard => "credit_card",
     }
 }
 
@@ -311,6 +312,7 @@ pub(crate) fn str_to_kind(s: &str) -> Result<CredentialKind, StorageError> {
     match s {
         "api_key" => Ok(CredentialKind::ApiKey),
         "password" => Ok(CredentialKind::Password),
+        "credit_card" => Ok(CredentialKind::CreditCard),
         other => Err(StorageError::Parse(format!("invalid kind: {other}"))),
     }
 }
