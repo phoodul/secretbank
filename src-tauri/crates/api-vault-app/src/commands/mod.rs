@@ -14,6 +14,7 @@ pub mod pairing;
 pub mod projects;
 pub mod railguard;
 pub mod scanner;
+pub mod security_check;
 pub mod settings;
 pub mod supply;
 pub mod sync;

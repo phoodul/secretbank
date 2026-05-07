@@ -49,6 +49,9 @@ use commands::projects::{
 };
 use commands::railguard::{railguard_apply, railguard_preview};
 use commands::scanner::env_scan_folder;
+use commands::security_check::{
+    dismiss_security_alert, list_security_alerts, run_security_check, undismiss_security_alert,
+};
 use commands::settings::{settings_get, settings_set};
 use commands::supply::supply_scan_project;
 use commands::sync::{
@@ -244,6 +247,10 @@ pub fn run(context: tauri::Context) {
             sync_pair_joiner_apply,
             sync_pair_cancel,
             supply_scan_project,
+            run_security_check,
+            list_security_alerts,
+            dismiss_security_alert,
+            undismiss_security_alert,
         ]);
     }
 

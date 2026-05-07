@@ -86,3 +86,4 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"
 tempfile = "3"
 secrecy = { workspace = true }
 wiremock = "0.6"
+ulid = { workspace = true }
