@@ -5,6 +5,69 @@
 
 ---
 
+## [2026-05-07] 보안 절대 우선 + "1인 + LLM 가능성 검증" 단계 정의
+
+### 사용자 결정 (직접 인용)
+
+> "물론 영원히 혼자서 하는 건 말이 되지 않아. 본격적으로 사업성이 생긴다면 직원을 채용하고 확대해야지. 다만 그 가능성을 확인해보는 거야. 정말 보안사고가 나면 최악이라고 할 수 있지. 보안사고가 나지 않도록 가장 안전하게 만들어야 하는 게 맞아."
+
+### A. 현 단계 = 가능성 검증 (Feasibility validation)
+
+- 영원히 1인 ❌. 사업성 생기면 채용 + 확대.
+- 채용 우선순위 (사업성 검증 후): (1) 보안 엔지니어 → (2) iOS/Android → (3) 디자이너 → (4) DevOps/on-call → (5) 마케팅.
+
+### B. 보안 절대 우선 — Security-First Spec (최상위 룰)
+
+다른 모든 결정 (속도/비용/기능/일정/UX) 과 충돌하면 보안 우선.
+
+#### B.1 매 implementator 호출 시 적용 (F.2 Spec 와 동급)
+
+1. 암호학 직접 구현 ❌ — `age` / `argon2` / `chacha20-poly1305` / `ed25519-dalek` / `secrecy` / `zeroize` 검증된 라이브러리만.
+2. 평문 메모리 시간 최소화 — `SecretBox` 또는 `Zeroizing` 즉시 래핑, drop 시 zeroize.
+3. 평문 IPC 미통과 — Tauri command 응답에 `valueHint` (마지막 4자) 같은 마스킹 메타만.
+4. Input 신뢰 0 — 파서 fuzz-safe, malformed input 으로 panic 안 됨.
+5. 공격 표면 최소화 — Tauri capability deny-by-default + 필요한 권한만.
+6. 모든 secret 작업 audit log (M6 Audit chain).
+7. dependency 보안 검사 자동 (Dependabot / cargo audit / pnpm audit).
+8. secret scanning 자기 적용 (GitHub Secret Protection + pre-commit hook).
+9. error message 누설 방지 (path / KDF salt / 사용자 식별자 ❌).
+10. timing-safe 비교 (`subtle::ConstantTimeEq`, `==` ❌).
+
+#### B.2 출시 전 의무 보안 검증
+
+| 항목                                     | 비용                                | 시기                   |
+| :--------------------------------------- | :---------------------------------- | :--------------------- |
+| 외부 보안 감사 (pentest + crypto review) | $5~10k                              | 출시 전 1회 + 매년     |
+| Bug bounty (HackerOne)                   | critical $500 / high $200 / med $50 | 출시 직후              |
+| SOC 2 Type 1 (Drata/Vanta 자동화)        | $5~10k/년                           | 출시 + 6개월           |
+| Cryptography review (PhD-level 외부)     | $2~5k                               | vault format 변경 시   |
+| Cargo audit / pnpm audit CI gate         | $0                                  | 영구                   |
+| Threat model 문서 (STRIDE)               | 본인 시간                           | Phase 3-A 진입 전 권고 |
+
+#### B.3 incident response plan (출시 전 작성 의무)
+
+문서 위치: `docs/SECURITY_INCIDENT_RESPONSE.md` — 0~1h detection / 1~4h 사용자 알림 / 4~24h 임시 조치 / 24~72h RCA + fix / 72h+ post-mortem 공개 + 영향 받은 사용자 무료 회복.
+
+#### B.4 LLM 한계 인정
+
+Claude Opus 4.7 도 cryptography 미세 실수 가끔 함. 매 implementator 호출 후 보안 critical 코드 (vault.rs / kdf.rs / connector auth / IPC boundary) 본인 직접 review + 외부 보안 감사 출시 전 1회 필수. **LLM 만 믿고 출시 ❌**.
+
+### C. 이전 비전 결정과 정합
+
+- F.2 Spec (디자인/UX) + Security Spec (B.1) **둘 다 동시 적용**, 한 쪽 희생 ❌
+- 충돌 시 보안 우선 (예: 신용카드 3D flip 이 평문 메모리 점유 시간 늘림 → 점유 시간 최소화 우선, 시각 효과는 그 안에서)
+
+### D. 다음 세션 (Phase 3-A) 진입 시 적용
+
+1. implementator 사양에 **F.2 Spec + Security Spec 둘 다 명시**
+2. 신용카드 = 카드번호 + CVC = sensitive secret. 둘 다 SecretBox + drop zeroize
+3. CVC reveal 30초 자동 클리어
+4. 카드번호 마스킹 (`•••• •••• •••• 1234`) frontend 에서 valueHint 마지막 4자만
+5. 별도 SQLite 테이블 (옵션 Y) → vault encryption 동일 (age) → vault unlock 시에만 평문 디크립트
+6. **Threat model 문서 1회 작성** (Phase 3-A 진입 전, 30분)
+
+---
+
 ## [2026-05-07] 비전 명확화 — "시장 출시 가능 수준" 까지 격차 좁히기 (1P / Bitwarden 경쟁)
 
 ### 사용자 결정 (2026-05-07, 직접 인용)
