@@ -20,7 +20,9 @@ urlencoding = { workspace = true }
 url = { workspace = true }
 secrecy = { workspace = true }
 sha1 = { workspace = true }
+sha2 = { workspace = true }
 subtle = { workspace = true }
+zxcvbn = "3.1"
 
 [dev-dependencies]
 wiremock = "0.6"
