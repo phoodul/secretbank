@@ -11,15 +11,42 @@
 
 > "Phase 2-2B + 3-A 풀체인 구현 끝났으므로, 다음 세션은 Phase 3-B / 4 / M14 진입 전에 dogfooding 1~3 일 먼저."
 
-### A. Dogfooding 검증 시나리오 (다음 세션 시작점)
+### 사용자 시정 (즉시 추가)
 
-1. **`pnpm tauri dev`** 로 앱 실행 — Phase 2-2B + 3-A 모두 활성
-2. **Phase 2-3-a CSV import** — Chrome 에서 비번 export → drag-drop import → 결과 검증
-3. **Phase 2-4-a Cmd+K Quick Add** — 클립보드 prefill → URL auto-detect → 저장
-4. **Phase 2-2B Watchtower** — Settings 에서 HIBP opt-in 활성화 → [Run Check] → 5 카테고리 결과 (Compromised / Weak / Reused / 2FA / Unsecured) 검증 + dismiss/undismiss 동작
-5. **Phase 3-A 신용카드** — Cmd+K 또는 dialog 에서 "Credit Card" kind 추가 → BIN 자동 감지 → 미리보기 그레이디언트 → 저장 → BentoCard 그리드 표시 → Detail 진입 → reveal 카드번호 / CVC → 30초 자동 클리어 검증 → 마스킹 상태 flip 금지 검증
-6. **i18n 4 로케일** — Settings 에서 ko/zh/ja 전환 → 모든 신규 UI 정상 번역 확인
-7. **회귀 검증** — Phase 1.5 hover mini-graph / Phase 1.5-D issuer pair labels / 기존 BentoCard / IncidentsPage 모두 정상
+> "Dogfooding 은 `pnpm tauri dev` 가 아니라 **다른 사람처럼 URL 에서 다운로드 받아 시행** 해야 한다."
+
+**근거**: `pnpm tauri dev` = 개발자 모드 (DevTools / hot reload / source map / 개발 의존성 / OS 보안 경고 우회) — 실제 사용자 경험과 다름. 진짜 dogfooding 은 production build → installer signing → GitHub Releases → 다운로드 → 설치 → 실행 흐름 자체를 검증해야 한다.
+
+### A. Dogfooding 진짜 절차 (정정)
+
+#### Pre-step: pre11 release 생성
+
+기존 인프라 활용 — `.github/workflows/release.yml` + `docs/RELEASE_GUIDE.md` 이미 완비. 이전 v0.1.0-pre1~pre10 10회 release 이력.
+
+```powershell
+# 1. 버전 bump
+git tag v0.1.0-pre11
+git push origin v0.1.0-pre11
+
+# 2. GitHub Actions release.yml 자동 트리거 → 다중 OS installer 빌드 (draft)
+# 3. https://github.com/phoodul/api-vault/releases/v0.1.0-pre11 에서 다운로드
+```
+
+#### Dogfooding 시나리오 (다른 사용자 흐름)
+
+1. **GitHub Releases URL 에서 본인 OS installer 다운로드** — Windows `.msi/.exe` / macOS `.dmg` / Linux `.deb` 또는 `.AppImage`
+2. **"unidentified developer" / SmartScreen / Gatekeeper 경고 확인** — 실제 사용자가 만나는 마찰. signing 적용 여부 검증
+3. **설치 → 실행** — DevTools ❌ / source map ❌ / hot reload ❌ / 개발 의존성 ❌
+4. **첫 실행 onboarding** — vault 생성 / Charter 발급 (PDF 출력) / passphrase 설정
+5. **실제 사용 시나리오**:
+   - Phase 2-3-a CSV import (Chrome 비번 export → drag-drop)
+   - Phase 2-4-a Cmd+K Quick Add (클립보드 prefill + URL auto-detect)
+   - Phase 2-2B Watchtower (Settings HIBP opt-in 활성화 → [Run Check] → 5 카테고리 결과)
+   - Phase 3-A 신용카드 (Credit Card kind → BIN 자동 감지 → 미리보기 그레이디언트 → 저장 → BentoCard 그리드 → Detail reveal 카드번호/CVC → **30초 자동 클리어 검증** → **마스킹 상태 flip 금지 검증**)
+6. **i18n 4 로케일 전환** (en/ko/zh/ja) — 신규 UI 정상 번역 확인
+7. **자동 업데이트 검증** (M13 updater) — 다음 release 시 in-app update 안내 표시 + minisign 서명 검증
+8. **백그라운드 동작** — 24h scheduler / 시스템 트레이 / 자동 잠금 (M9 cooldown)
+9. **회귀** — Phase 1.5 hover mini-graph / 1.5-D issuer pair labels / 기존 BentoCard / IncidentsPage
 
 ### B. UX 이슈 발견 시 우선순위
 
