@@ -1,0 +1,26 @@
+{
+  "name": "@api-vault/download-proxy",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.71",
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0",
+    "wrangler": "^4.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "wrangler": "^4.59.1",
+      "vite": "^6.4.2",
+      "esbuild": "^0.25.0"
+    }
+  }
+}

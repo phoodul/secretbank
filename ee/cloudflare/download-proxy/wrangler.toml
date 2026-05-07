@@ -1,0 +1,19 @@
+name = "download-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-04-25"
+account_id = "6f04212fcad5f073ed4e36af9b723eea"  # docs/runbooks/relay-deployment.md 참조
+
+# Workers Free 플랜으로 운영 (100k req/day)
+# KV namespace 없음 — Pages edge 캐시가 /api/latest 캐싱 담당
+# D1 없음 — 상태 없는 proxy
+
+[[routes]]
+pattern = "api-vault.app/download/*"
+zone_name = "api-vault.app"
+
+[[routes]]
+pattern = "api-vault.app/api/*"
+zone_name = "api-vault.app"
+
+# secrets (wrangler secret put 으로 주입) — production
+# GITHUB_PAT (wrangler secret put — 100+ DAU 또는 429 발생 시)
