@@ -292,6 +292,12 @@
 | :--- | :-------- |
 | **Phase 2-2B-2** `security_check.rs` 신규 (~340 라인) — `SecurityAlert` 5 variant (Compromised/Weak/Reused/MissingTwoFactor/UnsecuredWebsite) + `is_weak_password()` (zxcvbn score ≤ 2 또는 길이 < 8, Bitwarden PR #11252 기준) + `detect_reused_passwords()` (SHA-256 fingerprint hashmap → ReuseGroup) + `check_unsecured_url()` (http:// 검사) + `check_missing_2fa()` (서브도메인 safe 매칭 + `has_secondary_otp_slot` fallback). `twofa_directory.rs` 신규 (~270 라인) — `TwoFaDirectoryClient` (`api.2fa.directory/v4/totp.json`) + 24h TTL in-memory 캐시 + methods 배열에 "totp" 필터링 + `serde_json::Value` 관대 parser (B.1-4). 위험 R1 (HIGH) 검증: zxcvbn 3.1.1 `Score` 는 `PartialOrd + Ord` derive → `u8::from(score)` 비교. 위험 R4 (MEDIUM) 검증: `Credential.totp_uri` 부재 → `secondary_value_ref` + label fallback 로 호출 측 위임. expose_secret 단일 블록 (B.1-2) + SHA-256 fingerprint map drop on return + `SecurityAlert` 평문 미포함 (B.1-3). 신규 의존성 `zxcvbn = "3.1"` (workspace) + `sha2` workspace 재사용. 신규 26 단위 테스트 (W1~W5 / R1~R3 / U1~U2 / TFA1~TFA7 + parse 단위 + wiremock — 합 105 PASS). clippy 0 warning / fmt 통과. | `3714c34` |
 
+### M24 Phase 2-2B-3 (2026-05-07, SQLite security_alerts 마이그레이션 + Repo + scheduler skeleton)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **Phase 2-2B-3** 마이그레이션 0011 신규 — `security_alerts` (id/credential_id/alert_kind/alert_meta JSON/dismissed_at/checked_at + ON DELETE CASCADE) + 2 인덱스 (credential_id/alert_kind) + `twofa_directory_cache` (24h TTL). `SecurityAlertRepo` (~641줄, 9 메서드 — insert / list_active_by_credential / list_active_by_kind / list_active_all / dismiss / undismiss / clear_for_credential / clear_kind_for_credential / `replace_alerts_for_credential` 트랜잭션 dismissed=NULL 만 삭제 + 신규 insert + dismissed_at NOT NULL 보존). `TwoFaDirectoryCacheRepo` (replace_all + list_all_within_ttl). `feed_scheduler.spawn_security_check_poller` skeleton — 24h on_tick 주입형 + `cancellation_token` + `tokio::select!`. GATE 1-6: 자동 실행 audit ❌ tracing 만. GATE 1-7: alert_meta JSON 평문 메타 (count/score/domain). `tokio::time::interval` 0 duration 패닉 보정 (0 → 1ms). 부수 — `commands/import.rs` clippy `single_match` 경고 2건 fix (`-D warnings` gate). 신규 12 단위 테스트 (RA1~RA8 / C1~C2 / S1~S2) PASS. clippy 0 warning / fmt 통과. | `13758ca` |
+
 ---
 
 ## M0 — Foundation
