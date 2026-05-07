@@ -5,6 +5,43 @@
 
 ---
 
+## [2026-05-07] 다음 세션 = Dogfooding (Phase 2-2B + 3-A 풀체인 검증)
+
+### 사용자 결정 (resume 세션 종료 직전)
+
+> "Phase 2-2B + 3-A 풀체인 구현 끝났으므로, 다음 세션은 Phase 3-B / 4 / M14 진입 전에 dogfooding 1~3 일 먼저."
+
+### A. Dogfooding 검증 시나리오 (다음 세션 시작점)
+
+1. **`pnpm tauri dev`** 로 앱 실행 — Phase 2-2B + 3-A 모두 활성
+2. **Phase 2-3-a CSV import** — Chrome 에서 비번 export → drag-drop import → 결과 검증
+3. **Phase 2-4-a Cmd+K Quick Add** — 클립보드 prefill → URL auto-detect → 저장
+4. **Phase 2-2B Watchtower** — Settings 에서 HIBP opt-in 활성화 → [Run Check] → 5 카테고리 결과 (Compromised / Weak / Reused / 2FA / Unsecured) 검증 + dismiss/undismiss 동작
+5. **Phase 3-A 신용카드** — Cmd+K 또는 dialog 에서 "Credit Card" kind 추가 → BIN 자동 감지 → 미리보기 그레이디언트 → 저장 → BentoCard 그리드 표시 → Detail 진입 → reveal 카드번호 / CVC → 30초 자동 클리어 검증 → 마스킹 상태 flip 금지 검증
+6. **i18n 4 로케일** — Settings 에서 ko/zh/ja 전환 → 모든 신규 UI 정상 번역 확인
+7. **회귀 검증** — Phase 1.5 hover mini-graph / Phase 1.5-D issuer pair labels / 기존 BentoCard / IncidentsPage 모두 정상
+
+### B. UX 이슈 발견 시 우선순위
+
+- **Critical (출시 블로커)**: 데이터 손실 / 평문 노출 / 보안 룰 위반 → 즉시 fix
+- **High (출시 전 fix)**: 키보드 접근성 / i18n 누락 / 빈 상태 미흡 / 에러 메시지 모호
+- **Medium (Phase 3-B 와 병행)**: 마이크로 인터랙션 부드러움 / 로딩 표시 / hover 상태
+- **Low (개선 backlog)**: 색상 미세 조정 / 폰트 / 여백
+
+### C. Dogfooding 후 진입 순서 (확정)
+
+1. Dogfooding 보고서 (`docs/dogfooding_phase2_2b_3a.md`) — 발견 이슈 + fix 우선순위
+2. Critical / High 이슈 fix
+3. Phase 3-B (secure_note) 진입 — `ux_research_phase3.md` §2 기반
+4. 그 후 Phase 4 (카테고리) → 3-C (passkey)
+
+### D. ChatGPT 사전 조사 (`user_research/chatgpt_answer_0.md`) 와 정합 확인
+
+이미 구현된 핵심 권고: graph 관계 / 공급자 사고 알림 / push protection / Watchtower 동등.
+미구현 권고 = M14 자동 rotation (장기 로드맵), 단기 토큰 / OIDC 우선 가이드 (RAILGUARD M5 확장 가능). dogfooding 결과에 따라 우선순위 재평가.
+
+---
+
 ## [2026-05-07] Phase 3-A GATE 2 일괄 승인 (Integrator 권고 7항목)
 
 ### 사용자 결정
