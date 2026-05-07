@@ -1,0 +1,38 @@
+{
+  "creditCard": {
+    "title": "クレジットカード",
+    "addCard": "カードを追加",
+    "fields": {
+      "number": "カード番号",
+      "expiry": "有効期限",
+      "cvc": "CVC",
+      "cardholder": "カード所有者",
+      "billingAddress": "請求先住所"
+    },
+    "brand": {
+      "visa": "Visa",
+      "mastercard": "Mastercard",
+      "amex": "アメリカン・エキスプレス",
+      "discover": "Discover",
+      "jcb": "JCB",
+      "diners": "ダイナースクラブ",
+      "unknown": "不明"
+    },
+    "actions": {
+      "reveal": "表示",
+      "hide": "非表示",
+      "copy": "コピー",
+      "copied": "コピー済み"
+    },
+    "errors": {
+      "revealFailed": "カード情報を表示できませんでした。",
+      "copyFailed": "コピーに失敗しました。",
+      "saveFailed": "カードの保存に失敗しました。"
+    },
+    "empty": {
+      "title": "保存されたカードなし",
+      "description": "クレジットカードやデビットカードを安全に保管します。",
+      "cta": "カードを追加"
+    }
+  }
+}

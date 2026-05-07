@@ -1,7 +1,7 @@
 export type Env = "dev" | "staging" | "prod";
 export type CredentialStatus = "active" | "revoked" | "compromised";
 /** Rust CredentialKind (serde rename_all = "snake_case") */
-export type CredentialKind = "api_key" | "password";
+export type CredentialKind = "api_key" | "password" | "credit_card";
 
 // ---------------------------------------------------------------------------
 // Security score (T040) — mirrors api_vault_core::security_score
@@ -56,6 +56,13 @@ export interface CredentialSummary {
   primary_label: string | null;
   /** Display label for the secondary value. null when no secondary exists. */
   secondary_label: string | null;
+  // credit_card 전용 — kind="credit_card" 일 때만 non-null (B.5-3)
+  card_brand?: import("@/lib/card-utils").CardBrand;
+  /** 마지막 4자리만 저장 (B.5-3: 전체 카드번호 금지) */
+  card_last_4?: string;
+  card_expiry_month?: number;
+  card_expiry_year?: number;
+  card_cardholder_name?: string;
 }
 
 /** credential_list 커맨드에 전달하는 필터 */

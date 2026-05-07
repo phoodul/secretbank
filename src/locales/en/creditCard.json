@@ -1,0 +1,38 @@
+{
+  "creditCard": {
+    "title": "Credit Cards",
+    "addCard": "Add Card",
+    "fields": {
+      "number": "Card Number",
+      "expiry": "Expiry",
+      "cvc": "CVC",
+      "cardholder": "Cardholder",
+      "billingAddress": "Billing Address"
+    },
+    "brand": {
+      "visa": "Visa",
+      "mastercard": "Mastercard",
+      "amex": "American Express",
+      "discover": "Discover",
+      "jcb": "JCB",
+      "diners": "Diners Club",
+      "unknown": "Unknown"
+    },
+    "actions": {
+      "reveal": "Reveal",
+      "hide": "Hide",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "errors": {
+      "revealFailed": "Failed to reveal card information.",
+      "copyFailed": "Failed to copy.",
+      "saveFailed": "Failed to save card."
+    },
+    "empty": {
+      "title": "No saved cards",
+      "description": "Securely store your credit and debit cards.",
+      "cta": "Add Card"
+    }
+  }
+}

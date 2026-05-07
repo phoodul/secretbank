@@ -1,0 +1,38 @@
+{
+  "creditCard": {
+    "title": "信用卡",
+    "addCard": "添加卡片",
+    "fields": {
+      "number": "卡号",
+      "expiry": "有效期",
+      "cvc": "CVC",
+      "cardholder": "持卡人",
+      "billingAddress": "账单地址"
+    },
+    "brand": {
+      "visa": "Visa",
+      "mastercard": "Mastercard",
+      "amex": "美国运通",
+      "discover": "Discover",
+      "jcb": "JCB",
+      "diners": "大来卡",
+      "unknown": "未知"
+    },
+    "actions": {
+      "reveal": "查看",
+      "hide": "隐藏",
+      "copy": "复制",
+      "copied": "已复制"
+    },
+    "errors": {
+      "revealFailed": "无法显示卡片信息。",
+      "copyFailed": "复制失败。",
+      "saveFailed": "保存卡片失败。"
+    },
+    "empty": {
+      "title": "暂无保存的卡片",
+      "description": "安全存储您的信用卡和借记卡。",
+      "cta": "添加卡片"
+    }
+  }
+}

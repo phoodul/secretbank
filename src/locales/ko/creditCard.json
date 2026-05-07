@@ -1,0 +1,38 @@
+{
+  "creditCard": {
+    "title": "신용카드",
+    "addCard": "카드 추가",
+    "fields": {
+      "number": "카드 번호",
+      "expiry": "유효기간",
+      "cvc": "CVC",
+      "cardholder": "카드 소유자",
+      "billingAddress": "청구 주소"
+    },
+    "brand": {
+      "visa": "Visa",
+      "mastercard": "Mastercard",
+      "amex": "아메리칸 익스프레스",
+      "discover": "Discover",
+      "jcb": "JCB",
+      "diners": "다이너스 클럽",
+      "unknown": "알 수 없음"
+    },
+    "actions": {
+      "reveal": "보기",
+      "hide": "숨기기",
+      "copy": "복사",
+      "copied": "복사됨"
+    },
+    "errors": {
+      "revealFailed": "카드 정보를 불러오지 못했습니다.",
+      "copyFailed": "복사에 실패했습니다.",
+      "saveFailed": "카드 저장에 실패했습니다."
+    },
+    "empty": {
+      "title": "저장된 카드 없음",
+      "description": "신용카드 및 체크카드를 안전하게 보관하세요.",
+      "cta": "카드 추가"
+    }
+  }
+}

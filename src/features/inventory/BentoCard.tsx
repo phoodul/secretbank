@@ -44,6 +44,7 @@ import { MiniGraph } from "./MiniGraph";
 import type { CredentialSummary } from "./types";
 import { SecurityBadge } from "@/features/security/SecurityBadge";
 import type { SecurityAlertView } from "@/features/security/types";
+import { CreditCardBentoCard } from "./CreditCardBentoCard";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -227,6 +228,17 @@ export function BentoCard({ credential, onSelect, securityAlerts }: BentoCardPro
   const handleCardClick = () => {
     onSelect?.(credential.id);
   };
+
+  // credit_card 전용 컴포넌트로 위임 (hooks 이후 배치 — Rules of Hooks 준수)
+  if (credential.kind === "credit_card") {
+    return (
+      <CreditCardBentoCard
+        credential={credential}
+        securityAlerts={securityAlerts}
+        onClick={onSelect ? () => onSelect(credential.id) : undefined}
+      />
+    );
+  }
 
   return (
     <Card

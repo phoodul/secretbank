@@ -1,11 +1,21 @@
 /**
- * BentoCard — M24 C-2 정정 TDD 테스트
+ * BentoCard — M24 C-2 정정 TDD 테스트 + Phase 3-A-6 credit_card 분기 테스트 (B1~B8)
  *
  * 정정된 레이아웃:
  *   Row 1 — name (라벨 없이)
  *   Row 2 — "URL:" 라벨 + 값
  *   Row 3 — "ID:" 라벨 + (password: 마스킹 + reveal) | (api_key: issuer 평문)
  *   Row 4 — "PW:" / "Key:" 라벨 + 마스킹 + reveal + copy
+ *
+ * credit_card 분기 (B1~B8):
+ *   B1 — kind="credit_card" → CreditCardBentoCard 렌더
+ *   B2 — kind="api_key" 회귀
+ *   B3 — kind="password" 회귀
+ *   B4 — credit_card + securityAlerts → SecurityBadge
+ *   B5 — brand="visa" → maskCardNumber 결과 표시
+ *   B6 — brand="amex" → "•••• •••••• •last4" 형식
+ *   B7 — credit_card 클릭 → onClick 호출
+ *   B8 — credit_card brand badge 표시 (i18n)
  */
 
 import { render, screen, waitFor, act } from "@testing-library/react";
@@ -464,5 +474,114 @@ describe("BentoCard", () => {
       const hasEmpty = screen.queryByText(/not used in any project yet/i);
       expect(hasGraph ?? hasLoading ?? hasEmpty).toBeTruthy();
     });
+  });
+
+  // ── Phase 3-A-6: credit_card 분기 (B1~B8) ────────────────────────────────
+
+  function makeCreditCard(overrides: Partial<CredentialSummary> = {}): CredentialSummary {
+    return {
+      id: "01HZCCCCCCCCCCCCCCCCCCCCCC",
+      issuer_id: "01HZBBBBBBBBBBBBBBBBBBBBBB",
+      name: "My Visa Card",
+      env: "prod",
+      status: "active",
+      expires_at: null,
+      hash_hint: null,
+      score: { total: 100, level: "safe", factors: [] },
+      kind: "credit_card",
+      url: null,
+      username: null,
+      has_secondary: false,
+      primary_label: null,
+      secondary_label: null,
+      card_brand: "visa",
+      card_last_4: "1234",
+      card_expiry_month: 12,
+      card_expiry_year: 2028,
+      card_cardholder_name: "John Doe",
+      ...overrides,
+    };
+  }
+
+  // B1: kind="credit_card" → CreditCardBentoCard 렌더 (신용카드 마스킹 표시)
+  it("B1: kind=credit_card 일 때 CreditCardBentoCard 를 렌더링한다", () => {
+    renderCard(makeCreditCard());
+    // 카드 이름 표시
+    expect(screen.getByText("My Visa Card")).toBeInTheDocument();
+    // 마스킹된 카드번호 표시 (visa: "•••• •••• •••• 1234")
+    expect(screen.getByText("•••• •••• •••• 1234")).toBeInTheDocument();
+  });
+
+  // B2: kind="api_key" 회귀 — 기존 ApiKey 렌더링 유지
+  it("B2: kind=api_key 회귀 — 기존 렌더링 유지", () => {
+    renderCard(makeApiKey({ name: "OpenAI Production" }));
+    expect(screen.getByText("OpenAI Production")).toBeInTheDocument();
+    expect(screen.getByText("API Key:")).toBeInTheDocument();
+    // 신용카드 마스킹 포맷은 없어야 함
+    expect(screen.queryByText("•••• •••• •••• 1234")).toBeNull();
+  });
+
+  // B3: kind="password" 회귀 — 기존 Password 렌더링 유지
+  it("B3: kind=password 회귀 — 기존 렌더링 유지", () => {
+    renderCard(makePassword({ name: "Gmail" }));
+    expect(screen.getByText("Gmail")).toBeInTheDocument();
+    expect(screen.getByText("PW:")).toBeInTheDocument();
+  });
+
+  // B4: credit_card + securityAlerts → SecurityBadge 표시
+  it("B4: credit_card + securityAlerts 일 때 SecurityBadge 가 렌더된다", () => {
+    const alerts = [
+      {
+        id: "alert-01",
+        credential_id: "01HZCCCCCCCCCCCCCCCCCCCCCC",
+        alert_kind: "weak_password" as const,
+        alert_meta: {},
+        dismissed_at: null,
+        checked_at: new Date().toISOString(),
+      },
+    ];
+    renderCard(makeCreditCard(), undefined);
+    // securityAlerts prop 전달
+    render(
+      <MemoryRouter>
+        <BentoCard credential={makeCreditCard()} securityAlerts={alerts} />
+      </MemoryRouter>,
+    );
+    // SecurityBadge 는 Badge 컴포넌트로 렌더됨
+    // "Weak" 텍스트가 포함된 배지 확인 (en locale)
+    expect(screen.getByText(/weak/i)).toBeInTheDocument();
+  });
+
+  // B5: brand="visa", last_4="5678" → "•••• •••• •••• 5678" 표시
+  it("B5: brand=visa, last_4=5678 → maskCardNumber 결과 표시", () => {
+    renderCard(makeCreditCard({ card_brand: "visa", card_last_4: "5678" }));
+    expect(screen.getByText("•••• •••• •••• 5678")).toBeInTheDocument();
+  });
+
+  // B6: brand="amex" + last_4 → "•••• •••••• •last4" 형식
+  it("B6: brand=amex + last_4=9999 → Amex 마스킹 형식 표시", () => {
+    renderCard(makeCreditCard({ card_brand: "amex", card_last_4: "9999" }));
+    expect(screen.getByText("•••• •••••• •9999")).toBeInTheDocument();
+  });
+
+  // B7: credit_card 클릭 → onSelect 호출
+  it("B7: credit_card 카드 클릭 시 onSelect(id) 가 호출된다", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <BentoCard credential={makeCreditCard()} onSelect={onSelect} />
+      </MemoryRouter>,
+    );
+    const card = container.querySelector("[role='button']")!;
+    await user.click(card);
+    expect(onSelect).toHaveBeenCalledWith("01HZCCCCCCCCCCCCCCCCCCCCCC");
+  });
+
+  // B8: credit_card brand badge 표시 (i18n — en locale "Visa")
+  it("B8: credit_card brand badge 에 브랜드 라벨이 표시된다", () => {
+    renderCard(makeCreditCard({ card_brand: "visa" }));
+    // Badge 에 "Visa" 텍스트 (en locale creditCard.brand.visa)
+    expect(screen.getByText("Visa")).toBeInTheDocument();
   });
 });

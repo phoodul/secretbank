@@ -23,6 +23,11 @@ import koSecurity from "@/locales/ko/security.json";
 import jaSecurity from "@/locales/ja/security.json";
 import zhSecurity from "@/locales/zh/security.json";
 
+import enCreditCard from "@/locales/en/creditCard.json";
+import koCreditCard from "@/locales/ko/creditCard.json";
+import jaCreditCard from "@/locales/ja/creditCard.json";
+import zhCreditCard from "@/locales/zh/creditCard.json";
+
 /**
  * 지원 언어 목록 — UI 의 LanguageSwitcher 가 이 배열을 그대로 표시한다.
  * `nativeName` 은 모국어 표기 (글로벌 UX 베스트 프랙티스 — "한국어" 가 "Korean" 보다 인지 정확).
@@ -54,10 +59,10 @@ void i18next
   .use(initReactI18next)
   .init({
     resources: {
-      en: { common: en, security: enSecurity },
-      ko: { common: ko, security: koSecurity },
-      ja: { common: ja, security: jaSecurity },
-      zh: { common: zh, security: zhSecurity },
+      en: { common: en, security: enSecurity, creditCard: enCreditCard },
+      ko: { common: ko, security: koSecurity, creditCard: koCreditCard },
+      ja: { common: ja, security: jaSecurity, creditCard: jaCreditCard },
+      zh: { common: zh, security: zhSecurity, creditCard: zhCreditCard },
       es: { common: es },
       fr: { common: fr },
       de: { common: de },
