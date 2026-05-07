@@ -1,5 +1,55 @@
 # Work Log
 
+## 2026-05-07 / 08 — Resume 세션 종료: Phase 2-2B + 3-A 풀체인 + dogfooding 절차 확정 (35 commits)
+
+### 누적 이번 세션 — `fa9d111..00ceee5` (35 commits, push 완료)
+
+**Phase 2-2B Watchtower 풀체인 (9 commits)**:
+- 2-2B-1 `e26cc2d` PwnedPasswordsClient (HIBP k-anonymity range lookup, Add-Padding, ConstantTimeEq, SecretBox)
+- 2-2B-2 `3714c34` security_check.rs + twofa_directory.rs (zxcvbn weak / SHA-256 reused / missing 2FA / unsecured)
+- 2-2B-3 `13758ca` SQLite 0011 + SecurityAlertRepo + spawn_security_check_poller skeleton
+- 2-2B-4 `1dd89f4` 4 Tauri commands (concurrency 10, audit log)
+- 2-2B-5 `0c98e13` WatchtowerPage + SecurityAlertCard + SecurityBadge + Settings HIBP opt-in + i18n 4 로케일
+
+**THREAT_MODEL.md (STRIDE) `4e650b5`** — Phase 3-A 진입 전 의무 작성 (B.4)
+
+**Phase 3-A 신용카드 풀체인 (12 commits)**:
+- 3-A-1 `af2e802` CredentialKind::CreditCard + 0012 마이그레이션 + Repo
+- 3-A-2 `f81e3a2` BIN 감지 + card-utils.ts (25 Vitest)
+- 3-A-3 `0194078` CreditCardVisual 3D flip (파생 상태로 GATE 2-4 보장)
+- 3-A-4 `f83295e` CreditCardForm (BIN 실시간 + Zod refine + react-number-format)
+- 3-A-5 `a6c891a` 4 Tauri commands + Detail + 30s 자동 클리어
+- 3-A-6 `f7d00a3` BentoCard 분기 + i18n 4 로케일
+
+**Dogfooding 절차 확정 (사용자 시정 2회)**:
+- `03f25ed` 1차 결정 — Dogfooding 1~3일 먼저
+- `d065dc6` 1차 시정 — `pnpm tauri dev` ❌ → production build / GitHub Releases
+- `00ceee5` 2차 시정 — GitHub URL 노출 ❌ → **api-vault.app 단독 흐름** (Cloudflare Worker download-proxy)
+
+### 누적 검증
+
+- cargo test: 235+ passed (회귀 0)
+- cargo clippy: 0 warning
+- pnpm vitest: 신규 ~62 PASS (Phase 2-2B 9 + 3-A-2 25 + 3-A-3 13 + 3-A-4 10 + 3-A-5 7 + 3-A-6 8)
+- pnpm typecheck: 0 / lint 신규 0 / format PASS
+- 신규 의존성: sha1 / subtle / zxcvbn (workspace), react-number-format (frontend)
+
+### 보안
+
+- B.1 (10항목) + B.5 (5항목) + GATE 1 (7항목) + GATE 2 (7항목) 모두 적용
+- THREAT_MODEL §4 4대 위협 완화 (카드번호 부분 노출 / BIN / 3D flip / screenshot 잔여)
+- LLM 한계 인정 — 외부 보안 감사 출시 전 1회 의무
+
+### 다음 세션 시작점 (메모리 + project-decisions 영구 저장)
+
+1. **Cloudflare Worker `download-proxy` 배포** — api-vault.app/download/<filename> + /api/latest 자체 endpoint
+2. **`site/index.html` 정정** — api.github.com 직접 호출 ❌, 자체 endpoint 사용
+3. **`v0.1.0-pre11` tag push** → release.yml 트리거 → 다중 OS installer 빌드
+4. **api-vault.app 단독 dogfooding** — 브라우저 주소창 GitHub 노출 0
+5. 발견 이슈 fix → Phase 3-B (secure_note) 진입
+
+---
+
 ## 2026-05-07 — M24 Phase 2-2B-3 완료: SQLite security_alerts 마이그레이션 + SecurityAlertRepo + 24h scheduler skeleton
 
 ### 구현 범위
