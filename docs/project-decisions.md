@@ -5,6 +5,54 @@
 
 ---
 
+## [2026-05-07] Phase 3-A GATE 2 일괄 승인 (Integrator 권고 7항목)
+
+### 사용자 결정
+
+Integrator 보고서 (`docs/integrator_report_phase3a.md` §5) 권고 7항목 모두 일괄 승인.
+
+| GATE | 결정 |
+|:---|:---|
+| 2-1 | DB 스키마 = **별도 `credit_card_meta` 테이블** (마이그레이션 0012, Phase 3-B/C 일관성) |
+| 2-2 | 카드번호 reveal = **30초 자동 클리어** (CVC 와 동일, 보수적) |
+| 2-3 | BIN 표 = **하드코딩** (`src/lib/card-utils.ts`, 의존성 0개) |
+| 2-4 | 3D flip — 마스킹 상태 = **flip 완전 금지** (THREAT_MODEL §4 보수적) |
+| 2-5 | 청구주소 = **포함** (선택 텍스트 필드, 1P 동등) |
+| 2-6 | PIN 필드 = **미룸** (Phase 3-B/4 사이) |
+| 2-7 | 3D flip 사용 = **3D flip** (1P 동등 차별화, prefers-reduced-motion 시 즉시 전환) |
+
+### Sub-task 분할 (6개, 11~13 commits 예상)
+
+1. 3-A-1: `CredentialKind::CreditCard` + DB 마이그레이션 0012 + Rust 모델 (`CreditCardMeta` / `CreditCardSecret` / `CreditCardSummary` / `CreditCardInput`) + Repo
+2. 3-A-2: `src/lib/card-utils.ts` BIN 감지 + 그레이디언트 + 포맷팅 (4-4-4-4 + Amex 4-6-5)
+3. 3-A-3: `CreditCardVisual` 3D flip (마스킹 상태 flip 금지)
+4. 3-A-4: `CreditCardForm` 자연 순서 + 입력 마스크 + Zod
+5. 3-A-5: `CreditCardDetail` + `reveal_card_number` / `reveal_cvc` Tauri commands (30s 자동 클리어 + audit + capability)
+6. 3-A-6: BentoCard 통합 + i18n 4 로케일 + Vitest
+
+### 보안 룰 (B.1 + B.5 모두 적용)
+
+- `card_number` / `cvc` / `pin` = `SecretBox<String>` + Zeroizing on drop
+- `valueHint` last_4 만 frontend 전달 (B.5-3)
+- BIN 감지 prefix 6자만 (B.5-5)
+- vault encryption (age) 동일 (B.5-4)
+- reveal 별도 Tauri command + 30s 자동 클리어 (B.5-2)
+- audit log 기록 (reveal 작업 모두)
+
+### 위험 처리
+
+- R1 (MEDIUM) BIN 표 정확성 → implementator 가 Wikipedia IIN Ranges 1회 교차 확인
+- R2 (MEDIUM) screenshot 캡처 미차단 → Phase 3-A 미구현, 잔여 위험 placeholder. 장기 macOS NSWindow secureContentView / Windows DRM
+- R3 (LOW) DB 호환 → 0012 신규 테이블만, ALTER ❌
+- R4 (LOW) 입력 마스크 라이브러리 → react-number-format 또는 IMask, implementator 결정
+
+### 다음 액션
+
+1. progress.md 갱신
+2. Phase 3-A-1 implementator 호출 (CredentialKind + DB + Rust 모델 + Repo)
+
+---
+
 ## [2026-05-07] Phase 2-2B 풀체인 완료 + Threat model 작성 후 Phase 3-A 진입
 
 ### 사용자 결정
