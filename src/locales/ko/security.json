@@ -1,0 +1,44 @@
+{
+  "security": {
+    "title": "보안",
+    "title_full": "워치타워",
+    "run_check": "보안 검사 실행",
+    "running": "검사 중...",
+    "last_checked": "마지막 검사: {{date}}",
+    "never_checked": "검사 이력 없음",
+    "all_clear": "모두 안전합니다! 보안 문제가 없습니다.",
+    "no_history": "아직 비밀번호 검사를 실행하지 않았습니다.",
+    "no_history_cta": "첫 번째 보안 검사를 실행하여 결과를 확인하세요.",
+    "category": {
+      "compromised": "유출됨",
+      "weak": "취약",
+      "reused": "재사용",
+      "two_factor": "2FA 미설정",
+      "unsecured": "비보안 웹사이트"
+    },
+    "count": {
+      "compromised": "{{count}}개 유출",
+      "weak": "{{count}}개 취약",
+      "reused": "{{count}}개 재사용",
+      "two_factor": "{{count}}개 2FA 없음",
+      "unsecured": "{{count}}개 비보안"
+    },
+    "alert": {
+      "fix": "수정",
+      "dismiss": "무시",
+      "dismissed": "무시됨",
+      "exposure_count": "알려진 유출 {{count}}건에서 발견됨",
+      "weak_score": "강도: {{score}}/4",
+      "reused_with": "다른 {{count}}개 자격증명에서도 사용 중",
+      "missing_2fa_for": "{{domain}}은(는) 2FA를 지원합니다"
+    },
+    "opt_in_banner": "완전한 보호를 위해 설정 > 개인정보에서 HIBP 검사를 활성화하세요.",
+    "enable_hibp": "HIBP 검사 활성화",
+    "disable_hibp": "HIBP 검사 비활성화",
+    "hibp_description": "Have I Been Pwned 데이터베이스에서 비밀번호를 확인합니다. SHA-1 해시의 첫 5자리만 전송되며, 실제 비밀번호는 이 기기를 절대 벗어나지 않습니다.",
+    "vault_locked": "보안 검사를 실행하려면 볼트를 잠금 해제하세요.",
+    "vault_locked_cta": "볼트 잠금 해제",
+    "network_error": "HIBP에 연결할 수 없습니다. 로컬 검사는 완료되었습니다.",
+    "checking_progress": "{{total}}개 중 {{current}}개 검사 중..."
+  }
+}

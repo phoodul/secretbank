@@ -42,6 +42,8 @@ import {
 import { useIssuers } from "./use-issuers";
 import { MiniGraph } from "./MiniGraph";
 import type { CredentialSummary } from "./types";
+import { SecurityBadge } from "@/features/security/SecurityBadge";
+import type { SecurityAlertView } from "@/features/security/types";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -57,13 +59,15 @@ const MASKED = "•••••••••••••";
 export interface BentoCardProps {
   credential: CredentialSummary;
   onSelect?: (id: string) => void;
+  /** 해당 credential 의 보안 alerts. 최고 우선순위 1개 배지로 표시. */
+  securityAlerts?: SecurityAlertView[];
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function BentoCard({ credential, onSelect }: BentoCardProps) {
+export function BentoCard({ credential, onSelect, securityAlerts }: BentoCardProps) {
   const { t } = useTranslation("common");
   const { issuers } = useIssuers();
 
@@ -246,9 +250,14 @@ export function BentoCard({ credential, onSelect }: BentoCardProps) {
       }
     >
       <CardContent className="flex flex-col gap-2 p-4">
-        {/* ── Row 1: name + ⋮ menu ── */}
+        {/* ── Row 1: name + security badge + ⋮ menu ── */}
         <div className="flex items-start justify-between gap-2">
-          <span className="truncate text-sm font-medium leading-tight">{credential.name}</span>
+          <div className="min-w-0 flex flex-col gap-1">
+            <span className="truncate text-sm font-medium leading-tight">{credential.name}</span>
+            {securityAlerts && securityAlerts.length > 0 && (
+              <SecurityBadge credentialId={credential.id} alerts={securityAlerts} />
+            )}
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

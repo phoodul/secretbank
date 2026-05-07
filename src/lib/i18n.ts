@@ -18,6 +18,11 @@ import hi from "@/locales/hi/common.json";
 import vi from "@/locales/vi/common.json";
 import pl from "@/locales/pl/common.json";
 
+import enSecurity from "@/locales/en/security.json";
+import koSecurity from "@/locales/ko/security.json";
+import jaSecurity from "@/locales/ja/security.json";
+import zhSecurity from "@/locales/zh/security.json";
+
 /**
  * 지원 언어 목록 — UI 의 LanguageSwitcher 가 이 배열을 그대로 표시한다.
  * `nativeName` 은 모국어 표기 (글로벌 UX 베스트 프랙티스 — "한국어" 가 "Korean" 보다 인지 정확).
@@ -49,10 +54,10 @@ void i18next
   .use(initReactI18next)
   .init({
     resources: {
-      en: { common: en },
-      ko: { common: ko },
-      ja: { common: ja },
-      zh: { common: zh },
+      en: { common: en, security: enSecurity },
+      ko: { common: ko, security: koSecurity },
+      ja: { common: ja, security: jaSecurity },
+      zh: { common: zh, security: zhSecurity },
       es: { common: es },
       fr: { common: fr },
       de: { common: de },

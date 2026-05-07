@@ -1,0 +1,44 @@
+{
+  "security": {
+    "title": "Security",
+    "title_full": "Watchtower",
+    "run_check": "Run Security Check",
+    "running": "Checking...",
+    "last_checked": "Last checked: {{date}}",
+    "never_checked": "Never",
+    "all_clear": "All clear! No security issues found.",
+    "no_history": "Your passwords haven't been checked yet.",
+    "no_history_cta": "Run your first security check to see results.",
+    "category": {
+      "compromised": "Compromised",
+      "weak": "Weak",
+      "reused": "Reused",
+      "two_factor": "Missing 2FA",
+      "unsecured": "Unsecured Website"
+    },
+    "count": {
+      "compromised": "{{count}} compromised",
+      "weak": "{{count}} weak",
+      "reused": "{{count}} reused",
+      "two_factor": "{{count}} without 2FA",
+      "unsecured": "{{count}} unsecured"
+    },
+    "alert": {
+      "fix": "Fix",
+      "dismiss": "Dismiss",
+      "dismissed": "Dismissed",
+      "exposure_count": "Found in {{count}} known breaches",
+      "weak_score": "Strength: {{score}}/4",
+      "reused_with": "Also used by {{count}} other credential(s)",
+      "missing_2fa_for": "{{domain}} supports 2FA"
+    },
+    "opt_in_banner": "Enable HIBP check in Settings > Privacy for full protection.",
+    "enable_hibp": "Enable HIBP Check",
+    "disable_hibp": "Disable HIBP Check",
+    "hibp_description": "Check passwords against the Have I Been Pwned database. Only the first 5 characters of a SHA-1 hash are sent — your actual password never leaves this device.",
+    "vault_locked": "Unlock your vault to run security checks.",
+    "vault_locked_cta": "Unlock Vault",
+    "network_error": "Couldn't connect to HIBP. Local checks completed.",
+    "checking_progress": "Checking {{current}} of {{total}} credentials..."
+  }
+}

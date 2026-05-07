@@ -8,6 +8,7 @@
     "projects": "Projects",
     "graph": "Graph",
     "incidents": "Incidents",
+    "watchtower": "Watchtower",
     "audit": "Audit Log",
     "railguard": "RAILGUARD",
     "settings": "Settings"
@@ -71,7 +72,11 @@
     "keyCleared": "Key cleared",
     "saveKeyFailed": "Failed to save key",
     "vaultLockedWarning": "Unlock the vault to change this setting.",
-    "keyConfiguredPlaceholder": "Configured (hidden)"
+    "keyConfiguredPlaceholder": "Configured (hidden)",
+    "hibpCheck": "HIBP Password Check",
+    "hibpCheckDescription": "Check passwords against Have I Been Pwned. Only the first 5 characters of a SHA-1 hash are sent — your actual password never leaves this device.",
+    "hibpEnabled": "Enabled",
+    "hibpDisabled": "Disabled (default)"
   },
   "inventory": {
     "title": "Inventory",

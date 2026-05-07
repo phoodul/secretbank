@@ -1,0 +1,44 @@
+{
+  "security": {
+    "title": "セキュリティ",
+    "title_full": "ウォッチタワー",
+    "run_check": "セキュリティチェックを実行",
+    "running": "チェック中...",
+    "last_checked": "最終チェック：{{date}}",
+    "never_checked": "未チェック",
+    "all_clear": "すべて安全です！セキュリティの問題は見つかりませんでした。",
+    "no_history": "パスワードはまだチェックされていません。",
+    "no_history_cta": "最初のセキュリティチェックを実行して結果を確認してください。",
+    "category": {
+      "compromised": "侵害済み",
+      "weak": "弱いパスワード",
+      "reused": "再利用",
+      "two_factor": "2FA未設定",
+      "unsecured": "非セキュアサイト"
+    },
+    "count": {
+      "compromised": "{{count}} 件侵害",
+      "weak": "{{count}} 件弱い",
+      "reused": "{{count}} 件再利用",
+      "two_factor": "{{count}} 件2FAなし",
+      "unsecured": "{{count}} 件非セキュア"
+    },
+    "alert": {
+      "fix": "修正",
+      "dismiss": "無視",
+      "dismissed": "無視済み",
+      "exposure_count": "既知の {{count}} 件の侵害で発見",
+      "weak_score": "強度：{{score}}/4",
+      "reused_with": "他の {{count}} 件の認証情報でも使用中",
+      "missing_2fa_for": "{{domain}} は2FAをサポートしています"
+    },
+    "opt_in_banner": "完全な保護のために、設定 > プライバシーでHIBPチェックを有効にしてください。",
+    "enable_hibp": "HIBPチェックを有効化",
+    "disable_hibp": "HIBPチェックを無効化",
+    "hibp_description": "Have I Been Pwnedデータベースでパスワードを確認します。SHA-1ハッシュの最初の5文字のみが送信され、実際のパスワードはこのデバイスから外に出ることはありません。",
+    "vault_locked": "セキュリティチェックを実行するには、ボールトのロックを解除してください。",
+    "vault_locked_cta": "ボールトのロック解除",
+    "network_error": "HIBPに接続できませんでした。ローカルチェックは完了しました。",
+    "checking_progress": "{{total}} 件中 {{current}} 件目をチェック中..."
+  }
+}

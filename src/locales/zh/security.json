@@ -1,0 +1,44 @@
+{
+  "security": {
+    "title": "安全",
+    "title_full": "监控塔",
+    "run_check": "运行安全检查",
+    "running": "检查中...",
+    "last_checked": "上次检查：{{date}}",
+    "never_checked": "从未检查",
+    "all_clear": "一切正常！未发现安全问题。",
+    "no_history": "您的密码尚未进行过检查。",
+    "no_history_cta": "运行第一次安全检查以查看结果。",
+    "category": {
+      "compromised": "已泄露",
+      "weak": "弱密码",
+      "reused": "重复使用",
+      "two_factor": "缺少双重验证",
+      "unsecured": "不安全网站"
+    },
+    "count": {
+      "compromised": "{{count}} 个已泄露",
+      "weak": "{{count}} 个弱密码",
+      "reused": "{{count}} 个重复使用",
+      "two_factor": "{{count}} 个无双重验证",
+      "unsecured": "{{count}} 个不安全"
+    },
+    "alert": {
+      "fix": "修复",
+      "dismiss": "忽略",
+      "dismissed": "已忽略",
+      "exposure_count": "在 {{count}} 个已知数据泄露中发现",
+      "weak_score": "强度：{{score}}/4",
+      "reused_with": "另外 {{count}} 个凭据也在使用",
+      "missing_2fa_for": "{{domain}} 支持双重验证"
+    },
+    "opt_in_banner": "在设置 > 隐私中启用 HIBP 检查以获得完整保护。",
+    "enable_hibp": "启用 HIBP 检查",
+    "disable_hibp": "禁用 HIBP 检查",
+    "hibp_description": "通过 Have I Been Pwned 数据库检查密码。只发送 SHA-1 哈希值的前 5 个字符——您的实际密码永远不会离开此设备。",
+    "vault_locked": "请解锁保险库以运行安全检查。",
+    "vault_locked_cta": "解锁保险库",
+    "network_error": "无法连接到 HIBP。本地检查已完成。",
+    "checking_progress": "正在检查 {{total}} 个凭据中的第 {{current}} 个..."
+  }
+}

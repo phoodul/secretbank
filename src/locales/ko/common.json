@@ -8,6 +8,7 @@
     "projects": "프로젝트",
     "graph": "그래프",
     "incidents": "인시던트",
+    "watchtower": "워치타워",
     "audit": "감사 로그",
     "railguard": "RAILGUARD",
     "settings": "설정"
@@ -71,7 +72,11 @@
     "keyCleared": "키가 삭제되었습니다",
     "saveKeyFailed": "키 저장에 실패했습니다",
     "vaultLockedWarning": "이 설정을 변경하려면 볼트를 잠금 해제하세요.",
-    "keyConfiguredPlaceholder": "설정됨 (숨김)"
+    "keyConfiguredPlaceholder": "설정됨 (숨김)",
+    "hibpCheck": "HIBP 비밀번호 검사",
+    "hibpCheckDescription": "Have I Been Pwned에서 비밀번호를 확인합니다. SHA-1 해시의 첫 5자리만 전송되며, 실제 비밀번호는 이 기기를 절대 벗어나지 않습니다.",
+    "hibpEnabled": "활성화됨",
+    "hibpDisabled": "비활성화됨 (기본값)"
   },
   "inventory": {
     "title": "인벤토리",

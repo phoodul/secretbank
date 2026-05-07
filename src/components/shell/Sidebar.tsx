@@ -8,6 +8,7 @@ import {
   Network,
   Settings,
   ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { to: "/projects", icon: FolderKanban, labelKey: "nav.projects" },
   { to: "/graph", icon: Network, labelKey: "nav.graph" },
   { to: "/incidents", icon: AlertTriangle, labelKey: "nav.incidents" },
+  { to: "/watchtower", icon: ShieldAlert, labelKey: "nav.watchtower" },
   { to: "/audit", icon: FileText, labelKey: "nav.audit" },
   { to: "/railguard", icon: ShieldCheck, labelKey: "nav.railguard" },
   { to: "/settings", icon: Settings, labelKey: "nav.settings" },

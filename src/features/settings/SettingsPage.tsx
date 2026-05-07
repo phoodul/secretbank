@@ -14,6 +14,7 @@ import { useGraphNodesDraggable } from "@/features/graph/use-graph-nodes-draggab
 
 import { CloudSyncSection } from "@/features/auth/CloudSyncSection";
 import { SubscriptionSection } from "@/features/billing/SubscriptionSection";
+import { useHibpOptIn } from "@/features/security/use-hibp-opt-in";
 import { CharterCooldownSection } from "./CharterCooldownSection";
 import { GithubIntegrationSection } from "./GithubIntegrationSection";
 import { IntegrationsSection } from "./IntegrationsSection";
@@ -59,6 +60,7 @@ export function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { value: autoLock, loading: autoLockLoading, setValue: setAutoLock } = useAutoLockMinutes();
   const [draggable, setDraggable] = useGraphNodesDraggable();
+  const { optIn: hibpOptIn, toggle: toggleHibp } = useHibpOptIn();
 
   const currentLang = i18n.language.startsWith("ko")
     ? "ko"
@@ -156,6 +158,35 @@ export function SettingsPage() {
 
         {/* Charter cooldown — recovery 후 7일간 unlock 거부 (도난 방지) */}
         <CharterCooldownSection />
+
+        {/* HIBP opt-in — GATE 1-1: default 비활성 */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t("settings.hibpCheck")}</p>
+          <p className="text-muted-foreground text-xs">{t("settings.hibpCheckDescription")}</p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={hibpOptIn}
+              onClick={() => toggleHibp(!hibpOptIn)}
+              className={[
+                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                hibpOptIn ? "bg-primary" : "bg-input",
+              ].join(" ")}
+              data-testid="hibp-toggle"
+            >
+              <span
+                className={[
+                  "pointer-events-none inline-block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform",
+                  hibpOptIn ? "translate-x-5" : "translate-x-0",
+                ].join(" ")}
+              />
+            </button>
+            <span className="text-sm text-muted-foreground">
+              {hibpOptIn ? t("settings.hibpEnabled") : t("settings.hibpDisabled")}
+            </span>
+          </div>
+        </div>
       </section>
 
       {/* ------------------------------------------------------------------ */}
