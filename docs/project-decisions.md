@@ -5,6 +5,47 @@
 
 ---
 
+## [2026-05-07] Phase 2-2B 풀체인 완료 + Threat model 작성 후 Phase 3-A 진입
+
+### 사용자 결정
+
+> Phase 2-2B 풀체인 완성 후, Phase 3-A 신용카드 진입 전 Threat model 문서 (STRIDE) 1회 작성.
+
+### A. Phase 2-2B 풀체인 결과 (2026-05-07)
+
+5 sub-task / 9 commits / 누적 16 commits (research + integrator + 5 features + 4 docs + 2 final).
+
+- `e26cc2d` PwnedPasswordsClient (HIBP k-anonymity)
+- `3714c34` security_check + twofa_directory
+- `13758ca` SQLite 0011 + Repo + scheduler skeleton
+- `1dd89f4` 4 Tauri commands (concurrency 10 + audit)
+- `0c98e13` WatchtowerPage + Settings opt-in + i18n 4 로케일
+
+검증: cargo test 230+ passed / clippy 0 / fmt PASS / typecheck 0 / vitest 9 신규 PASS.
+
+위험 처리: R1 (zxcvbn `Score::PartialOrd` derive 됨, `u8::from()` 비교) / R3 (HIBP 부분 실패 → `hibp_failed: true`) / R4 (`Credential.totp_uri` 부재 → `secondary_value_ref` + label fallback).
+
+### B. 다음 액션 — Threat model 문서 작성 후 Phase 3-A
+
+1. **Threat model 문서** (`docs/THREAT_MODEL.md`) — 30분 작업, STRIDE 분석
+   - 자산 식별: vault file (age 암호화) / master passphrase / Charter recovery key / audit log chain / credential data / sync key / 외부 API key
+   - 신뢰 경계: frontend ↔ Tauri IPC ↔ Rust backend ↔ SQLite ↔ 외부 API (HIBP / 2fa.directory / OSV / RSS) ↔ Cloudflare relay
+   - STRIDE 매트릭스: 각 자산 + 경계별 위협 + 완화책
+   - 잔여 위험 명시 (LLM 한계 인정 — 외부 보안 감사 출시 전 1회 필수)
+2. **Phase 3-A integrator 호출** — `ux_research_phase3.md` §1 (신용카드 UI) 기반 통합 보고서 작성
+3. **USER APPROVAL GATE 2** — Phase 3-A 사양 승인
+4. **Phase 3-A implementator 연속 호출** (Night mode 동등)
+
+### C. Phase 3-A 적용할 보안 룰 ([2026-05-07] B.1 + 사용자 추가 결정)
+
+- 카드번호 + CVC = sensitive secret. 둘 다 `SecretBox<String>` + `Zeroizing` 즉시 래핑
+- CVC reveal **30초 자동 클리어** (1Password 와 다름 — 보수적)
+- 카드번호 마스킹 frontend 에서 `valueHint` 마지막 4자만
+- 별도 SQLite 테이블 (옵션 Y) → vault encryption 동일 (age) → vault unlock 시에만 평문 디크립트
+- BIN 감지는 prefix 6자만 사용, full hash 미사용 (k-anonymity 원칙)
+
+---
+
 ## [2026-05-07] Phase 2-2B GATE 1 일괄 승인 (Integrator 권고 7항목)
 
 ### 사용자 결정
