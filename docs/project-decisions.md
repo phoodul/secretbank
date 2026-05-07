@@ -5,6 +5,195 @@
 
 ---
 
+## [2026-05-07] 비전 명확화 — "시장 출시 가능 수준" 까지 격차 좁히기 (1P / Bitwarden 경쟁)
+
+### 사용자 결정 (2026-05-07, 직접 인용)
+
+> "나의 비전은 단순한 dogfooding 이 아님. 나는 시간이 걸리더라도 1Password 나 Bitwarden 과 경쟁할 수 있는 프로그램을 시장에 내놓고 싶음. 어느 정도는 부족하더라도 강점이 있어서 시장에서 점진적으로 확대되어 가려면 현재의 수준으로는 턱없이 부족한 상태로는 내놓을 수가 없는 거야."
+
+### A. 비전 갱신 — dogfooding 은 검증 수단, 출시는 목표
+
+기존 `m24_vision.md` 의 "dogfooding 우선" 은 검증 단계의 하나로 **격하**. 진짜 목표 = **시장 출시 가능 수준 + 점진 확대**.
+
+- "MVP 충분" 또는 "dogfooding 만으로 출시" 는 **금지**.
+- 우리 강점 (dependency graph / supply chain / RAILGUARD / MCP / multi-source incident feed) 만으로는 일반 사용자에게 **충분하지 않음** — 데이터 type / autofill / 기본 기능에서 1P / BW 와 비교당함.
+- 시장 진입 = 강점 + **최소 동등 수준의 기본 기능** 두 축 동시 충족.
+
+### B. "시장 출시 가능 수준" 정의 (Launch Readiness 체크리스트)
+
+격차 분석 [2026-05-07] 의 5 영역 (A 사용 환경 / B 데이터 type / C 가족·팀 / D 보안 검사 / E 운영) 기준 우선순위:
+
+#### B.1 Tier 1 — Launch Blocker (이거 없으면 출시 불가)
+
+| 항목                                                               | 작업량                               | 비고                                     |
+| :----------------------------------------------------------------- | :----------------------------------- | :--------------------------------------- |
+| **데이터 type 확장** (신용카드 / secure note / passkey)            | 큼 (Phase 3 진입)                    | 1P 격차 가장 가시적. **이번 결정 (나)**. |
+| **카테고리 / 폴더 시스템**                                         | 작 (1~2 commits)                     | dogfooding 때 즉시 통증. Phase 4 신설.   |
+| **브라우저 확장 (Chrome / Firefox / Safari / Edge)**               | 매우 큼 (M24-E placeholder → 실구현) | autofill 없으면 daily driver 불가        |
+| **모바일 (iOS / Android)**                                         | 매우 큼 (M11 placeholder → 실구현)   | autofill 없으면 daily driver 불가        |
+| **HIBP password check**                                            | 중 (2-2B 미룸 → 합류)                | Watchtower 동등                          |
+| **CSV 외 import 다양화** (Bitwarden JSON / 1pux / Apple / Firefox) | 중 (2-3-b ~ 2-3-d)                   | 마이그레이션 필수                        |
+| **2FA / TOTP 자동 채움**                                           | 중                                   | 1P 의 핵심 기능                          |
+| **자동 잠금 + 생체 인증** (이미 일부)                              | 작 (강화)                            | 신뢰성                                   |
+
+#### B.2 Tier 2 — Launch Strengthener (출시 후 단기 확대)
+
+| 항목                                             | 작업량                       |
+| :----------------------------------------------- | :--------------------------- |
+| Family / Shared vault (M19)                      | 큼                           |
+| 첨부 파일 (PDF / 이미지)                         | 중                           |
+| Send (자동 만료 일회성 공유)                     | 중                           |
+| Emergency access (신탁자)                        | 중 — Vault Charter 와 차별점 |
+| Travel mode (1P 만 보유)                         | 작 (niche)                   |
+| 더 많은 issuer preset (현재 10 개 → 50+)         | 작                           |
+| 강력한 비번 generator (Diceware + entropy meter) | 작                           |
+
+#### B.3 Tier 3 — Differentiation (강점 강화, 시장 확대 후 단계)
+
+| 항목                                            | 작업량                  |
+| :---------------------------------------------- | :---------------------- |
+| **Auto Rotation (M14)** + dependency graph 통합 | 매우 큼 — 우리만의 차별 |
+| MCP tool 확장 (5 → 10+)                         | 중                      |
+| 더 많은 incident feed source                    | 중                      |
+| Browser extension 의 dependency graph 통합      | 중                      |
+
+### C. 갱신된 진행 순서 (2026-05-07 시점)
+
+이번 세션 직후 진입할 순서:
+
+1. **Phase 3-A — 신용카드 kind** (5~7 commits, 이번 (나) 결정 직접 후속)
+2. **Phase 3-B — secure_note kind** (3~5 commits)
+3. **Phase 4 — 카테고리 시스템** (사용자 정의 그룹) (2~3 commits)
+4. **Phase 2-2B — HIBP password check** (M24 v2 → v1 으로 승격) (5~7 commits)
+5. **Phase 3-C — passkey kind** (7~10 commits, WebAuthn / OS API)
+6. **Phase 5 — TOTP 자동 채움** (3~5 commits)
+7. **Phase 6 — 더 많은 import (Bitwarden JSON / 1pux / Firefox CSV)** (각 3 commits)
+8. **M11 — 모바일 (iOS / Android)** — 매우 큼, 별도 마일스톤 시작
+9. **M24-E — 브라우저 확장** — 매우 큼, 별도 마일스톤 시작
+10. (M14 / M19 / 첨부파일 / Send 등은 출시 후 확대)
+
+### D. 일정 인식
+
+사용자 명시: "시간이 걸리더라도". → 출시 전까지 **수개월** 가능. 단 각 Phase 가 5~7 commits 로 잘게 끊겨있어 매 Phase 마다 검증 + dogfooding 가능.
+
+### E. dogfooding 위치 재정의
+
+- dogfooding ≠ 출시 시기 결정의 종점.
+- dogfooding = **각 Phase 의 검증 수단**. 신용카드 만든 직후 본인 카드 등록해보고 UX 이슈 fix → 다음 Phase. 매 Phase 마다 mini-dogfooding 사이클.
+- "출시 가능" 시점 = Tier 1 풀체인 완료 + Tier 2 의 50% 이상 + 신뢰성 검증 (외부 사용자 100~500명 베타).
+
+### F. 품질 기준 — "디자인 / UX / 직관성 / 기능 모두 1Password 동등" (2026-05-07 추가)
+
+사용자 명시 (직접 인용):
+
+> "디자인과 UX, 직관적인 사용, 기능 등 모든 수준에서 1password 에 준하는 수준으로 만들거야."
+
+이는 **차별화 (dependency graph 등) 만으로 차이를 메꿀 수 없다** 는 강한 인식. 출시 가능 = 4 축 모두 1P 동등 이상.
+
+#### F.1 4 축의 의미 + 우리 현재 위치
+
+| 축         | 1P 기준                                                                 | 우리 현재                                                    | 격차                                                                               |
+| :--------- | :---------------------------------------------------------------------- | :----------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **디자인** | 일관된 디자인 토큰 / 미세 디테일 (gradient / shadow / spacing) / 브랜딩 | shadcn + Tailwind v4 + Bento Card (M24 1+1.5)                | 🟡 중 — 토큰은 OK, 디테일 (마이크로 인터랙션 / 빈 상태 일러스트) 부족              |
+| **UX**     | 학습 0 — 처음 켠 사용자도 5분 안에 vault 가 채워짐                      | Welcome 3단계 + 드롭&스캔 + Quick Add                        | 🟡 중 — Welcome 흐름은 있으나 1P 의 "import 바로 권유" 같은 적극적 onboarding 부족 |
+| **직관성** | 라벨 없이도 알 수 있는 아이콘 / hover 즉시 피드백 / undo 흔함           | Bento Card + reason 아이콘 (Phase 2-2A-4) + clipboard 토스트 | 🟢 양호 — 다만 매 Phase 마다 직관성 검증 필요                                      |
+| **기능**   | password / 카드 / passkey / note / TOTP / autofill / sharing / family   | password / api_key (pair)                                    | 🔴 큼 — Phase 3 + 모바일 + 확장으로 메꿈                                           |
+
+#### F.2 매 implementator 호출 시 적용할 사양 (F.2 Spec)
+
+**모든 frontend implementator 사양에 다음 항목 추가**:
+
+1. **디자인 토큰만** — hex 하드코딩 금지. `--color-*`, `--radius-*`, `--font-*` 사용.
+2. **prefers-reduced-motion 존중** — 모든 애니메이션 단축.
+3. **미세 마이크로 인터랙션** — hover / focus / active 모두 200ms 이내 시각적 피드백. 1P 의 "버튼 클릭 시 살짝 가라앉음" 정도.
+4. **빈 상태 (empty state)** — 단순 "결과 없음" 텍스트 ❌. 1P 처럼 친절한 안내 + CTA 버튼 ✅.
+5. **로딩 / 스켈레톤** — 즉시 피드백, 스피너 단독 ❌, 콘텐츠 모양 미러 ✅.
+6. **에러 처리** — 빨강 토스트 ❌, 명확한 원인 + 다음 액션 (e.g. "vault 잠금 해제하세요" + [잠금 해제] 버튼) ✅.
+7. **키보드 fully accessible** — Tab order + Enter / Esc / Cmd+K 모두 동작.
+8. **i18n 4 로케일** (en / ko / ja / zh) — 1P 도 다국어 지원.
+
+#### F.3 ux-designer agent 정기 호출
+
+매 Phase 종료 직후 **ux-designer 에이전트 호출** 로 검증:
+
+- 신규 UI 컴포넌트 의 1P 동등 수준 검토
+- 접근성 (a11y) / 디자인 시스템 일관성 / 모션 정합성
+- 발견한 이슈는 fix sub-task 로 즉시 진입.
+
+이는 비용이 들어도 출시 품질 확보의 핵심 단계. dogfooding 으로 못 잡는 미세한 디테일을 ux-designer 가 잡음.
+
+#### F.4 일정 인식 갱신
+
+사용자 명시 "시간이 걸리더라도". → Tier 1 완료 + 4 축 모두 1P 동등은 **3~6 개월** 단위. 이 기간 동안:
+
+- 매 Phase = sub-task 5~7 commits + ux-designer 검증 + mini-dogfooding
+- 한 Phase 끝나야 다음 Phase. 병렬 X (1 implementator = 1 commit 룰 유지).
+- 모바일 / 브라우저 확장 같은 큰 마일스톤은 별도 streamline 으로.
+
+---
+
+## [2026-05-07] M24 Phase 3 신설 — credential `kind` 3종 확장 (신용카드 / passkey / secure_note)
+
+### 배경 — 1Password / Bitwarden 격차 분석 (2026-05-07)
+
+dogfooding 직전 격차 분석 결과:
+
+- **1P / Bitwarden 이 가진 데이터 type**: password / API key / 신용카드 / **passkey** / secure note / ID document / 첨부파일 / SSH key / software license
+- **우리는 password + api_key (pair 모델 포함)** 만 — 격차 큼
+- 사용자 직접 예시: "온라인 ID/PW / 개발자 / 신용카드 / PC passkey / Private Secrets (현관문 / 가족 주민번호 / 개인통관)"
+
+### 결정 — 옵션 (나) 채택: kind 3종 확장 즉시 진입
+
+| 옵션                                                    | 사용자 결정 |
+| :------------------------------------------------------ | :---------- |
+| (가) 카테고리 시스템만 + dogfooding                     | 미선택      |
+| **(나) 신용카드 / passkey / secure_note kind 3종 추가** | ✅ **선택** |
+| (다) dogfooding 만, 모두 후순위                         | 미선택      |
+| (라) 카테고리 + 신용카드만                              | 미선택      |
+
+**작업 순서 (가시성 + 작업량 기준)**:
+
+1. **Phase 3-A — 신용카드 (`credit_card` kind)** — 가장 가시적. 1P 격차의 대표 항목.
+2. **Phase 3-B — secure_note kind** — 가장 단순 (자유 텍스트 + 라벨 활용). Phase 3-A 패턴 재사용.
+3. **Phase 3-C — passkey kind** — 가장 복잡. WebAuthn / OS API 통합. 후순위.
+
+**카테고리 시스템 (사용자가 이전 메시지에서 제안)**: M24 Phase 3 종료 후 별도 진입 (Phase 4). kind 확장 우선.
+
+### 데이터 모델 결정 (Phase 3-A 진입 전 확정 필요)
+
+3가지 패턴 후보:
+
+- **옵션 X (단일 테이블 + kind enum 확장)**: 기존 `credentials` 테이블에 컬럼 추가 + nullable. 단순하지만 신용카드의 카드번호/CVC/만료일 같은 강타입 필드가 nullable 로 흩어짐.
+- **옵션 Y (별도 테이블 join)**: `credential_credit_card` / `credential_passkey` 테이블 신규. main `credentials` 와 1:1 join. type-safe 하지만 cross-table 쿼리 복잡.
+- **옵션 Z (JSON blob `type_data` 컬럼)**: 유연하나 type-safety 잃고 마이그레이션 어렵다.
+
+**제 권고**: **옵션 Y (별도 테이블 join)**. 이유 — 우리 Vault Charter / Audit / Yjs sync 모두 schema 명시적. JSON blob 은 sync conflict 시 머지 어렵다. 별도 테이블이 마이그레이션 안전 + type-safe.
+
+→ Phase 3-A-0 sub-task 에서 사용자 확정 필요.
+
+### Phase 3-A 잠정 sub-task 분해 (5~7 commits 예상)
+
+1. **3-A-0**: 데이터 모델 옵션 (X / Y / Z) 사용자 확정.
+2. **3-A-1**: 마이그레이션 0011 + `CredentialKind::CreditCard` enum + `CreditCard { number: SecretBox, cvc: SecretBox, expires: String, holder: String, brand: Option<String> }` schema (옵션 Y 가정).
+3. **3-A-2**: `CredentialRepo::insert_credit_card` + `credential_credit_card_get` Tauri commands + audit hook + 단위 테스트.
+4. **3-A-3**: BentoCard `credit_card` 분기 — masked 표시 (`•••• •••• •••• 1234`) + brand 아이콘 + 만료 + reveal 시 number/cvc 30s 자동 클립보드.
+5. **3-A-4**: CreateCredentialDialog kind toggle 에 `credit_card` 추가 + 카드 폼 + brand 자동 감지 (BIN prefix).
+6. **3-A-5**: i18n 4 로케일 + Vitest 5~7.
+7. **3-A-6**: docs(task / progress / work-log).
+
+### 후순위 (M24 v2 또는 v3)
+
+- 모바일 / 브라우저 확장 (격차 가장 큼이지만 작업량 매우 큼 — M11 / M24-E)
+- 첨부 파일 (PDF / 이미지)
+- Send (자동 만료 일회성 공유)
+- HIBP password check (2-2B) — 변함없이 M24 v2
+
+### 차별화 유지
+
+격차 좁히면서도 우리 강점 (dependency graph / supply chain / RAILGUARD / MCP / multi-source incident feed) 은 그대로 유지. 신용카드 / passkey / secure_note 는 **격차 좁히기**, dependency graph 와 결합되는 통합 시나리오 (Stripe 카드 결제 → 어떤 service 영향 등) 가 후속 차별화 가능.
+
+---
+
 ## [2026-05-07] M24 Phase 2-3 / 2-4 — Import 범위 확장 + "마찰 없는 등록 UX" 신설
 
 ### 사용자 결정 요지 (2026-05-07)

@@ -2,6 +2,22 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-07 (Night mode 종료 시점) — **비전 명확화 + ux-researcher 백그라운드 + 다음 = Phase 3-A (신용카드)**
+- **Phase:** Phase 3 — Implementation. M24 Phase 2-3-a / 2-4-a / 2-4-d 모두 ✅. **다음 = Phase 3-A (신용카드 kind)** + ux-researcher 가이드 도착 후 진입.
+- **사용자 비전 갱신 (2026-05-07, project-decisions [2026-05-07] 비전 명확화 항목 신규)**:
+  - "1Password / Bitwarden 과 경쟁할 수 있는 시장 출시 가능 수준이 목표. 시간이 걸리더라도 격차 좁힘."
+  - "디자인 / UX / 직관성 / 기능 모두 1P 동등 수준."
+  - dogfooding ≠ 출시 시기 결정의 종점. dogfooding = 매 Phase 의 검증 수단.
+  - 출시 가능 = Tier 1 풀체인 + Tier 2 의 50% 이상 + 외부 베타 100~500명.
+- **격차 분석 Tier 1 (Launch Blocker)**: 데이터 type 확장 (카드 / passkey / note) → 카테고리 → 브라우저 확장 (M24-E) → 모바일 (M11) → HIBP password check → 다양한 import → TOTP autofill → 자동 잠금 강화.
+- **사용자 결정 (옵션 나)**: 신용카드 / passkey / secure_note kind 3종 모두 추가. 카테고리는 Phase 4 로 별도. HIBP password check (2-2B) 는 v2 → v1 으로 승격.
+- **갱신된 진입 순서**: Phase 3-A 신용카드 → 3-B secure_note → 4 카테고리 → 2-2B HIBP password → 3-C passkey → TOTP autofill → import 다양화 → M11 모바일 → M24-E 브라우저 확장.
+- **이번 세션 마지막 액션**: **ux-researcher 백그라운드 호출** (1P/BW 의 신용카드/passkey/secure note/카테고리 UI + 마이크로 인터랙션/빈 상태/로딩/에러). 결과 → `docs/ux_research_phase3.md`. 다음 세션 시작 시 그것 기반으로 Phase 3-A implementator 사양 작성 후 진입.
+- **F.2 Spec (모든 frontend implementator 사양 추가)**: 디자인 토큰만 (hex 하드코딩 ❌) / prefers-reduced-motion / 마이크로 인터랙션 (200ms 이내) / 빈 상태 친절한 안내 + CTA / 스켈레톤 / 명확한 에러 + 다음 액션 / 키보드 fully accessible / i18n 4 로케일.
+- **매 Phase 종료 시**: ux-designer agent 호출 (1P 동등 검토) + mini-dogfooding.
+
+### 이전 — Phase 2-4-d 완료
+
 - **Time:** 2026-05-07 — **M24 Phase 2-4-d ✅ — `apivault add` CLI 서브커맨드 + APIVAULT_PASSPHRASE**
 - **Phase:** Phase 3 — Implementation. **Phase 2-3-a ✅ + Phase 2-4-a ✅ + Phase 2-4-d ✅**. M24 "마찰 없는 등록 UX" 풀체인 완료. 다음 → **dogfooding** 권장.
 - **Phase 2-4-d 결과** (`c041ee2`): `Command::Add` 서브커맨드 (7개 옵션) + `cmd_add()` 구현 + `get_passphrase()` 헬퍼 추출 (APIVAULT_PASSPHRASE env 우선 + remove_var) + `open_vault()` 헬퍼 재사용 + URL→host 추출 + subdomain-safe issuer 매칭 + issuer_id NOT NULL 폴백 + kind/env/name fallback chain + CredentialRepo::insert + vault.put_secret + flush + text/JSON 출력. 신규 테스트 11개 (총 14 PASS). 서브커맨드 6 → 7.
