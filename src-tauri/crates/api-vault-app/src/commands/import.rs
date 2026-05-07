@@ -396,35 +396,29 @@ pub async fn do_import_csv_commit(
         };
 
         // SQLite insert
-        match cred_repo
+        if let Err(e) = cred_repo
             .insert_with_id(Some(cred_id), &input, vault_ref.clone())
             .await
         {
-            Err(e) => {
-                row_results.push(ImportRowResult {
-                    row_index: idx,
-                    credential_id: None,
-                    error: Some(format!("db insert failed: {e}")),
-                });
-                continue;
-            }
-            Ok(_) => {}
+            row_results.push(ImportRowResult {
+                row_index: idx,
+                credential_id: None,
+                error: Some(format!("db insert failed: {e}")),
+            });
+            continue;
         }
 
         // vault put_secret — 실패 시 DB row 롤백
         let secret_bytes = SecretBytes::new(row.value.expose_secret().as_bytes().to_vec());
-        match vault.put_secret(&vault_ref, secret_bytes).await {
-            Err(e) => {
-                // best-effort rollback
-                let _ = cred_repo.delete(cred_id).await;
-                row_results.push(ImportRowResult {
-                    row_index: idx,
-                    credential_id: None,
-                    error: Some(format!("vault write failed: {e}")),
-                });
-                continue;
-            }
-            Ok(_) => {}
+        if let Err(e) = vault.put_secret(&vault_ref, secret_bytes).await {
+            // best-effort rollback
+            let _ = cred_repo.delete(cred_id).await;
+            row_results.push(ImportRowResult {
+                row_index: idx,
+                credential_id: None,
+                error: Some(format!("vault write failed: {e}")),
+            });
+            continue;
         }
 
         row_results.push(ImportRowResult {

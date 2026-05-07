@@ -1,5 +1,37 @@
 # Work Log
 
+## 2026-05-07 — M24 Phase 2-2B-3 완료: SQLite security_alerts 마이그레이션 + SecurityAlertRepo + 24h scheduler skeleton
+
+### 구현 범위
+
+| 파일 | 변경 |
+| :--- | :--- |
+| `migrations/0011_security_alerts.sql` | `security_alerts` + `twofa_directory_cache` 테이블 + 3 인덱스 |
+| `repositories/security_alert.rs` | `SecurityAlertRepo` (8 메서드 + 트랜잭션 replace) + `TwoFaDirectoryCacheRepo` (replace_all + TTL 조회) |
+| `repositories/mod.rs` | `pub mod security_alert` + 3종 re-export |
+| `services/feed_scheduler.rs` | `FeedSchedulerConfig` 에 `security_check_enabled` + `security_check_interval_seconds` 추가 + `spawn_security_check_poller` 신규 |
+| `tests/migration_test.rs` | 예상 테이블 수 14 → 16, 인덱스 9 → 11 갱신 |
+| `commands/import.rs` | clippy `single_match` → `if let` 보정 (기존 코드, 이번 clippy 검사에서 발견) |
+
+### 테스트 결과
+
+- RA1~RA8 + C1~C2 (security_alert unit): 10/10 PASS
+- S1~S2 (feed_scheduler): 2/2 PASS
+- api-vault-storage 전체: 93/93 PASS
+- api-vault-app 전체: 217/217 PASS
+- `cargo clippy --workspace -- -D warnings`: 0 warning
+- `cargo fmt --check`: 통과
+
+### 설계 결정
+
+- GATE 1-7 준수: `alert_meta` 는 평문 count/score/domain JSON만. 비번·username 미포함.
+- GATE 1-6 준수: 자동 스케줄러 `spawn_security_check_poller` 는 tracing 로그만, audit log 없음.
+- `replace_alerts_for_credential` 트랜잭션: `dismissed_at IS NULL` 만 삭제 → 사용자 dismiss 보존.
+- `spawn_security_check_poller` 첫 tick skip (앱 시작 직후 즉시 실행 방지, 수동 실행은 2-2B-4 Tauri command 담당).
+- `interval_seconds=0` 보정: 최소 1ms (tokio interval non-zero 요구).
+
+---
+
 ## 2026-05-07 (resume 세션) — Phase 2-2B 진입 결정 + Researcher 백그라운드
 
 세션 재개 후 Phase 3-A 신용카드보다 Phase 2-2B (Watchtower 동등 풀체인) 우선 결정.

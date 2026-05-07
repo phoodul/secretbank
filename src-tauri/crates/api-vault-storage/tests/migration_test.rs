@@ -3,7 +3,7 @@
 /// applies all migrations automatically, and tears down after each test.
 ///
 /// Verify that all expected tables are created by the migration.
-/// (M0 11 tables + M20 supply chain 3 tables = 14 total.)
+/// (M0 11 tables + M20 supply chain 3 tables + 0011 security 2 tables = 16 total.)
 #[sqlx::test(migrations = "./migrations")]
 async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     let tables: Vec<(String,)> = sqlx::query_as(
@@ -32,8 +32,11 @@ async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
         "package_advisory",
         "package_usage",
         "project",
+        // 0011 — Watchtower security alerts + 2FA directory cache
+        "security_alerts",
         "settings",
         "sync_state",
+        "twofa_directory_cache",
         "usage",
     ];
 
@@ -74,6 +77,9 @@ async fn indexes_created(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
         "idx_incident_issuer_detected",
         "idx_incident_match_unique",
         "idx_match_credential",
+        // 0011 — security_alerts 인덱스
+        "idx_security_alerts_credential_id",
+        "idx_security_alerts_kind",
         "idx_usage_credential",
         "idx_usage_project",
     ];

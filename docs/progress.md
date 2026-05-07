@@ -2,14 +2,15 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-07 (resume 세션 — **USER APPROVAL GATE 1 ✅ 통과, Phase 2-2B-1 implementator 호출 직전**)
-- **Phase:** Phase 3 — Implementation. **Researcher (`b6a1d49`) + Integrator (`1c3a82b`) 완료. GATE 1 일괄 승인 (`다음 commit 에 기록`)**.
-- **5 sub-task 분할 (총 9 commits 예상)**:
-  1. **2-2B-1**: PwnedPasswordsClient (Rust, wiremock 7 테스트) — 다음 호출
-  2. **2-2B-2**: security_check.rs (zxcvbn + 재사용 SHA-256 + 2fa.directory)
-  3. **2-2B-3**: SQLite security_alerts 마이그레이션 + scheduler 24h
-  4. **2-2B-4**: Tauri command + audit + capability
+- **Time:** 2026-05-07 — **Phase 2-2B-3 완료 (implementator)**
+- **Phase:** Phase 3 — Implementation. 2-2B-3 SQLite 마이그레이션 + Repo + scheduler skeleton 구현 완료.
+- **5 sub-task 진행 상황**:
+  1. ✅ **2-2B-1**: PwnedPasswordsClient (`e26cc2d`)
+  2. ✅ **2-2B-2**: security_check.rs + twofa_directory.rs (`3714c34`)
+  3. ✅ **2-2B-3**: SQLite 마이그레이션 0011 + SecurityAlertRepo + spawn_security_check_poller (이번 commit)
+  4. **2-2B-4**: Tauri `run_security_check` command + vault 잠금 확인 + audit log — **다음 implementator**
   5. **2-2B-5**: WatchtowerPage UI + BentoCard 배지 + i18n 4 로케일
+- **다음 액션**: 2-2B-4 implementator 사양 → implementator 호출
 - **GATE 1 결정 (모두 권고 수용)**:
   - 1-1 HIBP opt-in 기본값 = 비활성 / 1-2 WatchtowerPage = 사이드바 최상위 / 1-3 스케줄 = 24h + 수동 / 1-4 Vulnerable vs Compromised = 별도 / 1-5 동시성 = 10 / 1-6 audit = 수동만 / 1-7 alert_meta = 평문 메타
 - **B.1 보강 4 항목 모두 implementator 사양 자동 반영**: B.1-4 (suffix 길이 guard), B.1-5 (capability), B.1-6 (audit), B.1-9 (에러 메시지)

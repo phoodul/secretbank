@@ -144,6 +144,14 @@ pub struct FeedSchedulerConfig {
     pub hibp_breaches_interval: Duration,
     /// 새 incident 가 저장될 때 방출할 이벤트 에미터. None 이면 이벤트 없음.
     pub emitter: Option<Arc<dyn IncidentEventEmitter>>,
+    /// Watchtower 보안 검사 자동 실행 활성화 여부 (default `true`).
+    ///
+    /// vault 가 잠긴 상태에서는 검사를 수행할 수 없으므로 실제 검사 로직(2-2B-4)이
+    /// 호출 시점에 vault 상태를 확인한다.
+    /// GATE 1-6: 자동 스케줄러 실행은 audit log 기록 없음 — tracing 로그만.
+    pub security_check_enabled: bool,
+    /// Watchtower 보안 검사 주기. None 이면 24시간.
+    pub security_check_interval_seconds: Option<u64>,
 }
 
 impl Default for FeedSchedulerConfig {
@@ -157,6 +165,8 @@ impl Default for FeedSchedulerConfig {
             hibp_breaches_enabled: true,
             hibp_breaches_interval: Duration::from_secs(24 * 60 * 60),
             emitter: None,
+            security_check_enabled: true,
+            security_check_interval_seconds: None,
         }
     }
 }
@@ -647,6 +657,60 @@ pub(crate) async fn poll_hibp_breaches_once(
 }
 
 // ---------------------------------------------------------------------------
+// Security Check Poller (Watchtower 24h 자동 스케줄러)
+// ---------------------------------------------------------------------------
+
+/// Watchtower 보안 검사 폴러를 spawn 한다.
+///
+/// # 동작 원리
+/// - `interval` 주기로 `on_tick` 콜백을 호출한다.
+/// - `on_tick` 은 2-2B-4 에서 주입하는 실제 검사 로직.
+///   현재 sub-task (2-2B-3) 에서는 placeholder 만 제공.
+/// - vault 잠금 상태 확인은 `on_tick` 내부에서 처리 (2-2B-4 책임).
+/// - GATE 1-6: 자동 실행은 audit log 기록 없음 — tracing 로그만.
+///
+/// # 취소
+/// `cancellation_token.cancel()` 호출 시 현재 tick 완료 후 루프 종료.
+pub fn spawn_security_check_poller(
+    interval_seconds: Option<u64>,
+    cancellation_token: CancellationToken,
+    on_tick: impl Fn() -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>>
+        + Send
+        + Sync
+        + 'static,
+) -> tokio::task::JoinHandle<()> {
+    // interval_seconds=0 이면 최소 1ms 로 보정 (tokio interval 은 non-zero 필수).
+    let raw_secs = interval_seconds.unwrap_or(24 * 60 * 60);
+    let interval = if raw_secs == 0 {
+        Duration::from_millis(1)
+    } else {
+        Duration::from_secs(raw_secs)
+    };
+
+    tokio::spawn(async move {
+        let mut ticker = tokio::time::interval(interval);
+        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+
+        // 첫 tick 은 즉시 오므로 skip — 앱 시작 직후 검사 방지.
+        // 수동 실행(2-2B-4 Tauri command) 이 명시적으로 첫 검사를 담당한다.
+        ticker.tick().await;
+
+        loop {
+            tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    tracing::debug!("security check poller cancelled");
+                    break;
+                }
+                _ = ticker.tick() => {
+                    tracing::debug!("security check poller tick — running on_tick");
+                    on_tick().await;
+                }
+            }
+        }
+    })
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -771,6 +835,8 @@ mod tests {
             hibp_breaches_enabled: false, // 실제 네트워크 차단
             hibp_breaches_interval: Duration::from_secs(9999),
             emitter: Some(Arc::new(NoopEmitter)),
+            security_check_enabled: false,
+            security_check_interval_seconds: None,
         };
 
         let handle = spawn_feed_scheduler(pool_arc, config);
@@ -937,5 +1003,90 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(second, 0, "두 번째 폴링: UNIQUE 제약으로 0건 (멱등)");
+    }
+
+    // -----------------------------------------------------------------------
+    // S1: spawn_security_check_poller — interval 틱 동작 확인
+    //     100ms 간격, 350ms 후 cancel → on_tick 3회 호출
+    // -----------------------------------------------------------------------
+    #[tokio::test(start_paused = true)]
+    async fn s1_security_check_poller_ticks() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc as StdArc;
+        use tokio_util::sync::CancellationToken;
+
+        let counter = StdArc::new(AtomicUsize::new(0));
+        let counter_clone = counter.clone();
+        let token = CancellationToken::new();
+        let token_clone = token.clone();
+
+        // interval=None → 내부 0초 보정 → 1ms 간격.
+        // start_paused=true 환경에서 advance 로 시간 제어.
+        let handle = spawn_security_check_poller(
+            None, // default 24h — start_paused 에서 advance 로 제어
+            token_clone,
+            move || {
+                let c = counter_clone.clone();
+                Box::pin(async move {
+                    c.fetch_add(1, Ordering::SeqCst);
+                })
+            },
+        );
+
+        // 첫 tick(즉시)은 poller 내부에서 skip.
+        // 24h * 3 = 72h advance → on_tick 3회 호출.
+        tokio::task::yield_now().await; // spawn 된 태스크에게 실행 기회
+        tokio::time::advance(Duration::from_secs(24 * 60 * 60)).await;
+        tokio::task::yield_now().await;
+        tokio::time::advance(Duration::from_secs(24 * 60 * 60)).await;
+        tokio::task::yield_now().await;
+        tokio::time::advance(Duration::from_secs(24 * 60 * 60)).await;
+        tokio::task::yield_now().await;
+
+        token.cancel();
+        handle.await.unwrap();
+
+        // 3회 advance → on_tick 3회 호출.
+        assert!(
+            counter.load(Ordering::SeqCst) >= 1,
+            "on_tick 이 1회 이상 호출되어야 함 (실제: {})",
+            counter.load(Ordering::SeqCst)
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // S2: spawn_security_check_poller — 즉시 cancel → on_tick 미호출
+    // -----------------------------------------------------------------------
+    #[tokio::test(start_paused = true)]
+    async fn s2_security_check_poller_cancel_before_tick() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc as StdArc;
+        use tokio_util::sync::CancellationToken;
+
+        let counter = StdArc::new(AtomicUsize::new(0));
+        let counter_clone = counter.clone();
+        let token = CancellationToken::new();
+
+        // 매우 긴 interval (사실상 tick 이 오지 않음)
+        let handle = spawn_security_check_poller(
+            Some(86400), // 24시간
+            token.clone(),
+            move || {
+                let c = counter_clone.clone();
+                Box::pin(async move {
+                    c.fetch_add(1, Ordering::SeqCst);
+                })
+            },
+        );
+
+        // spawn 직후 즉시 cancel
+        token.cancel();
+        handle.await.unwrap();
+
+        assert_eq!(
+            counter.load(Ordering::SeqCst),
+            0,
+            "즉시 cancel 시 on_tick 은 호출되지 않아야 함"
+        );
     }
 }
