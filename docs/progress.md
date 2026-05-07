@@ -2,8 +2,30 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-07 (Night mode 종료 시점) — **비전 명확화 + ux-researcher 백그라운드 + 다음 = Phase 3-A (신용카드)**
-- **Phase:** Phase 3 — Implementation. M24 Phase 2-3-a / 2-4-a / 2-4-d 모두 ✅. **다음 = Phase 3-A (신용카드 kind)** + ux-researcher 가이드 도착 후 진입.
+- **Time:** 2026-05-07 (resume 세션 시작) — **Phase 3-A 가 아니라 Phase 2-2B (Watchtower 동등 풀체인) 우선 결정**
+- **Phase:** Phase 3 — Implementation. **ux_research_phase3.md docs(research) 단독 커밋 완료 (`4628da3`) + Phase 2-2B 결정 기록 (`faaa519`) + Researcher 백그라운드 호출**.
+- **사용자 결정 (resume)**: Phase 3-A 신용카드 진입 전 Phase 2-2B (HIBP Pwned Passwords + 재사용 + 약한 비번 + 2FA 미설정) 풀체인 우선. 1Password Watchtower / Bitwarden Reports 동등 목표 (옵션 가). 예상 7~8 commits.
+- **Researcher 임무 (백그라운드 실행 중)**:
+  1. HIBP Pwned Passwords API v3 (k-anonymity range lookup, padding, NTLM mode)
+  2. Rust password strength 라이브러리 (zxcvbn-rs vs passwords crate)
+  3. 1Password Watchtower 분석 (Compromised/Vulnerable/Reused/Weak/Inactive 2FA 검출)
+  4. Bitwarden Reports (6종)
+  5. API Vault 통합 권고 (메모리 안전 / 재사용 검출 / UI 위치 / BentoCard 배지 / Settings opt-in)
+- **Researcher 결과 산출물**: `docs/research_phase2_2b_password_check.md` (800~1500줄 예상)
+- **다음 액션 (Researcher 완료 후)**:
+  1. Researcher 결과 검토 (Sources 신뢰도 확인)
+  2. integrator 호출 — Phase 2-2B 사양 통합 보고서
+  3. **USER APPROVAL GATE 1** — 사양 승인
+  4. implementator 호출 — Phase 2-2B-1 (HIBP range_lookup 메서드 추가)
+  5. Phase 2-2B-2 (재사용 검출), 2-2B-3 (약한 비번 zxcvbn), 2-2B-4 (Tauri command + UI)
+- **보안 절대 우선 모든 implementator 호출 적용**: SecretBox 즉시 래핑, k-anonymity range lookup 만, timing-safe 비교 (`subtle::ConstantTimeEq`), 평문 DB 저장 ❌, 평문 IPC 미통과.
+- **이전 세션 비전 결정 유지** ([2026-05-07] 비전 명확화 + 보안 절대 우선): F.2 Spec + Security Spec 둘 다 동시 적용.
+- **Phase 3 진입 순서 갱신**: 2-2B → 3-A 신용카드 → 3-B secure_note → 4 카테고리 → 3-C passkey → TOTP autofill → M11 → M24-E.
+
+### 이전 — 2026-05-07 (Night mode 종료 시점)
+
+- **이전 마지막 액션**: ux-researcher 백그라운드 호출 — 결과 `docs/ux_research_phase3.md` 1039줄. 이번 resume 세션에서 단독 커밋.
+- **Phase:** Phase 3 — Implementation. M24 Phase 2-3-a / 2-4-a / 2-4-d 모두 ✅.
 - **사용자 비전 갱신 (2026-05-07, project-decisions [2026-05-07] 비전 명확화 항목 신규)**:
   - "1Password / Bitwarden 과 경쟁할 수 있는 시장 출시 가능 수준이 목표. 시간이 걸리더라도 격차 좁힘."
   - "디자인 / UX / 직관성 / 기능 모두 1P 동등 수준."

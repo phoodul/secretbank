@@ -1,5 +1,32 @@
 # Work Log
 
+## 2026-05-07 (resume 세션) — Phase 2-2B 진입 결정 + Researcher 백그라운드
+
+세션 재개 후 Phase 3-A 신용카드보다 Phase 2-2B (Watchtower 동등 풀체인) 우선 결정.
+
+### 결정 + 사전 작업 (`4628da3` + `faaa519`)
+
+- ux_research_phase3.md (1039줄) docs(research) 단독 커밋 (`4628da3`) — Phase 3 진입 시 즉시 사용 가능
+- project-decisions.md `[2026-05-07] Phase 3 진입 전 Phase 2-2B 우선` 신규 항목 추가 (`faaa519`)
+- **결정 요점**: 1Password Watchtower / Bitwarden Reports 동등을 목표 (Compromised + Vulnerable + Reused + Weak + Inactive 2FA + 2FA Available)
+- **보안 룰 적용**: HIBP k-anonymity range lookup 만 (전체 hash ❌), SecretBox 즉시 래핑, drop 시 zeroize, timing-safe 비교, 평문 DB 저장 ❌
+- **순서 갱신**: 2-2B → 3-A 신용카드 → 3-B secure_note → 4 카테고리 → 3-C passkey → TOTP autofill → M11
+
+### Researcher 백그라운드 호출 (진행 중)
+
+- 결과 산출물: `docs/research_phase2_2b_password_check.md`
+- 5개 섹션: HIBP Pwned Passwords API v3 / Rust password strength (zxcvbn-rs) / 1P Watchtower / BW Reports / API Vault 통합 권고
+- 분량 가이드: 800~1500줄
+
+### 다음 액션 (Researcher 완료 후)
+
+1. integrator 호출 — Phase 2-2B 사양 통합 보고서
+2. USER APPROVAL GATE 1 — 사양 승인
+3. implementator 사양 작성 (F.2 Spec + Security Spec) → implementator 호출 (TDD)
+4. Phase 2-2B 풀체인 7~8 commits 예상 (range_lookup → 재사용 검출 → zxcvbn → Tauri command → UI)
+
+---
+
 ## 2026-05-07 (Night mode 후반) — Phase 2-4-a + 2-4-d + tauri-plugin-fs fix (5 commits)
 
 이번 세션 후반에서 처리한 항목들 — Phase 2-3-a 풀체인 직후 자연 진입으로 Phase 2-4 마무리 + 2-3-a-5 회귀 fix.
