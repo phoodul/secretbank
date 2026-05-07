@@ -2,25 +2,21 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-07 — **🎉 Phase 2-2B 풀체인 완성! Watchtower 동등 비밀번호 보안 검사**
-- **Phase:** Phase 3 — Implementation. 2-2B 전체 완료. 다음 = Phase 3-A 또는 dogfooding.
-- **5 sub-task 누적 9 commits**:
-  1. ✅ **2-2B-1** PwnedPasswordsClient (`e26cc2d`) — HIBP k-anonymity range lookup, Add-Padding, ConstantTimeEq, SecretBox, fuzz-safe parser, wiremock 7
-  2. ✅ **2-2B-2** security_check + twofa_directory (`3714c34`) — SecurityAlert 5 variant, zxcvbn weak, SHA-256 reused, missing 2FA, 24h in-memory 캐시 (R1: zxcvbn `Score` 는 PartialOrd derive 됨, `u8::from()` 비교 / R4: `secondary_value_ref` + `label` fallback)
-  3. ✅ **2-2B-3** SQLite + Repo + scheduler (`13758ca`) — 마이그레이션 0011 + SecurityAlertRepo (9 메서드) + TwoFaDirectoryCacheRepo + spawn_security_check_poller skeleton
-  4. ✅ **2-2B-4** Tauri commands (`1dd89f4`) — run_security_check (concurrency 10) / list_security_alerts / dismiss / undismiss + audit log + R4 fallback (`secondary_label.contains("totp")` case-insensitive)
-  5. ✅ **2-2B-5** Frontend (`0c98e13`) — WatchtowerPage + SecurityAlertCard + SecurityBadge (BentoCard 통합) + Settings HIBP opt-in + i18n 4 로케일 + Vitest 9 PASS
-  + 4 docs commits (a2917a5 / d99a40c / a6191fd / 546847f)
-- **누적 검증**: cargo test 230+ passed (회귀 0) / cargo clippy 0 warning / cargo fmt PASS / pnpm typecheck 0 / pnpm vitest 9 신규 PASS
-- **신규 의존성**: sha1 = "0.10" / subtle = "2.6" / zxcvbn = "3.1" (workspace), ulid (dev-deps 재사용)
-- **B.1 보안 결정 모두 적용**: B.1-1 검증 라이브러리 / B.1-2 expose_secret 단일 블록 / B.1-3 평문 IPC 미통과 / B.1-4 fuzz-safe parser / B.1-6 audit log 수동만 / B.1-9 에러 메시지 범용화 / B.1-10 ConstantTimeEq
-- **GATE 1 모두 적용**: 1-1 HIBP opt-in 비활성 / 1-2 사이드바 Watchtower 신규 / 1-3 24h skeleton + 수동 풀 / 1-4 Compromised 별도 / 1-5 concurrency 10 / 1-6 audit 수동만 / 1-7 alert_meta 평문 메타
-- **위험 처리**: R1 (HIGH) zxcvbn PartialOrd 검증 OK / R3 HIBP 부분 실패 → `hibp_failed: true` summary 필드 / R4 (MEDIUM) Credential.totp_uri 부재 → secondary_value_ref + label fallback (마이그레이션 추가 ❌)
-- **다음 액션 (사용자 결정 필요)**:
-  1. **dogfooding 권장** — Chrome 비번 export → CSV import → Watchtower 검사 (HIBP opt-in 활성화) → 결과 검토. UX 이슈 발견 후 fix
-  2. **Phase 3-A (신용카드)** — `docs/ux_research_phase3.md` 기반 implementator 사양 작성 후 진입
-  3. **Threat model 문서** ([2026-05-07] 보안 결정 D.6 항목, 30분 작업) — Phase 3-A 진입 전 권고
-- **Phase 3 진입 순서 (확정)**: 2-2B ✅ → 3-A 신용카드 → 3-B secure_note → 4 카테고리 → 3-C passkey → TOTP autofill → M11 → M24-E
+- **Time:** 2026-05-07 — **🎉 Phase 3-A 풀체인 완성! 신용카드 credential kind 추가**
+- **Phase:** Phase 3 — Implementation. Phase 2-2B + 3-A 모두 ✅. 다음 = Phase 3-B (secure_note) 또는 4 (카테고리) 또는 dogfooding.
+- **Phase 3-A 풀체인 (6 sub-task / 12 commits)**:
+  - 3-A-1 `af2e802` CredentialKind + 0012 마이그레이션 + Repo
+  - 3-A-2 `f81e3a2` BIN 감지 + card-utils.ts
+  - 3-A-3 `0194078` CreditCardVisual 3D flip (GATE 2-4 구조적 보장)
+  - 3-A-4 `f83295e` CreditCardForm 자연 순서 (BIN 실시간 + Zod refine)
+  - 3-A-5 `a6c891a` 4 Tauri commands + Detail + 30s 자동 클리어
+  - 3-A-6 `f7d00a3` BentoCard 분기 + i18n 4 로케일
+  - + 6 docs commits
+- **누적 검증**: cargo test 235 passed (회귀 0) / cargo clippy 0 / cargo fmt PASS / pnpm typecheck 0 / pnpm vitest 154+8 신규 PASS / pnpm lint 신규 0 / pnpm format PASS
+- **신규 의존성**: react-number-format = 5.4.5 (frontend, Phase 3-A-4)
+- **B.1 + B.5 모두 적용** + GATE 2 7항목 일괄 승인 적용 + THREAT_MODEL §4 4대 위협 완화
+
+### 이전 — Phase 2-2B 풀체인 완성 시점
 
 ### 이전 — resume 세션 시작 시점
 
