@@ -5,6 +5,57 @@
 
 ---
 
+## [2026-05-08] Pre-step Worker 배포 — GATE 1 사양 확정 (Dogfooding 진입 전)
+
+이번 resume 세션 첫 GATE 1. m24_vision.md "다음 세션 시작점" Pre-step 5개 작업의 구체적 사양 확정.
+
+### 사용자 결정 3가지 (모두 권장 옵션)
+
+1. **Worker 코드 배치 위치**: `ee/cloudflare/download-proxy/` (별도 Worker + Routes)
+   - 근거: 기존 `ee/api-vault-relay/` 와 일관, ee/ 격리 (Open Core / EE License) 유지, Pages 와 같은 도메인이지만 wrangler routes 로 `api-vault.app/download/*` + `api-vault.app/api/*` 만 Worker 가 catch
+2. **`/api/latest` manifest 갱신 방식**: release.yml 이 `site/latest.json` 을 main 에 commit (정적)
+   - 근거: GitHub API rate limit 의존성 제거, Worker 가 site/latest.json 을 KV 또는 정적 복제로 제공. release 후 GitHub Actions 가 자동으로 main branch 에 commit + push (PAT/`GITHUB_TOKEN` 권한 사용)
+3. **구현 사이클**: researcher 짧게 → integrator → implementator (full)
+   - 근거: Worker stream proxy 패턴 / GitHub Releases CDN URL 형식 / Worker free plan 한계 / cache 전략 사전 검증. 보안·신뢰성 우선 (Project Vision = 1P/Bitwarden 동등)
+
+### 자동 결정 (memory 룰 + Project Vision 에 의해 자동 확정)
+
+- **도메인 매핑**: 단일 도메인 `api-vault.app/download/*` + `api-vault.app/api/latest`. **서브도메인 ❌** (`download.api-vault.app` 같은 서브도메인은 사용자 신뢰감 분산). m24_vision.md "어디에도 'github' 단어 미노출" 룰 충족.
+- **Proxy 방식**: Stream proxy (Worker 가 fetch + 청크 stream). **302 redirect ❌** (사용자 브라우저 주소창에 GitHub CDN URL 노출됨, 룰 위반).
+- **Manifest 형식**: tauri-plugin-updater 호환 (`version` + `notes` + `pub_date` + `platforms[].url + .signature`) — 기존 `site/latest.json` 형식 그대로 유지.
+- **`tauri.conf.json` updater endpoint**: `https://api-vault.app/api/latest` 단일 endpoint (`{{current_version}}` placeholder 제거 — tauri-plugin-updater 는 단일 endpoint + 응답의 version 비교로 동작).
+
+### 영향
+
+- 향후 Cloudflare R2 자체 호스팅 전환 시 Worker 내부 fetch URL 만 변경하면 됨 (사용자 노출 URL 불변)
+- Phase 3-B / 4 / M14 진입 전 dogfooding 가능
+- v0.1.0-pre11 release 시 GitHub Actions 가 main 에 site/latest.json commit → Pages 자동 재배포 → Worker 가 정적 manifest 제공
+
+### GATE 2 — 통합 사양 승인 (2026-05-08, integrator_report_pre_step_worker.md 508줄 기반)
+
+**전체 권고 채택**:
+- **Section 3-3**: 별도 Worker (`ee/cloudflare/download-proxy/`) 유지 (Pages Functions ❌). 라이선스 경계 우선 + 회색 지대 리스크는 deploy 후 `curl` 검증으로 즉시 탐지 + Pages Functions fallback 경로 명확
+- **Section 4**: 7대 위협 모델 (W1~W7) 모두 적용. `ALLOWED_FILENAME_RE` 의 `.` 이스케이프 implementator 검토
+- **Section 5**: 5개 sub-task 분할 (Worker → tauri/latest.json → release.yml → site/index.html → RELEASE_GUIDE), 1 implementator = 1 sub-task = 1 commit 룰
+- **결정 1**: Pages Functions fallback 트리거 = deploy 후 24h 내 `curl` 실패 시 즉시
+- **결정 2**: `release.yml` push 권한 = `GITHUB_TOKEN` 그대로 (branch protection 추가 시 PAT 마이그레이션)
+- **결정 3**: ~~"Previous releases" UI = 제거~~ → **유지 + (d) 자동 생성 채택** (2026-05-08 사용자 지적 반영)
+  - **사용자 지적**: "Python 등 다른 release 는 업데이트 되더라도 previous release 를 사용하는 경우가 있다"
+  - **유지 근거**: vault 파일 schema 마이그레이션 호환성 / 신버전 critical regression rollback / 버그 재현 / 회사·정부·은행 검증된 특정 버전만 허용
+  - **구현 (d)**: release.yml 이 release 후 `site/releases.json` 도 자동 생성 + `[skip ci]` main commit. CI `GITHUB_TOKEN` 으로 `releases?per_page=20` 호출 (rate limit 5000/h 무관).
+  - **Worker 변경 ❌**: 정적 파일은 Pages 가 직접 서빙 (`api-vault.app/releases.json`). `/api/releases` endpoint 추가 ❌
+  - **Sub-task 영향**: Sub-task 2 (`site/index.html`) `renderPreviousReleases()` → `fetch("/releases.json")` 변경, Sub-task 4 (`release.yml`) site/releases.json 자동 생성 step 추가, Sub-task 5 (RELEASE_GUIDE) releases.json 절차 명시. Sub-task 1 Worker 영향 ❌
+- **결정 4**: GitHub PAT 추가 시점 = 미설정 시작, 100+ DAU 또는 `429` 발생 시
+- **결정 5**: Workers plan = Free 시작, 50k req/day 도달 시 Paid 전환
+- **결정 6**: sub-task 묶음 = 5 implementator 분할 (commit 단위 추적 명확)
+- **결정 7**: Worker secrets = wrangler.toml 주석 미리 기록 (relay 패턴 일관)
+
+**추가 결정 (이번 세션 GATE 2 옵션)**:
+- **Sub-task 1 vitest 포함**: `@cloudflare/vitest-pool-workers` — filename allowlist / cache / SSRF 방어 / Range 헤더 단위 테스트. Project Vision = 1P/Bitwarden 동등 신뢰성
+- **wrangler deploy 주체**: 사용자 직접. Cloudflare account 인증 / API token / DNS route 설정 secrets 노출 위험으로 implementator 는 코드 작성만, 사용자가 RELEASE_GUIDE 따라 deploy
+
+---
+
 ## [2026-05-07] 다음 세션 = Dogfooding (Phase 2-2B + 3-A 풀체인 검증)
 
 ### 사용자 결정 (resume 세션 종료 직전)

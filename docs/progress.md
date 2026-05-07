@@ -2,6 +2,39 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-08 — **Pre-step Worker download-proxy GATE 1 완료, researcher 백그라운드 실행 중**
+- **Phase:** Phase 3 — Implementation. Phase 2-2B ✅ + 3-A ✅ 완료. 다음 세션 시작점 = **Pre-step Worker 배포** (m24_vision.md 룰 — api-vault.app 도메인 단독, github 단어 미노출).
+- **이번 세션 첫 액션 (resume)**:
+  - GATE 1 사용자 결정 3가지 (`docs/project-decisions.md` [2026-05-08] 항목 신규):
+    1. Worker 위치 = `ee/cloudflare/download-proxy/` (별도 Worker + Routes, ee/api-vault-relay 와 일관)
+    2. Manifest 갱신 = release.yml 이 `site/latest.json` 을 main 에 commit (정적, GitHub API rate limit 의존 ❌)
+    3. 사이클 = researcher → integrator → implementator (full)
+  - 자동 결정: 단일 도메인 (`api-vault.app/download/*` + `/api/latest`) / Stream proxy / tauri-plugin-updater 호환 형식 유지
+- **researcher 백그라운드 (`agentId: aa500bad7f7dbba67`)** — 7개 항목 조사:
+  1. Cloudflare Worker stream proxy 패턴 (ReadableStream + Range + CORS)
+  2. GitHub Releases CDN URL 형식 (302 chain + token 권장)
+  3. Workers free vs paid 한계 (subrequests / bandwidth)
+  4. 실제 미러링 사례 (다른 Tauri 앱 / OSS)
+  5. tauri-plugin-updater 자체 endpoint schema (단일 endpoint + version 비교)
+  6. release.yml 자동 commit 패턴 (circular trigger 방지)
+  7. wrangler routes 충돌 방어 (Pages 와 공존)
+  - 결과: `docs/research_pre_step_worker_download_proxy.md` (예상 800~1500줄)
+- **GATE 2 ✅ 승인 (2026-05-08)**: 전체 권고 채택 + Sub-task 1 vitest 포함 + wrangler deploy 사용자 직접
+- **사용자 지적 — 결정 #3 변경 (2026-05-08)**: "Previous releases UI 제거" ❌ → **유지 + (d) 자동 생성 채택**. release.yml 이 site/releases.json 자동 생성 + `[skip ci]` main commit. Worker 영향 ❌, Sub-task 2/4/5 영향
+- **Sub-task 1 ✅ implementator 완료** (commiter 호출 대기):
+  - 신규 파일 7개 (`ee/cloudflare/download-proxy/{wrangler.toml, src/index.ts, src/index.test.ts, package.json, tsconfig.json, vitest.config.ts, README.md}`)
+  - 검증: vitest 14/14 PASS / typecheck 0 / cargo test 회귀 0
+  - implementator 결정 (사양 보강): TAG_RE `(-[a-zA-Z0-9.]+)?` → `([-a-zA-Z0-9.]+)?` (SemVer pre-release 하이픈 허용, 보안 위협 없음 — 허용 문자 집합 동일)
+  - implementator 결정: mockFetch `mockResolvedValue` → `mockImplementation` 교체 (`@cloudflare/vitest-pool-workers` "I/O on behalf of a different request" 오류 회피)
+- **다음 액션**:
+  1. Sub-task 1 commit (commiter 호출)
+  2. Sub-task 2 (site/index.html) — `fetchReleases()` GitHub API → `/api/latest` + `renderPreviousReleases()` → `/releases.json`
+  3. Sub-task 3 (site/latest.json + tauri.conf.json updater)
+  4. Sub-task 4 (release.yml — latest.json + releases.json 자동 생성 + `[skip ci]` commit)
+  5. Sub-task 5 (RELEASE_GUIDE)
+
+### 이전 — 2026-05-07 (Phase 3-A 풀체인 완성)
+
 - **Time:** 2026-05-07 — **🎉 Phase 3-A 풀체인 완성! 신용카드 credential kind 추가**
 - **Phase:** Phase 3 — Implementation. Phase 2-2B + 3-A 모두 ✅. 다음 = Phase 3-B (secure_note) 또는 4 (카테고리) 또는 dogfooding.
 - **Phase 3-A 풀체인 (6 sub-task / 12 commits)**:
