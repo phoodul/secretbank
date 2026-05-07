@@ -5,6 +5,41 @@
 
 ---
 
+## [2026-05-07] Phase 2-2B GATE 1 일괄 승인 (Integrator 권고 7항목)
+
+### 사용자 결정
+
+Integrator 보고서 (`docs/integrator_report_phase2_2b.md` §4) 권고 7항목 모두 일괄 승인. 변경 없음.
+
+| GATE | 결정 |
+|:---|:---|
+| 1-1 | HIBP opt-in 기본값 = **비활성** (첫 실행 시 안내 배너로 활성화 유도) |
+| 1-2 | WatchtowerPage = 사이드바 **신규 최상위 섹션** (Inventory 아래) |
+| 1-3 | 스케줄 = **24h 자동 + 수동 [Run Check] 병행** |
+| 1-4 | Vulnerable vs Compromised = **별도 카테고리** (1P 동등) |
+| 1-5 | HIBP 동시성 = **concurrency = 10** + tokio JoinSet (1000개 ≈ 10초) |
+| 1-6 | audit log = **수동 실행만** (24h 자동은 tracing 로그) |
+| 1-7 | `alert_meta` JSON = **평문 메타데이터** (count/score/domain — 비번/필드 자체 미포함) |
+
+### B.1 보강 사항 (모든 implementator 호출 자동 적용)
+
+- B.1-4 — HIBP suffix 길이 != 35자 행 skip guard
+- B.1-5 — `run_security_check` Tauri capability deny-by-default
+- B.1-6 — 수동 실행 시 audit log (M6 chain)
+- B.1-9 — 에러 메시지 범용화 (URL/credential ID 미노출)
+
+### 위험 요소 처리
+
+- R1 (HIGH): zxcvbn Score PartialOrd → implementator 가 docs.rs 직접 확인 후 미지원 시 `matches!` 매크로
+- R4 (MEDIUM): `Credential.totp_uri` 부재 → 2-2B-2 에서 fallback 로직 (`secondary_value_ref` 또는 `name`/`label` 기반 추론), 별도 마이그레이션은 별도 결정
+
+### 다음 액션
+
+1. progress.md / loop_count.json 갱신
+2. Phase 2-2B-1 implementator 호출 (PwnedPasswordsClient + Add-Padding + ConstantTimeEq + wiremock 7 테스트)
+
+---
+
 ## [2026-05-07] Phase 3 진입 전 Phase 2-2B (Watchtower 동등 풀체인) 우선
 
 ### 사용자 결정 (resume 세션)

@@ -2,8 +2,24 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-07 (resume 세션 시작) — **Phase 3-A 가 아니라 Phase 2-2B (Watchtower 동등 풀체인) 우선 결정**
-- **Phase:** Phase 3 — Implementation. **ux_research_phase3.md docs(research) 단독 커밋 완료 (`4628da3`) + Phase 2-2B 결정 기록 (`faaa519`) + Researcher 백그라운드 호출**.
+- **Time:** 2026-05-07 (resume 세션 — **USER APPROVAL GATE 1 ✅ 통과, Phase 2-2B-1 implementator 호출 직전**)
+- **Phase:** Phase 3 — Implementation. **Researcher (`b6a1d49`) + Integrator (`1c3a82b`) 완료. GATE 1 일괄 승인 (`다음 commit 에 기록`)**.
+- **5 sub-task 분할 (총 9 commits 예상)**:
+  1. **2-2B-1**: PwnedPasswordsClient (Rust, wiremock 7 테스트) — 다음 호출
+  2. **2-2B-2**: security_check.rs (zxcvbn + 재사용 SHA-256 + 2fa.directory)
+  3. **2-2B-3**: SQLite security_alerts 마이그레이션 + scheduler 24h
+  4. **2-2B-4**: Tauri command + audit + capability
+  5. **2-2B-5**: WatchtowerPage UI + BentoCard 배지 + i18n 4 로케일
+- **GATE 1 결정 (모두 권고 수용)**:
+  - 1-1 HIBP opt-in 기본값 = 비활성 / 1-2 WatchtowerPage = 사이드바 최상위 / 1-3 스케줄 = 24h + 수동 / 1-4 Vulnerable vs Compromised = 별도 / 1-5 동시성 = 10 / 1-6 audit = 수동만 / 1-7 alert_meta = 평문 메타
+- **B.1 보강 4 항목 모두 implementator 사양 자동 반영**: B.1-4 (suffix 길이 guard), B.1-5 (capability), B.1-6 (audit), B.1-9 (에러 메시지)
+- **위험 R1 (HIGH) — zxcvbn Score PartialOrd**: implementator 가 docs.rs 직접 확인 후 `matches!` 매크로 fallback
+- **위험 R4 (MEDIUM) — Credential.totp_uri 부재**: 2-2B-2 에서 fallback 로직 (`secondary_value_ref` 또는 `name`/`label` 기반)
+- **다음 액션**: 결정 기록 commit → 2-2B-1 implementator 사양 작성 → implementator 호출 (TDD)
+
+### 이전 — resume 세션 시작 시점
+
+- **Phase:** Phase 3 — Implementation. ux_research_phase3.md docs(research) 단독 커밋 완료 (`4628da3`) + Phase 2-2B 결정 기록 (`faaa519`) + Researcher 백그라운드 호출.
 - **사용자 결정 (resume)**: Phase 3-A 신용카드 진입 전 Phase 2-2B (HIBP Pwned Passwords + 재사용 + 약한 비번 + 2FA 미설정) 풀체인 우선. 1Password Watchtower / Bitwarden Reports 동등 목표 (옵션 가). 예상 7~8 commits.
 - **Researcher 임무 (백그라운드 실행 중)**:
   1. HIBP Pwned Passwords API v3 (k-anonymity range lookup, padding, NTLM mode)
