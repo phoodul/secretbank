@@ -5,6 +5,46 @@
 
 ---
 
+## [2026-05-07] Phase 3 진입 전 Phase 2-2B (Watchtower 동등 풀체인) 우선
+
+### 사용자 결정 (resume 세션)
+
+> "Phase 3-A (신용카드) 진입 전, Phase 2-2B (HIBP password check) 를 먼저 풀체인으로 끝낸다."
+
+### A. 결정 사항
+
+1. **순서 갱신**: Phase 2-2B → Phase 3-A → 3-B → 4 → 3-C (기존 m24_vision 와 정합)
+2. **2-2B 범위 (옵션 가)**: **1Password Watchtower 동등 풀체인**
+   - HIBP Pwned Passwords API k-anonymity range lookup (`/range/<5-char SHA1 prefix>`)
+   - 재사용된 비밀번호 검출 (vault 내 동일 password hash 카운트)
+   - 약한 비밀번호 검출 (zxcvbn 또는 동등 라이브러리, score ≤ 2)
+   - 2FA 가능 계정인데 TOTP 미설정 경고
+   - UI: Watchtower 페이지 (또는 IncidentsPage 통합) + BentoCard 배지
+3. **예상 작업량**: 7~8 commits (researcher → implementator 2~3회 → ux-designer 검증)
+
+### B. 보안 우선 적용 ([2026-05-07] B.1 Security Spec 모두)
+
+- **range_lookup 만 사용** — 풀 hash 전송 ❌, k-anonymity 만
+- **password 평문은 SecretBox 즉시 래핑** — SHA1 prefix 추출 후 즉시 zeroize
+- **HIBP API call rate limit** — 기존 governor 재사용
+- **timing-safe 비교** — `subtle::ConstantTimeEq`
+- **재사용 검출은 vault unlock 시 메모리 내** — DB 평문 저장 ❌
+- **error message 누설 방지** — 어떤 password 가 pwn 되었는지 사용자 본인만 보이도록
+
+### C. ux_research_phase3.md 처리
+
+- **먼저 docs(research) 로 단독 커밋** — Phase 3 진입 시 즉시 사용 가능. 미커밋 보류 ❌.
+
+### D. 다음 액션
+
+1. ux_research_phase3.md 커밋
+2. Researcher 호출 — HIBP Pwned Passwords API + zxcvbn + 1P Watchtower 비교 자료
+3. Researcher 결과 → integrator 호출 (Phase 2-2B 사양 통합)
+4. implementator 사양 작성 (F.2 Spec + Security Spec)
+5. implementator 호출 (TDD)
+
+---
+
 ## [2026-05-07] 보안 절대 우선 + "1인 + LLM 가능성 검증" 단계 정의
 
 ### 사용자 결정 (직접 인용)
