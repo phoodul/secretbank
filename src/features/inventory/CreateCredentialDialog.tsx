@@ -275,17 +275,31 @@ export function CreateCredentialDialog({
             {isCreditCard && (
               <CreditCardForm
                 onSubmit={async (
-                  _values: CreditCardFormValues & { brand: CardBrand; last_4: string },
+                  values: CreditCardFormValues & { brand: CardBrand; last_4: string },
                 ) => {
+                  const issuerId = issuers[0]?.id ?? "";
                   try {
-                    // TODO (3-A-5): invoke("create_credit_card", { args: _values })
-                    console.info("[CreditCardForm] submit placeholder — Tauri command in 3-A-5");
+                    await invoke("create_credit_card", {
+                      input: {
+                        issuer_id: issuerId,
+                        name: values.cardholder_name?.trim()
+                          ? `${values.brand.charAt(0).toUpperCase() + values.brand.slice(1)} •••• ${values.last_4}`
+                          : `${values.brand.charAt(0).toUpperCase() + values.brand.slice(1)} •••• ${values.last_4}`,
+                        brand: values.brand,
+                        expiry_month: values.expiry_month,
+                        expiry_year: values.expiry_year,
+                        cardholder_name: values.cardholder_name || null,
+                        billing_address: values.billing_address || null,
+                        last_4: values.last_4,
+                        card_number_plain: values.card_number_plain,
+                        cvc_plain: values.cvc_plain,
+                      },
+                    });
                     toast.success(t("inventory.credentialSaved"));
                     form.reset();
                     onOpenChange(false);
                     onSuccess();
-                  } catch (err) {
-                    console.error(err);
+                  } catch {
                     toast.error(t("inventory.createFailed"));
                   }
                 }}

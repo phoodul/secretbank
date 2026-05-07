@@ -2,6 +2,7 @@ pub mod audit;
 pub mod auth;
 pub mod charter_cooldown;
 pub mod credentials;
+pub mod credit_card;
 pub mod deployments;
 pub mod entitlement;
 pub mod github;

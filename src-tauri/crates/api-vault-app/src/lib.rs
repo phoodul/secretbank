@@ -21,6 +21,9 @@ use commands::credentials::{
     credential_create, credential_delete, credential_get, credential_list, credential_reveal,
     credential_rotate_value, credential_update,
 };
+use commands::credit_card::{
+    create_credit_card, list_credit_cards, reveal_card_number, reveal_cvc,
+};
 use commands::deployments::{
     deployment_create, deployment_delete, deployment_list_for_project, deployment_update,
 };
@@ -251,6 +254,10 @@ pub fn run(context: tauri::Context) {
             list_security_alerts,
             dismiss_security_alert,
             undismiss_security_alert,
+            create_credit_card,
+            list_credit_cards,
+            reveal_card_number,
+            reveal_cvc,
         ]);
     }
 
@@ -340,6 +347,10 @@ pub fn run(context: tauri::Context) {
             sync_pair_joiner_apply,
             sync_pair_cancel,
             supply_scan_project,
+            create_credit_card,
+            list_credit_cards,
+            reveal_card_number,
+            reveal_cvc,
         ]);
     }
 
