@@ -11,17 +11,47 @@
 
 > "Phase 2-2B + 3-A 풀체인 구현 끝났으므로, 다음 세션은 Phase 3-B / 4 / M14 진입 전에 dogfooding 1~3 일 먼저."
 
-### 사용자 시정 (즉시 추가)
+### 사용자 시정 1차
 
 > "Dogfooding 은 `pnpm tauri dev` 가 아니라 **다른 사람처럼 URL 에서 다운로드 받아 시행** 해야 한다."
 
-**근거**: `pnpm tauri dev` = 개발자 모드 (DevTools / hot reload / source map / 개발 의존성 / OS 보안 경고 우회) — 실제 사용자 경험과 다름. 진짜 dogfooding 은 production build → installer signing → GitHub Releases → 다운로드 → 설치 → 실행 흐름 자체를 검증해야 한다.
+### 사용자 시정 2차 — GitHub 다운로드 방식 거부
+
+> "GitHub 에서 다운로드 하는 방식을 원하지 않아. 실제 **api-vault.app** 에서 다운로드 받기를 원해."
+
+**근거**: 진짜 사용자 흐름 = 검색/링크로 api-vault.app 방문 → "Download for Windows/macOS/Linux" 버튼 → 다운로드 → 설치. 브라우저 주소창에 GitHub 노출되면 1Password/Bitwarden 동등 신뢰감 ❌. 회사 방화벽으로 GitHub 차단된 환경도 커버해야 함.
+
+**현재 site/index.html 의 다운로드 로직** (`site/index.html:1850~1949`): `api.github.com/repos/phoodul/api-vault/releases` API 호출 + `asset.browser_download_url` (= GitHub CDN) 으로 redirect. 사용자가 원하지 않는 방식.
+
+### 사용자 결정 — Cloudflare Worker proxy (옵션 가)
+
+api-vault.app/download/&lt;filename&gt; 요청 → Cloudflare Worker → GitHub Releases CDN stream-proxy. 사용자 브라우저는 api-vault.app 도메인에서 다운로드한 것으로 보임.
+
+**구현 항목** (다음 세션):
+1. **신규 Cloudflare Worker** `download-proxy` 또는 `ee/` 의 기존 relay 확장 — `/download/<filename>` 라우트 → GitHub Releases asset stream-proxy
+2. **신규 endpoint** `api-vault.app/api/latest` — 최신 release manifest (자체 JSON, GitHub API 직접 호출 ❌, Worker 가 캐시)
+3. **`site/index.html` 수정** — `api.github.com` 호출 ❌, `/api/latest` 호출 + 다운로드 링크 `https://api-vault.app/download/...` 로 변경
+4. **`site/latest.json`** — tauri-plugin-updater endpoint. 현재 GitHub Releases 가리키는지 확인 후 api-vault.app 자체 endpoint 로 변경
+5. **`docs/RELEASE_GUIDE.md`** 갱신 — 새 흐름 반영
+6. **dogfooding 시 검증** — api-vault.app 어디에도 "github" 단어 미노출 확인 (브라우저 주소창 / 다운로드 링크 / 자동 업데이트 manifest)
+
+**비용**: Cloudflare Workers 무료 티어 (10만 req/day) 충분. 추가 0원.
+
+**향후 (선택)**: Cloudflare R2 자체 호스팅으로 전환하면 GitHub 의존 완전 제거. 다음 결정 시점.
 
 ### A. Dogfooding 진짜 절차 (정정)
 
-#### Pre-step: pre11 release 생성
+#### Pre-step 1: Cloudflare Worker download-proxy 배포 (신규)
 
-기존 인프라 활용 — `.github/workflows/release.yml` + `docs/RELEASE_GUIDE.md` 이미 완비. 이전 v0.1.0-pre1~pre10 10회 release 이력.
+다음 세션 implementator 가 처리:
+- `ee/cloudflare/download-proxy/` (또는 적절한 위치) Worker 작성 — `/download/<filename>` 라우트 + `/api/latest` endpoint
+- `wrangler deploy` → api-vault.app 도메인 라우팅 설정
+- `site/index.html` 다운로드 로직을 `/api/latest` + `https://api-vault.app/download/...` 로 정정
+- `site/latest.json` 또는 tauri updater endpoint 정정
+
+#### Pre-step 2: pre11 release 생성
+
+기존 인프라 활용 — `.github/workflows/release.yml` + `docs/RELEASE_GUIDE.md` 완비. 이전 v0.1.0-pre1~pre10 10회 release 이력.
 
 ```powershell
 # 1. 버전 bump
@@ -29,14 +59,17 @@ git tag v0.1.0-pre11
 git push origin v0.1.0-pre11
 
 # 2. GitHub Actions release.yml 자동 트리거 → 다중 OS installer 빌드 (draft)
-# 3. https://github.com/phoodul/api-vault/releases/v0.1.0-pre11 에서 다운로드
+#    - GitHub Releases 에 자산 업로드 (Worker 가 proxy 할 backend)
+#    - 사용자에게는 노출 ❌
 ```
 
-#### Dogfooding 시나리오 (다른 사용자 흐름)
+#### Dogfooding 시나리오 (api-vault.app 사용자 흐름)
 
-1. **GitHub Releases URL 에서 본인 OS installer 다운로드** — Windows `.msi/.exe` / macOS `.dmg` / Linux `.deb` 또는 `.AppImage`
-2. **"unidentified developer" / SmartScreen / Gatekeeper 경고 확인** — 실제 사용자가 만나는 마찰. signing 적용 여부 검증
-3. **설치 → 실행** — DevTools ❌ / source map ❌ / hot reload ❌ / 개발 의존성 ❌
+1. **api-vault.app 접속** → 랜딩 페이지 → 자동 OS 감지 → "Download for {OS}" 버튼
+2. **버튼 클릭** → `https://api-vault.app/download/api-vault_0.1.0-pre11_x64-setup.exe` (브라우저 주소창에 **api-vault.app 만 노출**, GitHub 단어 ❌)
+3. Cloudflare Worker → GitHub Releases CDN stream-proxy → installer 다운로드
+4. **"unidentified developer" / SmartScreen / Gatekeeper 경고 확인** — 실제 사용자가 만나는 마찰. signing 적용 여부 검증
+5. **설치 → 실행** — DevTools ❌ / source map ❌ / hot reload ❌ / 개발 의존성 ❌
 4. **첫 실행 onboarding** — vault 생성 / Charter 발급 (PDF 출력) / passphrase 설정
 5. **실제 사용 시나리오**:
    - Phase 2-3-a CSV import (Chrome 비번 export → drag-drop)
