@@ -18,6 +18,9 @@ futures = { workspace = true }
 chrono = { workspace = true }
 urlencoding = { workspace = true }
 url = { workspace = true }
+secrecy = { workspace = true }
+sha1 = { workspace = true }
+subtle = { workspace = true }
 
 [dev-dependencies]
 wiremock = "0.6"
