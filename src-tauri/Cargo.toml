@@ -99,7 +99,7 @@ tauri-plugin-opener = "2"
 
 [package]
 name = "secretbank"
-version = "0.1.0-pre10"
+version = "0.1.0-pre11"
 edition = "2021"
 description = "Secretbank — Bitwarden for APIs with dependency graph"
 authors = ["secretbank contributors"]
