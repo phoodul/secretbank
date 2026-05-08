@@ -5,6 +5,67 @@
 
 ---
 
+## [2026-05-09] **M24-E 직행 결정** — Site Logo / Password Generator / Quick Save 우선순위 통합 (Night mode)
+
+### 사용자 결정 (직접)
+
+> "자 이제 M24-E 진행하자. Night mode"
+
+### 배경 — 기존 진행 순서 ([2026-05-08] Tier 1 재조정)
+
+이전 결정은:
+
+```
+dogfooding ✅ → Site Logo (5~7 commits) → Password Generator α+β (4~7 commits)
+  → Quick Save 글로벌 hotkey + tray popup (1주) → M24-E 브라우저 확장 (1~2 개월)
+  → Phase 3-B → 4 → 3-C → 5 → M11
+```
+
+### 결정 (변경 후)
+
+```
+✅ dogfooding (방법 A 단축 완료)
+→ ⭐ M24-E 브라우저 확장 풀구현 — 직행 (Tier 1 가장 큰 항목)
+   ├─ form auto-detect → recipe inheritance → save dialog
+   ├─ Tiered Protection 적용 (device biometric 1회 → 세션 유지)
+   ├─ Site Logo 표시 (D+E 조합 결정 — extension UI 에서도 동일 활용)
+   ├─ Password Generator inline (가입 폼에서 강력 비번 생성, α+β 사양 통합)
+   └─ Quick Save (가입 후 자동 저장 dialog — autofill save handler 가 곧 Quick Save)
+→ Phase 3-B (secure_note) → 4 (카테고리) → 3-C (passkey)
+→ Phase 5 (TOTP autofill) → M11 (모바일)
+```
+
+### 근거 — Site Logo / Password Gen / Quick Save 가 M24-E 안에서 자연스럽게 발현
+
+| 이전 별도 항목                                             | M24-E 안에서의 발현                                                                                                                                                                                  |
+| :--------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Site Logo                                                  | extension popup + content script 의 카드 미리보기에 동일 favicon-proxy Worker 호출 — desktop 앱과 디자인 일관성. 별도 commits 불필요 (M24-E 의 UI sub-task 안에서 함께 구현)                         |
+| Password Generator α+β (Diceware + zxcvbn + issuer recipe) | extension 의 신규 가입 폼 인라인에서 호출 — desktop 의 generator 모듈을 shared lib 로 빼서 양쪽 사용. **분리 구현 ↔ 통합 구현 비용 차 ≈ 0**, daily UX 가치는 통합 시 극대화 (1P / Bitwarden 와 동등) |
+| Quick Save (글로벌 hotkey + tray popup)                    | extension 이 form submit 감지 후 자동 save dialog 띄우는 흐름 = Quick Save 의 본래 의도 (autofill save handler). **글로벌 hotkey + tray 는 단기 우회책이었고 본질 해결은 M24-E**                     |
+
+### 재확인된 통찰 — M24-E 가 daily driver 검증의 진짜 blocker
+
+[2026-05-09 resume 세션 마무리] 사용자 발언:
+
+> "autofill 없이 dogfooding 의미 X — daily driver 검증 불가"
+> "기본 설정이 1P 인 상황에서 Secretbank 에 비번 넣는 흐름 자체가 마찰 큼"
+
+→ Site Logo / Password Gen / Quick Save 를 M24-E 전에 먼저 끝내도 **daily driver 진입은 여전히 막힘** (autofill 없으면 매 가입 시마다 수동 복붙 마찰). 따라서 M24-E 직행이 사용자 가치 우선순위와 일치.
+
+### 영향 범위
+
+- **task.md `T-24-E`** — 기존 "스켈레톤 only" → **풀 구현으로 격상** (Phase A~F 분할 예정, planner 단계에서 확정)
+- **m24_vision.md** — 진행 순서 갱신 (M24-E 직행 표시)
+- **progress.md** — 다음 세션 시작점 = `researcher` 호출 (M24-E 사양 조사)
+- **researcher 임무 범위** — Manifest V3 / Native Messaging / form auto-detect / Tiered Protection 호환 / cross-browser 빌드 (Chrome / Firefox / Safari / Edge) / E2E 테스트 / 경쟁 제품 분석 (1P / Bitwarden) — 풀구현 사양 (Site Logo + Password Gen + Quick Save 통합 포함)
+
+### Night mode 운용 규칙 적용
+
+- **GATE 1-4 외 중간 "진행 여부" 질문 금지** (메모리 [feedback_night_mode] 따름)
+- 큐에 쌓고 계속 진행 — researcher 결과 + integrator_report 작성까지 자동 진행 후 GATE 1 에서만 사용자 승인 요청
+
+---
+
 ## [2026-05-08] **Zero-Knowledge 원칙 재확인** — "복구 가능 ↔ zero-knowledge" 양립 불가
 
 ### 배경 — 사용자 통찰 (직접 인용)
@@ -27,12 +88,12 @@
 
 ### 기존 서비스들의 처리 — 모두 "사용자 / 신탁자 책임" 으로 우회
 
-| 서비스 | 복구 방식 | zero-knowledge? |
-|:---|:---|:---|
-| 1Password Emergency Kit | 종이 출력 (사용자 본인 보관) | ✅ 유지 |
-| Bitwarden Emergency Access | 신탁자 m-of-n — 신탁자 자신의 key 로 vault receive | ✅ 유지 |
-| Apple iCloud Keychain | HSM (Hardware Security Module) + custodian protocol | ✅ 유지 (Apple 도 vault 못 봄) |
-| Web3 Wallet | Seed phrase 종이 + 옵션 social recovery (m-of-n trustees) | ✅ 유지 |
+| 서비스                     | 복구 방식                                                 | zero-knowledge?                |
+| :------------------------- | :-------------------------------------------------------- | :----------------------------- |
+| 1Password Emergency Kit    | 종이 출력 (사용자 본인 보관)                              | ✅ 유지                        |
+| Bitwarden Emergency Access | 신탁자 m-of-n — 신탁자 자신의 key 로 vault receive        | ✅ 유지                        |
+| Apple iCloud Keychain      | HSM (Hardware Security Module) + custodian protocol       | ✅ 유지 (Apple 도 vault 못 봄) |
+| Web3 Wallet                | Seed phrase 종이 + 옵션 social recovery (m-of-n trustees) | ✅ 유지                        |
 
 **서버가 복구 책임을 가지는 password manager 는 없음** — 그건 정의상 password manager 가 아님.
 
@@ -40,14 +101,14 @@
 
 각 layer 가 **책임 주체 분리**되어 있어 zero-knowledge 안 깨짐:
 
-| Layer | 의미 | zero-knowledge? | 책임 주체 | 우리 상태 |
-|:---|:---|:---|:---|:---|
-| **L1 Charter** (M23) | Diceware 6-word + 4-digit verifier + Shamir 2-of-3 옵션 | ✅ | 사용자 (종이 / PDF / Shamir split) | ✅ 구현됨 |
-| **L2 Multi-device sync** (M9) | E2EE Yjs CRDT + Cloudflare Workers relay | ✅ | 사용자 (디바이스 보유) | ✅ 구현됨 |
-| **L3 Biometric quick-unlock** | Touch ID / Windows Hello + device-bound key + OS keychain. passphrase 입력 빈도 ↓ → **잊을 가능성 자체 ↓** | ✅ | 사용자 (device + OS 잠금) | 🟡 부분 (자동잠금 idle 만) |
-| **L4 Emergency Access** | 신탁자 m-of-n, waiting period (예: 7일), 신탁자가 자기 key 로 vault receive | ✅ | 사용자 (신탁자 선정) + 신탁자 | ⏳ Tier 2 placeholder |
-| **L5 Hardware Key** | YubiKey FIDO2 / WebAuthn 물리 토큰 | ✅ | 사용자 (물리 토큰 보관) | ⏳ Phase 3-C passkey 합류 |
-| **L6 Charter reminder** | 정기 재출력 알림 + 신탁자 등록 권장 + multi-device sync 권장 | ✅ (UX 만) | 사용자 | ⏳ |
+| Layer                         | 의미                                                                                                       | zero-knowledge? | 책임 주체                          | 우리 상태                  |
+| :---------------------------- | :--------------------------------------------------------------------------------------------------------- | :-------------- | :--------------------------------- | :------------------------- |
+| **L1 Charter** (M23)          | Diceware 6-word + 4-digit verifier + Shamir 2-of-3 옵션                                                    | ✅              | 사용자 (종이 / PDF / Shamir split) | ✅ 구현됨                  |
+| **L2 Multi-device sync** (M9) | E2EE Yjs CRDT + Cloudflare Workers relay                                                                   | ✅              | 사용자 (디바이스 보유)             | ✅ 구현됨                  |
+| **L3 Biometric quick-unlock** | Touch ID / Windows Hello + device-bound key + OS keychain. passphrase 입력 빈도 ↓ → **잊을 가능성 자체 ↓** | ✅              | 사용자 (device + OS 잠금)          | 🟡 부분 (자동잠금 idle 만) |
+| **L4 Emergency Access**       | 신탁자 m-of-n, waiting period (예: 7일), 신탁자가 자기 key 로 vault receive                                | ✅              | 사용자 (신탁자 선정) + 신탁자      | ⏳ Tier 2 placeholder      |
+| **L5 Hardware Key**           | YubiKey FIDO2 / WebAuthn 물리 토큰                                                                         | ✅              | 사용자 (물리 토큰 보관)            | ⏳ Phase 3-C passkey 합류  |
+| **L6 Charter reminder**       | 정기 재출력 알림 + 신탁자 등록 권장 + multi-device sync 권장                                               | ✅ (UX 만)      | 사용자                             | ⏳                         |
 
 **핵심 인사이트**: **분실 가능성 자체를 줄이는 것** 이 가장 효과적. L3 biometric quick-unlock 으로 passphrase 입력 빈도 월 1회 수준으로 줄이면 잊을 가능성도 그만큼 ↓.
 
@@ -111,24 +172,27 @@ dogfooding → Site Logo → Password Generator → Quick Save → M24-E
 
 #### 2. Quick Save UX (단기 대안 + 장기 풀구현)
 
-| 단계 | 옵션 | 작업량 | UX 동등 |
-|:---|:---|:---|:---|
-| **단기 (dogfooding 기간)** | **B. 글로벌 hotkey + tray popup** — 가입 form 에서 `Cmd+Shift+G` → 데스크톱 popup → generator → 비번 자동 입력 + Quick Save (URL/username 추가 입력) | 중 (1주) | 부분 동등 |
-| **장기 (출시 전 필수)** | **A. M24-E 브라우저 확장 풀구현** — Chrome / FF / Safari / Edge × manifest v3 × form detection × autofill × save dialog | 매우 큼 (1~2 개월 단독) | 1P 동등 ✅ |
+| 단계                       | 옵션                                                                                                                                                 | 작업량                  | UX 동등    |
+| :------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------- | :--------- |
+| **단기 (dogfooding 기간)** | **B. 글로벌 hotkey + tray popup** — 가입 form 에서 `Cmd+Shift+G` → 데스크톱 popup → generator → 비번 자동 입력 + Quick Save (URL/username 추가 입력) | 중 (1주)                | 부분 동등  |
+| **장기 (출시 전 필수)**    | **A. M24-E 브라우저 확장 풀구현** — Chrome / FF / Safari / Edge × manifest v3 × form detection × autofill × save dialog                              | 매우 큼 (1~2 개월 단독) | 1P 동등 ✅ |
 
 **거부된 대안**:
+
 - **C. OS Keychain bridge** (Chrome Password Manager / Apple Keychain 양방향 sync) — 우리만의 차별 ❌, privacy / 권한 / 안정성 모두 복잡
 - **D. 클립보드 passive 감지** ("비번 같은 패턴 감지 → Save?" 토스트) — privacy 우려 + 다른 앱 복사도 보임
 
 ### Tier 1 우선순위 재조정 — M24-E 격상
 
 이전 진행 순서 (2026-05-07 비전 명확화):
+
 ```
 dogfooding → Site Logo → Phase 3-B (secure_note) → Phase 4 (카테고리)
   → Phase 3-C (passkey) → Phase 5 (TOTP autofill) → M11 → M24-E
 ```
 
 **변경 후** (이번 결정):
+
 ```
 dogfooding → Site Logo (5~7 commits)
   → Password Generator α + β (4~7 commits)
@@ -140,6 +204,7 @@ dogfooding → Site Logo (5~7 commits)
 ```
 
 **근거**:
+
 - 신용카드 / secure_note / passkey 같은 새 데이터 type 보다 **일반 password 의 daily UX 완성** 이 daily driver 진입의 더 큰 blocker
 - M24-E 풀구현 시 **Tiered Protection (autofill 재인증 없음)** + **Site Logo (시각 식별)** + **Password Generator + Quick Save** 가 모두 발현 → daily driver 자격 충족
 - secure_note / 카테고리 는 dogfooding 자체에 blocking ❌ — 있으면 좋지만 daily driver 가능성 무관
@@ -204,21 +269,22 @@ dogfooding → Site Logo (5~7 commits)
 ### 진입 시점 — dogfooding 직후, **Phase 3-B (secure_note) 이전 우선**
 
 근거:
+
 - BentoCard 가 현재 시각적으로 가장 빈약함 → daily driver 체감 대폭 향상
 - secure_note 는 보통 로고 없으니 (개인 메모/문서) Site Logo 와 작업 충돌 ❌
 - UX 4축 중 가장 빠르게 격차 좁히는 작업 (작업량 대비 효과)
 
 ### 작업 규모 (예상 5~7 commits)
 
-| Sub-task | 작업 |
-|:---|:---|
-| **Logo-1** | `ee/cloudflare/favicon-proxy/` Worker 신규 + vitest (download-proxy 패턴) |
-| **Logo-2** | issuer preset 17개 SVG 번들 (`simpleicons.org` 또는 직접) + `useIssuerLogo` priority 1 |
+| Sub-task   | 작업                                                                                      |
+| :--------- | :---------------------------------------------------------------------------------------- |
+| **Logo-1** | `ee/cloudflare/favicon-proxy/` Worker 신규 + vitest (download-proxy 패턴)                 |
+| **Logo-2** | issuer preset 17개 SVG 번들 (`simpleicons.org` 또는 직접) + `useIssuerLogo` priority 1    |
 | **Logo-3** | `useIssuerLogo` 훅 priority 2 (Worker fetch + IndexedDB 24h 캐시) + priority 3 (fallback) |
-| **Logo-4** | BentoCard 로고 슬롯 (좌측 상단 32x32) + LazyImage + 빈 상태 |
-| **Logo-5** | CredentialDetail 로고 표시 (헤더 영역) |
-| **Logo-6** | Settings `fetch_logos_enabled` 토글 + i18n 4 로케일 |
-| **Logo-7** | THREAT_MODEL.md 갱신 (favicon-proxy 위협 모델 / privacy 보장 명시) |
+| **Logo-4** | BentoCard 로고 슬롯 (좌측 상단 32x32) + LazyImage + 빈 상태                               |
+| **Logo-5** | CredentialDetail 로고 표시 (헤더 영역)                                                    |
+| **Logo-6** | Settings `fetch_logos_enabled` 토글 + i18n 4 로케일                                       |
+| **Logo-7** | THREAT_MODEL.md 갱신 (favicon-proxy 위협 모델 / privacy 보장 명시)                        |
 
 ### 갱신된 진행 순서 (2026-05-08)
 
@@ -247,11 +313,11 @@ dogfooding (Worker deploy + tag push + installer 검증)
 
 **모든 credential 을 같은 수준으로 잠그지 않는다.** 위험도에 따라 보호 수준 분리:
 
-| 자산 kind | 보호 수준 | autofill / reveal 흐름 |
-| :--- | :--- | :--- |
-| **password** (일반 웹사이트) | OS keychain 위임 (Touch ID / Windows Hello / OS lock) | **재인증 없이 즉시 자동완성** (vault unlock 한 번 후 device 잠금 풀릴 때까지 유지) |
-| **api_key / 토큰** | Secretbank vault + reveal-on-demand 30s 자동 클리어 | passphrase 1회 (auto-lock idle 정책 적용) |
-| **credit_card / passkey / vault charter / TOTP secret** | Secretbank vault + per-reveal 인증 | reveal 시점마다 재인증 (현재 3-A 신용카드 흐름과 일치) |
+| 자산 kind                                               | 보호 수준                                             | autofill / reveal 흐름                                                             |
+| :------------------------------------------------------ | :---------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **password** (일반 웹사이트)                            | OS keychain 위임 (Touch ID / Windows Hello / OS lock) | **재인증 없이 즉시 자동완성** (vault unlock 한 번 후 device 잠금 풀릴 때까지 유지) |
+| **api_key / 토큰**                                      | Secretbank vault + reveal-on-demand 30s 자동 클리어   | passphrase 1회 (auto-lock idle 정책 적용)                                          |
+| **credit_card / passkey / vault charter / TOTP secret** | Secretbank vault + per-reveal 인증                    | reveal 시점마다 재인증 (현재 3-A 신용카드 흐름과 일치)                             |
 
 ### 구현 방향
 
@@ -278,11 +344,11 @@ dogfooding (Worker deploy + tag push + installer 검증)
 
 ### 사용자 제안 3가지의 정식 처리
 
-| 제안 | 정식 처리 |
-| :--- | :--- |
-| "저장만 완벽하게" | 이미 충족 (zero-knowledge + Charter 복구 + Yjs CRDT sync). 단 강력한 generator (Diceware + entropy meter) 추가 — Tier 2 작은 작업으로 격상 |
-| "Import 를 단순하게" | Chrome CSV preview 가 이미 단순. 1pux / BW JSON 추가 시 **동일 단순함 유지** 가 기준. 5분 TTL + 충돌 자동 해제 패턴 그대로 |
-| **"입력은 재확인 없이"** | **본 Tiered Protection 모델의 핵심**. password kind 의 reveal/copy/autofill 에 한해 재인증 제거. Phase 5 / M24-E 의 default 설계 |
+| 제안                     | 정식 처리                                                                                                                                  |
+| :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| "저장만 완벽하게"        | 이미 충족 (zero-knowledge + Charter 복구 + Yjs CRDT sync). 단 강력한 generator (Diceware + entropy meter) 추가 — Tier 2 작은 작업으로 격상 |
+| "Import 를 단순하게"     | Chrome CSV preview 가 이미 단순. 1pux / BW JSON 추가 시 **동일 단순함 유지** 가 기준. 5분 TTL + 충돌 자동 해제 패턴 그대로                 |
+| **"입력은 재확인 없이"** | **본 Tiered Protection 모델의 핵심**. password kind 의 reveal/copy/autofill 에 한해 재인증 제거. Phase 5 / M24-E 의 default 설계           |
 
 ### Trade-off (명시)
 

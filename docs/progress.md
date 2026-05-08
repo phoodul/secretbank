@@ -2,7 +2,13 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-09 — **Resume 세션 종료. dogfooding 진입 + 인프라 setup + 핵심 UX 결정 4건 + pre11 release 완료. 다음 = M24-E (브라우저 확장) 풀구현 진입.**
+- **Time:** 2026-05-09 (Night mode 진입) — **사용자 결정: M24-E 브라우저 확장 풀구현 직행** (Site Logo / Password Generator / Quick Save 우선순위 변경, M24-E 안에서 통합 발현). researcher 백그라운드 호출 시작.
+- **Phase:** Phase 3 — Implementation. M24-E 진입 (Tier 1 가장 큰 항목, 1~2 개월 규모).
+- **결정 기록**: `docs/project-decisions.md` [2026-05-09] M24-E 직행 결정 항목 신규.
+- **다음 액션 (현재)**: researcher 결과 → integrator → **USER APPROVAL GATE 1** (사양 승인 — Night mode 에서도 GATE 는 필수).
+- **Night mode 운용**: GATE 1-4 외 중간 "진행 여부" 질문 금지. 큐에 쌓고 계속.
+
+### 이전 — 2026-05-09 (Resume 세션 종료, Tier 1 재조정 마무리)
 - **사용자 핵심 통찰 (세션 마무리 시점)**:
   - "autofill 없이 dogfooding 의미 X — daily driver 검증 불가"
   - "기본 설정이 1P 인 상황에서 Secretbank 에 비번 넣는 흐름 자체가 마찰 큼"
