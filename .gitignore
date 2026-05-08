@@ -89,3 +89,9 @@ media/*.mp4
 # site/media/ 는 deploy-site.yml 이 build 시 cp -v media/*.webm site/media/ 로 stage.
 # 로컬 dev 서버에서 video 미리보려면 같은 명령으로 직접 stage 하라.
 site/media/
+
+# browser extension (M24-E)
+extension/node_modules/
+extension/dist/
+extension/.wxt/
+extension/.output/

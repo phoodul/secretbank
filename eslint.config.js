@@ -20,6 +20,9 @@ export default tseslint.config(
       "vscode-extension/out/**",
       "vscode-extension/node_modules/**",
       "vscode-extension/**/*.vsix",
+      // extension/ 은 별도 workspace 패키지 — 자체 ESLint 구성으로 운영.
+      // 루트 ESLint 는 extension/ 를 스캔하지 않음.
+      "extension/**",
     ],
   },
   js.configs.recommended,
