@@ -1,5 +1,48 @@
 # Work Log
 
+## 2026-05-08 — Secretbank 전체 리브랜드 완료 (Phase A + B 일괄, 1 commit)
+
+### 커밋 `5e1db44`
+
+**Phase A — URL / 도메인**
+- `secretbank.app` 도메인 등록 (Cloudflare Registrar)
+- `tauri.conf.json` identifier: `app.secretbank`
+- updater endpoint: `https://secretbank.app/api/latest`
+- deep-link scheme: `secretbank://`
+- CSP origin: `https://secretbank.app`
+
+**Phase B — 코드 리네임 (354 files, 241 files changed)**
+- Rust 크레이트 13개: `api-vault-*` → `secretbank-*` (경로 + Cargo.toml)
+- CLI 바이너리명: `secretbank` (bin.name), MCP: `secretbank-mcp`
+- 볼트 파일 매직 바이트 `b"APIVAULT"` 유지 (파일 포맷 호환성 — 변경 ❌)
+- JetBrains 패키지: `app.apivault` → `app.secretbank` (11 Kotlin 파일 + 1 test)
+- `ee/api-vault-relay` → `ee/secretbank-relay`
+- Homebrew Cask: `api-vault.rb` → `secretbank.rb`
+- WinGet manifest: `secretbank.secretbank`
+- VS Code 확장: displayName/commandId/configKey `secretbank.*`
+- Cloudflare Worker REPO/MANIFEST_URL/CORS: `phoodul/secretbank` + `secretbank.app`
+- 설정 스토리지 키: `secretbank.settings.onboarding.done` (소문자)
+- deep-link 프로토콜 비교: `"secretbank:"` (소문자 — URL 표준)
+
+**주요 수정 에러**
+- `b"Secretbank"` (10 bytes) → `b"APIVAULT"` (8 bytes) 복원 (배열 크기 타입 불일치 컴파일 에러)
+- deep-link URL scheme 대소문자: `"Secretbank:"` → `"secretbank:"` (브라우저 `new URL()` 프로토콜 소문자 강제)
+- 설정 키 대소문자: `"Secretbank.settings..."` → `"secretbank.settings..."` (소문자 접두사)
+- PowerShell `Set-Content` UTF-8 BOM 추가 → JSON/CSS/JS 파서 깨짐 → `[System.IO.File]::WriteAllText` BOM-less 방식으로 수정 후 전역 BOM 제거 실행
+
+**검증 결과**
+- cargo build --workspace: 성공
+- cargo test --workspace --lib: 586 tests PASS
+- cargo clippy --workspace -- -D warnings: 경고 없음
+- pnpm typecheck: 에러 없음
+- pnpm vitest run: 614 tests PASS
+- pnpm lint: 에러 없음
+- pnpm format:check: 통과
+- Worker tests (ee/cloudflare/download-proxy): 14/14 PASS
+- Relay tests (ee/secretbank-relay): 71/71 PASS
+
+---
+
 ## 2026-05-07 / 08 — Resume 세션 종료: Phase 2-2B + 3-A 풀체인 + dogfooding 절차 확정 (35 commits)
 
 ### 누적 이번 세션 — `fa9d111..00ceee5` (35 commits, push 완료)

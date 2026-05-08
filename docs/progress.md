@@ -2,6 +2,15 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-08 — **Secretbank 전체 리브랜드 완료 (`5e1db44`). 다음 = dogfooding (GitHub Releases v0.1.0-pre10 installer 다운로드 → 설치 → 실행) 또는 Phase 3-B (secure_note)**
+- **이번 세션 주요 작업**:
+  - Cloudflare Worker download-proxy Sub-task 1 (`3e9ce39`)
+  - 브랜드/도메인 결정: **Secretbank** + `secretbank.app` 확정 (project-decisions [2026-05-08])
+  - api-vault → Secretbank 전체 리브랜드 Phase A + B 일괄 (`5e1db44`, 354 files)
+  - 검증: cargo build/test(586)/clippy + pnpm typecheck/vitest(614)/lint/format + Worker 14 + Relay 71 전원 통과
+
+### 이전 — 2026-05-08 (Pre-step Worker download-proxy GATE 1)
+
 - **Time:** 2026-05-08 — **Pre-step Worker download-proxy GATE 1 완료, researcher 백그라운드 실행 중**
 - **Phase:** Phase 3 — Implementation. Phase 2-2B ✅ + 3-A ✅ 완료. 다음 세션 시작점 = **Pre-step Worker 배포** (m24_vision.md 룰 — secretbank.app 도메인 단독, github 단어 미노출).
 - **이번 세션 첫 액션 (resume)**:

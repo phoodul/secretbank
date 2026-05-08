@@ -310,6 +310,12 @@
 | :--- | :-------- |
 | **Phase 2-2B-5** `WatchtowerPage.tsx` 신규 — 5 Summary Cards (Compromised/Weak/Reused/2FA/Unsecured) + SecurityAlertCard 목록 + 빈 상태 3종 (no_history/all_clear/vault_locked) + HIBP opt-in 배너 + 스켈레톤 로딩 + 에러 배너. `SecurityAlertCard.tsx` — 개별 alert 카드 (Dismiss/Undismiss/Fix 액션). `SecurityBadge.tsx` — BentoCard 통합용 최고 우선순위 배지 (priority: compromised > weak > reused > 2fa > unsecured). `useHibpOptIn` hook (localStorage, GATE 1-1 default 비활성). `types.ts` — SecurityAlertView/SecurityCheckSummary/ListFilter/SecurityCheckError TS 타입. **사이드바** Watchtower 항목 추가 (ShieldAlert, Incidents 아래, GATE 1-2). **라우터** `/watchtower` 등록. **BentoCard** `securityAlerts?` prop 추가 + SecurityBadge 통합. **Settings** HIBP opt-in 토글 (Security 섹션 내). **i18n** `security.json` 4 로케일 (en/ko/zh/ja) 19키 + `nav.watchtower` 15 로케일 + `settings.hibp*` 4키 × 2 로케일. **Vitest 9 PASS** (T1 no_history / T2 alerts list / T3 run_check invoke / T4 running disabled / T5 all_clear / T6 hibp banner / T7 vault_locked / T8 dismiss / T9 priority badge). typecheck 0 error / lint 0 new error / format:check (신규 파일 통과). **이 commit 으로 Phase 2-2B 풀체인 완성**. | `0c98e13` |
 
+### Rebrand (2026-05-08, api-vault → Secretbank 전체 리브랜드)
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **api-vault → Secretbank 전체 리브랜드** Phase A (URL/도메인: `secretbank.app`, identifier `app.secretbank`, deep-link scheme `secretbank://`, updater endpoint `https://secretbank.app/api/latest`) + Phase B (Rust 크레이트 13개 `secretbank-*` 리네임, JetBrains 패키지 `app.secretbank`, `ee/secretbank-relay`, Homebrew/WinGet/VS Code 확장 리네임, Cloudflare Worker REPO/CORS/MANIFEST_URL 갱신, 설정 스토리지 키 소문자, deep-link 프로토콜 비교 소문자). 볼트 파일 매직 바이트 `b"APIVAULT"` 유지 (파일 포맷 호환성). 354 files changed. cargo build/test(586)/clippy + pnpm typecheck/vitest(614)/lint/format + Worker 14 + Relay 71 전원 통과. | `5e1db44` |
+
 ---
 
 ## M0 — Foundation
