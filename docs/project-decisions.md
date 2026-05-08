@@ -5,6 +5,77 @@
 
 ---
 
+## [2026-05-08] **Tier 1 우선순위 재조정** — Password Generator + Quick Save + M24-E 격상
+
+### 배경 — 사용자 통찰 (직접 인용)
+
+> "secret을 가져올 때 csv에서 한번에 가져오는 게 아니라 새로 입력할 때 바로 저장할 수 있는 게 가장 중요해. 사용자가 새로운 사이트에 가입하면서 만든 비번을 자동으로 저장해주는 간단한 UX가 중요해. 또한 각 사이트의 조건에 맞는 안전한 비번을 자동으로 만들어주는 기능도 있으면 좋겠어"
+
+**문제 정의**: 1P / Bitwarden 의 daily driver 핵심 UX 두 가지 = "가입 시 자동 저장" + "사이트 맞춤 비번 생성". CSV import 만으로는 daily driver 진입 불가. 이는 **브라우저 확장 (M24-E) 의 핵심 기능** 이며, 우리 Tier 1 의 가장 큰 항목.
+
+### 결정 — 두 기능 분해 + 시간축 분리
+
+#### 1. Password Generator (즉시 가능, 작은 작업)
+
+- **α. 정적 generator** (1~2 commits): length / symbols / digits / uppercase / lowercase 토글 + Diceware passphrase 모드 + zxcvbn entropy meter (라이브러리 이미 있음)
+- **β. issuer preset password recipe** (3~5 commits): 17개 preset 에 `password_recipe: { min, max, symbols_allowed, digits_required }` 필드 추가 + 사이트별 사전 조사
+- **γ. M24-E 합류**: 브라우저 확장이 form `<input pattern>` / `minlength` 속성 읽어 자동 조정 (M24-E 풀구현 시점)
+
+#### 2. Quick Save UX (단기 대안 + 장기 풀구현)
+
+| 단계 | 옵션 | 작업량 | UX 동등 |
+|:---|:---|:---|:---|
+| **단기 (dogfooding 기간)** | **B. 글로벌 hotkey + tray popup** — 가입 form 에서 `Cmd+Shift+G` → 데스크톱 popup → generator → 비번 자동 입력 + Quick Save (URL/username 추가 입력) | 중 (1주) | 부분 동등 |
+| **장기 (출시 전 필수)** | **A. M24-E 브라우저 확장 풀구현** — Chrome / FF / Safari / Edge × manifest v3 × form detection × autofill × save dialog | 매우 큼 (1~2 개월 단독) | 1P 동등 ✅ |
+
+**거부된 대안**:
+- **C. OS Keychain bridge** (Chrome Password Manager / Apple Keychain 양방향 sync) — 우리만의 차별 ❌, privacy / 권한 / 안정성 모두 복잡
+- **D. 클립보드 passive 감지** ("비번 같은 패턴 감지 → Save?" 토스트) — privacy 우려 + 다른 앱 복사도 보임
+
+### Tier 1 우선순위 재조정 — M24-E 격상
+
+이전 진행 순서 (2026-05-07 비전 명확화):
+```
+dogfooding → Site Logo → Phase 3-B (secure_note) → Phase 4 (카테고리)
+  → Phase 3-C (passkey) → Phase 5 (TOTP autofill) → M11 → M24-E
+```
+
+**변경 후** (이번 결정):
+```
+dogfooding → Site Logo (5~7 commits)
+  → Password Generator α + β (4~7 commits)
+  → Quick Save 글로벌 hotkey + tray popup (B, 중)
+  → M24-E 브라우저 확장 풀구현 (매우 큼, 단독 1~2 개월) ⭐ Tier 1 가장 큰 항목
+  → Phase 3-B (secure_note) → Phase 4 (카테고리) → Phase 3-C (passkey)
+  → Phase 5 (TOTP autofill, Tiered Protection 적용)
+  → M11 (모바일, Tiered Protection 적용)
+```
+
+**근거**:
+- 신용카드 / secure_note / passkey 같은 새 데이터 type 보다 **일반 password 의 daily UX 완성** 이 daily driver 진입의 더 큰 blocker
+- M24-E 풀구현 시 **Tiered Protection (autofill 재인증 없음)** + **Site Logo (시각 식별)** + **Password Generator + Quick Save** 가 모두 발현 → daily driver 자격 충족
+- secure_note / 카테고리 는 dogfooding 자체에 blocking ❌ — 있으면 좋지만 daily driver 가능성 무관
+
+### Trade-off (명시)
+
+- **M24-E 풀구현 = 단독 1~2 개월** — 그 사이 Phase 3-B / 3-C / 4 / 5 보류. 출시 전체 일정 지연
+- **단기 글로벌 hotkey** 도 1주 단독 작업 — Site Logo / Password Generator 와 직렬
+- 결과: 출시 전체 일정은 늘어나지만 출시 시점의 **daily driver 자격은 1P 동등 이상**
+- 사용자 명시 "시간이 걸리더라도" → 본 trade-off 수락
+
+### M24-E 사양 사전 메모 (사양 작성 시 적용)
+
+본 결정에 따라 M24-E 진입 시 implementator 에게 전달할 핵심 사양:
+
+1. **Tiered Protection 적용** — device biometric 1회 → 세션 유지 → password kind autofill 재인증 ❌. api_key/카드/passkey 는 재인증
+2. **Form auto-detect + recipe inheritance** — 가입 form 의 `<input pattern>` / `minlength` / `maxlength` 속성 읽어 generator 옵션 자동 조정. 매칭되는 issuer preset 의 recipe 우선
+3. **Save dialog 마찰 최소화** — 1P 의 "save / never / not now" 3옵션 그대로. 자동 hide 옵션 ON 시 noise 없음
+4. **Site Logo 표시** — autofill 옵션 popup 에 issuer logo 노출 (시각 식별)
+5. **manifest v3** — 모든 4 브라우저 지원
+6. **Form detection 의 false positive 최소화** — 가입 form vs 로그인 form 구분 (heuristic)
+
+---
+
 ## [2026-05-08] **Site Logo 기능 신설** — BentoCard 로고 표시 (Phase 3-B 직전 진입)
 
 ### 배경 — 사용자 질문
