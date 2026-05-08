@@ -3,6 +3,7 @@
 > 작성자: Planner Agent (claude-opus-4-7)
 > 작성일: 2026-04-22
 > 기반: docs/project-decisions.md (Gate 1 확정), docs/integrator_report.md, docs/ux_research.md, user_research/initial_idea.md, user_research/gemini_deep_research_Secretbank.md
+> 갱신: 2026-05-09 — 10장 (M24-E Browser Extension) 신설
 
 ---
 
@@ -1057,6 +1058,393 @@ matrix:
 - `/` (root) → AGPL-3.0 — 코어 데스크톱 앱 + graph + supply chain + RAILGUARD + charter (모두 무료 OSS)
 - `/ee/` → Secretbank Enterprise License v1.0 — Cloudflare Workers relay + 자동 rotation + sync 백엔드 (paid)
 - AGPL copyleft → 제3자 SaaS fork 시 소스 공개 의무 → commercial fork 사실상 차단
+
+---
+
+## 10. M24-E — Browser Extension (Phase 3 진입, 2026-05-09 신설)
+
+> 본 섹션은 [2026-05-09] M24-E GATE 1 일괄 승인 (D1~D18 + Q1~Q6) 결과를 반영한다.
+> 상세 결정 근거는 `docs/integrator_report_m24e.md`, `docs/research_m24e_browser_extension.md` 참조.
+> **기존 1~9장은 변경 없음.** 본 10장은 M24-E 전용 신규 섹션.
+
+### 10.1 모노레포 구조 (D6)
+
+```
+secretbank/
+├── src/                              # Tauri 데스크톱 frontend (기존, 변경 없음)
+├── src-tauri/                        # Rust backend (기존)
+│   ├── Cargo.toml                    # workspace root
+│   └── crates/
+│       ├── secretbank-app/           # Tauri 앱 binary (기존)
+│       ├── secretbank-core/          # 도메인 모델 (기존)
+│       ├── secretbank-storage/       # 볼트 + SQLite (기존)
+│       ├── secretbank-crypto/        # X25519 + ChaCha20-Poly1305 (기존, 재사용)
+│       ├── secretbank-audit/         # audit log (기존)
+│       └── secretbank-nm-host/       # ★ NEW (Phase B-1) — Native Messaging Host binary
+│           ├── Cargo.toml            # [[bin]] target
+│           └── src/
+│               ├── main.rs           # stdio 이벤트 루프 (4-byte length header + JSON)
+│               ├── protocol.rs       # NM wire protocol (encode/decode)
+│               ├── pairing.rs        # X25519 페어링 + ChaCha20-Poly1305 (secretbank-crypto 재사용)
+│               ├── session.rs        # session token (HMAC-SHA256) 발급/검증
+│               ├── ipc.rs            # 데스크톱 앱과의 통신 (localhost socket 또는 SQLite shared file)
+│               └── installer.rs      # OS별 NM manifest 등록 (registry/plist/config)
+│
+├── extension/                        # ★ NEW — WXT 브라우저 확장 (AGPL-3.0)
+│   ├── wxt.config.ts                 # WXT 설정 (Chrome/Firefox/Edge/Safari 빌드 매트릭스)
+│   ├── package.json                  # "@secretbank/extension" — workspace 멤버
+│   ├── tailwind.config.ts            # Tailwind v4 (popup + Shadow DOM 두 영역)
+│   ├── postcss.config.cjs            # postcss-rem-to-px (Shadow DOM 단위 변환)
+│   ├── _locales/                     # @wxt-dev/i18n YAML 4 로케일 (en/ko/ja/zh)
+│   │   ├── en.yml
+│   │   ├── ko.yml
+│   │   ├── ja.yml
+│   │   └── zh.yml
+│   ├── public/                       # 정적 자산 (icons 16/32/48/128 PNG)
+│   ├── entrypoints/
+│   │   ├── background.ts             # MV3 service worker (Chrome) / background script (FF)
+│   │   ├── content.ts                # content script (모든 사이트, ISOLATED world)
+│   │   ├── content-main.ts           # MAIN world 스크립트 (XHR/fetch hook)
+│   │   ├── popup/
+│   │   │   ├── index.html
+│   │   │   ├── App.tsx               # popup 앱 (shadcn/ui + Tailwind v4)
+│   │   │   ├── PairingDialog.tsx
+│   │   │   ├── CredentialList.tsx
+│   │   │   ├── SaveDialog.tsx
+│   │   │   └── Settings.tsx
+│   │   └── options/
+│   │       └── index.html            # 확장 설정 페이지
+│   ├── components/                   # popup/options 공유 컴포넌트
+│   │   ├── ui/                       # shadcn/ui (별도 설치, src/components/ui 와 분리)
+│   │   ├── SaveBanner.tsx            # ★ in-page sticky banner (Shadow DOM)
+│   │   └── GeneratorIcon.tsx         # autocomplete="new-password" 옆 아이콘
+│   ├── lib/
+│   │   ├── nm-client.ts              # Native Messaging client (확장 → secretbank-nm-host)
+│   │   ├── form-detector.ts          # 폼 자동 감지 (autocomplete + MutationObserver + Shadow DOM)
+│   │   ├── autofill.ts               # autofill 트리거 + Tiered Protection 호출
+│   │   ├── save-handler.ts           # form submit 감지 + save dialog 디스패치
+│   │   ├── pairing.ts                # 페어링 흐름 (KeePassXC 단순화)
+│   │   ├── site-logo.ts              # favicon-proxy + IndexedDB 캐시
+│   │   ├── clickjack-defense.ts      # MutationObserver + Closed Shadow Root
+│   │   └── storage.ts                # chrome.storage.local 래퍼
+│   └── styles/
+│       └── content.css               # content script Shadow DOM 인라인 CSS (?inline import)
+│
+├── packages/                         # ★ NEW — pnpm workspace 공유 라이브러리
+│   └── shared/                       # "@secretbank/shared" (AGPL-3.0)
+│       ├── package.json
+│       ├── tsconfig.json
+│       └── src/
+│           ├── index.ts
+│           ├── types/                # CredentialKind / IssuerRecipe / pairing types
+│           │   ├── credential.ts
+│           │   ├── recipe.ts
+│           │   └── pairing.ts
+│           ├── password-generator/   # Diceware (4 lang) + zxcvbn-ts + recipe
+│           │   ├── index.ts
+│           │   ├── diceware.ts
+│           │   ├── wordlists/        # en/ko/ja/zh BIP39 기반
+│           │   │   ├── en.json
+│           │   │   ├── ko.json
+│           │   │   ├── ja.json
+│           │   │   └── zh.json
+│           │   ├── strength.ts       # zxcvbn-ts wrapper
+│           │   └── recipe.ts         # issuer recipe → 무작위 문자열 생성
+│           ├── validation/           # 공유 zod schemas
+│           │   └── credential.ts
+│           └── i18n-keys.ts          # 데스크톱 ↔ 확장 공통 i18n 키 상수
+│
+└── pnpm-workspace.yaml               # 갱신 — extension/, packages/* 추가
+```
+
+**라이선스 경계 (D18)**:
+
+| 경로                                   | 라이선스   | 비고                                   |
+| :------------------------------------- | :--------- | :------------------------------------- |
+| `extension/`                           | AGPL-3.0   | WXT 확장 전체                          |
+| `packages/shared/`                     | AGPL-3.0   | 공통 lib                               |
+| `src-tauri/crates/secretbank-nm-host/` | AGPL-3.0   | 별도 Rust binary, Tauri 앱과 독립      |
+| `ee/` (기존)                           | EE License | 확장은 EE 코드 import ❌ (간접 호출만) |
+
+### 10.2 통신 흐름 — 5 layer
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│  Layer 1 (사이트 DOM)                                                   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  로그인/가입 페이지의 <input type="password" autocomplete=...>   │   │
+│  │  + Shadow DOM 내부 input + iframe + 동적 SPA                    │   │
+│  └────────────────┬────────────────────────────────────────────────┘   │
+│                   │ form 감지 / autofill / save event                  │
+└───────────────────┼────────────────────────────────────────────────────┘
+                    │
+                    ▼ (focusin / submit / mutation)
+┌────────────────────────────────────────────────────────────────────────┐
+│  Layer 2 (content script — ISOLATED world)                             │
+│  + content-main.ts (MAIN world) — XHR/fetch hook                       │
+│  → MAIN ↔ ISOLATED 는 window.postMessage(targetOrigin = origin)        │
+│    *** credential plaintext 전달 금지, 도메인+이벤트 타입만 ***        │
+└───────────────────┬────────────────────────────────────────────────────┘
+                    │ chrome.runtime.sendMessage / Port
+                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│  Layer 3 (extension service worker — MV3)                              │
+│  - 페어링 상태 관리 / session token 보관 / autofill 라우팅              │
+│  - chrome.storage.session (브라우저 종료 시 휘발) + chrome.storage.local │
+└───────────────────┬────────────────────────────────────────────────────┘
+                    │ chrome.runtime.connectNative / sendNativeMessage
+                    │ (4-byte little-endian length + UTF-8 JSON, stdio)
+                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│  Layer 4 (secretbank-nm-host — Rust binary, OS-spawned)                │
+│  - protocol.rs : 4-byte length header + serde_json                     │
+│  - pairing.rs  : X25519 ECDH + ChaCha20-Poly1305 (secretbank-crypto)   │
+│  - session.rs  : HMAC-SHA256 session token, 4h TTL (사용자 설정)        │
+│  - ipc.rs      : 데스크톱 앱과 통신 (localhost UDS / Named Pipe)        │
+└───────────────────┬────────────────────────────────────────────────────┘
+                    │ localhost (loopback only) - Unix Domain Socket /
+                    │                              Windows Named Pipe
+                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│  Layer 5 (Tauri 데스크톱 앱)                                            │
+│  - 기존 vault key (메모리 only, ZK 유지)                                │
+│  - WebAuthn (Touch ID / Windows Hello) — Tiered Protection 호출        │
+│  - credential CRUD / reveal / save (기존 commands 재사용)               │
+│  - audit log (기존 audit_ctx 통합)                                     │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+**OS별 IPC 채널 선택 (Layer 4 ↔ Layer 5)**:
+
+| OS      | 채널                          | 경로                                               |
+| :------ | :---------------------------- | :------------------------------------------------- |
+| Linux   | Unix Domain Socket (loopback) | `$XDG_RUNTIME_DIR/secretbank/nm.sock`              |
+| macOS   | Unix Domain Socket (loopback) | `~/Library/Application Support/Secretbank/nm.sock` |
+| Windows | Named Pipe                    | `\\.\pipe\Secretbank-NM`                           |
+
+> **결정 [2026-05-09 D4 + Q2]**: 별도 Rust binary `secretbank-nm-host` 채택. Tauri 앱과 분리하여 stdout 오염 격리, AGPL-3.0 경계 명확, Tauri 앱 미실행 시에도 NM 호출 가능 (단 데스크톱 앱이 시작되지 않으면 실제 vault 접근은 차단).
+
+### 10.3 페어링 흐름 — KeePassXC 단순화 (D5 + Q3)
+
+```
+[1] 사용자가 확장 설치 → service worker 첫 부팅
+    │
+    ▼
+[2] service worker → nm-client.ts → chrome.runtime.connectNative("com.secretbank.nm_host")
+    │                                                 │
+    │                                                 ▼
+    │                                         [3] OS가 nm-host binary spawn
+    │                                                 │ (registry/plist 의 path 사용)
+    │                                                 ▼
+    │                                         [4] nm-host: pairing 상태 = "uninitialized"
+    │                                                 → 데스크톱 앱에 IPC 호출
+    │                                                 │
+    │                                                 ▼
+    │                                         [5] Tauri 앱: 사용자에게 dialog 표시
+    │                                                 "Secretbank 확장이 vault 접근을 요청합니다.
+    │                                                  허용하시겠습니까?"
+    │                                                 (1P 스타일, 확장 ID + 핑거프린트 표시)
+    │                                                 │
+    │                                                 ▼ 사용자 [승인]
+    │                                         [6] Tauri 앱: device-bound key pair 생성
+    │                                                 - X25519 priv (Tauri 앱 내부, age vault에 저장)
+    │                                                 - X25519 pub  (nm-host 통해 확장으로 전달)
+    │                                                 │
+    │                                                 ▼
+    [7] 확장: pub 키 저장 (chrome.storage.local) + 자체 X25519 priv 생성
+                                                      │
+                                                      ▼
+    [8] 이후 모든 메시지는 X25519 ECDH → ChaCha20-Poly1305 (secretbank-crypto 재사용)
+                                                      │
+                                                      ▼
+    [9] 첫 password reveal 시 → Tauri 앱 WebAuthn (Touch ID / Windows Hello)
+                                                      │
+                                                      ▼
+    [10] Tauri 앱: HMAC-SHA256(secret_key, "extension_session" || ts || nonce) → session_token
+                                                      → 확장에 전달, TTL 4h (기본값, 사용자 설정 가능)
+```
+
+**페어링 키 보관 위치**:
+
+| 키                         | 위치                                   | 수명                 |
+| :------------------------- | :------------------------------------- | :------------------- |
+| 데스크톱 X25519 priv       | age vault (`device/extension_priv`)    | 영구 (revoke 까지)   |
+| 확장 X25519 priv           | `chrome.storage.local` (extension key) | 영구                 |
+| 데스크톱 ↔ 확장 shared key | 메모리 only (ECDH 결과 유도)           | 세션 단위            |
+| session_token (HMAC)       | `chrome.storage.session`               | 4h (Q4: 사용자 설정) |
+
+**KeePassXC 원본 대비 단순화**:
+
+- 3-key (host / client / identity) → **2-key** (client + session token)
+- TweetNaCl Box → **secretbank-crypto** (X25519 + ChaCha20-Poly1305)
+- 별도 암호화 라이브러리 audit ❌ → 기존 crate 재활용 (B4 mitigation)
+
+### 10.4 Tiered Protection 적용 (D11)
+
+[2026-05-08] Tiered Protection 결정과 완전 정합. 자산별 처리:
+
+| credential.kind       | 첫 호출                                      | 이후 호출 (4h 이내)            | 4h 만료 후    |
+| :-------------------- | :------------------------------------------- | :----------------------------- | :------------ |
+| `password`            | Tauri 앱 WebAuthn → session_token 발급       | session_token 만으로 자동 fill | 다시 WebAuthn |
+| `api_key`             | 매 reveal 시마다 Tauri 앱 WebAuthn 재호출    | (per-reveal, 세션 무관)        | per-reveal    |
+| `credit_card` / `cvc` | 매 reveal + 30s 자동 클리어 (기존 정책 유지) | per-reveal                     | per-reveal    |
+| `passkey` / `totp`    | per-reveal                                   | per-reveal                     | per-reveal    |
+
+**session_token 유효 시간 (Q4)**:
+
+- 기본값: **4h**
+- 사용자 설정: 30분 / 1시간 / 4시간 / 8시간 / 브라우저 종료 시
+- 변경 시점: 즉시 적용 (기존 토큰 invalidate)
+- Settings UI: extension popup `Settings > Session lifetime`
+
+### 10.5 Site Logo 통합 (D12)
+
+[2026-05-08] Site Logo D+E 조합 결정 + extension 측에서 동일 Worker 재사용.
+
+**Fallback chain (3계층)**:
+
+```
+1. extension bundled SVG (issuer preset 17개, simpleicons.org 기반)
+   ↓ 도메인이 preset 에 없으면
+2. https://secretbank.app/api/favicon/<host>     ← 기존 favicon-proxy Worker
+   - IndexedDB 캐시 (24h TTL)
+   - chrome.storage.local 보조 캐시
+   ↓ Worker 4xx/5xx 또는 timeout (3s)
+3. 도메인 첫 글자 + brand-aware gradient SVG (frontend 자체 생성)
+```
+
+**Privacy 보장**:
+
+- Worker 호출 시 user_id / session_token 미포함 → Worker 가 secretbank 계정과 favicon 요청 연결 불가
+- Zero-Knowledge 와 양립
+
+**캐시 키**: `favicon:v1:<sha256(host)>` (host 평문 노출 방지)
+
+### 10.6 Form 감지 우선순위 (D14, RFC + Dashlane 권고)
+
+`extension/lib/form-detector.ts` 의 감지 알고리즘:
+
+```
+For each <input> in document (+ Shadow DOM via composedPath):
+  1. autocomplete="current-password" → password field (login)
+  2. autocomplete="new-password"     → password field (signup/rotation)
+                                       + generator icon 표시
+  3. type="password"                  → password field (fallback)
+  4. name/id regex: /(password|pwd|passwd)/i → password field (lowest priority)
+For each "password field":
+  - 인접 input 중 username 후보 탐색:
+      autocomplete="username|email" > type="email" > name=/(user|email)/i
+  - form 단위로 그룹핑 (closest("form") 또는 가장 가까운 fieldset)
+```
+
+**SPA 동적 렌더링 대응**:
+
+- `MutationObserver` 가 `<body>` 의 childList + subtree 변경 감지
+- 새 input 추가 시 위 알고리즘 재실행
+- History API (`pushState` / `popstate`) → URL 변경 감지 → 재스캔
+- iframe (same-origin) → 재귀 처리, cross-origin → skip
+
+**Shadow DOM 처리**:
+
+- `attachShadow({ mode: 'open' })` → `element.shadowRoot` 로 접근
+- `attachShadow({ mode: 'closed' })` → `event.composedPath()` 로 실제 target 검출
+- Web Components 이벤트는 항상 composedPath 로 검증
+
+### 10.7 위협 모델 — T1 ~ T7 (M24-E 자산)
+
+> 본 표는 `docs/THREAT_MODEL.md` 직접 수정 ❌. Phase A 진입 후 implementator 가 별도 commits 로 반영.
+
+| ID  | 위협                                             | 자산                            | 완화                                                                                                   |
+| :-- | :----------------------------------------------- | :------------------------------ | :----------------------------------------------------------------------------------------------------- |
+| T1  | NM channel 도청 / replay (host process spawning) | NM stdio 채널                   | OS 보안 모델 (registry/plist 검증) + 우리 X25519 + ChaCha20-Poly1305 페어링 + 단조 nonce + session TTL |
+| T2  | content ↔ MAIN world postMessage 도청            | form submit payload, AJAX 결과  | targetOrigin = origin (`*` 금지), credential plaintext 전달 ❌, 도메인+이벤트 타입만                   |
+| T3  | DOM Clickjacking (2025년 신규 위협, Marek Tóth)  | Extension autofill UI           | MutationObserver + `attachShadow({ mode: 'closed' })` + composedPath() 검증                            |
+| T4  | Phishing 가짜 form 자동 fill                     | credential plaintext            | autofill 시 issuer 도메인 매칭 강제 (subdomain-safe), HTTPS only, focus 후 사용자 click 필요           |
+| T5  | Browser side-channel (Spectre/Meltdown 잔여)     | session_token / credential 버퍼 | MV3 strict isolation (브라우저 벤더 의존) + 사용 후 변수 즉시 zeroize → R5 잔여 위험                   |
+| T6  | MV3 SW 일시정지 race condition                   | 진행 중 NM 요청                 | NM Port 연결 유지 시 SW idle 자동 연장 (Chrome 표준) + chrome.storage.local 큐 + 재시작 후 재전송      |
+| T7  | Extension 권한 abuse (악성 업데이트)             | vault credential, NM 채널       | AGPL-3.0 소스 공개 + Firefox AMO 소스 제출 심사 + activeTab + optional_host_permissions 최소화         |
+
+**잔여 위험 (Residual)**:
+
+- **R5** Browser side-channel: 벤더 패치 의존, extension 레벨 완전 방어 불가
+- **R-DC** DOM Clickjacking 신규 기법: 모든 사이트 수동 audit 불가능, 알려진 기법은 방어, 모니터링 지속
+
+### 10.8 권한 매니페스트 (D10)
+
+```jsonc
+// wxt.config.ts → manifest 출력
+{
+  "manifest_version": 3,
+  "name": "Secretbank",
+  "permissions": [
+    "activeTab", // 사용자 클릭 시에만 현재 탭 접근
+    "storage", // chrome.storage.local + .session
+    "nativeMessaging", // secretbank-nm-host 통신
+    // "scripting"는 WXT 가 dynamic injection 시 자동 주입 (필요 시)
+  ],
+  "optional_permissions": [
+    "clipboardWrite", // 사용자 명시 클릭 시 활성화
+  ],
+  "optional_host_permissions": [
+    "<all_urls>", // 사이트별 또는 전체 — 사용자 선택
+  ],
+  "host_permissions": [],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-scripts/content.js"],
+      "run_at": "document_idle",
+      "world": "ISOLATED",
+    },
+  ],
+}
+```
+
+**Chrome Web Store 심사 정당화 (B3)**:
+
+- `nativeMessaging`: "데스크톱 앱과의 zero-knowledge 통신 — 키 값은 항상 데스크톱 앱에 보관"
+- `optional_host_permissions <all_urls>`: "사용자가 사이트별로 명시 허용. 기본값은 비활성"
+- `activeTab`: "사용자가 확장 아이콘 클릭 시에만 폼 감지"
+
+### 10.9 UI 분리 (D8)
+
+| 영역                       | 기술 스택                                             | 이유                                          |
+| :------------------------- | :---------------------------------------------------- | :-------------------------------------------- |
+| Extension popup / options  | shadcn/ui + Tailwind v4 (build-time CSS)              | 데스크톱 앱과 동일 디자인 시스템 + CSP 'self' |
+| Content script 인페이지 UI | Closed Shadow DOM + `?inline` CSS + postcss-rem-to-px | host 페이지 CSS 격리 + rem 단위 충돌 방지     |
+
+**Radix UI portal 처리**: shadcn/ui Dialog 의 `Document.body` portal → Shadow Root 내부 portal 로 변경 (`portalContainerRef` prop 활용).
+
+### 10.10 i18n (D9)
+
+- Extension: `@wxt-dev/i18n` (YAML, 타입 안전, `_locales/` 표준)
+- Desktop: 기존 `react-i18next` (변경 없음)
+- 공통 키 상수: `packages/shared/src/i18n-keys.ts` 에 export → 양쪽 import
+- 4 로케일: en / ko / ja / zh
+- 제약: 브라우저 언어 변경 없이는 런타임 언어 전환 불가 (확장 표준 한계, 회피 ❌)
+
+### 10.11 외부 보안 audit 일정 (Q5)
+
+- **Phase B 완료 후 (페어링 + NM 흐름만)**: 외부 보안 업체 (TBD) — 1~2주 audit, 페어링 protocol + NM channel + session token 흐름 한정
+- **Phase F 완료 후 (출시 직전 종합 audit)**: 별도 — 전체 확장 + nm-host + form-detector + DOM Clickjacking 방어 + Web Store 제출 직전
+- 일정 미확정 시 fallback: AGPL-3.0 공개 검증 + 베타 사용자 피드백 (project-decisions.md [2026-05-09] Q5 = 옵션 A 채택, 단 일정 미확정 시 옵션 C 도 현실적)
+
+### 10.12 cross-browser 빌드 매트릭스 (D16 + D17 + Q1)
+
+| 브라우저 | Phase | 빌드 도구             | CI Runner     | 출시 채널        |
+| :------- | :---- | :-------------------- | :------------ | :--------------- |
+| Chrome   | F-1   | WXT (chromium target) | ubuntu-latest | Chrome Web Store |
+| Firefox  | F-1   | WXT (firefox target)  | ubuntu-latest | Firefox AMO      |
+| Edge     | F-2   | WXT (chromium 재사용) | ubuntu-latest | Edge Add-ons     |
+| Safari   | F-2   | WXT + Xcode wrapper   | macos-latest  | Mac App Store    |
+
+**E2E 테스트**:
+
+- Chrome / Edge: Playwright (`headless = false` for extensions)
+- Firefox: Mozilla `web-ext` (Playwright 확장 미지원)
+- Safari: Xcode + xcrun (Phase F-2)
+- Mock Native Messaging Host (Node.js stub, stdin/stdout 4-byte header 처리) → Tauri 없이 단독 E2E 가능
 
 ---
 
