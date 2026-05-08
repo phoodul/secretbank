@@ -2499,3 +2499,13 @@ secretbank 의 두 갈래 통합:
 
 _문서 끝._
 
+
+---
+
+## M24-E 진행 현황 (Browser Extension — Phase A~F)
+
+매 sub-task 완료 시 commiter 가 커밋을 만든 직후 한 줄 추가.
+
+| Task ID | 제목 | 완료일 | 커밋 해시 |
+| :------ | :--- | :----- | :-------- |
+| T-24-E-A1 | WXT v0.20 + Tailwind v4 + shadcn/ui Button — extension/ 신규 워크스페이스 + Chrome MV3/Firefox MV2 멀티타깃 + 단일 eslint 구조 (루트 분리) + ext:dev/build/test 편의 스크립트 | 2026-05-09 | `bd126bb` |
