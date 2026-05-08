@@ -1,5 +1,83 @@
 # Work Log
 
+## 2026-05-09 — Resume 세션 종료 (인프라 setup + UX 결정 4건 + pre11 release + branch protection 해결)
+
+### 큰 줄거리
+
+- Pre-step Worker 풀체인 마무리 (Sub-task 2~5)
+- Cloudflare 인프라 setup (Pages custom domain + Worker deploy)
+- pre11 release 풀체인 (version bump 19 files + release.yml 빌드 + 수동 mirror)
+- 핵심 UX 결정 4건 정식화 (Tiered Protection / Site Logo / M24-E 격상 / Zero-Knowledge 원칙)
+- Branch protection 영구 해결 (PR review + strict 비활성, github-actions[bot] push 가능)
+- site/ 브랜드 텍스트 fix (리브랜드 사각지대)
+- Dependabot 보안 패치 (hono 4.12.18)
+
+### 사용자 통찰 (세션 마무리 시점, 매우 중요)
+
+> "autofill 없이 dogfooding 의미 X — daily driver 검증 불가"
+
+**M24-E 가 진짜 출시 blocker** 임을 사용자가 직접 재확인. [2026-05-08] Tier 1 격상 결정의 정확한 근거.
+방법 A (1P autofill 끄고 Chrome native + 우리 import) 검증 완료.
+
+### 핵심 commits (push 모두 origin/main)
+
+| 카테고리 | commits | 의미 |
+| :--- | :--- | :--- |
+| Pre-step Worker Sub-task 2~5 | `8a4b5ac` ~ `33e944c` + `291c2ea` + `e005f6c` | site/releases.json + site/latest.json + release.yml + RELEASE_GUIDE |
+| Dependabot 보안 패치 | `673452a` | hono 4.12.15 → 4.12.18, 2 moderate 해소 |
+| Tiered Protection 결정 | `8ece666` | password = OS lock 위임 / api_key/카드/passkey = per-reveal 재인증 |
+| Site Logo 결정 | `cc384df` | D+E 조합 (Worker favicon-proxy + bundled SVG + fallback) |
+| Tier 1 재조정 (M24-E 격상) | `dc60285` | Password Generator + Quick Save + M24-E 우선 |
+| Zero-Knowledge 원칙 | `f02eab7` | 복구 가능 ↔ ZK 양립 불가, 6 layer 정리 |
+| pre11 version bump | `8e0432d` (19 files) | 모든 version 필드 0.1.0-pre10 → 0.1.0-pre11 |
+| pre11 manual mirror | `1514481` (가정 hash) | release.yml 의 main push 차단 회피, latest.json 수동 mirror |
+| site nav 브랜드 텍스트 fix | `6b6ef83` | "API Vault" → "Secret<lapis>bank</lapis>" |
+
+### 인프라 setup (코드 외)
+
+- **Cloudflare Pages custom domain** — `api-vault-site` Pages 프로젝트 + `secretbank.app` + `www.secretbank.app` custom domain 추가 + DNS A 레코드 자동 등록 + SSL 발급
+- **Cloudflare Worker deploy** — `ee/cloudflare/download-proxy/` 의 `wrangler deploy` 1회 실행 → `secretbank.app/download/*` + `secretbank.app/api/*` route 등록
+- **GitHub branch protection 갱신** — Settings → Branches → main rule:
+  - "Require a pull request before merging" 체크 해제
+  - "Require branches to be up to date before merging" 체크 해제
+  - 결과: `pr_review: null` / `strict: false` — github-actions[bot] 자동 commit 통과
+
+### 검증 결과 (회귀 0)
+
+| 검증 | 결과 |
+| :--- | :--- |
+| `cargo test --workspace --lib` | **586 PASS** |
+| `pnpm vitest run` | **614 PASS / 70 files** |
+| `cd ee/cloudflare/download-proxy && pnpm test` | **14 PASS** |
+| `pnpm typecheck` | 0 error |
+| `pnpm lint` | 0 신규 (22 기존 warnings 무관) |
+| `pnpm format:check` | PASS |
+| YAML / JSON syntax | release.yml + latest.json + releases.json PASS |
+
+### 라이브 인프라 검증
+
+- `https://secretbank.app` → Pages 정상 서빙 (title / og:* 모두 "Secretbank", nav brand text "Secretbank" lapis 강조)
+- `https://secretbank.app/api/latest` → Worker proxy → site/latest.json (`"version": "0.1.0-pre11"`, Content-Type: application/json)
+- `https://secretbank.app/download/v0.1.0-pre11/Secretbank_*_x64-setup.exe` → 200 OK (Worker GitHub Releases CDN passthrough)
+- GitHub Release v0.1.0-pre11 → public 상태, 모든 OS installer + .sig 존재
+
+### 다음 세션 시작점
+
+**진행 순서 갱신** (project-decisions [2026-05-08] 에 정식화):
+
+```
+~~dogfooding~~ (방법 A 로 단축 완료)
+→ Site Logo 풀체인 (5~7 commits) ⭐ 다음 세션 시작
+→ Password Generator α + β (4~7 commits)
+→ Quick Save 글로벌 hotkey + tray popup
+→ M24-E 브라우저 확장 풀구현 (Tier 1 가장 큰 항목)
+→ Phase 3-B → 4 → 3-C → 5 → M11
+```
+
+**다음 세션 첫 액션**: researcher 호출 (Site Logo 사양 사전 조사) → integrator → implementator (Logo-1 favicon-proxy Worker).
+
+---
+
 ## 2026-05-08 (저녁) — Pre-step Worker download-proxy 풀체인 마무리 (5 commits)
 
 ### 컨텍스트

@@ -2,20 +2,65 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-08 (저녁) — **Pre-step Worker 풀체인 완전 마무리 ✅ Sub-task 1~5 모두 ✅. dogfooding 진입 조건 충족.**
-- **다음 단계**: dogfooding (Worker deploy + v0.1.0-pre10 tag push + installer 다운로드/설치/실행)
-- **완료된 Sub-task (이번 resume 세션, 5 commits)**:
-  - Sub-task 2 잔여 — `site/releases.json` placeholder commit (`8a4b5ac`)
-  - Sub-task 3 — `site/latest.json` 4 platforms URL → secretbank.app proxy 교체 (`28c2c49`)
-  - Sub-task 4 — `release.yml` BASE URL 교체 + site/{latest,releases}.json 자동 commit step 추가 (`5a43147`)
-  - Sub-task 5 — `docs/RELEASE_GUIDE.md` 갱신 (Worker 9번 / Per-release / Rollback / Domain 다이어그램) (`33e944c`)
-  - progress.md 갱신 (`291c2ea`)
-- **검증** (회귀 0): cargo test 586 / vitest 614 / Worker vitest 14/14 / typecheck 0 / lint 0 신규 / format PASS / YAML+JSON syntax PASS
-- **다음 세션 시작 액션**:
-  1. **사용자 직접 Worker deploy** — `cd ee/cloudflare/download-proxy && wrangler deploy` (one-time, secrets 노출 위험으로 CI 자동화 ❌)
-  2. **검증** — `curl -I https://secretbank.app/download/v0.1.0-pre8/secretbank_0.1.0_x64-setup.exe` (200) + `curl https://secretbank.app/api/latest` (JSON)
-  3. **v0.1.0-pre10 tag push** → release.yml 자동 빌드 → site/{latest,releases}.json main commit (`[skip ci]`) → Pages 재배포
-  4. **dogfooding** — secretbank.app 에서 installer 다운로드 → 설치 → 실행 (Windows 우선). UX 이슈 발견 시 우선 fix.
+- **Time:** 2026-05-09 — **Resume 세션 종료. dogfooding 진입 + 인프라 setup + 핵심 UX 결정 4건 + pre11 release 완료. 다음 = M24-E (브라우저 확장) 풀구현 진입.**
+- **사용자 핵심 통찰 (세션 마무리 시점)**:
+  - "autofill 없이 dogfooding 의미 X — daily driver 검증 불가"
+  - "기본 설정이 1P 인 상황에서 Secretbank 에 비번 넣는 흐름 자체가 마찰 큼"
+  - → **M24-E 가 진짜 출시 blocker** ([2026-05-08] Tier 1 격상 결정의 정확한 근거 재확인)
+- **사용자 방법 A 검증 완료**: 1P autofill 비활성 → Chrome native password manager 활성 → 주기적 Chrome export → Secretbank drag-drop import 흐름 ✅ (Phase 2-3-a CSV import 검증)
+
+### 이번 resume 세션 commits (origin/main 모두 push 완료)
+
+| 카테고리 | 주요 commits | 의미 |
+| :--- | :--- | :--- |
+| **Pre-step Worker 풀체인 마무리 (Sub-task 2~5)** | `8a4b5ac` / `28c2c49` / `5a43147` / `33e944c` / `291c2ea` / `e005f6c` | site/releases.json + site/latest.json URL + release.yml 자동 commit step + RELEASE_GUIDE 9번 + docs |
+| **Dependabot 보안 패치** | `673452a` | hono 4.12.15 → 4.12.18 (2 moderate 해소). 모든 alert fixed |
+| **핵심 UX 결정 4건** | `8ece666` / `cc384df` / `dc60285` / `f02eab7` | Tiered Protection / Site Logo / Tier 1 재조정 (M24-E 격상) / Zero-Knowledge 원칙 |
+| **pre11 release 풀체인** | `8e0432d` (version bump 19 files) + tag `v0.1.0-pre11` | release.yml 자동 빌드 성공, draft → public 수동 승급 |
+| **인프라 setup (Cloudflare)** | (코드 외 작업) | secretbank.app Pages custom domain + download-proxy Worker `wrangler deploy` 완료 |
+| **Branch protection 영구 해결** | (GitHub Settings) | PR review requirement + strict 비활성 → release.yml `[skip ci]` push 차단 회피 |
+| **site/ 브랜드 텍스트 fix** | `6b6ef83` | nav 로고 옆 "API Vault" → "Secret<lapis>bank</lapis>" (리브랜드 commit 의 사각지대) |
+
+### 검증 결과 (회귀 0)
+
+- `cargo test --workspace --lib`: **586 PASS**
+- `pnpm vitest run`: **614 PASS / 70 files**
+- `cd ee/cloudflare/download-proxy && pnpm test`: **14 PASS**
+- `pnpm typecheck`: 0 error
+- `pnpm lint`: 0 신규 (기존 22 warnings 무관)
+- `pnpm format:check`: PASS
+
+### 라이브 인프라 검증
+
+- `https://secretbank.app` → Pages 정적 site 정상 서빙 (title / og:* 모두 "Secretbank")
+- `https://secretbank.app/api/latest` → Worker proxy → site/latest.json (`"version": "0.1.0-pre11"`)
+- `https://secretbank.app/download/v0.1.0-pre11/Secretbank_*_x64-setup.exe` → 200 (Worker GitHub Releases CDN passthrough)
+- GitHub Release v0.1.0-pre11 → public, 모든 OS installer + signature 존재
+
+### 다음 세션 시작점 — M24-E 진입 (Tier 1 가장 큰 항목)
+
+**진행 순서 갱신** (project-decisions [2026-05-08] 에 명시):
+
+```
+~~dogfooding~~ (방법 A 로 단축 완료)
+→ Site Logo 풀체인 (5~7 commits) — BentoCard 시각 식별
+→ Password Generator α + β (4~7 commits) — Diceware + zxcvbn + issuer recipe
+→ Quick Save 글로벌 hotkey + tray popup (1주) — 단기 대안
+→ M24-E 브라우저 확장 풀구현 (1~2 개월) ⭐ Tier 1 가장 큰 항목
+  - Chrome / Firefox / Safari / Edge × manifest v3
+  - form auto-detect → recipe inheritance → save dialog
+  - Tiered Protection 적용 (device biometric 1회 → 세션 유지)
+  - Site Logo 표시
+→ Phase 3-B (secure_note) → 4 (카테고리) → 3-C (passkey)
+→ Phase 5 (TOTP autofill) → M11 (모바일)
+```
+
+**다음 세션 첫 액션**: researcher 호출로 Site Logo 사양 사전 조사 (favicon proxy / simpleicons.org / IndexedDB 캐시 / Cloudflare Worker pattern). 그 후 Site Logo 첫 sub-task implementator 호출.
+
+**병행 가능 항목**:
+- (선택) 1pux import 파서 추가 (Phase 2-3-b) — 1P CSV/1pux 직접 받기. ROI 크지만 Tier 1 우선순위와 직렬
+- (선택) Generic CSV detector — 1P CSV / Bitwarden CSV / Chrome CSV 헤더 자동 분기. 작은 작업
+- THREAT_MODEL.md 갱신 (Tiered Protection password OS lock 위임 명시)
 
 ### 이전 — 2026-05-08 (Secretbank 리브랜드 완료)
 
