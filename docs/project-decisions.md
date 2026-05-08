@@ -5,6 +5,65 @@
 
 ---
 
+## [2026-05-08] **Tiered Protection 모델 채택** — UX 핵심 설계 원칙
+
+### 배경 — 사용자 통찰 (직접 인용)
+
+> "일반적인 비번의 경우 구글로 로그인을 하면 비번이 바로 완성되어 사용가능한데, 1password를 사용하면 다시 1password 비번을 입력해야 한다는 거야. 불필요하게 잠금을 건 경우라고도 할 수 있지. 내 생각에는 저장만 완벽하게 하고, import를 단순하게 하고 입력은 굳이 재확인 없이 구글 자동완성을 이용해도 될 것 같아"
+
+**문제 정의**: 1P 의 가장 큰 마찰점 = device 가 OS-level 잠금 해제된 상태에서 일반 password autofill 에 vault 재잠금까지 요구 → daily driver 비대칭 비용. autofill 한 번에 추가 단계 1~2개.
+
+이는 Secretbank 가 1P / Bitwarden 과 차별되는 가장 중요한 UX 결정 중 하나.
+
+### 결정 — 자산별 보호 수준 차등화
+
+**모든 credential 을 같은 수준으로 잠그지 않는다.** 위험도에 따라 보호 수준 분리:
+
+| 자산 kind | 보호 수준 | autofill / reveal 흐름 |
+| :--- | :--- | :--- |
+| **password** (일반 웹사이트) | OS keychain 위임 (Touch ID / Windows Hello / OS lock) | **재인증 없이 즉시 자동완성** (vault unlock 한 번 후 device 잠금 풀릴 때까지 유지) |
+| **api_key / 토큰** | Secretbank vault + reveal-on-demand 30s 자동 클리어 | passphrase 1회 (auto-lock idle 정책 적용) |
+| **credit_card / passkey / vault charter / TOTP secret** | Secretbank vault + per-reveal 인증 | reveal 시점마다 재인증 (현재 3-A 신용카드 흐름과 일치) |
+
+### 구현 방향
+
+**short-term (Settings 토글, dogfooding 후 즉시 가능)**:
+
+- Settings 에 **"Auto-unlock for low-stakes credentials"** 토글 추가 (기본값: ON — daily driver 우선)
+- vault unlock 한 번 후 device OS 잠금 풀린 동안 `kind == password` 인 credential 의 reveal/copy 는 passphrase 재입력 ❌
+- `kind in { api_key, credit_card, passkey, totp_secret, vault_charter }` 는 그대로 재인증 (현 흐름 유지)
+- 보안 우선 사용자는 토글 OFF 로 1P 모드 (모든 reveal 재인증) 선택 가능 — **명시적 선택권 보장**
+
+**long-term — M24-E 브라우저 확장 + Phase 5 TOTP autofill 핵심 설계 원칙**:
+
+- M24-E 브라우저 확장은 **device biometric 한 번 → 세션 유지 → autofill** 흐름을 기본으로. 매 사이트마다 vault 재잠금 ❌. 1P / Bitwarden 보다 마찰 한 단계 적게.
+- Phase 5 TOTP 자동 채움 — `kind == password` 인 credential 에 연결된 TOTP 는 autofill 시 함께 전달. `kind == totp_secret` (독립 TOTP) 만 재인증.
+- 모바일 (M11) 도 동일 — OS 의 biometric/PIN 통과하면 일반 password autofill 즉시 가능.
+
+### 영향
+
+- **Settings 토글** — Phase 3-B (secure_note) 직후 또는 dogfooding 1일 안에 추가 가능 (작은 작업, 1~2 commits)
+- **F.1 4축 분석 갱신** — UX 축의 격차가 좁혀짐. "1P 의 마찰 1단계 제거" 가 우리만의 차별로 등장
+- **THREAT_MODEL.md 갱신 필수** — `kind == password` 의 보호 모델이 OS lock 으로 위임됨. shoulder surfing / device unattended 시점의 위험을 OS keychain 모델과 동일 수준으로 명시
+- **Phase 5 / M24-E 사양** — implementator 호출 시 본 결정 인용 필수
+- **랜딩 페이지 마케팅** — "1P 보다 한 단계 빠른 autofill" 직접 어필 가능
+
+### 사용자 제안 3가지의 정식 처리
+
+| 제안 | 정식 처리 |
+| :--- | :--- |
+| "저장만 완벽하게" | 이미 충족 (zero-knowledge + Charter 복구 + Yjs CRDT sync). 단 강력한 generator (Diceware + entropy meter) 추가 — Tier 2 작은 작업으로 격상 |
+| "Import 를 단순하게" | Chrome CSV preview 가 이미 단순. 1pux / BW JSON 추가 시 **동일 단순함 유지** 가 기준. 5분 TTL + 충돌 자동 해제 패턴 그대로 |
+| **"입력은 재확인 없이"** | **본 Tiered Protection 모델의 핵심**. password kind 의 reveal/copy/autofill 에 한해 재인증 제거. Phase 5 / M24-E 의 default 설계 |
+
+### Trade-off (명시)
+
+- **OS lock 위임 = device 가 도난당했을 때 OS 잠금만이 방어선**. 단 이는 일반 password manager 와 동일 수준 (1P 의 vault 재잠금이 추가 보호선이긴 하나 daily 마찰 대비 이익 미미)
+- **고위험 자산은 여전히 vault 재인증** — shoulder surfing / over-the-shoulder 방어 유지
+- **사용자 명시 선택권** — Settings 토글로 "1P 모드" 선택 가능 — "보안 강조" 사용자 케이스 충족
+
+---
+
 ## [2026-05-08] Pre-step Worker 배포 — GATE 1 사양 확정 (Dogfooding 진입 전)
 
 이번 resume 세션 첫 GATE 1. m24_vision.md "다음 세션 시작점" Pre-step 5개 작업의 구체적 사양 확정.
