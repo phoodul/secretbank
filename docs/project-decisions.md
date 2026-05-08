@@ -5,6 +5,75 @@
 
 ---
 
+## [2026-05-08] **Site Logo 기능 신설** — BentoCard 로고 표시 (Phase 3-B 직전 진입)
+
+### 배경 — 사용자 질문
+
+> "각 비번카드는 이름 url ID PW/Key/Token 등이 들어간다고 했는데 각 카드에서 해당 카드를 잘 알아볼 수 있게 로고를 가져올 수 있는가?"
+
+현재 BentoCard 가 로고 미표시 → 카드 시각 식별성 부족. 1P / Bitwarden 모두 favicon 자동 fetch 가 기본. UX 4축 중 디자인 / 직관성 격차 좁히는 가시적 개선.
+
+### 현재 코드 상태
+
+- `Issuer` 모델에 `icon_key: Option<String>` + `domains: Vec<String>` 필드 **이미 존재** (`src-tauri/crates/secretbank-core/src/models/issuer.rs:17,24`)
+- 17개 issuer preset 시드 — domains 등록됨
+- BentoCard 는 로고 슬롯 미구현. CredentialDetail 도 동일
+
+### 결정 — D + E 조합 (Tiered source priority)
+
+**source priority** (1 → 2 → 3 fallback):
+
+1. **issuer preset (17개)** → bundled SVG (`src/assets/issuer-logos/<id>.svg`) — offline 동작 / 일관된 디자인 / `simpleicons.org` 패키지 활용
+2. **그 외 URL 보유 credential** → **Cloudflare Worker favicon-proxy** (`ee/cloudflare/favicon-proxy/`)
+   - route: `secretbank.app/api/favicon/<domain>`
+   - 내부에서 Google s2 API 호출 + Cloudflare KV 24h 캐시
+   - 응답: WebP 64x64 (모든 OS / 디바이스 일관)
+   - **Privacy**: Worker 가 secretbank 계정과 무관 → 누가 어떤 사이트 favicon 을 요청했는지 묶을 수 없음. zero-knowledge 와 양립
+3. **fallback** → 도메인 첫 글자 + brand-aware gradient (Phase 1.5 hover graph 와 동일 톤)
+
+### 거부된 대안 (이유)
+
+- **Google s2 / DuckDuckGo 직접 호출**: 외부 서비스가 사용자가 어떤 사이트에 계정이 있는지 학습 → zero-knowledge 위반
+- **사이트 origin 직접 fetch** (`<host>/favicon.ico`): 사이트마다 경로 (apple-touch-icon / favicon.png) 다양해 신뢰성 ↓ + CORS 이슈
+- **순수 local bundle 만**: 사용자가 추가하는 신규 issuer 는 fallback 만 — daily driver 시각 식별성 부족
+
+### Settings 토글 — 사용자 선택권 (Tiered Protection 원칙과 일관)
+
+- **"Fetch site logos from web"** — 기본 ON
+- OFF 시: bundled SVG 만, 그 외는 첫 글자 fallback. fully air-gapped 사용자 케이스 충족
+
+### 진입 시점 — dogfooding 직후, **Phase 3-B (secure_note) 이전 우선**
+
+근거:
+- BentoCard 가 현재 시각적으로 가장 빈약함 → daily driver 체감 대폭 향상
+- secure_note 는 보통 로고 없으니 (개인 메모/문서) Site Logo 와 작업 충돌 ❌
+- UX 4축 중 가장 빠르게 격차 좁히는 작업 (작업량 대비 효과)
+
+### 작업 규모 (예상 5~7 commits)
+
+| Sub-task | 작업 |
+|:---|:---|
+| **Logo-1** | `ee/cloudflare/favicon-proxy/` Worker 신규 + vitest (download-proxy 패턴) |
+| **Logo-2** | issuer preset 17개 SVG 번들 (`simpleicons.org` 또는 직접) + `useIssuerLogo` priority 1 |
+| **Logo-3** | `useIssuerLogo` 훅 priority 2 (Worker fetch + IndexedDB 24h 캐시) + priority 3 (fallback) |
+| **Logo-4** | BentoCard 로고 슬롯 (좌측 상단 32x32) + LazyImage + 빈 상태 |
+| **Logo-5** | CredentialDetail 로고 표시 (헤더 영역) |
+| **Logo-6** | Settings `fetch_logos_enabled` 토글 + i18n 4 로케일 |
+| **Logo-7** | THREAT_MODEL.md 갱신 (favicon-proxy 위협 모델 / privacy 보장 명시) |
+
+### 갱신된 진행 순서 (2026-05-08)
+
+dogfooding (Worker deploy + tag push + installer 검증)
+→ **Site Logo 풀체인 (5~7 commits)** ⭐ 신규 우선순위
+→ Phase 3-B (secure_note)
+→ Phase 4 (카테고리)
+→ Phase 3-C (passkey)
+→ Phase 5 (TOTP autofill, Tiered Protection 적용)
+→ M11 (모바일)
+→ M24-E (브라우저 확장, Tiered Protection 적용)
+
+---
+
 ## [2026-05-08] **Tiered Protection 모델 채택** — UX 핵심 설계 원칙
 
 ### 배경 — 사용자 통찰 (직접 인용)
