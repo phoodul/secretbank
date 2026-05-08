@@ -2,13 +2,20 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-08 — **Pre-step Worker 풀체인 완전 마무리 ✅ Sub-task 2~5 모두 커밋 완료**
-- **다음 단계**: dogfooding (GitHub Releases v0.1.0-pre10 installer 다운로드 → 설치 → 실행) 또는 Phase 3-B (secure_note)
-- **완료된 Sub-task (이번 세션)**:
+- **Time:** 2026-05-08 (저녁) — **Pre-step Worker 풀체인 완전 마무리 ✅ Sub-task 1~5 모두 ✅. dogfooding 진입 조건 충족.**
+- **다음 단계**: dogfooding (Worker deploy + v0.1.0-pre10 tag push + installer 다운로드/설치/실행)
+- **완료된 Sub-task (이번 resume 세션, 5 commits)**:
   - Sub-task 2 잔여 — `site/releases.json` placeholder commit (`8a4b5ac`)
   - Sub-task 3 — `site/latest.json` 4 platforms URL → secretbank.app proxy 교체 (`28c2c49`)
   - Sub-task 4 — `release.yml` BASE URL 교체 + site/{latest,releases}.json 자동 commit step 추가 (`5a43147`)
   - Sub-task 5 — `docs/RELEASE_GUIDE.md` 갱신 (Worker 9번 / Per-release / Rollback / Domain 다이어그램) (`33e944c`)
+  - progress.md 갱신 (`291c2ea`)
+- **검증** (회귀 0): cargo test 586 / vitest 614 / Worker vitest 14/14 / typecheck 0 / lint 0 신규 / format PASS / YAML+JSON syntax PASS
+- **다음 세션 시작 액션**:
+  1. **사용자 직접 Worker deploy** — `cd ee/cloudflare/download-proxy && wrangler deploy` (one-time, secrets 노출 위험으로 CI 자동화 ❌)
+  2. **검증** — `curl -I https://secretbank.app/download/v0.1.0-pre8/secretbank_0.1.0_x64-setup.exe` (200) + `curl https://secretbank.app/api/latest` (JSON)
+  3. **v0.1.0-pre10 tag push** → release.yml 자동 빌드 → site/{latest,releases}.json main commit (`[skip ci]`) → Pages 재배포
+  4. **dogfooding** — secretbank.app 에서 installer 다운로드 → 설치 → 실행 (Windows 우선). UX 이슈 발견 시 우선 fix.
 
 ### 이전 — 2026-05-08 (Secretbank 리브랜드 완료)
 

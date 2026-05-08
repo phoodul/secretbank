@@ -1,5 +1,53 @@
 # Work Log
 
+## 2026-05-08 (저녁) — Pre-step Worker download-proxy 풀체인 마무리 (5 commits)
+
+### 컨텍스트
+
+이전 세션에서 Sub-task 1 (`ee/cloudflare/download-proxy/` Cloudflare Worker, 14 vitest) 만 완료된 상태에서 사용자가 Secretbank 리브랜드를 결정해 commit `5e1db44` 로 일괄 처리. 그 과정에서 Sub-task 2 의 site/index.html 변경분 (classify URL → secretbank.app/download/, fetchReleases /api/latest + /releases.json 분리) 이 함께 들어갔으나 site/releases.json placeholder 만 untracked 상태로 남았음. 본 라운드 = 잔여 4 sub-task 완성.
+
+### 커밋 5개 (origin/main 보다 10 commits ahead)
+
+| # | 커밋 해시 | 제목 | 영향 |
+|---|---|---|---|
+| 1 | `8a4b5ac` | feat(site): releases.json placeholder 추가 (Pre-step 2/5) | site/releases.json 1 파일 |
+| 2 | `28c2c49` | feat(infra): site/latest.json URL → secretbank.app proxy 교체 (Pre-step 3/5) | site/latest.json 4 platforms URL |
+| 3 | `5a43147` | feat(ci): release.yml site/{latest,releases}.json 자동 commit (Pre-step 4/5) | release.yml: BASE URL 교체 + publish-updater-manifest job 자동 commit step 2개 신규 |
+| 4 | `33e944c` | docs(release-guide): Cloudflare Worker download-proxy 절차 추가 (Pre-step 5/5) | RELEASE_GUIDE.md: 섹션 9 신규, 섹션 7 갱신, Per-release/Rollback 갱신 |
+| 5 | `291c2ea` | docs: Pre-step Worker 풀체인 완료 — progress.md 갱신 | progress.md |
+
+### 주요 결정 (이번 라운드)
+
+- **GATE 결정 #3 (d) 채택 적용**: Previous releases UI 유지 + release.yml 자동 생성. release.yml 의 자동 commit step 이 `gh release list --limit 20` + per-tag `gh release view --json assets` 로 site/releases.json 자동 합성. URL 은 site/index.html 의 classify() 가 동적 구성 (Worker 형식).
+- **circular trigger 안전성 확인**: release.yml 트리거는 `push.tags: v*` 만 — main push 는 release.yml 자체를 다시 트리거하지 않음. `[skip ci]` 는 다른 workflow (예: ci.yml `push.branches: main`) 트리거 방지 이중 보험.
+- **`git pull --rebase` 안전장치 + `--force` 금지** — solo 환경이라 동시 release 충돌 가능성 극히 낮지만 명시적으로 보호.
+- **outdated 주석 제거** — release.yml 의 "branch protection 으로 GH_TOKEN push 차단" 주석 삭제. 현재 protection 없음 + 자동 commit 으로 처리됨.
+
+### 검증 결과 (회귀 0)
+
+- `cargo test --workspace --manifest-path src-tauri/Cargo.toml --lib`: **586 PASS / 0 FAIL**
+- `pnpm typecheck`: 0 error
+- `pnpm vitest run`: **614 PASS / 70 test files**
+- `pnpm lint`: 0 신규 error (기존 22 warnings 무관)
+- `pnpm format:check`: PASS
+- `cd ee/cloudflare/download-proxy && pnpm test`: **14/14 PASS**
+- YAML syntax (`python yaml.safe_load`): release.yml PASS
+- JSON syntax: site/latest.json + site/releases.json PASS
+
+### 다음 진입 — Dogfooding (production build → Worker deploy → tag push)
+
+Pre-step Worker 풀체인 (Sub-task 1~5) 모두 완성. dogfooding 진입 조건 충족. 다음 세션:
+
+1. **사용자 직접 — Worker deploy** (one-time, secrets 노출 위험으로 CI 자동화 ❌):
+   ```sh
+   cd ee/cloudflare/download-proxy && wrangler deploy
+   ```
+2. **검증**: `curl -I https://secretbank.app/download/v0.1.0-pre8/secretbank_0.1.0_x64-setup.exe` 200 + `curl https://secretbank.app/api/latest` JSON 응답
+3. **v0.1.0-pre10 tag push** → release.yml 자동 빌드 → site/{latest,releases}.json main commit (`[skip ci]`) → Pages 재배포
+4. **dogfooding**: secretbank.app 에서 installer 다운로드 → 설치 → 실행 (Windows 우선)
+
+---
+
 ## 2026-05-08 — Secretbank 전체 리브랜드 완료 (Phase A + B 일괄, 1 commit)
 
 ### 커밋 `5e1db44`

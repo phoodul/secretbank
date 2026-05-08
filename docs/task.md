@@ -316,6 +316,30 @@
 | :--- | :-------- |
 | **api-vault → Secretbank 전체 리브랜드** Phase A (URL/도메인: `secretbank.app`, identifier `app.secretbank`, deep-link scheme `secretbank://`, updater endpoint `https://secretbank.app/api/latest`) + Phase B (Rust 크레이트 13개 `secretbank-*` 리네임, JetBrains 패키지 `app.secretbank`, `ee/secretbank-relay`, Homebrew/WinGet/VS Code 확장 리네임, Cloudflare Worker REPO/CORS/MANIFEST_URL 갱신, 설정 스토리지 키 소문자, deep-link 프로토콜 비교 소문자). 볼트 파일 매직 바이트 `b"APIVAULT"` 유지 (파일 포맷 호환성). 354 files changed. cargo build/test(586)/clippy + pnpm typecheck/vitest(614)/lint/format + Worker 14 + Relay 71 전원 통과. | `5e1db44` |
 
+### Pre-step Worker download-proxy 풀체인 마무리 (2026-05-08, Sub-task 2~5)
+
+> Sub-task 1 (`ee/cloudflare/download-proxy/` Worker 신규) 은 이전 세션 commit `3e9ce39` + `3225a78` 로 완료. 본 라운드에서 잔여 4개 sub-task 를 commit 단위 분할로 구현. 사용자 결정 [2026-05-08]: GATE 결정 #3 (d) — Previous releases UI 유지 + release.yml 자동 생성 채택.
+
+| 주제 | 커밋 해시 |
+| :--- | :-------- |
+| **Sub-task 2 잔여** — `site/releases.json` placeholder (`{generated_at, releases:[]}`) commit. `site/index.html` 의 `fetch("/releases.json")` 가 정상 200 응답을 받도록 하는 빈 배열 placeholder. site/index.html 변경분(classify URL → `https://secretbank.app/download/...`, fetchReleases /api/latest + /releases.json 분리, adaptLatestToAssets 어댑터)은 리브랜드 commit `5e1db44` 에 이미 포함됨. release.yml 자동 갱신 (Sub-task 4) 도입 후 실제 release 데이터로 채워짐. | `8a4b5ac` |
+| **Sub-task 3** — `site/latest.json` 4 platforms (`darwin-x86_64`, `darwin-aarch64`, `windows-x86_64`, `linux-x86_64`) URL 형식을 `https://github.com/phoodul/secretbank/releases/download/v0.1.0-pre8/...` → `https://secretbank.app/download/v0.1.0-pre8/...` 로 교체. signature 무변경 (바이너리 자체 서명). tauri.conf.json updater endpoint (`https://secretbank.app/api/latest`) 는 리브랜드 commit `5e1db44` 에서 이미 변경됨 — 검증만. | `28c2c49` |
+| **Sub-task 4** — `release.yml` `BASE` URL 교체 (`https://github.com/...` → `https://secretbank.app/download/$TAG`) + `publish-updater-manifest` job 끝에 신규 step 2개 추가. (1) `actions/checkout@v6 with: ref: main, path: main-checkout` 으로 main 별도 checkout. (2) `cp ../latest.json site/latest.json` + `gh release list --limit 20 --json tagName,name,publishedAt,isPrerelease,isDraft \| jq` 로 site/releases.json 자동 생성 + per-tag `gh release view --json assets` 로 asset 메타데이터 (name + size) 채움 + `git config bot identity` + `git add` + `git diff --staged --quiet` no-op 가드 + `git commit -m "chore(release): $TAG site/{latest,releases}.json 자동 갱신 [skip ci]"` + `git pull --rebase origin main` 안전장치 + `git push origin HEAD:main`. `--force` 금지. outdated 주석 (branch protection 차단 안내) 3줄 제거. circular trigger 분석: release.yml 트리거는 `push.tags: v*` 만 — main push 트리거 ❌. `[skip ci]` 는 다른 workflow (예: ci.yml `push.branches: main`) 방지 이중 보험. | `5a43147` |
+| **Sub-task 5** — `docs/RELEASE_GUIDE.md` 갱신. (1) One-time setup 섹션 끝에 신규 항목 "9. Cloudflare Worker download-proxy" — `ee/cloudflare/download-proxy/` 위치, `pnpm install + pnpm test (14 vitest) + wrangler deploy`, deploy 후 `curl -I https://secretbank.app/download/...` + `curl https://secretbank.app/api/latest` 검증, Cloudflare 대시보드 route 충돌 점검, Pages Functions fallback (`site/functions/{download,api}/`) 절차. (2) Per-release flow 의 release.yml 트리거 목록 끝에 "자동 commit `site/{latest,releases}.json` to main `[skip ci]`" 항목 추가. (3) Rollback 의 항목 2 갱신 — `site/latest.json` main 직접 수정 + Pages 즉시 재배포 + `gh release upload <prev-tag> latest.json --clobber` 별개 갱신 안내. (4) "7. Domain + landing" 갱신 — Cloudflare Pages 정적 서빙 + Worker download-proxy 가로채기 5단계 라우팅 다이어그램 (`/`, `/latest.json`, `/releases.json` = Pages / `/api/latest`, `/download/<tag>/*` = Worker). | `33e944c` |
+| **progress.md 갱신** (Pre-step Worker 풀체인 완료 기록) | `291c2ea` |
+
+**누적 검증** (Sub-task 2~5 완료 시점, 본 라운드):
+- `cargo test --workspace --manifest-path src-tauri/Cargo.toml --lib`: **586 PASS / 0 FAIL** (회귀 0)
+- `pnpm typecheck`: 0 error
+- `pnpm vitest run`: **614 PASS** (회귀 0)
+- `pnpm lint`: 0 신규 error (기존 22 warnings 무관)
+- `pnpm format:check`: PASS
+- `cd ee/cloudflare/download-proxy && pnpm test`: **14 PASS** (회귀 0)
+- YAML syntax (`python yaml.safe_load`): release.yml PASS
+- JSON syntax: site/latest.json + site/releases.json PASS
+
+**dogfooding 진입 조건 충족** — Pre-step Worker 풀체인 완성 (Sub-task 1~5 모두 ✅). 사용자가 `wrangler deploy` (one-time) 후 v0.1.0-pre10 tag push 하면 자동 release pipeline 가 동작.
+
 ---
 
 ## M0 — Foundation
