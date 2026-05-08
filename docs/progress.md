@@ -2,6 +2,16 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-08 — **Pre-step Worker 풀체인 완전 마무리 ✅ Sub-task 2~5 모두 커밋 완료**
+- **다음 단계**: dogfooding (GitHub Releases v0.1.0-pre10 installer 다운로드 → 설치 → 실행) 또는 Phase 3-B (secure_note)
+- **완료된 Sub-task (이번 세션)**:
+  - Sub-task 2 잔여 — `site/releases.json` placeholder commit (`8a4b5ac`)
+  - Sub-task 3 — `site/latest.json` 4 platforms URL → secretbank.app proxy 교체 (`28c2c49`)
+  - Sub-task 4 — `release.yml` BASE URL 교체 + site/{latest,releases}.json 자동 commit step 추가 (`5a43147`)
+  - Sub-task 5 — `docs/RELEASE_GUIDE.md` 갱신 (Worker 9번 / Per-release / Rollback / Domain 다이어그램) (`33e944c`)
+
+### 이전 — 2026-05-08 (Secretbank 리브랜드 완료)
+
 - **Time:** 2026-05-08 — **Secretbank 전체 리브랜드 완료 (`5e1db44`). 다음 = dogfooding (GitHub Releases v0.1.0-pre10 installer 다운로드 → 설치 → 실행) 또는 Phase 3-B (secure_note)**
 - **이번 세션 주요 작업**:
   - Cloudflare Worker download-proxy Sub-task 1 (`3e9ce39`)
