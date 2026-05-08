@@ -5,6 +5,74 @@
 
 ---
 
+## [2026-05-09] **M24-E GATE 1 일괄 승인** — 18 핵심 결정 + 6 사용자 결정 항목 확정
+
+### 승인 흐름
+
+- researcher → `docs/research_m24e_browser_extension.md` (1370줄, 25+ 출처 인용)
+- integrator CRAAP 평가 → `docs/integrator_report_m24e.md` (LOW 신뢰도 출처 ❌, MEDIUM 1건 = `wxt-module-safari-xcode` Phase F 진입 전 재확인)
+- **사용자 일괄 승인** (Night mode, 단일 GATE 호출)
+
+### D1~D18 확정 결정 (모두 ✅ 승인)
+
+|    #    | 항목                  | 확정                                                                                                                                                                 |
+| :-----: | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **D1**  | 빌드 도구             | **WXT v0.20.x** (Plasmo 배제 — Tailwind v4 미지원 + 유지보수 모드)                                                                                                   |
+| **D2**  | 통신 채널             | **Native Messaging** (stdio + 4-byte length header + UTF-8 JSON)                                                                                                     |
+| **D3**  | vault 모델            | **1P 모델** — vault key = 데스크톱 앱, 확장 = client. Bitwarden 모델 ❌ (Zero-Knowledge 충돌)                                                                        |
+| **D4**  | NM Host 구현          | **별도 `secretbank-nm-host` Rust binary** 신설 (AGPL-3.0 단일 라이선스 + Tauri 앱과 분리)                                                                            |
+| **D5**  | 페어링 프로토콜       | **KeePassXC 단순화** (3-key → 2-key) + **우리 secretbank-crypto 의 X25519 + ChaCha20-Poly1305 재사용** (TweetNaCl 별도 dep ❌)                                       |
+| **D6**  | 모노레포 구조         | pnpm workspace 안에 **`extension/` + `packages/shared/`** 추가 (shared = `password-generator.ts` / `validation.ts` / `types.ts`)                                     |
+| **D7**  | Phase 분할            | **A~F 6 phase, 총 55일 ≈ 8주**. Phase B (NM Host) 위험도 최고                                                                                                        |
+| **D8**  | UI 라이브러리         | popup = **shadcn/ui + Tailwind v4** (build-time CSS) / content script = **Shadow DOM + 인라인 CSS + postcss-rem-to-px**                                              |
+| **D9**  | i18n                  | **`@wxt-dev/i18n`** (YAML 포맷, 타입 안전, `_locales/` 표준, 4 로케일)                                                                                               |
+| **D10** | 권한 최소화           | manifest = `activeTab` + `storage` + `nativeMessaging` + `scripting`. host permissions = `optional_host_permissions` (사용자 선택)                                   |
+| **D11** | Tiered Protection     | **WebAuthn (Touch ID / Windows Hello) = Tauri 앱에서 호출**, 확장은 session token (HMAC) 받기. password = 1회 인증 후 세션, api_key/카드/passkey = per-reveal 재호출 |
+| **D12** | Site Logo 통합        | 기존 `secretbank.app/api/favicon/*` Worker + IndexedDB 캐시 24h + fallback chain (Worker → bundled SVG → 첫 글자)                                                    |
+| **D13** | Password Generator    | `packages/shared/password-generator.ts` — Diceware 4 lang (en/ko/ja/zh) + zxcvbn 강도 미터 + issuer recipe (대문자/숫자/특수문자/길이). desktop 앱과 동일 코드       |
+| **D14** | Save dialog UX        | **in-page sticky banner (Shadow DOM 격리)** + extension popup 보조. 신규 가입 vs rotation 분기 (`autocomplete="new-password"` + 기존 credential 존재 여부)           |
+| **D15** | DOM Clickjacking 방어 | MutationObserver (extension UI 스타일 변경 감지) + Closed Shadow Root + composedPath() — NordPass/ProtonPass/Dashlane 패치 기법 동일                                 |
+| **D16** | E2E 테스트            | Playwright (Chromium) + `web-ext` (Firefox) + macOS runner (Safari) + Mock Native Messaging Host (Node.js stub)                                                      |
+| **D17** | 스토어 제출           | ⚠️ **수정 권고 채택** — Chrome + Firefox 우선 출시 (Phase F-1) → Safari + Edge 단계적 추가 (Phase F-2). [2026-05-09] 원 결정 (4 브라우저 동시) 변경                  |
+| **D18** | AGPL-3.0 경계         | 확장 코드 = OSS core (`extension/` + `packages/shared/`). EE 기능 (auto-rotation 등) = 데스크톱 측만. 확장은 EE 코드 ❌                                              |
+
+### Q1~Q6 확정 (모두 권고 채택)
+
+|   Q    | 항목           | 확정                                                                                                                                  |
+| :----: | :------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| **Q1** | 첫 출시 범위   | **Chrome + Firefox 먼저** (Phase F-1), Safari + Edge 단계적 (Phase F-2). Apple Developer Program $99 = Phase F-2 진입 시점에 결제     |
+| **Q2** | NM Host 형태   | **별도 Rust binary** (D4 와 일관) — `secretbank-nm-host`. Tauri installer 가 자동 등록                                                |
+| **Q3** | 페어링 UX      | **자동 페어링 + 승인 다이얼로그** (1P 스타일) — 확장 첫 설치 시 데스크톱 앱이 dialog 표시, 사용자 한 번 승인 후 device-bound key 생성 |
+| **Q4** | session 만료   | **기본 4시간 + 사용자 설정** (30분 / 1시간 / 4시간 / 8시간 / 사용자 잠금까지). 1P / Bitwarden 와 동등                                 |
+| **Q5** | 외부 보안 감사 | **Phase B 완료 후 페어링 흐름만 audit** ([2026-05-07] B.4 외부 감사 일정과 합산). Phase F 전체 audit 은 출시 직전                     |
+| **Q6** | commit 단위    | **sub-task 분할 (1~2일 단위)** — Night mode 운용 호환성. Phase A~F 각각 5~10 sub-task                                                 |
+
+### Blocker / High Risk (계속 추적)
+
+- **B1** Phase B NM Host OS 별 installer 등록 — Win 레지스트리 / macOS plist / Linux config. Phase B 시작 전 3 OS 수동 연결 테스트 선행 강제
+- **B2** Safari Xcode 빌드 + macOS runner CI 비용 (Phase F-2 진입 시점)
+- **B3** Chrome Web Store privacy policy 강화 (2025-01) — privacy policy 작성 + 심사 비용
+- **B4** 페어링 프로토콜 보안 audit — 우리 crypto crate 재활용으로 audit 비용 ↓
+- **B5** DOM Clickjacking 잔여 위험 — 모든 사이트 수동 audit 불가, 사용자에게 in-page banner 만 신뢰하도록 UX 강화
+
+### 영향 범위
+
+- **task.md** — `T-24-E` 를 Phase A~F sub-task 로 분해 (planner 진행 중)
+- **architecture.md** — M24-E 섹션 신설 (NM Host + 페어링 + Tiered Protection + 모노레포 구조)
+- **implementation_plan.md** — Phase A~F 순서 + 위험 완화 + 검증 절차 (planner 진행 중)
+- **THREAT_MODEL.md** — M24-E 자산 신설 (T1~T7 위협 + 완화) — Phase A 진입 후 implementator 갱신
+- **`packages/shared/`** — desktop / extension 양쪽 공유. Diceware wordlist (4 lang) + zxcvbn + validation
+- **`secretbank-nm-host` crate** — Tauri workspace 에 신규 추가 (Phase B-1)
+- **외부 감사 일정** — Phase B 완료 후 페어링 흐름만, Phase F 완료 후 전체
+
+### Night mode 운용 결과
+
+- 단일 GATE 호출로 18 결정 + 6 사용자 결정 일괄 처리 (총 24 항목)
+- 사용자 응답: "전체 일괄 승인"
+- 다음 단계 = planner → GATE 2 (구현 계획 승인)
+
+---
+
 ## [2026-05-09] **M24-E 직행 결정** — Site Logo / Password Generator / Quick Save 우선순위 통합 (Night mode)
 
 ### 사용자 결정 (직접)
