@@ -93,7 +93,7 @@ export function useSetting<T>(opts: UseSettingOptions<T>): UseSettingResult<T> {
 // Auto-lock convenience hook
 // ---------------------------------------------------------------------------
 
-export const AUTO_LOCK_KEY = "apivault.settings.security.auto_lock_minutes";
+export const AUTO_LOCK_KEY = "Secretbank.settings.security.auto_lock_minutes";
 
 const VALID_AUTO_LOCK_VALUES = [0, 5, 15, 30] as const;
 export type AutoLockMinutes = (typeof VALID_AUTO_LOCK_VALUES)[number];

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-const KEY = "apivault:command-palette:recent";
+const KEY = "Secretbank:command-palette:recent";
 const MAX = 10;
 
 export function useRecentCommands() {

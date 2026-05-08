@@ -1,4 +1,4 @@
-# Implementation Plan — API Vault
+# Implementation Plan — Secretbank
 
 > 작성자: Planner Agent (claude-opus-4-7)
 > 작성일: 2026-04-22
@@ -35,14 +35,14 @@
 | :--- | :------------------------------------------------------------------------- | :------------- | :-------------------- |
 | M0   | GitHub repo (public for core, private for relay/EE), GitHub Actions 활성화 | $0             | 즉시                  |
 | M0   | Cloudflare 계정 (무료)                                                     | $0             | 즉시                  |
-| M5   | GitHub App 생성 (apivault)                                                 | $0             | 즉시                  |
+| M5   | GitHub App 생성 (Secretbank)                                               | $0             | 즉시                  |
 | M8   | Cloudflare Pages 프로젝트 (relay subdomain)                                | $0             | 즉시                  |
 | M9   | Cloudflare Workers Paid ($5/월)                                            | $5/mo          | 즉시 (실사용 시 전환) |
 | M10  | Paddle 벤더 등록 + 승인                                                    | 5% + $0.50/tx  | 1~2주 심사            |
 | M10  | RevenueCat 프로젝트 (무료 ~ $2.5K ARR)                                     | $0 초반        | 즉시                  |
 | M10  | Apple Developer Program                                                    | $99/년         | 즉시                  |
 | M10  | Google Play Console                                                        | $25 일회       | 즉시                  |
-| M13  | 도메인 (api-vault.app 등)                                                  | ~$30/년        | 즉시                  |
+| M13  | 도메인 (secretbank.app 등)                                                 | ~$30/년        | 즉시                  |
 | M13  | SignPath.io 또는 Azure Trusted Signing                                     | ~$15~50/월     | 심사 1~3일            |
 | M13  | 변호사 법률 리뷰 (Privacy/ToS)                                             | $500~1500 일회 | 1~2주                 |
 
@@ -97,12 +97,12 @@ T001 ~ T012 (12개 Must)
 
 **T001~T002 (크레이트 분리):**
 
-- 먼저 `crates/api-vault-core/tests/smoke.rs` — `#[test] fn crate_exists() { }` (빌드만 확인)
+- 먼저 `crates/secretbank-core/tests/smoke.rs` — `#[test] fn crate_exists() { }` (빌드만 확인)
 - `cargo build --workspace` 가 녹색이면 통과
 
 **T013 준비 (SQLite):**
 
-- `crates/api-vault-storage/tests/migration_test.rs`:
+- `crates/secretbank-storage/tests/migration_test.rs`:
 
 ```rust
 #[sqlx::test]
@@ -122,12 +122,12 @@ async fn migrations_apply_cleanly(pool: SqlitePool) {
 
 ### 리스크 & 완화
 
-| 리스크                                                                 | 대응                                                                                                             |
-| :--------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
-| 워크스페이스 분리 후 `cargo tauri dev` 가 안 되는 경우 (bin 위치 변경) | `tauri.conf.json` 의 `beforeDevCommand` 와 `src-tauri/Cargo.toml` 의 bin path 조정. `api-vault-app` 이 기본 bin. |
-| pnpm vs npm 혼재                                                       | lockfile `pnpm-lock.yaml` 단일 유지, `.npmrc` 에 `engine-strict=true`                                            |
-| shadcn/ui CLI 와 현재 수동 구성 충돌                                   | `components.json` 기존 설정 존중, `pnpm dlx shadcn@latest add button --overwrite` 사용 시 주의                   |
-| Windows 경로/라인엔딩                                                  | `.gitattributes` 에 `*.sh text eol=lf`, `*.ps1 text eol=crlf`                                                    |
+| 리스크                                                                 | 대응                                                                                                              |
+| :--------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------- |
+| 워크스페이스 분리 후 `cargo tauri dev` 가 안 되는 경우 (bin 위치 변경) | `tauri.conf.json` 의 `beforeDevCommand` 와 `src-tauri/Cargo.toml` 의 bin path 조정. `secretbank-app` 이 기본 bin. |
+| pnpm vs npm 혼재                                                       | lockfile `pnpm-lock.yaml` 단일 유지, `.npmrc` 에 `engine-strict=true`                                             |
+| shadcn/ui CLI 와 현재 수동 구성 충돌                                   | `components.json` 기존 설정 존중, `pnpm dlx shadcn@latest add button --overwrite` 사용 시 주의                    |
+| Windows 경로/라인엔딩                                                  | `.gitattributes` 에 `*.sh text eol=lf`, `*.ps1 text eol=crlf`                                                     |
 
 ### 검증 체크리스트 (사용자 수동 확인)
 
@@ -166,7 +166,7 @@ T013 ~ T024 (12개 Must)
 ### age 볼트 초기화 패턴
 
 ```rust
-// crates/api-vault-storage/src/age_vault/mod.rs (요지)
+// crates/secretbank-storage/src/age_vault/mod.rs (요지)
 pub struct AgeVaultStorage {
     records: Option<RecordMap>,       // unlock 후 메모리에 상주 (secrecy::SecretBox)
     path: PathBuf,                    // <app_data_dir>/vault.age
@@ -211,7 +211,7 @@ impl VaultStorage for AgeVaultStorage {
 
 **T014~T015 (trait + MockVaultStorage):**
 
-- `crates/api-vault-storage/tests/vault_storage_contract.rs` — **모든 구현체가 통과해야 하는 계약 테스트**:
+- `crates/secretbank-storage/tests/vault_storage_contract.rs` — **모든 구현체가 통과해야 하는 계약 테스트**:
 
 ```rust
 async fn contract_roundtrip<V: VaultStorage>(mut v: V, pw: &str) {
@@ -229,7 +229,7 @@ async fn age_vault_passes_contract() { /* tempdir 에 vault.age 생성 */ }
 
 **T017 (KDF):**
 
-- `crates/api-vault-crypto/tests/kdf_test.rs` — Known-Answer Test 3개 (고정 salt + password → 고정 32바이트 기대값). `salt_auth != salt_enc` 일 때 결과 달라짐 검증.
+- `crates/secretbank-crypto/tests/kdf_test.rs` — Known-Answer Test 3개 (고정 salt + password → 고정 32바이트 기대값). `salt_auth != salt_enc` 일 때 결과 달라짐 검증.
 
 **T021~T023 (Tauri commands):**
 
@@ -257,8 +257,8 @@ async fn age_vault_passes_contract() { /* tempdir 에 vault.age 생성 */ }
 - [ ] 최초 실행 시 CreateVault 다이얼로그 → 패스프레이즈 2회 입력 → 성공 → Inventory (빈 상태)
 - [ ] 앱 재시작 → LockScreen → 패스프레이즈 입력 → 해제
 - [ ] 잘못된 패스프레이즈 3회 → 10초 쿨다운
-- [ ] `~/.api-vault/vault.age` 파일 존재, 파일 자체는 읽을 수 없음 (age 암호문 바이너리)
-- [ ] OS Keyring (Windows Credential Manager / macOS Keychain / Linux Secret Service) 에 `com.phoodul.apivault:master` 항목 존재
+- [ ] `~/.secretbank/vault.age` 파일 존재, 파일 자체는 읽을 수 없음 (age 암호문 바이너리)
+- [ ] OS Keyring (Windows Credential Manager / macOS Keychain / Linux Secret Service) 에 `com.phoodul.Secretbank:master` 항목 존재
 
 ---
 
@@ -286,7 +286,7 @@ T025 ~ T040 (14 Must + 2 Should)
 ### 드롭&스캔 알고리즘
 
 ```rust
-// crates/api-vault-connectors/src/env_scanner/mod.rs (요지)
+// crates/secretbank-connectors/src/env_scanner/mod.rs (요지)
 pub fn scan_path(root: &Path, presets: &[IssuerPreset]) -> Vec<DetectedKey> {
     let walker = ignore::WalkBuilder::new(root)
         .add_custom_ignore_filename(".gitignore")
@@ -331,7 +331,7 @@ fn scan_file(path: &Path, presets: &[IssuerPreset]) -> Vec<DetectedKey> {
 
 **T040 (security score):**
 
-- `crates/api-vault-core/tests/security_score_test.rs` — 8개 시나리오:
+- `crates/secretbank-core/tests/security_score_test.rs` — 8개 시나리오:
   - 만료 7일 이내 → `danger`
   - 90일+ 미교체 → `warn`
   - prod+dev 동일 값 → `warn` (값 해시 비교로 감지)
@@ -435,7 +435,7 @@ pub fn blast_radius(g: &DependencyGraph, cred: Ulid) -> BlastRadius {
 ### 성능 벤치마크
 
 ```rust
-// crates/api-vault-core/benches/graph_bench.rs (criterion)
+// crates/secretbank-core/benches/graph_bench.rs (criterion)
 fn bench_blast_radius_500(c: &mut Criterion) {
     let g = fixture_with_n_nodes(500);
     c.bench_function("blast_radius 500 nodes", |b| {
@@ -489,7 +489,7 @@ T049 ~ T058 (8 Must + 2 Should)
 
 ```
 ┌──────────────────────────────────────────────┐
-│  FeedScheduler (api-vault-app/services)      │
+│  FeedScheduler (secretbank-app/services)      │
 │   ├── NvdPoller (every 2h)                   │
 │   ├── GhsaPoller (every 24h)                 │
 │   ├── RssPoller x10 (every 5min)             │
@@ -611,8 +611,8 @@ Webhooks: off (Phase 2에서 활성화)
 ```jinja
 # templates/cursorrules.tpl
 {# Context: {{ project_name }}, {{ issuers | join(", ") }} #}
-# API Vault — Security Guardrails for AI Coding Assistants
-# Auto-generated, do not edit manually. Regenerate via API Vault.
+# Secretbank — Security Guardrails for AI Coding Assistants
+# Auto-generated, do not edit manually. Regenerate via Secretbank.
 
 - Never hardcode API keys, secrets, or tokens in any file.
 - Always reference secrets via environment variables (e.g. process.env.OPENAI_API_KEY).
@@ -621,8 +621,8 @@ Webhooks: off (Phase 2에서 활성화)
   {%- for issuer in issuers %}
   - {{ issuer }}: prefix `{{ issuer_prefix(issuer) }}`
   {%- endfor %}
-- Add new secrets to .env.local (git-ignored) and update API Vault, not to source code.
-- Rotate any leaked secret immediately using API Vault's Kill Switch.
+- Add new secrets to .env.local (git-ignored) and update Secretbank, not to source code.
+- Rotate any leaked secret immediately using Secretbank's Kill Switch.
 ```
 
 ### TDD 전략
@@ -651,7 +651,7 @@ async fn list_secret_scanning_alerts_paginates() {
 
 **T065 (templates):**
 
-- 각 템플릿 × 2 fixture context = 8 snapshot files in `crates/api-vault-railguard/tests/snapshots/`.
+- 각 템플릿 × 2 fixture context = 8 snapshot files in `crates/secretbank-railguard/tests/snapshots/`.
 - `insta` crate 로 snapshot diff.
 
 **T067 (UI):**
@@ -881,7 +881,7 @@ T079 ~ T086 (8 Must)
 mkdir apps/relay && cd apps/relay
 pnpm create hono@latest
 # Add @cloudflare/workers-types, drizzle-orm, drizzle-kit, @simplewebauthn/server, jose, zod
-wrangler d1 create api-vault-relay-dev
+wrangler d1 create secretbank-relay-dev
 wrangler kv:namespace create KV
 # wrangler.toml 에 binding 추가
 ```
@@ -899,7 +899,7 @@ import billing from "./routes/billing";
 import me from "./routes/me";
 
 const app = new Hono<{ Bindings: Env }>();
-app.use("*", cors({ origin: ["tauri://localhost", "https://app.api-vault.app"] }));
+app.use("*", cors({ origin: ["tauri://localhost", "https://app.secretbank.app"] }));
 app.get("/health", (c) => c.text("ok"));
 app.route("/auth", auth);
 app.route("/sync", sync);
@@ -951,7 +951,7 @@ fn auth_hash_and_enc_key_differ_with_different_salts() {
 | 리스크                                   | 대응                                                                                                                                                                    |
 | :--------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Passkey 가 Tauri WebView 에서 동작 안 함 | iOS/Android 에서는 네이티브 `LAContext` / `BiometricPrompt` 사용 — T083 에서 플랫폼 분기. 데스크톱 Tauri WebView 는 WebAuthn 지원 확인 후 결정 (WebView2 / WebKit 지원) |
-| OAuth redirect URI 등록                  | deep link `apivault://auth/callback` 은 GitHub/Google OAuth 에 등록 (HTTPS 아닌 커스텀 스킴). 대안: 웹 redirect → QR 재인증                                             |
+| OAuth redirect URI 등록                  | deep link `Secretbank://auth/callback` 은 GitHub/Google OAuth 에 등록 (HTTPS 아닌 커스텀 스킴). 대안: 웹 redirect → QR 재인증                                           |
 | Workers CORS 문제                        | Tauri WebView origin 은 `tauri://localhost` 또는 `https://tauri.localhost`, 둘 다 CORS 허용                                                                             |
 | 세션 JWT 탈취                            | 짧은 수명(1h) + refresh token (age 볼트 파일 `auth/refresh_token` 레코드에 저장) + device binding (JWT 에 device_id 포함)                                               |
 | salt 유실 시 enc_key 재파생 불가         | `/me` 응답에 항상 salt 포함, 서버가 잃어버려도 D1 백업에서 복구                                                                                                         |
@@ -1000,12 +1000,12 @@ export function SyncProvider({ children }: Props) {
 
   useEffect(() => {
     const d = new Y.Doc();
-    const persistence = new IndexeddbPersistence("api-vault-root", d);
+    const persistence = new IndexeddbPersistence("secretbank-root", d);
     let secsync: SecSyncClient | null = null;
     if (rootKey && entitlement.plan === "pro") {
       secsync = new SecSyncClient({
         doc: d,
-        websocketEndpoint: "wss://relay.api-vault.app/sync/ws",
+        websocketEndpoint: "wss://relay.secretbank.app/sync/ws",
         key: rootKey,
         documentId: userId,
       });
@@ -1237,7 +1237,7 @@ T104 ~ T109 (5 Must + 1 Should)
 ```bash
 # Prerequisites: Apple Developer team id, Android SDK/NDK
 pnpm tauri ios init
-# Opens src-tauri/gen/apple/api-vault.xcodeproj
+# Opens src-tauri/gen/apple/secretbank.xcodeproj
 # Xcode: Signing & Capabilities → team, provisioning profile
 
 pnpm tauri android init
@@ -1251,7 +1251,7 @@ pnpm tauri android init
 2. 앱 실행 → CreateVault → put/get/lock/unlock 5회 시나리오
 3. `/var/mobile/Containers/.../Documents/vault.age` 파일 존재 + 크기 > 0 확인 (age 암호문은 `age-encryption.org/v1` 헤더로 시작)
 4. 앱 재시작 → 기존 볼트 재오픈
-5. Android 동일 절차 (`/data/data/com.phoodul.apivault/files/vault.age`)
+5. Android 동일 절차 (`/data/data/com.phoodul.Secretbank/files/vault.age`)
 
 **실패 시 대안:** `age` 자체는 pure Rust 이므로 근본 호환성 이슈 가능성은 낮으나, 만약 파일 I/O 권한 경계(iOS 샌드박스 / Android scoped storage) 에 막히면 Tauri path API + `DocumentFile` 플러그인 조합으로 경로 전략만 조정 (구현 변경 없음).
 
@@ -1398,12 +1398,12 @@ test("passkey login works with virtual authenticator", async ({ browser }) => {
 | :---------------------------------- | :---------------------------------------------------------------------------------------- |
 | 번들에 Tauri-only 코드 포함 시 에러 | vite `define: { '__TAURI__': JSON.stringify(false) }` + `isTauri()` 가드 + dynamic import |
 | WebAuthn Safari / Firefox 동작 차이 | iOS Safari 16+ 필수 안내, Firefox 은 플랫폼 authenticator 제한 — fallback: OAuth          |
-| 릴레이 CORS 설정 누락               | `cors({ origin: ['https://app.api-vault.app', 'https://*.api-vault.app'] })`              |
+| 릴레이 CORS 설정 누락               | `cors({ origin: ['https://app.secretbank.app', 'https://*.secretbank.app'] })`            |
 | IndexedDB 에 enc_key 저장 위험      | 저장 금지 — 세션당 password 재입력 필수 (또는 WebAuthn PRF — Phase 2)                     |
 
 ### 검증 체크리스트
 
-- [ ] https://app.api-vault.app 접속 → SignIn 페이지
+- [ ] https://app.secretbank.app 접속 → SignIn 페이지
 - [ ] Passkey 로그인 → Inventory 읽기 전용 목록
 - [ ] Credential 클릭 → Detail (값 표시는 "Reveal" 버튼으로 서버 복호화 불가 — 로컬 enc_key 필요)
 - [ ] 수정/삭제 버튼 disabled + tooltip "Use desktop app"
@@ -1478,7 +1478,7 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "API Vault ${{ github.ref_name }}"
+          releaseName: "Secretbank ${{ github.ref_name }}"
           releaseBody: "See CHANGELOG.md"
           args: ${{ matrix.args }}
 ```
@@ -1488,10 +1488,10 @@ jobs:
 ```ruby
 # fastlane/Fastfile
 lane :ios_testflight do
-  match(type: 'appstore', app_identifier: 'com.phoodul.apivault')
+  match(type: 'appstore', app_identifier: 'com.phoodul.Secretbank')
   sh("pnpm tauri ios build")
   pilot(
-    ipa: '../src-tauri/gen/apple/build/arm64/api-vault.ipa',
+    ipa: '../src-tauri/gen/apple/build/arm64/secretbank.ipa',
     skip_waiting_for_build_processing: false
   )
 end
@@ -1514,7 +1514,7 @@ end
 - [ ] 데스크톱 앱에서 "Check for updates" → `v0.1.0-rc.1` 감지 → 설치 → 버전 표시 갱신
 - [ ] minisign 서명이 깨진 가짜 업데이트 → 거부 + 에러 메시지
 - [ ] TestFlight / Play Internal Track 에 자동 업로드
-- [ ] https://api-vault.app 랜딩 페이지 200 OK
+- [ ] https://secretbank.app 랜딩 페이지 200 OK
 - [ ] Privacy Policy / Terms 페이지 접근 가능
 - [ ] Settings > Language 에서 ko/ja 전환 시 UI 번역
 
@@ -1528,8 +1528,8 @@ end
 | D1 스키마                   | Drizzle migration 은 idempotent, rollback 스크립트 `0001_init.down.sql` 함께 관리. 단, 데이터 손실 위험 — 운영 전 수동 백업 `wrangler d1 export` |
 | 릴레이 코드                 | Cloudflare Workers 는 즉시 rollback 가능 (`wrangler rollback`)                                                                                   |
 | 앱 설정 / 마이그레이션 실패 | 로컬 SQLite 는 앱 시작 시 `migrations/` 순차 실행 — 실패 시 앱이 safe mode 로 진입 ("마이그레이션 실패, 지원 문의")                              |
-| age 볼트 파일 손상          | `~/.api-vault/vault.age.bak-<timestamp>` 항상 유지 (저장/마이그레이션 전 자동 백업, AgeVaultStorage 의 atomic rename 직전 단계)                  |
-| CRDT 상태 불일치            | 최악의 경우 로컬 `api-vault-root` IndexedDB 지우고 서버 스냅샷 다시 다운로드                                                                     |
+| age 볼트 파일 손상          | `~/.secretbank/vault.age.bak-<timestamp>` 항상 유지 (저장/마이그레이션 전 자동 백업, AgeVaultStorage 의 atomic rename 직전 단계)                 |
+| CRDT 상태 불일치            | 최악의 경우 로컬 `secretbank-root` IndexedDB 지우고 서버 스냅샷 다시 다운로드                                                                    |
 | 잘못된 릴리스 배포          | GitHub Release "draft" 플래그로 먼저 공개 전 검증, 문제 시 delete release                                                                        |
 
 ---
@@ -1549,12 +1549,12 @@ end
 ## Open Issues 요약 (Gate 2 사용자 확인 필요)
 
 1. **Free tier 디바이스 수** — 1대 (decisions 준수) vs 2대 (planner 제안)
-2. **도메인 확보** — api-vault.app 가용성
+2. **도메인 확보** — secretbank.app 가용성
 3. **계정 등록 타이밍** — Apple/Google/Paddle/Cloudflare Paid 언제 결제할지
 4. **Windows 서명 방식** — SignPath OSS 신청 vs EV 인증서 구매
 5. **변호사 리뷰 예산** — Privacy/ToS 검토 $500~1500
-6. **GitHub Organization 이름** — `apivault` 또는 다른 이름
-7. **모노레포 vs 분리 레포** — `api-vault-relay` 를 같은 repo 서브디렉터리로 둘지, 별도 private repo 로 둘지 (planner 는 별도 private repo 를 권고 — EE 라이선스 분리 명확)
+6. **GitHub Organization 이름** — `Secretbank` 또는 다른 이름
+7. **모노레포 vs 분리 레포** — `secretbank-relay` 를 같은 repo 서브디렉터리로 둘지, 별도 private repo 로 둘지 (planner 는 별도 private repo 를 권고 — EE 라이선스 분리 명확)
 8. **age 볼트 모바일 동작 검증** — 2026-04-22 Stronghold → age 교체로 근본 호환성 리스크는 해소됐으나, 파일 I/O 경계 검증을 위해 M11 T105 에서 실기기 PoC 유지
 
 ---

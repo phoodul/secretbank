@@ -24,7 +24,7 @@ import { useEntitlement } from "@/features/billing/use-entitlement";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CredentialFilter, CredentialStatus, Env } from "./types";
 
-const HIDE_REVOKED_KEY = "apivault:inventory:hideRevoked";
+const HIDE_REVOKED_KEY = "Secretbank:inventory:hideRevoked";
 
 function readHideRevoked(): boolean {
   try {

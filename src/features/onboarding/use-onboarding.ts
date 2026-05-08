@@ -1,6 +1,6 @@
 import { useSetting } from "@/features/settings/use-settings";
 
-export const ONBOARDING_DONE_KEY = "apivault.settings.onboarding.done";
+export const ONBOARDING_DONE_KEY = "secretbank.settings.onboarding.done";
 
 export function useOnboardingDone() {
   return useSetting<boolean>({

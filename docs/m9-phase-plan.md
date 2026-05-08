@@ -122,7 +122,7 @@
 
 **스코프**:
 
-- `api-vault-relay/src/routes/sync.ts`
+- `secretbank-relay/src/routes/sync.ts`
 - `POST /sync/snapshot` — `{ doc_id, version, ciphertext_b64, nonce_b64 }`
 - `GET /sync/deltas?since=<clock>`
 - D1 schema: `encrypted_docs` 테이블 (M8 D1 schema 확장 마이그레이션 0003_sync.sql)
@@ -155,7 +155,7 @@
 
 **스코프**:
 
-- T092: X25519 페어링 — `apivault://pair?pk=...&pin=...&user=...` deep-link, KV 5분 TTL 채널, ECDH+HKDF, 관련 Rust crypto
+- T092: X25519 페어링 — `Secretbank://pair?pk=...&pin=...&user=...` deep-link, KV 5분 TTL 채널, ECDH+HKDF, 관련 Rust crypto
 - T093: SyncSection — 디바이스 목록, "Add device" 다이얼로그, "Sign out"
 - T094: Free 2대 / Pro 무제한 entitlement 게이트 (server-side 검증)
 - T095: conflict resolver (last-write-wins on value channel, CRDT 기본 + revoked > active 정책)

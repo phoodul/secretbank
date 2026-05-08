@@ -1,14 +1,14 @@
 # `ee/` — Enterprise Edition
 
-이 디렉토리의 코드는 **API Vault Enterprise License v1.0** 으로 배포된다.
+이 디렉토리의 코드는 **Secretbank Enterprise License v1.0** 으로 배포된다.
 이는 프로젝트 루트의 AGPL-3.0 OSS 라이선스와 **별개의 라이선스**다.
 
 ## 라이선스 매트릭스
 
-| 위치                 | 라이선스                          | 용도                                                       |
-| :------------------- | :-------------------------------- | :--------------------------------------------------------- |
-| `/` (루트, OSS 코어) | AGPL-3.0-or-later                 | 데스크톱 앱, 로컬 볼트, 그래프, 감사로그, RAILGUARD 등     |
-| `/ee/`               | API Vault Enterprise License v1.0 | 릴레이 서버, 프리미엄 커넥터, 자동 rotation, 동기화 백엔드 |
+| 위치                 | 라이선스                           | 용도                                                       |
+| :------------------- | :--------------------------------- | :--------------------------------------------------------- |
+| `/` (루트, OSS 코어) | AGPL-3.0-or-later                  | 데스크톱 앱, 로컬 볼트, 그래프, 감사로그, RAILGUARD 등     |
+| `/ee/`               | Secretbank Enterprise License v1.0 | 릴레이 서버, 프리미엄 커넥터, 자동 rotation, 동기화 백엔드 |
 
 자세한 경계는 [`/LICENSE_FAQ.md`](../LICENSE_FAQ.md) 참조.
 
@@ -18,7 +18,7 @@
 ee/
 ├── LICENSE                       # EE 라이선스
 ├── README.md                     # 이 파일
-└── api-vault-relay/              # Cloudflare Workers 릴레이 (T061+, T079+)
+└── secretbank-relay/              # Cloudflare Workers 릴레이 (T061+, T079+)
     ├── package.json
     ├── wrangler.toml             # Cloudflare 배포 설정
     ├── tsconfig.json

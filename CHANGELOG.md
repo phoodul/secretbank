@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to API Vault will be documented in this file.
+All notable changes to Secretbank will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -15,7 +15,7 @@ First valid prerelease — every install / update channel exercised end-to-end.
 
 ### Added — launch infrastructure
 
-- **Public GitHub repository** (`phoodul/api-vault`) — open-sourced under AGPL-3.0
+- **Public GitHub repository** (`phoodul/secretbank`) — open-sourced under AGPL-3.0
   with `/ee/` carved out as Enterprise License. Anonymous artifact downloads and
   Tauri auto-updater verified.
 - **First valid prerelease** v0.1.0-pre8 — 12 GitHub release assets:
@@ -24,12 +24,12 @@ First valid prerelease — every install / update channel exercised end-to-end.
   - Linux: `*_amd64.deb` + `*_amd64.AppImage` + `*.AppImage.sig` + `*-1.x86_64.rpm`
   - `latest.json` — Tauri auto-updater manifest with darwin-x86_64 / darwin-aarch64 /
     windows-x86_64 / linux-x86_64 entries
-- **`api-vault.app` landing page live** — Cloudflare Pages with custom-domain SSL.
+- **`secretbank.app` landing page live** — Cloudflare Pages with custom-domain SSL.
   New design: bento-grid + glassmorphism + light/dark toggle + animated gradient
   mesh background. Logo is an SVG recreation of the desktop app's VaultMechanism
   unlock scene (hexagonal frame + brass reactor disc + cardinal reticle + rotating
   sweep arc + halo bloom + reactor core pulse).
-- **`api-vault-relay.phoodul.workers.dev` live** — Cloudflare Workers relay
+- **`secretbank-relay.phoodul.workers.dev` live** — Cloudflare Workers relay
   deployed; secrets registered (`JWT_SIGNING_KEY`, `GITHUB_OAUTH_CLIENT_SECRET`,
   `GOOGLE_OAUTH_CLIENT_SECRET`); GitHub & Google OAuth client IDs in
   `wrangler.toml`. The `/ee/` enterprise license boundary is intact.
@@ -118,7 +118,7 @@ First valid prerelease — every install / update channel exercised end-to-end.
 
 #### M23 — Vault Charter recovery (출시 블로커 해소, milestone close)
 
-- **`api-vault-charter` crate** — EFF Diceware large wordlist (7776 words,
+- **`secretbank-charter` crate** — EFF Diceware large wordlist (7776 words,
   public domain) embedded; 6-word + 4-digit verifier codec; Shamir Secret
   Sharing 2-of-3 (sharks crate, GF(2⁸) byte-wise); XChaCha20-Poly1305
   envelope wrapping a 32B `enc_key` with Argon2id-derived charter key.
@@ -183,8 +183,8 @@ First valid prerelease — every install / update channel exercised end-to-end.
   dims everything outside the blast set. A bottom banner reports the
   total affected count. This brings the desktop app's headline
   "what breaks if I revoke?" feature into the IDE.
-- New `apivault blast-radius <id>` CLI subcommand wraps
-  `api-vault-core::blast_radius` and emits the three buckets as JSON.
+- New `Secretbank blast-radius <id>` CLI subcommand wraps
+  `secretbank-core::blast_radius` and emits the three buckets as JSON.
 - **Context menu** (`JBPopupMenu`) on right-click. Menu items vary by
   node kind: credential gets _Show blast radius_ + _Reveal_, others
   get the relevant _Open URL/docs/repo_. All kinds get _Focus_ and
@@ -204,12 +204,12 @@ First valid prerelease — every install / update channel exercised end-to-end.
   - Project → open the project's repo URL.
   - Deployment → open the deployment URL.
 - JS ↔ Kotlin bridge built on `JBCefJSQuery`. The HTML page calls
-  `__apivaultSend("verb:id")`; Kotlin parses the message, looks up the
+  `__SecretbankSend("verb:id")`; Kotlin parses the message, looks up the
   node from a cached index, and dispatches the action.
 - Filter box (top-right) dims non-matching nodes and edges. **Center**
   button computes the bounding box of all nodes and fits them to the
   viewport.
-- `apivault graph` CLI extended to emit per-node metadata
+- `Secretbank graph` CLI extended to emit per-node metadata
   (`env`, `status`, `repo_url`, `docs_url`, `url`, `platform`,
   `issuer_id`, `project_id`) so the JetBrains action layer can route
   by kind without re-hitting SQLite.
@@ -221,11 +221,11 @@ First valid prerelease — every install / update channel exercised end-to-end.
   and click-to-highlight neighbors. No external CDN — bundled HTML+JS
   ships with the plugin, works offline. Falls back to a notice on IDE
   builds without JCEF.
-- New `apivault graph` CLI subcommand outputs the dependency graph as
+- New `Secretbank graph` CLI subcommand outputs the dependency graph as
   JSON (nodes: Issuer / Credential / Project / Deployment, edges:
   issues / used_by / deployed_as). Reads SQLite directly — no vault
   unlock required.
-- `ApiVaultService.fetchGraph()` parses the CLI's output into typed
+- `SecretbankService.fetchGraph()` parses the CLI's output into typed
   Kotlin records.
 
 #### M22 — JetBrains plugin (v2)
@@ -251,13 +251,13 @@ First valid prerelease — every install / update channel exercised end-to-end.
 - Gradle Kotlin DSL plugin module at `jetbrains-plugin/` targeting IntelliJ
   Platform 2.1.0. Compatible with IDEA / WebStorm / GoLand / PyCharm / Rider /
   CLion via `com.intellij.modules.platform`.
-- `Tools → API Vault` menu group with three actions: list credentials, reveal
+- `Tools → Secretbank` menu group with three actions: list credentials, reveal
   credential (passphrase prompt → clipboard, auto-clear in 30s), scan
   supply-chain risk.
-- Status-bar widget with the API Vault shield icon.
+- Status-bar widget with the Secretbank shield icon.
 - `LocalInspection` for `package.json` and `Cargo.toml` that flags lines whose
   package matches a cached supply-chain advisory as WARNING.
-- `ApiVaultService` wraps the `apivault` CLI process and caches scan results
+- `SecretbankService` wraps the `Secretbank` CLI process and caches scan results
   for inspection use.
 - JUnit 5 tests for the line-based manifest dependency parser.
 
@@ -272,8 +272,8 @@ First valid prerelease — every install / update channel exercised end-to-end.
 
 #### M21 — Editor plugins (v2)
 
-- Language Model tools (VS Code 1.96+): `apivault_list_credentials` and
-  `apivault_scan_supply_chain` so Copilot Chat / Claude / Cursor can invoke
+- Language Model tools (VS Code 1.96+): `Secretbank_list_credentials` and
+  `Secretbank_scan_supply_chain` so Copilot Chat / Claude / Cursor can invoke
   the vault without per-host wiring.
 - `package.json` hover provider — last scan's advisory tooltip on dependency
   lines.
@@ -281,7 +281,7 @@ First valid prerelease — every install / update channel exercised end-to-end.
 #### M21 — Editor plugins (v1)
 
 - VS Code extension with palette commands (list, reveal, scan) and Problems
-  panel diagnostics scoped to source `api-vault`.
+  panel diagnostics scoped to source `secretbank`.
 - Status bar item linking to the credential list.
 
 #### M20 — Supply chain risk graph (v2)
@@ -301,7 +301,7 @@ First valid prerelease — every install / update channel exercised end-to-end.
 
 #### M20 — Supply chain risk graph (v1)
 
-- New `api-vault-supply` crate: `manifest`, `ecosystem`, `advisory`,
+- New `secretbank-supply` crate: `manifest`, `ecosystem`, `advisory`,
   `matcher` modules.
 - `OsvClient` queries `api.osv.dev` per (ecosystem, name, version) tuple
   and classifies advisories into `secret_leak` / `crypto_weak` /
@@ -319,10 +319,10 @@ First valid prerelease — every install / update channel exercised end-to-end.
 
 #### M18 — CLI + MCP server
 
-- `apivault` CLI with `list`, `reveal`, `run`, and (added in M22 follow-up)
+- `Secretbank` CLI with `list`, `reveal`, `run`, and (added in M22 follow-up)
   `scan supply-chain` subcommands. Mirrors the desktop app's vault
   location so a single vault is shared.
-- `apivault mcp serve` starts a local Model Context Protocol server over
+- `Secretbank mcp serve` starts a local Model Context Protocol server over
   stdio. Five tools exposed: `list_credentials`, `reveal_credential`,
   `check_railguard_status`, `suggest_railguard_template`,
   `check_supply_chain_risk`.
@@ -487,5 +487,5 @@ First valid prerelease — every install / update channel exercised end-to-end.
   infrastructure are planned for M13; this release is unsigned and must be
   installed manually.
 
-[Unreleased]: https://github.com/phoodul/api-vault/compare/v0.1.0-pre8...HEAD
-[0.1.0-pre8]: https://github.com/phoodul/api-vault/releases/tag/v0.1.0-pre8
+[Unreleased]: https://github.com/phoodul/secretbank/compare/v0.1.0-pre8...HEAD
+[0.1.0-pre8]: https://github.com/phoodul/secretbank/releases/tag/v0.1.0-pre8

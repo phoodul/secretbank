@@ -78,7 +78,7 @@ describe("WelcomePage", () => {
   it("첫 렌더 시 Step 1 ('Drop your project folder') 를 표시한다", async () => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /welcome to api vault/i })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /welcome to Secretbank/i })).toBeInTheDocument();
       expect(
         screen.getByRole("heading", { name: /drop your project folder/i }),
       ).toBeInTheDocument();
@@ -150,7 +150,7 @@ describe("WelcomePage", () => {
 
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("settings_set", {
-        key: "apivault.settings.onboarding.done",
+        key: "secretbank.settings.onboarding.done",
         value: "true",
       });
       expect(navigateSpy).toHaveBeenCalledWith("/", { replace: true });
@@ -169,7 +169,7 @@ describe("WelcomePage", () => {
 
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("settings_set", {
-        key: "apivault.settings.onboarding.done",
+        key: "secretbank.settings.onboarding.done",
         value: "true",
       });
       expect(navigateSpy).toHaveBeenCalledWith("/", { replace: true });

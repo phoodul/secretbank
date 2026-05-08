@@ -1,11 +1,11 @@
-# API Vault — JetBrains plugin
+# Secretbank — JetBrains plugin
 
 > Dependency-graph-aware secrets manager for IntelliJ IDEA, WebStorm,
 > GoLand, PyCharm, Rider, RubyMine, CLion.
 
 ## Features
 
-### Tool Window (`View → Tool Windows → API Vault`)
+### Tool Window (`View → Tool Windows → Secretbank`)
 
 Four tabs on the right side of the IDE:
 
@@ -34,7 +34,7 @@ Four tabs on the right side of the IDE:
 
 - **Settings** — per-project CLI path and "scan on project open" toggle.
 
-### Tools menu (`Tools → API Vault`)
+### Tools menu (`Tools → Secretbank`)
 
 - **List credentials** — popup chooser.
 - **Reveal credential…** — passphrase prompt → clipboard.
@@ -61,13 +61,13 @@ populates immediately.
 
 ## Requires
 
-The desktop app's `apivault` CLI on your PATH.
-Install: <https://api-vault.app/download>.
+The desktop app's `Secretbank` CLI on your PATH.
+Install: <https://secretbank.app/download>.
 
 ## Build
 
 ```sh
-./gradlew buildPlugin            # creates build/distributions/api-vault-0.1.0.zip
+./gradlew buildPlugin            # creates build/distributions/secretbank-0.1.0.zip
 ./gradlew runIde                 # launches a sandboxed IntelliJ Community to test
 ./gradlew test                   # unit tests
 ./gradlew verifyPlugin           # JetBrains Marketplace pre-flight

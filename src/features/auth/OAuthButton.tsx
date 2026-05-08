@@ -2,10 +2,10 @@
  * OAuthButton — GitHub / Google OAuth 버튼.
  *
  * 흐름:
- * 1. 클릭 → `auth_oauth_start(provider, redirect_uri="apivault://auth/callback")`
+ * 1. 클릭 → `auth_oauth_start(provider, redirect_uri="Secretbank://auth/callback")`
  *    릴레이가 `state` + `authorize_url` 반환, Rust 쪽이 OS 브라우저 open.
  * 2. 사용자 동의 후 OAuth provider → 릴레이 callback → 릴레이가
- *    `apivault://auth/callback?provider=...&code=...&state=...` 로 다시 redirect.
+ *    `Secretbank://auth/callback?provider=...&code=...&state=...` 로 다시 redirect.
  * 3. lib.rs deep-link listener 가 `deep-link` 이벤트로 forward → useDeepLinkCallback.
  * 4. 부모(SignInPage)가 콜백을 받아 `auth_oauth_callback` 호출.
  *
@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 
 export type OAuthProvider = "github" | "google";
 
-const REDIRECT_URI = "apivault://auth/callback";
+const REDIRECT_URI = "Secretbank://auth/callback";
 
 interface OAuthStartResponse {
   state: string;

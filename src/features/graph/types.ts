@@ -1,6 +1,6 @@
 /**
  * T044: GraphPayload wire types — mirrors the Rust structs in
- * `src-tauri/crates/api-vault-app/src/commands/graph.rs`.
+ * `src-tauri/crates/secretbank-app/src/commands/graph.rs`.
  *
  * Field names match the serde output:
  *   - NodeKind / GraphEdgeKind: snake_case (rename_all = "snake_case")

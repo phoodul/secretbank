@@ -53,8 +53,8 @@ Full Tauri prereqs: https://v2.tauri.app/start/prerequisites/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/phoodul/api-vault.git
-cd api-vault
+git clone https://github.com/phoodul/secretbank.git
+cd secretbank
 
 # 2. Install frontend dependencies
 pnpm install
@@ -146,7 +146,7 @@ These are the same checks the GitHub Actions CI runs on every push (`.github/wor
 ## Folder Layout
 
 ```
-api-vault/
+secretbank/
 ├── src/                        # React + TypeScript frontend
 │   ├── App.tsx                 # Router root (BrowserRouter + 5 routes)
 │   ├── main.tsx                # Entry point (ThemeProvider, i18n init)
@@ -170,15 +170,15 @@ api-vault/
 │   ├── tauri.conf.json         # Tauri app configuration
 │   ├── capabilities/           # Permission declarations
 │   └── crates/
-│       ├── api-vault-app/      # Tauri entry point (bin + lib)
-│       ├── api-vault-core/     # Domain types and business logic
-│       ├── api-vault-storage/  # SQLite persistence layer
-│       ├── api-vault-crypto/   # age encryption + key management
-│       ├── api-vault-audit/    # ed25519 audit log chain
-│       ├── api-vault-feeds/    # NVD / GitHub Advisory incident feeds
-│       ├── api-vault-connectors/ # GitHub, Vercel, etc. connectors
-│       ├── api-vault-railguard/ # AI editor rules generator
-│       └── api-vault-sync/     # CRDT + E2EE sync (Yjs/SecSync)
+│       ├── secretbank-app/      # Tauri entry point (bin + lib)
+│       ├── secretbank-core/     # Domain types and business logic
+│       ├── secretbank-storage/  # SQLite persistence layer
+│       ├── secretbank-crypto/   # age encryption + key management
+│       ├── secretbank-audit/    # ed25519 audit log chain
+│       ├── secretbank-feeds/    # NVD / GitHub Advisory incident feeds
+│       ├── secretbank-connectors/ # GitHub, Vercel, etc. connectors
+│       ├── secretbank-railguard/ # AI editor rules generator
+│       └── secretbank-sync/     # CRDT + E2EE sync (Yjs/SecSync)
 │
 ├── docs/                       # Project documentation (see Docs Index below)
 ├── .github/
@@ -203,7 +203,7 @@ Some crates run build scripts (`build.rs`) that compile small helper binaries. W
 
 ```powershell
 # Run in PowerShell as Administrator
-Add-MpPreference -ExclusionPath "C:\Users\<you>\Projects\api-vault\src-tauri\target"
+Add-MpPreference -ExclusionPath "C:\Users\<you>\Projects\secretbank\src-tauri\target"
 Add-MpPreference -ExclusionPath "C:\Users\<you>\.cargo\registry"
 ```
 
@@ -284,7 +284,7 @@ RUST_LOG=debug cargo test --workspace --manifest-path src-tauri/Cargo.toml 2>&1 
 
 ## 한국어 요약
 
-**API Vault 로컬 개발 환경 세팅 (5단계):**
+**Secretbank 로컬 개발 환경 세팅 (5단계):**
 
 1. **필수 도구 설치:** Node.js 20+, pnpm, Rust stable (rustup), 플랫폼별 시스템 의존성 (Windows: VS Build Tools + WebView2 / macOS: Xcode CLI / Linux: webkit2gtk + build-essential)
 2. **저장소 클론 후:** `pnpm install` → 프론트엔드 의존성 설치

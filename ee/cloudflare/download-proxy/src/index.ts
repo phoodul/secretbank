@@ -1,19 +1,19 @@
 /**
  * download-proxy — Cloudflare Worker
  *
- * api-vault.app/download/<tag>/<filename>  → GitHub Releases stream proxy
- * api-vault.app/api/latest                 → site/latest.json manifest proxy
+ * secretbank.app/download/<tag>/<filename>  → GitHub Releases stream proxy
+ * secretbank.app/api/latest                 → site/latest.json manifest proxy
  *
  * 보안: W1 path traversal / W2 SSRF / W4 TLS / W5 cache poisoning / W7 Content-Disposition
  */
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 
-const REPO = "phoodul/api-vault";
+const REPO = "phoodul/secretbank";
 
 // W4: 컴파일 시점에 https:// 강제 — string literal 로 보장, HTTP 다운그레이드 코드 없음
 const GITHUB_BASE = `https://github.com/${REPO}/releases/download`;
-const MANIFEST_URL = "https://api-vault.app/latest.json";
+const MANIFEST_URL = "https://secretbank.app/latest.json";
 
 // W1: tag 형식 — v1.2.3, v0.1.0-pre11, v0.1.0-pre10-test.0 등 허용
 // pre-release 식별자에 하이픈(-) 추가 허용 (SemVer pre-release 관례)
@@ -106,7 +106,7 @@ async function handleDownload(tag: string, filename: string, request: Request): 
   // Range 헤더 pass-through (있으면)
   const rangeHeader = request.headers.get("Range");
   const upstreamHeaders: HeadersInit = {
-    "User-Agent": "api-vault-proxy/1.0",
+    "User-Agent": "secretbank-proxy/1.0",
   };
   if (rangeHeader !== null) {
     upstreamHeaders["Range"] = rangeHeader;
@@ -177,7 +177,7 @@ async function handleManifest(): Promise<Response> {
   responseHeaders.set("Content-Type", "application/json");
   // W5: KV 캐시 없음 — Pages edge 캐시가 담당. 60초 TTL.
   responseHeaders.set("Cache-Control", "public, max-age=60");
-  responseHeaders.set("Access-Control-Allow-Origin", "https://api-vault.app");
+  responseHeaders.set("Access-Control-Allow-Origin", "https://secretbank.app");
   responseHeaders.set("X-Robots-Tag", "noindex");
 
   // body stream pass-through (body 를 소비하지 않음)

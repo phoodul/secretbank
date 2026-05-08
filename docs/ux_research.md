@@ -1,14 +1,14 @@
-# UX Research — API Vault
+# UX Research — Secretbank
 
 > 작성자: UX Research Agent (claude-sonnet-4-6)
 > 수집일: 2026-04-22
-> 기반 자료: user_research/initial_idea.md, user_research/gemini_deep_research_apivault.md, docs/research_raw.md + 신규 웹 서치 20회 이상
+> 기반 자료: user_research/initial_idea.md, user_research/gemini_deep_research_Secretbank.md, docs/research_raw.md + 신규 웹 서치 20회 이상
 
 ---
 
 ## 1. 요약 (핵심 발견 TL;DR)
 
-API Vault는 **"전문 개발자(Power User)"** 와 **"바이브 코더(Vibe Coder)"** 라는 두 페르소나가 같은 앱을 써야 하는 구조적 UX 난점을 안고 있다. 조사 결과 도출한 핵심 발견 5가지:
+Secretbank는 **"전문 개발자(Power User)"** 와 **"바이브 코더(Vibe Coder)"** 라는 두 페르소나가 같은 앱을 써야 하는 구조적 UX 난점을 안고 있다. 조사 결과 도출한 핵심 발견 5가지:
 
 1. **디자인 시스템 현황**: 2025~2026년 기준 shadcn/ui + Radix UI + Tailwind v4 조합이 Tauri 데스크톱 React 앱의 사실상 표준으로 자리잡았다. GitHub에 `tauri-ui` (agmmnn) 보일러플레이트가 이미 존재하며 shadcn/ui 기반 Tauri 개발이 검증됐다 [#1, #2].
 
@@ -30,7 +30,7 @@ API Vault는 **"전문 개발자(Power User)"** 와 **"바이브 코더(Vibe Cod
 
 2025~2026년 기준으로 새로 출시되는 SaaS 제품의 45%가 다크 모드를 기본값으로 제공한다 [#3]. 특히 개발자 도구, 보안 대시보드, 생산성 도구는 "다크 퍼스트" 설계가 표준이다. 모바일 사용자의 80% 이상이 다크 모드를 상시 활성화한다. 2026년 기준 전문 디자인팀은 **다크 테마를 먼저 설계한 후 라이트 테마로 파생**하는 워크플로우를 채택한다.
 
-API Vault 함의: 다크 테마 우선 설계. 라이트 모드는 접근성 대안으로 제공(특히 웹 대시보드).
+Secretbank 함의: 다크 테마 우선 설계. 라이트 모드는 접근성 대안으로 제공(특히 웹 대시보드).
 
 ### 2.2 "Linear 미학"의 확산
 
@@ -54,11 +54,11 @@ Linear(프로젝트 관리 도구)가 시작한 디자인 트렌드가 개발자
 
 ### 2.4 AI 인터페이스 패턴의 주류화
 
-2026년 기준 Notion AI, GitHub Copilot 등이 "기존 UI와 AI 인터랙션의 공존"을 정상화했다 [#3]. 개발자 도구에서 인라인 제안, 예측적 입력 필드, 동적 레이아웃이 일반화됐다. API Vault의 RAILGUARD 기능(AI 룰 파일 자동 생성)은 이 트렌드와 완벽하게 맞닿는다.
+2026년 기준 Notion AI, GitHub Copilot 등이 "기존 UI와 AI 인터랙션의 공존"을 정상화했다 [#3]. 개발자 도구에서 인라인 제안, 예측적 입력 필드, 동적 레이아웃이 일반화됐다. Secretbank의 RAILGUARD 기능(AI 룰 파일 자동 생성)은 이 트렌드와 완벽하게 맞닿는다.
 
 ### 2.5 "Atomic Personalization" 부상
 
-2026년 대시보드는 사용자 행동 기반으로 인터페이스가 물리적으로 재배열되는 방향으로 진화 중이다 [#3]. API Vault에서 적용 가능한 형태: 전문 개발자가 Graph를 자주 쓰면 Graph를 첫 화면으로, 바이브 코더가 Incidents를 자주 보면 Incidents를 우선 표시하는 적응형 홈 화면.
+2026년 대시보드는 사용자 행동 기반으로 인터페이스가 물리적으로 재배열되는 방향으로 진화 중이다 [#3]. Secretbank에서 적용 가능한 형태: 전문 개발자가 Graph를 자주 쓰면 Graph를 첫 화면으로, 바이브 코더가 Incidents를 자주 보면 Incidents를 우선 표시하는 적응형 홈 화면.
 
 ---
 
@@ -68,7 +68,7 @@ Linear(프로젝트 관리 도구)가 시작한 디자인 트렌드가 개발자
 
 비교 조사 결과 [#5, #6]:
 
-| 항목        | 1Password 8+                          | Bitwarden                 | API Vault 적용 가이드                |
+| 항목        | 1Password 8+                          | Bitwarden                 | Secretbank 적용 가이드               |
 | :---------- | :------------------------------------ | :------------------------ | :----------------------------------- |
 | 디자인 언어 | 풍부한 색상, 아이콘 강조, 둥근 모서리 | 기능 중심, 다소 밋밋      | Linear 미학으로 차별화               |
 | 데스크톱    | 풀 기능, 카테고리 사이드바, 태그 필터 | 풀 기능, 유사 구조        | Graph 편집, 코드 스캔, Rotation 실행 |
@@ -127,7 +127,7 @@ Tailwind v4의 `@theme` 블록을 이용해 CSS variables로 토큰 정의:
 
 ### 4.1 Progressive Disclosure 패턴
 
-바이브 코더에게 API Vault의 복잡도를 숨기는 것이 아니라, 단계별로 드러내는 전략이 핵심이다 [#8, #9].
+바이브 코더에게 Secretbank의 복잡도를 숨기는 것이 아니라, 단계별로 드러내는 전략이 핵심이다 [#8, #9].
 
 **3단계 Progressive Disclosure 구조:**
 
@@ -157,11 +157,11 @@ Tailwind v4의 `@theme` 블록을 이용해 CSS variables로 토큰 정의:
 
 ### 4.3 RAILGUARD 시각화: 두렵지 않은 보안 가드레일
 
-gemini_deep_research_apivault.md 섹션 4.1의 RAILGUARD 개념을 바이브 코더 UX로 구현하는 방법:
+gemini_deep_research_Secretbank.md 섹션 4.1의 RAILGUARD 개념을 바이브 코더 UX로 구현하는 방법:
 
 **Cursor/Grammarly 인라인 제안 모델** 적용:
 
-- 키가 `.cursorrules` 없이 감지되면 → 빨간 경고 팝업이 아니라 **파란색 인라인 제안 배너**: "이 프로젝트에 API Vault 룰 파일을 추가하면 Cursor가 키를 하드코딩하지 않도록 도와드려요. [1초 추가]"
+- 키가 `.cursorrules` 없이 감지되면 → 빨간 경고 팝업이 아니라 **파란색 인라인 제안 배너**: "이 프로젝트에 Secretbank 룰 파일을 추가하면 Cursor가 키를 하드코딩하지 않도록 도와드려요. [1초 추가]"
 - 키 만료 임박 → 달력 아이콘 + 노란 배지 (자물쇠/경고 삼각형 아님): "OpenAI 키가 15일 후 만료됩니다. [지금 교체]"
 - Incident 감지 → "Stripe에서 보안 공지가 발표됐어요. 내 Stripe 키 [2개]가 영향을 받을 수 있습니다. [확인하기]"
 
@@ -185,9 +185,9 @@ gemini_deep_research_apivault.md 섹션 4.1의 RAILGUARD 개념을 바이브 코
 
 ### 5.1 레이아웃 알고리즘 선택
 
-API Vault의 의존성 그래프(Issuer → Credential → Project → Deployment → URL)는 계층 구조가 명확하다. 조사 결과 [#17, #18]:
+Secretbank의 의존성 그래프(Issuer → Credential → Project → Deployment → URL)는 계층 구조가 명확하다. 조사 결과 [#17, #18]:
 
-| 알고리즘        | 특징                                    | API Vault 적합성             |
+| 알고리즘        | 특징                                    | Secretbank 적합성            |
 | :-------------- | :-------------------------------------- | :--------------------------- |
 | **dagre**       | 계층적 DAG 레이아웃, 빠름, 설정 간단    | **MVP: 최우선 권장**         |
 | **ELK (elkjs)** | 가장 강력한 레이아웃 엔진, 비동기, 복잡 | 1000+ 노드 도달 시 전환 고려 |
@@ -257,11 +257,11 @@ React Flow 공식 권장 최적화 [#18]:
 
 ### 6.1 WCAG 2.2 AA 체크리스트 (핵심 항목)
 
-WCAG 2.2 AA는 API Vault의 최소 목표다 [#10, #11]:
+WCAG 2.2 AA는 Secretbank의 최소 목표다 [#10, #11]:
 
 **새로 추가된 AA 기준 (2.2에서 신설):**
 
-| 기준                      | 번호         | API Vault 적용                                                      |
+| 기준                      | 번호         | Secretbank 적용                                                     |
 | :------------------------ | :----------- | :------------------------------------------------------------------ |
 | Focus Not Obscured        | 2.4.11       | 드롭다운/다이얼로그가 포커스 요소를 가리지 않아야 함                |
 | Focus Appearance          | 2.4.12 (AAA) | 포커스 링 최소 2px, 최소 3:1 색상 대비 (AA는 2.4.11)                |
@@ -459,7 +459,7 @@ npm install @mantine/core @mantine/hooks @mantine/charts @mantine/notifications 
 #### 트레이드오프
 
 - 장점: 배터리 포함(알림, 폼 검증, 테이블 즉시 사용), 바이브 코더에게 친숙한 둥근 미학, 빠른 초기 개발 속도
-- 단점: Tauri 공식 보일러플레이트 없음, 번들 크기 큼, 커스터마이징 자유도가 shadcn/ui보다 낮음, API Vault의 "보안 신뢰 톤"을 표현하기 약간 어려울 수 있음
+- 단점: Tauri 공식 보일러플레이트 없음, 번들 크기 큼, 커스터마이징 자유도가 shadcn/ui보다 낮음, Secretbank의 "보안 신뢰 톤"을 표현하기 약간 어려울 수 있음
 
 ---
 
@@ -574,7 +574,7 @@ npm install @radix-ui/react-* @tabler/icons-react
 
 5. **접근성 자동 처리**: Radix UI primitives 기반이므로 WCAG 2.2 AA의 키보드 내비게이션, ARIA 속성이 대부분 자동 처리된다. 1인 개발자가 접근성에 별도 시간을 투자할 필요가 최소화된다.
 
-**Option B 대신 A를 선택하는 이유**: API Vault는 "보안 도구"이므로 Mantine의 "따뜻한 프로슈머" 톤이 자칫 신뢰도를 약화시킬 수 있다. 또한 번들 크기가 Tauri 데스크톱에서는 덜 중요하지만 웹 대시보드와 모바일 WebView에서는 부담이 된다.
+**Option B 대신 A를 선택하는 이유**: Secretbank는 "보안 도구"이므로 Mantine의 "따뜻한 프로슈머" 톤이 자칫 신뢰도를 약화시킬 수 있다. 또한 번들 크기가 Tauri 데스크톱에서는 덜 중요하지만 웹 대시보드와 모바일 WebView에서는 부담이 된다.
 
 **Option C 대신 A를 선택하는 이유**: 1인 개발자가 초기 구현 비용을 최소화해야 한다. Option C는 모든 스타일을 직접 작성해야 하므로 MVP 속도가 느리다. 바이브 코더 경험을 별도로 설계하는 이중 비용도 발생한다.
 
@@ -621,4 +621,4 @@ Option A를 기반으로 Option C의 장점을 선택적으로 채용:
 
 ---
 
-_이 문서는 user_research/initial_idea.md, user_research/gemini_deep_research_apivault.md, docs/research_raw.md를 Tier 1 출처로 참조하였으며, 신규 웹 서치 결과를 추가 보완하였다._
+_이 문서는 user_research/initial_idea.md, user_research/gemini_deep_research_Secretbank.md, docs/research_raw.md를 Tier 1 출처로 참조하였으며, 신규 웹 서치 결과를 추가 보완하였다._

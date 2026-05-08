@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "apivault:graph:nodePositions";
+const STORAGE_KEY = "Secretbank:graph:nodePositions";
 
 export type NodePosition = { x: number; y: number };
 export type NodePositionMap = Record<string, NodePosition>;
@@ -61,7 +61,7 @@ export interface UseGraphNodePositions {
  * Persists manually-dragged node positions in localStorage so the user's
  * custom arrangement survives page navigation and app restart.
  *
- * Storage key: `apivault:graph:nodePositions`
+ * Storage key: `Secretbank:graph:nodePositions`
  * Shape: `{ [nodeId]: { x, y } }`
  *
  * Missing entries fall through to dagre's auto-layout. On every graph data

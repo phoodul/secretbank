@@ -4,7 +4,7 @@ export type CredentialStatus = "active" | "revoked" | "compromised";
 export type CredentialKind = "api_key" | "password" | "credit_card";
 
 // ---------------------------------------------------------------------------
-// Security score (T040) — mirrors api_vault_core::security_score
+// Security score (T040) — mirrors secretbank_core::security_score
 // ---------------------------------------------------------------------------
 
 export type ScoreLevel = "safe" | "warn" | "danger";
@@ -78,7 +78,7 @@ export interface CredentialFilter {
 export type UsageWhereKind = "env_var" | "file_path" | "code_ref";
 export type UsageVerifiedBy = "scan" | "manual" | "runtime";
 
-/** credential_get 커맨드가 반환하는 Usage 원소 (Rust `api_vault_core::Usage`) */
+/** credential_get 커맨드가 반환하는 Usage 원소 (Rust `secretbank_core::Usage`) */
 export interface Usage {
   id: string;
   credential_id: string;

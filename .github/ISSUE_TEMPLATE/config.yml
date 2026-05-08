@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Question / Usage help
-    url: https://github.com/phoodul/api-vault/discussions/categories/q-a
+    url: https://github.com/phoodul/secretbank/discussions/categories/q-a
     about: 사용법 / 설정 / 일반 질문은 Discussions 의 Q&A 카테고리로. 답변이 누적되면 향후 사용자도 검색 가능합니다.
   - name: 💡 Idea / Show & Tell
-    url: https://github.com/phoodul/api-vault/discussions/categories/ideas
+    url: https://github.com/phoodul/secretbank/discussions/categories/ideas
     about: 큰 기능 아이디어 / 사용 후기 / Show & Tell 은 Discussions 로.
   - name: 🔐 Security vulnerability (private)
-    url: https://github.com/phoodul/api-vault/blob/main/SECURITY.md
+    url: https://github.com/phoodul/secretbank/blob/main/SECURITY.md
     about: 보안 취약점은 PUBLIC issue 로 올리지 마세요. SECURITY.md 의 PGP 이메일로 비공개 신고.

@@ -26,7 +26,7 @@ import type { SyncTransport, TransportStatus } from "./transport";
 // ---------------------------------------------------------------------------
 
 export interface RelayTransportOptions {
-  /** 릴레이 base URL (예: `https://api-vault.app` or `http://localhost:8787`). */
+  /** 릴레이 base URL (예: `https://secretbank.app` or `http://localhost:8787`). */
   baseUrl: string;
   /** 매 호출마다 신선한 access token 을 반환 (refresh 가 필요할 수 있음). */
   getAccessToken: () => Promise<string>;

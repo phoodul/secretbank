@@ -1,0 +1,35 @@
+[package]
+name = "secretbank-storage"
+version = "0.1.0-pre10"
+edition = "2021"
+
+[features]
+default = []
+mock = []
+
+[dependencies]
+secretbank-core = { path = "../secretbank-core" }
+secretbank-audit = { path = "../secretbank-audit" }
+sqlx      = { workspace = true }
+tokio     = { workspace = true }
+thiserror = { workspace = true }
+time      = { workspace = true }
+ulid      = { workspace = true }
+tracing   = { workspace = true }
+serde     = { workspace = true }
+serde_json = { workspace = true }
+secrecy   = { workspace = true }
+zeroize   = { workspace = true }
+async-trait = { workspace = true }
+age = "0.11"
+rmp-serde = "1"
+tempfile = "3"
+secretbank-crypto = { path = "../secretbank-crypto" }
+secretbank-charter = { path = "../secretbank-charter" }
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+bech32 = "0.9"
+
+[dev-dependencies]
+tokio = { workspace = true }
+sqlx  = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "macros", "migrate", "time", "uuid"] }
+secretbank-core = { path = "../secretbank-core" }

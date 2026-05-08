@@ -1,25 +1,25 @@
 <idea-plugin>
-    <id>app.api-vault.jetbrains</id>
-    <name>API Vault</name>
-    <vendor email="support@api-vault.app" url="https://api-vault.app">API Vault contributors</vendor>
+    <id>app.secretbank.jetbrains</id>
+    <name>Secretbank</name>
+    <vendor email="support@secretbank.app" url="https://secretbank.app">Secretbank contributors</vendor>
 
     <description><![CDATA[
-        <h2>API Vault — secrets manager that understands your dependency graph</h2>
+        <h2>Secretbank — secrets manager that understands your dependency graph</h2>
         <p>
-            Read and reveal credentials from your local API Vault directly inside
+            Read and reveal credentials from your local Secretbank directly inside
             IntelliJ IDEA / WebStorm / GoLand / PyCharm / Rider / RubyMine, and
             scan your project's dependencies for known secret-leak / supply-chain
             advisories from OSV.dev.
         </p>
         <ul>
-            <li><b>Tools → API Vault → List credentials</b> — quick view, no values.</li>
-            <li><b>Tools → API Vault → Reveal credential</b> — passphrase prompt → clipboard, auto-cleared in 30s.</li>
-            <li><b>Tools → API Vault → Scan supply-chain risk</b> — flags risky deps in package.json / Cargo.toml as inspection warnings.</li>
+            <li><b>Tools → Secretbank → List credentials</b> — quick view, no values.</li>
+            <li><b>Tools → Secretbank → Reveal credential</b> — passphrase prompt → clipboard, auto-cleared in 30s.</li>
+            <li><b>Tools → Secretbank → Scan supply-chain risk</b> — flags risky deps in package.json / Cargo.toml as inspection warnings.</li>
             <li>Status bar shield icon for at-a-glance access.</li>
         </ul>
         <p>
-            Requires the <code>apivault</code> CLI on your PATH. Get it at
-            <a href="https://api-vault.app/download">api-vault.app/download</a>.
+            Requires the <code>secretbank</code> CLI on your PATH. Get it at
+            <a href="https://secretbank.app/download">secretbank.app/download</a>.
             Plugin is AGPL-3.0; the desktop app is too.
         </p>
     ]]></description>
@@ -31,7 +31,7 @@
             <li><b>Graph tab</b> with JCEF-rendered dependency graph (Issuer → Credential → Project → Deployment). Pan / zoom / click / double-click / right-click. Right-click opens a kind-aware context menu: <b>Show blast radius</b> for credentials (BFS-bucketed downstream nodes coloured red→orange→yellow), Reveal, Open docs/repo/URL, Focus, Copy ID. Keyboard: Ctrl+F search, Esc clear, Ctrl+0 fit. No external CDN.</li>
             <li>Auto-scan on project open (opt-in via Settings tab).</li>
             <li>Status-bar widget, Tools menu actions, manifest inspections (package.json / Cargo.toml / requirements.txt / go.mod patterns).</li>
-            <li>Backed by the local <code>apivault</code> CLI — list / reveal / scan / graph subcommands.</li>
+            <li>Backed by the local <code>secretbank</code> CLI — list / reveal / scan / graph subcommands.</li>
         </ul>
     ]]></change-notes>
 
@@ -39,56 +39,56 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow
-            id="API Vault"
+            id="Secretbank"
             anchor="right"
             secondary="true"
             icon="AllIcons.Actions.Show"
-            factoryClass="app.apivault.jetbrains.ApiVaultToolWindowFactory"/>
+            factoryClass="app.secretbank.jetbrains.SecretbankToolWindowFactory"/>
         <statusBarWidgetFactory
-            id="app.api-vault.jetbrains.statusBar"
-            implementation="app.apivault.jetbrains.ApiVaultStatusBarWidgetFactory"
+            id="app.secretbank.jetbrains.statusBar"
+            implementation="app.secretbank.jetbrains.SecretbankStatusBarWidgetFactory"
             order="last"/>
         <localInspection
             language="JSON"
-            displayName="API Vault — risky dependency"
-            groupName="API Vault"
+            displayName="Secretbank — risky dependency"
+            groupName="Secretbank"
             enabledByDefault="true"
             level="WARNING"
-            implementationClass="app.apivault.jetbrains.PackageJsonAdvisoryInspection"/>
+            implementationClass="app.secretbank.jetbrains.PackageJsonAdvisoryInspection"/>
         <localInspection
             language="TOML"
-            displayName="API Vault — risky dependency"
-            groupName="API Vault"
+            displayName="Secretbank — risky dependency"
+            groupName="Secretbank"
             enabledByDefault="true"
             level="WARNING"
-            implementationClass="app.apivault.jetbrains.CargoTomlAdvisoryInspection"/>
+            implementationClass="app.secretbank.jetbrains.CargoTomlAdvisoryInspection"/>
         <projectService
-            serviceImplementation="app.apivault.jetbrains.ApiVaultService"/>
+            serviceImplementation="app.secretbank.jetbrains.SecretbankService"/>
         <projectService
-            serviceImplementation="app.apivault.jetbrains.ApiVaultSettings"/>
+            serviceImplementation="app.secretbank.jetbrains.SecretbankSettings"/>
         <postStartupActivity
-            implementation="app.apivault.jetbrains.ProjectStartup"/>
+            implementation="app.secretbank.jetbrains.ProjectStartup"/>
         <notificationGroup
-            id="app.api-vault.jetbrains.notifications"
+            id="app.secretbank.jetbrains.notifications"
             displayType="BALLOON"
             isLogByDefault="true"/>
     </extensions>
 
     <actions>
-        <group id="app.api-vault.jetbrains.toolsMenu"
-               text="API Vault"
+        <group id="app.secretbank.jetbrains.toolsMenu"
+               text="Secretbank"
                popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <action id="app.api-vault.jetbrains.list"
-                    class="app.apivault.jetbrains.ListCredentialsAction"
+            <action id="app.secretbank.jetbrains.list"
+                    class="app.secretbank.jetbrains.ListCredentialsAction"
                     text="List credentials"
                     description="Show vault credentials (no values)."/>
-            <action id="app.api-vault.jetbrains.reveal"
-                    class="app.apivault.jetbrains.RevealCredentialAction"
+            <action id="app.secretbank.jetbrains.reveal"
+                    class="app.secretbank.jetbrains.RevealCredentialAction"
                     text="Reveal credential…"
                     description="Reveal a credential value to the clipboard."/>
-            <action id="app.api-vault.jetbrains.scan"
-                    class="app.apivault.jetbrains.ScanSupplyChainAction"
+            <action id="app.secretbank.jetbrains.scan"
+                    class="app.secretbank.jetbrains.ScanSupplyChainAction"
                     text="Scan supply-chain risk"
                     description="Run a supply-chain scan on the current project."/>
         </group>

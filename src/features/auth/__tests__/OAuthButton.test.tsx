@@ -38,7 +38,7 @@ describe("OAuthButton", () => {
     await waitFor(() =>
       expect(mockInvoke).toHaveBeenCalledWith("auth_oauth_start", {
         provider: "github",
-        redirectUri: "apivault://auth/callback",
+        redirectUri: "Secretbank://auth/callback",
       }),
     );
     expect(onStart).toHaveBeenCalledWith("github", "deadbeef");

@@ -1,6 +1,6 @@
 name: Deploy Site
 
-# site/ (Cloudflare Pages 의 api-vault-site project) 자동 배포.
+# site/ (Cloudflare Pages 의 secretbank-site project) 자동 배포.
 # 이 project 는 Direct Upload 모드로 만들어졌기에 GitHub git integration
 # 으로는 자동 배포가 안 된다 — wrangler pages deploy 로 push 한다.
 #
@@ -69,4 +69,4 @@ jobs:
           # accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}  # 필요 시 활성화
           # --commit-message 는 영문 SHA 로 명시. Cloudflare Pages API 가
           # 한글 commit message 를 "Invalid UTF-8" (code 8000111) 로 reject.
-          command: pages deploy site --project-name=api-vault-site --branch=main --commit-hash=${{ github.sha }} --commit-message=${{ github.sha }}
+          command: pages deploy site --project-name=secretbank-site --branch=main --commit-hash=${{ github.sha }} --commit-message=${{ github.sha }}

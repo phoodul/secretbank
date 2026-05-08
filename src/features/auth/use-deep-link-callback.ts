@@ -1,9 +1,9 @@
 /**
- * useDeepLinkCallback — OS 가 `apivault://auth/callback?...` URL 을 열면 단일 콜백
+ * useDeepLinkCallback — OS 가 `Secretbank://auth/callback?...` URL 을 열면 단일 콜백
  * 으로 dispatch 한다.
  *
  * lib.rs (Phase C) 에서 deep_link.on_open_url 이 `deep-link` 이벤트로 `Vec<String>`
- * (URL 목록) 을 emit 한다. 본 훅은 그 이벤트를 listen, `apivault://auth/callback`
+ * (URL 목록) 을 emit 한다. 본 훅은 그 이벤트를 listen, `Secretbank://auth/callback`
  * prefix 일치하는 URL 만 파싱해 `provider`/`code`/`state` 를 콜백으로 넘긴다.
  *
  * 한 번에 하나의 OAuth 흐름만 진행한다고 가정한다 (UI 상 동시 클릭 방지).
@@ -19,10 +19,10 @@ export interface OAuthCallbackPayload {
 
 export type OAuthCallbackHandler = (payload: OAuthCallbackPayload) => void;
 
-const CALLBACK_PREFIX = "apivault://auth/callback";
+const CALLBACK_PREFIX = "Secretbank://auth/callback";
 
 /**
- * `apivault://auth/callback?provider=github&code=...&state=...` URL 을
+ * `Secretbank://auth/callback?provider=github&code=...&state=...` URL 을
  * 파싱해 OAuthCallbackPayload 로 변환한다. 실패 시 null.
  */
 export function parseOAuthCallbackUrl(raw: string): OAuthCallbackPayload | null {

@@ -1,6 +1,6 @@
 # site/ — landing page
 
-Static landing page for `api-vault.app`. Single self-contained
+Static landing page for `secretbank.app`. Single self-contained
 `index.html` with inline CSS — no build step, no runtime JS.
 
 ## Deploy
@@ -9,7 +9,7 @@ Static landing page for `api-vault.app`. Single self-contained
 
 ```sh
 # from repo root, point at this directory
-wrangler pages deploy site --project-name api-vault-landing
+wrangler pages deploy site --project-name secretbank-landing
 ```
 
 Or attach the GitHub repo at <https://dash.cloudflare.com/?to=/:account/pages>
@@ -36,7 +36,7 @@ git subtree push --prefix site origin gh-pages
 
 ## Domain
 
-Buy `api-vault.app` (or alternative TLD), point CNAME at the deployment
+Buy `secretbank.app` (or alternative TLD), point CNAME at the deployment
 target. Set up:
 
 - A/AAAA or CNAME → Cloudflare Pages / Vercel.

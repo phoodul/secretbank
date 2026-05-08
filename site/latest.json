@@ -1,22 +1,22 @@
 {
   "version": "0.1.0-pre8",
-  "notes": "API Vault v0.1.0-pre8 — see CHANGELOG.md",
+  "notes": "Secretbank v0.1.0-pre8 — see CHANGELOG.md",
   "pub_date": "2026-05-02T13:29:07Z",
   "platforms": {
     "darwin-x86_64": {
-      "url": "https://github.com/phoodul/api-vault/releases/download/v0.1.0-pre8/api-vault.app.tar.gz",
+      "url": "https://github.com/phoodul/secretbank/releases/download/v0.1.0-pre8/secretbank.app.tar.gz",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeFpQcmNJNU9QK3laMnF5MWFzSHFxSEZ0dnVpQnlmR1h2VFEwVG5qOTJSV0dTZ1o4REZiNjlKWTE1dUpUZUxVd3pERkhSMmVaVlczSTA5UG93a3Q2RndvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NzI4Mjc3CWZpbGU6YXBpLXZhdWx0LmFwcC50YXIuZ3oKb05LTkUwR1psdHRRbDFEYkpQT290a0U4SDhHREdtNTlRQlFMYkRQWGRyb2pqUXVhOHVhekhGdkdGcGF3SGNJNzBQa2JlOFFlY1VDRytzQlVzUmJrQlE9PQo="
     },
     "darwin-aarch64": {
-      "url": "https://github.com/phoodul/api-vault/releases/download/v0.1.0-pre8/api-vault.app.tar.gz",
+      "url": "https://github.com/phoodul/secretbank/releases/download/v0.1.0-pre8/secretbank.app.tar.gz",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeFpQcmNJNU9QK3laMnF5MWFzSHFxSEZ0dnVpQnlmR1h2VFEwVG5qOTJSV0dTZ1o4REZiNjlKWTE1dUpUZUxVd3pERkhSMmVaVlczSTA5UG93a3Q2RndvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NzI4Mjc3CWZpbGU6YXBpLXZhdWx0LmFwcC50YXIuZ3oKb05LTkUwR1psdHRRbDFEYkpQT290a0U4SDhHREdtNTlRQlFMYkRQWGRyb2pqUXVhOHVhekhGdkdGcGF3SGNJNzBQa2JlOFFlY1VDRytzQlVzUmJrQlE9PQo="
     },
     "windows-x86_64": {
-      "url": "https://github.com/phoodul/api-vault/releases/download/v0.1.0-pre8/api-vault_0.1.0_x64-setup.exe",
+      "url": "https://github.com/phoodul/secretbank/releases/download/v0.1.0-pre8/secretbank_0.1.0_x64-setup.exe",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeFl6RXB6d1ZIVTFBSTVIMW1wcW1CRDIyK2UvMnhFV3ZsQkJYcEFyUkVNUE9VNXI0L1NLdjUxaEROZnJrRFk1UmwzcXA2SkNhRUdGdFJYbWxqWTl6NndnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NzI4NTI5CWZpbGU6YXBpLXZhdWx0XzAuMS4wX3g2NC1zZXR1cC5leGUKN0UrbjN5RHJWTk5jOTdUVUpBaDZLZ3E3bU40czkzY1dlUEtLZzFZVDhvRFZib1VlZDUzNy8xbWQ3OFdDbUNNT3JZRTVmZVZWbitQRU94Wkdkeno1Q3c9PQo="
     },
     "linux-x86_64": {
-      "url": "https://github.com/phoodul/api-vault/releases/download/v0.1.0-pre8/api-vault_0.1.0_amd64.AppImage",
+      "url": "https://github.com/phoodul/secretbank/releases/download/v0.1.0-pre8/secretbank_0.1.0_amd64.AppImage",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeFgvNGtpZVNBT3czbitWMmNsV3p6SXNqRUpxb1g4Rm1qQTNMcUZRek1MaUlMSnV4MUtxOVlaVmliVGFpOXh1U1FReWd2c1ZhUThrbXo4S3A0OFJTbHdNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NzI4NDQwCWZpbGU6YXBpLXZhdWx0XzAuMS4wX2FtZDY0LkFwcEltYWdlCk5IR1MyWDM5RUUvZjBGaVNxNU44bWNxbGJrRUIwVENTWFFVcVVGMXI3UVg0TEFtRXpHb01kSzE1Si9DbFQrN0hwNk8rbFBPUTh2K0k4a2NpTE9sM0J3PT0K"
     }
   }

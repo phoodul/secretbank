@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="API Vault user guide — install, credentials, dependency graph, supply-chain scan, Vault Charter recovery, CLI, MCP, VS Code extension."
+      content="Secretbank user guide — install, credentials, dependency graph, supply-chain scan, Vault Charter recovery, CLI, MCP, VS Code extension."
     />
-    <title>API Vault — User Guide</title>
-    <link rel="canonical" href="https://api-vault.app/guide.html" />
+    <title>Secretbank — User Guide</title>
+    <link rel="canonical" href="https://secretbank.app/guide.html" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -372,7 +372,7 @@
   <body>
     <header class="guide-header">
       <div class="header-inner">
-        <a href="/" class="home">API Vault</a>
+        <a href="/" class="home">Secretbank</a>
         <span class="crumb">/ User Guide</span>
         <span class="spacer"></span>
         <div class="lang-group" role="tablist" aria-label="Language">
@@ -405,11 +405,11 @@
         const SUPPORTED = ["en", "ko", "zh"];
         const LANG_DOC_LANG = { en: "en", ko: "ko", zh: "zh-CN" };
         const RAW_BASE =
-          "https://raw.githubusercontent.com/phoodul/api-vault/main/docs/USER_GUIDE.";
+          "https://raw.githubusercontent.com/phoodul/secretbank/main/docs/USER_GUIDE.";
 
         // ── Theme: respect ?theme= or system. Persist to localStorage same as index.html.
         (function initTheme() {
-          const stored = localStorage.getItem("apivault-theme");
+          const stored = localStorage.getItem("Secretbank-theme");
           const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
           document.documentElement.setAttribute(
             "data-theme",
@@ -479,7 +479,7 @@
 
         async function loadGuide(lang) {
           const article = document.getElementById("content");
-          const title = "API Vault — User Guide";
+          const title = "Secretbank — User Guide";
           document.title = title + " (" + lang.toUpperCase() + ")";
           document.documentElement.lang = LANG_DOC_LANG[lang] || lang;
 

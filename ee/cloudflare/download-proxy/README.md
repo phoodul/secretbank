@@ -1,6 +1,6 @@
 # download-proxy — Cloudflare Worker
 
-`api-vault.app/download/*` 와 `api-vault.app/api/latest` 를 GitHub Releases 로 stream proxy 하는 Cloudflare Worker.
+`secretbank.app/download/*` 와 `secretbank.app/api/latest` 를 GitHub Releases 로 stream proxy 하는 Cloudflare Worker.
 
 ## 구조
 
@@ -41,20 +41,22 @@ pnpm wrangler deploy
 ```
 
 `wrangler.toml` 의 routes 가 자동 등록된다:
-- `api-vault.app/download/*`
-- `api-vault.app/api/*`
+
+- `secretbank.app/download/*`
+- `secretbank.app/api/*`
 
 ### 3. 배포 검증
 
 ```powershell
 # /api/latest — manifest JSON 응답 확인
-curl https://api-vault.app/api/latest
+curl https://secretbank.app/api/latest
 
 # /download/* — 헤더만 확인 (바이너리 전체 다운로드 없이)
-curl -I "https://api-vault.app/download/v0.1.0-pre8/api-vault_0.1.0_x64-setup.exe"
+curl -I "https://secretbank.app/download/v0.1.0-pre8/secretbank_0.1.0_x64-setup.exe"
 ```
 
 기대 결과:
+
 - `/api/latest` → `200 OK`, `Content-Type: application/json`
 - `/download/...` → `200 OK`, `Content-Disposition: attachment; filename="..."`
 - 브라우저 Network 탭 → `github.com` 호출 0회
@@ -62,7 +64,7 @@ curl -I "https://api-vault.app/download/v0.1.0-pre8/api-vault_0.1.0_x64-setup.ex
 ### 4. Cloudflare 대시보드 route 우선순위 확인
 
 Cloudflare 대시보드 → Workers & Pages → download-proxy → Triggers → Routes 에서
-`api-vault.app/download/*` 와 `api-vault.app/api/*` 가 등록되어 있는지 확인.
+`secretbank.app/download/*` 와 `secretbank.app/api/*` 가 등록되어 있는지 확인.
 
 Pages route 와 충돌 시: Workers route 가 Pages 보다 우선순위가 높으므로 정상 동작.
 만약 Pages 가 먼저 응답하면 (404 반환) → Cloudflare 대시보드에서 route 우선순위 조정.
@@ -82,13 +84,13 @@ pnpm wrangler rollback <deployment-id>
 
 ## 보안 모델
 
-| 위협 | 완화 |
-|------|------|
-| W1 Path traversal | TAG_RE + FILENAME_SAFE_RE + ALLOWED_EXTS endsWith + URL decode 후 `..` 거부 |
-| W2 SSRF | REPO 하드코딩, 사용자 입력으로 외부 URL 구성 금지 |
-| W4 TLS 다운그레이드 | `https://` string literal 강제, HTTP 코드 없음 |
-| W5 Cache poisoning | KV 캐시 없음, Pages edge 캐시만 사용 |
-| W7 인라인 실행 | `Content-Disposition: attachment` 강제 |
+| 위협                | 완화                                                                        |
+| ------------------- | --------------------------------------------------------------------------- |
+| W1 Path traversal   | TAG_RE + FILENAME_SAFE_RE + ALLOWED_EXTS endsWith + URL decode 후 `..` 거부 |
+| W2 SSRF             | REPO 하드코딩, 사용자 입력으로 외부 URL 구성 금지                           |
+| W4 TLS 다운그레이드 | `https://` string literal 강제, HTTP 코드 없음                              |
+| W5 Cache poisoning  | KV 캐시 없음, Pages edge 캐시만 사용                                        |
+| W7 인라인 실행      | `Content-Disposition: attachment` 강제                                      |
 
 ## 향후 확장
 

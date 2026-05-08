@@ -91,7 +91,7 @@ Chromium `csv_field_parser.cc` 분석:
 
 - Chromium import parser 는 header row 를 읽어 `ColumnMap` (`flat_map<size_t, Label>`) 으로 변환 → **컬럼 순서에 무관하게 이름으로 매핑**
 - 즉 export 파일은 `name,url,username,password,note` 순이지만, import 시 순서가 달라도 됨
-- API Vault 파서도 이름 기반 매핑 사용 권장
+- Secretbank 파서도 이름 기반 매핑 사용 권장
 
 ---
 
@@ -107,7 +107,7 @@ Chromium `csv_field_parser.cc` 분석:
 - import 시에도 동일하게 url / username / password 3컬럼만 인식
 - **Microsoft 계정 비밀번호**: 검색 결과로는 별도 처리 여부 불명확. Edge 에 저장된 모든 웹사이트 비밀번호를 export 하는 것으로 보임. Microsoft 계정 자체 로그인 자격증명이 포함되는지는 미확인.
 
-**참고**: 사용자가 Edge 에서 내보낸 파일을 API Vault 에 import 할 때 `name` 컬럼이 없으므로, 파서가 `name` 없어도 정상 처리해야 함.
+**참고**: 사용자가 Edge 에서 내보낸 파일을 Secretbank 에 import 할 때 `name` 컬럼이 없으므로, 파서가 `name` 없어도 정상 처리해야 함.
 
 **출처**:
 
@@ -173,7 +173,7 @@ server,account,password
 - Firefox 79+ 에서 CSV export 기능 활성화 (about:logins)
 - Lockwise 는 Firefox 기반이었으나 2021년 서비스 종료, 이후 Firefox 내장 about:logins 가 대체
 
-**구현 참고**: API Vault 가 Firefox CSV 를 지원할 경우 9컬럼 중 3개(`url`, `username`, `password`)만 필요. 나머지는 무시.
+**구현 참고**: Secretbank 가 Firefox CSV 를 지원할 경우 9컬럼 중 3개(`url`, `username`, `password`)만 필요. 나머지는 무시.
 
 **출처**:
 
@@ -204,7 +204,7 @@ server,account,password
 - 1Password 공식: "delete the unencrypted CSV file" (import 후 삭제 명시)
 - Google 공식: "Delete the .CSV password file you downloaded. If you don't delete your password file, anyone with access to the device can open the file and access your passwords."
 
-**API Vault 구현 권고**:
+**Secretbank 구현 권고**:
 
 - import 완료 모달/토스트에 **파일 경로 + "삭제 권고" 경고** 포함
 - 가능하면 "파일 삭제" 버튼을 UI 에 직접 제공 (Tauri `fs::remove_file` API 사용 가능)
@@ -236,7 +236,7 @@ server,account,password
 ### 4-3. 중복 import 방지
 
 - Bitwarden: 중복 감지 없음, 다중 import 시 중복 항목 생성됨
-- **API Vault 차별화 기회**: URL + username 조합으로 기존 credential 과 대조 → import preview 에서 "이미 존재" 플래그 표시
+- **Secretbank 차별화 기회**: URL + username 조합으로 기존 credential 과 대조 → import preview 에서 "이미 존재" 플래그 표시
 
 ---
 
@@ -281,7 +281,7 @@ Chrome export 는 BOM 없음이 기본이지만, 사용자가 Excel 로 한 번 
 # src-tauri/Cargo.toml [workspace.dependencies]
 csv = "1"
 
-# src-tauri/crates/api-vault-core/Cargo.toml (또는 별도 api-vault-import crate)
+# src-tauri/crates/secretbank-core/Cargo.toml (또는 별도 secretbank-import crate)
 csv = { workspace = true }
 ```
 
@@ -423,7 +423,7 @@ struct CsvRow {
 
 ### 7-4. preview 단계 UI 권고 (차별화)
 
-업계 현황: **모두 preview 없음** → API Vault 의 Bento Card preview 가 차별화 포인트.
+업계 현황: **모두 preview 없음** → Secretbank 의 Bento Card preview 가 차별화 포인트.
 
 **권고 흐름**:
 
@@ -450,7 +450,7 @@ struct CsvRow {
 [파일 열기] [지금 삭제] [나중에]"
 ```
 
-- Bitwarden / 1Password / Google 모두 삭제 권고하나 UI 가 텍스트만 → API Vault 는 **삭제 버튼 직접 제공**이 차별화
+- Bitwarden / 1Password / Google 모두 삭제 권고하나 UI 가 텍스트만 → Secretbank 는 **삭제 버튼 직접 제공**이 차별화
 - Tauri `tauri::api::path` + `std::fs::remove_file` 또는 tauri-plugin-fs 로 구현 가능
 
 ### 7-6. 새 Issuer 자동 감지

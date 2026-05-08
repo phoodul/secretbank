@@ -12,8 +12,8 @@ import { parsePairDeepLink, usePairJoiner } from "../use-pair-joiner";
 const mockInvoke = vi.mocked(invoke);
 
 describe("parsePairDeepLink", () => {
-  it("parses apivault://pair?pin=...&pub=...", () => {
-    const r = parsePairDeepLink("apivault://pair?pin=012345&pub=ABC123");
+  it("parses secretbank://pair?pin=...&pub=...", () => {
+    const r = parsePairDeepLink("secretbank://pair?pin=012345&pub=ABC123");
     expect(r).toEqual({ pin: "012345", initiatorPubB64: "ABC123" });
   });
 
@@ -22,12 +22,12 @@ describe("parsePairDeepLink", () => {
   });
 
   it("returns null on non-numeric or short pin", () => {
-    expect(parsePairDeepLink("apivault://pair?pin=abc&pub=A")).toBeNull();
-    expect(parsePairDeepLink("apivault://pair?pin=12345&pub=A")).toBeNull();
+    expect(parsePairDeepLink("secretbank://pair?pin=abc&pub=A")).toBeNull();
+    expect(parsePairDeepLink("secretbank://pair?pin=12345&pub=A")).toBeNull();
   });
 
   it("returns null when pub is missing", () => {
-    expect(parsePairDeepLink("apivault://pair?pin=012345")).toBeNull();
+    expect(parsePairDeepLink("secretbank://pair?pin=012345")).toBeNull();
   });
 });
 

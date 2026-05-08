@@ -89,7 +89,7 @@ describe("GithubIntegrationSection", () => {
       if (cmd === "entitlement_current") return Promise.resolve(PRO_ENTITLEMENT);
       if (cmd === "github_list_installations") return Promise.resolve([]);
       if (cmd === "github_install_url")
-        return Promise.resolve("https://github.com/apps/api-vault/installations/new");
+        return Promise.resolve("https://github.com/apps/secretbank/installations/new");
       return Promise.resolve([]);
     });
 
@@ -109,7 +109,7 @@ describe("GithubIntegrationSection", () => {
 
     await waitFor(() => {
       expect(mockShellOpen).toHaveBeenCalledWith(
-        "https://github.com/apps/api-vault/installations/new",
+        "https://github.com/apps/secretbank/installations/new",
       );
     });
   });

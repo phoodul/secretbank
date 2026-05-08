@@ -1,1 +1,1 @@
-rootProject.name = "api-vault-jetbrains"
+rootProject.name = "secretbank-jetbrains"

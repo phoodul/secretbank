@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "API Vault",
+    "title": "Secretbank",
     "subtitle": "理解依赖关系图的密钥管理器"
   },
   "nav": {
@@ -295,7 +295,7 @@
   },
   "auth": {
     "signIn": {
-      "title": "连接 API Vault",
+      "title": "连接 Secretbank",
       "subtitle": "登录以启用云同步、事件匹配和部署共享。保险库始终在本机加密保存。",
       "emailLabel": "邮箱",
       "or": "或",
@@ -331,9 +331,9 @@
     },
     "pairJoin": {
       "title": "与其他设备配对",
-      "description": "粘贴来自现有 API Vault 设备的配对链接。两台设备将通过端到端加密交换密钥,主密码不会以明文形式离开源设备。",
+      "description": "粘贴来自现有 Secretbank 设备的配对链接。两台设备将通过端到端加密交换密钥,主密码不会以明文形式离开源设备。",
       "linkLabel": "配对链接",
-      "invalidLink": "无效的配对链接。需要 apivault://pair?pin=…&pub=… 格式",
+      "invalidLink": "无效的配对链接。需要 Secretbank://pair?pin=…&pub=… 格式",
       "joining": "正在连接源设备…",
       "waiting": "正在等待源设备发送凭据…",
       "applying": "解密并保存保险库…",
@@ -344,7 +344,7 @@
     },
     "pair": {
       "title": "添加新设备",
-      "description": "在新设备上打开 API Vault,粘贴下方链接,两台设备将通过端到端加密交换密钥。明文绝不会离开任何设备。",
+      "description": "在新设备上打开 Secretbank,粘贴下方链接,两台设备将通过端到端加密交换密钥。明文绝不会离开任何设备。",
       "starting": "正在建立安全通道…",
       "pinLabel": "配对 PIN",
       "deepLinkLabel": "配对链接",
@@ -385,7 +385,7 @@
     "importing": "导入中…",
     "importSuccess": "已将 {{count}} 个密钥导入 {{project}}",
     "importFailed": "导入失败",
-    "welcomeTitle": "欢迎使用 API Vault",
+    "welcomeTitle": "欢迎使用 Secretbank",
     "welcomeSubtitle": "只需 3 步即可快速完成设置。",
     "stepIndicator": "第 {{current}} / {{total}} 步",
     "stepDropTitle": "拖入项目文件夹",
@@ -786,7 +786,7 @@
     },
     "removeConfirm": {
       "title": "移除安装？",
-      "body": "这将从 API Vault 中移除安装 {{id}}。GitHub 上的应用安装将保留，如需请在 GitHub 上单独删除。",
+      "body": "这将从 Secretbank 中移除安装 {{id}}。GitHub 上的应用安装将保留，如需请在 GitHub 上单独删除。",
       "confirm": "移除",
       "cancel": "取消"
     },

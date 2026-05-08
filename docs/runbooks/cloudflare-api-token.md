@@ -34,7 +34,7 @@
 
 ### 자동 트리거 검증
 
-`ee/api-vault-relay/` 경로 파일 변경 후 main 에 push 하면
+`ee/secretbank-relay/` 경로 파일 변경 후 main 에 push 하면
 GitHub Actions 탭에서 **Deploy Relay** 워크플로우가 자동 실행된다.
 
 ### 수동 트리거 검증
@@ -45,7 +45,7 @@ GitHub Actions 탭에서 **Deploy Relay** 워크플로우가 자동 실행된다
 
 ### 배포 확인
 
-Cloudflare 대시보드 → Workers & Pages → `api-vault-relay` Worker → **Deployments** 탭에서
+Cloudflare 대시보드 → Workers & Pages → `secretbank-relay` Worker → **Deployments** 탭에서
 최신 배포 항목과 타임스탬프를 확인한다.
 
 ## 4. 토큰 갱신

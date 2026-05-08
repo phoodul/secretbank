@@ -1,14 +1,14 @@
 {
-  "name": "api-vault",
-  "displayName": "API Vault",
+  "name": "secretbank",
+  "displayName": "Secretbank",
   "description": "Dependency-graph-aware secrets manager with supply-chain risk detection — list / reveal credentials and scan dependencies for known secret-exfil history without leaving your editor.",
   "version": "0.1.0-pre10",
-  "publisher": "api-vault",
+  "publisher": "secretbank",
   "license": "AGPL-3.0-or-later",
-  "homepage": "https://github.com/phoodul/api-vault",
+  "homepage": "https://github.com/phoodul/secretbank",
   "repository": {
     "type": "git",
-    "url": "https://github.com/phoodul/api-vault.git"
+    "url": "https://github.com/phoodul/secretbank.git"
   },
   "engines": {
     "vscode": "^1.96.0"
@@ -31,28 +31,28 @@
   "contributes": {
     "commands": [
       {
-        "command": "apivault.list",
-        "title": "API Vault: List credentials",
-        "category": "API Vault"
+        "command": "Secretbank.list",
+        "title": "Secretbank: List credentials",
+        "category": "Secretbank"
       },
       {
-        "command": "apivault.reveal",
-        "title": "API Vault: Reveal credential (copy to clipboard)",
-        "category": "API Vault"
+        "command": "Secretbank.reveal",
+        "title": "Secretbank: Reveal credential (copy to clipboard)",
+        "category": "Secretbank"
       },
       {
-        "command": "apivault.scanSupplyChain",
-        "title": "API Vault: Scan workspace for supply-chain risk",
-        "category": "API Vault"
+        "command": "Secretbank.scanSupplyChain",
+        "title": "Secretbank: Scan workspace for supply-chain risk",
+        "category": "Secretbank"
       }
     ],
     "languageModelTools": [
       {
-        "name": "apivault_list_credentials",
-        "displayName": "List API Vault credentials",
-        "modelDescription": "List credentials stored in the user's API Vault — returns id / issuer / name / env / status. Does NOT reveal secret values. Use this to discover what secrets are available so you can ask the user about a specific one. Read-only.",
+        "name": "Secretbank_list_credentials",
+        "displayName": "List Secretbank credentials",
+        "modelDescription": "List credentials stored in the user's Secretbank — returns id / issuer / name / env / status. Does NOT reveal secret values. Use this to discover what secrets are available so you can ask the user about a specific one. Read-only.",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "apivault",
+        "toolReferenceName": "Secretbank",
         "icon": "$(shield)",
         "tags": [
           "secrets",
@@ -77,7 +77,7 @@
         }
       },
       {
-        "name": "apivault_scan_supply_chain",
+        "name": "Secretbank_scan_supply_chain",
         "displayName": "Scan supply-chain risk",
         "modelDescription": "Scan the user's current workspace for npm / Cargo dependencies that have a known OSV.dev advisory (especially secret_leak / supply_chain category). Use BEFORE adding or upgrading a dependency — if a package has secret-exfil history, surface that to the user. Read-only.",
         "canBeReferencedInPrompt": true,
@@ -104,14 +104,14 @@
       }
     ],
     "configuration": {
-      "title": "API Vault",
+      "title": "Secretbank",
       "properties": {
-        "apivault.cliPath": {
+        "Secretbank.cliPath": {
           "type": "string",
-          "default": "apivault",
-          "description": "Path to the `apivault` CLI binary. Leave as `apivault` if it is on your PATH."
+          "default": "Secretbank",
+          "description": "Path to the `Secretbank` CLI binary. Leave as `Secretbank` if it is on your PATH."
         },
-        "apivault.scanOnStartup": {
+        "Secretbank.scanOnStartup": {
           "type": "boolean",
           "default": false,
           "description": "Run a supply-chain scan when the workspace opens."

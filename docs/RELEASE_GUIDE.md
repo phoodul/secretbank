@@ -1,4 +1,4 @@
-# Release Guide — API Vault
+# Release Guide — Secretbank
 
 This document is for maintainers cutting a release. It documents the
 **one-time setup** (signing, certs, store accounts) and the **per-release
@@ -58,10 +58,10 @@ The Tauri updater verifies its update manifest against a public key shipped
 with the app.
 
 ```sh
-pnpm tauri signer generate -w ~/.tauri/api-vault.key
+pnpm tauri signer generate -w ~/.tauri/secretbank.key
 ```
 
-Output: a private key (`api-vault.key`) and a public key. Add the public key
+Output: a private key (`secretbank.key`) and a public key. Add the public key
 to `src-tauri/tauri.conf.json` under `plugins.updater.pubkey`. Add the
 private key to GitHub secrets as `TAURI_SIGNING_PRIVATE_KEY` and the
 password as `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
@@ -70,7 +70,7 @@ password as `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 
 1. Create a publisher at https://marketplace.visualstudio.com/manage —
    publisher id must match `vscode-extension/package.json` `publisher`
-   field (currently `api-vault`).
+   field (currently `secretbank`).
 2. Generate a Personal Access Token at https://dev.azure.com/<your-org>
    with **Marketplace → Manage** scope.
 3. Same for Open VSX at https://open-vsx.org/user-settings/tokens.
@@ -91,9 +91,9 @@ GitHub secrets:
 
 ### 6. Homebrew tap (optional but recommended)
 
-Create a separate repo `phoodul/homebrew-api-vault`. Users then install
-with `brew install --cask phoodul/api-vault/api-vault`. The Cask file at
-`distribution/homebrew/Casks/api-vault.rb` goes in that tap's `Casks/`
+Create a separate repo `phoodul/homebrew-secretbank`. Users then install
+with `brew install --cask phoodul/secretbank/secretbank`. The Cask file at
+`distribution/homebrew/Casks/secretbank.rb` goes in that tap's `Casks/`
 directory.
 
 Eventually we can submit to `homebrew/cask` upstream once we have ≥ 75
@@ -101,7 +101,7 @@ GitHub stars and ≥ 30 days of releases.
 
 ### 7. Domain + landing
 
-Buy `api-vault.app` (or alternative). Point at Cloudflare Pages or
+Buy `secretbank.app` (or alternative). Point at Cloudflare Pages or
 Vercel. The landing page lives in `site/` (TBD — separate from the
 desktop app's `src/`).
 
@@ -135,7 +135,7 @@ Before pushing a real `v*` tag, you can verify the entire build/sign
 pipeline without creating a GitHub Release. The Release workflow accepts
 a `dry_run` boolean input via manual trigger.
 
-1. Open https://github.com/phoodul/api-vault/actions/workflows/release.yml
+1. Open https://github.com/phoodul/secretbank/actions/workflows/release.yml
 2. Click **Run workflow** (top-right).
 3. Leave `tag` at the default (`v0.0.0-dryrun`) and check **Dry run**.
 4. **Run workflow**.
@@ -155,7 +155,7 @@ What runs:
 Common dry-run failure modes:
 
 - "Invalid base64 secret key" → `TAURI_SIGNING_PRIVATE_KEY` was pasted
-  incorrectly. Re-copy with `Get-Content $HOME\.tauri\api-vault.key | Set-Clipboard`
+  incorrectly. Re-copy with `Get-Content $HOME\.tauri\secretbank.key | Set-Clipboard`
   and re-add the secret.
 - "Decryption failed" → `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` mismatch.
 - macOS notarization step failure → APPLE\_\* secrets missing or wrong;
@@ -192,9 +192,9 @@ If a job fails, fix forward — do **not** edit the tag. Push a
 - [ ] Smoke-test installers on each platform.
 - [ ] Update `distribution/winget/manifest.yaml` with the new
       InstallerSha256 and submit a PR to microsoft/winget-pkgs.
-- [ ] Update `distribution/homebrew/Casks/api-vault.rb` with the new
+- [ ] Update `distribution/homebrew/Casks/secretbank.rb` with the new
       sha256 in our tap repo.
-- [ ] If Linux: `snapcraft upload api-vault_*.snap --release stable`.
+- [ ] If Linux: `snapcraft upload secretbank_*.snap --release stable`.
 - [ ] Tweet / Mastodon / HN announcement (only for x.0 / x.5 releases).
 - [ ] Verify the in-app updater detects the new version on the previous
       version.

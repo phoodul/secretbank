@@ -2,7 +2,7 @@
 
 ## 개요
 
-API Vault 의 E2E 회귀는 두 단계로 분리된다:
+Secretbank 의 E2E 회귀는 두 단계로 분리된다:
 
 | 단계                      | 무엇을 검증                                                    | 도구                                                    | 상태                           |
 | :------------------------ | :------------------------------------------------------------- | :------------------------------------------------------ | :----------------------------- |
@@ -24,7 +24,7 @@ API Vault 의 E2E 회귀는 두 단계로 분리된다:
 
 ### 무엇을 못 잡는가
 
-- 실제 OS-level deep-link (`apivault://...`) 라우팅 → tauri-driver 필요
+- 실제 OS-level deep-link (`Secretbank://...`) 라우팅 → tauri-driver 필요
 - 실제 SQLite/age 암호화 라운드트립 → Rust 통합 테스트로 보완
 - 멀티 윈도우 / 트레이 / 알림 등 OS 위젯 → tauri-driver 필요
 
@@ -91,7 +91,7 @@ e2e-desktop/
 ├── wdio.conf.ts        # webdriverio config (chromedriver port 4444 → tauri-driver)
 ├── specs/
 │   ├── lock-unlock.spec.ts
-│   ├── deep-link.spec.ts   # apivault://auth/callback / github/callback round-trip
+│   ├── deep-link.spec.ts   # Secretbank://auth/callback / github/callback round-trip
 │   └── ipc-roundtrip.spec.ts
 └── README.md
 ```

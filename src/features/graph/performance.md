@@ -20,7 +20,7 @@ Implementation: `useViewport()` in `InnerGraph` → `compactMode` bool → injec
 ## nodesDraggable
 
 Default: `false` (best performance — no drag event listeners).
-Preference stored: `localStorage['apivault:graph:nodesDraggable']`.
+Preference stored: `localStorage['Secretbank:graph:nodesDraggable']`.
 Hook: `useGraphNodesDraggable()` in `use-graph-nodes-draggable.ts`.
 Toggle UI: Settings page → Graph section.
 

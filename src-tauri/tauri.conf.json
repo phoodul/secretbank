@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "api-vault",
+  "productName": "Secretbank",
   "version": "0.1.0-pre10",
-  "identifier": "com.phoodul.apivault",
+  "identifier": "app.secretbank",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -13,26 +13,24 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "api-vault",
+        "title": "Secretbank",
         "width": 800,
         "height": 600
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost http://localhost:8787 https://api-vault.app https://services.nvd.nist.gov https://api.github.com https://haveibeenpwned.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost http://localhost:8787 https://secretbank.app https://services.nvd.nist.gov https://api.github.com https://haveibeenpwned.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
     }
   },
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["apivault"]
+        "schemes": ["secretbank"]
       }
     },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM1NEFGRDhDMTI3MTgxOEUKUldTT2dYRVNqUDFLeFZkb1ZuZ3pEcEVaTFNmUTJvemZPYU1JT0JvYnBUNDF3ZGNZTDhjc3BzNE0K",
-      "endpoints": [
-        "https://github.com/phoodul/api-vault/releases/download/v{{current_version}}/latest.json"
-      ]
+      "endpoints": ["https://secretbank.app/api/latest"]
     }
   },
   "bundle": {

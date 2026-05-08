@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "API Vault",
+    "title": "Secretbank",
     "subtitle": "The secrets manager that understands your dependency graph."
   },
   "nav": {
@@ -306,7 +306,7 @@
   },
   "auth": {
     "signIn": {
-      "title": "Connect to API Vault",
+      "title": "Connect to Secretbank",
       "subtitle": "Sign in to enable cloud sync, incident matching, and shared deployments. Your vault stays encrypted on this device.",
       "emailLabel": "Email",
       "or": "or",
@@ -342,9 +342,9 @@
     },
     "pairJoin": {
       "title": "Pair with another device",
-      "description": "Paste the pairing link from your existing API Vault device. Both devices will exchange keys end-to-end — your master passphrase never leaves the source device unencrypted.",
+      "description": "Paste the pairing link from your existing Secretbank device. Both devices will exchange keys end-to-end — your master passphrase never leaves the source device unencrypted.",
       "linkLabel": "Pairing link",
-      "invalidLink": "Not a valid pairing link. Expected apivault://pair?pin=…&pub=…",
+      "invalidLink": "Not a valid pairing link. Expected Secretbank://pair?pin=…&pub=…",
       "joining": "Connecting to the source device…",
       "waiting": "Waiting for the source device to send your credentials…",
       "applying": "Decrypting and saving your vault…",
@@ -355,7 +355,7 @@
     },
     "pair": {
       "title": "Add a new device",
-      "description": "Open API Vault on the new device, paste the link below, and the two devices will exchange keys end-to-end. Nothing private leaves either device unencrypted.",
+      "description": "Open Secretbank on the new device, paste the link below, and the two devices will exchange keys end-to-end. Nothing private leaves either device unencrypted.",
       "starting": "Setting up secure channel…",
       "pinLabel": "Pairing PIN",
       "deepLinkLabel": "Pairing link",
@@ -396,7 +396,7 @@
     "importing": "Importing…",
     "importSuccess": "{{count}} keys imported to {{project}}",
     "importFailed": "Import failed",
-    "welcomeTitle": "Welcome to API Vault",
+    "welcomeTitle": "Welcome to Secretbank",
     "welcomeSubtitle": "Let's get you set up in 3 quick steps.",
     "stepIndicator": "Step {{current}} of {{total}}",
     "stepDropTitle": "Drop your project folder",
@@ -797,7 +797,7 @@
     },
     "removeConfirm": {
       "title": "Remove installation?",
-      "body": "This will remove installation {{id}} from API Vault. The GitHub App will remain installed on GitHub — remove it there separately if needed.",
+      "body": "This will remove installation {{id}} from Secretbank. The GitHub App will remain installed on GitHub — remove it there separately if needed.",
       "confirm": "Remove",
       "cancel": "Cancel"
     },

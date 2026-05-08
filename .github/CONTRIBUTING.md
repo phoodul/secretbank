@@ -25,7 +25,7 @@
 - **Rust** — `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`
 - **Frontend** — `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`
 - **E2E smoke** — Playwright browser-mode 핵심 플로우
-- **EE Relay** — `ee/api-vault-relay`의 typecheck + test
+- **EE Relay** — `ee/secretbank-relay`의 typecheck + test
 
 ### Claude 자동 리뷰 (선택, 메인테이너 라벨)
 

@@ -242,7 +242,7 @@ export function SettingsPage() {
 
         <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
           <dt className="text-muted-foreground">{t("settings.appName")}</dt>
-          <dd>API Vault</dd>
+          <dd>Secretbank</dd>
 
           <dt className="text-muted-foreground">{t("settings.version")}</dt>
           <dd>{import.meta.env.VITE_APP_VERSION ?? "0.1.0-dev"}</dd>
@@ -263,7 +263,7 @@ export function SettingsPage() {
             <button
               type="button"
               className="text-primary underline-offset-4 hover:underline"
-              onClick={() => openExternal("https://github.com/phoodul/api-vault")}
+              onClick={() => openExternal("https://github.com/phoodul/secretbank")}
             >
               {t("settings.openRepo")}
             </button>

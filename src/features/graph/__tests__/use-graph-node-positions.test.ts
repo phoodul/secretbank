@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { useGraphNodePositions } from "../use-graph-node-positions";
 
-const KEY = "apivault:graph:nodePositions";
+const KEY = "Secretbank:graph:nodePositions";
 
 describe("useGraphNodePositions", () => {
   beforeEach(() => {

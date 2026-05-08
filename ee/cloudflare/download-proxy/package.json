@@ -1,5 +1,5 @@
 {
-  "name": "@api-vault/download-proxy",
+  "name": "@secretbank/download-proxy",
   "private": true,
   "version": "0.1.0",
   "type": "module",

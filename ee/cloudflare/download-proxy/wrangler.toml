@@ -8,12 +8,12 @@ account_id = "6f04212fcad5f073ed4e36af9b723eea"  # docs/runbooks/relay-deploymen
 # D1 없음 — 상태 없는 proxy
 
 [[routes]]
-pattern = "api-vault.app/download/*"
-zone_name = "api-vault.app"
+pattern = "secretbank.app/download/*"
+zone_name = "secretbank.app"
 
 [[routes]]
-pattern = "api-vault.app/api/*"
-zone_name = "api-vault.app"
+pattern = "secretbank.app/api/*"
+zone_name = "secretbank.app"
 
 # secrets (wrangler secret put 으로 주입) — production
 # GITHUB_PAT (wrangler secret put — 100+ DAU 또는 429 발생 시)

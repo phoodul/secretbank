@@ -29,10 +29,10 @@ export interface RemoteKey {
 // Deep-link callback parser
 // ---------------------------------------------------------------------------
 
-const GITHUB_CALLBACK_PREFIX = "apivault://github/callback";
+const GITHUB_CALLBACK_PREFIX = "Secretbank://github/callback";
 
 /**
- * `apivault://github/callback?installation_id=N[&setup_action=install]` URL 을
+ * `Secretbank://github/callback?installation_id=N[&setup_action=install]` URL 을
  * 파싱해 installation_id 를 추출한다. 매칭 실패 시 null.
  *
  * GitHub App 의 "Setup URL" 이 이 deep-link 로 설정되어 있어야 동작한다 —
@@ -157,7 +157,7 @@ export function useGithubIntegration(): UseGithubIntegrationReturn {
 
       // Register a one-time deep-link listener. lib.rs emits `deep-link` with
       // a `Vec<String>` payload containing the matched URLs — we filter for
-      // ones starting with `apivault://github/callback`.
+      // ones starting with `Secretbank://github/callback`.
       if (!deepLinkRegistered.current) {
         deepLinkRegistered.current = true;
         const { listen } = await import("@tauri-apps/api/event");

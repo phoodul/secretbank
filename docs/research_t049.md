@@ -1,4 +1,4 @@
-# T049 구현 선행 조사 — NVD Feed 크레이트 (`api-vault-feeds/nvd.rs`)
+# T049 구현 선행 조사 — NVD Feed 크레이트 (`secretbank-feeds/nvd.rs`)
 
 > 작성일: 2026-04-24
 > 조사 범위: NVD CVE API 2.0, governor 0.10.x, wiremock 0.6.x, time 0.3 직렬화, thiserror 에러 모델

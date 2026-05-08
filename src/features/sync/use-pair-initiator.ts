@@ -53,7 +53,7 @@ export interface UsePairInitiatorOptions {
  */
 export function buildPairDeepLink(pin: string, initiatorPubB64: string): string {
   const params = new URLSearchParams({ pin, pub: initiatorPubB64 });
-  return `apivault://pair?${params.toString()}`;
+  return `Secretbank://pair?${params.toString()}`;
 }
 
 function errorMessage(e: unknown): string {

@@ -1,6 +1,6 @@
 # Security Policy
 
-API Vault stores secrets. Security is the product. We treat vulnerability
+Secretbank stores secrets. Security is the product. We treat vulnerability
 reports as the highest-priority class of issue.
 
 ## Supported versions
@@ -17,7 +17,7 @@ We will publish a CHANGELOG entry for every security-relevant fix.
 
 Please **do not** open a public GitHub issue for security problems.
 
-Send an email to **security@api-vault.app**. PGP encryption is preferred —
+Send an email to **security@secretbank.app**. PGP encryption is preferred —
 fingerprint and public key are below.
 
 Include:
@@ -59,7 +59,7 @@ once a patched build is available, or at day 90, whichever comes first.
 
 We do not run a paid bounty program at this time. We do publicly credit
 reporters in the CHANGELOG and in the advisory page on
-https://api-vault.app/security unless you ask us not to.
+https://secretbank.app/security unless you ask us not to.
 
 ## PGP key
 
@@ -68,7 +68,7 @@ Fingerprint: TBD-on-public-launch
 ```
 
 The fingerprint will be pinned in the v1.0 release notes and on the
-website. Until then, plain TLS email to security@api-vault.app is
+website. Until then, plain TLS email to security@secretbank.app is
 acceptable — please mark the subject `[security]` and avoid reproducer
 attachments larger than 10 MB.
 

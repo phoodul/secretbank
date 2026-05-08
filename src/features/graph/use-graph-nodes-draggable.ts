@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-const STORAGE_KEY = "apivault:graph:nodesDraggable";
+const STORAGE_KEY = "Secretbank:graph:nodesDraggable";
 
 function readStorage(): boolean {
   try {

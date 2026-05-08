@@ -1,6 +1,6 @@
 # Contributor License Agreement (CLA)
 
-**Project:** api-vault
+**Project:** secretbank
 **Maintainer:** phoodul (phoodul@gmail.com)
 
 By submitting a pull request or otherwise contributing to this project, you agree to the following terms:
@@ -11,11 +11,11 @@ You confirm that you are the original author of your contribution, or have the r
 
 ## 2. License Grant
 
-You grant the api-vault maintainer a **perpetual, irrevocable, worldwide, royalty-free license** — including the right to sublicense — to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute your contribution and derivative works thereof under any license, including proprietary licenses.
+You grant the secretbank maintainer a **perpetual, irrevocable, worldwide, royalty-free license** — including the right to sublicense — to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute your contribution and derivative works thereof under any license, including proprietary licenses.
 
 ## 3. Patent Grant
 
-You grant the api-vault maintainer a **perpetual, irrevocable, worldwide, royalty-free patent license** — including the right to sublicense — to make, have made, use, offer to sell, sell, import, and otherwise transfer your contribution where such license applies to those patent claims necessarily infringed by your contribution alone or in combination with the project.
+You grant the secretbank maintainer a **perpetual, irrevocable, worldwide, royalty-free patent license** — including the right to sublicense — to make, have made, use, offer to sell, sell, import, and otherwise transfer your contribution where such license applies to those patent claims necessarily infringed by your contribution alone or in combination with the project.
 
 ## 4. Future License Changes
 

@@ -260,16 +260,16 @@ describe("usageMapper (Phase D-2a)", () => {
 
 describe("settingMapper + SYNC_SETTING_KEYS (Phase D-2a)", () => {
   it("isSyncableSettingKey is true for whitelisted keys, false otherwise", () => {
-    expect(isSyncableSettingKey("apivault.settings.security.auto_lock_minutes")).toBe(true);
-    expect(isSyncableSettingKey("apivault.settings.integrations.nvd_api_key")).toBe(true);
-    expect(isSyncableSettingKey("apivault.settings.ui.theme")).toBe(false);
-    expect(isSyncableSettingKey("apivault.settings.ui.language")).toBe(false);
+    expect(isSyncableSettingKey("Secretbank.settings.security.auto_lock_minutes")).toBe(true);
+    expect(isSyncableSettingKey("Secretbank.settings.integrations.nvd_api_key")).toBe(true);
+    expect(isSyncableSettingKey("Secretbank.settings.ui.theme")).toBe(false);
+    expect(isSyncableSettingKey("Secretbank.settings.ui.language")).toBe(false);
     expect(isSyncableSettingKey("")).toBe(false);
   });
 
   it("toYMap → fromYMap round-trips key-value pair", () => {
     const original = {
-      key: "apivault.settings.security.auto_lock_minutes",
+      key: "Secretbank.settings.security.auto_lock_minutes",
       value: "15",
     };
     const restored = settingMapper.fromYMap(settingMapper.toYMap(original), original.key);
@@ -283,7 +283,7 @@ describe("settingMapper + SYNC_SETTING_KEYS (Phase D-2a)", () => {
 
   it("SYNC_SETTING_KEYS contains policy-required entries", () => {
     expect(SYNC_SETTING_KEYS.size).toBeGreaterThanOrEqual(2);
-    expect(SYNC_SETTING_KEYS.has("apivault.settings.security.auto_lock_minutes")).toBe(true);
+    expect(SYNC_SETTING_KEYS.has("Secretbank.settings.security.auto_lock_minutes")).toBe(true);
   });
 });
 

@@ -1,13 +1,13 @@
-# Snap package definition — `snap install api-vault`.
+# Snap package definition — `snap install secretbank`.
 # Run `snapcraft pack` after `pnpm tauri build` has produced the Linux
-# binary at src-tauri/target/release/api-vault.
+# binary at src-tauri/target/release/secretbank.
 
-name: api-vault
+name: secretbank
 base: core22
 version: "0.1.0"
 summary: Dependency-graph-aware secrets manager with supply-chain risk
 description: |
-  API Vault is an open-core desktop secrets manager that goes beyond simple
+  Secretbank is an open-core desktop secrets manager that goes beyond simple
   key storage. It maps how each API key relates to your projects,
   deployments, and URLs, so you always know the blast radius before you
   rotate or revoke. When NVD or GHSA reports a breach, it auto-matches the
@@ -18,15 +18,15 @@ description: |
 grade: stable
 confinement: strict
 license: AGPL-3.0-or-later
-website: https://api-vault.app
-contact: support@api-vault.app
-issues: https://github.com/phoodul/api-vault/issues
+website: https://secretbank.app
+contact: support@secretbank.app
+issues: https://github.com/phoodul/secretbank/issues
 
 apps:
-  api-vault:
-    command: bin/api-vault
-    desktop: usr/share/applications/api-vault.desktop
-    common-id: app.api-vault
+  secretbank:
+    command: bin/secretbank
+    desktop: usr/share/applications/secretbank.desktop
+    common-id: app.secretbank
     extensions: [gnome]
     plugs:
       - home
@@ -39,23 +39,23 @@ apps:
       - opengl
       - audio-playback
       - password-manager-service # for OS keyring
-  apivault:
-    command: bin/apivault
+  Secretbank:
+    command: bin/Secretbank
     plugs:
       - home
       - network
       - password-manager-service
 
 parts:
-  api-vault:
+  secretbank:
     plugin: dump
     source: ../../src-tauri/target/release
     organize:
-      api-vault: bin/api-vault
-      apivault: bin/apivault
+      secretbank: bin/secretbank
+      Secretbank: bin/Secretbank
     stage:
-      - bin/api-vault
-      - bin/apivault
+      - bin/secretbank
+      - bin/Secretbank
     stage-packages:
       - libwebkit2gtk-4.1-0
       - libgtk-3-0
@@ -66,5 +66,5 @@ parts:
     plugin: dump
     source: .
     organize:
-      api-vault.desktop: usr/share/applications/api-vault.desktop
-      icon.png: usr/share/icons/hicolor/512x512/apps/api-vault.png
+      secretbank.desktop: usr/share/applications/secretbank.desktop
+      icon.png: usr/share/icons/hicolor/512x512/apps/secretbank.png

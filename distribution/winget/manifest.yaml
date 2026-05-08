@@ -1,32 +1,32 @@
 # winget manifest template — Microsoft Store / winget repo submission.
 # 실제 release 가 끝난 후 InstallerUrl/Sha256 을 채우고
 # microsoft/winget-pkgs 저장소에 PR 로 제출. version 별로 디렉토리:
-#   manifests/a/api-vault/api-vault/<version>/
-# 안에 세 파일(api-vault.api-vault.locale.en-US.yaml,
-# api-vault.api-vault.installer.yaml, api-vault.api-vault.yaml) 분리.
+#   manifests/a/secretbank/secretbank/<version>/
+# 안에 세 파일(secretbank.secretbank.locale.en-US.yaml,
+# secretbank.secretbank.installer.yaml, secretbank.secretbank.yaml) 분리.
 # 본 파일은 통합 템플릿 — 제출 시 분리.
 
-PackageIdentifier: api-vault.api-vault
+PackageIdentifier: secretbank.secretbank
 PackageVersion: 0.1.0-pre10
 PackageLocale: en-US
-Publisher: API Vault
-PublisherUrl: https://api-vault.app
-PublisherSupportUrl: https://github.com/phoodul/api-vault/issues
-Author: API Vault contributors
-PackageName: API Vault
-PackageUrl: https://api-vault.app
+Publisher: Secretbank
+PublisherUrl: https://secretbank.app
+PublisherSupportUrl: https://github.com/phoodul/secretbank/issues
+Author: Secretbank contributors
+PackageName: Secretbank
+PackageUrl: https://secretbank.app
 License: AGPL-3.0-or-later
-LicenseUrl: https://github.com/phoodul/api-vault/blob/main/LICENSE
-Copyright: Copyright (c) API Vault contributors
+LicenseUrl: https://github.com/phoodul/secretbank/blob/main/LICENSE
+Copyright: Copyright (c) Secretbank contributors
 ShortDescription: Dependency-graph-aware secrets manager with supply-chain risk detection.
 Description: |
-  API Vault stores API keys and secrets locally with Zero-Knowledge encryption,
+  Secretbank stores API keys and secrets locally with Zero-Knowledge encryption,
   but goes beyond storage by mapping how each key is used across your projects,
   deployments, and URLs. It detects supply-chain risk in your npm/Cargo
   dependencies via OSV.dev, auto-matches NVD/GHSA incidents to your vault, and
   generates RAILGUARD rulesets that protect your AI editors (Cursor, Copilot,
   Claude) from leaking keys.
-Moniker: api-vault
+Moniker: secretbank
 Tags:
   - secrets
   - credentials
@@ -34,12 +34,12 @@ Tags:
   - api-keys
   - supply-chain
   - dependency-graph
-ReleaseNotesUrl: https://github.com/phoodul/api-vault/releases/tag/v0.1.0
+ReleaseNotesUrl: https://github.com/phoodul/secretbank/releases/tag/v0.1.0
 
 Installers:
   - Architecture: x64
     InstallerType: nullsoft
-    InstallerUrl: https://github.com/phoodul/api-vault/releases/download/v0.1.0/api-vault_0.1.0_x64-setup.exe
+    InstallerUrl: https://github.com/phoodul/secretbank/releases/download/v0.1.0/secretbank_0.1.0_x64-setup.exe
     InstallerSha256: TBD-FILL-AFTER-RELEASE-BUILD
     Scope: user
     InstallerSwitches:
@@ -47,7 +47,7 @@ Installers:
       SilentWithProgress: /S
   - Architecture: x64
     InstallerType: wix
-    InstallerUrl: https://github.com/phoodul/api-vault/releases/download/v0.1.0/api-vault_0.1.0_x64_en-US.msi
+    InstallerUrl: https://github.com/phoodul/secretbank/releases/download/v0.1.0/secretbank_0.1.0_x64_en-US.msi
     InstallerSha256: TBD-FILL-AFTER-RELEASE-BUILD
     Scope: user
 

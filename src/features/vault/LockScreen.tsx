@@ -92,7 +92,7 @@ export function LockScreen({ showCreate, onSuccess }: LockScreenProps) {
       .catch(() => setHasCharter(false));
   }, [showCreate]);
 
-  // Deep-link auto-route — apivault://pair?... 로 진입하면 PairJoinerDialog
+  // Deep-link auto-route — Secretbank://pair?... 로 진입하면 PairJoinerDialog
   // 자동 open. uninitialized 상태에서만 (showCreate=true) listener 활성.
   usePairDeepLink(
     showCreate

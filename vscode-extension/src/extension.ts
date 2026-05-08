@@ -1,21 +1,21 @@
 /**
- * API Vault — VS Code extension entry point.
+ * Secretbank — VS Code extension entry point.
  *
  * M21-1 (commands + status bar) + M21-2 (Language Model tools + hover provider).
  *
  * Commands (palette):
- *   - apivault.list           — Quick pick of credentials
- *   - apivault.reveal         — pick → passphrase → clipboard
- *   - apivault.scanSupplyChain — workspace scan → Problems panel
+ *   - Secretbank.list           — Quick pick of credentials
+ *   - Secretbank.reveal         — pick → passphrase → clipboard
+ *   - Secretbank.scanSupplyChain — workspace scan → Problems panel
  *
  * Language model tools (Copilot Chat / Claude / Cursor / any 1.96+ host):
- *   - apivault_list_credentials
- *   - apivault_scan_supply_chain
+ *   - Secretbank_list_credentials
+ *   - Secretbank_scan_supply_chain
  *
  * Editor surface:
  *   - status bar item ($(shield))
  *   - package.json hover provider — last scan's advisory tooltip on dep lines
- *   - Problems panel diagnostics (scoped to "api-vault")
+ *   - Problems panel diagnostics (scoped to "secretbank")
  */
 
 import * as vscode from "vscode";
@@ -50,19 +50,19 @@ const lastScan: Map<string, SupplyAdvisory[]> = new Map(); // key = package name
 
 export function activate(context: vscode.ExtensionContext): void {
   statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusItem.text = "$(shield) API Vault";
+  statusItem.text = "$(shield) Secretbank";
   statusItem.tooltip = "Click to list credentials";
-  statusItem.command = "apivault.list";
+  statusItem.command = "Secretbank.list";
   statusItem.show();
   context.subscriptions.push(statusItem);
 
-  diagnostics = vscode.languages.createDiagnosticCollection("apivault");
+  diagnostics = vscode.languages.createDiagnosticCollection("Secretbank");
   context.subscriptions.push(diagnostics);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("apivault.list", cmdList),
-    vscode.commands.registerCommand("apivault.reveal", cmdReveal),
-    vscode.commands.registerCommand("apivault.scanSupplyChain", cmdScanSupplyChain),
+    vscode.commands.registerCommand("Secretbank.list", cmdList),
+    vscode.commands.registerCommand("Secretbank.reveal", cmdReveal),
+    vscode.commands.registerCommand("Secretbank.scanSupplyChain", cmdScanSupplyChain),
   );
 
   // Language Model tools — Copilot Chat / Claude / Cursor / any host that
@@ -70,8 +70,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // their `invoke` is wired here.
   if (typeof vscode.lm?.registerTool === "function") {
     context.subscriptions.push(
-      vscode.lm.registerTool("apivault_list_credentials", new ListCredentialsTool()),
-      vscode.lm.registerTool("apivault_scan_supply_chain", new ScanSupplyChainTool()),
+      vscode.lm.registerTool("Secretbank_list_credentials", new ListCredentialsTool()),
+      vscode.lm.registerTool("Secretbank_scan_supply_chain", new ScanSupplyChainTool()),
     );
   }
 
@@ -101,7 +101,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // Optional auto-scan on startup.
-  const cfg = vscode.workspace.getConfiguration("apivault");
+  const cfg = vscode.workspace.getConfiguration("Secretbank");
   if (cfg.get<boolean>("scanOnStartup", false)) {
     void cmdScanSupplyChain();
   }
@@ -117,8 +117,8 @@ export function deactivate(): void {
 // ---------------------------------------------------------------------------
 
 function cliPath(): string {
-  const cfg = vscode.workspace.getConfiguration("apivault");
-  return cfg.get<string>("cliPath", "apivault");
+  const cfg = vscode.workspace.getConfiguration("Secretbank");
+  return cfg.get<string>("cliPath", "Secretbank");
 }
 
 interface RunResult {
@@ -133,7 +133,7 @@ function runCli(args: string[], stdinPassphrase?: string): Promise<RunResult> {
       { maxBuffer: 32 * 1024 * 1024 },
       (err: ExecException | null, stdout: string, stderr: string) => {
         if (err) {
-          reject(new Error(`apivault CLI failed (${err.code ?? "?"}): ${stderr || err.message}`));
+          reject(new Error(`Secretbank CLI failed (${err.code ?? "?"}): ${stderr || err.message}`));
           return;
         }
         resolve({ stdout, stderr });
@@ -159,7 +159,7 @@ async function cmdList(): Promise<void> {
   try {
     result = await runCli(["list", "--json"]);
   } catch (e) {
-    void vscode.window.showErrorMessage(`API Vault list failed: ${(e as Error).message}`);
+    void vscode.window.showErrorMessage(`Secretbank list failed: ${(e as Error).message}`);
     return;
   }
   let parsed: { credentials: CredentialSummary[] };
@@ -175,7 +175,7 @@ async function cmdList(): Promise<void> {
     detail: `${c.id}  (${c.status})`,
   }));
   if (items.length === 0) {
-    void vscode.window.showInformationMessage("API Vault: no credentials yet.");
+    void vscode.window.showInformationMessage("Secretbank: no credentials yet.");
     return;
   }
   await vscode.window.showQuickPick(items, {
@@ -190,14 +190,14 @@ async function cmdReveal(): Promise<void> {
     const r = await runCli(["list", "--json"]);
     parsed = JSON.parse(r.stdout);
   } catch (e) {
-    void vscode.window.showErrorMessage(`API Vault list failed: ${(e as Error).message}`);
+    void vscode.window.showErrorMessage(`Secretbank list failed: ${(e as Error).message}`);
     return;
   }
   const items: vscode.QuickPickItem[] = parsed.credentials
     .filter((c) => c.status === "active")
     .map((c) => ({ label: c.name, description: `${c.issuer} · ${c.env}`, detail: c.id }));
   if (items.length === 0) {
-    void vscode.window.showInformationMessage("API Vault: no active credentials.");
+    void vscode.window.showInformationMessage("Secretbank: no active credentials.");
     return;
   }
   const picked = await vscode.window.showQuickPick(items, {
@@ -207,13 +207,13 @@ async function cmdReveal(): Promise<void> {
 
   // Step 2 — passphrase prompt (no shell echo in VS Code).
   const passphrase = await vscode.window.showInputBox({
-    prompt: "API Vault passphrase",
+    prompt: "Secretbank passphrase",
     password: true,
     ignoreFocusOut: true,
   });
   if (!passphrase) return;
 
-  // Step 3 — `apivault reveal <id> --print` reads passphrase from stdin.
+  // Step 3 — `Secretbank reveal <id> --print` reads passphrase from stdin.
   // We use `--print` so the value comes back to us; we then write it to the
   // clipboard ourselves and avoid storing it on the user's terminal history.
   let revealed: RunResult;
@@ -225,7 +225,7 @@ async function cmdReveal(): Promise<void> {
   }
   const value = revealed.stdout.trim();
   if (!value) {
-    void vscode.window.showWarningMessage("API Vault returned an empty value.");
+    void vscode.window.showWarningMessage("Secretbank returned an empty value.");
     return;
   }
   await vscode.env.clipboard.writeText(value);
@@ -245,7 +245,7 @@ async function cmdScanSupplyChain(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "API Vault: scanning supply chain…",
+      title: "Secretbank: scanning supply chain…",
       cancellable: false,
     },
     async () => {
@@ -255,8 +255,8 @@ async function cmdScanSupplyChain(): Promise<void> {
       surfaceDiagnostics(advisories);
       void vscode.window.showInformationMessage(
         advisories.length === 0
-          ? "API Vault: no supply-chain advisories matched."
-          : `API Vault: ${advisories.length} advisory(ies) — check the Problems panel.`,
+          ? "Secretbank: no supply-chain advisories matched."
+          : `Secretbank: ${advisories.length} advisory(ies) — check the Problems panel.`,
       );
     },
   );
@@ -275,7 +275,7 @@ function cacheScanResults(advisories: SupplyAdvisory[]): void {
 // ---------------------------------------------------------------------------
 // Inline scan (MVP) — bundled-binary-free path.
 //
-// In v2 (M21-2) we'll spawn `apivault-mcp` and route through MCP tools so the
+// In v2 (M21-2) we'll spawn `Secretbank-mcp` and route through MCP tools so the
 // extension stays a thin shell.
 // ---------------------------------------------------------------------------
 
@@ -446,7 +446,7 @@ function surfaceDiagnostics(advisories: SupplyAdvisory[]): void {
       `[${a.category}] ${a.package}@${a.version} — ${a.summary} (${a.source_id})`,
       sev,
     );
-    d.source = "api-vault";
+    d.source = "secretbank";
     const list = grouped.get(uri.fsPath) ?? [];
     list.push(d);
     grouped.set(uri.fsPath, list);
@@ -486,7 +486,7 @@ function advisoryHover(packageName: string): vscode.Hover | undefined {
   if (!advs || advs.length === 0) return undefined;
   const md = new vscode.MarkdownString();
   md.isTrusted = false;
-  md.appendMarkdown(`**API Vault — ${advs.length} advisory(ies) for \`${packageName}\`**\n\n`);
+  md.appendMarkdown(`**Secretbank — ${advs.length} advisory(ies) for \`${packageName}\`**\n\n`);
   for (const a of advs.slice(0, 5)) {
     const tag = a.category === "secret_leak" ? "🔑" : a.category === "supply_chain" ? "📦" : "⚠️";
     md.appendMarkdown(`- ${tag} **${a.severity}** [${a.source_id}] — ${a.summary}\n`);
@@ -557,7 +557,7 @@ class ListCredentialsTool implements vscode.LanguageModelTool<{ issuer?: string;
       result = await runCli(args);
     } catch (e) {
       return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(`apivault list failed: ${(e as Error).message}`),
+        new vscode.LanguageModelTextPart(`Secretbank list failed: ${(e as Error).message}`),
       ]);
     }
     let parsed: { credentials: CredentialSummary[] } = { credentials: [] };

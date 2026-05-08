@@ -2,7 +2,7 @@
  * use-pair-joiner — M9 Phase G T093 (UI hook for the joining device).
  *
  * 흐름 (`services::pairing` 의 joiner_* 와 1:1 매핑):
- *   1. `parseDeepLink(url)` — `apivault://pair?pin=...&pub=...` 파서
+ *   1. `parseDeepLink(url)` — `secretbank://pair?pin=...&pub=...` 파서
  *   2. `start({ pin })` → invoke `sync_pair_joiner_join` → initiator_pub
  *      (서버측에 KV 채널 통해 검증) + 즉시 payload 가 있으면 apply.
  *   3. payload 없으면 `sync_pair_joiner_poll` polling 1.5s
@@ -50,15 +50,15 @@ export interface ParsedPairLink {
 }
 
 /**
- * Parse `apivault://pair?pin=<6digits>&pub=<base64url>` into structured data.
+ * Parse `secretbank://pair?pin=<6digits>&pub=<base64url>` into structured data.
  * Returns `null` for malformed input — UI surface 에서 "잘못된 링크" 표시.
  */
 export function parsePairDeepLink(url: string): ParsedPairLink | null {
   try {
     const u = new URL(url);
-    if (u.protocol !== "apivault:") return null;
+    if (u.protocol !== "secretbank:") return null;
     if (u.hostname !== "pair" && !u.pathname.includes("pair")) {
-      // `apivault://pair?...` 의 경우 host="pair" / path=""
+      // `secretbank://pair?...` 의 경우 host="pair" / path=""
       // 일부 브라우저는 host 가 비고 pathname 으로 옴 — 둘 다 허용.
       return null;
     }

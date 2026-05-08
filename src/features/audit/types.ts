@@ -2,7 +2,7 @@
  * TypeScript mirrors of Rust audit DTOs (T073).
  *
  * Matches:
- *   api-vault-app/src/commands/audit.rs — AuditEntry, AuditListInput,
+ *   secretbank-app/src/commands/audit.rs — AuditEntry, AuditListInput,
  *   PerDeviceVerification, ChainVerifyReport
  */
 

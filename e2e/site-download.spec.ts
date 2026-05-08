@@ -41,7 +41,7 @@ test("site download grid: 3 cards populated + recommended item highlighted", asy
   expect(count).toBeGreaterThanOrEqual(6); // Windows 2 + macOS 1 + Linux 3
   const hrefs = await links.evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href));
   for (const href of hrefs) {
-    expect(href).toMatch(/github\.com\/phoodul\/api-vault\/releases\/download\//);
+    expect(href).toMatch(/github\.com\/phoodul\/secretbank\/releases\/download\//);
   }
 
   // 각 카드에 recommended item 1개씩 (★ marker)

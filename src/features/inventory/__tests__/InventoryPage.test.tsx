@@ -48,7 +48,7 @@ describe("InventoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Hide revoked 토글 기본값을 false로 설정해 모든 크리덴셜이 보이게 함
-    localStorage.setItem("apivault:inventory:hideRevoked", "false");
+    localStorage.setItem("Secretbank:inventory:hideRevoked", "false");
     // credential_list → MOCK_CREDENTIALS, issuer_list → [], credential_get → MOCK_CREDENTIAL_FULL
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "issuer_list") return Promise.resolve([]);

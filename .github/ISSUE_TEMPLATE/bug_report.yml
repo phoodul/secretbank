@@ -7,14 +7,14 @@ body:
     attributes:
       value: |
         감사합니다. 신고 전 확인:
-        - 🔐 **보안 취약점**은 [SECURITY.md](https://github.com/phoodul/api-vault/blob/main/SECURITY.md) 의 PGP 이메일로 (public issue 금지)
-        - 사용법 / 설정 질문은 [Discussions Q&A](https://github.com/phoodul/api-vault/discussions/categories/q-a) 로
+        - 🔐 **보안 취약점**은 [SECURITY.md](https://github.com/phoodul/secretbank/blob/main/SECURITY.md) 의 PGP 이메일로 (public issue 금지)
+        - 사용법 / 설정 질문은 [Discussions Q&A](https://github.com/phoodul/secretbank/discussions/categories/q-a) 로
 
   - type: input
     id: version
     attributes:
-      label: API Vault 버전
-      description: "Settings → About 또는 `apivault --version` 출력"
+      label: Secretbank 버전
+      description: "Settings → About 또는 `Secretbank --version` 출력"
       placeholder: "v0.1.0-pre8"
     validations:
       required: true
@@ -44,7 +44,7 @@ body:
       multiple: false
       options:
         - Desktop app (GUI)
-        - CLI (apivault command)
+        - CLI (Secretbank command)
         - MCP server (Claude / Cursor / Copilot Chat)
         - VS Code extension
         - JetBrains plugin

@@ -119,7 +119,7 @@ async function collectTargets(): Promise<BumpTarget[]> {
   }
 
   // distribution/homebrew Cask
-  const cask = resolve(REPO_ROOT, "distribution/homebrew/Casks/api-vault.rb");
+  const cask = resolve(REPO_ROOT, "distribution/homebrew/Casks/secretbank.rb");
   if (existsSync(cask)) {
     targets.push({
       file: cask,

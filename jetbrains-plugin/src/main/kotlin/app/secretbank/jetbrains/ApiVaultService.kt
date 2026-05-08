@@ -1,0 +1,176 @@
+package app.secretbank.jetbrains
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.concurrent.TimeUnit
+
+/**
+ * Project-scoped wrapper around the local `Secretbank` CLI. The plugin never
+ * holds plaintext credentials — it only orchestrates the CLI and forwards
+ * its output (which the CLI zeroes on its own exit). Network calls are also
+ * the CLI's job; we do not embed any HTTP client for OSV.
+ */
+@Service(Service.Level.PROJECT)
+class SecretbankService(private val project: Project) {
+
+    private val log = Logger.getInstance(SecretbankService::class.java)
+    private val mapper = ObjectMapper().registerKotlinModule()
+
+    /** Cached scan result for inspections to consult without re-running. */
+    @Volatile
+    var lastScan: ScanReport? = null
+        private set
+
+    fun listCredentials(): List<CredentialMeta> {
+        val out = run("list", "--json") ?: return emptyList()
+        return runCatching { mapper.readValue(out, Array<CredentialMeta>::class.java).toList() }
+            .onFailure { log.warn("Secretbank list parse: ${it.message}") }
+            .getOrDefault(emptyList())
+    }
+
+    /**
+     * Returns the requested credential value or null on failure. The caller is
+     * responsible for clipboard handling and zeroing — we hand back a String
+     * because Kotlin Strings are immutable and the JVM will GC them; for
+     * stricter zeroing JetBrains plugins typically delegate to the CLI and
+     * only carry a transient handle.
+     */
+    fun revealCredential(idOrName: String, passphrase: CharArray): String? {
+        // CLI 의 `Secretbank reveal <id> --print` 는 rpassword 로 stdin 의
+        // passphrase 를 그대로 받음. JetBrains 가 piped stdin 을 흘려 보내면
+        // TTY 가 아니어도 동작.
+        return run("reveal", idOrName, "--print", input = String(passphrase) + "\n")
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+    }
+
+    fun scanSupplyChain(projectPath: String): ScanReport? {
+        val out = run("scan", "supply-chain", "--project", projectPath, "--json") ?: return null
+        return runCatching { mapper.readValue(out, ScanReport::class.java) }
+            .onSuccess { lastScan = it }
+            .onFailure { log.warn("Secretbank scan parse: ${it.message}") }
+            .getOrNull()
+    }
+
+    /** 그래프 데이터 (M22 v3 — 'Secretbank graph' CLI). 실패 시 빈 graph. */
+    fun fetchGraph(): GraphPayload {
+        val out = run("graph") ?: return GraphPayload()
+        return runCatching { mapper.readValue(out, GraphPayload::class.java) }
+            .onFailure { log.warn("Secretbank graph parse: ${it.message}") }
+            .getOrDefault(GraphPayload())
+    }
+
+    /** Blast radius (M22 v5 — 'Secretbank blast-radius' CLI). null on failure. */
+    fun blastRadius(credentialId: String): BlastRadiusPayload? {
+        val out = run("blast-radius", credentialId) ?: return null
+        return runCatching { mapper.readValue(out, BlastRadiusPayload::class.java) }
+            .onFailure { log.warn("Secretbank blast-radius parse: ${it.message}") }
+            .getOrNull()
+    }
+
+    /** Convenience for inspections — package_name -> highest-severity advisory in the cached scan. */
+    fun advisoryFor(packageName: String): MatchedAdvisory? {
+        val scan = lastScan ?: return null
+        return scan.matched
+            .filter { it.packageName.equals(packageName, ignoreCase = true) }
+            .maxByOrNull { severityRank(it.severity) }
+    }
+
+    private fun severityRank(s: String): Int = when (s.lowercase()) {
+        "critical" -> 4; "high" -> 3; "medium" -> 2; "low" -> 1; else -> 0
+    }
+
+    private fun run(vararg args: String, input: String? = null): String? {
+        val cli = settings().cliPath.ifBlank { "secretbank" }
+        return try {
+            val pb = ProcessBuilder(listOf(cli) + args.toList())
+                .redirectErrorStream(false)
+            val proc = pb.start()
+            input?.let {
+                proc.outputStream.use { os -> os.write(it.toByteArray()); os.flush() }
+            }
+            val ok = proc.waitFor(20, TimeUnit.SECONDS)
+            if (!ok) {
+                proc.destroyForcibly()
+                log.warn("Secretbank timed out: ${args.joinToString(" ")}")
+                return null
+            }
+            if (proc.exitValue() != 0) {
+                log.info("Secretbank non-zero exit: ${args.joinToString(" ")}")
+                return null
+            }
+            BufferedReader(InputStreamReader(proc.inputStream)).readText()
+        } catch (e: Exception) {
+            log.warn("Secretbank exec failed (${args.joinToString(" ")}): ${e.message}")
+            null
+        }
+    }
+
+    private fun settings(): SecretbankSettings = project.service()
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class CredentialMeta(
+        val id: String,
+        val name: String,
+        val issuer: String,
+        val env: String? = null,
+        val status: String? = null,
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class ScanReport(
+        val manifestsFound: Int = 0,
+        val packagesSeen: Int = 0,
+        val advisoriesMatched: Int = 0,
+        val matched: List<MatchedAdvisory> = emptyList(),
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class MatchedAdvisory(
+        val packageName: String,
+        val ecosystem: String,
+        val version: String,
+        val manifestPath: String,
+        val sourceId: String,
+        val severity: String,
+        val category: String,
+        val summary: String,
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class GraphPayload(
+        val nodes: List<GraphNode> = emptyList(),
+        val edges: List<GraphEdge> = emptyList(),
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class GraphNode(
+        val id: String,
+        val kind: String,
+        val label: String,
+        val meta: Map<String, Any?> = emptyMap(),
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class GraphEdge(
+        val id: String,
+        val source: String,
+        val target: String,
+        val kind: String,
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class BlastRadiusPayload(
+        val credentialId: String = "",
+        val primary: List<String> = emptyList(),
+        val secondary: List<String> = emptyList(),
+        val tertiary: List<String> = emptyList(),
+    )
+}

@@ -1,4 +1,4 @@
-/** project_* 커맨드가 다루는 Rust Project 타입 (api_vault_core::Project) */
+/** project_* 커맨드가 다루는 Rust Project 타입 (secretbank_core::Project) */
 export interface Project {
   id: string;
   name: string;
@@ -12,7 +12,7 @@ export interface Project {
   updated_at: number;
 }
 
-/** project_create 커맨드가 받는 입력 (api_vault_core::ProjectInput) */
+/** project_create 커맨드가 받는 입력 (secretbank_core::ProjectInput) */
 export interface ProjectInput {
   name: string;
   repo_url: string | null;
@@ -21,7 +21,7 @@ export interface ProjectInput {
   local_path: string | null;
 }
 
-/** project_update 커맨드가 받는 patch (api_vault_core::ProjectPatch).
+/** project_update 커맨드가 받는 patch (secretbank_core::ProjectPatch).
  * 필드가 undefined 면 변경 없음, null 이면 빈 문자열 업데이트 — Rust 측은 Option<String> 이므로
  * JSON 에서 null 을 보내면 Some(null) 이 아닌 "필드 누락"으로 처리해야 한다. 따라서 patch 는
  * 서버에서 필드 생략 시 변경 없음으로 취급. name 을 제외한 필드는 "비우기" 가 필요할 때
@@ -34,7 +34,7 @@ export interface ProjectPatch {
   local_path?: string | null;
 }
 
-/** deployment_* 커맨드가 다루는 Rust Deployment 타입 (api_vault_core::Deployment) */
+/** deployment_* 커맨드가 다루는 Rust Deployment 타입 (secretbank_core::Deployment) */
 export type DeploymentPlatform = "vercel" | "railway" | "fly" | "netlify" | "other";
 
 export interface Deployment {
@@ -47,7 +47,7 @@ export interface Deployment {
   created_at: number;
 }
 
-/** deployment_create 입력 (api_vault_core::DeploymentInput) */
+/** deployment_create 입력 (secretbank_core::DeploymentInput) */
 export interface DeploymentInput {
   project_id: string;
   url: string;
@@ -55,7 +55,7 @@ export interface DeploymentInput {
   env: "dev" | "staging" | "prod";
 }
 
-/** deployment_update patch (api_vault_core::DeploymentPatch) — 모든 필드 optional */
+/** deployment_update patch (secretbank_core::DeploymentPatch) — 모든 필드 optional */
 export interface DeploymentPatch {
   url?: string;
   platform?: DeploymentPlatform;

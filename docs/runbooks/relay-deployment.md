@@ -1,6 +1,6 @@
 # Relay 배포 가이드 (Cloudflare Workers)
 
-`ee/api-vault-relay/` 를 Cloudflare Workers 에 배포하는 step-by-step 가이드.
+`ee/secretbank-relay/` 를 Cloudflare Workers 에 배포하는 step-by-step 가이드.
 
 ---
 
@@ -16,7 +16,7 @@
 ## 1. 프로젝트 의존성 설치
 
 ```bash
-cd ee/api-vault-relay
+cd ee/secretbank-relay
 pnpm install
 ```
 
@@ -25,18 +25,18 @@ pnpm install
 ## 2. D1 데이터베이스 생성
 
 ```bash
-wrangler d1 create api-vault-relay
+wrangler d1 create secretbank-relay
 ```
 
 출력 예시:
 
 ```
-✅ Successfully created DB 'api-vault-relay' in region APAC
+✅ Successfully created DB 'secretbank-relay' in region APAC
 Created your new D1 database.
 
 [[d1_databases]]
 binding = "DB"
-database_name = "api-vault-relay"
+database_name = "secretbank-relay"
 database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 ```
 
@@ -45,7 +45,7 @@ database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 ```toml
 [[d1_databases]]
 binding = "DB"
-database_name = "api-vault-relay"
+database_name = "secretbank-relay"
 database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # ← 여기
 ```
 
@@ -140,19 +140,19 @@ cp .dev.vars.example .dev.vars
 
 ## 8. Custom Domain 연결 (선택)
 
-`relay.api-vault.app` 도메인을 릴레이에 연결하는 방법:
+`relay.secretbank.app` 도메인을 릴레이에 연결하는 방법:
 
 **방법 A — Cloudflare 대시보드:**
 
-1. Workers & Pages → `api-vault-relay` → Settings → Triggers
-2. Custom Domains → `relay.api-vault.app` 추가
+1. Workers & Pages → `secretbank-relay` → Settings → Triggers
+2. Custom Domains → `relay.secretbank.app` 추가
 
 **방법 B — wrangler.toml:**
 `wrangler.toml` 의 주석을 해제:
 
 ```toml
 routes = [
-  { pattern = "relay.api-vault.app/*", custom_domain = true }
+  { pattern = "relay.secretbank.app/*", custom_domain = true }
 ]
 ```
 
@@ -172,10 +172,10 @@ pnpm deploy
 
 ```bash
 # workers.dev URL (wrangler deploy 출력에서 확인)
-curl https://api-vault-relay.<your-subdomain>.workers.dev/health
+curl https://secretbank-relay.<your-subdomain>.workers.dev/health
 
 # custom domain 연결 후
-curl https://relay.api-vault.app/health
+curl https://relay.secretbank.app/health
 ```
 
 정상 응답:
@@ -183,7 +183,7 @@ curl https://relay.api-vault.app/health
 ```json
 {
   "status": "ok",
-  "service": "api-vault-relay",
+  "service": "secretbank-relay",
   "version": "0.1.0",
   "time": "2026-04-25T12:00:00.000Z"
 }

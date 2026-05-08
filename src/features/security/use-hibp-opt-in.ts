@@ -6,7 +6,7 @@
 
 import { useCallback, useState } from "react";
 
-const STORAGE_KEY = "apivault.hibp_opt_in";
+const STORAGE_KEY = "Secretbank.hibp_opt_in";
 
 export function useHibpOptIn() {
   const [optIn, setOptIn] = useState<boolean>(() => localStorage.getItem(STORAGE_KEY) === "true");

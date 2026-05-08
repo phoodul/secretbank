@@ -1,15 +1,15 @@
-# Integrator Report — API Vault
+# Integrator Report — Secretbank
 
 > 작성자: Integrator Agent (claude-sonnet-4-6)
 > 작성일: 2026-04-22
-> 입력 자료: docs/project-decisions.md, docs/research_raw.md, docs/ux_research.md, user_research/initial_idea.md, user_research/gemini_deep_research_apivault.md, user_research/chatgpt_deep_research_apivault.md
+> 입력 자료: docs/project-decisions.md, docs/research_raw.md, docs/ux_research.md, user_research/initial_idea.md, user_research/gemini_deep_research_Secretbank.md, user_research/chatgpt_deep_research_Secretbank.md
 > Gate 1 의사결정 지원 문서
 
 ---
 
 ## 0. 요약 — Executive Summary
 
-**프로젝트 정의:** API Vault는 "Bitwarden for APIs, with Dependency Graph" — API 키의 저장·회전·영향도 분석·사고 대응을 통합한 Local-First E2EE 멀티 디바이스 플랫폼. 타깃은 전문 개발자와 바이브 코더, 수익은 Freemium($2/월 Pro).
+**프로젝트 정의:** Secretbank는 "Bitwarden for APIs, with Dependency Graph" — API 키의 저장·회전·영향도 분석·사고 대응을 통합한 Local-First E2EE 멀티 디바이스 플랫폼. 타깃은 전문 개발자와 바이브 코더, 수익은 Freemium($2/월 Pro).
 
 **가장 중요한 의사결정 7개:**
 
@@ -160,7 +160,7 @@
 
 ### 2.6 감사 로그 (Hash Chain + ed25519)
 
-**요약:** SHA-256 Hash Chain + ed25519 서명 방식이 API Vault의 감사 로그 규모(수천~수만 건)에서 구현 단순성, Rust 생태계 지원, 외부 의존성 없음 측면에서 최적이다 [#18, #19]. Sigstore/Rekor는 외부 서비스 의존과 오프라인 사용 불가 문제로 제외.
+**요약:** SHA-256 Hash Chain + ed25519 서명 방식이 Secretbank의 감사 로그 규모(수천~수만 건)에서 구현 단순성, Rust 생태계 지원, 외부 의존성 없음 측면에서 최적이다 [#18, #19]. Sigstore/Rekor는 외부 서비스 의존과 오프라인 사용 불가 문제로 제외.
 
 **CRAAP 평가:** 🟢 채택
 
@@ -372,7 +372,7 @@
 
 ### 3.2 두 페르소나 공존 전략 타당성 검토
 
-UX researcher가 제안한 **Progressive Disclosure 3단계** 구조(기본 카드 뷰 → 상세 메타 → Graph/Blast Radius/Kill Switch)는 Firefox UX 연구 [UX #16]와 Grammarly/Cursor 인라인 제안 모델로 검증된 패턴이다. API Vault 맥락에서 타당성이 높다.
+UX researcher가 제안한 **Progressive Disclosure 3단계** 구조(기본 카드 뷰 → 상세 메타 → Graph/Blast Radius/Kill Switch)는 Firefox UX 연구 [UX #16]와 Grammarly/Cursor 인라인 제안 모델로 검증된 패턴이다. Secretbank 맥락에서 타당성이 높다.
 
 **검증 포인트:**
 

@@ -1,4 +1,4 @@
-# API Vault — User Guide (English)
+# Secretbank — User Guide (English)
 
 > The dependency-graph-aware secrets manager. Stores keys, but also tells you
 > **who uses them, where, and what breaks if you revoke them.**
@@ -18,7 +18,7 @@ ordered by how often you'll actually use each.
 6. [Desktop — RAILGUARD (AI editor protection)](#6-desktop--railguard-ai-editor-protection)
 7. [Desktop — supply chain scan](#7-desktop--supply-chain-scan)
 8. [Desktop — multi-device sync](#8-desktop--multi-device-sync)
-9. [CLI — `apivault`](#9-cli--apivault)
+9. [CLI — `Secretbank`](#9-cli--Secretbank)
 10. [MCP server — Claude / Cursor / Copilot Chat](#10-mcp-server--claude--cursor--copilot-chat)
 11. [VS Code extension](#11-vs-code-extension)
 12. [Backup and recovery](#12-backup-and-recovery)
@@ -38,13 +38,13 @@ ordered by how often you'll actually use each.
 
 ### 1.2 Install
 
-| Platform | How                                                          |
-| :------- | :----------------------------------------------------------- |
-| Windows  | `api-vault_x64-setup.exe` or `winget install api-vault`      |
-| macOS    | `api-vault_universal.dmg` or `brew install --cask api-vault` |
-| Linux    | `.deb` / `.AppImage` / `.rpm` or `snap install api-vault`    |
+| Platform | How                                                            |
+| :------- | :------------------------------------------------------------- |
+| Windows  | `secretbank_x64-setup.exe` or `winget install secretbank`      |
+| macOS    | `secretbank_universal.dmg` or `brew install --cask secretbank` |
+| Linux    | `.deb` / `.AppImage` / `.rpm` or `snap install secretbank`     |
 
-Builds: https://github.com/phoodul/api-vault/releases
+Builds: https://github.com/phoodul/secretbank/releases
 
 ### 1.3 First run — set the master passphrase
 
@@ -293,7 +293,7 @@ shown (60-second TTL).
 
 ---
 
-## 9. CLI — `apivault`
+## 9. CLI — `Secretbank`
 
 Same vault, no GUI.
 
@@ -302,29 +302,29 @@ Same vault, no GUI.
 The desktop installer adds it to PATH. Or:
 
 ```sh
-brew install api-vault           # macOS
-winget install api-vault         # Windows
-cargo install api-vault-cli      # all platforms
+brew install secretbank           # macOS
+winget install secretbank         # Windows
+cargo install secretbank-cli      # all platforms
 ```
 
 ### 9.2 Commands
 
 ```sh
-apivault list [--issuer <slug>] [--env dev|staging|prod]
+Secretbank list [--issuer <slug>] [--env dev|staging|prod]
 # Lists credentials (no values).
 
-apivault reveal <id-or-name>
+Secretbank reveal <id-or-name>
 # Passphrase prompt → value to stdout. Exits in 30s.
 
-apivault run <id-or-name> -- <command>
+Secretbank run <id-or-name> -- <command>
 # Inject the credential into env vars then exec the command.
-# Example: apivault run prod-stripe -- npm run deploy
+# Example: Secretbank run prod-stripe -- npm run deploy
 ```
 
 ### 9.3 Env-var injection (`run`)
 
-`apivault run` puts only the chosen credentials into the child process's
-environment. Map credential IDs to env var names with `apivault.json`:
+`Secretbank run` puts only the chosen credentials into the child process's
+environment. Map credential IDs to env var names with `Secretbank.json`:
 
 ```json
 {
@@ -336,14 +336,14 @@ environment. Map credential IDs to env var names with `apivault.json`:
 ```
 
 ```sh
-apivault run --config apivault.json -- node server.js
+Secretbank run --config Secretbank.json -- node server.js
 ```
 
 ### 9.4 Security notes
 
 - Plaintext lives only in the child process's memory; CLI zeroizes on exit.
 - There's no `--print` flag by design — don't `echo` the result of
-  `apivault reveal`.
+  `Secretbank reveal`.
 - Be mindful of shell history. Use the value directly, don't capture it.
 
 ---
@@ -355,8 +355,8 @@ Talk to the vault via [Model Context Protocol](https://modelcontextprotocol.io).
 ### 10.1 Start the server
 
 ```sh
-apivault mcp serve              # stdio (Claude Desktop / Cursor)
-apivault mcp serve --port 3737  # SSE (Copilot Chat, etc.)
+Secretbank mcp serve              # stdio (Claude Desktop / Cursor)
+Secretbank mcp serve --port 3737  # SSE (Copilot Chat, etc.)
 ```
 
 ### 10.2 Exposed tools
@@ -376,15 +376,15 @@ apivault mcp serve --port 3737  # SSE (Copilot Chat, etc.)
 ```json
 {
   "mcpServers": {
-    "api-vault": {
-      "command": "apivault",
+    "secretbank": {
+      "command": "Secretbank",
       "args": ["mcp", "serve"]
     }
   }
 }
 ```
 
-Restart, then in chat: `@api-vault list openai`.
+Restart, then in chat: `@secretbank list openai`.
 
 ### 10.4 Cursor
 
@@ -402,21 +402,21 @@ Settings → MCP → add the same JSON.
 
 ### 11.1 Install
 
-- Search "API Vault" in the VS Code Marketplace.
+- Search "Secretbank" in the VS Code Marketplace.
 - Or Open VSX with the same name.
 
 ### 11.2 Commands (palette)
 
-- `API Vault: List credentials`
-- `API Vault: Reveal credential` — passphrase prompt → clipboard.
-- `API Vault: Scan workspace for supply-chain risk`
+- `Secretbank: List credentials`
+- `Secretbank: Reveal credential` — passphrase prompt → clipboard.
+- `Secretbank: Scan workspace for supply-chain risk`
 
 ### 11.3 Language Model tools (1.96+)
 
 Any chat host implementing the VS Code LM tool API — Copilot Chat, Claude,
 Cursor — picks these up automatically.
 
-- `#apivault` — list credentials.
+- `#Secretbank` — list credentials.
 - `#supplyrisk` — supply-chain scan.
 
 ### 11.4 Editor surface
@@ -426,14 +426,14 @@ Cursor — picks these up automatically.
   scan's advisory tooltip.
 - **Code lens** — risky dep lines get an inline "🔑 N advisor(ies)" lens.
   Click → Problems panel.
-- **Problems panel** — diagnostics with source `api-vault`.
+- **Problems panel** — diagnostics with source `secretbank`.
 
 ### 11.5 Settings
 
 ```json
 {
-  "apivault.cliPath": "apivault",
-  "apivault.scanOnStartup": false
+  "Secretbank.cliPath": "Secretbank",
+  "Secretbank.scanOnStartup": false
 }
 ```
 
@@ -443,7 +443,7 @@ Cursor — picks these up automatically.
 
 ### 12.1 Backup
 
-- Settings → **Export encrypted backup** → `.apivault-backup` file.
+- Settings → **Export encrypted backup** → `.Secretbank-backup` file.
 - The file is encrypted with your master passphrase — safe to put in cloud.
 - Recommended: weekly + after any master-passphrase change.
 
@@ -524,7 +524,7 @@ notarization yet.
 **Fix:**
 
 ```sh
-xattr -cr "/Applications/API Vault.app"
+xattr -cr "/Applications/Secretbank.app"
 ```
 
 The first command strips the quarantine attribute Gatekeeper added on
@@ -559,9 +559,9 @@ sudo dnf install -y webkit2gtk4.1 libappindicator-gtk3
 1. **Cooldown active** after a Charter recovery (default 7 days). Settings
    → Security → "Charter recovery cooldown" shows whether it's on.
    Solution: wait, or click **Clear cooldown** (audited).
-2. **Wrong vault file.** The default is `~/.local/share/api-vault/vault.age`
-   (Linux), `~/Library/Application Support/api-vault/vault.age` (macOS),
-   `%APPDATA%\api-vault\vault.age` (Windows). If you migrated machines
+2. **Wrong vault file.** The default is `~/.local/share/secretbank/vault.age`
+   (Linux), `~/Library/Application Support/secretbank/vault.age` (macOS),
+   `%APPDATA%\secretbank\vault.age` (Windows). If you migrated machines
    without copying this file, you have an empty new vault.
 3. **Caps Lock or different keyboard layout.** Sounds obvious — it's still
    the #1 cause.
@@ -582,34 +582,34 @@ sudo dnf install -y webkit2gtk4.1 libappindicator-gtk3
 
 1. Quit the app.
 2. Delete the updater cache:
-   - macOS: `~/Library/Caches/api-vault/updater/`
-   - Linux: `~/.cache/api-vault/updater/`
-   - Windows: `%LOCALAPPDATA%\api-vault\Cache\updater\`
+   - macOS: `~/Library/Caches/secretbank/updater/`
+   - Linux: `~/.cache/secretbank/updater/`
+   - Windows: `%LOCALAPPDATA%\secretbank\Cache\updater\`
 3. Relaunch.
 
-### 13.6 CLI — `apivault: command not found`
+### 13.6 CLI — `Secretbank: command not found`
 
 The CLI binary is installed alongside the desktop app. Add it to your PATH:
 
-| OS               | Path                                                  |
-| :--------------- | :---------------------------------------------------- |
-| macOS            | `/Applications/API Vault.app/Contents/MacOS/apivault` |
-| Linux (deb/rpm)  | `/usr/bin/apivault`                                   |
-| Linux (AppImage) | extract first, the binary is in `usr/bin/apivault`    |
-| Windows          | `%LOCALAPPDATA%\Programs\api-vault\apivault.exe`      |
+| OS               | Path                                                     |
+| :--------------- | :------------------------------------------------------- |
+| macOS            | `/Applications/Secretbank.app/Contents/MacOS/Secretbank` |
+| Linux (deb/rpm)  | `/usr/bin/Secretbank`                                    |
+| Linux (AppImage) | extract first, the binary is in `usr/bin/Secretbank`     |
+| Windows          | `%LOCALAPPDATA%\Programs\secretbank\Secretbank.exe`      |
 
 For convenience, symlink to a directory that's already on PATH:
 
 ```sh
 # macOS
-sudo ln -s "/Applications/API Vault.app/Contents/MacOS/apivault" /usr/local/bin/apivault
+sudo ln -s "/Applications/Secretbank.app/Contents/MacOS/Secretbank" /usr/local/bin/Secretbank
 
 # Linux
-sudo ln -s /usr/bin/apivault /usr/local/bin/apivault
+sudo ln -s /usr/bin/Secretbank /usr/local/bin/Secretbank
 
 # Windows (PowerShell as admin)
-New-Item -ItemType SymbolicLink -Path "C:\Windows\apivault.exe" `
-  -Target "$env:LOCALAPPDATA\Programs\api-vault\apivault.exe"
+New-Item -ItemType SymbolicLink -Path "C:\Windows\Secretbank.exe" `
+  -Target "$env:LOCALAPPDATA\Programs\secretbank\Secretbank.exe"
 ```
 
 ### 13.7 MCP server doesn't appear in Claude Desktop / Cursor
@@ -692,11 +692,11 @@ A. No. It only stores ChaCha20-Poly1305 ciphertext produced on your device.
 The server source lives at [`/ee/`](../ee/) for verification.
 
 **Q. I want to contribute.**
-A. https://github.com/phoodul/api-vault — issues and PRs welcome. CLA
+A. https://github.com/phoodul/secretbank — issues and PRs welcome. CLA
 required before merge.
 
 **Q. I found a security issue.**
-A. PGP-encrypted email to security@api-vault.app. 90-day responsible
+A. PGP-encrypted email to security@secretbank.app. 90-day responsible
 disclosure.
 
 ---

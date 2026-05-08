@@ -1,6 +1,6 @@
 # UX Research — M24 Phase 3 + 4 (1P / BW 동등 수준 가이드, 2026-05-07)
 
-> **목적**: API Vault 가 M24 Phase 3 (kind 확장: 신용카드 / passkey / secure_note) 와 Phase 4 (카테고리 시스템) 에 진입하기 전, 1Password / Bitwarden 의 실제 UX 패턴을 분석해 구현 사양의 기초를 마련한다.
+> **목적**: Secretbank 가 M24 Phase 3 (kind 확장: 신용카드 / passkey / secure_note) 와 Phase 4 (카테고리 시스템) 에 진입하기 전, 1Password / Bitwarden 의 실제 UX 패턴을 분석해 구현 사양의 기초를 마련한다.
 >
 > **조사 기준일**: 2026-05-07
 > **대상 버전**: 1Password 8 (Electron 기반 데스크톱), Bitwarden 2025.x (Electron), Bitwarden 2026.1.x
@@ -11,13 +11,13 @@
 
 ### 5 영역 핵심 발견
 
-| 영역 | 1Password 수준 | 우리의 현재 | 격차 크기 |
-|:---|:---|:---|:---|
-| 신용카드 UI | 시각적 카드 표현 + BIN 자동 감지 + 필드별 마스킹 + copy on tap | 없음 (신규) | 큼 |
-| Passkey UI | 로그인 항목에 통합 저장 + OS-level 인증 (Win Hello / Touch ID) | 없음 (신규) | 매우 큼 |
-| Secure Note UI | Markdown 렌더링 + 커스텀 필드 추가 + 검색 내 하이라이팅 | 없음 (신규) | 중 |
-| 카테고리 시스템 | Tags (중첩 가능) + 22종 기본 카테고리 + 드래그로 tag 적용 | 없음 (신규) | 큼 |
-| 마이크로인터랙션 / 빈 상태 | warm-informal 톤 + 구체 액션 안내 + skeleton 로딩 | Bento hover 있음 / 나머지 부족 | 중 |
+| 영역                       | 1Password 수준                                                 | 우리의 현재                    | 격차 크기 |
+| :------------------------- | :------------------------------------------------------------- | :----------------------------- | :-------- |
+| 신용카드 UI                | 시각적 카드 표현 + BIN 자동 감지 + 필드별 마스킹 + copy on tap | 없음 (신규)                    | 큼        |
+| Passkey UI                 | 로그인 항목에 통합 저장 + OS-level 인증 (Win Hello / Touch ID) | 없음 (신규)                    | 매우 큼   |
+| Secure Note UI             | Markdown 렌더링 + 커스텀 필드 추가 + 검색 내 하이라이팅        | 없음 (신규)                    | 중        |
+| 카테고리 시스템            | Tags (중첩 가능) + 22종 기본 카테고리 + 드래그로 tag 적용      | 없음 (신규)                    | 큼        |
+| 마이크로인터랙션 / 빈 상태 | warm-informal 톤 + 구체 액션 안내 + skeleton 로딩              | Bento hover 있음 / 나머지 부족 | 중        |
 
 ### 우선순위 권고
 
@@ -62,14 +62,14 @@
 
 카드번호 입력 시 첫 자릿수(BIN prefix)로 카드사를 자동 인식한다:
 
-| prefix | 카드사 |
-|:---|:---|
-| 4 | Visa |
-| 51–55 또는 2221–2720 | Mastercard |
-| 34 / 37 | American Express |
-| 6011 / 622126–622925 / 64–65 | Discover |
-| 3528–3589 | JCB |
-| 36 / 38 / 300–305 | Diners Club |
+| prefix                       | 카드사           |
+| :--------------------------- | :--------------- |
+| 4                            | Visa             |
+| 51–55 또는 2221–2720         | Mastercard       |
+| 34 / 37                      | American Express |
+| 6011 / 622126–622925 / 64–65 | Discover         |
+| 3528–3589                    | JCB              |
+| 36 / 38 / 300–305            | Diners Club      |
 
 감지 즉시 카드 아이콘과 배경 그레이디언트가 전환된다.
 
@@ -88,6 +88,7 @@ Amex는 15자리: `•••• •••••• •1234` (4-6-5 그룹핑)
 #### 등록 폼 필드 순서 (자연 순서)
 
 1Password 의 신용카드 등록 폼은 실제 카드 사용 흐름을 반영한다:
+
 1. 카드 번호 (BIN 입력하는 순간 카드사 자동 감지)
 2. 만료일 (MM / YY)
 3. 보안 코드 (CVC/CVV)
@@ -127,14 +128,14 @@ Bitwarden 은 실물 카드 형태 렌더링 **없음**. 단순한 항목 목록
 
 ### 1.3 비교 요약
 
-| 기능 | 1Password | Bitwarden |
-|:---|:---|:---|
-| 카드 시각화 | 실물 카드 3D flip | 없음 |
-| BIN 자동 감지 | 있음 | 없음 (수동 선택) |
-| 번호 마스킹 | 기본 마스킹, reveal 가능 | 기본 평문 (요청 중) |
-| 4자리 그룹핑 | 있음 | 부분 적용 |
-| CVC 마스킹 | 기본 마스킹 | 없음 |
-| 카드사 아이콘 | 자동 감지 후 표시 | 없음 |
+| 기능          | 1Password                | Bitwarden           |
+| :------------ | :----------------------- | :------------------ |
+| 카드 시각화   | 실물 카드 3D flip        | 없음                |
+| BIN 자동 감지 | 있음                     | 없음 (수동 선택)    |
+| 번호 마스킹   | 기본 마스킹, reveal 가능 | 기본 평문 (요청 중) |
+| 4자리 그룹핑  | 있음                     | 부분 적용           |
+| CVC 마스킹    | 기본 마스킹              | 없음                |
+| 카드사 아이콘 | 자동 감지 후 표시        | 없음                |
 
 ---
 
@@ -184,6 +185,7 @@ shadcn/ui + Tailwind v4 구현 참고:
 1Password 는 passkey 를 **로그인(Login) 항목에 통합**해 저장한다. 기존 로그인 항목에 passkey 가 추가되면 같은 항목 안에 password 와 passkey 가 공존할 수 있다. passkey 를 새 항목으로 저장하는 것도 가능.
 
 저장 데이터:
+
 - private key (WebAuthn credential, 암호화)
 - associated site origin (rpId)
 - user handle (username/identifier)
@@ -192,6 +194,7 @@ shadcn/ui + Tailwind v4 구현 참고:
 #### Vault 내 표시 메타데이터
 
 1Password 에서 passkey 항목은 다음 정보를 포함한다:
+
 - 도메인 (사이트명 + favicon)
 - 사용자 이름 (userHandle)
 - 생성 일자
@@ -219,12 +222,12 @@ shadcn/ui + Tailwind v4 구현 참고:
 
 #### OS API 통합
 
-| OS | 통합 방식 | 상태 |
-|:---|:---|:---|
+| OS                 | 통합 방식                                       | 상태                       |
+| :----------------- | :---------------------------------------------- | :------------------------- |
 | Windows 11 (24H2+) | Passkey Manager Plugin API (KB5068861, 2025-11) | 1Password MSIX 빌드로 지원 |
-| macOS | ASAuthorization (Apple Passwords API) | 지원 |
-| iOS 17+ | iOS native passkey sheet | 지원 |
-| Android | Android Credential Manager API | 지원 |
+| macOS              | ASAuthorization (Apple Passwords API)           | 지원                       |
+| iOS 17+            | iOS native passkey sheet                        | 지원                       |
+| Android            | Android Credential Manager API                  | 지원                       |
 
 **Windows 11 의 Passkey Plugin API**: 2025년 11월 누적 업데이트(KB5068861)로 Windows 11 24H2/25H2 에서 제3자 passkey 관리자를 시스템 기본값으로 설정 가능. 1Password MSIX 빌드와 Bitwarden(베타)이 최초 지원. Windows Hello(PIN/생체) 가 로컬 인증자로 사용되고, 제3자 관리자는 저장/동기화 담당.
 
@@ -245,6 +248,7 @@ Bitwarden 의 passkey 항목 표시: vault 내 항목에 "Passkey" 라벨이 달
 #### 사용 가능한 Rust/Tauri 옵션
 
 **Option A: tauri-plugin-webauthn** (Profiidev)
+
 - GitHub: `github.com/Profiidev/tauri-plugin-webauthn`
 - 버전: v0.2.0 (2025년 5월), 18 stars, 활발한 유지보수
 - 지원: Linux, Windows, Android (API 28+)
@@ -255,24 +259,26 @@ Bitwarden 의 passkey 항목 표시: vault 내 항목에 "Passkey" 라벨이 달
 - Windows Credential Discovery 미지원
 
 **Option B: tauri-plugin-macos-passkey**
+
 - macOS native Passkey API 전용
 - macOS ASAuthorization 호출
 - PRF extension 지원
 - iOS 미지원
 
 **Option C: 1Password 오픈소스 passkey-rs**
+
 - GitHub: `github.com/1Password/passkey-rs`
 - passkey-client, passkey-authenticator, passkey-types, passkey-transports (CTAP HID)
 - 서버/authenticator 구현 목적. 브라우저와 통신 레이어가 필요해 Tauri 단독 앱에서는 복잡
 
 **현실 평가**:
 
-| 플랫폼 | 현실적 passkey 구현 방법 | 제약 |
-|:---|:---|:---|
-| Windows | tauri-plugin-webauthn (Windows Hello) | Credential Discovery 불가 |
-| macOS | tauri-plugin-macos-passkey | iOS 미지원 |
-| Linux | tauri-plugin-webauthn | PIN 이벤트 직접 처리 필요 |
-| iOS / Android | Tauri Mobile + OS Credential Manager | 별도 플러그인 필요 |
+| 플랫폼        | 현실적 passkey 구현 방법              | 제약                      |
+| :------------ | :------------------------------------ | :------------------------ |
+| Windows       | tauri-plugin-webauthn (Windows Hello) | Credential Discovery 불가 |
+| macOS         | tauri-plugin-macos-passkey            | iOS 미지원                |
+| Linux         | tauri-plugin-webauthn                 | PIN 이벤트 직접 처리 필요 |
+| iOS / Android | Tauri Mobile + OS Credential Manager  | 별도 플러그인 필요        |
 
 **결론**: 완전한 cross-platform passkey 구현은 Windows + macOS 별도 플러그인을 조합해야 한다. 단기적으로는 **"passkey 메타데이터 저장 + 표시"** (private key 없이 username / origin / credential ID 만 저장)부터 시작하고, OS 인증 연계는 Phase 3-C 에서 점진적 구현.
 
@@ -327,24 +333,25 @@ Phase 3-C implementator 사양 핵심 항목:
 
 여기에 사용자가 원하는 만큼 **Custom Fields** 를 추가할 수 있다. Custom Field 타입은 11종:
 
-| 타입 | 용도 |
-|:---|:---|
-| Text | 일반 텍스트 복사 |
-| Password | 마스킹 + reveal + 생성기 |
-| Security Question | 보안 질문 답변 |
-| Email | 이메일 주소 |
-| Phone | 전화번호 |
-| URL | 웹 주소 |
-| Address | 우편 주소 |
-| One-Time Password | OTP TOTP 통합 |
-| Date | 날짜 (만료 알림 포함) |
-| Month/Year | 연월 |
-| Sign in with | 소셜 로그인 프로바이더 |
+| 타입              | 용도                     |
+| :---------------- | :----------------------- |
+| Text              | 일반 텍스트 복사         |
+| Password          | 마스킹 + reveal + 생성기 |
+| Security Question | 보안 질문 답변           |
+| Email             | 이메일 주소              |
+| Phone             | 전화번호                 |
+| URL               | 웹 주소                  |
+| Address           | 우편 주소                |
+| One-Time Password | OTP TOTP 통합            |
+| Date              | 날짜 (만료 알림 포함)    |
+| Month/Year        | 연월                     |
+| Sign in with      | 소셜 로그인 프로바이더   |
 
 #### Markdown 지원
 
 1Password 8 에서 Secure Note 텍스트 영역은 Markdown 을 지원한다:
-- 지원 문법: 제목(#, ##, ###), 굵게(**), 기울임(*), 취소선(~~), 글머리(-), 번호 목록, 인용(>), 코드 블록, 코드 스팬, 구분선(---), `https://` 로 시작하는 URL 자동 링크, 백슬래시 이스케이프
+
+- 지원 문법: 제목(#, ##, ###), 굵게(\*_), 기울임(_), 취소선(~~), 글머리(-), 번호 목록, 인용(>), 코드 블록, 코드 스팬, 구분선(---), `https://` 로 시작하는 URL 자동 링크, 백슬래시 이스케이프
 - **미지원**: 테이블, 이미지, 체크박스(GFM)
 - 미리보기: 편집 후 저장해야 렌더링됨 (실시간 미리보기 없음)
 - 설정에서 비활성화 가능 (평문 모드 전환)
@@ -358,6 +365,7 @@ Phase 3-C implementator 사양 핵심 항목:
 사용자 예시(현관문 비밀번호 / 가족 주민번호 / 개인통관비밀번호) 와 같은 **짧은 비밀 값**의 경우:
 
 1Password 권장 패턴:
+
 - Title: "현관문 비밀번호"
 - Custom Field (type: Password): 4자리 코드 — 기본 마스킹, reveal 가능, copy 가능
 - Notes: 메모 (언제 바꿨는지, 누구에게 알려줬는지 등)
@@ -373,6 +381,7 @@ Phase 3-C implementator 사양 핵심 항목:
 ### 3.2 Bitwarden 분석
 
 Bitwarden 의 Secure Note 기본 구조:
+
 - Name (제목)
 - Notes (큰 텍스트 영역, **Markdown 미지원**)
 - Custom Fields: 4종 — Text, Hidden (마스킹), Checkbox, Linked
@@ -380,6 +389,7 @@ Bitwarden 의 Secure Note 기본 구조:
 **Hidden 타입 Custom Field**: 마스킹 기본 적용, 눈 아이콘으로 reveal. 조직 권한과 연동해 Hidden 필드를 숨기도록 설정 가능. Master password re-prompt 와 결합 시 보안 강화.
 
 **Bitwarden 의 한계**:
+
 - Secure Note 기본 텍스트 영역에 마스킹 없음 (보안 커뮤니티 지적)
 - Markdown 미지원
 - Custom Field 타입이 4종으로 1Password 대비 단순
@@ -388,14 +398,14 @@ Bitwarden 의 Secure Note 기본 구조:
 
 ### 3.3 비교 요약
 
-| 기능 | 1Password | Bitwarden |
-|:---|:---|:---|
-| Markdown 렌더링 | 있음 (저장 후 미리보기) | 없음 |
-| Custom Field 타입 | 11종 | 4종 |
-| Custom Field Password 타입 | 있음 (reveal + 생성기) | Hidden (reveal만) |
-| OTP 커스텀 필드 | 있음 | 없음 |
-| 파일 첨부 | 있음 | 유료 플랜 |
-| 검색 내 하이라이팅 | 있음 (2024+) | 부분 |
+| 기능                       | 1Password               | Bitwarden         |
+| :------------------------- | :---------------------- | :---------------- |
+| Markdown 렌더링            | 있음 (저장 후 미리보기) | 없음              |
+| Custom Field 타입          | 11종                    | 4종               |
+| Custom Field Password 타입 | 있음 (reveal + 생성기)  | Hidden (reveal만) |
+| OTP 커스텀 필드            | 있음                    | 없음              |
+| 파일 첨부                  | 있음                    | 유료 플랜         |
+| 검색 내 하이라이팅         | 있음 (2024+)            | 부분              |
 
 ---
 
@@ -448,6 +458,7 @@ DB 스키마:
 1Password 8 은 두 그룹으로 분류:
 
 **Common (5종)**:
+
 1. Login
 2. Credit Card
 3. Identity
@@ -455,23 +466,7 @@ DB 스키마:
 5. Password (독립 비밀번호)
 6. Document
 
-**Other (16종)**:
-7. API Credential
-8. Bank Account
-9. Crypto Wallet
-10. Database
-11. Driver License
-12. Email Account
-13. Medical Record
-14. Membership
-15. Outdoor License
-16. Passport
-17. Reward Program
-18. SSH Key
-19. Server
-20. Social Security Number
-21. Software License
-22. Wireless Router
+**Other (16종)**: 7. API Credential 8. Bank Account 9. Crypto Wallet 10. Database 11. Driver License 12. Email Account 13. Medical Record 14. Membership 15. Outdoor License 16. Passport 17. Reward Program 18. SSH Key 19. Server 20. Social Security Number 21. Software License 22. Wireless Router
 
 이 카테고리들은 1Password 의 item type 으로, **사용자가 직접 카테고리를 만들 수는 없다**. 대신 **Tags** 가 사용자 정의 그룹의 역할을 한다.
 
@@ -521,6 +516,7 @@ TAGS
 **Categories 는 기본적으로 숨겨져 있으며** Settings > Appearance 에서 "Always show in sidebar" 체크로 표시. 각 카테고리 옆 항목 수 배지는 현재 기본 미표시 (커뮤니티 요청 중).
 
 **드래그 앤 드롭 지원**:
+
 - 항목 → 볼트: 볼트 간 이동
 - 항목 → tag: tag 적용
 - 항목 → Favorites: 즐겨찾기 추가
@@ -579,14 +575,14 @@ COLLECTIONS (조직)
 
 ### 4.3 비교 요약
 
-| 기능 | 1Password | Bitwarden |
-|:---|:---|:---|
-| 사용자 정의 분류 | Tags (무제한, 중첩) | Folders (중첩) |
-| 하나의 항목에 다중 분류 | 가능 (멀티 태그) | 불가 (폴더 1개) |
-| 드래그 적용 | 있음 | 없음 |
-| 기본 카테고리 종류 | 22종 | 4종 (Login/Card/Identity/Note) |
-| 항목 수 배지 | 없음 (요청 중) | 일부 있음 |
-| trash/archive 구분 | 있음 (Archive 영구 + Recently Deleted 30일) | Trash (30일) + Archive (별도) |
+| 기능                    | 1Password                                   | Bitwarden                      |
+| :---------------------- | :------------------------------------------ | :----------------------------- |
+| 사용자 정의 분류        | Tags (무제한, 중첩)                         | Folders (중첩)                 |
+| 하나의 항목에 다중 분류 | 가능 (멀티 태그)                            | 불가 (폴더 1개)                |
+| 드래그 적용             | 있음                                        | 없음                           |
+| 기본 카테고리 종류      | 22종                                        | 4종 (Login/Card/Identity/Note) |
+| 항목 수 배지            | 없음 (요청 중)                              | 일부 있음                      |
+| trash/archive 구분      | 있음 (Archive 영구 + Recently Deleted 30일) | Trash (30일) + Archive (별도)  |
 
 ---
 
@@ -594,13 +590,13 @@ COLLECTIONS (조직)
 
 사용자 예시 카테고리: "온라인 ID/PW / 개발자 / 신용카드 / PC passkey / Private Secrets"
 
-| 사용자 의도 | 1P Tags 방식 | BW Folders 방식 |
-|:---|:---|:---|
-| 온라인 ID/PW | tag: `logins` | folder: `온라인 ID/PW` |
-| 개발자 | tag: `dev` (하위: `dev/aws`, `dev/github`) | folder: `개발자` |
-| 신용카드 | tag: `cards` | folder: `신용카드` |
-| PC passkey | tag: `passkeys` | folder: `PC passkey` |
-| Private Secrets | tag: `private` | folder: `Private Secrets` |
+| 사용자 의도     | 1P Tags 방식                               | BW Folders 방식           |
+| :-------------- | :----------------------------------------- | :------------------------ |
+| 온라인 ID/PW    | tag: `logins`                              | folder: `온라인 ID/PW`    |
+| 개발자          | tag: `dev` (하위: `dev/aws`, `dev/github`) | folder: `개발자`          |
+| 신용카드        | tag: `cards`                               | folder: `신용카드`        |
+| PC passkey      | tag: `passkeys`                            | folder: `PC passkey`      |
+| Private Secrets | tag: `private`                             | folder: `Private Secrets` |
 
 **우리 모델 결정 포인트**: Tags (1P) 방식이 멀티 분류, 중첩, 드래그 적용 면에서 우월. 단, 처음 사용자에게 "태그 vs 폴더" 개념 차이 설명이 필요. **"카테고리"** 라는 이름으로 시작하고 내부 구현은 tags 방식 채택 권장.
 
@@ -659,11 +655,13 @@ DB 스키마:
 #### 버튼 상호작용 패턴
 
 1Password 8 의 copy 버튼은 클릭 시:
+
 1. 클릭 → 즉시 시각 피드백 (background opacity 변화 또는 scale down)
 2. 100–150ms 후 "Copied!" 아이콘/텍스트 전환 (체크마크 아이콘)
 3. 1.5–2초 후 원래 상태로 복귀
 
 **Motion 라이브러리 권장값** (이미 프로젝트 채택):
+
 ```
 버튼 press: scale(0.97), duration: 0.1s, ease: [0.4, 0, 0.6, 1]
 카드 hover: scale(1.01), duration: 0.15s, ease: [0.2, 0, 0, 1]
@@ -673,6 +671,7 @@ copy 완료 아이콘: duration: 0.4s, spring { stiffness: 200, damping: 20 }
 ```
 
 **Motion 라이브러리 spring 기본값 참고**:
+
 - React Spring 기본: `{ mass: 1, tension: 170, friction: 26 }`
 - Framer Motion 기본: `{ stiffness: 100, damping: 10, mass: 1 }`
 - 카드 hover expand (우리 Bento mini-graph): `{ stiffness: 300, damping: 30 }` — snappy하되 오버슈트 없음
@@ -680,6 +679,7 @@ copy 완료 아이콘: duration: 0.4s, spring { stiffness: 200, damping: 20 }
 #### Reveal 애니메이션 패턴
 
 마스킹 해제 (• → 텍스트 전환):
+
 - blur filter: `filter: blur(4px) → blur(0px)`, duration: 0.2s
 - 또는 CSS clip-path reveal: `inset(0 100% 0 0) → inset(0 0% 0 0)`, duration: 0.3s
 - 1Password 는 단순 텍스트 교체로 즉각 reveal (애니메이션 미확인)
@@ -697,17 +697,20 @@ copy 완료 아이콘: duration: 0.4s, spring { stiffness: 200, damping: 20 }
 1Password 은 vault 가 비어있을 때, 카테고리가 비어있을 때, 검색 결과가 없을 때 각각 다른 메시지를 표시한다.
 
 **Vault 전체 비어있을 때 (신규 사용자)**:
+
 - 1Password 의 일러스트 시스템 활용: 작은 아이콘 → 스팟 일러스트 → 내러티브 일러스트 계층
 - 톤: "Get started by saving your first item" 형태의 CTA
 - 버튼: "Add Item", "Import from..." 등
 - 1Password 의 브랜드 리프레시 언어: "warm, informal, quirkiness" 의 일러스트
 
 **검색 결과 0 건**:
+
 - "No items match your search" + 검색어 재확인 안내
 - "Try different keywords" 또는 "Clear search" 버튼
 - 아이콘: 돋보기 + 물음표 계열
 
 **카테고리 비어있을 때**:
+
 - 카테고리별 관련 아이콘과 "No [Category] items yet. Add one to get started."
 - 카테고리에 맞는 예시 제안 (Credit Cards: "Save a card for faster checkout")
 
@@ -725,27 +728,36 @@ copy 완료 아이콘: duration: 0.4s, spring { stiffness: 200, damping: 20 }
 #### 1Password 의 로딩 패턴
 
 **Vault 잠금 해제 후 디크립트 로딩**:
+
 - 단순 로딩 스피너 + "Decrypting vault..." 텍스트 (진행률 바 없음)
 - 로딩 시간이 짧으므로 (<200ms 로컬) 복잡한 progress 불필요
 
 **아이템 리스트 로딩 (초기 로드 또는 많은 항목)**:
+
 - 스켈레톤 화면: 실제 리스트 행 형태를 모방한 회색 블록 + 펄스 애니메이션
 - 1Password 8 은 실제로 Electron 앱이라 Webkit 스켈레톤 사용
 
 #### 스켈레톤 디자인 Best Practice
 
 Carbon Design System 원칙:
+
 - 컨테이너 기반 컴포넌트(카드, 리스트 행)에만 스켈레톤 적용
 - 버튼, 인풋, 체크박스에는 스켈레톤 미적용
 - 첫 번째 배치: 기본 레이아웃 구조 + 텍스트 영역 플레이스홀더
 - 이후 배치: 이미지, 뷰포트 바깥 콘텐츠, 인터랙티브 요소
 
 **Tailwind v4 스켈레톤 구현**:
+
 ```css
 /* globals.css 에 추가 */
 @keyframes pulse-skeleton {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 .skeleton {
   background: var(--color-muted);
@@ -755,6 +767,7 @@ Carbon Design System 원칙:
 ```
 
 **우리 Bento 카드 스켈레톤**:
+
 - 카드 크기 동일한 회색 블록 + 내부 텍스트 라인 2개 (너비 60%, 40%)
 - Favicon 영역: 원형 회색 블록 (32px)
 - 우상단 배지 영역: 작은 직사각형 블록
@@ -766,6 +779,7 @@ Carbon Design System 원칙:
 #### 1Password 의 에러 메시지 패턴
 
 1Password 의 스타일 가이드에서 에러 메시지 톤:
+
 - **구체적 액션 안내**: "Something went wrong" 만으로 끝내지 않음 → "Your vault is locked. Select [Unlock] to continue."
 - **허위 위안 금지**: "Don't worry!" 같은 문구 사용 안 함
 - **"just" 사용 금지**: "Just try again" 처럼 쉽다고 암시하는 표현 피함
@@ -773,6 +787,7 @@ Carbon Design System 원칙:
 - **동사형 제목**: "Sign in to 1Password" (명사 나열 금지)
 
 실제 1Password 에러 패턴 관찰:
+
 - 네트워크 에러: "Unable to connect. Check your connection and try again." + [Retry] 버튼
 - 잠금 상태: "Your vault is locked. Unlock to continue." (앱 내) / unlock 화면으로 redirect
 - 권한 거부: "You don't have permission to view this item." + [Request Access] (teams 기능)
@@ -782,12 +797,12 @@ Carbon Design System 원칙:
 
 #### 에러 표시 방법별 용도
 
-| 방법 | 용도 |
-|:---|:---|
-| 인라인 에러 (필드 아래) | 폼 유효성 검사 실패 |
-| 토스트 알림 | 짧은 액션 결과 (복사 실패, 저장 완료, 네트워크 일시 오류) |
-| 배너 (항목 상단 빨간 바) | Watchtower 보안 경고 (중요, 영구적) |
-| 모달 / 다이얼로그 | 파괴적 액션 확인 (삭제, 볼트 비우기) — 선택이 필요한 에러 |
+| 방법                     | 용도                                                      |
+| :----------------------- | :-------------------------------------------------------- |
+| 인라인 에러 (필드 아래)  | 폼 유효성 검사 실패                                       |
+| 토스트 알림              | 짧은 액션 결과 (복사 실패, 저장 완료, 네트워크 일시 오류) |
+| 배너 (항목 상단 빨간 바) | Watchtower 보안 경고 (중요, 영구적)                       |
+| 모달 / 다이얼로그        | 파괴적 액션 확인 (삭제, 볼트 비우기) — 선택이 필요한 에러 |
 
 Bitwarden 의 에러 처리: 1Password 보다 덜 세련됨. 일반적 "An error has occurred" 메시지 빈번. UI 재설계(2024.12.0) 후 일부 개선.
 
@@ -872,6 +887,7 @@ shadcn/ui + Tailwind v4 구현 참고:
 ```
 
 **ux-designer agent 가 검증할 항목**:
+
 - 카드 flip 애니메이션 속도가 너무 빠르거나 느리지 않은지
 - 마스킹 상태에서 hover 시 "reveal" 힌트가 충분히 표시되는지
 - 키보드만으로 모든 필드 접근 및 복사 가능한지 (Tab + Enter)
@@ -912,6 +928,7 @@ shadcn/ui + Tailwind v4 구현 참고:
 ```
 
 **ux-designer agent 가 검증할 항목**:
+
 - Markdown 편집 → 저장 → 렌더링 전환이 자연스러운지
 - secret 타입 필드의 마스킹이 기본값으로 작동하는지
 - 빈 note 의 empty state 가 적절히 안내하는지
@@ -967,6 +984,7 @@ shadcn/ui + Tailwind v4 구현 참고:
 ```
 
 **ux-designer agent 가 검증할 항목**:
+
 - 사이드바 항목 수 배지가 실시간으로 갱신되는지
 - 드래그 앤 드롭의 drop zone 이 충분히 크고 시각적으로 명확한지
 - 태그 삭제 시 "이 태그로 분류된 항목은 태그에서만 제거되고 삭제되지 않습니다" 경고 표시
@@ -977,11 +995,13 @@ shadcn/ui + Tailwind v4 구현 참고:
 ### Phase 3-C: Passkey (추후)
 
 **현재 결정 (Phase 3-C 진입 조건)**:
+
 1. tauri-plugin-webauthn 이 macOS 지원 추가 OR tauri-plugin-macos-passkey 와 통합 방법 확인
 2. Windows 11 Passkey Plugin API 와 Tauri MSIX 빌드 호환성 확인 (1Password 이미 MSIX 빌드로 지원)
 3. iOS/Android (M11) 진입 전까지 모바일 passkey 는 스코프 밖
 
 **단기 Phase 3-C (저장 전용)**:
+
 ```
 1. DB: kind = 'passkey', 필드: domain, username, credential_id (암호화), note
 2. UI: 메타데이터 표시 전용 카드 (실제 WebAuthn 인증 미연결)
@@ -990,6 +1010,7 @@ shadcn/ui + Tailwind v4 구현 참고:
 ```
 
 **장기 Phase 3-C (OS API 연결)**:
+
 ```
 Windows: tauri-plugin-webauthn (v0.2.0+) + Windows Passkey Plugin API
 macOS: tauri-plugin-macos-passkey (PRF 지원)
@@ -1000,40 +1021,40 @@ macOS: tauri-plugin-macos-passkey (PRF 지원)
 
 ## 출처 (Sources)
 
-| URL | 내용 | 신뢰도 |
-|:---|:---|:---|
-| https://support.1password.com/item-categories/ | 1Password 22종 카테고리 목록 및 설명 | HIGH |
-| https://support.1password.com/custom-fields/ | 1Password Custom Field 11종 타입 및 UX | HIGH |
-| https://support.1password.com/sidebar/ | 1Password 사이드바 구조, 드래그 앤 드롭 기능 | HIGH |
-| https://support.1password.com/favorites-tags/ | 1Password Tags 시스템, 중첩, 사이드바 표시 | HIGH |
-| https://support.1password.com/markdown/ | 1Password Markdown 지원 범위 및 제한 | HIGH |
-| https://support.1password.com/archive-delete-items/ | Archive vs Recently Deleted 30일 lifecycle | HIGH |
-| https://support.1password.com/rich-icons-privacy/ | 1Password rich icon 처리 및 프라이버시 | HIGH |
-| https://1password.com/product/passkeys | 1Password passkey 저장/사용/OS 통합 개요 | HIGH |
-| https://support.1password.com/save-use-passkeys/ | passkey 저장 및 사용 흐름 상세 | HIGH |
-| https://1password.com/blog/how-save-manage-share-passkeys-1password | passkey vault 내 표시, 공유, 메타데이터 | HIGH |
-| https://1password.com/blog/design-values-ux-prinicples | 1Password 5가지 UX 원칙 | HIGH |
-| https://1password.com/blog/concept-first-design | 1Password concept-first 설계 방법론 | HIGH |
-| https://support.1password.com/style-guide/ | 1Password 문체 가이드 (에러 메시지 톤) | HIGH |
-| https://bitwarden.com/help/storing-passkeys/ | Bitwarden passkey 저장 및 표시 | HIGH |
-| https://bitwarden.com/help/custom-fields/ | Bitwarden Custom Field 4종 (Hidden 포함) | HIGH |
-| https://bitwarden.com/help/folders/ | Bitwarden Folders 구조 및 중첩 | HIGH |
-| https://community.bitwarden.com/t/request-standardize-credit-card-number-format-across-viewing-and-editing/57741 | Bitwarden 카드 번호 포맷 요청 (커뮤니티) | MEDIUM |
-| https://community.bitwarden.com/t/credit-card-default-fields-are-not-hidden-or-no-option-for-toggle/291 | Bitwarden 카드 마스킹 부재 지적 | MEDIUM |
-| https://crates.io/crates/tauri-plugin-macos-passkey | Tauri macOS passkey 플러그인 | HIGH |
-| https://github.com/Profiidev/tauri-plugin-webauthn | Tauri WebAuthn 플러그인 (Linux/Win/Android) | HIGH |
-| https://github.com/1Password/passkey-rs | 1Password passkey-rs Rust 크레이트 | HIGH |
-| https://windowsforum.com/threads/windows-11-native-passkeys-1password-and-bitwarden-integration.389014/ | Windows 11 Passkey Plugin API + 1P/BW 통합 | MEDIUM |
-| https://bleepingcomputer.com/news/security/windows-11-now-supports-3rd-party-apps-for-native-passkey-management/ | Windows 11 KB5068861, 2025-11 제3자 passkey 지원 | HIGH |
-| https://www.1password.community/discussions/1password/how-to-get-my-custom-categories-to-appear-in-the-sidebar/56586 | 1P 사이드바 Categories 설정 방법 | MEDIUM |
-| https://alexn.org/blog/2024/08/20/1password-vs-bitwarden/ | 1P vs BW 상세 UX 비교 (개인 블로그) | MEDIUM |
-| https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/ | 스켈레톤 로딩 디자인 best practice | HIGH |
-| https://carbondesignsystem.com/patterns/loading-pattern/ | Carbon Design System 로딩 패턴 공식 가이드 | HIGH |
-| https://motion.dev/docs/react-transitions | Motion 라이브러리 spring transition 문서 | HIGH |
-| https://react-spring.dev/common/configs | React Spring 기본 spring 설정값 | HIGH |
-| https://www.shadcn.io/components/finance/credit-card | shadcn/ui 신용카드 컴포넌트 (flip 포함) | HIGH |
-| https://www.passwordmanager.com/1password-vs-bitwarden/ | 1P vs BW 전문 리뷰 2026 | MEDIUM |
-| https://cybernews.com/best-password-managers/bitwarden-vs-1password/ | 1P vs BW 보안/기능/UX 종합 비교 | MEDIUM |
-| https://1password.com/blog/1password-brand-refresh | 1Password 브랜드 리프레시 + 일러스트 시스템 | HIGH |
-| https://www.helpnetsecurity.com/2025/11/19/bitwarden-browser-extensions/ | Bitwarden 2025.11 Chromium passkey 로그인 | HIGH |
-| https://techcommunity.microsoft.com/blog/windows-itpro-blog/windows-11-expands-passkey-manager-support/4467572 | Windows 11 Passkey Manager Plugin API 공식 발표 | HIGH |
+| URL                                                                                                                  | 내용                                             | 신뢰도 |
+| :------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- | :----- |
+| https://support.1password.com/item-categories/                                                                       | 1Password 22종 카테고리 목록 및 설명             | HIGH   |
+| https://support.1password.com/custom-fields/                                                                         | 1Password Custom Field 11종 타입 및 UX           | HIGH   |
+| https://support.1password.com/sidebar/                                                                               | 1Password 사이드바 구조, 드래그 앤 드롭 기능     | HIGH   |
+| https://support.1password.com/favorites-tags/                                                                        | 1Password Tags 시스템, 중첩, 사이드바 표시       | HIGH   |
+| https://support.1password.com/markdown/                                                                              | 1Password Markdown 지원 범위 및 제한             | HIGH   |
+| https://support.1password.com/archive-delete-items/                                                                  | Archive vs Recently Deleted 30일 lifecycle       | HIGH   |
+| https://support.1password.com/rich-icons-privacy/                                                                    | 1Password rich icon 처리 및 프라이버시           | HIGH   |
+| https://1password.com/product/passkeys                                                                               | 1Password passkey 저장/사용/OS 통합 개요         | HIGH   |
+| https://support.1password.com/save-use-passkeys/                                                                     | passkey 저장 및 사용 흐름 상세                   | HIGH   |
+| https://1password.com/blog/how-save-manage-share-passkeys-1password                                                  | passkey vault 내 표시, 공유, 메타데이터          | HIGH   |
+| https://1password.com/blog/design-values-ux-prinicples                                                               | 1Password 5가지 UX 원칙                          | HIGH   |
+| https://1password.com/blog/concept-first-design                                                                      | 1Password concept-first 설계 방법론              | HIGH   |
+| https://support.1password.com/style-guide/                                                                           | 1Password 문체 가이드 (에러 메시지 톤)           | HIGH   |
+| https://bitwarden.com/help/storing-passkeys/                                                                         | Bitwarden passkey 저장 및 표시                   | HIGH   |
+| https://bitwarden.com/help/custom-fields/                                                                            | Bitwarden Custom Field 4종 (Hidden 포함)         | HIGH   |
+| https://bitwarden.com/help/folders/                                                                                  | Bitwarden Folders 구조 및 중첩                   | HIGH   |
+| https://community.bitwarden.com/t/request-standardize-credit-card-number-format-across-viewing-and-editing/57741     | Bitwarden 카드 번호 포맷 요청 (커뮤니티)         | MEDIUM |
+| https://community.bitwarden.com/t/credit-card-default-fields-are-not-hidden-or-no-option-for-toggle/291              | Bitwarden 카드 마스킹 부재 지적                  | MEDIUM |
+| https://crates.io/crates/tauri-plugin-macos-passkey                                                                  | Tauri macOS passkey 플러그인                     | HIGH   |
+| https://github.com/Profiidev/tauri-plugin-webauthn                                                                   | Tauri WebAuthn 플러그인 (Linux/Win/Android)      | HIGH   |
+| https://github.com/1Password/passkey-rs                                                                              | 1Password passkey-rs Rust 크레이트               | HIGH   |
+| https://windowsforum.com/threads/windows-11-native-passkeys-1password-and-bitwarden-integration.389014/              | Windows 11 Passkey Plugin API + 1P/BW 통합       | MEDIUM |
+| https://bleepingcomputer.com/news/security/windows-11-now-supports-3rd-party-apps-for-native-passkey-management/     | Windows 11 KB5068861, 2025-11 제3자 passkey 지원 | HIGH   |
+| https://www.1password.community/discussions/1password/how-to-get-my-custom-categories-to-appear-in-the-sidebar/56586 | 1P 사이드바 Categories 설정 방법                 | MEDIUM |
+| https://alexn.org/blog/2024/08/20/1password-vs-bitwarden/                                                            | 1P vs BW 상세 UX 비교 (개인 블로그)              | MEDIUM |
+| https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/                                                 | 스켈레톤 로딩 디자인 best practice               | HIGH   |
+| https://carbondesignsystem.com/patterns/loading-pattern/                                                             | Carbon Design System 로딩 패턴 공식 가이드       | HIGH   |
+| https://motion.dev/docs/react-transitions                                                                            | Motion 라이브러리 spring transition 문서         | HIGH   |
+| https://react-spring.dev/common/configs                                                                              | React Spring 기본 spring 설정값                  | HIGH   |
+| https://www.shadcn.io/components/finance/credit-card                                                                 | shadcn/ui 신용카드 컴포넌트 (flip 포함)          | HIGH   |
+| https://www.passwordmanager.com/1password-vs-bitwarden/                                                              | 1P vs BW 전문 리뷰 2026                          | MEDIUM |
+| https://cybernews.com/best-password-managers/bitwarden-vs-1password/                                                 | 1P vs BW 보안/기능/UX 종합 비교                  | MEDIUM |
+| https://1password.com/blog/1password-brand-refresh                                                                   | 1Password 브랜드 리프레시 + 일러스트 시스템      | HIGH   |
+| https://www.helpnetsecurity.com/2025/11/19/bitwarden-browser-extensions/                                             | Bitwarden 2025.11 Chromium passkey 로그인        | HIGH   |
+| https://techcommunity.microsoft.com/blog/windows-itpro-blog/windows-11-expands-passkey-manager-support/4467572       | Windows 11 Passkey Manager Plugin API 공식 발표  | HIGH   |

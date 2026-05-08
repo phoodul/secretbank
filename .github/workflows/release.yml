@@ -3,7 +3,7 @@ name: Release
 # Triggers when a `v*` tag is pushed (e.g. `v0.1.0`).
 # Builds Tauri bundles for Windows / macOS (universal) / Linux and uploads
 # them to a GitHub Release. The desktop installer + tauri-updater manifest
-# end up on https://github.com/phoodul/api-vault/releases.
+# end up on https://github.com/phoodul/secretbank/releases.
 #
 # Manual workflow_dispatch supports `dry_run` mode — builds all platforms
 # without creating a GitHub Release; bundles are uploaded as workflow
@@ -57,7 +57,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
-              name: `API Vault ${tag}`,
+              name: `Secretbank ${tag}`,
               body: `See [CHANGELOG](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CHANGELOG.md) for details.`,
               draft: true,
               prerelease: tag.includes("-"),
@@ -120,7 +120,7 @@ jobs:
             ~/.cargo/git
             src-tauri/target
           # Cargo.lock 은 .gitignore 라 hashFiles 가 비어 stale cache 공유 → 모든
-          # version bump 후 prerelease "api-vault-charter ^0.1.0" 매칭 fail.
+          # version bump 후 prerelease "secretbank-charter ^0.1.0" 매칭 fail.
           # Cargo.toml 들의 hash 로 key 생성 → version bump 시 자동 invalidate.
           key: ${{ matrix.platform }}-cargo-${{ hashFiles('src-tauri/**/Cargo.toml') }}
           restore-keys: ${{ matrix.platform }}-cargo-
@@ -315,7 +315,7 @@ jobs:
           jq -n \
             --arg version  "$VERSION" \
             --arg pub_date "$PUB_DATE" \
-            --arg notes    "API Vault $TAG — see CHANGELOG.md" \
+            --arg notes    "Secretbank $TAG — see CHANGELOG.md" \
             --argjson platforms "$PLATFORMS" \
             '{version: $version, notes: $notes, pub_date: $pub_date, platforms: $platforms}' \
             > latest.json

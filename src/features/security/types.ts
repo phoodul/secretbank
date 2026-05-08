@@ -2,7 +2,7 @@
  * TypeScript mirrors of Rust security check types (Phase 2-2B).
  *
  * Matches:
- *   src-tauri/crates/api-vault-app/src/commands/security_check.rs
+ *   src-tauri/crates/secretbank-app/src/commands/security_check.rs
  */
 
 // ---------------------------------------------------------------------------

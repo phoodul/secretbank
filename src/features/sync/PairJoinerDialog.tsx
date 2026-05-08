@@ -29,7 +29,7 @@ interface PairJoinerDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Apply 성공 (vault unlocked) 시 호출. VaultGate 의 refresh 트리거. */
   onSuccess: () => void;
-  /** Deep-link 로 진입한 경우 자동 prefill — `apivault://pair?...` 전체 URL. */
+  /** Deep-link 로 진입한 경우 자동 prefill — `Secretbank://pair?...` 전체 URL. */
   prefillUrl?: string;
 }
 
@@ -104,7 +104,7 @@ export function PairJoinerDialog({
               <Input
                 id="pair-link"
                 type="text"
-                placeholder="apivault://pair?pin=…&pub=…"
+                placeholder="Secretbank://pair?pin=…&pub=…"
                 value={linkInput}
                 onChange={(e) => setLinkInput(e.target.value)}
                 autoFocus

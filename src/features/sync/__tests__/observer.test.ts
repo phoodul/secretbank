@@ -137,17 +137,17 @@ describe("applyDbChangeToYMap (Phase D-3)", () => {
     const ok = applyDbChangeToYMap(doc, {
       entity: "settings",
       op: "upsert",
-      id: "apivault.settings.security.auto_lock_minutes",
+      id: "Secretbank.settings.security.auto_lock_minutes",
     });
     expect(ok).toBe(true);
 
     const skipped = applyDbChangeToYMap(doc, {
       entity: "settings",
       op: "upsert",
-      id: "apivault.settings.ui.theme", // not in whitelist
+      id: "Secretbank.settings.ui.theme", // not in whitelist
     });
     expect(skipped).toBe(false);
-    expect(doc.getMap<unknown>("settings").has("apivault.settings.ui.theme")).toBe(false);
+    expect(doc.getMap<unknown>("settings").has("Secretbank.settings.ui.theme")).toBe(false);
     doc.destroy();
   });
 });

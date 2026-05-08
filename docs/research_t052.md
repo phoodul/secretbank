@@ -1,4 +1,4 @@
-# T052 구현 선행 조사 — HIBP 클라이언트 (`api-vault-feeds/hibp.rs`)
+# T052 구현 선행 조사 — HIBP 클라이언트 (`secretbank-feeds/hibp.rs`)
 
 > 작성일: 2026-04-24
 > 조사 범위: HIBP API v3 공식 문서, 엔드포인트/인증/Rate Limit/응답 스키마, governor 매핑,
@@ -231,14 +231,14 @@ User-Agent 헤더가 **누락되면 HTTP 403 Forbidden** 을 즉시 반환한다
 
 권장 패턴:
 
-- `api-vault/0.1.0` (앱 이름/버전)
-- `api-vault/0.1.0 (contact: phoodul@gmail.com)` (연락처 포함)
+- `secretbank/0.1.0` (앱 이름/버전)
+- `secretbank/0.1.0 (contact: phoodul@gmail.com)` (연락처 포함)
 
-T049~T051 과 동일하게 `api-vault/0.1.0` 으로 통일한다.
+T049~T051 과 동일하게 `secretbank/0.1.0` 으로 통일한다.
 
 ```rust
 let client = reqwest::Client::builder()
-    .user_agent("api-vault/0.1.0")
+    .user_agent("secretbank/0.1.0")
     .build()?;
 ```
 
@@ -530,7 +530,7 @@ T052 의 `HibpBreach` DTO 에는 두 필드 모두 포함한다.
 ### 10-3. 직접 구현 시 권장 구조
 
 ```rust
-// src-tauri/crates/api-vault-feeds/src/hibp.rs
+// src-tauri/crates/secretbank-feeds/src/hibp.rs
 
 pub struct HibpClient {
     http: reqwest::Client,
@@ -552,7 +552,7 @@ impl HibpClient {
         let limiter = build_limiter(rpm);
         Self {
             http: reqwest::Client::builder()
-                .user_agent("api-vault/0.1.0")
+                .user_agent("secretbank/0.1.0")
                 .build()
                 .expect("static config"),
             base_url: base_url.into(),
@@ -703,7 +703,7 @@ async fn get_breaches_404_returns_empty_vec() {
 출처:
 
 - [wiremock docs.rs 0.6.x](https://docs.rs/wiremock/latest/wiremock/) — 2026-04-24 확인
-- NvdClient 테스트 패턴 (`src-tauri/crates/api-vault-feeds/src/nvd.rs`) 참조
+- NvdClient 테스트 패턴 (`src-tauri/crates/secretbank-feeds/src/nvd.rs`) 참조
 
 ---
 

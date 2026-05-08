@@ -98,7 +98,7 @@ function routeInvokes(opts: {
 
 function renderPage() {
   // Reset localStorage HIBP key to default (disabled) before each test
-  localStorage.removeItem("apivault.hibp_opt_in");
+  localStorage.removeItem("Secretbank.hibp_opt_in");
 
   return render(
     <MemoryRouter>
@@ -255,7 +255,7 @@ describe("WatchtowerPage", () => {
   // -------------------------------------------------------------------------
   it("T6: HIBP opt-in 비활성 시 opt_in_banner 표시", async () => {
     // Ensure opt-in is false (default)
-    localStorage.removeItem("apivault.hibp_opt_in");
+    localStorage.removeItem("Secretbank.hibp_opt_in");
 
     routeInvokes({ list: [] });
 

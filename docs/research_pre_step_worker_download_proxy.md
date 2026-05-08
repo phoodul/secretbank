@@ -23,7 +23,7 @@ export default {
   async fetch(request: Request): Promise<Response> {
     const upstreamUrl = buildGitHubUrl(request.url);
     const upstream = await fetch(upstreamUrl, {
-      headers: { "User-Agent": "api-vault-proxy/1.0" },
+      headers: { "User-Agent": "secretbank-proxy/1.0" },
     });
     // upstream.body (ReadableStream) 를 그대로 포함한 새 Response 반환
     return new Response(upstream.body, {
@@ -55,6 +55,7 @@ return new Response(readable, {
 ### 1.3 Range 요청 처리
 
 브라우저와 다운로드 매니저는 대용량 파일을 위해 `Range: bytes=N-M` 요청을 보낼 수 있다.
+
 - **권장 방법**: `Range` 헤더를 upstream `fetch()` 에 그대로 전달. GitHub CDN(`objects.githubusercontent.com`)은 Range 요청을 지원.
 - **주의**: Cloudflare community 에서 Workers 가 특정 케이스에서 Range 헤더를 무시한다는 리포트가 있음 (2024). 캐시를 거치지 않는 직접 subrequest 에서는 일반적으로 동작. 만약 Range 가 동작하지 않으면 `206 Partial Content` 대신 `200 OK` 전체 응답이 내려와 클라이언트가 다시 시작.
 - **결론**: `Range` 헤더를 upstream 에 forwarding 하는 코드를 포함시키되, 동작 검증을 dogfooding 단계에서 확인.
@@ -62,7 +63,7 @@ return new Response(readable, {
 ```typescript
 // Range 헤더 전달 예시
 const rangeHeader = request.headers.get("Range");
-const upstreamHeaders: HeadersInit = { "User-Agent": "api-vault-proxy/1.0" };
+const upstreamHeaders: HeadersInit = { "User-Agent": "secretbank-proxy/1.0" };
 if (rangeHeader) {
   upstreamHeaders["Range"] = rangeHeader;
 }
@@ -81,8 +82,15 @@ const upstream = await fetch(upstreamUrl, { headers: upstreamHeaders });
 
 ```typescript
 const ALLOWED_EXTENSIONS = [
-  ".exe", ".msi", ".dmg", ".app.tar.gz", ".AppImage",
-  ".deb", ".rpm", ".sig", "latest.json"
+  ".exe",
+  ".msi",
+  ".dmg",
+  ".app.tar.gz",
+  ".AppImage",
+  ".deb",
+  ".rpm",
+  ".sig",
+  "latest.json",
 ];
 
 function isValidFilename(filename: string): boolean {
@@ -91,11 +99,12 @@ function isValidFilename(filename: string): boolean {
   // 슬래시 금지 (경로 구분자)
   if (/[/\\]/.test(filename)) return false;
   // 허용 확장자만 통과
-  return ALLOWED_EXTENSIONS.some(ext => filename.endsWith(ext));
+  return ALLOWED_EXTENSIONS.some((ext) => filename.endsWith(ext));
 }
 ```
 
 공격 벡터:
+
 - **Path traversal**: `../../etc/passwd` → URL decode 후 `..` 탐지로 방어
 - **Filename injection**: 임의 GitHub repo asset 으로 proxy 우회 → allowlist(허용 패턴) 적용
 - **Rate limit 우회**: 동일 IP 에서 대량 다운로드 → Cloudflare WAF 또는 KV rate limiter 로 방어 (초기에는 무시 가능)
@@ -109,19 +118,21 @@ function isValidFilename(filename: string): boolean {
 
 ### 2.1 두 가지 URL 형식 비교
 
-| 형식 | 예시 | 특징 |
-|---|---|---|
-| **직접 다운로드 URL** | `https://github.com/<owner>/<repo>/releases/download/<tag>/<file>` | 302 → `objects.githubusercontent.com` CDN |
-| **API URL** | `https://api.github.com/repos/<owner>/<repo>/releases/assets/<id>` | `Accept: application/octet-stream` 필요, 인증 필요 |
+| 형식                  | 예시                                                               | 특징                                               |
+| --------------------- | ------------------------------------------------------------------ | -------------------------------------------------- |
+| **직접 다운로드 URL** | `https://github.com/<owner>/<repo>/releases/download/<tag>/<file>` | 302 → `objects.githubusercontent.com` CDN          |
+| **API URL**           | `https://api.github.com/repos/<owner>/<repo>/releases/assets/<id>` | `Accept: application/octet-stream` 필요, 인증 필요 |
 
 **Worker proxy 에 적합한 형식**: 직접 다운로드 URL (형식 1).
 
 이유:
+
 - public repo 는 인증 불필요 (unauthenticated GET 가능)
 - `fetch()` 는 302 redirect 를 자동으로 follow → Worker 가 최종 CDN URL(`objects.githubusercontent.com`) 에서 파일을 받아 stream
 - Worker 코드에 PAT 를 포함하지 않아도 됨
 
 **중요 동작**: `https://github.com/.../releases/download/...` 에 GET 요청 시:
+
 1. GitHub → `302 Found` (Location: `https://objects.githubusercontent.com/...`)
 2. Worker 의 `fetch()` 가 redirect follow → CDN 에서 실제 파일 받음
 3. CDN 응답(200)을 클라이언트에 stream
@@ -130,13 +141,13 @@ CORS 문제(브라우저 직접 fetch 시 redirect 후 CORS 헤더 없음)는 Wo
 
 ### 2.2 인증 필요 여부
 
-| 상황 | 필요한 인증 | 제한 |
-|---|---|---|
-| Public repo release asset (Worker 내) | 불필요 | Unauthenticated: 60 req/h per IP |
-| Public repo (인증 추가 시) | PAT `read:repo` | 5,000 req/h |
-| Private repo | PAT `repo` (전체) | Redirect 시 Authorization 헤더 제거 필요 |
+| 상황                                  | 필요한 인증       | 제한                                     |
+| ------------------------------------- | ----------------- | ---------------------------------------- |
+| Public repo release asset (Worker 내) | 불필요            | Unauthenticated: 60 req/h per IP         |
+| Public repo (인증 추가 시)            | PAT `read:repo`   | 5,000 req/h                              |
+| Private repo                          | PAT `repo` (전체) | Redirect 시 Authorization 헤더 제거 필요 |
 
-**API Vault 권고**: public repo 이므로 인증 불필요. 단, GitHub IP-based rate limit(60 req/h) 을 초과할 경우 wrangler secret 으로 PAT 를 Worker KV 에 저장하고 `Authorization: token <PAT>` 를 upstream request 에 추가. **PAT 를 코드에 하드코딩 금지**.
+**Secretbank 권고**: public repo 이므로 인증 불필요. 단, GitHub IP-based rate limit(60 req/h) 을 초과할 경우 wrangler secret 으로 PAT 를 Worker KV 에 저장하고 `Authorization: token <PAT>` 를 upstream request 에 추가. **PAT 를 코드에 하드코딩 금지**.
 
 ### 2.3 redirect follow 구현
 
@@ -145,7 +156,7 @@ Workers 의 `fetch()` 는 기본으로 redirect 를 follow 함(`redirect: "follo
 ```typescript
 const upstream = await fetch(githubUrl, {
   redirect: "follow", // 기본값이지만 명시
-  headers: { "User-Agent": "api-vault-proxy/1.0" },
+  headers: { "User-Agent": "secretbank-proxy/1.0" },
 });
 ```
 
@@ -157,17 +168,18 @@ const upstream = await fetch(githubUrl, {
 
 ### 3.1 한계 비교표
 
-| 항목 | Free | Paid ($5/월) |
-|---|---|---|
-| 요청 수 | 100,000 / day | 10M / month 포함, 초과 $0.30/백만 |
-| CPU time | 10 ms / invocation | 30 s (기본), 최대 5분 |
-| Subrequest (외부 fetch) | **50 / request** | **10,000 / request** |
-| 메모리 | 128 MB | 128 MB |
-| 대역폭(egress) | **무료, 무제한** | **무료, 무제한** |
-| KV 읽기 | 100k / day | 10M / month |
-| Durable Objects | ❌ | ✅ |
+| 항목                    | Free               | Paid ($5/월)                      |
+| ----------------------- | ------------------ | --------------------------------- |
+| 요청 수                 | 100,000 / day      | 10M / month 포함, 초과 $0.30/백만 |
+| CPU time                | 10 ms / invocation | 30 s (기본), 최대 5분             |
+| Subrequest (외부 fetch) | **50 / request**   | **10,000 / request**              |
+| 메모리                  | 128 MB             | 128 MB                            |
+| 대역폭(egress)          | **무료, 무제한**   | **무료, 무제한**                  |
+| KV 읽기                 | 100k / day         | 10M / month                       |
+| Durable Objects         | ❌                 | ✅                                |
 
 **중요 포인트**:
+
 - **대역폭 무료**: 수백 MB 파일을 proxy 해도 추가 요금 없음. 공식 문서: "There are no additional charges for data transfer (egress) or throughput (bandwidth)."
 - **CPU time 은 stream proxy 에 영향 없음**: `fetch()` 의 네트워크 대기 시간은 CPU time 에 미포함. 10 ms 제한은 실제 JS 코드 실행 시간만 측정.
 - **Subrequest 50/req (free)**: 다운로드 1건당 Worker subrequest 는 1회(GitHub CDN fetch 1번). 여유로움.
@@ -180,7 +192,7 @@ const upstream = await fetch(githubUrl, {
 
 ### 3.3 권고
 
-사용자가 이미 `ee/api-vault-relay` Worker 를 운영 중이므로, **동일 Cloudflare 계정에서 Paid plan 전환 시 모든 Worker 가 paid 혜택을 공유**함 (Workers Paid = $5/월 고정 + 사용량 과금). 현 단계(dogfooding)에서는 Free로 시작 권장.
+사용자가 이미 `ee/secretbank-relay` Worker 를 운영 중이므로, **동일 Cloudflare 계정에서 Paid plan 전환 시 모든 Worker 가 paid 혜택을 공유**함 (Workers Paid = $5/월 고정 + 사용량 과금). 현 단계(dogfooding)에서는 Free로 시작 권장.
 
 **출처**: Cloudflare Workers Limits docs, Cloudflare Workers Pricing docs
 
@@ -208,10 +220,10 @@ const upstream = await fetch(githubUrl, {
 
 ### 4.4 패턴 선택 — proxy vs R2 미러링
 
-| 패턴 | 장점 | 단점 |
-|---|---|---|
-| **Stream proxy** (선택) | 구현 단순, 즉시 적용, GitHub Release 업로드 후 즉시 제공 | GitHub CDN 의존, rate limit 잠재 리스크 |
-| R2 미러링 | GitHub 의존성 완전 제거, 빠른 CDN | 빌드 후 R2 업로드 추가 단계, 스토리지 비용($0.015/GB/month) |
+| 패턴                    | 장점                                                     | 단점                                                        |
+| ----------------------- | -------------------------------------------------------- | ----------------------------------------------------------- |
+| **Stream proxy** (선택) | 구현 단순, 즉시 적용, GitHub Release 업로드 후 즉시 제공 | GitHub CDN 의존, rate limit 잠재 리스크                     |
+| R2 미러링               | GitHub 의존성 완전 제거, 빠른 CDN                        | 빌드 후 R2 업로드 추가 단계, 스토리지 비용($0.015/GB/month) |
 
 **project-decisions.md 확정 사항**: Stream proxy 방식. R2 전환은 추후 선택.
 
@@ -229,47 +241,48 @@ const upstream = await fetch(githubUrl, {
   "notes": "릴리즈 노트",
   "pub_date": "2026-05-08T12:00:00Z",
   "platforms": {
-    "darwin-x86_64":  { "url": "https://...", "signature": "<.sig 파일 내용>" },
+    "darwin-x86_64": { "url": "https://...", "signature": "<.sig 파일 내용>" },
     "darwin-aarch64": { "url": "https://...", "signature": "<.sig 파일 내용>" },
     "windows-x86_64": { "url": "https://...", "signature": "<.sig 파일 내용>" },
-    "linux-x86_64":   { "url": "https://...", "signature": "<.sig 파일 내용>" }
+    "linux-x86_64": { "url": "https://...", "signature": "<.sig 파일 내용>" }
   }
 }
 ```
 
 **필수 필드**:
+
 - `version`: SemVer (leading `v` 있어도 됨)
 - `platforms.<key>.url`: 실제 다운로드 URL
 - `platforms.<key>.signature`: `.sig` 파일의 **내용**(base64 문자열), 경로/URL ❌
 
 **선택 필드**:
+
 - `pub_date`: RFC 3339 형식 (`2026-05-08T12:00:00Z`)
 - `notes`: 자유 텍스트
 
 ### 5.2 플랫폼 키 목록
 
-| 키 | 대상 |
-|---|---|
-| `darwin-x86_64` | macOS Intel |
+| 키               | 대상                           |
+| ---------------- | ------------------------------ |
+| `darwin-x86_64`  | macOS Intel                    |
 | `darwin-aarch64` | macOS Apple Silicon (M1/M2/M3) |
-| `windows-x86_64` | Windows 64-bit |
-| `windows-i686` | Windows 32-bit (선택) |
-| `linux-x86_64` | Linux x86-64 |
-| `linux-aarch64` | Linux ARM64 (선택) |
+| `windows-x86_64` | Windows 64-bit                 |
+| `windows-i686`   | Windows 32-bit (선택)          |
+| `linux-x86_64`   | Linux x86-64                   |
+| `linux-aarch64`  | Linux ARM64 (선택)             |
 
 현재 `site/latest.json` 이 이미 올바른 형식을 사용 중 (확인됨: `darwin-x86_64`, `darwin-aarch64`, `windows-x86_64`, `linux-x86_64`).
 
 ### 5.3 단일 endpoint (placeholder 없음)
 
 `tauri.conf.json`:
+
 ```json
 {
   "plugins": {
     "updater": {
       "pubkey": "...",
-      "endpoints": [
-        "https://api-vault.app/api/latest"
-      ]
+      "endpoints": ["https://secretbank.app/api/latest"]
     }
   }
 }
@@ -281,13 +294,13 @@ const upstream = await fetch(githubUrl, {
 
 ### 5.4 검증 흐름
 
-1. 앱 → `GET https://api-vault.app/api/latest`
+1. 앱 → `GET https://secretbank.app/api/latest`
 2. Worker 응답 → JSON 파싱 → `version` 비교
 3. 새 버전이면 `platforms[currentOS].url` 로 파일 다운로드
 4. 다운로드 완료 후 minisign 으로 `platforms[currentOS].signature` 검증 (pubkey 는 앱 번들에 포함)
 5. 검증 성공 → 설치 적용
 
-**중요**: `url` 필드에 `https://api-vault.app/download/<filename>` 을 넣으면 Worker 가 GitHub CDN 로 proxy. 사용자 브라우저/앱은 api-vault.app 도메인에서만 통신.
+**중요**: `url` 필드에 `https://secretbank.app/download/<filename>` 을 넣으면 Worker 가 GitHub CDN 로 proxy. 사용자 브라우저/앱은 secretbank.app 도메인에서만 통신.
 
 **출처**: Tauri v2 공식 Updater docs (v2.tauri.app/plugin/updater/), tauri-apps/tauri-docs GitHub
 
@@ -298,6 +311,7 @@ const upstream = await fetch(githubUrl, {
 ### 6.1 현재 release.yml 상태 분석
 
 현재 `publish-updater-manifest` job 은:
+
 - `site/latest.json` 을 main 에 commit 하지 않음
 - GitHub Releases 에 `latest.json` 을 asset 으로 업로드만 함
 - `tauri.conf.json` 의 updater endpoint 가 `releases/download/v{{current_version}}/latest.json` self-reference URL 을 사용 중 (주석에 명시)
@@ -339,7 +353,7 @@ on:
       - "site/latest.json"
 ```
 
-**API Vault 상황**: `release.yml` 은 `push.tags: v*` 만으로 트리거됨. main branch push 는 트리거 조건이 아님. 따라서 circular trigger 리스크 없음. `[skip ci]` 는 추가 보험으로 포함 권장.
+**Secretbank 상황**: `release.yml` 은 `push.tags: v*` 만으로 트리거됨. main branch push 는 트리거 조건이 아님. 따라서 circular trigger 리스크 없음. `[skip ci]` 는 추가 보험으로 포함 권장.
 
 ### 6.4 충돌 처리
 
@@ -356,7 +370,7 @@ git push origin HEAD:main
 
 현재 `release.yml` 상단: `permissions: contents: write` — 이미 `site/latest.json` push 에 충분한 권한.
 
-**주의**: main 브랜치에 branch protection 이 활성화된 경우 `GITHUB_TOKEN` push 가 거부될 수 있음. 이 경우 PAT(Personal Access Token)를 별도 secret 으로 사용해야 하나, 현재 API Vault repo 는 branch protection 없음(릴리즈 이력 10회, solo developer 상태).
+**주의**: main 브랜치에 branch protection 이 활성화된 경우 `GITHUB_TOKEN` push 가 거부될 수 있음. 이 경우 PAT(Personal Access Token)를 별도 secret 으로 사용해야 하나, 현재 Secretbank repo 는 branch protection 없음(릴리즈 이력 10회, solo developer 상태).
 
 **출처**: GitHub Docs (Skipping workflow runs), GitHub Actions changelog (skip ci), Semantic Release GitHub Actions recipe
 
@@ -366,12 +380,12 @@ git push origin HEAD:main
 
 ### 7.1 Workers Routes vs Custom Domains
 
-| 방식 | 용도 | Pages 와 공존 |
-|---|---|---|
-| **Routes** (선택) | path-specific Worker 실행 | ✅ 특정 path 만 intercept |
-| Custom Domains | Worker 가 도메인 전체 처리 | ❌ Pages 와 동시 불가 |
+| 방식              | 용도                       | Pages 와 공존             |
+| ----------------- | -------------------------- | ------------------------- |
+| **Routes** (선택) | path-specific Worker 실행  | ✅ 특정 path 만 intercept |
+| Custom Domains    | Worker 가 도메인 전체 처리 | ❌ Pages 와 동시 불가     |
 
-`api-vault.app` 전체는 Cloudflare Pages 가 서빙. `/download/*` 와 `/api/*` 만 Worker 가 intercept → **Routes 방식이 유일한 선택**.
+`secretbank.app` 전체는 Cloudflare Pages 가 서빙. `/download/*` 와 `/api/*` 만 Worker 가 intercept → **Routes 방식이 유일한 선택**.
 
 ### 7.2 wrangler.toml 설정 예시
 
@@ -381,12 +395,12 @@ main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
 [[routes]]
-pattern = "api-vault.app/download/*"
-zone_name = "api-vault.app"
+pattern = "secretbank.app/download/*"
+zone_name = "secretbank.app"
 
 [[routes]]
-pattern = "api-vault.app/api/*"
-zone_name = "api-vault.app"
+pattern = "secretbank.app/api/*"
+zone_name = "secretbank.app"
 ```
 
 - `zone_name` 또는 `zone_id` 중 하나 필요
@@ -395,7 +409,7 @@ zone_name = "api-vault.app"
 
 ### 7.3 route 우선순위
 
-더 specific 한 route 가 우선. `api-vault.app/download/*` 는 `api-vault.app/*` 보다 우선. Pages 는 Worker route 와 겹치지 않는 경로를 처리.
+더 specific 한 route 가 우선. `secretbank.app/download/*` 는 `secretbank.app/*` 보다 우선. Pages 는 Worker route 와 겹치지 않는 경로를 처리.
 
 **중요 제한 (커뮤니티 확인)**: Pages 도메인의 특정 path 만 Worker route 로 catch 하는 것은 공식 문서에 명시되지 않았으나, 커뮤니티에서 동작이 확인됨. 단, Pages Functions 를 사용하는 것이 더 안정적인 대안.
 
@@ -420,17 +434,17 @@ Pages Functions 는 Workers 런타임과 동일한 환경 (fetch, ReadableStream
 
 ### 7.5 충돌 시나리오와 방어
 
-| 시나리오 | 결과 | 방어 |
-|---|---|---|
-| Worker route 가 `api-vault.app/*` 전체 catch | Pages 전체 차단 → 404 | route 를 `/download/*` + `/api/*` 로 한정 |
-| Custom Domain 을 `api-vault.app` 에 등록 | Pages 차단 | Custom Domain ❌, Routes 사용 |
+| 시나리오                                          | 결과                           | 방어                                         |
+| ------------------------------------------------- | ------------------------------ | -------------------------------------------- |
+| Worker route 가 `secretbank.app/*` 전체 catch     | Pages 전체 차단 → 404          | route 를 `/download/*` + `/api/*` 로 한정    |
+| Custom Domain 을 `secretbank.app` 에 등록         | Pages 차단                     | Custom Domain ❌, Routes 사용                |
 | `/api/latest` Worker 가 없을 때 앱이 updater 호출 | Worker 미배포면 Pages 404 반환 | Worker 먼저 배포, updater.conf 는 그 후 수정 |
 
 **출처**: Cloudflare Workers Routes docs, Cloudflare Pages Functions Routing docs, community.cloudflare.com 논의
 
 ---
 
-## API Vault 적용 권고
+## Secretbank 적용 권고
 
 ### 권고 아키텍처
 
@@ -438,11 +452,11 @@ Pages Functions 는 Workers 런타임과 동일한 환경 (fetch, ReadableStream
 사용자 브라우저
       │
       ▼
-api-vault.app (Cloudflare Pages)
+secretbank.app (Cloudflare Pages)
       │
       ├─ /download/* → Cloudflare Worker (download-proxy)
       │       │
-      │       └─ fetch → github.com/phoodul/api-vault/releases/download/<tag>/<file>
+      │       └─ fetch → github.com/phoodul/secretbank/releases/download/<tag>/<file>
       │               │
       │               └─ 302 → objects.githubusercontent.com (CDN)
       │                       │
@@ -462,12 +476,18 @@ api-vault.app (Cloudflare Pages)
 ```typescript
 const ALLOWED_FILENAME_RE = /^[a-zA-Z0-9._\-]+$/;
 const ALLOWED_EXTENSIONS = [
-  ".exe", ".msi", ".dmg",
-  ".app.tar.gz", ".AppImage",
-  ".deb", ".rpm", ".sig", ".json",
+  ".exe",
+  ".msi",
+  ".dmg",
+  ".app.tar.gz",
+  ".AppImage",
+  ".deb",
+  ".rpm",
+  ".sig",
+  ".json",
 ];
 
-const REPO = "phoodul/api-vault";
+const REPO = "phoodul/secretbank";
 const GITHUB_BASE = `https://github.com/${REPO}/releases/download`;
 
 function isValidFilename(name: string): boolean {
@@ -483,7 +503,7 @@ export default {
     // ── /api/latest ──────────────────────────────────────────────
     if (url.pathname === "/api/latest" || url.pathname === "/api/latest.json") {
       // Pages 의 site/latest.json 을 self-fetch (Pages 가 이미 정적 파일 서빙)
-      const manifestUrl = `https://api-vault.app/latest.json`;
+      const manifestUrl = `https://secretbank.app/latest.json`;
       const manifest = await fetch(manifestUrl);
       if (!manifest.ok) {
         return new Response("manifest not found", { status: 502 });
@@ -499,7 +519,7 @@ export default {
     }
 
     // ── /download/<tag>/<filename> ────────────────────────────────
-    // 경로 형식: /download/v0.1.0-pre11/api-vault_0.1.0_x64-setup.exe
+    // 경로 형식: /download/v0.1.0-pre11/secretbank_0.1.0_x64-setup.exe
     const match = url.pathname.match(/^\/download\/([^/]+)\/([^/]+)$/);
     if (!match) {
       return new Response("Not Found", { status: 404 });
@@ -520,7 +540,7 @@ export default {
 
     // Range 헤더 전달 (resume download 지원)
     const upstreamHeaders: HeadersInit = {
-      "User-Agent": "api-vault-proxy/1.0",
+      "User-Agent": "secretbank-proxy/1.0",
     };
     const rangeHeader = request.headers.get("Range");
     if (rangeHeader) {
@@ -547,10 +567,7 @@ export default {
     responseHeaders.set("Access-Control-Allow-Origin", "*");
     // Content-Disposition 이 없으면 브라우저가 인라인으로 열 수 있음
     if (!responseHeaders.has("Content-Disposition")) {
-      responseHeaders.set(
-        "Content-Disposition",
-        `attachment; filename="${filename}"`
-      );
+      responseHeaders.set("Content-Disposition", `attachment; filename="${filename}"`);
     }
 
     // body 를 소비하지 않고 stream pass-through
@@ -570,12 +587,12 @@ main = "src/index.ts"
 compatibility_date = "2024-09-23"
 
 [[routes]]
-pattern = "api-vault.app/download/*"
-zone_name = "api-vault.app"
+pattern = "secretbank.app/download/*"
+zone_name = "secretbank.app"
 
 [[routes]]
-pattern = "api-vault.app/api/*"
-zone_name = "api-vault.app"
+pattern = "secretbank.app/api/*"
+zone_name = "secretbank.app"
 ```
 
 ### release.yml 수정 — latest.json commit 추가
@@ -583,25 +600,25 @@ zone_name = "api-vault.app"
 `publish-updater-manifest` job 에 아래 step 추가 (기존 `gh release upload` 이후):
 
 ```yaml
-      - name: Checkout repo for site/latest.json commit
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 1
+- name: Checkout repo for site/latest.json commit
+  uses: actions/checkout@v4
+  with:
+    ref: main
+    fetch-depth: 1
 
-      - name: Update site/latest.json and commit to main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # latest.json 은 이전 step 에서 이미 생성됨 (WORK 디렉토리)
-          cp latest.json site/latest.json
-          git add site/latest.json
-          git diff --staged --quiet && echo "[skip] no changes to site/latest.json" && exit 0
-          git commit -m "chore: latest.json 갱신 — $TAG [skip ci]"
-          git pull --rebase origin main
-          git push origin HEAD:main
+- name: Update site/latest.json and commit to main
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    git config user.name "github-actions[bot]"
+    git config user.email "github-actions[bot]@users.noreply.github.com"
+    # latest.json 은 이전 step 에서 이미 생성됨 (WORK 디렉토리)
+    cp latest.json site/latest.json
+    git add site/latest.json
+    git diff --staged --quiet && echo "[skip] no changes to site/latest.json" && exit 0
+    git commit -m "chore: latest.json 갱신 — $TAG [skip ci]"
+    git pull --rebase origin main
+    git push origin HEAD:main
 ```
 
 **주의**: `actions/checkout@v4` 는 `ref: main` 으로 체크아웃해야 함. 현재 workflow 는 tag context 에서 실행되므로 HEAD 가 tag commit. main branch 에 push 하려면 명시적 ref 필요.
@@ -613,15 +630,13 @@ zone_name = "api-vault.app"
   "plugins": {
     "updater": {
       "pubkey": "<기존 pubkey>",
-      "endpoints": [
-        "https://api-vault.app/api/latest"
-      ]
+      "endpoints": ["https://secretbank.app/api/latest"]
     }
   }
 }
 ```
 
-기존 `releases/download/v{{current_version}}/latest.json` self-reference URL → `https://api-vault.app/api/latest` 단일 endpoint 로 변경.
+기존 `releases/download/v{{current_version}}/latest.json` self-reference URL → `https://secretbank.app/api/latest` 단일 endpoint 로 변경.
 
 ### manifest url 필드 수정
 
@@ -632,32 +647,32 @@ zone_name = "api-vault.app"
 BASE="https://github.com/${{ github.repository }}/releases/download/$TAG"
 
 # 변경 (Worker proxy 경유)
-BASE="https://api-vault.app/download/$TAG"
+BASE="https://secretbank.app/download/$TAG"
 ```
 
-이 변경으로 `platforms[OS].url` 이 `https://api-vault.app/download/v0.1.0-pre11/api-vault_0.1.0_x64-setup.exe` 형식이 됨. tauri-plugin-updater 가 이 URL 로 파일을 다운로드 → Worker 가 GitHub CDN 으로 proxy.
+이 변경으로 `platforms[OS].url` 이 `https://secretbank.app/download/v0.1.0-pre11/secretbank_0.1.0_x64-setup.exe` 형식이 됨. tauri-plugin-updater 가 이 URL 로 파일을 다운로드 → Worker 가 GitHub CDN 으로 proxy.
 
 ---
 
 ## Sources
 
-| # | 출처 | 신뢰도 | 관련도 |
-|---|---|---|---|
-| 1 | [Cloudflare Workers Streams API](https://developers.cloudflare.com/workers/runtime-apis/streams/) | HIGH (공식) | 10 |
-| 2 | [Cloudflare Workers Best Practices](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/) | HIGH (공식) | 9 |
-| 3 | [Cloudflare Workers Limits](https://developers.cloudflare.com/workers/platform/limits/) | HIGH (공식) | 9 |
-| 4 | [Cloudflare Workers Pricing](https://developers.cloudflare.com/workers/platform/pricing/) | HIGH (공식) | 8 |
-| 5 | [Cloudflare Workers Routes](https://developers.cloudflare.com/workers/configuration/routing/routes/) | HIGH (공식) | 9 |
-| 6 | [Cloudflare Pages Functions Routing](https://developers.cloudflare.com/pages/functions/routing/) | HIGH (공식) | 7 |
-| 7 | [Tauri v2 Updater Plugin 공식 docs](https://v2.tauri.app/plugin/updater/) | HIGH (공식) | 10 |
-| 8 | [tauri-apps/tauri-docs GitHub (v2 branch)](https://github.com/tauri-apps/tauri-docs/blob/v2/src/content/docs/plugin/updater.mdx) | HIGH (공식) | 10 |
-| 9 | [GitHub Docs — REST API: Release Assets](https://docs.github.com/en/rest/releases/assets) | HIGH (공식) | 8 |
-| 10 | [GitHub Docs — Skipping Workflow Runs](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs) | HIGH (공식) | 8 |
-| 11 | [GitHub community discussion #46420 — Release URL redirect](https://github.com/orgs/community/discussions/46420) | MEDIUM (공식 커뮤니티) | 7 |
-| 12 | [corsfix.com — Fetch GitHub Release (CORS/redirect 분석)](https://corsfix.com/blog/fetch-github-release) | MEDIUM (기술 블로그) | 9 |
-| 13 | [ShinChven/github-cdn-proxy](https://github.com/ShinChven/github-cdn-proxy) | MEDIUM (OSS) | 8 |
-| 14 | [BH3GEI/CloudflareWorkerProxy](https://github.com/BH3GEI/CloudflareWorkerProxy) | MEDIUM (OSS) | 6 |
-| 15 | [aD4wn/Workers-Proxy](https://github.com/aD4wn/Workers-Proxy) | MEDIUM (OSS) | 6 |
-| 16 | [Cloudflare Community — configure workers on CF Pages path](https://community.cloudflare.com/t/configure-workers-to-run-on-a-path-s-currently-served-by-cf-pages-any-plans-to-merge-pages-workers-sites/312550) | MEDIUM (공식 커뮤니티) | 8 |
-| 17 | [GitHub Blog — skip ci in Actions](https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/) | HIGH (공식) | 7 |
-| 18 | [Cloudflare Community — Range request caching](https://community.cloudflare.com/t/possible-to-cache-ranged-requests/74514) | MEDIUM (공식 커뮤니티) | 6 |
+| #   | 출처                                                                                                                                                                                                            | 신뢰도                 | 관련도 |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------ |
+| 1   | [Cloudflare Workers Streams API](https://developers.cloudflare.com/workers/runtime-apis/streams/)                                                                                                               | HIGH (공식)            | 10     |
+| 2   | [Cloudflare Workers Best Practices](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)                                                                                           | HIGH (공식)            | 9      |
+| 3   | [Cloudflare Workers Limits](https://developers.cloudflare.com/workers/platform/limits/)                                                                                                                         | HIGH (공식)            | 9      |
+| 4   | [Cloudflare Workers Pricing](https://developers.cloudflare.com/workers/platform/pricing/)                                                                                                                       | HIGH (공식)            | 8      |
+| 5   | [Cloudflare Workers Routes](https://developers.cloudflare.com/workers/configuration/routing/routes/)                                                                                                            | HIGH (공식)            | 9      |
+| 6   | [Cloudflare Pages Functions Routing](https://developers.cloudflare.com/pages/functions/routing/)                                                                                                                | HIGH (공식)            | 7      |
+| 7   | [Tauri v2 Updater Plugin 공식 docs](https://v2.tauri.app/plugin/updater/)                                                                                                                                       | HIGH (공식)            | 10     |
+| 8   | [tauri-apps/tauri-docs GitHub (v2 branch)](https://github.com/tauri-apps/tauri-docs/blob/v2/src/content/docs/plugin/updater.mdx)                                                                                | HIGH (공식)            | 10     |
+| 9   | [GitHub Docs — REST API: Release Assets](https://docs.github.com/en/rest/releases/assets)                                                                                                                       | HIGH (공식)            | 8      |
+| 10  | [GitHub Docs — Skipping Workflow Runs](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs)                                                 | HIGH (공식)            | 8      |
+| 11  | [GitHub community discussion #46420 — Release URL redirect](https://github.com/orgs/community/discussions/46420)                                                                                                | MEDIUM (공식 커뮤니티) | 7      |
+| 12  | [corsfix.com — Fetch GitHub Release (CORS/redirect 분석)](https://corsfix.com/blog/fetch-github-release)                                                                                                        | MEDIUM (기술 블로그)   | 9      |
+| 13  | [ShinChven/github-cdn-proxy](https://github.com/ShinChven/github-cdn-proxy)                                                                                                                                     | MEDIUM (OSS)           | 8      |
+| 14  | [BH3GEI/CloudflareWorkerProxy](https://github.com/BH3GEI/CloudflareWorkerProxy)                                                                                                                                 | MEDIUM (OSS)           | 6      |
+| 15  | [aD4wn/Workers-Proxy](https://github.com/aD4wn/Workers-Proxy)                                                                                                                                                   | MEDIUM (OSS)           | 6      |
+| 16  | [Cloudflare Community — configure workers on CF Pages path](https://community.cloudflare.com/t/configure-workers-to-run-on-a-path-s-currently-served-by-cf-pages-any-plans-to-merge-pages-workers-sites/312550) | MEDIUM (공식 커뮤니티) | 8      |
+| 17  | [GitHub Blog — skip ci in Actions](https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/)                                                                  | HIGH (공식)            | 7      |
+| 18  | [Cloudflare Community — Range request caching](https://community.cloudflare.com/t/possible-to-cache-ranged-requests/74514)                                                                                      | MEDIUM (공식 커뮤니티) | 6      |

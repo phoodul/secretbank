@@ -1,6 +1,0 @@
-[package]
-name = "api-vault-sync"
-version = "0.1.0-pre10"
-edition = "2021"
-
-[dependencies]

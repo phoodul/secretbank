@@ -1,13 +1,13 @@
-# Terms of Service — API Vault
+# Terms of Service — Secretbank
 
 Last updated: 2026-04-29.
 
 These terms cover the use of:
 
-- The API Vault desktop app, CLI, MCP server, and VS Code extension
+- The Secretbank desktop app, CLI, MCP server, and VS Code extension
   (collectively, the **"Software"**, licensed under AGPL-3.0-or-later).
 - The **Pro service** (subscription account, multi-device sync relay,
-  auto-revoke, auto-rotation), provided by **API Vault contributors**
+  auto-revoke, auto-rotation), provided by **Secretbank contributors**
   ("we", "us").
 
 If you only use the open-source Software locally, the AGPL-3.0 license at
@@ -89,7 +89,7 @@ We do not provide:
 - Anything in the repo root and `crates/` is AGPL-3.0. You can fork,
   modify, and self-host it; if you offer it as a network service, you
   must publish your modifications.
-- Anything in `/ee/` is the **API Vault Enterprise License v1.0** (see
+- Anything in `/ee/` is the **Secretbank Enterprise License v1.0** (see
   `ee/LICENSE`). You can read the source for verification but production
   use requires a Pro subscription **or** a written enterprise license.
 
@@ -132,5 +132,5 @@ agree, cancel before the new terms take effect.
 
 ## 13. Contact
 
-legal@api-vault.app for these terms.
-support@api-vault.app for everything else.
+legal@secretbank.app for these terms.
+support@secretbank.app for everything else.

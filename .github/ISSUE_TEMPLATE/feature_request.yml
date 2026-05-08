@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        제안 감사합니다. 큰 아이디어 / 토론은 [Discussions → Ideas](https://github.com/phoodul/api-vault/discussions/categories/ideas) 가 더 적합할 수 있습니다.
+        제안 감사합니다. 큰 아이디어 / 토론은 [Discussions → Ideas](https://github.com/phoodul/secretbank/discussions/categories/ideas) 가 더 적합할 수 있습니다.
 
   - type: textarea
     id: problem

@@ -1,11 +1,11 @@
-# Privacy Policy — API Vault
+# Privacy Policy — Secretbank
 
 Last updated: 2026-04-29.
 
-This is the privacy policy for the API Vault desktop app, CLI, MCP server,
+This is the privacy policy for the Secretbank desktop app, CLI, MCP server,
 VS Code extension, and the optional Pro sync service. We tried to write it
 in plain language. If anything is unclear, please email
-privacy@api-vault.app.
+privacy@secretbank.app.
 
 ## TL;DR
 
@@ -27,7 +27,7 @@ privacy@api-vault.app.
 The desktop app, CLI, MCP server, and VS Code extension store everything
 on your device:
 
-- Encrypted vault — `<OS data dir>/api-vault/vault.db` (SQLite, encrypted
+- Encrypted vault — `<OS data dir>/secretbank/vault.db` (SQLite, encrypted
   with `age` + ChaCha20-Poly1305 derived from your master passphrase).
 - Audit log — same SQLite file, encrypted at rest.
 - Dependency graph and supply-chain scan results — same SQLite file.
@@ -113,7 +113,7 @@ If you subscribe to Pro:
 Stripe's privacy policy applies to payment processing:
 https://stripe.com/privacy.
 
-To delete your Pro account: email privacy@api-vault.app. We delete the
+To delete your Pro account: email privacy@secretbank.app. We delete the
 account record and stop billing within 7 days. Local vault data is
 **unaffected** — it lives only on your device.
 
@@ -135,7 +135,7 @@ account record and stop billing within 7 days. Local vault data is
 
 Where applicable (GDPR, CCPA, etc.):
 
-- **Access** — email privacy@api-vault.app to request a copy of any data
+- **Access** — email privacy@secretbank.app to request a copy of any data
   tied to your account.
 - **Correction** — same address.
 - **Deletion** — same address. Local data is your own to delete.
@@ -152,7 +152,7 @@ because we do not hold the keys.
 
 ## 8. Children
 
-API Vault is not directed at children under 13 (16 in the EU). We do not
+Secretbank is not directed at children under 13 (16 in the EU). We do not
 knowingly collect their data.
 
 ---
@@ -161,12 +161,12 @@ knowingly collect their data.
 
 If the policy materially changes, we publish the new version with the
 date at the top, and Pro users get an email. Past versions are retained
-in git history at https://github.com/phoodul/api-vault/commits/main/docs/PRIVACY.md.
+in git history at https://github.com/phoodul/secretbank/commits/main/docs/PRIVACY.md.
 
 ---
 
 ## 10. Contact
 
-- privacy@api-vault.app — privacy questions, deletion requests.
-- security@api-vault.app — vulnerabilities (PGP, see SECURITY.md).
-- support@api-vault.app — everything else.
+- privacy@secretbank.app — privacy questions, deletion requests.
+- security@secretbank.app — vulnerabilities (PGP, see SECURITY.md).
+- support@secretbank.app — everything else.

@@ -17,9 +17,9 @@ import { buildPairDeepLink, usePairInitiator } from "../use-pair-initiator";
 const mockInvoke = vi.mocked(invoke);
 
 describe("buildPairDeepLink", () => {
-  it("returns apivault://pair?pin=<pin>&pub=<pub>", () => {
+  it("returns Secretbank://pair?pin=<pin>&pub=<pub>", () => {
     const link = buildPairDeepLink("012345", "ABCxyz_-=");
-    expect(link.startsWith("apivault://pair?")).toBe(true);
+    expect(link.startsWith("Secretbank://pair?")).toBe(true);
     expect(link).toContain("pin=012345");
     expect(link).toContain("pub=ABCxyz_-%3D"); // = is percent-encoded
   });

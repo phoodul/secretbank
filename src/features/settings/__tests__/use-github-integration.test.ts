@@ -36,11 +36,11 @@ describe("useGithubIntegration deep-link callback", () => {
     vi.clearAllMocks();
   });
 
-  it("saves installation when deep-link payload matches apivault://github/callback", async () => {
+  it("saves installation when deep-link payload matches Secretbank://github/callback", async () => {
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "github_list_installations") return Promise.resolve([]);
       if (cmd === "github_install_url")
-        return Promise.resolve("https://github.com/apps/api-vault/installations/new");
+        return Promise.resolve("https://github.com/apps/secretbank/installations/new");
       if (cmd === "github_save_installation") return Promise.resolve(undefined);
       return Promise.resolve([]);
     });
@@ -60,7 +60,7 @@ describe("useGithubIntegration deep-link callback", () => {
     // Fire a synthetic deep-link event with a github callback URL
     await act(async () => {
       deepLinkListeners[0]({
-        payload: ["apivault://github/callback?installation_id=42&setup_action=install"],
+        payload: ["Secretbank://github/callback?installation_id=42&setup_action=install"],
       });
       // wait for the await save inside the listener to flush
       await Promise.resolve();
@@ -78,7 +78,7 @@ describe("useGithubIntegration deep-link callback", () => {
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === "github_list_installations") return Promise.resolve([]);
       if (cmd === "github_install_url")
-        return Promise.resolve("https://github.com/apps/api-vault/installations/new");
+        return Promise.resolve("https://github.com/apps/secretbank/installations/new");
       return Promise.resolve(undefined);
     });
 
@@ -92,7 +92,7 @@ describe("useGithubIntegration deep-link callback", () => {
     await waitFor(() => expect(deepLinkListeners.length).toBeGreaterThan(0));
 
     deepLinkListeners[0]({
-      payload: ["apivault://auth/callback?provider=github&code=x&state=y"],
+      payload: ["Secretbank://auth/callback?provider=github&code=x&state=y"],
     });
 
     // Allow microtasks to flush

@@ -2,8 +2,8 @@
  * TypeScript mirrors of Rust Incident domain types (T056).
  *
  * Matches:
- *   api-vault-core/src/models/incident.rs
- *   api-vault-storage/src/sqlite/repositories/incident.rs (IncidentListEntry/IncidentMatchDetail)
+ *   secretbank-core/src/models/incident.rs
+ *   secretbank-storage/src/sqlite/repositories/incident.rs (IncidentListEntry/IncidentMatchDetail)
  */
 
 export type IncidentSource = "nvd" | "ghsa" | "rss" | "hibp";

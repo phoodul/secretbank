@@ -468,7 +468,7 @@ function makeUnlockedBase(): CommandMap {
     audit_list: { kind: "ok", value: [] },
     audit_verify_chain: { kind: "ok", value: { verified: true, broken_at: null, total: 0 } },
     entitlement_status: { kind: "ok", value: { plan: "pro", source: "beta", expires_at: null } },
-    auth_status: { kind: "ok", value: { user_id: "demo-user", email: "demo@api-vault.app" } },
+    auth_status: { kind: "ok", value: { user_id: "demo-user", email: "demo@secretbank.app" } },
     feed_refresh: { kind: "ok", value: { ok: true } },
   };
 }
@@ -477,7 +477,7 @@ function makeUnlockedBase(): CommandMap {
 // 잘못 적으면 RequireOnboarding 가드가 /welcome 으로 redirect 해 모든 demo 가
 // "Welcome to API Vault" 화면에 머문다.
 const onboardingDoneSettings = {
-  "apivault.settings.onboarding.done": "true",
+  "secretbank.settings.onboarding.done": "true",
 };
 
 // ────────────────────────────────────────────────────────────────────

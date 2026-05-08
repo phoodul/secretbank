@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>API Vault — graph</title>
+    <title>Secretbank — graph</title>
     <style>
       :root {
         color-scheme: dark light;
@@ -287,9 +287,9 @@
       }
 
       function send(verb, id) {
-        if (typeof window.__apivaultSend === "function") {
+        if (typeof window.__SecretbankSend === "function") {
           try {
-            window.__apivaultSend(verb + ":" + id);
+            window.__SecretbankSend(verb + ":" + id);
           } catch (e) {
             console.warn("send failed", e);
           }
@@ -318,7 +318,7 @@
         send("context", id);
       }
 
-      window.apivaultCenter = function () {
+      window.SecretbankCenter = function () {
         if (nodes.length === 0) return;
         let minX = Infinity,
           minY = Infinity,
@@ -341,7 +341,7 @@
         applyTransform();
       };
 
-      window.apivaultFocus = function (id) {
+      window.SecretbankFocus = function (id) {
         const n = nodes.find((n) => n.id === id);
         if (!n) return;
         const w = window.innerWidth,
@@ -370,7 +370,7 @@
         if (banner) banner.style.display = "none";
       }
 
-      window.apivaultClearHighlight = function () {
+      window.SecretbankClearHighlight = function () {
         clearBlastClasses();
         selectedId = null;
         for (const el of root.querySelectorAll(".node")) el.classList.remove("selected");
@@ -382,7 +382,7 @@
         }
       };
 
-      window.apivaultBlastRadius = function (payloadOrJson) {
+      window.SecretbankBlastRadius = function (payloadOrJson) {
         const data = typeof payloadOrJson === "string" ? JSON.parse(payloadOrJson) : payloadOrJson;
         clearBlastClasses();
 
@@ -415,7 +415,7 @@
         }
 
         // 자동으로 source 노드에 포커스.
-        if (typeof window.apivaultFocus === "function") window.apivaultFocus(sourceId);
+        if (typeof window.SecretbankFocus === "function") window.SecretbankFocus(sourceId);
       };
 
       function render() {
@@ -555,9 +555,9 @@
         animId = requestAnimationFrame(loop);
       }
 
-      // JCEF bridge: the Kotlin side calls `window.apivaultLoad(json)` with the
+      // JCEF bridge: the Kotlin side calls `window.SecretbankLoad(json)` with the
       // payload. We accept it as an object or a JSON string.
-      window.apivaultLoad = function (payload) {
+      window.SecretbankLoad = function (payload) {
         try {
           const data = typeof payload === "string" ? JSON.parse(payload) : payload;
           const w = window.innerWidth,
@@ -577,7 +577,7 @@
             kind: e.kind,
           }));
           selectedId = null;
-          if (typeof window.apivaultClearHighlight === "function") {
+          if (typeof window.SecretbankClearHighlight === "function") {
             // clear blast/highlight if a previous payload was active
             const banner = document.getElementById("blast-banner");
             if (banner) banner.style.display = "none";
@@ -588,7 +588,7 @@
           // run faster initial settle
           for (let k = 0; k < 80; k++) step();
         } catch (e) {
-          console.error("apivaultLoad failed", e);
+          console.error("SecretbankLoad failed", e);
         }
       };
 
@@ -604,9 +604,9 @@
           }
         } else if (mod && e.key === "0") {
           e.preventDefault();
-          if (window.apivaultCenter) window.apivaultCenter();
+          if (window.SecretbankCenter) window.SecretbankCenter();
         } else if (e.key === "Escape") {
-          if (window.apivaultClearHighlight) window.apivaultClearHighlight();
+          if (window.SecretbankClearHighlight) window.SecretbankClearHighlight();
         }
       });
 
@@ -637,7 +637,7 @@
       });
 
       // Empty initial state
-      window.apivaultLoad({ nodes: [], edges: [] });
+      window.SecretbankLoad({ nodes: [], edges: [] });
     </script>
   </body>
 </html>

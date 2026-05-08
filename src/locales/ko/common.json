@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "API Vault",
+    "title": "Secretbank",
     "subtitle": "API 키 의존성 그래프 관리 매니저"
   },
   "nav": {
@@ -306,7 +306,7 @@
   },
   "auth": {
     "signIn": {
-      "title": "API Vault 연결",
+      "title": "Secretbank 연결",
       "subtitle": "로그인하면 클라우드 동기화, 인시던트 매칭, 배포 공유가 활성화됩니다. 볼트는 이 디바이스에 암호화된 상태로 남습니다.",
       "emailLabel": "이메일",
       "or": "또는",
@@ -342,9 +342,9 @@
     },
     "pairJoin": {
       "title": "다른 디바이스와 페어링",
-      "description": "기존 API Vault 디바이스에서 받은 페어링 링크를 붙여넣으세요. 두 디바이스가 종단간 암호화로 키를 교환하며, 마스터 비밀번호는 평문으로 외부에 나가지 않습니다.",
+      "description": "기존 Secretbank 디바이스에서 받은 페어링 링크를 붙여넣으세요. 두 디바이스가 종단간 암호화로 키를 교환하며, 마스터 비밀번호는 평문으로 외부에 나가지 않습니다.",
       "linkLabel": "페어링 링크",
-      "invalidLink": "유효하지 않은 페어링 링크입니다. apivault://pair?pin=…&pub=… 형식이어야 합니다",
+      "invalidLink": "유효하지 않은 페어링 링크입니다. Secretbank://pair?pin=…&pub=… 형식이어야 합니다",
       "joining": "원본 디바이스에 연결 중…",
       "waiting": "원본 디바이스가 자격 정보를 전송하기를 기다리는 중…",
       "applying": "복호화하고 볼트를 저장 중…",
@@ -355,7 +355,7 @@
     },
     "pair": {
       "title": "새 디바이스 추가",
-      "description": "새 디바이스에서 API Vault를 열고 아래 링크를 붙여넣으면 두 디바이스가 종단간 암호화로 키를 교환합니다. 어느 쪽에서도 평문이 외부로 나가지 않습니다.",
+      "description": "새 디바이스에서 Secretbank를 열고 아래 링크를 붙여넣으면 두 디바이스가 종단간 암호화로 키를 교환합니다. 어느 쪽에서도 평문이 외부로 나가지 않습니다.",
       "starting": "보안 채널을 만드는 중…",
       "pinLabel": "페어링 PIN",
       "deepLinkLabel": "페어링 링크",
@@ -396,7 +396,7 @@
     "importing": "가져오는 중…",
     "importSuccess": "{{project}}에 {{count}}개 키 가져옴",
     "importFailed": "가져오기 실패",
-    "welcomeTitle": "API Vault에 오신 것을 환영합니다",
+    "welcomeTitle": "Secretbank에 오신 것을 환영합니다",
     "welcomeSubtitle": "3단계로 빠르게 시작해 봐요.",
     "stepIndicator": "{{current}} / {{total}} 단계",
     "stepDropTitle": "프로젝트 폴더를 드롭하세요",
@@ -797,7 +797,7 @@
     },
     "removeConfirm": {
       "title": "설치 제거?",
-      "body": "설치 {{id}}를 API Vault에서 제거합니다. GitHub의 앱 설치는 그대로 유지되므로 필요하면 GitHub에서 별도로 제거하세요.",
+      "body": "설치 {{id}}를 Secretbank에서 제거합니다. GitHub의 앱 설치는 그대로 유지되므로 필요하면 GitHub에서 별도로 제거하세요.",
       "confirm": "제거",
       "cancel": "취소"
     },

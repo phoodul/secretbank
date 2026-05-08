@@ -2,9 +2,9 @@
 
 ## Q1: What license is this repository?
 
-**EN:** This repository (`api-vault`) is licensed under the **GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)**. See [LICENSE](./LICENSE) for the full text.
+**EN:** This repository (`secretbank`) is licensed under the **GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)**. See [LICENSE](./LICENSE) for the full text.
 
-**KO:** 이 저장소(`api-vault`)는 **GNU AGPL v3.0 이상** 라이선스로 배포됩니다.
+**KO:** 이 저장소(`secretbank`)는 **GNU AGPL v3.0 이상** 라이선스로 배포됩니다.
 
 ---
 
@@ -12,8 +12,8 @@
 
 **EN:**
 
-- `api-vault` (this repo) = **AGPL-3.0-or-later** — open-source core (local vault, graph engine, basic incident feed, RAILGUARD).
-- `api-vault-relay` (separate private repo) = **Enterprise Edition (EE) proprietary license** — Cloudflare Workers sync relay, Pro connectors, automated rotation pipelines, premium incident feed. Requires a separate commercial license.
+- `secretbank` (this repo) = **AGPL-3.0-or-later** — open-source core (local vault, graph engine, basic incident feed, RAILGUARD).
+- `secretbank-relay` (separate private repo) = **Enterprise Edition (EE) proprietary license** — Cloudflare Workers sync relay, Pro connectors, automated rotation pipelines, premium incident feed. Requires a separate commercial license.
 
 **KO:**
 
@@ -36,9 +36,9 @@
 
 ## Q4: Can I use this commercially without AGPL obligations?
 
-**EN:** A separate commercial license is available for organizations that cannot comply with AGPL terms (e.g., proprietary SaaS use). Contact: **contact@api-vault.app** _(placeholder — not yet active)_.
+**EN:** A separate commercial license is available for organizations that cannot comply with AGPL terms (e.g., proprietary SaaS use). Contact: **contact@secretbank.app** _(placeholder — not yet active)_.
 
-**KO:** AGPL 조건을 준수할 수 없는 경우(예: 독점 SaaS 재배포) 별도 상업용 라이선스를 문의하세요: contact@api-vault.app _(아직 미운영)_.
+**KO:** AGPL 조건을 준수할 수 없는 경우(예: 독점 SaaS 재배포) 별도 상업용 라이선스를 문의하세요: contact@secretbank.app _(아직 미운영)_.
 
 ---
 

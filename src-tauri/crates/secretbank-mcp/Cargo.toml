@@ -1,0 +1,35 @@
+[package]
+name = "secretbank-mcp"
+version = "0.1.0-pre10"
+edition = "2021"
+description = "Secretbank MCP server — Model Context Protocol bridge for Claude / Cursor / Continue"
+
+[[bin]]
+name = "secretbank-mcp"
+path = "src/main.rs"
+
+[dependencies]
+# Workspace runtime — need io-std for stdin/stdout async readers.
+tokio = { workspace = true, features = ["io-std"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+secrecy = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Domain
+secretbank-storage = { path = "../secretbank-storage" }
+secretbank-core = { path = "../secretbank-core" }
+secretbank-crypto = { path = "../secretbank-crypto" }
+secretbank-railguard = { path = "../secretbank-railguard" }
+secretbank-supply = { path = "../secretbank-supply" }
+
+# CLI tooling
+clap = { workspace = true }
+rpassword = { workspace = true }
+directories = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"

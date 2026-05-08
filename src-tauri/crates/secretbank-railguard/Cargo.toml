@@ -1,0 +1,9 @@
+[package]
+name = "secretbank-railguard"
+version = "0.1.0-pre10"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }

@@ -40,7 +40,7 @@ const unlockedVault: CommandMap = {
 // Onboarding marked complete so AppShell routes (settings, inventory) render
 // without redirect to /welcome.
 const onboardingDone: SettingMap = {
-  "apivault.settings.onboarding.done": "true",
+  "secretbank.settings.onboarding.done": "true",
 };
 
 test.describe("smoke", () => {

@@ -65,7 +65,7 @@ describe("SignInPage", () => {
 
   it("renders title, email input, and three sign-in options", () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: /Connect to API Vault/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Connect to Secretbank/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /passkey/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /GitHub/i })).toBeInTheDocument();
@@ -102,7 +102,7 @@ describe("SignInPage", () => {
     // Fire a synthetic deep-link event with the matching state
     const fire = deepLinkListeners[0];
     fire({
-      payload: ["apivault://auth/callback?provider=github&code=the-code&state=deadbeef"],
+      payload: ["Secretbank://auth/callback?provider=github&code=the-code&state=deadbeef"],
     });
 
     await waitFor(() =>
@@ -133,7 +133,7 @@ describe("SignInPage", () => {
 
     const fire = deepLinkListeners[0];
     fire({
-      payload: ["apivault://auth/callback?provider=github&code=the-code&state=BAD"],
+      payload: ["Secretbank://auth/callback?provider=github&code=the-code&state=BAD"],
     });
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());

@@ -15,8 +15,8 @@
  * 로 propagate. 그래서 두 origin 만 skip target 으로 정의.
  */
 
-export const ORIGIN_LOCAL_DB = Symbol("apivault:sync:local-db");
-export const ORIGIN_REMOTE = Symbol("apivault:sync:remote");
+export const ORIGIN_LOCAL_DB = Symbol("Secretbank:sync:local-db");
+export const ORIGIN_REMOTE = Symbol("Secretbank:sync:remote");
 
 export type SyncOrigin = typeof ORIGIN_LOCAL_DB | typeof ORIGIN_REMOTE;
 

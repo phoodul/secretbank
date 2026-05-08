@@ -1,0 +1,37 @@
+[package]
+name = "secretbank-cli"
+version = "0.1.0-pre10"
+edition = "2021"
+description = "Secretbank CLI — Secretbank list/reveal/run for terminal use"
+
+[[bin]]
+name = "secretbank"
+path = "src/main.rs"
+
+[dependencies]
+# Workspace runtime
+tokio = { workspace = true }
+serde_json = { workspace = true }
+secrecy = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Domain
+secretbank-storage = { path = "../secretbank-storage" }
+secretbank-core = { path = "../secretbank-core" }
+secretbank-crypto = { path = "../secretbank-crypto" }
+secretbank-supply = { path = "../secretbank-supply" }
+serde = { workspace = true }
+
+# CLI tooling
+clap = { workspace = true }
+rpassword = { workspace = true }
+directories = { workspace = true }
+arboard = { workspace = true }
+
+# URL parsing (Secretbank add — URL → host 추출)
+url = "2.5"
+time = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"

@@ -32,7 +32,7 @@ if (import.meta.env.DEV) {
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ThemeProvider defaultTheme="dark" storageKey="api-vault-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="secretbank-theme">
       <App />
       <Toaster />
     </ThemeProvider>

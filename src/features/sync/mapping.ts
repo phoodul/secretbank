@@ -313,8 +313,8 @@ export const usageMapper: EntityMapper<Usage, UsageYValue> = {
  *   - 디바이스별 UX preference (테마, language, sidebar 너비 등) → device-local
  */
 export const SYNC_SETTING_KEYS: ReadonlySet<string> = new Set([
-  "apivault.settings.security.auto_lock_minutes",
-  "apivault.settings.integrations.nvd_api_key",
+  "Secretbank.settings.security.auto_lock_minutes",
+  "Secretbank.settings.integrations.nvd_api_key",
 ]);
 
 export interface SettingRow {

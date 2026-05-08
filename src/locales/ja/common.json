@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "API Vault",
+    "title": "Secretbank",
     "subtitle": "The secrets manager that understands your dependency graph."
   },
   "nav": {
@@ -295,7 +295,7 @@
   },
   "auth": {
     "signIn": {
-      "title": "API Vault に接続",
+      "title": "Secretbank に接続",
       "subtitle": "サインインするとクラウド同期、インシデントマッチング、デプロイ共有が有効になります。ボールトはこの端末に暗号化されたまま保管されます。",
       "emailLabel": "メール",
       "or": "または",
@@ -331,9 +331,9 @@
     },
     "pairJoin": {
       "title": "他のデバイスとペアリング",
-      "description": "既存のAPI Vaultデバイスからペアリングリンクを貼り付けてください。両端末がエンドツーエンド暗号化で鍵を交換し、マスターパスフレーズは平文で外部に出ません。",
+      "description": "既存のSecretbankデバイスからペアリングリンクを貼り付けてください。両端末がエンドツーエンド暗号化で鍵を交換し、マスターパスフレーズは平文で外部に出ません。",
       "linkLabel": "ペアリングリンク",
-      "invalidLink": "有効なペアリングリンクではありません。apivault://pair?pin=…&pub=… の形式が必要です",
+      "invalidLink": "有効なペアリングリンクではありません。Secretbank://pair?pin=…&pub=… の形式が必要です",
       "joining": "ソースデバイスに接続中…",
       "waiting": "ソースデバイスからの認証情報送信を待機中…",
       "applying": "復号してボールトに保存中…",
@@ -344,7 +344,7 @@
     },
     "pair": {
       "title": "新しいデバイスを追加",
-      "description": "新しいデバイスでAPI Vaultを開き、下のリンクを貼り付けると、両端末がエンドツーエンド暗号化で鍵を交換します。平文は外部に出ません。",
+      "description": "新しいデバイスでSecretbankを開き、下のリンクを貼り付けると、両端末がエンドツーエンド暗号化で鍵を交換します。平文は外部に出ません。",
       "starting": "セキュアチャネルを準備中…",
       "pinLabel": "ペアリングPIN",
       "deepLinkLabel": "ペアリングリンク",
@@ -385,7 +385,7 @@
     "importing": "インポート中…",
     "importSuccess": "{{project}} に {{count}} 個のキーをインポートしました",
     "importFailed": "インポート失敗",
-    "welcomeTitle": "API Vault へようこそ",
+    "welcomeTitle": "Secretbank へようこそ",
     "welcomeSubtitle": "3ステップで素早くセットアップしましょう。",
     "stepIndicator": "ステップ {{current}} / {{total}}",
     "stepDropTitle": "プロジェクトフォルダをドロップ",
@@ -786,7 +786,7 @@
     },
     "removeConfirm": {
       "title": "インストールを削除しますか？",
-      "body": "インストール {{id}} を API Vault から削除します。GitHub のアプリインストールはそのまま残るため、必要に応じて GitHub 側でも削除してください。",
+      "body": "インストール {{id}} を Secretbank から削除します。GitHub のアプリインストールはそのまま残るため、必要に応じて GitHub 側でも削除してください。",
       "confirm": "削除",
       "cancel": "キャンセル"
     },

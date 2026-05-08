@@ -189,7 +189,7 @@ describe("CommandPalette", () => {
     await user.click(screen.getByText("Inventory"));
 
     expect(setItemSpy).toHaveBeenCalledWith(
-      "apivault:command-palette:recent",
+      "Secretbank:command-palette:recent",
       expect.stringContaining("nav.inventory"),
     );
 
@@ -199,7 +199,7 @@ describe("CommandPalette", () => {
   // 11. localStorage에 recent 있을 때 "Recent" 그룹 상단 렌더
   it("localStorage에 recent가 있을 때 'Recent' 그룹이 렌더링된다", async () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation((key) => {
-      if (key === "apivault:command-palette:recent") {
+      if (key === "Secretbank:command-palette:recent") {
         return JSON.stringify(["nav.inventory", "nav.settings"]);
       }
       return null;

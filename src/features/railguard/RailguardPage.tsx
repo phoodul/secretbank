@@ -17,7 +17,7 @@ import { RuleFilesPreview } from "./RuleFilesPreview";
 // Local-storage key for last-used project path
 // ---------------------------------------------------------------------------
 
-const LS_KEY = "apivault:railguard:lastPath";
+const LS_KEY = "Secretbank:railguard:lastPath";
 
 function loadLastPath(): string {
   try {

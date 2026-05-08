@@ -111,7 +111,7 @@ describe("SettingsPage", () => {
 
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("settings_get", {
-        key: "apivault.settings.security.auto_lock_minutes",
+        key: "Secretbank.settings.security.auto_lock_minutes",
       });
     });
   });
@@ -170,7 +170,7 @@ describe("SettingsPage", () => {
 
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("settings_set", {
-        key: "apivault.settings.security.auto_lock_minutes",
+        key: "Secretbank.settings.security.auto_lock_minutes",
         value: "15",
       });
     });
