@@ -5,6 +5,94 @@
 
 ---
 
+## [2026-05-08] **Zero-Knowledge 원칙 재확인** — "복구 가능 ↔ zero-knowledge" 양립 불가
+
+### 배경 — 사용자 통찰 (직접 인용)
+
+> "이 시스템의 가장 큰 문제는 비번 하나로 너무니 많은 중요한 것들을 관리한다는 점이고 만약 1password를 잊어버리면 재앙이지 ... 사용자가 설정한 질문 3개, 안면인식, e-mail 확인, 패턴인식, 스마트폰 authenticator 등 여러 단계를 모두 알아야 복원할 수 있도록 해도 zero knowledge에 위배되어 신뢰도를 떨어뜨리겠지?"
+
+**사용자 인식 100% 정확**. 이는 암호화 시스템의 근본 원리.
+
+### 본질적 분석 — 양립 불가 증명
+
+"사용자가 N단계 (질문 / 안면 / 이메일 / authenticator) 통과 → 서버가 vault key derive" 가 동작하려면:
+
+1. 서버가 N단계 인증 정보를 **어떤 형태로든 보관**해야 함
+2. 통과 시 master key 의 derive 함수를 갖고 있어야 함
+3. 즉 서버가 vault 를 열 수 있는 능력 보유 = **zero-knowledge 위반**
+
+설령 각 단계를 hash + salt 로 저장해도 통과 시 master key 함수를 derive 해야 하므로 본질적으로 동일. **단계가 늘어날수록 사용자 편의 ↑ 지만 zero-knowledge 는 정확히 같은 비율로 무너짐**.
+
+→ **zero-knowledge 깨면 1P / Bitwarden 과 차별점 없음 + Secretbank 가치 명제 (`README` 핵심 + `docs/PRIVACY.md`) 자체 붕괴**. 출시 후 깨면 평판 회복 불가.
+
+### 기존 서비스들의 처리 — 모두 "사용자 / 신탁자 책임" 으로 우회
+
+| 서비스 | 복구 방식 | zero-knowledge? |
+|:---|:---|:---|
+| 1Password Emergency Kit | 종이 출력 (사용자 본인 보관) | ✅ 유지 |
+| Bitwarden Emergency Access | 신탁자 m-of-n — 신탁자 자신의 key 로 vault receive | ✅ 유지 |
+| Apple iCloud Keychain | HSM (Hardware Security Module) + custodian protocol | ✅ 유지 (Apple 도 vault 못 봄) |
+| Web3 Wallet | Seed phrase 종이 + 옵션 social recovery (m-of-n trustees) | ✅ 유지 |
+
+**서버가 복구 책임을 가지는 password manager 는 없음** — 그건 정의상 password manager 가 아님.
+
+### 우리의 답 — Zero-knowledge 유지 + 재앙 회피 Layer 다중화
+
+각 layer 가 **책임 주체 분리**되어 있어 zero-knowledge 안 깨짐:
+
+| Layer | 의미 | zero-knowledge? | 책임 주체 | 우리 상태 |
+|:---|:---|:---|:---|:---|
+| **L1 Charter** (M23) | Diceware 6-word + 4-digit verifier + Shamir 2-of-3 옵션 | ✅ | 사용자 (종이 / PDF / Shamir split) | ✅ 구현됨 |
+| **L2 Multi-device sync** (M9) | E2EE Yjs CRDT + Cloudflare Workers relay | ✅ | 사용자 (디바이스 보유) | ✅ 구현됨 |
+| **L3 Biometric quick-unlock** | Touch ID / Windows Hello + device-bound key + OS keychain. passphrase 입력 빈도 ↓ → **잊을 가능성 자체 ↓** | ✅ | 사용자 (device + OS 잠금) | 🟡 부분 (자동잠금 idle 만) |
+| **L4 Emergency Access** | 신탁자 m-of-n, waiting period (예: 7일), 신탁자가 자기 key 로 vault receive | ✅ | 사용자 (신탁자 선정) + 신탁자 | ⏳ Tier 2 placeholder |
+| **L5 Hardware Key** | YubiKey FIDO2 / WebAuthn 물리 토큰 | ✅ | 사용자 (물리 토큰 보관) | ⏳ Phase 3-C passkey 합류 |
+| **L6 Charter reminder** | 정기 재출력 알림 + 신탁자 등록 권장 + multi-device sync 권장 | ✅ (UX 만) | 사용자 | ⏳ |
+
+**핵심 인사이트**: **분실 가능성 자체를 줄이는 것** 이 가장 효과적. L3 biometric quick-unlock 으로 passphrase 입력 빈도 월 1회 수준으로 줄이면 잊을 가능성도 그만큼 ↓.
+
+### UX 원칙 — "사용자 책임 명시" 의 명확한 alerting
+
+zero-knowledge 의 trade-off 를 사용자가 **명확히 인지**하게 만드는 것이 출시 후 신뢰도의 핵심:
+
+1. **vault 생성 시** — "당신의 passphrase 는 우리가 절대 못 봅니다. 분실 시 복구 불가 — Charter 출력 필수" 명시
+2. **Charter 출력 안 한 사용자는 vault 사용 자체 차단** — 이미 M23 에서 Charter 발급 강제
+3. **정기 Charter 재출력 reminder** (L6 / 6개월마다 / 새 device 추가 시)
+4. **신탁자 등록 권장** (L4 출시 후, "재앙 회피 layer 추가" 권유)
+5. **Onboarding 에 명시적 trade-off 설명** — "편한 복구 = 우리가 vault 봄. 우리는 절대 안 본다 = 당신이 책임진다"
+
+→ 1P / Bitwarden 보다 **더 명확하게 사용자 책임을 알림** → 역설적으로 신뢰도 ↑. 우리만의 차별점.
+
+### 결정 (2026-05-08)
+
+- **Zero-knowledge 는 절대 깨지 않는다** — 이는 출시 전후 모든 결정에서 가장 우선되는 원칙
+- "여러 단계 인증 기반 서버 측 복구" 같은 기능은 **요청이 있어도 구현 ❌**
+- 모든 재앙 회피 layer 는 **책임 주체 분리** 형태로만 추가 (사용자 본인 / 신탁자 / 물리 토큰 / device)
+
+### 영향 범위
+
+- **모든 미래 implementator 호출** — 위 원칙 인용 가능. "복구 편의" 기능 검토 시 zero-knowledge 영향 분석 필수
+- **마케팅 / 랜딩 페이지** — "분실 시 우리가 못 도와줍니다 (그래서 안전합니다)" 명시
+- **Onboarding 흐름** — Charter 발급 + trade-off 설명 강조 (현재 구현 그대로 유지)
+- **THREAT_MODEL.md** — 본 결정 인용 추가 권고
+
+### 구현 우선순위 (2026-05-08 시점)
+
+**원칙만 정식화. 구현 일정은 현재 순서 유지** (M24-E 격상 결정 그대로):
+
+```
+dogfooding → Site Logo → Password Generator → Quick Save → M24-E
+  → Phase 3-B → 4 → 3-C → 5 → M11
+```
+
+**향후 dogfooding 피드백** 받고 L3 / L4 / L6 격상 여부 재결정. 특히:
+
+- L3 biometric quick-unlock — 자주 passphrase 입력 부담 호소 시 격상
+- L6 Charter reminder — 사용자가 Charter 분실 우려 표현 시 격상
+- L4 Emergency Access — 가족 / 회사 사용자 피드백 받고 격상
+
+---
+
 ## [2026-05-08] **Tier 1 우선순위 재조정** — Password Generator + Quick Save + M24-E 격상
 
 ### 배경 — 사용자 통찰 (직접 인용)
