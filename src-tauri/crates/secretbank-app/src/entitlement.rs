@@ -163,8 +163,8 @@ mod tests {
     use std::sync::Arc;
     use tokio::sync::{Mutex, RwLock};
 
-    use secretbank_storage::vault::{mock::MockVaultStorage, SecretBytes, VaultStorage as _};
     use secrecy::SecretString;
+    use secretbank_storage::vault::{mock::MockVaultStorage, SecretBytes, VaultStorage as _};
     use time::OffsetDateTime;
 
     use super::*;

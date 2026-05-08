@@ -20,9 +20,9 @@
 
 use std::time::Duration;
 
+use reqwest::{Client, StatusCode};
 use secretbank_storage::sqlite::repositories::settings::SettingsRepo;
 use secretbank_storage::sqlite::SqlitePool;
-use reqwest::{Client, StatusCode};
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
 use url::Url;

@@ -135,9 +135,9 @@ impl Default for ImportSessionStore {
 mod tests {
     use std::time::Duration;
 
+    use secrecy::SecretBox;
     use secretbank_connectors::import::csv_google::{CsvFormat, ImportWarnings};
     use secretbank_connectors::import::to_detected::{CredentialKind, DetectedFromCsv};
-    use secrecy::SecretBox;
 
     use super::ImportSessionStore;
 

@@ -276,10 +276,10 @@ pub async fn vault_setting_set(
 
 #[cfg(test)]
 mod tests {
+    use secrecy::ExposeSecret;
     use secretbank_storage::vault::{
         mock::MockVaultStorage, SecretBytes, VaultError, VaultStorage as _,
     };
-    use secrecy::ExposeSecret;
 
     use super::*;
 

@@ -12,13 +12,13 @@
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use secrecy::ExposeSecret;
 use secretbank_audit::AuditActor;
 use secretbank_connectors::import::csv_google::{parse_csv, CsvFormat, ImportError};
 use secretbank_connectors::import::to_detected::{rows_to_detected, ToDetectedOptions};
 use secretbank_core::{CredentialId, CredentialInput, CredentialKind, Env, IssuerId};
 use secretbank_storage::sqlite::repositories::{credential::CredentialRepo, issuer::IssuerRepo};
 use secretbank_storage::vault::SecretBytes;
-use secrecy::ExposeSecret;
 use serde::Serialize;
 use tauri::State;
 use thiserror::Error;
@@ -498,11 +498,13 @@ pub async fn import_csv_commit(
 mod tests {
     use std::sync::Arc;
 
+    use secrecy::SecretString;
     use secretbank_core::{CredentialInput, Env, IssuerInput};
-    use secretbank_storage::sqlite::repositories::{credential::CredentialRepo, issuer::IssuerRepo};
+    use secretbank_storage::sqlite::repositories::{
+        credential::CredentialRepo, issuer::IssuerRepo,
+    };
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::{ExposeSecret, SecretBytes, VaultStorage as _};
-    use secrecy::SecretString;
     use tempfile::NamedTempFile;
     use tokio::sync::{Mutex, RwLock};
 

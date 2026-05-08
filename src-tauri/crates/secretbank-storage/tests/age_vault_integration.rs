@@ -3,11 +3,11 @@
 //! 각 테스트는 임시 디렉터리를 사용하므로 서로 격리된다.
 //! Argon2id (m=64MiB, t=3) 로 인해 테스트당 0.5–1초 소요.
 
+use secrecy::{ExposeSecret, SecretString};
 use secretbank_storage::{
     age_vault::AgeVaultStorage,
     vault::{SecretBytes, VaultError, VaultStorage},
 };
-use secrecy::{ExposeSecret, SecretString};
 
 fn make_password(s: &str) -> SecretString {
     SecretString::from(s.to_owned())
@@ -363,8 +363,8 @@ async fn legacy_initialize_remains_no_charter_path() {
 
 #[tokio::test]
 async fn issued_charter_unwraps_envelope_back_to_password_derived_enc_key() {
-    use secretbank_crypto::kdf;
     use secrecy::ExposeSecret;
+    use secretbank_crypto::kdf;
 
     let dir = tempfile::tempdir().unwrap();
     let vault_path = dir.path().join("vault.age");
@@ -394,9 +394,9 @@ async fn issued_charter_unwraps_envelope_back_to_password_derived_enc_key() {
 
 #[tokio::test]
 async fn shamir_shares_combine_back_to_envelope_unwrap_capable_secret() {
+    use secrecy::ExposeSecret;
     use secretbank_charter::shamir_combine;
     use secretbank_crypto::kdf;
-    use secrecy::ExposeSecret;
 
     let dir = tempfile::tempdir().unwrap();
     let vault_path = dir.path().join("vault.age");

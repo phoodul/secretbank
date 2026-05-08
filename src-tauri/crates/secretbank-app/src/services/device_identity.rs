@@ -17,11 +17,11 @@
 
 use std::sync::Arc;
 
+use ed25519_dalek::SigningKey;
+use rand_core::OsRng;
 use secretbank_core::{DeviceId, DeviceInput, DevicePlatform};
 use secretbank_storage::sqlite::{repositories::device::DeviceRepo, SqlitePool};
 use secretbank_storage::vault::{ExposeSecret, SecretBytes, VaultError, VaultStorage};
-use ed25519_dalek::SigningKey;
-use rand_core::OsRng;
 use thiserror::Error;
 use tokio::sync::RwLock;
 

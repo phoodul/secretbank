@@ -641,10 +641,10 @@ pub async fn hydrate_session_from_vault(state: &AppContext) -> Result<(), AuthCo
 mod tests {
     use std::sync::Arc;
 
+    use secrecy::SecretString;
     use secretbank_storage::sqlite::init_pool;
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::VaultStorage;
-    use secrecy::SecretString;
     use tokio::sync::{Mutex, RwLock};
     use url::Url;
     use wiremock::matchers::{body_json, method, path};

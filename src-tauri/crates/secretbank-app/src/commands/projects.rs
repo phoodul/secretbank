@@ -172,11 +172,11 @@ pub async fn project_delete(
 mod tests {
     use std::sync::Arc;
 
+    use secrecy::SecretString;
     use secretbank_core::ProjectInput;
     use secretbank_storage::sqlite::repositories::project::ProjectRepo;
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::VaultStorage as _;
-    use secrecy::SecretString;
     use tokio::sync::{Mutex, RwLock};
 
     use crate::audit_ctx::AuditCtx;

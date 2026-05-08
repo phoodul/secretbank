@@ -6,6 +6,7 @@
 //! Compiled only when the `mock` feature is enabled.
 #![cfg(feature = "mock")]
 
+use secrecy::SecretString;
 use secretbank_core::{CredentialFilter, CredentialId, CredentialInput, Env, IssuerInput};
 use secretbank_storage::{
     sqlite::{
@@ -14,7 +15,6 @@ use secretbank_storage::{
     },
     vault::{mock::MockVaultStorage, ExposeSecret, SecretBytes, VaultStorage},
 };
-use secrecy::SecretString;
 use sqlx::SqlitePool as RawPool;
 
 // ---------------------------------------------------------------------------

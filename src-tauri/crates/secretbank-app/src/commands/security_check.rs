@@ -16,6 +16,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use secrecy::SecretBox;
 use secretbank_audit::AuditActor;
 use secretbank_feeds::{
     check_missing_2fa, check_unsecured_url, detect_reused_passwords, is_weak_password,
@@ -25,7 +26,6 @@ use secretbank_storage::sqlite::repositories::{
     credential::CredentialRepo, security_alert::SecurityAlertRepo,
 };
 use secretbank_storage::vault::ExposeSecret;
-use secrecy::SecretBox;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use time::format_description::well_known::Rfc3339;
@@ -445,6 +445,7 @@ pub async fn undismiss_security_alert(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use secrecy::SecretString;
     use secretbank_core::{CredentialId, CredentialInput, Env, IssuerInput};
     use secretbank_storage::sqlite::{
         init_pool,
@@ -454,7 +455,6 @@ mod tests {
     };
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::{SecretBytes, VaultStorage as _};
-    use secrecy::SecretString;
     use std::sync::Arc;
     use tokio::sync::{Mutex, RwLock};
 

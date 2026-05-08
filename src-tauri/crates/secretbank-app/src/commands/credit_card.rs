@@ -362,6 +362,7 @@ fn brand_display(brand: CardBrand) -> &'static str {
 mod tests {
     use std::sync::Arc;
 
+    use secrecy::SecretString;
     use secretbank_audit::AuditActor;
     use secretbank_core::{CredentialInput, Env, IssuerId, IssuerInput};
     use secretbank_storage::sqlite::repositories::credential::CredentialRepo;
@@ -369,7 +370,6 @@ mod tests {
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::{ExposeSecret, VaultStorage as _};
     use secretbank_storage::AuditRepo;
-    use secrecy::SecretString;
     use tokio::sync::{Mutex, RwLock};
 
     use crate::audit_ctx::AuditCtx;

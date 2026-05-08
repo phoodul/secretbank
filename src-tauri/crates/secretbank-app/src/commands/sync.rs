@@ -8,9 +8,9 @@
 //! desktop never transmits these to the relay — only ciphertext encrypted
 //! under them. Zero-Knowledge invariant: relay sees only ciphertext.
 
-use secretbank_crypto::{kdf, KdfError};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use secrecy::{ExposeSecret as _, SecretString};
+use secretbank_crypto::{kdf, KdfError};
 use serde::Serialize;
 use tauri::State;
 use thiserror::Error;
@@ -202,10 +202,10 @@ pub async fn sync_get_root_key(state: State<'_, AppContext>) -> Result<String, S
 mod tests {
     use std::sync::Arc;
 
+    use secrecy::{SecretBox, SecretString};
     use secretbank_storage::sqlite::init_pool;
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::VaultStorage;
-    use secrecy::{SecretBox, SecretString};
     use tokio::sync::{Mutex, RwLock};
     use url::Url;
 

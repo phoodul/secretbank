@@ -23,9 +23,9 @@
 //! priv key 는 모두 백엔드 메모리 (`PairingSession`) 에만. frontend 는
 //! pin / pub_b64 / payload_b64 같은 wire 값만 본다.
 
-use secretbank_crypto::{aead, pairing as kp, AeadError, KdfError};
 use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
 use secrecy::{ExposeSecret as _, SecretBox, SecretString};
+use secretbank_crypto::{aead, pairing as kp, AeadError, KdfError};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::sync::RwLock;

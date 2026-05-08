@@ -523,12 +523,12 @@ pub async fn credential_rotate_value(
 mod tests {
     use std::sync::Arc;
 
+    use secrecy::SecretString;
     use secretbank_core::{CredentialId, CredentialInput, Env, IssuerId, IssuerInput};
     use secretbank_storage::sqlite::repositories::credential::CredentialRepo;
     use secretbank_storage::sqlite::repositories::issuer::IssuerRepo;
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::{ExposeSecret, VaultStorage as _};
-    use secrecy::SecretString;
     use tokio::sync::{Mutex, RwLock};
 
     use crate::audit_ctx::AuditCtx;

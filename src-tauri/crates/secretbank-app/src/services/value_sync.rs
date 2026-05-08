@@ -13,10 +13,10 @@
 //! AAD = `user:<userId>:cred:<credentialId>` — cross-user / cross-credential
 //! replay 차단.
 
-use secretbank_crypto::{aead, kdf, AeadError, KdfError};
-use secretbank_storage::vault::{SecretBytes, VaultError};
 use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
 use secrecy::{ExposeSecret as _, SecretBox, SecretString};
+use secretbank_crypto::{aead, kdf, AeadError, KdfError};
+use secretbank_storage::vault::{SecretBytes, VaultError};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -223,10 +223,10 @@ pub async fn pull_values_since(
 mod tests {
     use std::sync::Arc;
 
+    use secrecy::{SecretBox, SecretString};
     use secretbank_storage::sqlite::init_pool;
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::VaultStorage;
-    use secrecy::{SecretBox, SecretString};
     use tokio::sync::{Mutex, RwLock};
     use url::Url;
     use wiremock::matchers::{method, path, path_regex};

@@ -17,8 +17,8 @@ pub mod github;
 mod types;
 pub use types::{Auth, ConnectorError, RemoteKey, RepoRef, RotationCap};
 
-use secretbank_core::Incident;
 use async_trait::async_trait;
+use secretbank_core::Incident;
 
 /// Cross-provider connector trait.
 ///
@@ -52,8 +52,8 @@ pub trait Connector: Send + Sync {
 #[cfg(any(test, feature = "testing"))]
 pub mod testing {
     use super::{Auth, Connector, ConnectorError, RemoteKey, RotationCap};
-    use secretbank_core::Incident;
     use async_trait::async_trait;
+    use secretbank_core::Incident;
     use std::sync::{Arc, Mutex};
 
     /// `Connector` trait 의 동기화 가능한 mock 구현.

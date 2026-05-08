@@ -297,8 +297,8 @@ pub async fn github_scan_repo(
 
 #[cfg(test)]
 mod tests {
-    use secretbank_storage::vault::{mock::MockVaultStorage, VaultStorage as _};
     use secrecy::SecretString;
+    use secretbank_storage::vault::{mock::MockVaultStorage, VaultStorage as _};
 
     use super::*;
 

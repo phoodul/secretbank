@@ -6,8 +6,8 @@
 //! Compiled only when the `mock` feature is enabled.
 #![cfg(feature = "mock")]
 
-use secretbank_storage::vault::{mock::MockVaultStorage, VaultError, VaultStorage};
 use secrecy::SecretString;
+use secretbank_storage::vault::{mock::MockVaultStorage, VaultError, VaultStorage};
 
 // ---------------------------------------------------------------------------
 // Error type (mirrors VaultCommandError)

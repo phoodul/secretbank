@@ -6,11 +6,11 @@
 
 use std::collections::HashMap;
 
+use ed25519_dalek::VerifyingKey;
 use secretbank_audit::{verify as verify_chain, ChainVerification};
 use secretbank_core::DeviceId;
 use secretbank_storage::sqlite::repositories::device::DeviceRepo;
 use secretbank_storage::{AuditFilter, AuditRepo};
-use ed25519_dalek::VerifyingKey;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use thiserror::Error;

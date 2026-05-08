@@ -1,5 +1,5 @@
-use secretbank_crypto::kdf::{derive_auth_hash, derive_enc_key, derive_subkey, generate_salt};
 use secrecy::{ExposeSecret, SecretString};
+use secretbank_crypto::kdf::{derive_auth_hash, derive_enc_key, derive_subkey, generate_salt};
 
 fn test_password() -> SecretString {
     SecretString::new("correct-horse-battery-staple".into())

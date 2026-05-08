@@ -28,7 +28,9 @@ use clap::{Parser, Subcommand};
 use secrecy::SecretString;
 
 use secretbank_core::graph::{DependencyGraph, EdgeKind, NodeRef};
-use secretbank_core::{CredentialFilter, CredentialId, CredentialStatus, ProjectId, UsageWhereKind};
+use secretbank_core::{
+    CredentialFilter, CredentialId, CredentialStatus, ProjectId, UsageWhereKind,
+};
 use secretbank_storage::age_vault::AgeVaultStorage;
 use secretbank_storage::sqlite::init_pool;
 use secretbank_storage::sqlite::repositories::credential::CredentialRepo;

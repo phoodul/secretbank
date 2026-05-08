@@ -8,10 +8,10 @@ pub mod auth;
 pub mod secret_scanning;
 
 use crate::{Auth, Connector, ConnectorError, RemoteKey, RepoRef, RotationCap};
-use secretbank_core::Incident;
 use async_trait::async_trait;
 use reqwest::Client;
 use secret_scanning::list_alerts_with_base;
+use secretbank_core::Incident;
 use tracing::warn;
 
 pub const PROVIDER_ID: &str = "github";

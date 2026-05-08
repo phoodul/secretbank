@@ -26,12 +26,14 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
+use rand::Rng;
 use secretbank_audit::AuditActor;
-use secretbank_core::{CredentialFilter, CredentialId, CredentialPatch, CredentialStatus, IssuerId};
+use secretbank_core::{
+    CredentialFilter, CredentialId, CredentialPatch, CredentialStatus, IssuerId,
+};
 use secretbank_storage::sqlite::repositories::credential::CredentialRepo;
 use secretbank_storage::sqlite::repositories::issuer::IssuerRepo;
 use secretbank_storage::vault::VaultError;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use tauri::{Emitter, State};
 use thiserror::Error;
@@ -554,6 +556,7 @@ pub async fn kill_switch_revoke_issuer(
 mod tests {
     use std::sync::Arc;
 
+    use secrecy::SecretString;
     use secretbank_core::{
         CredentialFilter, CredentialInput, CredentialStatus, Env, IssuerId, IssuerInput,
     };
@@ -561,7 +564,6 @@ mod tests {
     use secretbank_storage::sqlite::repositories::issuer::IssuerRepo;
     use secretbank_storage::vault::mock::MockVaultStorage;
     use secretbank_storage::vault::{SecretBytes, VaultStorage as _};
-    use secrecy::SecretString;
     use tokio::sync::RwLock;
     use tokio::time::sleep;
 

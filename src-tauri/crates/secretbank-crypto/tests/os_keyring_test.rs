@@ -1,6 +1,6 @@
+use secrecy::ExposeSecret;
 use secretbank_crypto::os_keyring::{delete_master, load_master, store_master};
 use secretbank_crypto::KeyringError;
-use secrecy::ExposeSecret;
 
 /// 테스트마다 고유한 user_id 를 만들기 위한 간단한 식별자.
 /// ulid 대신 타임스탬프 + 스레드 ID 조합 사용 (추가 dep 없이).

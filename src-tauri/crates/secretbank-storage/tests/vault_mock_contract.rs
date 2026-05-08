@@ -3,10 +3,10 @@
 //! These 7 scenarios verify the behavioural contract that every
 //! `VaultStorage` implementation must satisfy.
 
+use secrecy::SecretString;
 use secretbank_storage::vault::{
     mock::MockVaultStorage, ExposeSecret, SecretBytes, VaultError, VaultStorage,
 };
-use secrecy::SecretString;
 
 fn secret_str(s: &str) -> SecretString {
     SecretString::from(s)

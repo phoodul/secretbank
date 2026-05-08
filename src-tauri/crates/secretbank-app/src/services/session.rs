@@ -26,10 +26,10 @@
 //! sees the access JWT it issued, but it never sees the refresh token at
 //! rest — only when the desktop client explicitly POSTs `/auth/refresh`).
 
-use secretbank_crypto::{kdf, KdfError};
-use secretbank_storage::vault::{ExposeSecret, SecretBytes, VaultError, VaultStorage};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use secrecy::{SecretBox, SecretString};
+use secretbank_crypto::{kdf, KdfError};
+use secretbank_storage::vault::{ExposeSecret, SecretBytes, VaultError, VaultStorage};
 use serde::Deserialize;
 
 /// Vault key prefix for authenticated session material.
@@ -387,8 +387,8 @@ pub fn derive_session_keys(
 
 #[cfg(test)]
 mod tests {
-    use secretbank_storage::vault::mock::MockVaultStorage;
     use secrecy::ExposeSecret as _;
+    use secretbank_storage::vault::mock::MockVaultStorage;
 
     use super::*;
 

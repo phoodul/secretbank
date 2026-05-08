@@ -1,4 +1,6 @@
-use secretbank_core::{CredentialInput, Env, IssuerInput, ProjectInput, UsageInput, UsageWhereKind};
+use secretbank_core::{
+    CredentialInput, Env, IssuerInput, ProjectInput, UsageInput, UsageWhereKind,
+};
 use secretbank_storage::sqlite::{
     repositories::{
         credential::CredentialRepo, issuer::IssuerRepo, project::ProjectRepo, usage::UsageRepo,
