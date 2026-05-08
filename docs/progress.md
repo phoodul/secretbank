@@ -26,12 +26,24 @@
   - 검증: vitest 14/14 PASS / typecheck 0 / cargo test 회귀 0
   - implementator 결정 (사양 보강): TAG_RE `(-[a-zA-Z0-9.]+)?` → `([-a-zA-Z0-9.]+)?` (SemVer pre-release 하이픈 허용, 보안 위협 없음 — 허용 문자 집합 동일)
   - implementator 결정: mockFetch `mockResolvedValue` → `mockImplementation` 교체 (`@cloudflare/vitest-pool-workers` "I/O on behalf of a different request" 오류 회피)
-- **다음 액션**:
-  1. Sub-task 1 commit (commiter 호출)
-  2. Sub-task 2 (site/index.html) — `fetchReleases()` GitHub API → `/api/latest` + `renderPreviousReleases()` → `/releases.json`
-  3. Sub-task 3 (site/latest.json + tauri.conf.json updater)
-  4. Sub-task 4 (release.yml — latest.json + releases.json 자동 생성 + `[skip ci]` commit)
-  5. Sub-task 5 (RELEASE_GUIDE)
+- **Sub-task 1 ✅ commits 완료 (이번 세션)**: `3e9ce39` feat(infra) Worker 신규 (8 files, 2582+) + `3225a78` docs GATE 1+2 결정 (4 files, 1263+)
+- **Sub-task 2 ✅ implementator 작성 완료, commit 보류 (working tree 에 보존)**:
+  - 변경: `site/index.html` (수정, +83/-24, 라인 1929~1985 + 1992 + 2126~2204) + `site/releases.json` (신규 placeholder, generated_at + releases:[])
+  - 검증: typecheck 0 / lint 0 errors (22 기존 warnings 무관) / format ✅ / 외부 fetch 제거 확인
+  - **commit 보류 사유**: 이번 세션 후반 사용자 제기 = "api-vault" 브랜드 → secretbank? → 도메인 / 브랜드 재검토. URL 변경 가능성 있어 도메인 결정 후 일괄 교체 필요
+- **🚨 이번 세션 후반 — 사용자 제기 브랜드/도메인 재검토 (project-decisions [2026-05-08] 신규)**:
+  - 사용자 지적: "api-vault 가 가치 축소" — API key 만 표현, password/card/passkey/note/graph 차별화 미반영
+  - 후보: Vaultmap (graph 직접 표현) / Secretbank (사용자 제안, broad secret + bank 메타포) / Lockmesh / Truststack / Bastion / Aegis 등
+  - 사용자 발견: secretbank.app 외 다른 TLD 모두 사용 중 → .com 인수 또는 다른 브랜드 후보 비교 필요
+  - **결정 1 (사용자)**: 브랜드 = **일단 보류** — 도메인 조사 더 시간
+  - **결정 2 (사용자)**: Phase A + B 동시 완료 후 dogfooding (URL 만 분리 적용 ❌, 일관성 우선)
+- **다음 세션 시작점 — Brand/Domain Decision (필수 선결)**:
+  1. 사용자 도메인 가용성 / 상표 / .com 인수 옵션 조사 (project-decisions [2026-05-08] 도메인 섹션 가이드)
+  2. 후보 매트릭스 (Vaultmap / Secretbank / Lockmesh / 기타 신규) 평가
+  3. 브랜드 + 도메인 확정 → Phase A + B 일괄 마이그레이션
+     - Phase A (~3 commits): Sub-task 2 working tree URL 교체 commit + Sub-task 3 (latest.json + tauri updater) + Sub-task 4 (release.yml) + Sub-task 5 (RELEASE_GUIDE) — 모두 새 도메인
+     - Phase B (~10~20 commits): repo rename / Tauri identifier / Cargo.toml / package.json / 27 crate / CLI binary / VSCode publisher / 이메일·로고·카피·docs broad
+  4. dogfooding 진입 (Phase A + B 완료 후)
 
 ### 이전 — 2026-05-07 (Phase 3-A 풀체인 완성)
 

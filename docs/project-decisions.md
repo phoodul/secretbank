@@ -56,6 +56,81 @@
 
 ---
 
+## [2026-05-08] 브랜드 / 도메인 재검토 — Pre-step Worker 진행 중 사용자 제기
+
+### 사용자 지적
+
+> "api-vault 로 시작했지만 점차 활용 확대 중. api-vault 라는 이름이 우리의 가치를 오히려 축소시키고 있다. secretbank 가 차라리 어떨까?"
+
+### 평가
+
+**사용자 지적이 타당**. 현재 구현 / 향후 비전 vs "api-vault" 이름의 격차:
+- API key (✅ 이름과 일치) / password (M24, ❌) / 신용카드 (Phase 3-A ✅, ❌) / passkey (Phase 3-C, ❌) / secure_note (Phase 3-B, ❌) / 의존성 graph + blast radius (핵심 차별화, ❌) / supply chain risk / incident matching / browser autofill / TOTP autofill 모두 "api-vault" 가 표현 못함.
+- Project Vision = 1P/Bitwarden 동등 시장 출시. 그들은 카테고리 자체를 broad 로 ("1Password", "Bitwarden"). API Vault 는 카테고리를 좁힘.
+
+### 검토된 후보
+
+**Tier A (강력)**: Vaultmap (graph 차별화 직접 표현) / Secretbank (사용자 제안, secret broad scope + bank 메타포) / Lockmesh (supply chain mesh)
+**Tier B**: Truststack / Keymap / Bastion / Aegis / Knox / Strongbox
+**Tier C**: Vaultweb / Linkvault / Cipherline 등
+
+### 사용자 결정 (2026-05-08, 이번 세션)
+
+1. **브랜드 / 도메인 = 일단 보류** — 더 시간 들여 조사 후 다음 세션에 확정
+   - 사용자 발견: secretbank.app 외 다른 TLD 모두 사용 중 → .com 인수 검토 또는 다른 브랜드 후보 비교 필요
+2. **Phase B (broad rename) 시점 = Phase A + B 동시 완료 후 dogfooding 진입** — URL 만 바꾸고 코드 내부는 api-vault 유지하는 부분 적용 ❌. 일관성 우선
+3. **이번 세션 진행 상태**: Sub-task 1 (Worker) ✅ 완료 + commit. Sub-task 2 (site/index.html) ✅ 코드 작성 완료, **working tree 에 보존, commit 보류** (도메인 결정 후 URL 일괄 교체 필요). Sub-task 3, 4, 5 진입 ❌.
+
+### 다음 세션 시작점 (Brand/Domain Decision)
+
+**선결 작업** (사용자가 다음 세션 시작 전 또는 시작 시 결정):
+
+1. **도메인 가용성 조사**:
+   - WHOIS 조회 도구: https://who.is, https://lookup.icann.org
+   - 가용성 검사: https://porkbun.com, https://www.cloudflare.com/products/registrar/, https://domains.google
+   - 만료 임박 도메인: https://www.snapnames.com, https://www.dropcatch.com
+
+2. **상표 검색 (필수)**:
+   - USPTO TESS (미국): https://tmsearch.uspto.gov
+   - EUIPO (유럽): https://euipo.europa.eu
+   - KIPRIS (한국): https://www.kipris.or.kr
+
+3. **`.com` 인수 옵션 (사용자 질문 답)**:
+   - WHOIS 로 owner 확인 (대부분 GDPR privacy proxy — proxy forward 이메일은 보임)
+   - 사용 상태 4가지: Parked+sale (즉시 buyout) / Parked-no-sale (broker 협상) / Active site (거절 多 또는 매우 비쌈) / Expiring (drop catch)
+   - Broker 서비스: GoDaddy Domain Broker ($69 service fee + 협상가) / Sedo (commission ~15%) / Afternic / Dan.com (escrow)
+   - 직접 컨택: WHOIS proxy email forward 또는 LinkedIn
+   - 가격 범위: parked $500~5K / Sedo buyout $3K~20K / active $10K~100K+ / premium $50K+
+   - 1Password 도 1password.com 인수에 수년 걸림 → .app 으로 시작은 정상 경로
+
+4. **후보 비교 표** (다음 세션 시작 시 사용자 직접 선택):
+   - 사용자가 Vaultmap / Secretbank / Lockmesh / 기타 신규 후보를 USPTO + 도메인 가용성 매트릭스로 평가
+
+### Phase A + B 통합 영향 범위 (도메인 결정 후 일괄 적용)
+
+**Phase A (사용자 노출 면)**:
+- `site/index.html` (Sub-task 2 working tree 보존, URL 일괄 교체)
+- `site/latest.json` (Sub-task 3)
+- `src-tauri/tauri.conf.json` updater endpoint (Sub-task 3)
+- `ee/cloudflare/download-proxy/src/index.ts` `MANIFEST_URL` + `Access-Control-Allow-Origin`
+- `ee/cloudflare/download-proxy/wrangler.toml` routes 4개
+- `docs/RELEASE_GUIDE.md` 도메인 명시 (Sub-task 5)
+
+**Phase B (코드 내부 broad rename)**:
+- GitHub repo 이름 (`phoodul/api-vault` → `phoodul/<new>`, GitHub 자동 redirect 7년)
+- Worker `REPO` 상수
+- Cargo.toml workspace name + `package.name`
+- 27 Rust crate 이름 (`api-vault-app`, `api-vault-cli`, `api-vault-core`, ...)
+- package.json `name` (root + vscode-extension)
+- Tauri identifier (`app.api-vault` → `app.<new>` — 0 사용자 / dogfooding 시작 직전이라 영향 ❌)
+- CLI binary 이름 (`apivault` → `<new>` 또는 짧은 alias)
+- VS Code extension publisher (`api-vault`)
+- 이메일 / 로고 / 카피 / docs 전반
+
+**예상 작업량**: Phase A ~3 commits / Phase B ~10~20 commits. broad rename 자동화 도구 (sed-style) 사용 + 수동 검토 병행.
+
+---
+
 ## [2026-05-07] 다음 세션 = Dogfooding (Phase 2-2B + 3-A 풀체인 검증)
 
 ### 사용자 결정 (resume 세션 종료 직전)
