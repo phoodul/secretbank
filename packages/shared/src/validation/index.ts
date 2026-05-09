@@ -25,6 +25,9 @@ export type { IssuerRecipeValidated } from "./recipe.js";
 
 export {
   NMMessageInitSchema,
+  NMMessagePairRequestSchema,
+  NMMessagePairResponseSchema,
+  NMMessagePairedSchema,
   NMMessagePairSchema,
   NMMessageRevealSchema,
   NMMessageSaveSchema,
@@ -32,6 +35,9 @@ export {
 } from "./pairing.js";
 export type {
   NMMessageInitValidated,
+  NMMessagePairRequestValidated,
+  NMMessagePairResponseValidated,
+  NMMessagePairedValidated,
   NMMessagePairValidated,
   NMMessageRevealValidated,
   NMMessageSaveValidated,

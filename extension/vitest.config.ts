@@ -8,6 +8,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "."),
     },
+    // @noble/* 패키지는 browser/default 조건으로 해석해야 함
+    conditions: ["browser", "import", "module", "default"],
   },
   test: {
     globals: true,

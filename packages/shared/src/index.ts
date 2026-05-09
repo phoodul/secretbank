@@ -12,9 +12,13 @@ export type {
   SessionToken,
   NMMessage,
   NMMessageInit,
-  NMMessagePair,
+  NMMessagePairRequest,
+  NMMessagePairResponse,
+  NMMessagePaired,
   NMMessageReveal,
   NMMessageSave,
+  // 하위 호환
+  NMMessagePair,
 } from "./types/pairing.js";
 
 // password-generator
@@ -39,6 +43,9 @@ export {
   CredentialMetaSchema,
   IssuerRecipeSchema,
   NMMessageInitSchema,
+  NMMessagePairRequestSchema,
+  NMMessagePairResponseSchema,
+  NMMessagePairedSchema,
   NMMessagePairSchema,
   NMMessageRevealSchema,
   NMMessageSaveSchema,
@@ -52,6 +59,9 @@ export type {
   CredentialMeta,
   IssuerRecipeValidated,
   NMMessageInitValidated,
+  NMMessagePairRequestValidated,
+  NMMessagePairResponseValidated,
+  NMMessagePairedValidated,
   NMMessagePairValidated,
   NMMessageRevealValidated,
   NMMessageSaveValidated,

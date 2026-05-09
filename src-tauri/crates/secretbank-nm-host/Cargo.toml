@@ -28,8 +28,23 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
-# B-4 페어링에서 실제 사용 — B-1 에서는 의존만 추가
+# B-4 페어링 암호화 — secretbank-crypto 재사용
 secretbank-crypto = { path = "../secretbank-crypto" }
+
+# B-4 비밀키 메모리 보호
+secrecy = { workspace = true }
+
+# B-4 페어링 protocol — 공개키 base64 인코딩/디코딩
+base64 = { workspace = true }
+
+# B-4 timing-safe 공개키 비교
+subtle = { workspace = true }
+
+# B-4 XChaCha20-Poly1305 (고정 nonce 테스트용 직접 접근)
+chacha20poly1305 = { workspace = true }
+
+# B-4 X25519 ECDH (RFC 7748 test vector 직접 검증용)
+x25519-dalek = { workspace = true }
 
 # B-2: 설치 경로 해석 (3 OS 통일 helper)
 dirs = "5"

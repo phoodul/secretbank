@@ -302,7 +302,12 @@ describe("IssuerRecipeSchema", () => {
 
 describe("NMMessageInitSchema", () => {
   it("[positive] 유효한 init 메시지가 통과한다", () => {
-    const result = NMMessageInitSchema.safeParse({ type: "init", version: "1.0.0" });
+    const result = NMMessageInitSchema.safeParse({
+      type: "init",
+      extension_id: "abcdefghijklmnopqrstuvwxyzAB",
+      version: "1.0.0",
+      ext_pub: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    });
     expect(result.success).toBe(true);
   });
 
@@ -388,7 +393,12 @@ describe("NMMessageSaveSchema", () => {
 
 describe("NMMessageSchema (discriminated union)", () => {
   it("[positive] type=init 분기가 동작한다", () => {
-    const result = NMMessageSchema.safeParse({ type: "init", version: "0.1.0" });
+    const result = NMMessageSchema.safeParse({
+      type: "init",
+      extension_id: "abcdefghijklmnopqrstuvwxyzAB",
+      version: "0.1.0",
+      ext_pub: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.type).toBe("init");

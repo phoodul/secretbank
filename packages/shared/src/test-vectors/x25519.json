@@ -1,0 +1,26 @@
+{
+  "_comment": "RFC 7748 §6.1 X25519 Diffie-Hellman Test Vectors. Rust + TS 양쪽이 공유하는 cross-language 검증 데이터.",
+  "_license": "AGPL-3.0-or-later",
+  "_reference": "https://www.rfc-editor.org/rfc/rfc7748#section-6.1",
+  "_note": "RFC 7748 §6.1 Test Vector 1. alice_priv 는 이미 clamped 된 스칼라 값이며 x25519-dalek/noble-curves 등 주요 구현과 호환 검증됨.",
+  "rfc7748_ecdh_vectors": [
+    {
+      "id": "rfc7748_tv1",
+      "description": "RFC 7748 §6.1 Test Vector 1. X25519(alice_priv, basepoint)=alice_pub, X25519(bob_priv, basepoint)=bob_pub, X25519(alice_priv, bob_pub)=X25519(bob_priv, alice_pub)=shared.",
+      "alice_private_hex": "a546e36bf0527c9d3b16154b82465edd62144c0ac1fc5a18506a2244ba449ac4",
+      "alice_public_hex": "e6db6867583030db3594c1a424b15f7c726624ec26b3353b10a903a6d0ab1c4c",
+      "bob_private_hex": "4b66e9d4d1b4673c5ad22691957d6af5c11b6421e0ea01d42ca4169e7918ba4d",
+      "bob_public_hex": "e5210f12786811d3f4b7959d0538ae2c31dbe7106fc03c3efc4cd549c715a897",
+      "shared_secret_hex": "c3da55379de9c6908e94ea4df28d084f32eccf03491c71f754b4075577a28552"
+    }
+  ],
+  "xchacha20poly1305_cross_check": {
+    "description": "XChaCha20-Poly1305 cross-language round-trip. 고정 key+nonce 로 Rust ↔ TS 양방향 검증.",
+    "key_hex": "0101010101010101010101010101010101010101010101010101010101010101",
+    "nonce_hex": "000000000000000000000000000000000000000000000001",
+    "plaintext_hex": "48656c6c6f2c2053656372657462616e6b21",
+    "plaintext_utf8": "Hello, Secretbank!",
+    "aad_hex": "",
+    "note": "24-byte nonce (XChaCha20). key/nonce 는 테스트 전용 고정값 — 프로덕션은 generate_nonce() 필수."
+  }
+}
