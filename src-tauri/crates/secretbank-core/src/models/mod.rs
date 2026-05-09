@@ -5,5 +5,6 @@ pub mod deployment;
 pub mod device;
 pub mod incident;
 pub mod issuer;
+pub mod issuer_recipe;
 pub mod project;
 pub mod usage;

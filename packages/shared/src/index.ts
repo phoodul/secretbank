@@ -22,6 +22,10 @@ export type {
   NMMessageCredentialCreate,
   NMMessageCredentialUpdate,
   NMMessageCredentialSaveResponse,
+  NMMessageGetRecipeForDomain,
+  NMMessageGetRecipeForDomainResponse,
+  NMMessageUpsertRecipeForDomain,
+  NMMessageUpsertRecipeForDomainResponse,
   // 하위 호환
   NMMessagePair,
 } from "./types/pairing.js";

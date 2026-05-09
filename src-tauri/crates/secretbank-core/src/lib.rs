@@ -24,6 +24,7 @@ pub use models::incident::{
     Incident, IncidentFilter, IncidentMatch, IncidentSeverity, IncidentSource, MatchReason,
 };
 pub use models::issuer::{Issuer, IssuerInput};
+pub use models::issuer_recipe::{IssuerRecipe, RecipeSource, StoredRecipe};
 pub use models::project::{Project, ProjectInput, ProjectPatch};
 pub use models::usage::{Usage, UsageInput, UsageWhereKind, VerifiedBy};
 pub use security_score::{

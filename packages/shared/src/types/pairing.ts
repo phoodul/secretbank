@@ -149,6 +149,41 @@ export interface NMMessageCredentialSaveResponse {
   error?: string;
 }
 
+// ---------------------------------------------------------------------------
+// T-24-E-E2: issuer recipe RPC 메시지
+// ---------------------------------------------------------------------------
+
+/** Extension → nm-host: 도메인 레시피 조회 */
+export interface NMMessageGetRecipeForDomain {
+  type: "get_recipe_for_domain";
+  domain: string;
+  session_token: string;
+}
+
+/** nm-host → Extension: 도메인 레시피 조회 응답 */
+export interface NMMessageGetRecipeForDomainResponse {
+  type: "get_recipe_for_domain_response";
+  domain: string;
+  found: boolean;
+  recipe?: import("./recipe.js").IssuerRecipe;
+  source?: "preset" | "user" | "heuristic";
+}
+
+/** Extension → nm-host: 도메인 레시피 upsert (사용자 보정 silent 등록) */
+export interface NMMessageUpsertRecipeForDomain {
+  type: "upsert_recipe_for_domain";
+  domain: string;
+  recipe: import("./recipe.js").IssuerRecipe;
+  session_token: string;
+}
+
+/** nm-host → Extension: 도메인 레시피 upsert 응답 */
+export interface NMMessageUpsertRecipeForDomainResponse {
+  type: "upsert_recipe_for_domain_response";
+  ok: boolean;
+  error?: string;
+}
+
 // 하위 호환 — A2 의 "pair" 타입 (코드 제출 메시지)은 pair_response 로 통합.
 // 기존 테스트가 "pair" type 을 직접 참조하는 경우를 위해 재-export 하지 않는다.
 
@@ -156,6 +191,7 @@ export interface NMMessageCredentialSaveResponse {
  * Native Messaging 메시지 discriminated union.
  * B-4: X25519 페어링 메시지(init/pair_request/pair_response/paired) 추가.
  * D-4: credential CRUD RPC 메시지 추가.
+ * E-2: issuer recipe RPC 메시지 추가.
  */
 export type NMMessage =
   | NMMessageInit
@@ -168,7 +204,11 @@ export type NMMessage =
   | NMMessageCredentialListByDomainResponse
   | NMMessageCredentialCreate
   | NMMessageCredentialUpdate
-  | NMMessageCredentialSaveResponse;
+  | NMMessageCredentialSaveResponse
+  | NMMessageGetRecipeForDomain
+  | NMMessageGetRecipeForDomainResponse
+  | NMMessageUpsertRecipeForDomain
+  | NMMessageUpsertRecipeForDomainResponse;
 
 // ---------------------------------------------------------------------------
 // 하위 호환 별칭 (A2 명명 유지 — 외부 consumer 가 직접 import 중)

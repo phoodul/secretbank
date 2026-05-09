@@ -67,6 +67,14 @@ pub const EXT_SAVE_CREATE: &str = "extension.save.create";
 pub const EXT_SAVE_UPDATE: &str = "extension.save.update";
 
 // ---------------------------------------------------------------------------
+// extension.recipe.*  (T-24-E-E2)
+// ---------------------------------------------------------------------------
+
+/// 사용자가 GeneratorPanel 에서 도메인 레시피를 silent 등록/갱신한 시점.
+/// TM-EXT-ACTOR: 사용자 명시적 동의 없음 — audit log 로 사후 검토 가능.
+pub const EXT_RECIPE_UPSERT: &str = "extension.recipe.upsert";
+
+// ---------------------------------------------------------------------------
 // 모든 신규 action 상수 목록 (테스트 순회용)
 // ---------------------------------------------------------------------------
 
@@ -84,6 +92,7 @@ pub const ALL_EXT_ACTIONS: &[&str] = &[
     EXT_REVEAL_API_KEY,
     EXT_SAVE_CREATE,
     EXT_SAVE_UPDATE,
+    EXT_RECIPE_UPSERT,
 ];
 
 // ---------------------------------------------------------------------------

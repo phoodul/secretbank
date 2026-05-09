@@ -12,6 +12,7 @@ pub mod graph;
 pub mod import;
 pub mod incidents;
 pub mod issuer;
+pub mod issuer_recipe;
 pub mod kill_switch;
 pub mod pairing;
 pub mod projects;

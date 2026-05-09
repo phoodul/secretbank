@@ -28,9 +28,12 @@
  */
 
 import type {
+  IssuerRecipe,
   NMMessage,
   NMMessageCredentialListByDomainResponse,
   NMMessageCredentialSaveResponse,
+  NMMessageGetRecipeForDomainResponse,
+  NMMessageUpsertRecipeForDomainResponse,
 } from "@secretbank/shared";
 import {
   NMDisconnected,
@@ -331,6 +334,44 @@ export class NMClient {
         session_token: sessionToken,
       },
       "credential_save_response",
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // T-24-E-E2: issuer recipe RPC
+  // -------------------------------------------------------------------------
+
+  /**
+   * 도메인 레시피를 조회한다.
+   *
+   * 우선순위: preset > user > heuristic.
+   * 없으면 `found: false` 반환 — caller 가 heuristic 을 적용한다.
+   * T-CRED-1: session_token 첨부 필수.
+   */
+  async getRecipeForDomain(
+    domain: string,
+    sessionToken: string,
+  ): Promise<NMMessageGetRecipeForDomainResponse> {
+    return this._rpc<NMMessageGetRecipeForDomainResponse>(
+      { type: "get_recipe_for_domain", domain, session_token: sessionToken },
+      "get_recipe_for_domain_response",
+    );
+  }
+
+  /**
+   * 사용자 보정 레시피를 silent 등록/갱신한다.
+   *
+   * TM-EXT-ACTOR: 사용자 명시적 동의 없이 silent 저장 — audit log 1건 기록.
+   * T-CRED-1: session_token 첨부 필수.
+   */
+  async upsertRecipeForDomain(
+    domain: string,
+    recipe: IssuerRecipe,
+    sessionToken: string,
+  ): Promise<NMMessageUpsertRecipeForDomainResponse> {
+    return this._rpc<NMMessageUpsertRecipeForDomainResponse>(
+      { type: "upsert_recipe_for_domain", domain, recipe, session_token: sessionToken },
+      "upsert_recipe_for_domain_response",
     );
   }
 

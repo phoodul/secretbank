@@ -43,6 +43,7 @@ use commands::incidents::{
     incident_dismiss, incident_feed_refresh, incident_list, incident_matches_for_credential,
 };
 use commands::issuer::{issuer_get, issuer_list};
+use commands::issuer_recipe::{resolve_issuer_recipe, upsert_issuer_recipe};
 use commands::kill_switch::{
     kill_switch_request_confirm, kill_switch_request_confirm_issuer, kill_switch_revoke,
     kill_switch_revoke_issuer,
@@ -196,6 +197,8 @@ pub fn run(context: tauri::Context) {
             import_csv_commit,
             issuer_list,
             issuer_get,
+            resolve_issuer_recipe,
+            upsert_issuer_recipe,
             project_create,
             project_list,
             project_get,
@@ -300,6 +303,8 @@ pub fn run(context: tauri::Context) {
             import_csv_commit,
             issuer_list,
             issuer_get,
+            resolve_issuer_recipe,
+            upsert_issuer_recipe,
             project_create,
             project_list,
             project_get,
