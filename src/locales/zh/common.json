@@ -72,7 +72,21 @@
     "charterCooldownClearedToast": "已解除冷却。",
     "charterCooldownToggleFailed": "无法更改冷却设置。",
     "charterLastRecoveredAt": "最近恢复: {{when}}",
-    "internalError": "发生意外错误。请重试。"
+    "internalError": "发生意外错误。请重试。",
+    "extensionSession": "扩展程序会话",
+    "extensionSessionTitle": "会话超时",
+    "extensionSessionDescription": "密码查看在此时间内保持解锁状态。更改此设置将立即使所有活跃扩展会话失效。",
+    "extensionSessionTtlMins30": "30分钟",
+    "extensionSessionTtlHour1": "1小时",
+    "extensionSessionTtlHours4": "4小时（默认）",
+    "extensionSessionTtlHours8": "8小时",
+    "extensionSessionTtlUntilLock": "直到保险库锁定",
+    "extensionSessionRotateConfirmTitle": "活跃会话将立即终止",
+    "extensionSessionRotateConfirmDescription": "更改会话超时时间将立即注销所有浏览器扩展会话。下次使用时需要重新认证。",
+    "extensionSessionRotateConfirmOk": "应用",
+    "extensionSessionRotateConfirmCancel": "取消",
+    "extensionSessionSaved": "会话超时已更新",
+    "extensionSessionSaveFailed": "会话超时更新失败"
   },
   "inventory": {
     "title": "清单",

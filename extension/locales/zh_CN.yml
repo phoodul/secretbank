@@ -116,3 +116,60 @@ pairing_repair_button:
 pairing_open_app:
   message: "请确保Secretbank桌面应用正在运行。"
   description: "错误状态下引导用户的帮助文本"
+
+# ── B-7: Extension session settings ──
+session_settings_title:
+  message: "会话超时"
+  description: "扩展程序会话超时设置区域标题"
+
+session_ttl_label:
+  message: "自动过期时间"
+  description: "会话TTL单选组标签"
+
+session_ttl_description:
+  message: "密码查看在此时间内保持解锁状态。更改此设置将立即使所有活跃会话失效。"
+  description: "会话TTL设置说明"
+
+session_ttl_mins30:
+  message: "30分钟"
+  description: "会话TTL选项：30分钟"
+
+session_ttl_hour1:
+  message: "1小时"
+  description: "会话TTL选项：1小时"
+
+session_ttl_hours4:
+  message: "4小时（默认）"
+  description: "会话TTL选项：4小时（默认）"
+
+session_ttl_hours8:
+  message: "8小时"
+  description: "会话TTL选项：8小时"
+
+session_ttl_until_lock:
+  message: "直到保险库锁定"
+  description: "会话TTL选项：保持会话直到用户手动锁定保险库"
+
+session_rotate_confirm_title:
+  message: "活跃会话将立即终止"
+  description: "轮换会话密钥前显示的确认对话框标题"
+
+session_rotate_confirm_description:
+  message: "更改会话超时时间将立即注销所有浏览器扩展会话。下次使用时需要重新认证。"
+  description: "会话轮换确认对话框正文"
+
+session_rotate_confirm_ok:
+  message: "应用"
+  description: "会话轮换对话框确认按钮"
+
+session_rotate_confirm_cancel:
+  message: "取消"
+  description: "会话轮换对话框取消按钮"
+
+session_settings_saved:
+  message: "会话超时已更新"
+  description: "设置保存成功时显示的提示"
+
+session_settings_save_failed:
+  message: "会话超时更新失败"
+  description: "设置保存失败时显示的提示"

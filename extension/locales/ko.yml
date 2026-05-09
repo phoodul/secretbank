@@ -116,3 +116,60 @@ pairing_repair_button:
 pairing_open_app:
   message: "Secretbank 데스크톱 앱이 실행 중인지 확인하세요."
   description: "에러 상태에서 사용자를 안내하는 도움말 텍스트"
+
+# ── B-7: Extension session settings ──
+session_settings_title:
+  message: "세션 만료"
+  description: "확장 세션 만료 설정 섹션 제목"
+
+session_ttl_label:
+  message: "자동 만료 시간"
+  description: "세션 TTL 라디오 그룹 레이블"
+
+session_ttl_description:
+  message: "비밀번호 확인이 이 시간 동안 잠금 해제 상태로 유지됩니다. 변경하면 모든 활성 세션이 즉시 종료됩니다."
+  description: "세션 TTL 설정 설명"
+
+session_ttl_mins30:
+  message: "30분"
+  description: "세션 TTL 옵션: 30분"
+
+session_ttl_hour1:
+  message: "1시간"
+  description: "세션 TTL 옵션: 1시간"
+
+session_ttl_hours4:
+  message: "4시간 (기본값)"
+  description: "세션 TTL 옵션: 4시간 (기본값)"
+
+session_ttl_hours8:
+  message: "8시간"
+  description: "세션 TTL 옵션: 8시간"
+
+session_ttl_until_lock:
+  message: "볼트 잠금 시까지"
+  description: "세션 TTL 옵션: 사용자가 직접 볼트를 잠글 때까지 유지"
+
+session_rotate_confirm_title:
+  message: "활성 세션이 즉시 종료됩니다"
+  description: "세션 시크릿 회전 전 표시되는 확인 dialog 제목"
+
+session_rotate_confirm_description:
+  message: "세션 만료 시간을 변경하면 모든 브라우저 확장 세션이 즉시 로그아웃됩니다. 다음 사용 시 재인증이 필요합니다."
+  description: "세션 회전 확인 dialog 본문"
+
+session_rotate_confirm_ok:
+  message: "적용"
+  description: "세션 회전 dialog 확인 버튼"
+
+session_rotate_confirm_cancel:
+  message: "취소"
+  description: "세션 회전 dialog 취소 버튼"
+
+session_settings_saved:
+  message: "세션 만료 시간이 업데이트됐습니다"
+  description: "설정 저장 성공 시 표시되는 토스트"
+
+session_settings_save_failed:
+  message: "세션 만료 시간 업데이트에 실패했습니다"
+  description: "설정 저장 실패 시 표시되는 토스트"

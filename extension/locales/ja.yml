@@ -116,3 +116,60 @@ pairing_repair_button:
 pairing_open_app:
   message: "Secretbankデスクトップアプリが起動していることを確認してください。"
   description: "エラー状態でユーザーを案内するヘルプテキスト"
+
+# ── B-7: Extension session settings ──
+session_settings_title:
+  message: "セッションタイムアウト"
+  description: "拡張機能のセッションタイムアウト設定セクションの見出し"
+
+session_ttl_label:
+  message: "自動期限切れ"
+  description: "セッションTTLラジオグループのラベル"
+
+session_ttl_description:
+  message: "パスワードの表示がこの時間だけロック解除状態を維持します。設定を変更すると、すべてのアクティブセッションが即座に無効になります。"
+  description: "セッションTTL設定の説明"
+
+session_ttl_mins30:
+  message: "30分"
+  description: "セッションTTLオプション: 30分"
+
+session_ttl_hour1:
+  message: "1時間"
+  description: "セッションTTLオプション: 1時間"
+
+session_ttl_hours4:
+  message: "4時間（デフォルト）"
+  description: "セッションTTLオプション: 4時間（デフォルト）"
+
+session_ttl_hours8:
+  message: "8時間"
+  description: "セッションTTLオプション: 8時間"
+
+session_ttl_until_lock:
+  message: "ボルトをロックするまで"
+  description: "セッションTTLオプション: ユーザーが手動でボルトをロックするまで維持"
+
+session_rotate_confirm_title:
+  message: "アクティブセッションが即座に終了します"
+  description: "セッションシークレットのローテーション前に表示される確認ダイアログのタイトル"
+
+session_rotate_confirm_description:
+  message: "セッションタイムアウトを変更すると、すべてのブラウザ拡張機能セッションが即座にサインアウトされます。次回使用時に再認証が必要です。"
+  description: "セッションローテーション確認ダイアログの本文"
+
+session_rotate_confirm_ok:
+  message: "適用"
+  description: "セッションローテーションダイアログの確認ボタン"
+
+session_rotate_confirm_cancel:
+  message: "キャンセル"
+  description: "セッションローテーションダイアログのキャンセルボタン"
+
+session_settings_saved:
+  message: "セッションタイムアウトを更新しました"
+  description: "設定保存成功時に表示されるトースト"
+
+session_settings_save_failed:
+  message: "セッションタイムアウトの更新に失敗しました"
+  description: "設定保存失敗時に表示されるトースト"

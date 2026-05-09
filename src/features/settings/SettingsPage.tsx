@@ -16,6 +16,7 @@ import { CloudSyncSection } from "@/features/auth/CloudSyncSection";
 import { SubscriptionSection } from "@/features/billing/SubscriptionSection";
 import { useHibpOptIn } from "@/features/security/use-hibp-opt-in";
 import { CharterCooldownSection } from "./CharterCooldownSection";
+import { ExtensionSettings } from "./ExtensionSettings";
 import { GithubIntegrationSection } from "./GithubIntegrationSection";
 import { IntegrationsSection } from "./IntegrationsSection";
 import { type AutoLockMinutes, useAutoLockMinutes } from "./use-settings";
@@ -158,6 +159,9 @@ export function SettingsPage() {
 
         {/* Charter cooldown — recovery 후 7일간 unlock 거부 (도난 방지) */}
         <CharterCooldownSection />
+
+        {/* Extension session timeout (B-7) */}
+        <ExtensionSettings />
 
         {/* HIBP opt-in — GATE 1-1: default 비활성 */}
         <div className="space-y-2">

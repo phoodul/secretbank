@@ -76,7 +76,21 @@
     "hibpCheck": "HIBP Password Check",
     "hibpCheckDescription": "Check passwords against Have I Been Pwned. Only the first 5 characters of a SHA-1 hash are sent — your actual password never leaves this device.",
     "hibpEnabled": "Enabled",
-    "hibpDisabled": "Disabled (default)"
+    "hibpDisabled": "Disabled (default)",
+    "extensionSession": "Extension Session",
+    "extensionSessionTitle": "Session Timeout",
+    "extensionSessionDescription": "Password reveals stay unlocked for this long. Changing this setting will immediately invalidate all active extension sessions.",
+    "extensionSessionTtlMins30": "30 minutes",
+    "extensionSessionTtlHour1": "1 hour",
+    "extensionSessionTtlHours4": "4 hours (default)",
+    "extensionSessionTtlHours8": "8 hours",
+    "extensionSessionTtlUntilLock": "Until vault locks",
+    "extensionSessionRotateConfirmTitle": "Active sessions will be terminated",
+    "extensionSessionRotateConfirmDescription": "Changing the session timeout will immediately sign out all browser extension sessions. You will need to re-authenticate on next use.",
+    "extensionSessionRotateConfirmOk": "Apply",
+    "extensionSessionRotateConfirmCancel": "Cancel",
+    "extensionSessionSaved": "Session timeout updated",
+    "extensionSessionSaveFailed": "Failed to update session timeout"
   },
   "inventory": {
     "title": "Inventory",

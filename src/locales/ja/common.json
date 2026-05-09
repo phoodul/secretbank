@@ -72,7 +72,21 @@
     "charterCooldownClearedToast": "クールダウンを解除しました。",
     "charterCooldownToggleFailed": "クールダウン設定を変更できませんでした。",
     "charterLastRecoveredAt": "最終リカバリ: {{when}}",
-    "internalError": "予期しないエラーが発生しました。もう一度お試しください。"
+    "internalError": "予期しないエラーが発生しました。もう一度お試しください。",
+    "extensionSession": "拡張機能セッション",
+    "extensionSessionTitle": "セッションタイムアウト",
+    "extensionSessionDescription": "パスワードの表示がこの時間だけロック解除状態を維持します。変更するとすべてのアクティブな拡張機能セッションが即座に無効になります。",
+    "extensionSessionTtlMins30": "30分",
+    "extensionSessionTtlHour1": "1時間",
+    "extensionSessionTtlHours4": "4時間（デフォルト）",
+    "extensionSessionTtlHours8": "8時間",
+    "extensionSessionTtlUntilLock": "ボルトをロックするまで",
+    "extensionSessionRotateConfirmTitle": "アクティブセッションが即座に終了します",
+    "extensionSessionRotateConfirmDescription": "セッションタイムアウトを変更すると、すべてのブラウザ拡張機能セッションが即座にサインアウトされます。次回使用時に再認証が必要です。",
+    "extensionSessionRotateConfirmOk": "適用",
+    "extensionSessionRotateConfirmCancel": "キャンセル",
+    "extensionSessionSaved": "セッションタイムアウトを更新しました",
+    "extensionSessionSaveFailed": "セッションタイムアウトの更新に失敗しました"
   },
   "inventory": {
     "title": "インベントリ",

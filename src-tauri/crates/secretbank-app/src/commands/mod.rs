@@ -6,6 +6,7 @@ pub mod credit_card;
 pub mod deployments;
 pub mod entitlement;
 pub mod ext_pairing;
+pub mod extension_session;
 pub mod github;
 pub mod graph;
 pub mod import;

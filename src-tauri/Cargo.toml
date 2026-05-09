@@ -44,6 +44,9 @@ x25519-dalek = { version = "2", features = ["static_secrets"] }
 keyring = { version = "3", features = ["windows-native", "apple-native", "sync-secret-service", "crypto-rust"] }
 hex = "0.4"
 
+# HMAC (B-7 session token)
+hmac = "0.12"
+
 # Timing-safe comparison
 subtle = "2.6"
 

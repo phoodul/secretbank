@@ -29,6 +29,10 @@ use commands::deployments::{
 };
 use commands::entitlement::{entitlement_current, entitlement_set_dev};
 use commands::ext_pairing::{ext_pairing_list, ext_pairing_request_received, ext_pairing_revoke};
+use commands::extension_session::{
+    extension_session_issue, extension_session_settings_get, extension_session_settings_set,
+    extension_session_verify,
+};
 use commands::github::{
     github_install_url, github_list_installations, github_remove_installation,
     github_save_installation, github_scan_repo,
@@ -262,6 +266,10 @@ pub fn run(context: tauri::Context) {
             ext_pairing_request_received,
             ext_pairing_revoke,
             ext_pairing_list,
+            extension_session_issue,
+            extension_session_verify,
+            extension_session_settings_get,
+            extension_session_settings_set,
         ]);
     }
 
@@ -358,6 +366,10 @@ pub fn run(context: tauri::Context) {
             ext_pairing_request_received,
             ext_pairing_revoke,
             ext_pairing_list,
+            extension_session_issue,
+            extension_session_verify,
+            extension_session_settings_get,
+            extension_session_settings_set,
         ]);
     }
 

@@ -76,7 +76,21 @@
     "hibpCheck": "HIBP 비밀번호 검사",
     "hibpCheckDescription": "Have I Been Pwned에서 비밀번호를 확인합니다. SHA-1 해시의 첫 5자리만 전송되며, 실제 비밀번호는 이 기기를 절대 벗어나지 않습니다.",
     "hibpEnabled": "활성화됨",
-    "hibpDisabled": "비활성화됨 (기본값)"
+    "hibpDisabled": "비활성화됨 (기본값)",
+    "extensionSession": "확장 세션",
+    "extensionSessionTitle": "세션 만료",
+    "extensionSessionDescription": "비밀번호 확인이 이 시간 동안 잠금 해제 상태로 유지됩니다. 변경하면 모든 활성 확장 세션이 즉시 종료됩니다.",
+    "extensionSessionTtlMins30": "30분",
+    "extensionSessionTtlHour1": "1시간",
+    "extensionSessionTtlHours4": "4시간 (기본값)",
+    "extensionSessionTtlHours8": "8시간",
+    "extensionSessionTtlUntilLock": "볼트 잠금 시까지",
+    "extensionSessionRotateConfirmTitle": "활성 세션이 즉시 종료됩니다",
+    "extensionSessionRotateConfirmDescription": "세션 만료 시간을 변경하면 모든 브라우저 확장 세션이 즉시 로그아웃됩니다. 다음 사용 시 재인증이 필요합니다.",
+    "extensionSessionRotateConfirmOk": "적용",
+    "extensionSessionRotateConfirmCancel": "취소",
+    "extensionSessionSaved": "세션 만료 시간이 업데이트됐습니다",
+    "extensionSessionSaveFailed": "세션 만료 시간 업데이트에 실패했습니다"
   },
   "inventory": {
     "title": "인벤토리",

@@ -86,6 +86,36 @@ export const I18N_KEYS = {
   PAIRING_REPAIR_BUTTON: "pairing_repair_button",
   /** 에러 상태 도움말 — 데스크톱 앱 실행 확인 안내 */
   PAIRING_OPEN_APP: "pairing_open_app",
+
+  // ── B-7: Extension session settings ──
+  /** Session 설정 섹션 제목 */
+  SESSION_SETTINGS_TITLE: "session_settings_title",
+  /** Session TTL 옵션 레이블 */
+  SESSION_TTL_LABEL: "session_ttl_label",
+  /** Session TTL 설명 */
+  SESSION_TTL_DESCRIPTION: "session_ttl_description",
+  /** TTL 옵션: 30분 */
+  SESSION_TTL_MINS30: "session_ttl_mins30",
+  /** TTL 옵션: 1시간 */
+  SESSION_TTL_HOUR1: "session_ttl_hour1",
+  /** TTL 옵션: 4시간 (기본값) */
+  SESSION_TTL_HOURS4: "session_ttl_hours4",
+  /** TTL 옵션: 8시간 */
+  SESSION_TTL_HOURS8: "session_ttl_hours8",
+  /** TTL 옵션: 사용자 잠금까지 */
+  SESSION_TTL_UNTIL_LOCK: "session_ttl_until_lock",
+  /** 설정 변경 확인 dialog 제목 */
+  SESSION_ROTATE_CONFIRM_TITLE: "session_rotate_confirm_title",
+  /** 설정 변경 확인 dialog 설명 */
+  SESSION_ROTATE_CONFIRM_DESCRIPTION: "session_rotate_confirm_description",
+  /** 설정 변경 확인 버튼 */
+  SESSION_ROTATE_CONFIRM_OK: "session_rotate_confirm_ok",
+  /** 설정 변경 취소 버튼 */
+  SESSION_ROTATE_CONFIRM_CANCEL: "session_rotate_confirm_cancel",
+  /** 설정 저장 성공 토스트 */
+  SESSION_SETTINGS_SAVED: "session_settings_saved",
+  /** 설정 저장 실패 토스트 */
+  SESSION_SETTINGS_SAVE_FAILED: "session_settings_save_failed",
 } as const;
 
 /**

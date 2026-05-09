@@ -116,3 +116,60 @@ pairing_repair_button:
 pairing_open_app:
   message: "Make sure the Secretbank desktop app is running."
   description: "Help text shown in error state to guide the user"
+
+# ── B-7: Extension session settings ──
+session_settings_title:
+  message: "Session Timeout"
+  description: "Section heading for extension session timeout settings"
+
+session_ttl_label:
+  message: "Auto-expire after"
+  description: "Label for the session TTL radio group"
+
+session_ttl_description:
+  message: "Password reveals stay unlocked for this long. Changing this setting will immediately invalidate all active sessions."
+  description: "Description for the session TTL setting"
+
+session_ttl_mins30:
+  message: "30 minutes"
+  description: "Session TTL option: 30 minutes"
+
+session_ttl_hour1:
+  message: "1 hour"
+  description: "Session TTL option: 1 hour"
+
+session_ttl_hours4:
+  message: "4 hours (default)"
+  description: "Session TTL option: 4 hours (default)"
+
+session_ttl_hours8:
+  message: "8 hours"
+  description: "Session TTL option: 8 hours"
+
+session_ttl_until_lock:
+  message: "Until vault locks"
+  description: "Session TTL option: keep session until user manually locks vault"
+
+session_rotate_confirm_title:
+  message: "Active sessions will be terminated"
+  description: "Title of the confirmation dialog shown before rotating the session secret"
+
+session_rotate_confirm_description:
+  message: "Changing the session timeout will immediately sign out all browser extension sessions. You will need to re-authenticate on next use."
+  description: "Body text of the session rotation confirmation dialog"
+
+session_rotate_confirm_ok:
+  message: "Apply"
+  description: "Confirm button in the session rotation dialog"
+
+session_rotate_confirm_cancel:
+  message: "Cancel"
+  description: "Cancel button in the session rotation dialog"
+
+session_settings_saved:
+  message: "Session timeout updated"
+  description: "Toast shown after successfully saving session settings"
+
+session_settings_save_failed:
+  message: "Failed to update session timeout"
+  description: "Toast shown when saving session settings fails"
