@@ -1,5 +1,44 @@
 # Work Log
 
+## 2026-05-09 — T-24-E-B7 세션 토큰 (HMAC-SHA256) + Settings UI 완료
+
+### 큰 줄거리
+
+- `secretbank-nm-host/src/session.rs`: HMAC-SHA256(key, "session" || ts || nonce || ext_id) 토큰 — issue/verify/verify_at + ST1-12 단위 테스트 (12케이스)
+- `secretbank-app/src/commands/extension_session.rs`: 4 Tauri 커맨드 (issue/verify/settings_get/settings_set) + EX1-8 단위 테스트 (8케이스)
+- `src/features/settings/ExtensionSettings.tsx`: 5-option 라디오 그룹 + AlertDialog confirm (기존 세션 종료 경고) + 성공/실패 toast + Skeleton 로딩
+- `extension/entrypoints/popup/Settings.tsx`: chrome.storage 캐시 기반 read-only TTL 배지 + 데스크톱 앱 안내
+- i18n: SESSION_* 14키 신규 (I18N_KEYS 28→42) + 4로케일 (en/ko/ja/zh_CN 확장 + en/ko/ja/zh 데스크톱)
+- typecheck: `useRef` 미사용 imports 제거
+- drift detection 테스트 갱신: 28 → 42키
+
+### 보안 설계 핵심
+
+- constant-time 비교 (subtle::ConstantTimeEq) — timing attack 방어
+- CSPRNG 16-byte nonce (rand::thread_rng)
+- secret_key: 32-byte CSPRNG, vault `device/extension/{ext_id}/session_secret` 저장
+- settings_set 호출 시 모든 ext_id secret 즉시 회전 → 기존 token 무효화
+
+### 검증 결과
+
+| 항목 | 결과 |
+| :--- | :--- |
+| cargo test --lib | 253+ PASS (회귀 0, ST1-12 + EX1-8 신규) |
+| cargo clippy -D warnings | 0 warnings |
+| cargo fmt --check | OK |
+| pnpm typecheck | 0 errors |
+| pnpm vitest run | 628 PASS (회귀 0, ExtensionSettings 7신규) |
+| extension test | 122 PASS (회귀 0, drift detection 42키 갱신) |
+| shared test | 100 PASS |
+
+### 핵심 commits
+
+| 카테고리 | 커밋 | 의미 |
+| :--- | :--- | :--- |
+| T-24-E-B7 session token + Settings UI | `ba92e60` | HMAC-SHA256 토큰 + 4 Tauri 커맨드 + Settings UI |
+
+---
+
 ## 2026-05-09 — T-24-E-B5 PairingDialog UI + storage typed wrapper 완료
 
 ### 큰 줄거리

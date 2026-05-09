@@ -759,9 +759,9 @@
 | T-24-E-B2   | NM installer (3 OS)                              | 2026-05-09 | `7145f2d` |
 | T-24-E-B3   | nm-client.ts                                     | 2026-05-09 | `465c82c` |
 | T-24-E-B4   | 페어링 protocol                                  | 2026-05-09 | `8b5275f` |
-| T-24-E-B5   | 확장 PairingDialog                               | -      | -         |
+| T-24-E-B5   | 확장 PairingDialog                               | 2026-05-09 | `6ad32f7` |
 | T-24-E-B6   | 데스크톱 PairingApprovalDialog                   | 2026-05-09 | `21ecccb` |
-| T-24-E-B7   | session token + Settings                         | -      | -         |
+| T-24-E-B7   | session token + Settings                         | 2026-05-09 | `ba92e60` |
 | T-24-E-B8   | NM Host audit                                    | -      | -         |
 | T-24-E-B9   | 외부 audit (Phase B)                             | -      | -         |
 | T-24-E-B10  | 3 OS 수동 검증                                   | -      | -         |
