@@ -20,7 +20,25 @@ export interface SaveBannerProps {
 
 const AUTO_DISMISS_MS = 5000;
 
-// inline style — Shadow DOM 내 Tailwind 동작 어려움. px 기반 (rem 충돌 방지).
+/*
+ * inline style — Shadow DOM 내 Tailwind 동작 어려움. px 기반 (rem 충돌 방지).
+ *
+ * E-5 토큰 동기화 (2026-05-10):
+ *   oklch 값은 extension/styles/globals.css 의 :root / .dark 토큰과 동일.
+ *   shadow DOM 은 host :root CSS 변수를 상속받지 못하므로 직접 hardcode.
+ *
+ *   Light 배경 : oklch(0.985 0.006 250)  = --background
+ *   Dark 배경  : oklch(0.14 0.04 252)    = --background (.dark)
+ *   Light border: oklch(0.86 0.025 245)  = --border
+ *   Dark border : oklch(0.45 0.08 245)   ≈ --border (.dark, 알파 제거)
+ *   Light fg    : oklch(0.16 0.04 250)   = --foreground
+ *   Dark fg     : oklch(0.96 0.012 250)  = --foreground (.dark)
+ *   Light muted-fg: oklch(0.42 0.05 250) = --muted-foreground
+ *   Dark muted-fg : oklch(0.7 0.03 250)  = --muted-foreground (.dark)
+ *   Primary (light): oklch(0.42 0.2 245) = --primary
+ *   Primary (dark) : oklch(0.62 0.2 245) = --primary (.dark)
+ *   Destructive    : oklch(0.5 0.2 28) / oklch(0.62 0.22 28) = --destructive
+ */
 const BANNER_CSS = `
 :host { all: initial; }
 .sb-logo-wrap {
@@ -45,7 +63,7 @@ const BANNER_CSS = `
   justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  color: #fff;
+  color: oklch(0.985 0.005 250);
   flex-shrink: 0;
 }
 .sb-banner {
@@ -54,31 +72,31 @@ const BANNER_CSS = `
   right: 16px;
   z-index: 2147483647;
   width: 360px;
-  background: oklch(0.98 0.005 264);
-  border: 1px solid oklch(0.88 0.01 264);
-  border-radius: 12px;
+  background: oklch(0.985 0.006 250);
+  border: 1px solid oklch(0.86 0.025 245);
+  border-radius: 10px;
   box-shadow: 0 4px 24px oklch(0 0 0 / 0.12);
   padding: 16px;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  color: oklch(0.2 0.01 264);
+  color: oklch(0.16 0.04 250);
   box-sizing: border-box;
 }
 @media (prefers-color-scheme: dark) {
   .sb-banner {
-    background: oklch(0.18 0.01 264);
-    border-color: oklch(0.3 0.01 264);
-    color: oklch(0.9 0.005 264);
+    background: oklch(0.14 0.04 252);
+    border-color: oklch(0.45 0.08 245);
+    color: oklch(0.96 0.012 250);
   }
 }
 .sb-site {
   font-weight: 600;
   font-size: 13px;
-  color: oklch(0.45 0.02 264);
+  color: oklch(0.42 0.05 250);
 }
 @media (prefers-color-scheme: dark) {
-  .sb-site { color: oklch(0.65 0.02 264); }
+  .sb-site { color: oklch(0.7 0.03 250); }
 }
 .sb-title {
   font-weight: 700;
@@ -102,27 +120,30 @@ const BANNER_CSS = `
 }
 .sb-btn:hover { opacity: 0.85; }
 .sb-btn:focus-visible {
-  outline: 3px solid oklch(0.6 0.15 264);
+  outline: 3px solid oklch(0.55 0.22 245);
   outline-offset: 2px;
 }
 .sb-btn-primary {
-  background: oklch(0.5 0.18 264);
-  color: oklch(0.98 0.005 264);
+  background: oklch(0.42 0.2 245);
+  color: oklch(0.985 0.005 250);
 }
 .sb-btn-ghost {
   background: transparent;
-  color: oklch(0.45 0.01 264);
+  color: oklch(0.42 0.05 250);
 }
 @media (prefers-color-scheme: dark) {
   .sb-btn-primary {
-    background: oklch(0.6 0.18 264);
-    color: oklch(0.1 0.005 264);
+    background: oklch(0.62 0.2 245);
+    color: oklch(0.99 0.005 250);
   }
-  .sb-btn-ghost { color: oklch(0.65 0.01 264); }
+  .sb-btn-ghost { color: oklch(0.7 0.03 250); }
 }
 .sb-btn-danger {
   background: transparent;
-  color: oklch(0.55 0.18 25);
+  color: oklch(0.5 0.2 28);
+}
+@media (prefers-color-scheme: dark) {
+  .sb-btn-danger { color: oklch(0.62 0.22 28); }
 }
 `;
 

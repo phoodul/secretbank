@@ -2,94 +2,229 @@
 
 /*
   Secretbank Extension — Design Tokens
-  ─────────────────────────────────────────────────────
-  F.2 Spec 준수:
-    - 모든 시각적 값은 CSS 변수(디자인 토큰)만 사용 — hex 하드코딩 ❌
-    - prefers-reduced-motion 존중 (@media 블록)
-    - 라이트/다크 테마 토큰 CSS 변수로 정의
-    - 키보드 접근성: focus-visible 스타일 토큰에서 파생
+  ────────────────────────────────────────────────────────────────────
+  E-5: Desktop 토큰 동기화 (옵션 A — mirror)
+  Sync source: src/styles/globals.css
+  Sync date  : 2026-05-10
 
-  메인 앱(src/styles/globals.css)과 동일한 oklch 팔레트 사용하되
-  독립 패키지로 분리 (extension/ 전용 CSS 번들)
+  이 파일의 oklch 값은 desktop globals.css 와 1:1 일치한다.
+  변경 시 desktop 파일도 함께 갱신할 것.
+
+  Design: Option A2 "Lapis Vault, METAL pass"
+  Color hue map (oklch):
+    250  midnight indigo (deep base)
+    245  lapis lazuli (primary metal)
+    230  cool steel highlight
+    80   brass / champagne gold
+    55   dark bronze (gold shadow)
+    28   copper red (destructive)
+    155  patina green (success)
+    195  verdigris teal (info)
+
+  Extension 제약:
+    · Inter Variable / JetBrains Mono Variable 웹폰트 미포함
+      (확장 번들 크기 최소화 — 시스템 폰트 fallback 사용)
+    · popup HTML 에서 <html class="dark"> 또는 <html class="light"> 로 테마 제어
+    · shadow DOM inline style 은 별도 hardcode — 값은 이 파일의 같은 토큰과 mirror
 */
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── prefers-reduced-motion: 모든 트랜지션/애니메이션 비활성화 ── */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-@theme {
-  /* ── 라이트 모드 기본 토큰 ── */
-  --color-background: oklch(0.985 0.006 250);
-  --color-foreground: oklch(0.16 0.04 250);
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.16 0.04 250);
-  --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.16 0.04 250);
-  --color-primary: oklch(0.42 0.2 245);
-  --color-primary-foreground: oklch(0.985 0.005 250);
-  --color-secondary: oklch(0.94 0.012 250);
-  --color-secondary-foreground: oklch(0.22 0.06 250);
-  --color-muted: oklch(0.95 0.01 250);
-  --color-muted-foreground: oklch(0.42 0.05 250);
-  --color-accent: oklch(0.68 0.16 80);
-  --color-accent-foreground: oklch(0.16 0.04 250);
-  --color-destructive: oklch(0.5 0.2 28);
-  --color-destructive-foreground: oklch(0.99 0.005 250);
-  --color-border: oklch(0.86 0.025 245);
-  --color-input: oklch(0.97 0.008 250);
-  --color-ring: oklch(0.55 0.22 245);
-
-  /* ── 반지름 토큰 ── */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.625rem;
-
-  /* ── 폰트 토큰 ── */
+/* ── Light mode 기본 토큰 (:root) ── */
+:root {
+  /* ═══ LIGHT MODE — polished platinum + lapis inlay ═══ */
+  --background: oklch(0.985 0.006 250);
+  --foreground: oklch(0.16 0.04 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.04 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.04 250);
+  --primary: oklch(0.42 0.2 245);
+  --primary-foreground: oklch(0.985 0.005 250);
+  --secondary: oklch(0.94 0.012 250);
+  --secondary-foreground: oklch(0.22 0.06 250);
+  --muted: oklch(0.95 0.01 250);
+  --muted-foreground: oklch(0.42 0.05 250);
+  --accent: oklch(0.68 0.16 80);
+  --accent-foreground: oklch(0.16 0.04 250);
+  --destructive: oklch(0.5 0.2 28);
+  --destructive-foreground: oklch(0.99 0.005 250);
+  --border: oklch(0.86 0.025 245);
+  --input: oklch(0.97 0.008 250);
+  --ring: oklch(0.55 0.22 245);
+  --radius: 0.625rem;
+  /* Extension: 시스템 폰트 fallback (Variable 웹폰트 미포함) */
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Vault semantic */
+  --vault-danger: oklch(0.5 0.2 28);
+  --vault-danger-foreground: oklch(0.99 0.005 250);
+  --vault-warning: oklch(0.68 0.16 80);
+  --vault-warning-foreground: oklch(0.16 0.04 250);
+  --vault-success: oklch(0.55 0.14 155);
+  --vault-success-foreground: oklch(0.99 0.005 250);
+  --vault-info: oklch(0.6 0.14 195);
+  --vault-info-foreground: oklch(0.99 0.005 250);
+  /* Metal palette — light-mode polished stone/brass */
+  --vault-gold: oklch(0.7 0.18 82);
+  --vault-gold-bright: oklch(0.92 0.16 90);
+  --vault-gold-deep: oklch(0.4 0.14 55);
+  --vault-gold-glow: oklch(0.84 0.2 85);
+  --vault-lapis: oklch(0.38 0.24 252);
+  --vault-lapis-bright: oklch(0.72 0.22 244);
+  --vault-lapis-deep: oklch(0.2 0.16 254);
+  --vault-lapis-glow: oklch(0.55 0.28 248);
+  --vault-steel-bright: oklch(0.92 0.02 235);
+  --vault-bg-deep: oklch(0.88 0.018 250);
+  --vault-surface-edge: oklch(0.78 0.04 245);
+}
+
+/* ── Dark mode 오버라이드 ── */
+.dark {
+  /* ═══ DARK MODE — midnight lapis metal ═══ */
+  --background: oklch(0.14 0.04 252);
+  --foreground: oklch(0.96 0.012 250);
+  --card: oklch(0.22 0.06 248);
+  --card-foreground: oklch(0.96 0.012 250);
+  --popover: oklch(0.2 0.05 250);
+  --popover-foreground: oklch(0.96 0.012 250);
+  --primary: oklch(0.62 0.2 245);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --secondary: oklch(0.28 0.06 248);
+  --secondary-foreground: oklch(0.93 0.02 250);
+  --muted: oklch(0.24 0.05 250);
+  --muted-foreground: oklch(0.7 0.03 250);
+  --accent: oklch(0.78 0.16 80);
+  --accent-foreground: oklch(0.14 0.04 252);
+  --destructive: oklch(0.62 0.22 28);
+  --destructive-foreground: oklch(0.99 0.005 250);
+  --border: oklch(0.45 0.08 245 / 32%);
+  --input: oklch(0.5 0.07 245 / 24%);
+  --ring: oklch(0.72 0.22 245);
+  /* Vault semantic — dark */
+  --vault-danger: oklch(0.65 0.22 28);
+  --vault-danger-foreground: oklch(0.99 0.005 250);
+  --vault-warning: oklch(0.82 0.16 80);
+  --vault-warning-foreground: oklch(0.14 0.04 252);
+  --vault-success: oklch(0.74 0.16 155);
+  --vault-success-foreground: oklch(0.14 0.04 252);
+  --vault-info: oklch(0.78 0.15 195);
+  --vault-info-foreground: oklch(0.14 0.04 252);
+  /* Metal palette — dark */
+  --vault-gold: oklch(0.74 0.18 82);
+  --vault-gold-bright: oklch(0.94 0.16 92);
+  --vault-gold-deep: oklch(0.36 0.14 55);
+  --vault-gold-glow: oklch(0.88 0.2 85);
+  --vault-lapis: oklch(0.42 0.24 252);
+  --vault-lapis-bright: oklch(0.85 0.2 240);
+  --vault-lapis-deep: oklch(0.16 0.14 254);
+  --vault-lapis-glow: oklch(0.7 0.28 248);
+  --vault-steel-bright: oklch(0.78 0.04 235);
+  --vault-bg-deep: oklch(0.1 0.05 254);
+  --vault-surface-edge: oklch(0.4 0.1 245);
 }
 
 /*
-  다크 모드 토큰 오버라이드
-  .dark 클래스가 상위 요소에 있을 때 적용
-  (popup HTML 에서 <html class="dark"> 방식으로 제어)
+  @theme inline — Tailwind v4 CSS-first 토큰 매핑
+  desktop 과 동일한 구조: CSS var() 참조 방식
 */
-.dark {
-  --color-background: oklch(0.13 0.04 250);
-  --color-foreground: oklch(0.95 0.01 250);
-  --color-card: oklch(0.18 0.04 250);
-  --color-card-foreground: oklch(0.95 0.01 250);
-  --color-popover: oklch(0.18 0.04 250);
-  --color-popover-foreground: oklch(0.95 0.01 250);
-  --color-primary: oklch(0.6 0.22 245);
-  --color-primary-foreground: oklch(0.13 0.04 250);
-  --color-secondary: oklch(0.24 0.05 250);
-  --color-secondary-foreground: oklch(0.9 0.01 250);
-  --color-muted: oklch(0.24 0.05 250);
-  --color-muted-foreground: oklch(0.6 0.05 250);
-  --color-accent: oklch(0.7 0.16 80);
-  --color-accent-foreground: oklch(0.13 0.04 250);
-  --color-destructive: oklch(0.6 0.22 28);
-  --color-destructive-foreground: oklch(0.99 0.005 250);
-  --color-border: oklch(0.3 0.04 245);
-  --color-input: oklch(0.22 0.04 250);
-  --color-ring: oklch(0.6 0.22 245);
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-vault-danger: var(--vault-danger);
+  --color-vault-danger-foreground: var(--vault-danger-foreground);
+  --color-vault-warning: var(--vault-warning);
+  --color-vault-warning-foreground: var(--vault-warning-foreground);
+  --color-vault-success: var(--vault-success);
+  --color-vault-success-foreground: var(--vault-success-foreground);
+  --color-vault-info: var(--vault-info);
+  --color-vault-info-foreground: var(--vault-info-foreground);
+  --color-vault-gold: var(--vault-gold);
+  --color-vault-gold-bright: var(--vault-gold-bright);
+  --color-vault-gold-deep: var(--vault-gold-deep);
+  --color-vault-gold-glow: var(--vault-gold-glow);
+  --color-vault-lapis: var(--vault-lapis);
+  --color-vault-lapis-bright: var(--vault-lapis-bright);
+  --color-vault-lapis-deep: var(--vault-lapis-deep);
+  --color-vault-lapis-glow: var(--vault-lapis-glow);
+  --color-vault-steel-bright: var(--vault-steel-bright);
+  --color-vault-bg-deep: var(--vault-bg-deep);
+  --color-vault-surface-edge: var(--vault-surface-edge);
+  /* Radius — desktop 과 동일한 계산 기반 */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  /* Font */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-/* ── 기본 body 스타일 ── */
-body {
-  font-family: var(--font-sans);
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  min-width: 320px;
+/* ── 기본 base 스타일 ── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--foreground);
+    min-width: 320px;
+  }
+
+  /* prefers-reduced-motion — desktop 과 동일 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
+
+/*
+  ── Shadow DOM inline style 동기화 정책 (E-5) ──────────────────────
+  SaveBanner.tsx / GeneratorPanel.tsx 의 BANNER_CSS / PANEL_CSS 는
+  shadow DOM 내부 inline <style> 로 주입된다.
+  shadow DOM 은 host :root CSS 변수를 상속받지 못하므로
+  oklch 값을 직접 hardcode 한다.
+
+  아래 값들은 이 파일의 토큰과 동일 (light/dark 분기):
+
+  Light 배경 : oklch(0.985 0.006 250) = --background
+  Dark 배경  : oklch(0.14 0.04 252)   = --background (.dark)
+  Light border: oklch(0.86 0.025 245) = --border
+  Dark border : oklch(0.45 0.08 245 / 32%) = --border (.dark)
+  Light fg    : oklch(0.16 0.04 250)  = --foreground
+  Dark fg     : oklch(0.96 0.012 250) = --foreground (.dark)
+  Light muted-fg: oklch(0.42 0.05 250) = --muted-foreground
+  Dark muted-fg : oklch(0.7 0.03 250) = --muted-foreground (.dark)
+  Primary (light): oklch(0.42 0.2 245) = --primary
+  Primary (dark) : oklch(0.62 0.2 245) = --primary (.dark)
+  Muted (light)  : oklch(0.95 0.01 250) = --muted
+  Muted (dark)   : oklch(0.24 0.05 250) = --muted (.dark)
+
+  inline style 의 hue 264 → 245/250 으로 정렬 완료
+  (SaveBanner.tsx, GeneratorPanel.tsx 참고)
+*/
