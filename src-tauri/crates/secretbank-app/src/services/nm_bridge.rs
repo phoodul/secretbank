@@ -246,6 +246,8 @@ async fn dispatch(msg: &Value, bctx: &BridgeContext) -> Value {
         "graph_for_credential" => handle_graph_for_credential(msg, bctx).await,
         // T-24-E-G2-1: host incident 조회 (severity ≥ MEDIUM)
         "incident_check_for_host" => handle_incident_check_for_host(msg, bctx).await,
+        // T-24-E-G3-1: autofill/save 시 host blast radius preview
+        "blast_radius_for_host" => handle_blast_radius_for_host(msg, bctx).await,
         _ => serde_json::json!({ "ok": false, "error": "unknown_type" }),
     }
 }
@@ -938,6 +940,212 @@ async fn handle_incident_check_for_host(msg: &Value, bctx: &BridgeContext) -> Va
         "type": "incident_check_for_host_response",
         "ok": true,
         "matches": match_items
+    })
+}
+
+// ---------------------------------------------------------------------------
+// T-24-E-G3-1: blast_radius_for_host 핸들러
+// ---------------------------------------------------------------------------
+
+/// Extension autofill/save 시 host 기반 blast radius preview 를 반환한다.
+///
+/// 요청 필드:
+///   - `host` (string): 정규화 전 host (예: "github.com", "www.stripe.com")
+///
+/// 응답:
+///   - `type`: "blast_radius_for_host_response"
+///   - `ok`: true/false
+///   - `credential_id`: Option<String> (ok=true 시)
+///   - `affected`: Vec<{ kind, label, status }> (최대 5개)
+///   - `total`: usize
+///   - `hidden_count`: usize
+///
+/// host 매칭 ❌ → credential_id=null, affected=[], total=0.
+/// audit log: EXT_BLAST_RADIUS_PREVIEW 1건 기록.
+async fn handle_blast_radius_for_host(msg: &Value, bctx: &BridgeContext) -> Value {
+    use secretbank_audit::{actions::EXT_BLAST_RADIUS_PREVIEW, AuditActor};
+    use secretbank_core::{blast_radius::blast_radius, graph::DependencyGraph, CredentialKind};
+    use secretbank_storage::sqlite::repositories::{
+        credential::CredentialRepo, deployment::DeploymentRepo, issuer::IssuerRepo,
+        project::ProjectRepo, usage::UsageRepo,
+    };
+
+    let host = msg.get("host").and_then(|v| v.as_str()).unwrap_or("");
+
+    // audit log (best-effort) — 항상 기록.
+    bctx.audit
+        .record(
+            AuditActor::LocalUser,
+            EXT_BLAST_RADIUS_PREVIEW,
+            "host",
+            host.to_string(),
+            None,
+        )
+        .await;
+
+    if host.trim().is_empty() {
+        return serde_json::json!({
+            "type": "blast_radius_for_host_response",
+            "ok": true,
+            "credential_id": null,
+            "affected": [],
+            "total": 0,
+            "hidden_count": 0
+        });
+    }
+
+    // vault 잠금 재확인 (defense-in-depth).
+    {
+        let vault = bctx.vault.read().await;
+        if !vault.is_unlocked().await {
+            return serde_json::json!({
+                "type": "blast_radius_for_host_response",
+                "ok": false,
+                "error": "vault_locked"
+            });
+        }
+    }
+
+    let issuer_repo = IssuerRepo::new(&bctx.pool);
+
+    // 1. host → issuer (domains[] 매칭)
+    let issuer = match issuer_repo.find_by_domain(host).await {
+        Ok(Some(i)) => i,
+        Ok(None) => {
+            return serde_json::json!({
+                "type": "blast_radius_for_host_response",
+                "ok": true,
+                "credential_id": null,
+                "affected": [],
+                "total": 0,
+                "hidden_count": 0
+            });
+        }
+        Err(e) => {
+            error!("nm-bridge: blast_radius_for_host issuer 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "blast_radius_for_host_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+
+    // 2. issuer → Password credential (가장 최근 생성된 것).
+    // list_all() 은 Credential (created_at 포함), list() 는 CredentialSummary (created_at 없음).
+    let all_creds = match CredentialRepo::new(&bctx.pool).list_all().await {
+        Ok(c) => c,
+        Err(e) => {
+            error!("nm-bridge: blast_radius_for_host credential 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "blast_radius_for_host_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+    let mut creds: Vec<secretbank_core::Credential> = all_creds
+        .into_iter()
+        .filter(|c| c.issuer_id == issuer.id && c.kind == CredentialKind::Password)
+        .collect();
+
+    creds.sort_by_key(|c| std::cmp::Reverse(c.created_at));
+
+    let credential_id = match creds.into_iter().next() {
+        Some(c) => c.id,
+        None => {
+            return serde_json::json!({
+                "type": "blast_radius_for_host_response",
+                "ok": true,
+                "credential_id": null,
+                "affected": [],
+                "total": 0,
+                "hidden_count": 0
+            });
+        }
+    };
+
+    // 3. 그래프 로드 + blast_radius 계산
+    let issuers = IssuerRepo::new(&bctx.pool).list().await.unwrap_or_default();
+    let credentials = CredentialRepo::new(&bctx.pool)
+        .list_all()
+        .await
+        .unwrap_or_default();
+    let usages = UsageRepo::new(&bctx.pool)
+        .list_all()
+        .await
+        .unwrap_or_default();
+    let projects = ProjectRepo::new(&bctx.pool)
+        .list()
+        .await
+        .unwrap_or_default();
+    let deployments = DeploymentRepo::new(&bctx.pool)
+        .list_all()
+        .await
+        .unwrap_or_default();
+
+    let graph = DependencyGraph::build(&issuers, &credentials, &usages, &projects, &deployments);
+    let br = blast_radius(&graph, credential_id);
+
+    // 4. affected 아이템 변환 (primary + secondary, 최대 5개)
+    const MAX_VISIBLE: usize = 5;
+
+    let project_map: std::collections::HashMap<String, &secretbank_core::Project> =
+        projects.iter().map(|p| (p.id.to_string(), p)).collect();
+    let dep_map: std::collections::HashMap<String, &secretbank_core::Deployment> =
+        deployments.iter().map(|d| (d.id.to_string(), d)).collect();
+
+    let mut affected_items: Vec<serde_json::Value> = Vec::new();
+
+    use secretbank_core::graph::NodeRef;
+    for nr in br.primary.iter().chain(br.secondary.iter()) {
+        let item = match nr {
+            NodeRef::Project(pid) => {
+                let label = project_map
+                    .get(&pid.to_string())
+                    .map(|p| p.name.clone())
+                    .unwrap_or_else(|| format!("<project:{pid}>"));
+                serde_json::json!({ "kind": "project", "label": label, "status": "active" })
+            }
+            NodeRef::Deployment(did) => {
+                let label = dep_map
+                    .get(&did.to_string())
+                    .map(|d| {
+                        let env = match d.env {
+                            secretbank_core::Env::Dev => "dev",
+                            secretbank_core::Env::Staging => "staging",
+                            secretbank_core::Env::Prod => "prod",
+                        };
+                        format!("{} @ {}", d.url, env)
+                    })
+                    .unwrap_or_else(|| format!("<deployment:{did}>"));
+                serde_json::json!({ "kind": "deployment", "label": label, "status": "active" })
+            }
+            _ => continue,
+        };
+        affected_items.push(item);
+    }
+
+    // 결정성: (kind, label) 정렬.
+    affected_items.sort_by(|a, b| {
+        let ka = a["kind"].as_str().unwrap_or("");
+        let kb = b["kind"].as_str().unwrap_or("");
+        let la = a["label"].as_str().unwrap_or("");
+        let lb = b["label"].as_str().unwrap_or("");
+        ka.cmp(kb).then(la.cmp(lb))
+    });
+
+    let total = affected_items.len();
+    let hidden_count = total.saturating_sub(MAX_VISIBLE);
+    let visible: Vec<_> = affected_items.into_iter().take(MAX_VISIBLE).collect();
+
+    serde_json::json!({
+        "type": "blast_radius_for_host_response",
+        "ok": true,
+        "credential_id": credential_id.to_string(),
+        "affected": visible,
+        "total": total,
+        "hidden_count": hidden_count
     })
 }
 

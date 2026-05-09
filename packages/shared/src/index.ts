@@ -36,6 +36,9 @@ export type {
   // G2-1: host incident 조회 RPC
   NMMessageIncidentCheckForHost,
   NMMessageIncidentCheckForHostResponse,
+  // G3-1: blast radius preview RPC
+  NMMessageBlastRadiusForHost,
+  NMMessageBlastRadiusForHostResponse,
   // 하위 호환
   NMMessagePair,
 } from "./types/pairing.js";
@@ -43,6 +46,11 @@ export type {
 export type { IncidentMatchSummary } from "./types/incident.js";
 // G1-1: mini-graph 타입
 export type { CredentialMiniGraph, ProjectNode, MiniGraphEdge } from "./types/graph.js";
+// G3-1: blast radius preview 타입
+export type {
+  BlastRadiusItem,
+  BlastRadiusForHostResponse,
+} from "./types/blast-radius.js";
 
 // password-generator
 export {

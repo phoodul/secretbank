@@ -37,7 +37,9 @@ use commands::github::{
     github_install_url, github_list_installations, github_remove_installation,
     github_save_installation, github_scan_repo,
 };
-use commands::graph::{blast_radius_for_credential, graph_fetch, graph_for_credential};
+use commands::graph::{
+    blast_radius_for_credential, blast_radius_for_host, graph_fetch, graph_for_credential,
+};
 use commands::import::{import_csv_commit, import_csv_prepare};
 use commands::incidents::{
     incident_dismiss, incident_feed_refresh, incident_list, incident_matches_for_credential,
@@ -218,6 +220,7 @@ pub fn run(context: tauri::Context) {
             env_scan_folder,
             graph_fetch,
             blast_radius_for_credential,
+            blast_radius_for_host,
             graph_for_credential,
             incident_list,
             incident_dismiss,
@@ -326,6 +329,7 @@ pub fn run(context: tauri::Context) {
             env_scan_folder,
             graph_fetch,
             blast_radius_for_credential,
+            blast_radius_for_host,
             graph_for_credential,
             incident_list,
             incident_dismiss,

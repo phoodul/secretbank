@@ -33,6 +33,38 @@ use crate::context::AppContext;
 /// 최대 표시 project 노드 수 (popup 인지부하 제한 — M24 1.5 MAX_VISIBLE 정책).
 const MAX_VISIBLE_PROJECTS: usize = 5;
 
+// ---------------------------------------------------------------------------
+// Blast-radius-for-host wire types (T-24-E-G3-1)
+// ---------------------------------------------------------------------------
+
+/// blast radius preview 아이템 하나 — credential plaintext ❌, 라벨+kind+status 만.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct BlastRadiusItem {
+    /// 노드 종류: "project" | "deployment"
+    pub kind: String,
+    /// 사람이 읽을 수 있는 라벨 (프로젝트 이름 / 배포 URL)
+    pub label: String,
+    /// 상태: "active" | "unknown" (현재 상태 모델 단순화)
+    pub status: String,
+}
+
+/// `blast_radius_for_host` Tauri command 응답.
+///
+/// - `credential_id`: 매칭된 credential ULID (없으면 None)
+/// - `affected`: 최대 MAX_VISIBLE_BLAST(5) 미리보기 아이템
+/// - `total`: 전체 affected 노드 수
+/// - `hidden_count`: 잘린 수 (`total - affected.len()`)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct BlastRadiusForHostResponse {
+    pub credential_id: Option<String>,
+    pub affected: Vec<BlastRadiusItem>,
+    pub total: usize,
+    pub hidden_count: usize,
+}
+
+/// blast radius preview 최대 표시 수 (G1-1 MAX_VISIBLE 와 동일 정책).
+const MAX_VISIBLE_BLAST: usize = 5;
+
 /// mini-graph 의 project 노드 하나.
 ///
 /// credential plaintext 없음 — id/label/env 최소 정보만.
@@ -350,6 +382,102 @@ pub async fn blast_radius_for_credential(
     Ok(blast_radius(&graph, id))
 }
 
+/// Extension autofill/save 시 host 기반 blast radius preview 반환 (T-24-E-G3-1).
+///
+/// 흐름: host → IssuerRepo.find_by_domain → CredentialRepo.list (Password, 최근 1개)
+///       → blast_radius_for_credential → 최대 MAX_VISIBLE_BLAST(5) affected 아이템.
+///
+/// host 매칭 ❌ 또는 Password credential 없음 → credential_id=None, affected=[], total=0.
+/// audit log 1건 (`extension.blast_radius.preview`) 기록.
+#[tauri::command]
+pub async fn blast_radius_for_host(
+    host: String,
+    state: State<'_, AppContext>,
+) -> Result<BlastRadiusForHostResponse, GraphCommandError> {
+    use secretbank_audit::{actions, AuditActor};
+    use secretbank_core::CredentialKind;
+
+    // audit log (best-effort) — 항상 기록.
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            actions::EXT_BLAST_RADIUS_PREVIEW,
+            "host",
+            host.clone(),
+            None,
+        )
+        .await;
+
+    if host.trim().is_empty() {
+        return Ok(BlastRadiusForHostResponse {
+            credential_id: None,
+            affected: vec![],
+            total: 0,
+            hidden_count: 0,
+        });
+    }
+
+    let issuer_repo = IssuerRepo::new(&state.pool);
+    let cred_repo = CredentialRepo::new(&state.pool);
+
+    // 1. host → issuer (domains[] 매칭)
+    let issuer = match issuer_repo.find_by_domain(&host).await? {
+        Some(i) => i,
+        None => {
+            return Ok(BlastRadiusForHostResponse {
+                credential_id: None,
+                affected: vec![],
+                total: 0,
+                hidden_count: 0,
+            });
+        }
+    };
+
+    // 2. issuer → Password credential (가장 최근 생성된 것).
+    // list_all() 은 Credential (created_at 포함), list() 는 CredentialSummary (created_at 없음).
+    let mut creds: Vec<secretbank_core::Credential> = cred_repo
+        .list_all()
+        .await?
+        .into_iter()
+        .filter(|c| c.issuer_id == issuer.id && c.kind == CredentialKind::Password)
+        .collect();
+
+    // 최근 생성 순 정렬 (created_at DESC)
+    creds.sort_by_key(|c| std::cmp::Reverse(c.created_at));
+
+    let credential_id = match creds.into_iter().next() {
+        Some(c) => c.id,
+        None => {
+            return Ok(BlastRadiusForHostResponse {
+                credential_id: None,
+                affected: vec![],
+                total: 0,
+                hidden_count: 0,
+            });
+        }
+    };
+
+    // 3. blast_radius 계산
+    let graph = load_graph(&state).await?;
+    let br = blast_radius(&graph, credential_id);
+
+    // 4. affected 아이템 변환 (primary + secondary, 최대 MAX_VISIBLE_BLAST)
+    let affected_items = blast_radius_to_items(&br, &state).await;
+
+    let total = affected_items.len();
+    let hidden_count = total.saturating_sub(MAX_VISIBLE_BLAST);
+    let affected: Vec<BlastRadiusItem> =
+        affected_items.into_iter().take(MAX_VISIBLE_BLAST).collect();
+
+    Ok(BlastRadiusForHostResponse {
+        credential_id: Some(credential_id.to_string()),
+        affected,
+        total,
+        hidden_count,
+    })
+}
+
 /// Extension popup hover 용 credential 1-hop mini-graph 반환 (T-24-E-G1-1).
 ///
 /// center = credential, 팬아웃 = UsedBy 에지로 연결된 project 들.
@@ -401,6 +529,71 @@ pub async fn graph_for_credential(
         .await;
 
     Ok(mini)
+}
+
+// ---------------------------------------------------------------------------
+// blast radius → BlastRadiusItem 변환 헬퍼 (T-24-E-G3-1)
+// ---------------------------------------------------------------------------
+
+/// BlastRadius 의 primary + secondary 노드를 BlastRadiusItem 목록으로 변환한다.
+///
+/// primary = project, secondary = deployment.
+/// 노드 라벨은 DB 에서 조회하며 실패 시 ID 로 대체.
+/// 결과는 (kind, label) 기준 정렬 — 결정성 보장.
+async fn blast_radius_to_items(
+    br: &secretbank_core::BlastRadius,
+    state: &State<'_, AppContext>,
+) -> Vec<BlastRadiusItem> {
+    // 노드 라벨 조회를 위해 모든 entity 로드.
+    let projects = ProjectRepo::new(&state.pool)
+        .list()
+        .await
+        .unwrap_or_default();
+    let deployments = DeploymentRepo::new(&state.pool)
+        .list_all()
+        .await
+        .unwrap_or_default();
+
+    let project_map: HashMap<String, &secretbank_core::Project> =
+        projects.iter().map(|p| (p.id.to_string(), p)).collect();
+    let dep_map: HashMap<String, &secretbank_core::Deployment> =
+        deployments.iter().map(|d| (d.id.to_string(), d)).collect();
+
+    let mut items: Vec<BlastRadiusItem> = Vec::new();
+
+    for nr in br.primary.iter().chain(br.secondary.iter()) {
+        let item = match nr {
+            NodeRef::Project(pid) => {
+                let label = project_map
+                    .get(&pid.to_string())
+                    .map(|p| p.name.clone())
+                    .unwrap_or_else(|| format!("<project:{pid}>"));
+                BlastRadiusItem {
+                    kind: "project".to_string(),
+                    label,
+                    status: "active".to_string(),
+                }
+            }
+            NodeRef::Deployment(did) => {
+                let label = dep_map
+                    .get(&did.to_string())
+                    .map(|d| format!("{} @ {}", d.url, env_str(d.env)))
+                    .unwrap_or_else(|| format!("<deployment:{did}>"));
+                BlastRadiusItem {
+                    kind: "deployment".to_string(),
+                    label,
+                    status: "active".to_string(),
+                }
+            }
+            // issuer / credential 는 blast radius downstream 에 포함되지 않음.
+            _ => continue,
+        };
+        items.push(item);
+    }
+
+    // 결정성: (kind, label) 정렬.
+    items.sort_by(|a, b| a.kind.cmp(&b.kind).then(a.label.cmp(&b.label)));
+    items
 }
 
 // ---------------------------------------------------------------------------
@@ -879,5 +1072,118 @@ mod tests {
         let deserialized: CredentialMiniGraph =
             serde_json::from_str(&serialized).expect("deserialize");
         assert_eq!(mini, deserialized, "CredentialMiniGraph must round-trip");
+    }
+
+    // -----------------------------------------------------------------------
+    // G3-1 테스트: BlastRadiusItem + BlastRadiusForHostResponse
+    // -----------------------------------------------------------------------
+
+    // G3-1-T1: BlastRadiusItem round-trips through JSON
+    #[test]
+    fn g3_1_t1_blast_radius_item_json_round_trip() {
+        let item = BlastRadiusItem {
+            kind: "project".to_string(),
+            label: "My Project".to_string(),
+            status: "active".to_string(),
+        };
+        let serialized = serde_json::to_string(&item).expect("serialize");
+        let deserialized: BlastRadiusItem = serde_json::from_str(&serialized).expect("deserialize");
+        assert_eq!(item, deserialized, "BlastRadiusItem must round-trip");
+    }
+
+    // G3-1-T2: BlastRadiusForHostResponse — host 매칭 ❌ 시 빈 응답 round-trip
+    #[test]
+    fn g3_1_t2_empty_response_json_round_trip() {
+        let resp = BlastRadiusForHostResponse {
+            credential_id: None,
+            affected: vec![],
+            total: 0,
+            hidden_count: 0,
+        };
+        let serialized = serde_json::to_string(&resp).expect("serialize");
+        let deserialized: BlastRadiusForHostResponse =
+            serde_json::from_str(&serialized).expect("deserialize");
+        assert_eq!(resp, deserialized, "빈 응답 round-trip");
+        assert!(deserialized.credential_id.is_none());
+        assert_eq!(deserialized.total, 0);
+    }
+
+    // G3-1-T3: BlastRadiusForHostResponse — credential 있을 때 round-trip
+    #[test]
+    fn g3_1_t3_full_response_json_round_trip() {
+        let cred_id = CredentialId::new().to_string();
+        let resp = BlastRadiusForHostResponse {
+            credential_id: Some(cred_id.clone()),
+            affected: vec![
+                BlastRadiusItem {
+                    kind: "project".to_string(),
+                    label: "Alpha".to_string(),
+                    status: "active".to_string(),
+                },
+                BlastRadiusItem {
+                    kind: "deployment".to_string(),
+                    label: "https://alpha.example.com @ prod".to_string(),
+                    status: "active".to_string(),
+                },
+            ],
+            total: 2,
+            hidden_count: 0,
+        };
+        let serialized = serde_json::to_string(&resp).expect("serialize");
+        let deserialized: BlastRadiusForHostResponse =
+            serde_json::from_str(&serialized).expect("deserialize");
+        assert_eq!(resp, deserialized);
+        assert_eq!(
+            deserialized.credential_id.as_deref(),
+            Some(cred_id.as_str())
+        );
+        assert_eq!(deserialized.affected.len(), 2);
+    }
+
+    // G3-1-T4: MAX_VISIBLE_BLAST 상수 = 5
+    #[test]
+    fn g3_1_t4_max_visible_blast_is_5() {
+        assert_eq!(MAX_VISIBLE_BLAST, 5, "MAX_VISIBLE_BLAST 은 5 이어야 한다");
+    }
+
+    // G3-1-T5: hidden_count 계산 — total 7, visible 5 → hidden 2
+    #[test]
+    fn g3_1_t5_hidden_count_calculated_correctly() {
+        let total = 7usize;
+        let hidden_count = total.saturating_sub(MAX_VISIBLE_BLAST);
+        assert_eq!(hidden_count, 2, "7 - 5 = 2 hidden");
+    }
+
+    // G3-1-T6: audit action 상수 검증
+    #[test]
+    fn g3_1_t6_audit_action_constant() {
+        assert_eq!(
+            secretbank_audit::actions::EXT_BLAST_RADIUS_PREVIEW,
+            "extension.blast_radius.preview"
+        );
+    }
+
+    // G3-1-T7: 결정성 — BlastRadiusForHostResponse 동일 입력 동일 출력
+    #[test]
+    fn g3_1_t7_response_deterministic() {
+        let cred_id = CredentialId::new().to_string();
+        let make = || BlastRadiusForHostResponse {
+            credential_id: Some(cred_id.clone()),
+            affected: vec![
+                BlastRadiusItem {
+                    kind: "project".to_string(),
+                    label: "Alpha".to_string(),
+                    status: "active".to_string(),
+                },
+                BlastRadiusItem {
+                    kind: "project".to_string(),
+                    label: "Beta".to_string(),
+                    status: "active".to_string(),
+                },
+            ],
+            total: 2,
+            hidden_count: 0,
+        };
+        assert_eq!(make(), make(), "동일 입력 → 동일 출력 (결정성)");
     }
 }

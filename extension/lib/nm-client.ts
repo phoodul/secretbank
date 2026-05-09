@@ -37,6 +37,7 @@ import type {
   NMMessageGetCredentialListResponse,
   NMMessageGraphForCredentialResponse,
   NMMessageIncidentCheckForHostResponse,
+  NMMessageBlastRadiusForHostResponse,
 } from "@secretbank/shared";
 import {
   NMDisconnected,
@@ -446,6 +447,30 @@ export class NMClient {
     return this._rpc<NMMessageIncidentCheckForHostResponse>(
       { type: "incident_check_for_host", host, session_token: sessionToken },
       "incident_check_for_host_response",
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // T-24-E-G3-1: host blast radius preview RPC
+  // -------------------------------------------------------------------------
+
+  /**
+   * autofill/save 시 host 기반 blast radius preview 를 반환한다.
+   *
+   * extension 이 `autocomplete="new-password"` 필드에 값 입력(= rotation 시도) 시 호출.
+   * 응답: credential_id + 최대 5개 affected 아이템 + hidden_count.
+   * credential plaintext ❌ — kind/label/status 만.
+   *
+   * host 매칭 없으면 credential_id=null, affected=[], total=0.
+   * T-CRED-1: session_token 첨부 필수.
+   */
+  async blastRadiusForHost(
+    host: string,
+    sessionToken: string,
+  ): Promise<NMMessageBlastRadiusForHostResponse> {
+    return this._rpc<NMMessageBlastRadiusForHostResponse>(
+      { type: "blast_radius_for_host", host, session_token: sessionToken },
+      "blast_radius_for_host_response",
     );
   }
 

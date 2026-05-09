@@ -648,4 +648,104 @@ describe("NMClient", () => {
     expect(result.error).toBe("vault_locked");
     expect(result.matches).toBeUndefined();
   });
+
+  // ── 11. T-24-E-G3-1: blastRadiusForHost RPC ──────────────────────────────
+
+  it("blastRadiusForHost() 은 올바른 타입으로 요청을 전송하고 affected 목록을 반환한다", async () => {
+    const { port, dispatch } = createPortStub();
+
+    const host = "github.com";
+    const sessionToken = "test-session-token";
+    const credentialId = "01JXXXXXXXXXXXXXXXXXXXXXXX";
+
+    const mockResponse = {
+      type: "blast_radius_for_host_response" as const,
+      ok: true,
+      credential_id: credentialId,
+      affected: [
+        { kind: "project" as const, label: "My App", status: "active" },
+        { kind: "deployment" as const, label: "https://app.example.com @ prod", status: "active" },
+      ],
+      total: 2,
+      hidden_count: 0,
+    };
+
+    mockConnectNative(port);
+    await client.connect();
+
+    const origOnMessage = client.onMessage.bind(client);
+    vi.spyOn(client, "onMessage").mockImplementationOnce((handler) => {
+      const unsub = origOnMessage(handler);
+      Promise.resolve().then(() => dispatch.message(mockResponse));
+      return unsub;
+    });
+
+    const result = await client.blastRadiusForHost(host, sessionToken);
+
+    // 요청 타입 검증
+    const postMessage = (port as unknown as { postMessage: ReturnType<typeof vi.fn> }).postMessage;
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "blast_radius_for_host",
+        host,
+        session_token: sessionToken,
+      }),
+    );
+
+    // 응답 내용 검증
+    expect(result.ok).toBe(true);
+    expect(result.credential_id).toBe(credentialId);
+    expect(result.affected).toHaveLength(2);
+    expect(result.total).toBe(2);
+    expect(result.hidden_count).toBe(0);
+  });
+
+  it("blastRadiusForHost() 은 5s timeout 후 NMDisconnected 를 throw 한다", async () => {
+    const { port } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    // unhandled rejection 방지: rpcPromise 를 catch 로 silencing 후 별도 검증.
+    let caughtError: unknown;
+    const rpcPromise = client
+      .blastRadiusForHost("github.com", "tok")
+      .catch((e) => {
+        caughtError = e;
+      });
+
+    // 5초 초과 — 응답 없음
+    await vi.advanceTimersByTimeAsync(5001);
+    await rpcPromise;
+
+    expect(caughtError).toBeInstanceOf(NMDisconnected);
+  });
+
+  it("blastRadiusForHost() 는 host 매칭 없을 때 ok=true + credential_id=null 을 반환한다", async () => {
+    const { port, dispatch } = createPortStub();
+
+    const emptyResponse = {
+      type: "blast_radius_for_host_response" as const,
+      ok: true,
+      credential_id: null,
+      affected: [],
+      total: 0,
+      hidden_count: 0,
+    };
+
+    mockConnectNative(port);
+    await client.connect();
+
+    const origOnMessage = client.onMessage.bind(client);
+    vi.spyOn(client, "onMessage").mockImplementationOnce((handler) => {
+      const unsub = origOnMessage(handler);
+      Promise.resolve().then(() => dispatch.message(emptyResponse));
+      return unsub;
+    });
+
+    const result = await client.blastRadiusForHost("unknown-host.xyz", "tok");
+    expect(result.ok).toBe(true);
+    expect(result.credential_id).toBeNull();
+    expect(result.affected).toHaveLength(0);
+    expect(result.total).toBe(0);
+  });
 });

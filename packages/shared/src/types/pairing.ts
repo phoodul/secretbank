@@ -210,38 +210,6 @@ export interface NMMessageGraphForCredentialResponse {
   error?: string;
 }
 
-/**
- * Native Messaging 메시지 discriminated union.
- * B-4: X25519 페어링 메시지(init/pair_request/pair_response/paired) 추가.
- * D-4: credential CRUD RPC 메시지 추가.
- * E-2: issuer recipe RPC 메시지 추가.
- * E-4: get_credential_list RPC 메시지 추가.
- * G1-1: graph_for_credential mini-graph RPC 메시지 추가.
- * G2-1: incident_check_for_host host incident 조회 RPC 메시지 추가.
- */
-export type NMMessage =
-  | NMMessageInit
-  | NMMessagePairRequest
-  | NMMessagePairResponse
-  | NMMessagePaired
-  | NMMessageReveal
-  | NMMessageSave
-  | NMMessageCredentialListByDomain
-  | NMMessageCredentialListByDomainResponse
-  | NMMessageCredentialCreate
-  | NMMessageCredentialUpdate
-  | NMMessageCredentialSaveResponse
-  | NMMessageGetRecipeForDomain
-  | NMMessageGetRecipeForDomainResponse
-  | NMMessageUpsertRecipeForDomain
-  | NMMessageUpsertRecipeForDomainResponse
-  | NMMessageGetCredentialList
-  | NMMessageGetCredentialListResponse
-  | NMMessageGraphForCredential
-  | NMMessageGraphForCredentialResponse
-  | NMMessageIncidentCheckForHost
-  | NMMessageIncidentCheckForHostResponse;
-
 // ---------------------------------------------------------------------------
 // T-24-E-E4: credential 전체 목록 조회 (popup CredentialList 용)
 // ---------------------------------------------------------------------------
@@ -291,6 +259,72 @@ export interface NMMessageIncidentCheckForHostResponse {
   matches?: import("./incident.js").IncidentMatchSummary[];
   error?: string;
 }
+
+// ---------------------------------------------------------------------------
+// T-24-E-G3-1: blast radius preview RPC 메시지
+// ---------------------------------------------------------------------------
+
+/** Extension → nm-host: autofill/save 시 host blast radius preview 조회 */
+export interface NMMessageBlastRadiusForHost {
+  type: "blast_radius_for_host";
+  /** 정규화 전 host (예: "github.com", "www.stripe.com") */
+  host: string;
+  session_token: string;
+}
+
+/** nm-host → Extension: blast radius preview 응답 */
+export interface NMMessageBlastRadiusForHostResponse {
+  type: "blast_radius_for_host_response";
+  ok: boolean;
+  /** 매칭된 credential ULID (ok=true + 매칭 있을 때). */
+  credential_id?: string | null;
+  /** 최대 5개 affected 아이템 (ok=true 시). */
+  affected?: import("./blast-radius.js").BlastRadiusItem[];
+  /** 전체 affected 노드 수 (ok=true 시). */
+  total?: number;
+  /** 잘린 수 = total - affected.length (ok=true 시). */
+  hidden_count?: number;
+  error?: string;
+}
+
+// ---------------------------------------------------------------------------
+// NMMessage union 갱신 (G3-1 추가)
+// ---------------------------------------------------------------------------
+
+/**
+ * Native Messaging 메시지 discriminated union.
+ * B-4: X25519 페어링 메시지(init/pair_request/pair_response/paired) 추가.
+ * D-4: credential CRUD RPC 메시지 추가.
+ * E-2: issuer recipe RPC 메시지 추가.
+ * E-4: get_credential_list RPC 메시지 추가.
+ * G1-1: graph_for_credential mini-graph RPC 메시지 추가.
+ * G2-1: incident_check_for_host host incident 조회 RPC 메시지 추가.
+ * G3-1: blast_radius_for_host autofill/save blast radius preview RPC 메시지 추가.
+ */
+export type NMMessage =
+  | NMMessageInit
+  | NMMessagePairRequest
+  | NMMessagePairResponse
+  | NMMessagePaired
+  | NMMessageReveal
+  | NMMessageSave
+  | NMMessageCredentialListByDomain
+  | NMMessageCredentialListByDomainResponse
+  | NMMessageCredentialCreate
+  | NMMessageCredentialUpdate
+  | NMMessageCredentialSaveResponse
+  | NMMessageGetRecipeForDomain
+  | NMMessageGetRecipeForDomainResponse
+  | NMMessageUpsertRecipeForDomain
+  | NMMessageUpsertRecipeForDomainResponse
+  | NMMessageGetCredentialList
+  | NMMessageGetCredentialListResponse
+  | NMMessageGraphForCredential
+  | NMMessageGraphForCredentialResponse
+  | NMMessageIncidentCheckForHost
+  | NMMessageIncidentCheckForHostResponse
+  | NMMessageBlastRadiusForHost
+  | NMMessageBlastRadiusForHostResponse;
 
 // ---------------------------------------------------------------------------
 // 하위 호환 별칭 (A2 명명 유지 — 외부 consumer 가 직접 import 중)

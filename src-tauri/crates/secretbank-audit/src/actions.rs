@@ -91,6 +91,14 @@ pub const EXT_GRAPH_FETCH: &str = "extension.graph.fetch";
 pub const EXT_INCIDENT_LOOKUP: &str = "extension.incident.lookup";
 
 // ---------------------------------------------------------------------------
+// extension.blast_radius.*  (T-24-E-G3-1)
+// ---------------------------------------------------------------------------
+
+/// Extension 이 autofill / save 시 blast radius preview 를 조회한 이벤트.
+/// `blast_radius_for_host` nm-host 메시지 / Tauri command 처리 시 기록.
+pub const EXT_BLAST_RADIUS_PREVIEW: &str = "extension.blast_radius.preview";
+
+// ---------------------------------------------------------------------------
 // 모든 신규 action 상수 목록 (테스트 순회용)
 // ---------------------------------------------------------------------------
 
@@ -111,6 +119,7 @@ pub const ALL_EXT_ACTIONS: &[&str] = &[
     EXT_RECIPE_UPSERT,
     EXT_GRAPH_FETCH,
     EXT_INCIDENT_LOOKUP,
+    EXT_BLAST_RADIUS_PREVIEW,
 ];
 
 // ---------------------------------------------------------------------------
