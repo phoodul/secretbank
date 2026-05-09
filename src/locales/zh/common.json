@@ -716,6 +716,31 @@
       "notFoundError": "未找到凭证 — 它可能已被删除。"
     }
   },
+  "extPairing": {
+    "dialog": {
+      "title": "浏览器扩展配对请求",
+      "description": "浏览器扩展正在请求与此保险库配对。在批准之前，请验证指纹与扩展显示的内容是否一致。",
+      "fingerprintLabel": "扩展指纹",
+      "extensionIdLabel": "扩展 ID",
+      "approve": "批准",
+      "reject": "拒绝",
+      "approving": "批准中…",
+      "done": "配对成功",
+      "close": "关闭"
+    },
+    "error": {
+      "vaultLocked": "保险库已锁定。请解锁保险库后重试。",
+      "invalidPubKey": "无效的扩展公钥。",
+      "vaultStorage": "将配对密钥保存到保险库失败。",
+      "internal": "发生了意外错误。",
+      "unknown": "发生了意外错误。"
+    },
+    "toast": {
+      "approved": "扩展配对成功",
+      "rejected": "配对请求已拒绝",
+      "error": "配对失败"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "输入命令或搜索…",
     "noResults": "未找到结果",

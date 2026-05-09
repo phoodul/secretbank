@@ -727,6 +727,31 @@
       "notFoundError": "Credential not found — it may have already been deleted."
     }
   },
+  "extPairing": {
+    "dialog": {
+      "title": "Browser Extension Pairing Request",
+      "description": "A browser extension is requesting to pair with this vault. Verify the fingerprint matches what the extension shows before approving.",
+      "fingerprintLabel": "Extension fingerprint",
+      "extensionIdLabel": "Extension ID",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approving": "Approving…",
+      "done": "Paired successfully",
+      "close": "Close"
+    },
+    "error": {
+      "vaultLocked": "Vault is locked. Unlock the vault and try again.",
+      "invalidPubKey": "Invalid extension public key.",
+      "vaultStorage": "Failed to save pairing keys to vault.",
+      "internal": "An unexpected error occurred.",
+      "unknown": "An unexpected error occurred."
+    },
+    "toast": {
+      "approved": "Extension paired successfully",
+      "rejected": "Pairing request rejected",
+      "error": "Pairing failed"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "Type a command or search…",
     "noResults": "No results found",

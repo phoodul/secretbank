@@ -716,6 +716,31 @@
       "notFoundError": "認証情報が見つかりません — すでに削除されている可能性があります。"
     }
   },
+  "extPairing": {
+    "dialog": {
+      "title": "ブラウザ拡張のペアリングリクエスト",
+      "description": "ブラウザ拡張がこのボールトとのペアリングをリクエストしています。承認前に、拡張に表示されたフィンガープリントと一致することを確認してください。",
+      "fingerprintLabel": "拡張フィンガープリント",
+      "extensionIdLabel": "拡張 ID",
+      "approve": "承認",
+      "reject": "拒否",
+      "approving": "承認中…",
+      "done": "ペアリング完了",
+      "close": "閉じる"
+    },
+    "error": {
+      "vaultLocked": "ボールトがロックされています。ロックを解除してから再試行してください。",
+      "invalidPubKey": "無効な拡張公開鍵です。",
+      "vaultStorage": "ペアリングキーのボールトへの保存に失敗しました。",
+      "internal": "予期しないエラーが発生しました。",
+      "unknown": "予期しないエラーが発生しました。"
+    },
+    "toast": {
+      "approved": "拡張が正常にペアリングされました",
+      "rejected": "ペアリングリクエストが拒否されました",
+      "error": "ペアリングに失敗しました"
+    }
+  },
   "commandPalette": {
     "searchPlaceholder": "コマンドまたは検索ワードを入力…",
     "noResults": "結果が見つかりません",

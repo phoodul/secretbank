@@ -28,6 +28,7 @@ use commands::deployments::{
     deployment_create, deployment_delete, deployment_list_for_project, deployment_update,
 };
 use commands::entitlement::{entitlement_current, entitlement_set_dev};
+use commands::ext_pairing::{ext_pairing_list, ext_pairing_request_received, ext_pairing_revoke};
 use commands::github::{
     github_install_url, github_list_installations, github_remove_installation,
     github_save_installation, github_scan_repo,
@@ -258,6 +259,9 @@ pub fn run(context: tauri::Context) {
             list_credit_cards,
             reveal_card_number,
             reveal_cvc,
+            ext_pairing_request_received,
+            ext_pairing_revoke,
+            ext_pairing_list,
         ]);
     }
 
@@ -351,6 +355,9 @@ pub fn run(context: tauri::Context) {
             list_credit_cards,
             reveal_card_number,
             reveal_cvc,
+            ext_pairing_request_received,
+            ext_pairing_revoke,
+            ext_pairing_list,
         ]);
     }
 
