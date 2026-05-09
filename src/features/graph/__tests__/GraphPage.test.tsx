@@ -8,6 +8,11 @@ import type { GraphPayload } from "../types";
 import type { MobilePhase } from "../use-is-mobile";
 
 // ---------------------------------------------------------------------------
+// useSearchParams 는 react-router-dom 내부에서 자동 주입됨.
+// MemoryRouter 의 initialEntries 로 ?focus=<id> 를 시뮬레이션한다.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Mock useIsMobile — defaults to 'desktop'; tests can override via mockReturnValue.
 // ---------------------------------------------------------------------------
 const mockUseIsMobile = vi.fn<() => MobilePhase>(() => "desktop");
@@ -37,7 +42,7 @@ vi.mock("@xyflow/react", async () => {
     Background: () => null,
     useNodesState: (init: unknown[]) => [init, vi.fn(), vi.fn()],
     useEdgesState: (init: unknown[]) => [init, vi.fn(), vi.fn()],
-    useReactFlow: () => ({ fitView: vi.fn() }),
+    useReactFlow: () => ({ fitView: vi.fn(), setCenter: vi.fn() }),
     useViewport: () => ({ zoom: 1, x: 0, y: 0 }),
     Panel: ({ children }: { children?: React.ReactNode }) =>
       React.createElement("div", {}, children),
@@ -60,9 +65,9 @@ const FIXTURE: GraphPayload = {
   ],
 };
 
-function renderPage() {
+function renderPage(initialEntry = "/graph") {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <GraphPage />
     </MemoryRouter>,
   );
@@ -141,6 +146,32 @@ describe("GraphPage", () => {
     // MobileGraphList renders the credential list
     expect(screen.getByText("My Token")).toBeInTheDocument();
     // React Flow provider is NOT present
+    expect(screen.queryByTestId("rf-provider")).not.toBeInTheDocument();
+  });
+
+  it("?focus=<id> query param — desktop graph 렌더 (rf-provider 존재)", async () => {
+    mockUseIsMobile.mockReturnValue("desktop");
+    mockInvoke.mockResolvedValueOnce(FIXTURE);
+    // focus query param 포함한 URL 로 렌더
+    renderPage("/graph?focus=cred-1");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("desktop-graph-page")).toBeInTheDocument();
+    });
+
+    // DependencyGraph 가 렌더되어야 함
+    expect(screen.getByTestId("rf-provider")).toBeInTheDocument();
+  });
+
+  it("?focus=<id> query param — mobile 에서는 MobileGraphList 렌더 (rf-provider 없음)", async () => {
+    mockUseIsMobile.mockReturnValue("mobile");
+    mockInvoke.mockResolvedValueOnce(FIXTURE);
+    renderPage("/graph?focus=cred-1");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mobile-graph-page")).toBeInTheDocument();
+    });
+
     expect(screen.queryByTestId("rf-provider")).not.toBeInTheDocument();
   });
 });

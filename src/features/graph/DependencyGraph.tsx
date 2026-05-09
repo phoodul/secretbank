@@ -32,11 +32,13 @@ interface InnerGraphProps {
   direction: LayoutDirection;
   onToggle: () => void;
   nodesDraggable: boolean;
+  /** deep-link 에서 전달된 focus credential id — highlight + center */
+  focusNodeId?: string;
 }
 
-function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraphProps) {
+function InnerGraph({ payload, direction, onToggle, nodesDraggable, focusNodeId }: InnerGraphProps) {
   const { t } = useTranslation("common");
-  const { fitView } = useReactFlow();
+  const { fitView, setCenter } = useReactFlow();
   const { zoom } = useViewport();
 
   const {
@@ -132,7 +134,30 @@ function InnerGraph({ payload, direction, onToggle, nodesDraggable }: InnerGraph
     return () => window.removeEventListener("keydown", onKey);
   }, [selectionClear]);
 
+  // deep-link focus: focusNodeId 가 바뀌면 해당 노드를 highlight + center
+  useEffect(() => {
+    if (!focusNodeId) return;
+    // 노드가 렌더된 이후 실행되도록 rAF 사용
+    requestAnimationFrame(() => {
+      setNodes((prev) =>
+        prev.map((n) => ({
+          ...n,
+          data: {
+            ...n.data,
+            focused: n.id === focusNodeId,
+          },
+        })),
+      );
+      // 해당 노드로 viewport 이동
+      const target = nodes.find((n) => n.id === focusNodeId);
+      if (target) {
+        setCenter(target.position.x, target.position.y, { zoom: 1.2, duration: 600 });
+      }
+    });
+  }, [focusNodeId, nodes, setNodes, setCenter]);
+
   // Derive nodes with blast-radius status + compact flag injected (does NOT mutate state)
+  // focused flag is already set directly on nodes via the focusNodeId effect above.
   const computedNodes = useMemo(() => {
     const sm = selectionState.phase === "ok" ? selectionState.statusMap : null;
     if (!sm && !compactMode) return nodes;
@@ -204,13 +229,19 @@ export interface DependencyGraphProps {
   payload: GraphPayload;
   /** Whether nodes can be dragged. Default false for best performance. */
   nodesDraggable?: boolean;
+  /** deep-link 에서 전달된 focus credential id — highlight + center */
+  focusNodeId?: string;
 }
 
 /**
  * Dependency graph canvas. Wraps `ReactFlowProvider` so `useReactFlow` is
  * available in the inner component. Direction state is lifted here.
  */
-export function DependencyGraph({ payload, nodesDraggable = false }: DependencyGraphProps) {
+export function DependencyGraph({
+  payload,
+  nodesDraggable = false,
+  focusNodeId,
+}: DependencyGraphProps) {
   const [direction, setDirection] = useState<LayoutDirection>("TB");
 
   const toggle = useCallback(() => {
@@ -224,6 +255,7 @@ export function DependencyGraph({ payload, nodesDraggable = false }: DependencyG
         direction={direction}
         onToggle={toggle}
         nodesDraggable={nodesDraggable}
+        focusNodeId={focusNodeId}
       />
     </ReactFlowProvider>
   );

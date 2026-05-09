@@ -14,6 +14,7 @@ function CredentialNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
   const targetPos = isLR ? Position.Left : Position.Top;
   const sourcePos = isLR ? Position.Right : Position.Bottom;
   const status = data.status;
+  const focused = data.focused;
   const credentialStatus = data.meta.status as string | undefined;
   const isRevoked = credentialStatus === "revoked";
 
@@ -22,6 +23,7 @@ function CredentialNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
       <Handle type="target" position={targetPos} className="!h-2 !w-2 !bg-muted-foreground/50" />
       <Card
         data-status={status}
+        data-focused={focused || undefined}
         data-credential-status={credentialStatus}
         className={cn(
           "min-w-[160px] max-w-[220px] border-2 px-3 py-2 shadow-sm transition-all duration-200",
@@ -31,6 +33,8 @@ function CredentialNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
           status === "secondary" && "outline outline-2 outline-offset-2",
           status === "tertiary" && "outline outline-1 outline-offset-1",
           status === "dimmed" && "opacity-35",
+          // deep-link focus highlight: ring + glow
+          focused && "ring-2 ring-offset-2 ring-vault-warning shadow-[0_0_12px_2px] shadow-vault-warning/50",
         )}
         style={
           isRevoked

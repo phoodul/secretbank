@@ -18,6 +18,13 @@ import { WelcomePage } from "@/features/onboarding/WelcomePage";
 import { useOnboardingDone } from "@/features/onboarding/use-onboarding";
 import { LockScreen } from "@/features/vault/LockScreen";
 import { useVaultStatus } from "@/features/vault/use-vault-status";
+import { useDeepLink } from "@/lib/deep-link";
+
+/** BrowserRouter 내부에서 deep-link 이벤트를 전역으로 구독한다 */
+function DeepLinkListener() {
+  useDeepLink();
+  return null;
+}
 
 /** onboarding 미완료 시 /welcome 으로 리다이렉트하는 가드 */
 function RequireOnboarding({ children }: { children: React.ReactNode }) {
@@ -53,6 +60,7 @@ function VaultGate() {
   if (status.state === "unlocked") {
     return (
       <BrowserRouter>
+        <DeepLinkListener />
         <AutoLockGuard />
         <DropZone />
         <Routes>

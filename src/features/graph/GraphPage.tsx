@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ export function GraphPage() {
   const { state, refresh } = useGraphData();
   const [draggable] = useGraphNodesDraggable();
   const platform = useIsMobile();
+  const [searchParams] = useSearchParams();
+  // deep-link 로 전달된 focus credential id
+  const focusNodeId = searchParams.get("focus") ?? undefined;
 
   if (state.phase === "loading") {
     return <div className="p-6 text-sm text-muted-foreground">{t("graph.loading")}</div>;
@@ -72,7 +75,11 @@ export function GraphPage() {
         <p className="text-sm text-muted-foreground">{t("graph.subtitle")}</p>
       </header>
       <div className="flex-1" style={{ minHeight: 0 }}>
-        <DependencyGraph payload={state.data} nodesDraggable={draggable} />
+        <DependencyGraph
+          payload={state.data}
+          nodesDraggable={draggable}
+          focusNodeId={focusNodeId}
+        />
       </div>
     </div>
   );

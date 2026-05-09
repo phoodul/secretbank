@@ -23,6 +23,7 @@ export function areNodePropsEqual(
     p.kind === n.kind &&
     p.direction === n.direction &&
     p.status === n.status &&
-    p.compact === n.compact
+    p.compact === n.compact &&
+    p.focused === n.focused
   );
 }

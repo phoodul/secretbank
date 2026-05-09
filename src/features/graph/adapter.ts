@@ -20,6 +20,11 @@ export interface GraphNodeData extends Record<string, unknown> {
    * Activated when node count > 200 AND zoom < 0.5.
    */
   compact?: boolean;
+  /**
+   * deep-link focus: 해당 노드를 highlight (border glow) 한다.
+   * useDeepLink 훅이 secretbank://graph?credential=<id> 수신 시 설정.
+   */
+  focused?: boolean;
 }
 
 function toFlowNode(node: GraphNode, direction: LayoutDirection): Node<GraphNodeData> {
