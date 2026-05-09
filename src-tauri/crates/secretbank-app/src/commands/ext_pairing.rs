@@ -16,7 +16,7 @@
 //   - audit_ctx 기존 chain 유지 — 신규 action 문자열만 추가.
 
 use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
-use secretbank_audit::AuditActor;
+use secretbank_audit::{actions, AuditActor};
 use secretbank_crypto::pairing as crypto_pairing;
 use secretbank_storage::vault::SecretBytes;
 use serde::{Deserialize, Serialize};
@@ -154,12 +154,27 @@ pub async fn process_pairing_decision(
             .unwrap_or_else(|| "unknown".to_string())
     };
 
+    // 페어링 요청 도착 시점 audit (승인/거부 결정 이전).
+    // ext_id 가 metadata 에 포함되어 다중 확장 환경에서 분리 조회 가능.
+    ctx.audit
+        .record(
+            AuditActor::LocalUser,
+            actions::EXT_PAIRING_REQUEST,
+            "extension",
+            ext_id,
+            Some(format!(
+                r#"{{"ext_id":"{ext_id}","fingerprint":"{}","approved":{approved}}}"#,
+                hex_fingerprint(ext_pub_bytes)
+            )),
+        )
+        .await;
+
     if !approved {
         // 거부 — audit 만 기록
         ctx.audit
             .record(
                 AuditActor::LocalUser,
-                "extension.pairing.rejected",
+                actions::EXT_PAIRING_REJECTED,
                 "extension",
                 ext_id,
                 Some(format!(
@@ -212,7 +227,7 @@ pub async fn process_pairing_decision(
     ctx.audit
         .record(
             AuditActor::LocalUser,
-            "extension.pairing.approved",
+            actions::EXT_PAIRING_APPROVED,
             "extension",
             ext_id,
             Some(format!(
@@ -256,7 +271,7 @@ pub async fn process_pairing_revoke(ctx: &AppContext, ext_id: &str) -> Result<()
     ctx.audit
         .record(
             AuditActor::LocalUser,
-            "extension.pairing.revoked",
+            actions::EXT_PAIRING_REVOKED,
             "extension",
             ext_id,
             None,
@@ -798,5 +813,69 @@ mod tests {
         let ts: i64 = ts_str.parse().expect("unix timestamp 숫자");
         // 2025-01-01 00:00:00 UTC = 1735689600 보다 크면 현재 시각
         assert!(ts > 1_735_689_600, "timestamp 가 2025년 이후여야 한다");
+    }
+
+    // ── EP11: extension.pairing.request audit 가 승인/거부 이전에 기록 ─────────
+
+    #[tokio::test]
+    async fn ep11_pairing_request_audit_recorded_before_decision() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+        let ctx = make_ctx_with_identity(pool.clone(), vault).await;
+
+        let ext_pub_a = gen_ext_pub();
+        let ext_pub_r = gen_ext_pub();
+        let ext_id_a = "ext_request_approve";
+        let ext_id_r = "ext_request_reject";
+
+        // 승인 1건 — request + approved 2건 기록
+        process_pairing_decision(&ctx, ext_id_a, &ext_pub_a, true)
+            .await
+            .expect("승인 실패");
+
+        // 거부 1건 — request + rejected 2건 기록
+        process_pairing_decision(&ctx, ext_id_r, &ext_pub_r, false)
+            .await
+            .expect("거부 실패");
+
+        let repo = AuditRepo::new(pool.as_ref());
+        let all = repo
+            .list(&secretbank_storage::AuditFilter {
+                limit: 100,
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // extension.pairing.request 가 2건 (승인/거부 각 1건씩) 기록되어야 한다
+        let request_entries: Vec<_> = all
+            .iter()
+            .filter(|e| e.action == secretbank_audit::actions::EXT_PAIRING_REQUEST)
+            .collect();
+        assert_eq!(request_entries.len(), 2, "pairing.request audit 2건 기록");
+
+        // 각 ext_id 가 subject_id 에 포함되어야 한다
+        let has_approve_id = request_entries.iter().any(|e| e.subject_id == ext_id_a);
+        let has_reject_id = request_entries.iter().any(|e| e.subject_id == ext_id_r);
+        assert!(has_approve_id, "승인 ext_id 의 request audit 있어야 한다");
+        assert!(has_reject_id, "거부 ext_id 의 request audit 있어야 한다");
+
+        // request audit 이 approved/rejected audit 보다 seq 가 앞서야 한다
+        // (같은 ext_id 기준: request seq < approved/rejected seq)
+        let request_a = request_entries
+            .iter()
+            .find(|e| e.subject_id == ext_id_a)
+            .unwrap();
+        let approved_a = all
+            .iter()
+            .find(|e| e.action == secretbank_audit::actions::EXT_PAIRING_APPROVED)
+            .unwrap();
+        assert!(
+            request_a.seq < approved_a.seq,
+            "request audit(seq={}) 가 approved audit(seq={}) 보다 먼저 기록되어야 한다",
+            request_a.seq,
+            approved_a.seq
+        );
     }
 }

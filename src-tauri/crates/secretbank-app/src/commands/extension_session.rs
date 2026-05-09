@@ -18,6 +18,7 @@
 //   - secret_key 회전 시 기존 token 모두 즉시 무효화
 
 use rand::RngCore as _;
+use secretbank_audit::{actions, AuditActor};
 use secretbank_nm_host::session;
 use secretbank_storage::vault::SecretBytes;
 use serde::{Deserialize, Serialize};
@@ -192,6 +193,7 @@ fn session_secret_path(ext_id: &str) -> String {
 
 /// session_secret 를 회전 (CSPRNG 새 값으로 덮어쓰기).
 /// 기존 token 모두 즉시 무효화.
+/// 회전 완료 후 `extension.session.revoke` audit 를 기록한다.
 async fn rotate_session_secret(ctx: &AppContext, ext_id: &str) -> Result<(), ExtSessionError> {
     let secret_path = session_secret_path(ext_id);
 
@@ -208,6 +210,20 @@ async fn rotate_session_secret(ctx: &AppContext, ext_id: &str) -> Result<(), Ext
             .await?;
         vault.flush().await?;
     }
+
+    // session_secret 회전 = 기존 세션 전체 무효화 audit.
+    // ext_id 가 payload 에 포함되어 다중 확장 환경에서 분리 조회 가능.
+    ctx.audit
+        .record(
+            AuditActor::System,
+            actions::EXT_SESSION_REVOKE,
+            "extension",
+            ext_id,
+            Some(format!(
+                r#"{{"ext_id":"{ext_id}","reason":"secret_rotation"}}"#
+            )),
+        )
+        .await;
 
     Ok(())
 }
@@ -604,6 +620,56 @@ mod tests {
             assert_ne!(new_key, *old_key, "회전 후 {ext_id} secret 달라야 함");
             let result = session::verify_token(&new_key, old_token, ext_id, ttl);
             assert!(result.is_err(), "{ext_id} 기존 token 무효화 확인");
+        }
+    }
+
+    // ── EX9: rotate_session_secret 시 extension.session.revoke audit 기록 ────
+
+    #[tokio::test]
+    async fn ex9_rotate_records_session_revoke_audit() {
+        use secretbank_storage::AuditRepo;
+
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+        let ctx = make_ctx_with_identity(pool.clone(), vault).await;
+
+        let ext_ids = ["chrome_audit_a", "firefox_audit_b"];
+
+        // 각 ext_id secret 초기화 후 회전 — 회전마다 audit 1건 기록되어야 한다
+        for ext_id in &ext_ids {
+            get_or_create_session_secret(&ctx, ext_id)
+                .await
+                .expect("secret 초기화 성공");
+            rotate_session_secret(&ctx, ext_id)
+                .await
+                .expect("회전 성공");
+        }
+
+        let repo = AuditRepo::new(pool.as_ref());
+        let all = repo
+            .list(&secretbank_storage::AuditFilter {
+                limit: 100,
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // extension.session.revoke 가 ext_id 수만큼 기록되어야 한다
+        let revoke_entries: Vec<_> = all
+            .iter()
+            .filter(|e| e.action == secretbank_audit::actions::EXT_SESSION_REVOKE)
+            .collect();
+        assert_eq!(
+            revoke_entries.len(),
+            ext_ids.len(),
+            "각 ext_id 마다 session.revoke audit 1건"
+        );
+
+        // ext_id 가 subject_id 에 포함되어 분리 조회 가능
+        for ext_id in &ext_ids {
+            let found = revoke_entries.iter().any(|e| e.subject_id == *ext_id);
+            assert!(found, "{ext_id} 의 session.revoke audit 가 있어야 한다");
         }
     }
 }
