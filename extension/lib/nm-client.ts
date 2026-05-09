@@ -27,7 +27,11 @@
  *   client.disconnect();
  */
 
-import type { NMMessage } from "@secretbank/shared";
+import type {
+  NMMessage,
+  NMMessageCredentialListByDomainResponse,
+  NMMessageCredentialSaveResponse,
+} from "@secretbank/shared";
 import {
   NMDisconnected,
   NMNotInstalled,
@@ -247,6 +251,87 @@ export class NMClient {
   /** 현재 연결 상태를 반환한다. */
   isConnected(): boolean {
     return this.port !== null;
+  }
+
+  // -------------------------------------------------------------------------
+  // D-4: credential RPC 래퍼 (request-response 패턴)
+  // -------------------------------------------------------------------------
+
+  // D-4: 요청-응답 매칭 — type 기준 단순 매칭 (단일 inflight 가정). T-CRED-1.
+  private static readonly RPC_TIMEOUT_MS = 5000;
+
+  /** nm-host 에 메시지를 보내고 특정 type 의 응답을 기다린다. */
+  private async _rpc<T extends NMMessage>(request: NMMessage, responseType: T["type"]): Promise<T> {
+    await this.sendMessage(request);
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        unsub();
+        reject(new NMDisconnected(`RPC timeout: ${responseType}`));
+      }, NMClient.RPC_TIMEOUT_MS);
+
+      const unsub = this.onMessage((msg) => {
+        if (msg.type === responseType) {
+          clearTimeout(timer);
+          unsub();
+          resolve(msg as T);
+        }
+      });
+    });
+  }
+
+  /** 도메인 기준 기존 credential 조회. T-CRED-1: session token 첨부 필수. */
+  async credentialListByDomain(
+    domain: string,
+    sessionToken: string,
+  ): Promise<NMMessageCredentialListByDomainResponse> {
+    return this._rpc<NMMessageCredentialListByDomainResponse>(
+      { type: "credential_list_by_domain", domain, session_token: sessionToken },
+      "credential_list_by_domain_response",
+    );
+  }
+
+  /** 새 credential 생성. T-CRED-1: session token 첨부 필수. */
+  async credentialCreate(
+    payload: {
+      domain: string;
+      username: string;
+      password: string;
+      site_name: string;
+    },
+    sessionToken: string,
+  ): Promise<NMMessageCredentialSaveResponse> {
+    return this._rpc<NMMessageCredentialSaveResponse>(
+      {
+        type: "credential_create",
+        domain: payload.domain,
+        username: payload.username,
+        password: payload.password,
+        site_name: payload.site_name,
+        session_token: sessionToken,
+      },
+      "credential_save_response",
+    );
+  }
+
+  /** 기존 credential 업데이트 (rotation). T-CRED-1: session token 첨부 필수. */
+  async credentialUpdate(
+    payload: {
+      credential_id: string;
+      username: string;
+      password: string;
+    },
+    sessionToken: string,
+  ): Promise<NMMessageCredentialSaveResponse> {
+    return this._rpc<NMMessageCredentialSaveResponse>(
+      {
+        type: "credential_update",
+        credential_id: payload.credential_id,
+        username: payload.username,
+        password: payload.password,
+        session_token: sessionToken,
+      },
+      "credential_save_response",
+    );
   }
 
   // -------------------------------------------------------------------------

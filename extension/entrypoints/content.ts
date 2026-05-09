@@ -13,7 +13,12 @@
 import { detectForms } from "../lib/form-detector";
 import { installWorldListener } from "../lib/world-bridge";
 import type { WorldBridgePayload } from "../lib/world-bridge";
-import { mountSaveBanner } from "../lib/save-banner-host";
+import { handleFormSubmit } from "../lib/save-handler";
+import type { AutocompleteHint } from "../lib/save-handler";
+import { NMClient } from "../lib/nm-client";
+
+// D-4: NMClient 싱글턴 — content script 생애 동안 유지 (reconnect 내장).
+const _nmClient = new NMClient();
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -63,9 +68,10 @@ export function installFormSubmitListener(
     if (detected.length === 0) return; // password input 없는 form 은 무시.
 
     const first = detected[0]!;
+    const domain = doc.location?.hostname ?? "";
     const ctx: FormSubmitContext = {
       eventType: "form-submit",
-      domain: doc.location?.hostname ?? "",
+      domain,
       actionUrl: resolveActionUrl(form, doc),
       hasPassword: first.passwordInput != null,
       hasUsername: first.usernameInput != null,
@@ -75,14 +81,20 @@ export function installFormSubmitListener(
     if (onCapture) {
       onCapture(ctx);
     }
-    // D-3: dummy props 로 banner 표시 (신규/rotation 분기는 D-4 save-handler 에서 교체).
-    mountSaveBanner({
-      kind: "new",
-      siteName: ctx.domain,
-      onSave: () => {},
-      onNever: () => {},
-      onDismiss: () => {},
-    });
+
+    // D-4: form input 직접 읽기 (T2 방어 — postMessage 경유 ❌).
+    const username = first.usernameInput?.value ?? "";
+    const password = first.passwordInput?.value ?? "";
+    // T-CRED-1: password 는 handleFormSubmit 내부에서만 사용, 종료 시 null 처리됨.
+    if (!password) return; // 빈 password 는 저장 불필요.
+
+    // autocomplete hint 추출 — passwordPriority → AutocompleteHint 변환.
+    const hint = passwordPriorityToHint(first.passwordPriority);
+
+    void handleFormSubmit(
+      { domain, siteName: domain, username, password, autocompleteHint: hint },
+      _nmClient,
+    );
   }
 
   doc.addEventListener("submit", handleSubmit, { capture: true });
@@ -130,4 +142,13 @@ function resolveActionUrl(form: HTMLFormElement, doc: Document): string {
   } catch {
     return action;
   }
+}
+
+// D-4: PasswordPriority → AutocompleteHint 변환 헬퍼.
+function passwordPriorityToHint(
+  priority: import("../lib/form-detector").PasswordPriority,
+): AutocompleteHint {
+  if (priority === "new-password") return "new-password";
+  if (priority === "current-password") return "current-password";
+  return null;
 }

@@ -219,10 +219,39 @@ async fn run_nm_loop() {
 
 /// 메시지 처리 함수 (placeholder — B-3 에서 실제 라우팅으로 교체 예정)
 ///
-/// 현재는 수신 메시지를 그대로 ack 래퍼로 감싸 반환한다.
+/// D-4: credential_list_by_domain / credential_create / credential_update stub.
+/// D-5 에서 실제 desktop IPC 라우팅으로 교체 예정.
 fn process_message(msg: serde_json::Value) -> serde_json::Value {
-    serde_json::json!({
-        "status": "ok",
-        "echo": msg
-    })
+    let msg_type = msg.get("type").and_then(|v| v.as_str()).unwrap_or("");
+
+    match msg_type {
+        // D-4 stub: 도메인 기존 credential 조회 — 항상 exists=false 반환 (D-5에서 실제 조회).
+        "credential_list_by_domain" => {
+            serde_json::json!({
+                "type": "credential_list_by_domain_response",
+                "exists": false
+            })
+        }
+        // D-4 stub: credential 생성 — ok=true mock 응답 (D-5에서 실제 저장).
+        "credential_create" => {
+            serde_json::json!({
+                "type": "credential_save_response",
+                "ok": true,
+                "credential_id": "stub-id"
+            })
+        }
+        // D-4 stub: credential 업데이트 — ok=true mock 응답 (D-5에서 실제 업데이트).
+        "credential_update" => {
+            serde_json::json!({
+                "type": "credential_save_response",
+                "ok": true
+            })
+        }
+        _ => {
+            serde_json::json!({
+                "status": "ok",
+                "echo": msg
+            })
+        }
+    }
 }

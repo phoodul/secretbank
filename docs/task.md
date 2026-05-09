@@ -2220,7 +2220,7 @@
 
 - **Milestone**: M24-E (M24 와 별개 마일스톤으로 격상)
 - **Priority**: Tier 1 (출시 blocker)
-- **Status**: 🔄 25/53 완료 — Phase A 7/7 ✅ + Phase B 10/10 ✅ + Phase C 8/8 ✅ + GATE 1/2/2-bis 승인. **B-9 옵션 C / B-10 옵션 B 확정 [2026-05-10]**. 다음 = Phase D (save dialog).
+- **Status**: 🔄 29/53 완료 — Phase A 7/7 ✅ + Phase B 10/10 ✅ + Phase C 8/8 ✅ + Phase D 4/6 (D-1 ✅ + D-2 ✅ + D-3 ✅ + D-4 ✅) + GATE 1/2/2-bis 승인. 다음 = D-5 (데스크톱 credential_create/update 라우팅).
 - **상세 명세**: **`docs/task_m24e.md`** (Phase A~F 43 sub-task, DoD + Files + Tests + Depends + Risk 풀 명세)
 - **구현 계획**: **`docs/implementation_plan_m24e.md`** (Phase 진입 순서 + 검증 절차 + 위험 완화 + audit 일정 + commit 운용)
 - **아키텍처**: `docs/architecture.md` 10장 (M24-E 모노레포 / 5-layer 통신 / 페어링 / Tiered Protection / 위협 모델)
@@ -2530,3 +2530,6 @@ _문서 끝._
 | T-24-E-C4 | autofill + domain-match (T4 phishing 방어, subdomain-safe matchesIssuer) | 2026-05-09 | `928a798` |
 | T-24-E-C5 | autofill trigger (focus + Cmd/Ctrl+Shift+L hotkey) | 2026-05-09 | `d619e79` |
 | T-24-E-C6+C7+C8 | Phase C 클로즈 — multi-step form 지원 + same-origin iframe traverse + closed shadow + clickjack 방어 3 계층 (closed shadow + MutationObserver + composedPath, 2025 Marek Tóth 발표 대응) | 2026-05-09 | `f66b737` |
+| T-24-E-D1 | MAIN/ISOLATED world form hook — `content-main.ts` (XHR/fetch hook + isAuthPath filter + hasFormBody) + `content.ts` (form submit capture phase + C1 form-detector 재사용 + origin 검증) + WXT MAIN world entry. T2 도청 방어 (postMessage payload = metadata only, plaintext ❌). 신규 33 테스트 (21 + 12), 회귀 219, 총 252 PASS | 2026-05-10 | `013987c` |
+| T-24-E-D2 | world-bridge.ts 추출 — postToWorld (target origin 두 번째 인수 internal 강제, `'*'` 호출 경로 ❌) + installWorldListener (origin + source 이중 검증, event.source !== win 거부로 D-1 보강) + WorldBridgePayload discriminated union + isValidPayload narrow. content-main / content 모두 bridge 위임으로 리팩터. 신규 16 테스트, 총 268 PASS | 2026-05-10 | `5976b3d` |
+| T-24-E-D3 | SaveBanner Closed Shadow DOM in-page sticky — kind=new/update 분기 + 4 버튼 + 5초 auto-dismiss + hover pause. save-banner-host.ts 가 attachShadow({mode:"closed"}) + module-level single instance 보장 (T3 위협 모델, C-8 패턴 재사용). inline `<style>` + px 기반 + oklch + prefers-color-scheme 다크 + z-index 2147483647. i18n 6키 4언어 (I18N_KEYS 42→48). 신규 20 테스트, 총 288 PASS | 2026-05-10 | `f344a1c` |

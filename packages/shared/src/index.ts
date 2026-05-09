@@ -17,6 +17,11 @@ export type {
   NMMessagePaired,
   NMMessageReveal,
   NMMessageSave,
+  NMMessageCredentialListByDomain,
+  NMMessageCredentialListByDomainResponse,
+  NMMessageCredentialCreate,
+  NMMessageCredentialUpdate,
+  NMMessageCredentialSaveResponse,
   // 하위 호환
   NMMessagePair,
 } from "./types/pairing.js";
