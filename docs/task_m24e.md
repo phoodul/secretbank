@@ -786,7 +786,7 @@
 | T-24-E-F2   | Firefox AMO 제출                                          | -          | -         |
 | T-24-E-F3   | Playwright E2E                                            | -          | -         |
 | T-24-E-F4   | web-ext E2E                                               | -          | -         |
-| T-24-E-F5   | Mock NM Host                                              | -          | -         |
+| T-24-E-F5   | Mock NM Host                                              | 2026-05-10 | pending   |
 | T-24-E-F6   | Safari Xcode wrapper                                      | -          | -         |
 | T-24-E-F7   | Edge Add-ons                                              | -          | -         |
 | T-24-E-F8   | 외부 audit 결과 반영                                      | -          | -         |

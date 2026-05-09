@@ -83,16 +83,19 @@ globalThis.defineUnlistedScript = (fn: unknown) => fn;
 // ── window.matchMedia mock (jsdom 미지원) ─────────────────────────────────────
 // ThemeProvider 의 prefers-color-scheme 감지에 필요.
 // 기본값: light 모드 (matches = false).
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: (query: string) => ({
-    matches: false, // 기본 light 모드
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
-  }),
-});
+// node 환경(mock-nm-host 테스트)에서는 window 가 없으므로 guard.
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: (query: string) => ({
+      matches: false, // 기본 light 모드
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
+}
