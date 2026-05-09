@@ -25,3 +25,31 @@ export {
   generateFromRecipe,
 } from "./password-generator/index.js";
 export type { DicewareLang, StrengthScore, StrengthResult } from "./password-generator/index.js";
+
+// validation (Zod schemas)
+export {
+  CredentialKindSchema,
+  ApiKeyMetaSchema,
+  PasswordMetaSchema,
+  CreditCardMetaSchema,
+  CredentialMetaSchema,
+  IssuerRecipeSchema,
+  NMMessageInitSchema,
+  NMMessagePairSchema,
+  NMMessageRevealSchema,
+  NMMessageSaveSchema,
+  NMMessageSchema,
+} from "./validation/index.js";
+export type {
+  CredentialKindInferred,
+  ApiKeyMeta,
+  PasswordMeta,
+  CreditCardMeta,
+  CredentialMeta,
+  IssuerRecipeValidated,
+  NMMessageInitValidated,
+  NMMessagePairValidated,
+  NMMessageRevealValidated,
+  NMMessageSaveValidated,
+  NMMessageValidated,
+} from "./validation/index.js";
