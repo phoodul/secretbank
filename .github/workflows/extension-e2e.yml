@@ -1,0 +1,118 @@
+name: Extension E2E (Chromium)
+
+# F-3: Playwright E2E — Chromium MV3 + Mock NM Host.
+# F-4 (Firefox) 는 별도 job 으로 추가 예정.
+#
+# 실행 조건:
+#   - main 브랜치 push (extension/** 변경 시)
+#   - PR (extension/** 변경 시)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "extension/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/extension-e2e.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "extension/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/extension-e2e.yml"
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Chromium MV3 E2E
+  # ────────────────────────────────────────────────────────────────────────────
+  e2e-chromium:
+    name: E2E Chromium MV3
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. 소스 체크아웃 ───────────────────────────────────────────────────
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      # ── 2. pnpm 설치 ────────────────────────────────────────────────────────
+      - name: pnpm 설치
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      # ── 3. Node.js 설치 ─────────────────────────────────────────────────────
+      - name: Node.js 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # ── 4. 의존성 설치 ──────────────────────────────────────────────────────
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      # ── 5. Chromium MV3 빌드 ────────────────────────────────────────────────
+      - name: Extension 빌드 (Chromium MV3)
+        run: pnpm --filter @secretbank/extension build:chromium
+
+      # ── 6. Playwright Chromium + 의존성 설치 ────────────────────────────────
+      - name: Playwright Chromium 설치
+        run: pnpm --filter @secretbank/extension exec playwright install chromium --with-deps
+
+      # ── 7. mock-nm-host 등록 (Linux) ────────────────────────────────────────
+      #       install.sh 는 placeholder_ext_id 로 등록.
+      #       실제 EXT_ID 는 Playwright globalSetup 에서 service_workers() 로 추출.
+      - name: Mock NM Host 등록 (Linux)
+        run: |
+          chmod +x extension/tests/mock-nm-host/install.sh
+          bash extension/tests/mock-nm-host/install.sh
+        env:
+          EXT_ID: placeholder_ext_id
+
+      # ── 8. Playwright E2E 실행 ──────────────────────────────────────────────
+      #       headless: false (MV3) → Xvfb 가상 디스플레이 필요
+      - name: Playwright E2E 실행 (Xvfb)
+        run: |
+          # Xvfb 시작 (headful Chromium 용 가상 디스플레이)
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          pnpm --filter @secretbank/extension e2e --reporter=list,github
+        env:
+          CI: "true"
+          DISPLAY: ":99"
+
+      # ── 9. mock-nm-host 제거 ────────────────────────────────────────────────
+      - name: Mock NM Host 제거 (Linux)
+        if: always()
+        run: bash extension/tests/mock-nm-host/uninstall.sh
+
+      # ── 10. 테스트 결과 업로드 (실패 시) ──────────────────────────────────
+      - name: Playwright 리포트 업로드 (실패 시)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-chromium
+          path: extension/playwright-report/
+          retention-days: 7
+
+      - name: 스크린샷/영상 업로드 (실패 시)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results-chromium
+          path: extension/test-results/
+          retention-days: 7
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Firefox E2E (F-4) — TODO: F-4 commit 시 추가
+  # ────────────────────────────────────────────────────────────────────────────
+  # e2e-firefox:
+  #   name: E2E Firefox MV2
+  #   runs-on: ubuntu-latest
+  #   # TODO: web-ext 기반 F-4 구현 후 활성화
