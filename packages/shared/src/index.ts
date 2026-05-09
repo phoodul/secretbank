@@ -30,9 +30,14 @@ export type {
   CredentialListItem,
   NMMessageGetCredentialList,
   NMMessageGetCredentialListResponse,
+  // G1-1: credential mini-graph RPC
+  NMMessageGraphForCredential,
+  NMMessageGraphForCredentialResponse,
   // 하위 호환
   NMMessagePair,
 } from "./types/pairing.js";
+// G1-1: mini-graph 타입
+export type { CredentialMiniGraph, ProjectNode, MiniGraphEdge } from "./types/graph.js";
 
 // password-generator
 export {

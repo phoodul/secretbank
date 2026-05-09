@@ -35,6 +35,7 @@ import type {
   NMMessageGetRecipeForDomainResponse,
   NMMessageUpsertRecipeForDomainResponse,
   NMMessageGetCredentialListResponse,
+  NMMessageGraphForCredentialResponse,
 } from "@secretbank/shared";
 import {
   NMDisconnected,
@@ -398,6 +399,28 @@ export class NMClient {
         session_token: sessionToken,
       },
       "get_credential_list_response",
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // T-24-E-G1-1: credential mini-graph RPC
+  // -------------------------------------------------------------------------
+
+  /**
+   * credential 의 1-hop 의존성 mini-graph 를 반환한다.
+   *
+   * extension popup CredentialCard hover 시 호출.
+   * 응답: center(credential) + project 팬아웃 최대 5개 + hidden_count.
+   * credential plaintext ❌ — center_label = issuer name 만.
+   * T-CRED-1: session_token 첨부 필수.
+   */
+  async graphForCredential(
+    credentialId: string,
+    sessionToken: string,
+  ): Promise<NMMessageGraphForCredentialResponse> {
+    return this._rpc<NMMessageGraphForCredentialResponse>(
+      { type: "graph_for_credential", credential_id: credentialId, session_token: sessionToken },
+      "graph_for_credential_response",
     );
   }
 

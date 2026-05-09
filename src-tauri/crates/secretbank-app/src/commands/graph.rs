@@ -3,6 +3,8 @@
 //! `graph_fetch` returns a React Flow-friendly payload (nodes + edges) built
 //! from the full entity slices in SQLite. `blast_radius_for_credential` runs
 //! the BFS engine from `secretbank-core` and returns the bucketed result.
+//! `graph_for_credential` returns a 1-hop mini-graph for extension popup hover
+//! (T-24-E-G1-1): center = credential, fan-out = projects.
 
 use std::collections::HashMap;
 
@@ -23,6 +25,46 @@ use serde_json::json;
 use tauri::State;
 
 use crate::context::AppContext;
+
+// ---------------------------------------------------------------------------
+// Mini-graph wire types (T-24-E-G1-1)
+// ---------------------------------------------------------------------------
+
+/// 최대 표시 project 노드 수 (popup 인지부하 제한 — M24 1.5 MAX_VISIBLE 정책).
+const MAX_VISIBLE_PROJECTS: usize = 5;
+
+/// mini-graph 의 project 노드 하나.
+///
+/// credential plaintext 없음 — id/label/env 최소 정보만.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MiniGraphProjectNode {
+    pub id: String,
+    pub label: String,
+    /// "prod" / "staging" / "dev"
+    pub env: String,
+}
+
+/// mini-graph 의 에지 하나 (credential → project).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MiniGraphEdge {
+    pub from: String,
+    pub to: String,
+}
+
+/// extension popup hover 에 응답할 1-hop subgraph.
+///
+/// - `center_label`: issuer name + masked credential name (plaintext ❌).
+/// - `project_nodes`: credential → project 1-hop 팬아웃 (최대 MAX_VISIBLE_PROJECTS).
+/// - `edges`: center → project 엣지.
+/// - `hidden_count`: 잘린 project 수 ("+N more" UI 표시용).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CredentialMiniGraph {
+    pub center_id: String,
+    pub center_label: String,
+    pub project_nodes: Vec<MiniGraphProjectNode>,
+    pub edges: Vec<MiniGraphEdge>,
+    pub hidden_count: usize,
+}
 
 // ---------------------------------------------------------------------------
 // Wire types
@@ -308,6 +350,133 @@ pub async fn blast_radius_for_credential(
     Ok(blast_radius(&graph, id))
 }
 
+/// Extension popup hover 용 credential 1-hop mini-graph 반환 (T-24-E-G1-1).
+///
+/// center = credential, 팬아웃 = UsedBy 에지로 연결된 project 들.
+/// project 가 MAX_VISIBLE_PROJECTS(5) 초과이면 앞 5개만 포함하고
+/// `hidden_count` 에 나머지 수를 담는다.
+///
+/// center_label = issuer display_name (credential plaintext ❌).
+/// audit log 1건 (`extension.graph.fetch`) 기록.
+#[tauri::command]
+pub async fn graph_for_credential(
+    credential_id: CredentialId,
+    state: State<'_, AppContext>,
+) -> Result<CredentialMiniGraph, GraphCommandError> {
+    use secretbank_audit::{actions, AuditActor};
+
+    let issuers = IssuerRepo::new(&state.pool).list().await?;
+    let credentials = CredentialRepo::new(&state.pool).list_all().await?;
+    let usages = UsageRepo::new(&state.pool).list_all().await?;
+    let projects = ProjectRepo::new(&state.pool).list().await?;
+    let deployments = DeploymentRepo::new(&state.pool).list_all().await?;
+
+    let graph = DependencyGraph::build(&issuers, &credentials, &usages, &projects, &deployments);
+
+    // center_label — issuer display_name (credential plaintext 없음).
+    let cred = credentials.iter().find(|c| c.id == credential_id);
+    let issuer_name = cred
+        .and_then(|c| issuers.iter().find(|i| i.id == c.issuer_id))
+        .map(|i| i.display_name.clone())
+        .unwrap_or_else(|| credential_id.to_string());
+    let center_label = issuer_name;
+
+    // project_map: ProjectId → Project (label/env 조회용).
+    let project_map: HashMap<String, &secretbank_core::Project> =
+        projects.iter().map(|p| (p.id.to_string(), p)).collect();
+
+    // 1-hop: credential → UsedBy → project.
+    let mini = extract_credential_mini_graph(&graph, credential_id, &project_map, &center_label);
+
+    // audit log (best-effort).
+    state
+        .audit
+        .record(
+            AuditActor::LocalUser,
+            actions::EXT_GRAPH_FETCH,
+            "credential",
+            credential_id.to_string(),
+            None,
+        )
+        .await;
+
+    Ok(mini)
+}
+
+// ---------------------------------------------------------------------------
+// mini-graph 추출 헬퍼 (순수 함수 — 테스트 용이)
+// ---------------------------------------------------------------------------
+
+/// DependencyGraph 에서 credential_id 의 1-hop subgraph 를 추출한다.
+///
+/// `credential → (UsedBy) → project` 방향 에지만 추출.
+/// 결과 project 수가 MAX_VISIBLE_PROJECTS 초과이면 잘라내고 hidden_count 설정.
+pub fn extract_credential_mini_graph(
+    graph: &DependencyGraph,
+    credential_id: CredentialId,
+    project_map: &HashMap<String, &secretbank_core::Project>,
+    center_label: &str,
+) -> CredentialMiniGraph {
+    let center_id = credential_id.to_string();
+
+    // credential 노드에서 나가는 UsedBy 에지의 target (project) 수집.
+    let mut project_ids: Vec<String> = graph
+        .edges()
+        .filter_map(|(src, dst, kind)| {
+            if kind == EdgeKind::UsedBy {
+                if let NodeRef::Credential(cid) = src {
+                    if cid == credential_id {
+                        if let NodeRef::Project(pid) = dst {
+                            return Some(pid.to_string());
+                        }
+                    }
+                }
+            }
+            None
+        })
+        .collect();
+
+    // 결정성: ID 문자열 정렬 (같은 입력 → 같은 출력).
+    project_ids.sort();
+
+    let total = project_ids.len();
+    let hidden_count = total.saturating_sub(MAX_VISIBLE_PROJECTS);
+
+    // 최대 MAX_VISIBLE_PROJECTS 만 표시.
+    let visible_ids: Vec<String> = project_ids.into_iter().take(MAX_VISIBLE_PROJECTS).collect();
+
+    let project_nodes: Vec<MiniGraphProjectNode> = visible_ids
+        .iter()
+        .map(|pid| {
+            let (label, env) = project_map
+                .get(pid)
+                .map(|p| (p.name.clone(), "prod".to_string()))
+                .unwrap_or_else(|| (format!("<project:{pid}>"), "prod".to_string()));
+            MiniGraphProjectNode {
+                id: pid.clone(),
+                label,
+                env,
+            }
+        })
+        .collect();
+
+    let edges: Vec<MiniGraphEdge> = visible_ids
+        .iter()
+        .map(|pid| MiniGraphEdge {
+            from: center_id.clone(),
+            to: pid.clone(),
+        })
+        .collect();
+
+    CredentialMiniGraph {
+        center_id,
+        center_label: center_label.to_string(),
+        project_nodes,
+        edges,
+        hidden_count,
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -432,5 +601,283 @@ mod tests {
                 "EdgeKind::{core_kind:?} must convert to GraphEdgeKind::{expected:?}"
             );
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // T-24-E-G1-1 mini-graph 테스트 helpers
+    // -----------------------------------------------------------------------
+
+    use secretbank_core::{
+        graph::DependencyGraph,
+        id::{IssuerId, UsageId},
+        models::{
+            credential::{CredentialStatus, Env},
+            deployment::DeploymentPlatform,
+            usage::UsageWhereKind,
+        },
+        Credential, DeploymentId, Issuer, Project, Usage,
+    };
+    use time::OffsetDateTime;
+
+    fn make_issuer(id: IssuerId, name: &str) -> Issuer {
+        let now = OffsetDateTime::UNIX_EPOCH;
+        Issuer {
+            id,
+            slug: id.to_string(),
+            display_name: name.to_string(),
+            docs_url: None,
+            issue_url: None,
+            status_url: None,
+            security_feed_url: None,
+            connector_id: None,
+            icon_key: None,
+            default_primary_label: None,
+            default_secondary_label: None,
+            domains: vec![],
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    fn make_credential(id: CredentialId, issuer_id: IssuerId) -> Credential {
+        Credential {
+            id,
+            issuer_id,
+            name: id.to_string(),
+            env: Env::Prod,
+            scope: None,
+            vault_ref: format!("credentials/{id}"),
+            created_at: OffsetDateTime::UNIX_EPOCH,
+            last_rotated_at: None,
+            expires_at: None,
+            owner: None,
+            rotation_policy_days: None,
+            rotation_runbook_id: None,
+            status: CredentialStatus::Active,
+            hash_hint: None,
+            kind: secretbank_core::CredentialKind::ApiKey,
+            url: None,
+            username: None,
+            secondary_value_ref: None,
+            primary_label: None,
+            secondary_label: None,
+        }
+    }
+
+    fn make_project(id: ProjectId, name: &str) -> Project {
+        let now = OffsetDateTime::UNIX_EPOCH;
+        Project {
+            id,
+            name: name.to_string(),
+            repo_url: None,
+            framework: None,
+            runtime: None,
+            local_path: None,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    fn make_usage(cred_id: CredentialId, proj_id: ProjectId) -> Usage {
+        Usage {
+            id: UsageId::new(),
+            credential_id: cred_id,
+            project_id: proj_id,
+            deployment_id: None,
+            where_kind: UsageWhereKind::EnvVar,
+            where_value: "API_KEY".to_string(),
+            verified_at: None,
+            verified_by: None,
+        }
+    }
+
+    fn make_deployment(proj_id: ProjectId) -> secretbank_core::Deployment {
+        secretbank_core::Deployment {
+            id: DeploymentId::new(),
+            project_id: proj_id,
+            url: "https://example.com".to_string(),
+            platform: DeploymentPlatform::Other,
+            env: Env::Prod,
+            created_at: OffsetDateTime::UNIX_EPOCH,
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // G1-1-T1: 0 projects → empty mini-graph, hidden_count=0
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn g1_1_t1_no_projects_yields_empty_mini_graph() {
+        let iss_id = IssuerId::new();
+        let cred_id = CredentialId::new();
+
+        let issuers = vec![make_issuer(iss_id, "GitHub")];
+        let creds = vec![make_credential(cred_id, iss_id)];
+        let graph = DependencyGraph::build(&issuers, &creds, &[], &[], &[]);
+
+        let project_map: HashMap<String, &secretbank_core::Project> = HashMap::new();
+        let mini = extract_credential_mini_graph(&graph, cred_id, &project_map, "GitHub");
+
+        assert_eq!(mini.center_id, cred_id.to_string());
+        assert_eq!(mini.center_label, "GitHub");
+        assert!(
+            mini.project_nodes.is_empty(),
+            "0 projects → no project_nodes"
+        );
+        assert!(mini.edges.is_empty(), "0 projects → no edges");
+        assert_eq!(mini.hidden_count, 0);
+    }
+
+    // -----------------------------------------------------------------------
+    // G1-1-T2: 3 projects → all visible, hidden_count=0
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn g1_1_t2_three_projects_all_visible() {
+        let iss_id = IssuerId::new();
+        let cred_id = CredentialId::new();
+        let proj_ids: Vec<ProjectId> = (0..3).map(|_| ProjectId::new()).collect();
+
+        let issuers = vec![make_issuer(iss_id, "Stripe")];
+        let creds = vec![make_credential(cred_id, iss_id)];
+        let projects: Vec<Project> = proj_ids
+            .iter()
+            .enumerate()
+            .map(|(i, &pid)| make_project(pid, &format!("Project {i}")))
+            .collect();
+        let usages: Vec<Usage> = proj_ids
+            .iter()
+            .map(|&pid| make_usage(cred_id, pid))
+            .collect();
+        let deployments: Vec<secretbank_core::Deployment> =
+            proj_ids.iter().map(|&pid| make_deployment(pid)).collect();
+
+        let graph = DependencyGraph::build(&issuers, &creds, &usages, &projects, &deployments);
+
+        let project_map: HashMap<String, &secretbank_core::Project> =
+            projects.iter().map(|p| (p.id.to_string(), p)).collect();
+        let mini = extract_credential_mini_graph(&graph, cred_id, &project_map, "Stripe");
+
+        assert_eq!(mini.project_nodes.len(), 3, "3 projects → 3 nodes");
+        assert_eq!(mini.edges.len(), 3, "3 edges");
+        assert_eq!(mini.hidden_count, 0, "hidden_count=0 when ≤MAX_VISIBLE");
+
+        // 모든 에지 source = cred_id.
+        for edge in &mini.edges {
+            assert_eq!(edge.from, cred_id.to_string());
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // G1-1-T3: 7 projects → 5 visible + hidden_count=2
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn g1_1_t3_seven_projects_truncated_to_five() {
+        let iss_id = IssuerId::new();
+        let cred_id = CredentialId::new();
+        let proj_ids: Vec<ProjectId> = (0..7).map(|_| ProjectId::new()).collect();
+
+        let issuers = vec![make_issuer(iss_id, "AWS")];
+        let creds = vec![make_credential(cred_id, iss_id)];
+        let projects: Vec<Project> = proj_ids
+            .iter()
+            .enumerate()
+            .map(|(i, &pid)| make_project(pid, &format!("Service {i}")))
+            .collect();
+        let usages: Vec<Usage> = proj_ids
+            .iter()
+            .map(|&pid| make_usage(cred_id, pid))
+            .collect();
+        let deployments: Vec<secretbank_core::Deployment> =
+            proj_ids.iter().map(|&pid| make_deployment(pid)).collect();
+
+        let graph = DependencyGraph::build(&issuers, &creds, &usages, &projects, &deployments);
+
+        let project_map: HashMap<String, &secretbank_core::Project> =
+            projects.iter().map(|p| (p.id.to_string(), p)).collect();
+        let mini = extract_credential_mini_graph(&graph, cred_id, &project_map, "AWS");
+
+        assert_eq!(
+            mini.project_nodes.len(),
+            MAX_VISIBLE_PROJECTS,
+            "7 projects → 5 visible"
+        );
+        assert_eq!(mini.edges.len(), MAX_VISIBLE_PROJECTS, "5 edges");
+        assert_eq!(mini.hidden_count, 2, "7 - 5 = 2 hidden");
+    }
+
+    // -----------------------------------------------------------------------
+    // G1-1-T4: 결정성 — 같은 입력은 항상 같은 순서
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn g1_1_t4_deterministic_output() {
+        let iss_id = IssuerId::new();
+        let cred_id = CredentialId::new();
+        let proj_ids: Vec<ProjectId> = (0..4).map(|_| ProjectId::new()).collect();
+
+        let issuers = vec![make_issuer(iss_id, "OpenAI")];
+        let creds = vec![make_credential(cred_id, iss_id)];
+        let projects: Vec<Project> = proj_ids
+            .iter()
+            .enumerate()
+            .map(|(i, &pid)| make_project(pid, &format!("App {i}")))
+            .collect();
+        let usages: Vec<Usage> = proj_ids
+            .iter()
+            .map(|&pid| make_usage(cred_id, pid))
+            .collect();
+
+        let graph = DependencyGraph::build(&issuers, &creds, &usages, &projects, &[]);
+        let project_map: HashMap<String, &secretbank_core::Project> =
+            projects.iter().map(|p| (p.id.to_string(), p)).collect();
+
+        let mini1 = extract_credential_mini_graph(&graph, cred_id, &project_map, "OpenAI");
+        let mini2 = extract_credential_mini_graph(&graph, cred_id, &project_map, "OpenAI");
+
+        assert_eq!(mini1, mini2, "동일 입력 → 동일 출력 (결정성)");
+    }
+
+    // -----------------------------------------------------------------------
+    // G1-1-T5: audit action 상수 검증
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn g1_1_t5_audit_action_constant() {
+        assert_eq!(
+            secretbank_audit::actions::EXT_GRAPH_FETCH,
+            "extension.graph.fetch"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // G1-1-T6: CredentialMiniGraph round-trips through JSON
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn g1_1_t6_mini_graph_json_round_trip() {
+        let cred_id = CredentialId::new().to_string();
+        let proj_id = ProjectId::new().to_string();
+
+        let mini = CredentialMiniGraph {
+            center_id: cred_id.clone(),
+            center_label: "GitHub".to_string(),
+            project_nodes: vec![MiniGraphProjectNode {
+                id: proj_id.clone(),
+                label: "My App".to_string(),
+                env: "prod".to_string(),
+            }],
+            edges: vec![MiniGraphEdge {
+                from: cred_id.clone(),
+                to: proj_id.clone(),
+            }],
+            hidden_count: 0,
+        };
+
+        let serialized = serde_json::to_string(&mini).expect("serialize");
+        let deserialized: CredentialMiniGraph =
+            serde_json::from_str(&serialized).expect("deserialize");
+        assert_eq!(mini, deserialized, "CredentialMiniGraph must round-trip");
     }
 }

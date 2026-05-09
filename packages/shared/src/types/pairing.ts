@@ -187,12 +187,36 @@ export interface NMMessageUpsertRecipeForDomainResponse {
 // 하위 호환 — A2 의 "pair" 타입 (코드 제출 메시지)은 pair_response 로 통합.
 // 기존 테스트가 "pair" type 을 직접 참조하는 경우를 위해 재-export 하지 않는다.
 
+// ---------------------------------------------------------------------------
+// T-24-E-G1-1: credential mini-graph RPC 메시지
+// ---------------------------------------------------------------------------
+
+/** Extension → nm-host: credential 1-hop mini-graph 조회 */
+export interface NMMessageGraphForCredential {
+  type: "graph_for_credential";
+  credential_id: string;
+  session_token: string;
+}
+
+/** nm-host → Extension: credential mini-graph 응답 */
+export interface NMMessageGraphForCredentialResponse {
+  type: "graph_for_credential_response";
+  ok: boolean;
+  center_id?: string;
+  center_label?: string;
+  project_nodes?: import("./graph.js").ProjectNode[];
+  edges?: import("./graph.js").MiniGraphEdge[];
+  hidden_count?: number;
+  error?: string;
+}
+
 /**
  * Native Messaging 메시지 discriminated union.
  * B-4: X25519 페어링 메시지(init/pair_request/pair_response/paired) 추가.
  * D-4: credential CRUD RPC 메시지 추가.
  * E-2: issuer recipe RPC 메시지 추가.
  * E-4: get_credential_list RPC 메시지 추가.
+ * G1-1: graph_for_credential mini-graph RPC 메시지 추가.
  */
 export type NMMessage =
   | NMMessageInit
@@ -211,7 +235,9 @@ export type NMMessage =
   | NMMessageUpsertRecipeForDomain
   | NMMessageUpsertRecipeForDomainResponse
   | NMMessageGetCredentialList
-  | NMMessageGetCredentialListResponse;
+  | NMMessageGetCredentialListResponse
+  | NMMessageGraphForCredential
+  | NMMessageGraphForCredentialResponse;
 
 // ---------------------------------------------------------------------------
 // T-24-E-E4: credential 전체 목록 조회 (popup CredentialList 용)

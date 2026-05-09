@@ -75,6 +75,14 @@ pub const EXT_SAVE_UPDATE: &str = "extension.save.update";
 pub const EXT_RECIPE_UPSERT: &str = "extension.recipe.upsert";
 
 // ---------------------------------------------------------------------------
+// extension.graph.*  (T-24-E-G1-1)
+// ---------------------------------------------------------------------------
+
+/// Extension popup 의 credential 1-hop 의존성 그래프 조회 이벤트.
+/// `graph_for_credential` nm-host 메시지 처리 시 기록.
+pub const EXT_GRAPH_FETCH: &str = "extension.graph.fetch";
+
+// ---------------------------------------------------------------------------
 // 모든 신규 action 상수 목록 (테스트 순회용)
 // ---------------------------------------------------------------------------
 
@@ -93,6 +101,7 @@ pub const ALL_EXT_ACTIONS: &[&str] = &[
     EXT_SAVE_CREATE,
     EXT_SAVE_UPDATE,
     EXT_RECIPE_UPSERT,
+    EXT_GRAPH_FETCH,
 ];
 
 // ---------------------------------------------------------------------------

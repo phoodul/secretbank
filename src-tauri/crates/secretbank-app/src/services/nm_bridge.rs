@@ -242,6 +242,8 @@ async fn dispatch(msg: &Value, bctx: &BridgeContext) -> Value {
         }
         "credential_create" => handle_credential_create(msg, bctx).await,
         "credential_update" => handle_credential_update(msg, bctx).await,
+        // T-24-E-G1-1: credential 1-hop mini-graph 조회
+        "graph_for_credential" => handle_graph_for_credential(msg, bctx).await,
         _ => serde_json::json!({ "ok": false, "error": "unknown_type" }),
     }
 }
@@ -659,6 +661,156 @@ async fn handle_credential_update(msg: &Value, bctx: &BridgeContext) -> Value {
     serde_json::json!({
         "type": "credential_save_response",
         "ok": true
+    })
+}
+
+// ---------------------------------------------------------------------------
+// T-24-E-G1-1: graph_for_credential 핸들러
+// ---------------------------------------------------------------------------
+
+/// credential 의 1-hop mini-graph 를 반환한다.
+///
+/// nm-host → bridge forward → 이 핸들러 → DB 조회 → mini-graph 응답.
+/// credential plaintext ❌ — center_label = issuer display_name 만.
+async fn handle_graph_for_credential(msg: &Value, bctx: &BridgeContext) -> Value {
+    use secretbank_storage::sqlite::repositories::{
+        credential::CredentialRepo, deployment::DeploymentRepo, issuer::IssuerRepo,
+        project::ProjectRepo, usage::UsageRepo,
+    };
+    use std::collections::HashMap;
+
+    use secretbank_audit::{actions, AuditActor};
+    use secretbank_core::{graph::DependencyGraph, CredentialId};
+
+    use crate::commands::graph::extract_credential_mini_graph;
+
+    let credential_id_str = msg
+        .get("credential_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
+    if credential_id_str.is_empty() {
+        return serde_json::json!({
+            "type": "graph_for_credential_response",
+            "ok": false,
+            "error": "missing_credential_id"
+        });
+    }
+
+    let credential_id: CredentialId = match credential_id_str.parse() {
+        Ok(id) => id,
+        Err(_) => {
+            return serde_json::json!({
+                "type": "graph_for_credential_response",
+                "ok": false,
+                "error": "invalid_credential_id"
+            });
+        }
+    };
+
+    // vault 잠금 재확인 (defense-in-depth).
+    {
+        let vault = bctx.vault.read().await;
+        if !vault.is_unlocked().await {
+            return serde_json::json!({
+                "type": "graph_for_credential_response",
+                "ok": false,
+                "error": "vault_locked"
+            });
+        }
+    }
+
+    // DB에서 그래프 구성에 필요한 모든 엔티티 로드.
+    let issuers = match IssuerRepo::new(&bctx.pool).list().await {
+        Ok(v) => v,
+        Err(e) => {
+            error!("nm-bridge: graph_for_credential issuers 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "graph_for_credential_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+    let credentials = match CredentialRepo::new(&bctx.pool).list_all().await {
+        Ok(v) => v,
+        Err(e) => {
+            error!("nm-bridge: graph_for_credential credentials 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "graph_for_credential_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+    let usages = match UsageRepo::new(&bctx.pool).list_all().await {
+        Ok(v) => v,
+        Err(e) => {
+            error!("nm-bridge: graph_for_credential usages 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "graph_for_credential_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+    let projects = match ProjectRepo::new(&bctx.pool).list().await {
+        Ok(v) => v,
+        Err(e) => {
+            error!("nm-bridge: graph_for_credential projects 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "graph_for_credential_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+    let deployments = match DeploymentRepo::new(&bctx.pool).list_all().await {
+        Ok(v) => v,
+        Err(e) => {
+            error!("nm-bridge: graph_for_credential deployments 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "graph_for_credential_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+
+    let graph = DependencyGraph::build(&issuers, &credentials, &usages, &projects, &deployments);
+
+    // center_label — issuer display_name (plaintext ❌).
+    let center_label = credentials
+        .iter()
+        .find(|c| c.id == credential_id)
+        .and_then(|c| issuers.iter().find(|i| i.id == c.issuer_id))
+        .map(|i| i.display_name.clone())
+        .unwrap_or_else(|| credential_id.to_string());
+
+    let project_map: HashMap<String, &secretbank_core::Project> =
+        projects.iter().map(|p| (p.id.to_string(), p)).collect();
+
+    let mini = extract_credential_mini_graph(&graph, credential_id, &project_map, &center_label);
+
+    // audit log (best-effort).
+    bctx.audit
+        .record(
+            AuditActor::LocalUser,
+            actions::EXT_GRAPH_FETCH,
+            "credential",
+            credential_id.to_string(),
+            None,
+        )
+        .await;
+
+    serde_json::json!({
+        "type": "graph_for_credential_response",
+        "ok": true,
+        "center_id": mini.center_id,
+        "center_label": mini.center_label,
+        "project_nodes": mini.project_nodes,
+        "edges": mini.edges,
+        "hidden_count": mini.hidden_count
     })
 }
 

@@ -458,4 +458,98 @@ describe("NMClient", () => {
     // 최초 1회만 호출
     expect(connectNativeSpy).toHaveBeenCalledTimes(1);
   });
+
+  // ── 9. T-24-E-G1-1: graphForCredential RPC ───────────────────────────────
+
+  it("graphForCredential() 은 올바른 타입으로 요청을 전송하고 응답을 반환한다", async () => {
+    const { port, dispatch } = createPortStub();
+
+    const credentialId = "01JXXXXXXXXXXXXXXXXXXXXXXX";
+    const sessionToken = "test-session-token";
+
+    const mockResponse = {
+      type: "graph_for_credential_response" as const,
+      ok: true,
+      center_id: credentialId,
+      center_label: "GitHub",
+      project_nodes: [
+        { id: "proj-1", label: "My App", env: "prod" },
+        { id: "proj-2", label: "My Backend", env: "staging" },
+      ],
+      edges: [
+        { from: credentialId, to: "proj-1" },
+        { from: credentialId, to: "proj-2" },
+      ],
+      hidden_count: 0,
+    };
+
+    mockConnectNative(port);
+    await client.connect();
+
+    // _rpc 흐름: sendMessage → new Promise → const unsub = this.onMessage(cb) → 리스너 등록.
+    // onMessage mock 내에서 즉시 dispatch 하면 unsub 아직 초기화 전 → TDZ 오류.
+    // Promise.resolve().then 으로 unsub 할당 완료 후 dispatch 한다.
+    const origOnMessage = client.onMessage.bind(client);
+    vi.spyOn(client, "onMessage").mockImplementationOnce((handler) => {
+      const unsub = origOnMessage(handler);
+      Promise.resolve().then(() => dispatch.message(mockResponse));
+      return unsub;
+    });
+
+    const result = await client.graphForCredential(credentialId, sessionToken);
+
+    // 요청 타입 검증
+    const postMessage = (port as unknown as { postMessage: ReturnType<typeof vi.fn> }).postMessage;
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "graph_for_credential",
+        credential_id: credentialId,
+        session_token: sessionToken,
+      }),
+    );
+
+    // 응답 내용 검증
+    expect(result.ok).toBe(true);
+    expect(result.center_label).toBe("GitHub");
+    expect(result.project_nodes).toHaveLength(2);
+    expect(result.hidden_count).toBe(0);
+  });
+
+  it("graphForCredential() 은 5s timeout 후 NMDisconnected 를 throw 한다", async () => {
+    const { port } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    const rpcPromise = client.graphForCredential("cred-id", "tok");
+
+    // 5초 초과 — 응답 없음
+    await vi.advanceTimersByTimeAsync(5001);
+
+    await expect(rpcPromise).rejects.toBeInstanceOf(NMDisconnected);
+  });
+
+  it("graphForCredential() 은 타입 호환 응답 (ok=false) 도 수신한다", async () => {
+    const { port, dispatch } = createPortStub();
+
+    const errorResponse = {
+      type: "graph_for_credential_response" as const,
+      ok: false,
+      error: "vault_locked",
+    };
+
+    mockConnectNative(port);
+    await client.connect();
+
+    // onMessage mock: unsub 할당 완료 후 dispatch (TDZ 방지).
+    const origOnMessage = client.onMessage.bind(client);
+    vi.spyOn(client, "onMessage").mockImplementationOnce((handler) => {
+      const unsub = origOnMessage(handler);
+      Promise.resolve().then(() => dispatch.message(errorResponse));
+      return unsub;
+    });
+
+    const result = await client.graphForCredential("cred-id", "tok");
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("vault_locked");
+  });
 });
