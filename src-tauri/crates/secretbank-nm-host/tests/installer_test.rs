@@ -91,14 +91,21 @@ fn integration_manifest_path_contains_host_name() {
 /// NOTE: 환경 변수 변경은 프로세스 전역에 영향을 주므로 각 테스트는
 ///       set_var / remove_var 를 직접 수행한다 (병렬 실행 시 레이스 주의).
 ///       cargo test 는 기본적으로 테스트별 독립 스레드이므로 이 수준에서는 안전.
+/// 환경 변수 변경 시 process-global 이라 cargo test 의 병렬 실행에서 race 발생.
+/// 모든 with_temp_home 호출을 단일 Mutex 로 serialize 한다.
+#[cfg(not(windows))]
+static TEST_ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[cfg(not(windows))]
 fn with_temp_home<F: FnOnce(&TempDir)>(f: F) {
+    // CI 의 다른 테스트가 panic 으로 poison 한 경우에도 진행 (lock state 만 필요).
+    let _guard = TEST_ENV_LOCK.lock().unwrap_or_else(|p| p.into_inner());
     let tmp = TempDir::new().unwrap();
-    // SAFETY: 단일 스레드 테스트 전용. 멀티스레드 시 set_var 는 안전하지 않을 수 있음.
+    // SAFETY: TEST_ENV_LOCK 보유 중이라 단일 thread 만 env 변경.
     //
-    // Linux 의 `dirs::config_dir()` 는 `XDG_CONFIG_HOME` 우선이라 `HOME` 만으로는
-    // 격리 불충분. CI runner (Ubuntu) 에서 XDG_CONFIG_HOME 이 비어있어도 일부
-    // libc 구현은 passwd entry 의 home_dir 을 따른다. 따라서 양쪽 모두 override.
+    // Linux 의 `dirs::*` 는 `HOME` 의 set_var 를 무시 (passwd entry 우선) 하므로
+    // installer.rs 의 manifest_path_linux 가 직접 std::env::var 를 읽도록 변경됨.
+    // XDG_CONFIG_HOME 도 같이 override 하여 Chrome/Edge 경로 결정 정확.
     unsafe {
         std::env::set_var("HOME", tmp.path());
         std::env::set_var("XDG_CONFIG_HOME", tmp.path().join(".config"));
