@@ -1,0 +1,35 @@
+[package]
+name = "secretbank-nm-host"
+version = "0.1.0-pre11"
+edition = "2021"
+description = "Secretbank Native Messaging Host — Chrome/Firefox extension bridge (stdio JSON protocol)"
+license = "AGPL-3.0-or-later"
+
+[[bin]]
+name = "secretbank-nm-host"
+path = "src/main.rs"
+
+[lib]
+name = "secretbank_nm_host"
+path = "src/lib.rs"
+
+[dependencies]
+# Async runtime — io-std (stdin/stdout 비동기), signal (ctrl-c)
+tokio = { workspace = true }
+
+# JSON 직렬화
+serde_json = { workspace = true }
+
+# 에러 처리
+thiserror = { workspace = true }
+
+# 로깅 (stdout 오염 금지 — stderr 전용)
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# B-4 페어링에서 실제 사용 — B-1 에서는 의존만 추가
+secretbank-crypto = { path = "../secretbank-crypto" }
+
+[dev-dependencies]
+tokio = { workspace = true }
+serde_json = { workspace = true }
