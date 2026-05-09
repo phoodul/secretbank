@@ -752,7 +752,7 @@
 | T-24-E-A2   | packages/shared types                            | 2026-05-09 | `7d3191d` |
 | T-24-E-A3   | password-generator (Diceware 4 lang + zxcvbn-ts) | 2026-05-09 | `f8a8a6f` |
 | T-24-E-A4   | shared validation                                | 2026-05-09 | `a983000` |
-| T-24-E-A5   | i18n (4 lang YAML + @wxt-dev/i18n + I18N_KEYS)  | 2026-05-09 | (commit pending) |
+| T-24-E-A5   | i18n (4 lang YAML + @wxt-dev/i18n + I18N_KEYS)  | 2026-05-09 | `d093ffe` |
 | T-24-E-A6   | popup 골격                                       | -      | -         |
 | T-24-E-A7   | CI 빌드 매트릭스                                 | -      | -         |
 | T-24-E-B1   | nm-host crate                                    | -      | -         |
