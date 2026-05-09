@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/lib/form-detector.ts — M24-E Phase C-1
+// extension/lib/form-detector.ts — M24-E Phase C-1 + C-3 (Shadow DOM)
 //
 // 페이지 내 password / username input 을 우선순위로 감지한다.
 // 우선순위:
@@ -9,10 +9,12 @@
 //   3. <input type="password">
 //   4. name/id regex (/password|pwd|passwd/i)
 //
-// 이 파일은 Light DOM 의 1회 scan 만 처리한다:
-//   - Shadow DOM (open / closed) 처리는 C-3 에서.
-//   - MutationObserver / SPA 동적 렌더링은 C-2 에서.
-//   - iframe / cross-origin 처리는 C-7 에서.
+// Shadow DOM:
+//   - open: shadowRoot 재귀 traverse
+//   - closed: querySelector 로 접근 ❌ → composedPath() event-driven 만 cover
+//     (inputFromComposedPath 헬퍼)
+// iframe / cross-origin 처리는 C-7 에서.
+// MutationObserver / SPA 동적 렌더링은 C-2 (spa-watcher.ts) 에서.
 
 /** password input 이 어떤 시그널로 감지되었는지. 우선순위 결정용. */
 export type PasswordPriority = "current-password" | "new-password" | "type-password" | "name-regex";
@@ -38,19 +40,20 @@ const USERNAME_NAME_RE = /user|email|login|account/i;
 
 /**
  * `root` 의 모든 password input 을 우선순위에 따라 감지한다.
+ * Open Shadow DOM 도 재귀 traverse (C-3).
+ * Closed Shadow DOM 은 querySelector 로 접근 ❌ — `inputFromComposedPath` 활용.
  *
  * @param root  scan 시작 요소 (default = `document`).
- *              Shadow DOM 은 미지원 (C-3 에서).
  */
 export function detectForms(
-  root: Document | HTMLElement = typeof document !== "undefined"
+  root: Document | HTMLElement | ShadowRoot = typeof document !== "undefined"
     ? document
     : (undefined as unknown as Document),
 ): DetectedForm[] {
   if (!root) return [];
 
-  // 모든 input 후보 수집 — light DOM 만.
-  const allInputs = Array.from(root.querySelectorAll("input")) as HTMLInputElement[];
+  // 모든 input 후보 수집 — open shadow root 까지 재귀.
+  const allInputs = collectInputsRecursive(root);
 
   const detected: DetectedForm[] = [];
   const seen = new Set<HTMLInputElement>();
@@ -118,13 +121,11 @@ interface UsernameMatch {
  */
 function findUsernameNear(
   formEl: HTMLFormElement | null,
-  root: Document | HTMLElement,
+  _root: Document | HTMLElement | ShadowRoot,
   allInputs: HTMLInputElement[],
   seen: Set<HTMLInputElement>,
 ): UsernameMatch | null {
-  const candidates: HTMLInputElement[] = formEl
-    ? (Array.from(formEl.querySelectorAll("input")) as HTMLInputElement[])
-    : allInputs;
+  const candidates: HTMLInputElement[] = formEl ? collectInputsRecursive(formEl) : allInputs;
 
   // 우선순위별 후보 분류.
   let acMatch: HTMLInputElement | null = null;
@@ -152,5 +153,57 @@ function findUsernameNear(
   if (acMatch) return { input: acMatch, priority: "autocomplete" };
   if (emailMatch) return { input: emailMatch, priority: "type-email" };
   if (regexMatch) return { input: regexMatch, priority: "name-regex" };
+  return null;
+}
+
+/**
+ * Light DOM + Open Shadow DOM 의 모든 input 을 재귀적으로 수집.
+ * Closed Shadow Root 는 host 에서 접근 불가능 → 건너뛴다.
+ */
+function collectInputsRecursive(
+  root: Document | HTMLElement | ShadowRoot | DocumentFragment,
+): HTMLInputElement[] {
+  const result: HTMLInputElement[] = [];
+  const visited = new WeakSet<ShadowRoot>();
+
+  function walk(node: ParentNode): void {
+    // 현재 node 의 모든 input.
+    const inputs = node.querySelectorAll("input");
+    for (const inp of Array.from(inputs)) {
+      result.push(inp as HTMLInputElement);
+    }
+    // 모든 element 를 traverse 하면서 open shadowRoot 발견 시 재귀.
+    const all = node.querySelectorAll("*");
+    for (const el of Array.from(all)) {
+      const sr = (el as Element).shadowRoot;
+      if (sr && !visited.has(sr)) {
+        visited.add(sr);
+        walk(sr);
+      }
+    }
+  }
+
+  walk(root);
+  return result;
+}
+
+/**
+ * Closed Shadow Root 안의 input 에 focus / click event 발생 시,
+ * `event.composedPath()` 의 첫 번째 HTMLInputElement 를 반환.
+ *
+ * `attachShadow({ mode: 'closed' })` 로 만든 shadow tree 는 host 에서
+ * `shadowRoot` 접근이 불가능하지만, 사용자 상호작용 event 는 composed=true
+ * 라면 path 에 deep target 이 노출된다. autofill 트리거 시점에서 활용.
+ *
+ * 반환된 input 의 `closest("form")` 는 closed shadow tree 내부의 form 일 수
+ * 있다 (form-detector 가 detectForms 로 cover 못 함).
+ */
+export function inputFromComposedPath(event: Event): HTMLInputElement | null {
+  const path = event.composedPath?.() ?? [];
+  for (const node of path) {
+    if (node instanceof HTMLInputElement) {
+      return node;
+    }
+  }
   return null;
 }
