@@ -784,7 +784,7 @@
 | T-24-E-E5   | 디자인 토큰 동기화                                        | 2026-05-10 | pending   |
 | T-24-E-F1   | Chrome Web Store 제출                                     | -          | -         |
 | T-24-E-F2   | Firefox AMO 제출                                          | -          | -         |
-| T-24-E-F3   | Playwright E2E                                            | -          | -         |
+| T-24-E-F3   | Playwright E2E                                            | 2026-05-10 | 48e9fa0   |
 | T-24-E-F4   | web-ext E2E                                               | -          | -         |
 | T-24-E-F5   | Mock NM Host                                              | 2026-05-10 | pending   |
 | T-24-E-F6   | Safari Xcode wrapper                                      | -          | -         |
