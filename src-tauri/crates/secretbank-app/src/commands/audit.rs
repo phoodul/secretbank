@@ -29,8 +29,8 @@ pub struct AuditEntry {
     pub id: String,
     pub seq: i64,
     pub device_id: Option<String>,
-    /// "local-user" | "system" | "connector"
-    pub actor: &'static str,
+    /// "local-user" | "system" | "connector" | "extension:{ext_id}"
+    pub actor: String,
     pub action: String,
     pub subject_kind: String,
     pub subject_id: String,

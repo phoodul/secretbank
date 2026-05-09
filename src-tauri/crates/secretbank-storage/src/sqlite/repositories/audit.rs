@@ -35,7 +35,7 @@ impl<'a> AuditRepo<'a> {
     /// Insert a fully-formed audit entry (all hashes/signature must be set).
     pub async fn insert(&self, entry: &AuditLog) -> Result<(), StorageError> {
         let created_ms = dt_to_ms(entry.created_at);
-        let actor_str = actor_to_str(entry.actor);
+        let actor_str = actor_to_str(&entry.actor);
 
         sqlx::query(
             r#"INSERT INTO audit_log
@@ -190,12 +190,9 @@ fn row_to_audit_log(r: &sqlx::sqlite::SqliteRow) -> Result<AuditLog, StorageErro
     })
 }
 
-fn actor_to_str(a: AuditActor) -> &'static str {
-    match a {
-        AuditActor::LocalUser => "local-user",
-        AuditActor::System => "system",
-        AuditActor::Connector => "connector",
-    }
+// T-24-E-D5: Extension variant 직렬화 — "extension:{id}" 형식. — TM-EXT-ACTOR
+fn actor_to_str(a: &AuditActor) -> String {
+    a.as_str()
 }
 
 fn str_to_actor(s: &str) -> Result<AuditActor, StorageError> {
@@ -203,6 +200,9 @@ fn str_to_actor(s: &str) -> Result<AuditActor, StorageError> {
         "local-user" => Ok(AuditActor::LocalUser),
         "system" => Ok(AuditActor::System),
         "connector" => Ok(AuditActor::Connector),
+        other if other.starts_with("extension:") => Ok(AuditActor::Extension(
+            other["extension:".len()..].to_string(),
+        )),
         other => Err(StorageError::Parse(format!("unknown actor: {other}"))),
     }
 }

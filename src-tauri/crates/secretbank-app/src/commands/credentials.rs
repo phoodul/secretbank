@@ -11,9 +11,11 @@ use time::OffsetDateTime;
 use secretbank_audit::AuditActor;
 use secretbank_core::{
     score_credential, Credential, CredentialFilter, CredentialId, CredentialInput, CredentialPatch,
-    CredentialSummary, ScoreBreakdown, Usage,
+    CredentialSummary, IssuerId, ScoreBreakdown, Usage,
 };
-use secretbank_storage::sqlite::repositories::{credential::CredentialRepo, usage::UsageRepo};
+use secretbank_storage::sqlite::repositories::{
+    credential::CredentialRepo, issuer::IssuerRepo, usage::UsageRepo,
+};
 use secretbank_storage::vault::{ExposeSecret, SecretBytes};
 
 use crate::context::AppContext;
@@ -112,19 +114,90 @@ pub struct CredentialRotateInput {
 // Tauri commands
 // ---------------------------------------------------------------------------
 
-#[tauri::command]
-pub async fn credential_create(
+// ---------------------------------------------------------------------------
+// Issuer resolution helper (T-24-E-D5)
+// ---------------------------------------------------------------------------
+
+/// 도메인 문자열에서 slug 를 추론한다.
+///
+/// `github.com` → `github`, `api.openai.com` → `openai`(마지막 공개 레이블 추출).
+/// 규칙: "www." prefix 제거 → 마지막 2개 레이블에서 TLD 제거 → 첫 번째 파트.
+/// 예: `api.github.com` → segments = ["api","github","com"] → TLD 제거 → "github".
+///
+/// 순수 함수이므로 비동기 아님.
+pub fn domain_to_slug(domain: &str) -> String {
+    let host = domain.trim().to_lowercase();
+    // URL 형태가 오면 host 만 추출 (scheme:// 제거)
+    let host = host
+        .strip_prefix("https://")
+        .or_else(|| host.strip_prefix("http://"))
+        .unwrap_or(&host);
+    // path 제거 — '/' 이전 부분만
+    let host = host.split('/').next().unwrap_or(host);
+    // port 제거
+    let host = host.split(':').next().unwrap_or(host);
+    // www. prefix 제거
+    let host = host.strip_prefix("www.").unwrap_or(host);
+
+    let parts: Vec<&str> = host.split('.').collect();
+    match parts.as_slice() {
+        [] => "unknown".to_string(),
+        [only] => only.to_string(),
+        // e.g. ["github", "com"] → "github"
+        [name, _tld] => name.to_string(),
+        // e.g. ["api", "github", "com"] → 두 번째 마지막 = "github"
+        _ => {
+            let n = parts.len();
+            parts[n - 2].to_string()
+        }
+    }
+}
+
+/// domain 에 해당하는 IssuerId 를 반환한다. 우선순위:
+/// 1. payload 에 issuer_id 가 명시된 경우 그대로 사용.
+/// 2. IssuerRepo::find_by_domain 으로 domains 배열 매칭.
+/// 3. slug 자동 추론 + IssuerRepo::get_or_create_by_slug (idempotent placeholder). — TM-EXT-ACTOR
+pub async fn resolve_issuer_for_domain(
+    domain: &str,
+    pool: &sqlx::SqlitePool,
+) -> Result<IssuerId, CredentialCommandError> {
+    let repo = IssuerRepo::new(pool);
+
+    // domains 배열 기반 정확 매칭 시도
+    if let Some(issuer) = repo.find_by_domain(domain).await? {
+        return Ok(issuer.id);
+    }
+
+    // 미매칭 → slug 자동 추론 후 placeholder get-or-create
+    let slug = domain_to_slug(domain);
+    // display_name 은 slug 첫 글자 대문자화 (단순 placeholder)
+    let display_name = {
+        let mut chars = slug.chars();
+        match chars.next() {
+            None => String::new(),
+            Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
+        }
+    };
+
+    let id = repo.get_or_create_by_slug(&slug, &display_name).await?;
+    Ok(id)
+}
+
+/// credential_create 핵심 로직 — Tauri command 와 nm-host extension 경로 양쪽에서 호출.
+/// actor = AuditActor::LocalUser (UI) 또는 AuditActor::Extension(ext_id) (nm-host). — TM-EXT-ACTOR
+pub async fn credential_create_internal(
     args: CredentialCreateArgs,
-    state: State<'_, AppContext>,
+    actor: AuditActor,
+    ctx: &AppContext,
 ) -> Result<CredentialId, CredentialCommandError> {
     {
-        let vault = state.vault.read().await;
+        let vault = ctx.vault.read().await;
         if !vault.is_unlocked().await {
             return Err(CredentialCommandError::NotUnlocked);
         }
     }
 
-    let repo = CredentialRepo::new(&state.pool);
+    let repo = CredentialRepo::new(&ctx.pool);
     let id = CredentialId::new();
     let vault_ref = format!("credentials/{id}");
 
@@ -148,7 +221,7 @@ pub async fn credential_create(
     // Write primary secret.
     let secret_bytes = SecretBytes::new(args.value.as_bytes().to_vec());
     {
-        let mut vault = state.vault.write().await;
+        let mut vault = ctx.vault.write().await;
         if let Err(vault_err) = vault.put_secret(&vault_ref, secret_bytes).await {
             let _ = repo.delete(id).await;
             return Err(CredentialCommandError::from(vault_err));
@@ -180,10 +253,9 @@ pub async fn credential_create(
         "issuer_id": args.input.issuer_id.to_string()
     })
     .to_string();
-    state
-        .audit
+    ctx.audit
         .record(
-            AuditActor::LocalUser,
+            actor,
             "credential.create",
             "credential",
             id.to_string(),
@@ -191,21 +263,17 @@ pub async fn credential_create(
         )
         .await;
 
-    state
-        .db_change_emitter
+    ctx.db_change_emitter
         .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
             crate::services::sync_emit::DbChangeEntity::Credential,
             id.to_string(),
         ));
 
-    // M9 Phase F-3 — best-effort value push to relay. Sync 가 비활성 (enc_key
-    // 없음 / network 실패) 이어도 credential 생성 자체는 성공으로 간주 — 다음
-    // pull 또는 명시적 retry 에서 따라잡는다.
+    // M9 Phase F-3 — best-effort value push to relay.
     {
         let plaintext = secrecy::SecretString::from(args.value.clone());
         let cred_id_str = id.to_string();
-        if let Err(e) =
-            crate::services::value_sync::push_value(&state, &cred_id_str, &plaintext).await
+        if let Err(e) = crate::services::value_sync::push_value(ctx, &cred_id_str, &plaintext).await
         {
             tracing::debug!(
                 credential_id = %cred_id_str,
@@ -216,6 +284,14 @@ pub async fn credential_create(
     }
 
     Ok(id)
+}
+
+#[tauri::command]
+pub async fn credential_create(
+    args: CredentialCreateArgs,
+    state: State<'_, AppContext>,
+) -> Result<CredentialId, CredentialCommandError> {
+    credential_create_internal(args, AuditActor::LocalUser, &state).await
 }
 
 #[tauri::command]
@@ -258,13 +334,15 @@ pub async fn credential_get(
     })
 }
 
-#[tauri::command]
-pub async fn credential_update(
+/// credential_update 핵심 로직 — Tauri command 와 nm-host extension 경로 양쪽에서 호출.
+/// actor = AuditActor::LocalUser (UI) 또는 AuditActor::Extension(ext_id) (nm-host). — TM-EXT-ACTOR
+pub async fn credential_update_internal(
     id: CredentialId,
     patch: CredentialPatch,
-    state: State<'_, AppContext>,
+    actor: AuditActor,
+    ctx: &AppContext,
 ) -> Result<(), CredentialCommandError> {
-    let repo = CredentialRepo::new(&state.pool);
+    let repo = CredentialRepo::new(&ctx.pool);
     repo.update(id, &patch).await?;
 
     // Record which fields were touched — values are never logged.
@@ -302,10 +380,9 @@ pub async fn credential_update(
         Some(serde_json::json!({ "updated_fields": updated_fields }).to_string())
     };
 
-    state
-        .audit
+    ctx.audit
         .record(
-            AuditActor::LocalUser,
+            actor,
             "credential.update",
             "credential",
             id.to_string(),
@@ -313,14 +390,22 @@ pub async fn credential_update(
         )
         .await;
 
-    state
-        .db_change_emitter
+    ctx.db_change_emitter
         .emit_db_changed(&crate::services::sync_emit::DbChangePayload::upsert(
             crate::services::sync_emit::DbChangeEntity::Credential,
             id.to_string(),
         ));
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn credential_update(
+    id: CredentialId,
+    patch: CredentialPatch,
+    state: State<'_, AppContext>,
+) -> Result<(), CredentialCommandError> {
+    credential_update_internal(id, patch, AuditActor::LocalUser, &state).await
 }
 
 #[tauri::command]
@@ -891,5 +976,87 @@ mod tests {
             1,
             "credential_list must return 1 item when vault is unlocked"
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // T-24-E-D5-S1: domain_to_slug — 다양한 도메인 형태에서 slug 추론
+    // -----------------------------------------------------------------------
+    #[test]
+    fn d5_domain_to_slug_extracts_correct_slug() {
+        assert_eq!(domain_to_slug("github.com"), "github");
+        assert_eq!(domain_to_slug("api.github.com"), "github");
+        assert_eq!(domain_to_slug("www.github.com"), "github");
+        assert_eq!(domain_to_slug("api.openai.com"), "openai");
+        assert_eq!(domain_to_slug("stripe.com"), "stripe");
+        assert_eq!(domain_to_slug("supabase.io"), "supabase");
+        // URL 형태도 처리
+        assert_eq!(domain_to_slug("https://api.github.com/v3"), "github");
+        // 단일 레이블
+        assert_eq!(domain_to_slug("localhost"), "localhost");
+        // 포트 포함
+        assert_eq!(domain_to_slug("localhost:8080"), "localhost");
+    }
+
+    // -----------------------------------------------------------------------
+    // T-24-E-D5-S2: resolve_issuer_for_domain — domains 배열 매칭 시 기존 issuer 반환
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn d5_resolve_issuer_for_domain_returns_existing_when_matched() {
+        let (_dir, pool) = make_pool().await;
+
+        // github.com → domains 에 등록된 issuer
+        let github_id = IssuerRepo::new(&pool)
+            .insert(&IssuerInput {
+                slug: "github".to_string(),
+                display_name: "GitHub".to_string(),
+                domains: vec!["github.com".to_string()],
+                ..Default::default()
+            })
+            .await
+            .expect("insert");
+
+        let resolved = resolve_issuer_for_domain("github.com", &pool)
+            .await
+            .expect("resolve");
+
+        assert_eq!(resolved, github_id, "domains 매칭 시 기존 issuer_id 반환");
+    }
+
+    // -----------------------------------------------------------------------
+    // T-24-E-D5-S3: resolve_issuer_for_domain — 미매칭 시 placeholder 자동 생성
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn d5_resolve_issuer_for_domain_creates_placeholder_when_no_match() {
+        let (_dir, pool) = make_pool().await;
+
+        let resolved = resolve_issuer_for_domain("stripe.com", &pool)
+            .await
+            .expect("resolve");
+
+        // DB 에 slug = "stripe" issuer 가 생성되어야 한다
+        let issuer = IssuerRepo::new(&pool)
+            .get_by_id(resolved)
+            .await
+            .expect("get_by_id")
+            .expect("Some");
+
+        assert_eq!(issuer.slug, "stripe");
+    }
+
+    // -----------------------------------------------------------------------
+    // T-24-E-D5-S4: resolve_issuer_for_domain — 두 번 호출 시 동일 id (idempotent)
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn d5_resolve_issuer_for_domain_is_idempotent() {
+        let (_dir, pool) = make_pool().await;
+
+        let id1 = resolve_issuer_for_domain("notion.so", &pool)
+            .await
+            .expect("first resolve");
+        let id2 = resolve_issuer_for_domain("notion.so", &pool)
+            .await
+            .expect("second resolve");
+
+        assert_eq!(id1, id2, "두 번 호출 시 동일 issuer_id (idempotent)");
     }
 }

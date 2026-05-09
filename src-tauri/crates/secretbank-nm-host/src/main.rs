@@ -217,22 +217,35 @@ async fn run_nm_loop() {
     }
 }
 
-/// 메시지 처리 함수 (placeholder — B-3 에서 실제 라우팅으로 교체 예정)
+/// 메시지 처리 함수.
 ///
-/// D-4: credential_list_by_domain / credential_create / credential_update stub.
-/// D-5 에서 실제 desktop IPC 라우팅으로 교체 예정.
+/// # nm-host IPC 라우팅 결정 (T-24-E-D5)
+///
+/// nm-host 는 독립 binary 이고 Tauri AppContext(vault, SQLite pool) 와 프로세스를
+/// 공유하지 않는다. 따라서 실제 credential 저장/조회를 직접 수행할 수 없다.
+///
+/// 옵션 분석:
+/// - 옵션 A (nm-host 에 secretbank-storage 직접 의존): vault unlock 상태가
+///   nm-host 프로세스에 없으므로 실질적으로 불가.
+/// - 옵션 B/C (Unix socket / named pipe IPC 로 Tauri 프로세스에 forward):
+///   별도 IPC 채널 구현 필요 — 범위 초과, D-6 또는 별도 서브태스크로 미룸.
+///
+/// 현재: stub 응답 유지. 실제 라우팅은 D-6 (popup SaveDialog) 구현 시 함께 설계.
+/// — TM-EXT-ACTOR
 fn process_message(msg: serde_json::Value) -> serde_json::Value {
     let msg_type = msg.get("type").and_then(|v| v.as_str()).unwrap_or("");
 
     match msg_type {
-        // D-4 stub: 도메인 기존 credential 조회 — 항상 exists=false 반환 (D-5에서 실제 조회).
+        // TODO(D-6): 실제 Tauri IPC 라우팅으로 교체.
+        // 현재: 항상 exists=false (도메인 조회 불가 — vault 가 이 프로세스에 없음).
         "credential_list_by_domain" => {
             serde_json::json!({
                 "type": "credential_list_by_domain_response",
                 "exists": false
             })
         }
-        // D-4 stub: credential 생성 — ok=true mock 응답 (D-5에서 실제 저장).
+        // TODO(D-6): 실제 Tauri IPC 경유 credential_create_internal 호출로 교체.
+        // actor = AuditActor::Extension(ext_id) 로 기록되어야 함. — TM-EXT-ACTOR
         "credential_create" => {
             serde_json::json!({
                 "type": "credential_save_response",
@@ -240,7 +253,8 @@ fn process_message(msg: serde_json::Value) -> serde_json::Value {
                 "credential_id": "stub-id"
             })
         }
-        // D-4 stub: credential 업데이트 — ok=true mock 응답 (D-5에서 실제 업데이트).
+        // TODO(D-6): 실제 Tauri IPC 경유 credential_update_internal 호출로 교체.
+        // actor = AuditActor::Extension(ext_id) 로 기록되어야 함. — TM-EXT-ACTOR
         "credential_update" => {
             serde_json::json!({
                 "type": "credential_save_response",

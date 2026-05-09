@@ -306,6 +306,139 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
+    // T-24-E-D5-A1: actor = LocalUser → audit_log.actor = "local-user"
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn d5_actor_local_user_stored_as_local_user_string() {
+        let vault = unlocked_vault().await;
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let identity = make_identity(vault, pool.as_ref()).await;
+        let ctx = make_ctx(pool.clone(), Some(identity));
+
+        let entry = ctx
+            .record(
+                AuditActor::LocalUser,
+                "credential.create",
+                "credential",
+                "cred-local",
+                None,
+            )
+            .await
+            .expect("record must succeed");
+
+        assert_eq!(entry.actor, AuditActor::LocalUser);
+
+        // DB 에서 raw 문자열 확인
+        let actor_raw: String = sqlx::query_scalar("SELECT actor FROM audit_log WHERE id = ?")
+            .bind(&entry.id)
+            .fetch_one(pool.as_ref())
+            .await
+            .unwrap();
+        assert_eq!(actor_raw, "local-user");
+    }
+
+    // -----------------------------------------------------------------------
+    // T-24-E-D5-A2: actor = Extension("abc123") → audit_log.actor = "extension:abc123"
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn d5_actor_extension_stored_as_extension_colon_id() {
+        use secretbank_audit::{append, AuditInput};
+        use secretbank_storage::AuditRepo;
+        use time::OffsetDateTime;
+
+        let vault = unlocked_vault().await;
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let identity = make_identity(vault, pool.as_ref()).await;
+
+        let ext_id = "abc123".to_string();
+
+        // AuditCtx 를 우회하여 append + insert 를 직접 수행 — None 반환 원인 격리.
+        let repo = AuditRepo::new(&pool);
+        let prev = repo
+            .last_for_device(&identity.device_id.to_string())
+            .await
+            .expect("last_for_device");
+
+        let input = AuditInput {
+            device_id: Some(identity.device_id.to_string()),
+            actor: AuditActor::Extension(ext_id.clone()),
+            action: "credential.create".to_string(),
+            subject_kind: "credential".to_string(),
+            subject_id: "cred-ext".to_string(),
+            payload_json: None,
+        };
+
+        let entry = append(
+            input,
+            prev.as_ref(),
+            &identity.signing_key,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("append must succeed");
+
+        assert_eq!(entry.actor, AuditActor::Extension(ext_id.clone()));
+
+        repo.insert(&entry).await.expect("insert must succeed");
+
+        // DB 에서 raw 문자열 확인
+        let actor_raw: String = sqlx::query_scalar("SELECT actor FROM audit_log WHERE id = ?")
+            .bind(&entry.id)
+            .fetch_one(pool.as_ref())
+            .await
+            .unwrap();
+        assert_eq!(actor_raw, format!("extension:{ext_id}"));
+    }
+
+    // -----------------------------------------------------------------------
+    // T-24-E-D5-A3: Extension actor → DB 에서 읽으면 다시 Extension variant 로 복원
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn d5_extension_actor_round_trips_through_db() {
+        use secretbank_audit::{append, AuditInput};
+        use secretbank_storage::AuditRepo;
+        use time::OffsetDateTime;
+
+        let vault = unlocked_vault().await;
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let identity = make_identity(vault, pool.as_ref()).await;
+
+        let ext_id = "chrome_ext_xyzzy".to_string();
+        let repo = AuditRepo::new(&pool);
+
+        let input = AuditInput {
+            device_id: Some(identity.device_id.to_string()),
+            actor: AuditActor::Extension(ext_id.clone()),
+            action: "credential.update".to_string(),
+            subject_kind: "credential".to_string(),
+            subject_id: "cred-rt".to_string(),
+            payload_json: None,
+        };
+        let written = append(
+            input,
+            None,
+            &identity.signing_key,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("append must succeed");
+        repo.insert(&written).await.expect("insert must succeed");
+
+        // AuditRepo 로 다시 읽어서 actor variant 확인
+        let all = repo.list_for_verify().await.unwrap();
+        let found = all
+            .iter()
+            .find(|e| e.id == written.id)
+            .expect("entry must exist");
+        assert_eq!(
+            found.actor,
+            AuditActor::Extension(ext_id),
+            "actor must round-trip as Extension variant"
+        );
+    }
+
+    // -----------------------------------------------------------------------
     // T5: three records → fetch all, verify chain
     // -----------------------------------------------------------------------
     #[tokio::test]

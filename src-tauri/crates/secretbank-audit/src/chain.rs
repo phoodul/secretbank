@@ -50,7 +50,7 @@ pub struct ChainVerification {
 fn canonical_bytes(
     seq: i64,
     device_id: Option<&str>,
-    actor: AuditActor,
+    actor: &AuditActor,
     action: &str,
     subject_kind: &str,
     subject_id: &str,
@@ -76,7 +76,8 @@ fn canonical_bytes(
     }
 
     // actor (u8 len + utf8)
-    let actor_bytes = actor.as_str().as_bytes();
+    let actor_str = actor.as_str();
+    let actor_bytes = actor_str.as_bytes();
     let actor_len = u8::try_from(actor_bytes.len()).expect("actor string exceeds u8::MAX bytes");
     buf.push(actor_len);
     buf.extend_from_slice(actor_bytes);
@@ -149,7 +150,7 @@ pub fn append(
     let canonical = canonical_bytes(
         seq,
         input.device_id.as_deref(),
-        input.actor,
+        &input.actor,
         &input.action,
         &input.subject_kind,
         &input.subject_id,
@@ -199,7 +200,7 @@ pub fn verify(chain: &[AuditLog], verifying_key: &VerifyingKey) -> ChainVerifica
         let canonical = canonical_bytes(
             entry.seq,
             entry.device_id.as_deref(),
-            entry.actor,
+            &entry.actor,
             &entry.action,
             &entry.subject_kind,
             &entry.subject_id,

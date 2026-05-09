@@ -31,20 +31,24 @@ mod serde_array64 {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+// T-24-E-D5: Extension variant added. Copy removed (String payload). — TM-EXT-ACTOR
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum AuditActor {
     LocalUser,
     System,
     Connector,
+    /// extension:{ext_id} — nm-host 경유 호출에 사용. audit trail 에 ext_id 기록.
+    Extension(String),
 }
 
 impl AuditActor {
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> String {
         match self {
-            AuditActor::LocalUser => "local-user",
-            AuditActor::System => "system",
-            AuditActor::Connector => "connector",
+            AuditActor::LocalUser => "local-user".to_string(),
+            AuditActor::System => "system".to_string(),
+            AuditActor::Connector => "connector".to_string(),
+            AuditActor::Extension(id) => format!("extension:{id}"),
         }
     }
 }
