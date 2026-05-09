@@ -26,6 +26,10 @@ export {
 } from "./password-generator/index.js";
 export type { DicewareLang, StrengthScore, StrengthResult } from "./password-generator/index.js";
 
+// i18n 키 상수 (extension + desktop 공유 source of truth)
+export { I18N_KEYS, SUPPORTED_LOCALES } from "./i18n-keys.js";
+export type { I18nKey, SupportedLocale } from "./i18n-keys.js";
+
 // validation (Zod schemas)
 export {
   CredentialKindSchema,

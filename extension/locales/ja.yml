@@ -1,0 +1,43 @@
+# Secretbank Extension — 日本語 (ja) locale
+# @wxt-dev/i18n YAML format → auto-generated _locales/ja/messages.json at build time
+# Phase A5: 인프라 최소 placeholder 셋. 실제 메시지는 Phase B/C/D/E 에서 추가.
+
+popup_title:
+  message: "Secretbank"
+  description: "拡張機能ポップアップのタイトル"
+
+popup_greeting:
+  message: "シークレットを管理する"
+  description: "ポップアップヘッダーに表示される挨拶"
+
+pairing_start:
+  message: "デスクトップと接続"
+  description: "デスクトップペアリング開始ボタンのラベル"
+
+save_button:
+  message: "シークレットを保存"
+  description: "検出されたクレデンシャルを保存するボタンラベル"
+
+cancel_button:
+  message: "キャンセル"
+  description: "汎用キャンセルボタンラベル"
+
+settings_title:
+  message: "設定"
+  description: "設定ページのタイトル"
+
+vault_locked:
+  message: "ボルトがロックされています"
+  description: "ボルトがロック状態のステータスメッセージ"
+
+vault_unlocked:
+  message: "ボルトのロックが解除されています"
+  description: "ボルトがロック解除状態のステータスメッセージ"
+
+credential_list_empty:
+  message: "保存されたシークレットはありません"
+  description: "クレデンシャルリストの空状態メッセージ"
+
+copy_to_clipboard:
+  message: "クリップボードにコピー"
+  description: "コピーボタンのツールチップまたはaria-label"

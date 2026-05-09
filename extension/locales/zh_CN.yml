@@ -1,0 +1,43 @@
+# Secretbank Extension — 简体中文 (zh_CN) locale
+# @wxt-dev/i18n YAML format → auto-generated _locales/zh_CN/messages.json at build time
+# Phase A5: 인프라 최소 placeholder 셋. 실제 메시지는 Phase B/C/D/E 에서 추가.
+
+popup_title:
+  message: "Secretbank"
+  description: "扩展弹出窗口标题"
+
+popup_greeting:
+  message: "管理您的密钥"
+  description: "弹出窗口头部显示的问候语"
+
+pairing_start:
+  message: "连接到桌面端"
+  description: "发起桌面配对的按钮标签"
+
+save_button:
+  message: "保存密钥"
+  description: "保存检测到的凭据的按钮标签"
+
+cancel_button:
+  message: "取消"
+  description: "通用取消按钮标签"
+
+settings_title:
+  message: "设置"
+  description: "设置页面标题"
+
+vault_locked:
+  message: "保险库已锁定"
+  description: "保险库处于锁定状态时的状态消息"
+
+vault_unlocked:
+  message: "保险库已解锁"
+  description: "保险库处于解锁状态时的状态消息"
+
+credential_list_empty:
+  message: "尚未保存任何密钥"
+  description: "凭据列表为空时的状态消息"
+
+copy_to_clipboard:
+  message: "复制到剪贴板"
+  description: "复制按钮的工具提示或aria-label"

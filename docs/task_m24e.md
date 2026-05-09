@@ -17,7 +17,7 @@
 **1. `docs/task.md` 마일스톤 표 (라인 27~57 부근)** — 기존 표에 한 줄 추가:
 
 ```markdown
-| **M24-E** | **Browser Extension (Phase A~F 풀구현)** | T-24-E-A1~F8 | 49 sub-tasks | 🔄 0/49 완료 |
+| **M24-E** | **Browser Extension (Phase A~F 풀구현)** | T-24-E-A1~F8 | 43 sub-tasks | 🔄 5/43 완료 |
 ```
 
 위치: M25 행 뒤 (또는 알파벳/번호 순서에 따라 M24 행 직후).
@@ -748,11 +748,11 @@
 
 | Sub-task ID | 제목                                             | 완료일 | 커밋 해시 |
 | :---------- | :----------------------------------------------- | :----- | :-------- |
-| T-24-E-A1   | WXT 골격 + Tailwind v4 + shadcn/ui               | -      | -         |
-| T-24-E-A2   | packages/shared types                            | -      | -         |
-| T-24-E-A3   | password-generator (Diceware 4 lang + zxcvbn-ts) | 2026-05-09 | (commit pending) |
+| T-24-E-A1   | WXT 골격 + Tailwind v4 + shadcn/ui               | 2026-05-09 | `bd126bb` |
+| T-24-E-A2   | packages/shared types                            | 2026-05-09 | `7d3191d` |
+| T-24-E-A3   | password-generator (Diceware 4 lang + zxcvbn-ts) | 2026-05-09 | `f8a8a6f` |
 | T-24-E-A4   | shared validation                                | 2026-05-09 | `a983000` |
-| T-24-E-A5   | i18n (4 lang)                                    | -      | -         |
+| T-24-E-A5   | i18n (4 lang YAML + @wxt-dev/i18n + I18N_KEYS)  | 2026-05-09 | (commit pending) |
 | T-24-E-A6   | popup 골격                                       | -      | -         |
 | T-24-E-A7   | CI 빌드 매트릭스                                 | -      | -         |
 | T-24-E-B1   | nm-host crate                                    | -      | -         |

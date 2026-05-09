@@ -1,0 +1,43 @@
+# Secretbank Extension — English (en) locale
+# @wxt-dev/i18n YAML format → auto-generated _locales/en/messages.json at build time
+# Phase A5: 인프라 최소 placeholder 셋. 실제 메시지는 Phase B/C/D/E 에서 추가.
+
+popup_title:
+  message: "Secretbank"
+  description: "Extension popup title"
+
+popup_greeting:
+  message: "Manage your secrets"
+  description: "Greeting shown in popup header"
+
+pairing_start:
+  message: "Connect to Desktop"
+  description: "Button label to initiate desktop pairing"
+
+save_button:
+  message: "Save Secret"
+  description: "Button label to save a detected credential"
+
+cancel_button:
+  message: "Cancel"
+  description: "Generic cancel button label"
+
+settings_title:
+  message: "Settings"
+  description: "Settings page title"
+
+vault_locked:
+  message: "Vault is locked"
+  description: "Status message when the vault is locked"
+
+vault_unlocked:
+  message: "Vault is unlocked"
+  description: "Status message when the vault is unlocked"
+
+credential_list_empty:
+  message: "No secrets saved yet"
+  description: "Empty state for the credential list"
+
+copy_to_clipboard:
+  message: "Copy to clipboard"
+  description: "Tooltip or aria-label for copy button"
