@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/components/SaveBanner.tsx — M24-E Phase D-3, E-3
+// extension/components/SaveBanner.tsx — M24-E Phase D-3, E-3, G-3-2
 //
 // "Save to Secretbank?" 인페이지 sticky banner.
 // T3: closed shadow DOM 안에서만 렌더됨 — host 페이지 JS/CSS 침범 차단.
 // E-3: Site Logo 표시 (bundled SVG → favicon-proxy → letter fallback).
+// G-3-2: kind=update 시 blast radius preview 카드 inline 표시.
 
 import React, { useEffect, useRef, useState } from "react";
 import { getSiteLogo, type SiteLogoResult } from "../lib/site-logo.js";
+import { BlastRadiusPreviewCard } from "./BlastRadiusPreviewCard.js";
+import type { BlastRadiusForHostResponse, BlastRadiusItem } from "@secretbank/shared";
 
 // T3: credential plaintext ❌ — siteName(도메인) 만 표시.
 export interface SaveBannerProps {
@@ -16,6 +19,10 @@ export interface SaveBannerProps {
   onSave: () => void;
   onNever: () => void;
   onDismiss: () => void;
+  /** G-3-2: kind=update 시 blast radius 데이터 (undefined = 로딩 중, null = 없음) */
+  blastRadius?: BlastRadiusForHostResponse | null;
+  /** G-3-2: 그래프 딥링크로 이동 */
+  onViewBlastRadius?: () => void;
 }
 
 const AUTO_DISMISS_MS = 5000;
@@ -147,7 +154,15 @@ const BANNER_CSS = `
 }
 `;
 
-export function SaveBanner({ kind, siteName, onSave, onNever, onDismiss }: SaveBannerProps) {
+export function SaveBanner({
+  kind,
+  siteName,
+  onSave,
+  onNever,
+  onDismiss,
+  blastRadius,
+  onViewBlastRadius,
+}: SaveBannerProps) {
   const [hovered, setHovered] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [logo, setLogo] = useState<SiteLogoResult | null>(null);
@@ -216,6 +231,34 @@ export function SaveBanner({ kind, siteName, onSave, onNever, onDismiss }: SaveB
           <div className="sb-site">{siteName}</div>
         </div>
         <div className="sb-title">{title}</div>
+        {/* G-3-2: kind=update 시 blast radius preview 카드 */}
+        {kind === "update" && blastRadius === undefined && (
+          <div
+            style={{
+              marginTop: 10,
+              marginBottom: 10,
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid oklch(0.78 0.16 65)",
+              background: "oklch(0.98 0.014 65)",
+              fontSize: 12,
+              color: "oklch(0.50 0.10 65)",
+              fontStyle: "italic",
+            }}
+            aria-label="영향 범위 로딩 중"
+            data-testid="blast-radius-skeleton"
+          >
+            영향 범위 확인 중…
+          </div>
+        )}
+        {kind === "update" && blastRadius !== undefined && blastRadius !== null && blastRadius.total > 0 && (
+          <BlastRadiusPreviewCard
+            items={blastRadius.affected as BlastRadiusItem[]}
+            total={blastRadius.total}
+            hiddenCount={blastRadius.hidden_count}
+            onViewDetails={onViewBlastRadius ?? (() => {})}
+          />
+        )}
         <div className="sb-actions">
           <button className="sb-btn sb-btn-primary" onClick={onSave} type="button">
             {primaryLabel}

@@ -182,6 +182,20 @@ export const I18N_KEYS = {
   SUPPLY_CHAIN_BANNER_SEVERITY_MEDIUM: "supply_chain_banner_severity_medium",
   /** SupplyChainBanner severity 배지 — CRITICAL */
   SUPPLY_CHAIN_BANNER_SEVERITY_CRITICAL: "supply_chain_banner_severity_critical",
+
+  // ── G-3-2: BlastRadiusPreviewCard ──
+  /** BlastRadiusPreviewCard 섹션 제목 */
+  BLAST_RADIUS_TITLE: "blast_radius_title",
+  /** BlastRadiusPreviewCard 본문 — "이 변경이 N개 항목에 영향" ($COUNT$ 치환) */
+  BLAST_RADIUS_AFFECTS: "blast_radius_affects",
+  /** BlastRadiusPreviewCard 잘린 항목 표시 (+N개 더, $COUNT$ 치환) */
+  BLAST_RADIUS_HIDDEN_COUNT: "blast_radius_hidden_count",
+  /** BlastRadiusPreviewCard CTA — "그래프에서 보기" */
+  BLAST_RADIUS_VIEW_DETAILS: "blast_radius_view_details",
+  /** BlastRadiusPreviewCard 항목 종류 라벨: project */
+  BLAST_RADIUS_KIND_PROJECT: "blast_radius_kind_project",
+  /** BlastRadiusPreviewCard 항목 종류 라벨: deployment */
+  BLAST_RADIUS_KIND_DEPLOYMENT: "blast_radius_kind_deployment",
 } as const;
 
 /**

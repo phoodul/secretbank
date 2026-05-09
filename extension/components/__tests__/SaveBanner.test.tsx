@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/components/__tests__/SaveBanner.test.tsx — M24-E Phase D-3, E-3
+// extension/components/__tests__/SaveBanner.test.tsx — M24-E Phase D-3, E-3, G-3-2
 
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { SaveBanner } from "../SaveBanner";
+import type { BlastRadiusForHostResponse } from "@secretbank/shared";
 
 // E-3: site-logo mock — 테스트 환경에서 chrome.runtime.getURL / IDB 미사용
 vi.mock("../../lib/site-logo", () => ({
@@ -254,5 +255,140 @@ describe("SaveBanner — auto-dismiss timer", () => {
       vi.advanceTimersByTime(5000);
     });
     expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G-3-2: blast radius 통합 테스트
+// ---------------------------------------------------------------------------
+
+const BLAST_RADIUS_FIXTURE: BlastRadiusForHostResponse = {
+  credential_id: "01JWBLASTCRED000001",
+  affected: [
+    { kind: "project", label: "my-api", status: "active" },
+    { kind: "deployment", label: "prod@aws", status: "active" },
+  ],
+  total: 5,
+  hidden_count: 3,
+};
+
+describe("SaveBanner — G-3-2 blast radius 통합", () => {
+  it("kind=update + blastRadius 로딩 중(undefined) → skeleton 표시", () => {
+    render(
+      <SaveBanner
+        kind="update"
+        siteName="github.com"
+        onSave={vi.fn()}
+        onNever={vi.fn()}
+        onDismiss={vi.fn()}
+        blastRadius={undefined}
+      />,
+    );
+    expect(screen.getByTestId("blast-radius-skeleton")).toBeInTheDocument();
+  });
+
+  it("kind=update + blastRadius null → skeleton 없고 카드 없음", () => {
+    render(
+      <SaveBanner
+        kind="update"
+        siteName="github.com"
+        onSave={vi.fn()}
+        onNever={vi.fn()}
+        onDismiss={vi.fn()}
+        blastRadius={null}
+      />,
+    );
+    expect(screen.queryByTestId("blast-radius-skeleton")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("blast-radius-card")).not.toBeInTheDocument();
+  });
+
+  it("kind=update + blastRadius total>0 → 카드 표시", () => {
+    render(
+      <SaveBanner
+        kind="update"
+        siteName="github.com"
+        onSave={vi.fn()}
+        onNever={vi.fn()}
+        onDismiss={vi.fn()}
+        blastRadius={BLAST_RADIUS_FIXTURE}
+      />,
+    );
+    expect(screen.getByTestId("blast-radius-card")).toBeInTheDocument();
+  });
+
+  it("kind=update + blastRadius total=0 → 카드 숨김", () => {
+    render(
+      <SaveBanner
+        kind="update"
+        siteName="github.com"
+        onSave={vi.fn()}
+        onNever={vi.fn()}
+        onDismiss={vi.fn()}
+        blastRadius={{ credential_id: null, affected: [], total: 0, hidden_count: 0 }}
+      />,
+    );
+    expect(screen.queryByTestId("blast-radius-card")).not.toBeInTheDocument();
+  });
+
+  it("kind=new → blast radius 카드/skeleton 모두 숨김", () => {
+    render(
+      <SaveBanner
+        kind="new"
+        siteName="github.com"
+        onSave={vi.fn()}
+        onNever={vi.fn()}
+        onDismiss={vi.fn()}
+        blastRadius={BLAST_RADIUS_FIXTURE}
+      />,
+    );
+    // kind=new 이면 블록 자체가 렌더되지 않음
+    expect(screen.queryByTestId("blast-radius-card")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("blast-radius-skeleton")).not.toBeInTheDocument();
+  });
+
+  it("카드 내 '그래프에서 보기' 클릭 → onViewBlastRadius 호출", () => {
+    const onViewBlastRadius = vi.fn();
+    render(
+      <SaveBanner
+        kind="update"
+        siteName="github.com"
+        onSave={vi.fn()}
+        onNever={vi.fn()}
+        onDismiss={vi.fn()}
+        blastRadius={BLAST_RADIUS_FIXTURE}
+        onViewBlastRadius={onViewBlastRadius}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /그래프에서/ }));
+    expect(onViewBlastRadius).toHaveBeenCalledTimes(1);
+  });
+
+  it("카드에 affected items 라벨이 표시된다", () => {
+    render(
+      <SaveBanner
+        kind="update"
+        siteName="github.com"
+        onSave={vi.fn()}
+        onNever={vi.fn()}
+        onDismiss={vi.fn()}
+        blastRadius={BLAST_RADIUS_FIXTURE}
+      />,
+    );
+    expect(screen.getByText("my-api")).toBeInTheDocument();
+    expect(screen.getByText("prod@aws")).toBeInTheDocument();
+  });
+
+  it("hiddenCount 가 카드에 표시된다", () => {
+    render(
+      <SaveBanner
+        kind="update"
+        siteName="github.com"
+        onSave={vi.fn()}
+        onNever={vi.fn()}
+        onDismiss={vi.fn()}
+        blastRadius={BLAST_RADIUS_FIXTURE}
+      />,
+    );
+    expect(screen.getByText(/\+3개 더/)).toBeInTheDocument();
   });
 });

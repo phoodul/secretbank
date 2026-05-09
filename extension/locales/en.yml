@@ -292,3 +292,28 @@ supply_chain_banner_severity_medium:
 supply_chain_banner_severity_critical:
   message: "CRITICAL"
   description: "Severity badge label for CRITICAL incidents in supply chain banner"
+
+# ── G-3-2: BlastRadiusPreviewCard ──
+blast_radius_title:
+  message: "Blast radius preview"
+  description: "BlastRadiusPreviewCard section title"
+
+blast_radius_affects:
+  message: "This change affects $COUNT$ item(s):"
+  description: "BlastRadiusPreviewCard body — how many items are affected. $COUNT$ is replaced with the number."
+
+blast_radius_hidden_count:
+  message: "+$COUNT$ more"
+  description: "BlastRadiusPreviewCard — truncated items indicator. $COUNT$ is replaced with hidden_count."
+
+blast_radius_view_details:
+  message: "View in graph"
+  description: "BlastRadiusPreviewCard CTA — opens blast radius graph deep-link"
+
+blast_radius_kind_project:
+  message: "Project"
+  description: "BlastRadiusPreviewCard item kind label: project"
+
+blast_radius_kind_deployment:
+  message: "Deployment"
+  description: "BlastRadiusPreviewCard item kind label: deployment"

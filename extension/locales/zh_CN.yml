@@ -292,3 +292,28 @@ supply_chain_banner_severity_medium:
 supply_chain_banner_severity_critical:
   message: "严重"
   description: "供应链 banner 严重性徽章标签"
+
+# ── G-3-2: BlastRadiusPreviewCard ──
+blast_radius_title:
+  message: "影响范围预览"
+  description: "BlastRadiusPreviewCard 区块标题"
+
+blast_radius_affects:
+  message: "此更改影响 $COUNT$ 个项目："
+  description: "BlastRadiusPreviewCard 正文 — 受影响项目数。$COUNT$ 替换为数字。"
+
+blast_radius_hidden_count:
+  message: "另 +$COUNT$ 个"
+  description: "BlastRadiusPreviewCard — 截断项目提示。$COUNT$ 替换为 hidden_count。"
+
+blast_radius_view_details:
+  message: "在图中查看"
+  description: "BlastRadiusPreviewCard CTA — 打开 blast radius 图深度链接"
+
+blast_radius_kind_project:
+  message: "项目"
+  description: "BlastRadiusPreviewCard 项目种类标签: project"
+
+blast_radius_kind_deployment:
+  message: "部署"
+  description: "BlastRadiusPreviewCard 项目种类标签: deployment"

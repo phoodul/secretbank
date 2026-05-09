@@ -292,3 +292,28 @@ supply_chain_banner_severity_medium:
 supply_chain_banner_severity_critical:
   message: "重大"
   description: "サプライチェーンバナーの CRITICAL 重大度バッジラベル"
+
+# ── G-3-2: BlastRadiusPreviewCard ──
+blast_radius_title:
+  message: "影響範囲プレビュー"
+  description: "BlastRadiusPreviewCard セクションタイトル"
+
+blast_radius_affects:
+  message: "この変更は $COUNT$ 件に影響します:"
+  description: "BlastRadiusPreviewCard 本文 — 影響を受けるアイテム数。$COUNT$ は数字に置換。"
+
+blast_radius_hidden_count:
+  message: "他 +$COUNT$ 件"
+  description: "BlastRadiusPreviewCard — 省略件数表示。$COUNT$ は hidden_count に置換。"
+
+blast_radius_view_details:
+  message: "グラフで表示"
+  description: "BlastRadiusPreviewCard CTA — blast radius グラフディープリンクを開く"
+
+blast_radius_kind_project:
+  message: "プロジェクト"
+  description: "BlastRadiusPreviewCard アイテム種別ラベル: project"
+
+blast_radius_kind_deployment:
+  message: "デプロイ"
+  description: "BlastRadiusPreviewCard アイテム種別ラベル: deployment"

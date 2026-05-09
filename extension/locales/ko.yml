@@ -292,3 +292,28 @@ supply_chain_banner_severity_medium:
 supply_chain_banner_severity_critical:
   message: "심각"
   description: "공급망 banner CRITICAL 심각도 배지 라벨"
+
+# ── G-3-2: BlastRadiusPreviewCard ──
+blast_radius_title:
+  message: "영향 범위 미리보기"
+  description: "BlastRadiusPreviewCard 섹션 제목"
+
+blast_radius_affects:
+  message: "이 변경이 $COUNT$개 항목에 영향:"
+  description: "BlastRadiusPreviewCard 본문 — 영향받는 항목 수. $COUNT$는 숫자로 교체."
+
+blast_radius_hidden_count:
+  message: "+$COUNT$개 더"
+  description: "BlastRadiusPreviewCard — 잘린 항목 표시. $COUNT$는 hidden_count로 교체."
+
+blast_radius_view_details:
+  message: "그래프에서 보기"
+  description: "BlastRadiusPreviewCard CTA — blast radius 그래프 딥링크 열기"
+
+blast_radius_kind_project:
+  message: "프로젝트"
+  description: "BlastRadiusPreviewCard 항목 종류 라벨: project"
+
+blast_radius_kind_deployment:
+  message: "배포"
+  description: "BlastRadiusPreviewCard 항목 종류 라벨: deployment"

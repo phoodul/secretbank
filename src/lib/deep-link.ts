@@ -6,7 +6,10 @@
  * secretbank://graph?credential=<id> URL 수신 시 React Router 로
  * /graph?focus=<id> 에 navigate 한다.
  *
- * 보안: credential query 파라미터만 허용한다. 임의 경로는 무시한다.
+ * G-3-2: secretbank://graph?blast_credential=<id> → /graph?blast_focus=<id>
+ *   (blast radius 시각화 모드 진입)
+ *
+ * 보안: credential/blast_credential query 파라미터만 허용한다. 임의 경로는 무시한다.
  */
 
 import { useEffect } from "react";
@@ -85,6 +88,19 @@ export function handleDeepLink(
 
   if (segment === "graph") {
     const credentialId = url.searchParams.get("credential");
+    const blastCredentialId = url.searchParams.get("blast_credential");
+
+    // G-3-2: blast_credential 파라미터 우선 처리
+    if (blastCredentialId !== null) {
+      // 빈 문자열이거나 whitelist 형식 불일치 → 거부
+      if (!blastCredentialId || !CREDENTIAL_ID_RE.test(blastCredentialId)) {
+        console.warn("[deep-link] invalid blast_credential id:", blastCredentialId);
+        return;
+      }
+      navigate(`/graph?blast_focus=${encodeURIComponent(blastCredentialId)}`);
+      return;
+    }
+
     if (credentialId === null) {
       // focus 없이 그래프 페이지로 이동 (credential 파라미터 자체가 없는 경우)
       navigate("/graph");

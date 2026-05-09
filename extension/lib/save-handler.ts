@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/lib/save-handler.ts — M24-E Phase D-4
+// extension/lib/save-handler.ts — M24-E Phase D-4, G-3-2
 //
 // form submit 감지 → nm-host 조회 → 신규/rotation 분기 → SaveBanner 표시.
 // T-CRED-1: plaintext password 는 메모리 + NM channel(B-4 암호화)만. console.log/DOM ❌.
 // T-SAVE-1: never list 체크 선행 → 이미 등록된 도메인은 banner skip.
 // T-SAVE-2: debounce(single-flight) — 빠른 연속 submit 시 마지막 1건만 처리.
+// G-3-2: kind=update 시 blastRadiusForHost 비동기 호출 → SaveBanner props 에 전달.
 
 import { NMClient } from "./nm-client.js";
 import { mountSaveBanner } from "./save-banner-host.js";
 import { getSessionToken, getNeverSaveDomains, addNeverSaveDomain } from "./storage.js";
+import { openSecretbankDeepLink } from "./deep-link.js";
+import type { BlastRadiusForHostResponse } from "@secretbank/shared";
 
 // ---------------------------------------------------------------------------
 // 타입
@@ -77,6 +80,37 @@ export function _resetInflight(): void {
 }
 
 // ---------------------------------------------------------------------------
+// G-3-2: blast radius 응답이 도착하면 banner 를 새 props 로 재마운트
+// ---------------------------------------------------------------------------
+
+function remountWithBlastRadius(
+  ctx: {
+    unmountRef: { current: (() => void) | null };
+    kind: "new" | "update";
+    siteName: string;
+    onSave: () => Promise<void>;
+    onNever: () => Promise<void>;
+    onDismiss: () => void;
+    onViewBlastRadius: () => void;
+  },
+  blastRadius: BlastRadiusForHostResponse | null,
+): void {
+  const prev = ctx.unmountRef.current;
+  if (!prev) return; // banner 가 이미 닫혔으면 무시
+
+  prev();
+  ctx.unmountRef.current = mountSaveBanner({
+    kind: ctx.kind,
+    siteName: ctx.siteName,
+    onSave: ctx.onSave,
+    onNever: ctx.onNever,
+    onDismiss: ctx.onDismiss,
+    blastRadius,
+    onViewBlastRadius: ctx.onViewBlastRadius,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // handleFormSubmit — 메인 진입점
 // ---------------------------------------------------------------------------
 
@@ -89,9 +123,11 @@ export function _resetInflight(): void {
  *   3. session token 조회 → 없으면 skip (미페어링/만료)
  *   4. nm-host → credential_list_by_domain → hasExisting 결정
  *   5. decideSaveKind 호출
- *   6. SaveBanner 마운트
- *   7. 사용자 액션 처리 (onSave/onNever/onDismiss)
- *   8. T-CRED-1: password null 처리
+ *   6. G-3-2: kind=update → blastRadiusForHost 비동기 시작 (banner mount 와 병렬)
+ *   7. SaveBanner 마운트 (skeleton 상태)
+ *   8. blast radius 응답 도착 시 카드 inject (re-render)
+ *   9. 사용자 액션 처리 (onSave/onNever/onDismiss)
+ *  10. T-CRED-1: password null 처리
  */
 export async function handleFormSubmit(input: FormSubmitInput, client: NMClient): Promise<void> {
   // T-SAVE-1: never list 먼저 확인
@@ -120,13 +156,27 @@ export async function handleFormSubmit(input: FormSubmitInput, client: NMClient)
 
     const kind = decideSaveKind(input.domain, hasExisting, input.autocompleteHint);
 
-    // banner 마운트 — unmount 핸들 유지
-    let unmount: (() => void) | null = null;
+    // unmountRef: blastRadius 응답 클로저에서 안전하게 참조하기 위한 ref 패턴
+    const unmountRef: { current: (() => void) | null } = { current: null };
+
+    // G-3-2: blast radius 상세 보기 → deep-link
+    // blastRadius 는 나중에 채워지지만 credId 는 클로저 시점에 읽음
+    let latestBlastRadius: BlastRadiusForHostResponse | null | undefined =
+      kind === "update" ? undefined : null;
+
+    const handleViewBlastRadius = () => {
+      const credId = latestBlastRadius?.credential_id;
+      if (credId) {
+        openSecretbankDeepLink("graph", { blast_credential: credId });
+      } else {
+        openSecretbankDeepLink("graph", {});
+      }
+    };
 
     const onSave = async () => {
-      if (unmount) {
-        unmount();
-        unmount = null;
+      if (unmountRef.current) {
+        unmountRef.current();
+        unmountRef.current = null;
       }
       try {
         const tok = await getSessionToken();
@@ -171,27 +221,78 @@ export async function handleFormSubmit(input: FormSubmitInput, client: NMClient)
     };
 
     const onNever = async () => {
-      if (unmount) {
-        unmount();
-        unmount = null;
+      if (unmountRef.current) {
+        unmountRef.current();
+        unmountRef.current = null;
       }
       await addNeverSaveDomain(input.domain);
     };
 
     const onDismiss = () => {
-      if (unmount) {
-        unmount();
-        unmount = null;
+      if (unmountRef.current) {
+        unmountRef.current();
+        unmountRef.current = null;
       }
     };
 
-    unmount = mountSaveBanner({
+    // banner 마운트 (skeleton 상태 = blastRadius 가 undefined 면 skeleton 표시)
+    unmountRef.current = mountSaveBanner({
       kind,
       siteName: input.siteName,
       onSave,
       onNever,
       onDismiss,
+      blastRadius: latestBlastRadius,
+      onViewBlastRadius: handleViewBlastRadius,
     });
+
+    // G-3-2: kind=update 시 blast radius 비동기 조회 → 응답 시 banner re-mount
+    if (kind === "update") {
+      const tok = await getSessionToken();
+      if (tok) {
+        const remountCtx = {
+          unmountRef,
+          kind,
+          siteName: input.siteName,
+          onSave,
+          onNever,
+          onDismiss,
+          onViewBlastRadius: handleViewBlastRadius,
+        };
+        client
+          .blastRadiusForHost(input.domain, tok.token)
+          .then((resp) => {
+            // NMMessageBlastRadiusForHostResponse → BlastRadiusForHostResponse 정규화
+            const normalized: BlastRadiusForHostResponse = {
+              credential_id: resp.credential_id ?? null,
+              affected: resp.affected ?? [],
+              total: resp.total ?? 0,
+              hidden_count: resp.hidden_count ?? 0,
+            };
+            latestBlastRadius = normalized;
+            remountWithBlastRadius(remountCtx, normalized);
+          })
+          .catch(() => {
+            latestBlastRadius = null;
+            remountWithBlastRadius(remountCtx, null);
+          });
+      } else {
+        // session 없으면 카드 숨김
+        latestBlastRadius = null;
+        remountWithBlastRadius(
+          {
+            unmountRef,
+            kind,
+            siteName: input.siteName,
+            onSave,
+            onNever,
+            onDismiss,
+            onViewBlastRadius: handleViewBlastRadius,
+          },
+          null,
+        );
+      }
+    }
   } finally {
     // T-CRED-1: password plaintext 메모리 잔류 최소화 — 참조 해제
     // JS 는 GC 기반이므로 완전한 제거 보장은 불가하나, 참조 제거로 GC 기회 부여.

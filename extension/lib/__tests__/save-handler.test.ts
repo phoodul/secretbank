@@ -50,6 +50,8 @@ function makeClientMock(opts?: {
   listExists?: boolean;
   listCredentialId?: string;
   listReject?: boolean;
+  blastReject?: boolean;
+  blastTotal?: number;
 }) {
   return {
     credentialListByDomain: vi.fn(async () => {
@@ -69,23 +71,44 @@ function makeClientMock(opts?: {
       type: "credential_save_response" as const,
       ok: true,
     })),
+    blastRadiusForHost: vi.fn(async () => {
+      if (opts?.blastReject) throw new Error("blast error");
+      return {
+        type: "blast_radius_for_host_response" as const,
+        credential_id: "cred-blast-1",
+        affected: [],
+        total: opts?.blastTotal ?? 0,
+        hidden_count: 0,
+      };
+    }),
   };
 }
 
-// mountSaveBanner mock — onSave/onNever/onDismiss 캡처용
+// mountSaveBanner mock — onSave/onNever/onDismiss/blastRadius 캡처용
 let capturedProps: {
   kind: "new" | "update";
   siteName: string;
   onSave: () => void;
   onNever: () => void;
   onDismiss: () => void;
+  blastRadius?: unknown;
+  onViewBlastRadius?: () => void;
 } | null = null;
+
+// mountSaveBanner 호출 횟수 추적
+let mountCallCount = 0;
 
 vi.mock("../save-banner-host.js", () => ({
   mountSaveBanner: vi.fn((props: typeof capturedProps) => {
     capturedProps = props;
+    mountCallCount += 1;
     return vi.fn(); // unmount fn
   }),
+}));
+
+// deep-link mock
+vi.mock("../deep-link.js", () => ({
+  openSecretbankDeepLink: vi.fn(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -163,6 +186,7 @@ function validSession() {
 describe("handleFormSubmit", () => {
   beforeEach(() => {
     capturedProps = null;
+    mountCallCount = 0;
   });
 
   it("never list 에 있는 도메인 → banner 미표시", async () => {
@@ -315,5 +339,58 @@ describe("getSessionToken — 만료 토큰 처리", () => {
     capturedProps = null;
     await handleFormSubmit(makeInput(), client as never);
     expect(capturedProps).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G-3-2: blastRadiusForHost 호출 검증
+// ---------------------------------------------------------------------------
+
+describe("G-3-2: blastRadiusForHost 호출", () => {
+  it("kind=update 시 blastRadiusForHost 가 호출된다", async () => {
+    validSession();
+    const client = makeClientMock({ listExists: true, listCredentialId: "cred-1" });
+    await handleFormSubmit(makeInput(), client as never);
+    // blastRadius RPC 는 비동기이므로 Promise 소진을 위해 microtask flush
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(client.blastRadiusForHost).toHaveBeenCalledWith("example.com", "tok-abc");
+  });
+
+  it("kind=new 시 blastRadiusForHost 가 호출되지 않는다", async () => {
+    validSession();
+    const client = makeClientMock({ listExists: false });
+    await handleFormSubmit(makeInput(), client as never);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(client.blastRadiusForHost).not.toHaveBeenCalled();
+  });
+
+  it("kind=update + blastRadius 응답 도착 시 banner 재마운트된다 (mountCallCount=2)", async () => {
+    validSession();
+    const client = makeClientMock({ listExists: true, listCredentialId: "cred-x", blastTotal: 3 });
+    await handleFormSubmit(makeInput(), client as never);
+    // blastRadius 비동기 완료를 위해 flush
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    // 초기 mount(1) + blast 응답 후 re-mount(1) = 2
+    expect(mountCallCount).toBeGreaterThanOrEqual(2);
+  });
+
+  it("blastRadiusForHost 실패 시 banner 재마운트 — blastRadius=null", async () => {
+    validSession();
+    const client = makeClientMock({
+      listExists: true,
+      listCredentialId: "cred-x",
+      blastReject: true,
+    });
+    await handleFormSubmit(makeInput(), client as never);
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    // 실패 후 re-mount 시 blastRadius=null 로 전달됨
+    expect(mountCallCount).toBeGreaterThanOrEqual(2);
+    expect(capturedProps?.blastRadius).toBeNull();
   });
 });
