@@ -5,6 +5,73 @@
 
 ---
 
+## [2026-05-09] **M24-E Phase G 신설** — Secretbank 만의 차별화 기능 통합 (1P 의존성 제거)
+
+### 사용자 통찰 (Phase B-8 진행 중 제기)
+
+> "현재 만들고 있는 방식이 1password의 라이선스를 침해하지는 않는가? 분명 우리 프로그램이 단순히 dependency 이외에도 더 낫고 1password와 다른 방식이어야 해."
+
+### 라이선스 안전성 검증
+
+- **1Password 코드 복사 ❌** — 1P = closed-source. 우리는 코드 본 적 없음
+- **Design pattern 합법** — Sega v. Accolade (1992) / Lotus v. Borland (1995) 판례. interface / behavior / design pattern 자체는 저작권 보호 ❌
+- **Industry standard**: X25519 (RFC 7748) / ChaCha20-Poly1305 (RFC 7539) / HMAC-SHA256 (RFC 2104) / Native Messaging (Chrome/Firefox 공개 spec) — 1P 의 소유물 ❌
+- **상표 침해 ❌** — 우리는 Secretbank + 자체 디자인
+- **실제 reference**: KeePassXC-Browser (GPL OSS, AGPL-3.0 호환) 의 페어링 protocol 단순화. 1P 가 아닌 OSS 직접 인용
+- **결론**: 법적으로 안전. 단, "1P 의존성 같다" 는 **인식상 차별점이 약함** = 진짜 문제
+
+### 결정 — Phase G 신설 (G-1~G-5 모두 채택, 사용자 일괄 승인)
+
+기존 Phase A~F (autofill / save / generator) 는 1P 동등 = 차별점 ❌. Phase G 에서 Secretbank 만의 차별 기능을 확장에 inline 통합.
+
+|                sub-task                | 의미                                                                                                                                                 | 1P 보유? |
+| :------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :------: |
+|    **G-1 Inline 의존성 mini-graph**    | autofill 시 popup 에 "이 비번이 어떤 project / deployment 에 쓰이는지" 카드 hover graph (M3 의 graph 엔진 + M24 1.5 의 hover mini-graph 패턴 재사용) |    ❌    |
+|      **G-2 Supply chain banner**       | 가입 사이트가 최근 NVD/GHSA alert 보유 시 in-page banner — "이 service 가 N일 전 breach 보고됨" (M5 incident feed + M20 supply chain risk 재사용)    |    ❌    |
+| **G-3 Blast radius preview on revoke** | 확장에서 비번 변경 시 "이 변경이 어떤 dependency 영향" 미리보기 (M3 blast radius BFS 재사용)                                                         |    ❌    |
+|        **G-4 MCP context push**        | 확장이 현재 사이트 정보 (URL + credential 메타) 를 데스크톱 MCP server 에 push → Claude / Cursor 즉시 활용 (M18 MCP server 재사용)                   |    ❌    |
+|     **G-5 RAILGUARD 인라인 hint**      | AI 에디터 사이트 (chatgpt.com / cursor.com) sidebar 에 "AI 에 비번/키 입력 시 위험" 경고 (RAILGUARD 룰 재사용)                                       |    ❌    |
+
+### 영향 범위
+
+- **task_m24e.md** — Phase G sub-task 분해 (planner)
+- **architecture.md** — Phase G 섹션 신설
+- **implementation_plan_m24e.md** — Phase G 진입 시점 / 의존성 / 검증 절차
+- **일정**: 기존 8주 (43 sub-tasks) → **약 11주 (50+ sub-tasks)**. ~3주 추가
+- **Phase G 진입 시점**: Phase F-1 (Chrome+Firefox 우선 출시) 직전. 즉 A → B → C → D → E → **G** → F-1 → F-2
+
+### Night mode 운용
+
+- 결정 자체는 사용자 명시 응답 (AskUserQuestion 통한 Phase G 신설 채택)
+- planner 호출 → GATE 2-bis (Phase G 구현 계획 승인) 1회 호출 후 implementator 자동 진행
+
+### CLI / Android / iOS 비교 결과
+
+| 항목     |                Secretbank                | 1Password | 비고                    |
+| :------- | :--------------------------------------: | :-------: | :---------------------- |
+| CLI      | ✅ M18 (`secretbank` + `secretbank-mcp`) |  ✅ `op`  | 동등                    |
+| Android  |      ⏳ M11 (Tauri Mobile, 미진입)       | ✅ stable | 출시 후 1년 내 따라잡기 |
+| iOS      |                  ⏳ M11                  | ✅ stable | 동상                    |
+| Web 뷰어 |                  ⏳ M12                  |    ✅     | 동상                    |
+
+→ 현재 우선순위는 M24-E + Phase G. M11 / M12 = M24-E 출시 후 1년 내.
+
+### 핵심 차별점 누적 (이미 보유, M24-E + Phase G 출시 시 모두 발현)
+
+1. 의존성 그래프 (M3) + Blast radius (M3)
+2. Supply chain risk (M20 v2)
+3. Incident feed auto-match (M5)
+4. Kill Switch (multi-key revoke)
+5. RAILGUARD (.cursorrules / CLAUDE.md / Copilot)
+6. MCP server (Claude / Cursor / Copilot stdio, M18)
+7. VS Code + JetBrains plugin (M21+M22)
+8. Card hover → mini-graph (M24 1.5)
+9. Vault Charter (Diceware + Shamir, M23) — 1P Emergency Kit 보다 안전
+
+**Phase G = 위 8 항목을 확장 안에서 inline 발현. "확장 자체에 dependency-aware 기능" = 진짜 차별**
+
+---
+
 ## [2026-05-09] **M24-E GATE 1 일괄 승인** — 18 핵심 결정 + 6 사용자 결정 항목 확정
 
 ### 승인 흐름
