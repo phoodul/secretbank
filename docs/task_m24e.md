@@ -2,7 +2,7 @@
 
 > 작성자: Planner Agent (claude-opus-4-7)
 > 작성일: 2026-05-09
-> 상태: Phase A 완료 (A1~A6 모두 완료, A7 진행 중)
+> 상태: Phase A 완료 (A1~A7 모두 완료), Phase B 진입 — B1 완료
 > 참조: `docs/architecture.md` 10장, `docs/integrator_report_m24e.md`, `docs/project-decisions.md` [2026-05-09]
 > 갱신: **기존 `docs/task.md` 의 T-24-E ("스켈레톤 only") 항목을 본 문서의 Phase A~F 풀구현 sub-task 들로 대체한다.**
 
@@ -755,7 +755,7 @@
 | T-24-E-A5   | i18n (4 lang YAML + @wxt-dev/i18n + I18N_KEYS)  | 2026-05-09 | `d093ffe` |
 | T-24-E-A6   | popup 골격 (ThemeProvider + Tab 라우팅 + placeholder 4종) | 2026-05-09 | `edcc2e3` |
 | T-24-E-A7   | CI 빌드 매트릭스                                 | 2026-05-09 | `dcd686b` |
-| T-24-E-B1   | nm-host crate                                    | -      | -         |
+| T-24-E-B1   | nm-host crate (stdio 이벤트 루프 + 프로토콜)     | 2026-05-09 | `3198bf1` |
 | T-24-E-B2   | NM installer (3 OS)                              | -      | -         |
 | T-24-E-B3   | nm-client.ts                                     | -      | -         |
 | T-24-E-B4   | 페어링 protocol                                  | -      | -         |
