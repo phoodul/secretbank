@@ -17,7 +17,7 @@
 **1. `docs/task.md` 마일스톤 표 (라인 27~57 부근)** — 기존 표에 한 줄 추가:
 
 ```markdown
-| **M24-E** | **Browser Extension (Phase A~F 풀구현)** | T-24-E-A1~F8 | 43 sub-tasks | 🔄 5/43 완료 |
+| **M24-E** | **Browser Extension (Phase A~F 풀구현)** | T-24-E-A1~F8 | 43 sub-tasks | 🔄 15/43 완료 |
 ```
 
 위치: M25 행 뒤 (또는 알파벳/번호 순서에 따라 M24 행 직후).
@@ -762,7 +762,7 @@
 | T-24-E-B5   | 확장 PairingDialog                               | 2026-05-09 | `6ad32f7` |
 | T-24-E-B6   | 데스크톱 PairingApprovalDialog                   | 2026-05-09 | `21ecccb` |
 | T-24-E-B7   | session token + Settings                         | 2026-05-09 | `ba92e60` |
-| T-24-E-B8   | NM Host audit                                    | -      | -         |
+| T-24-E-B8   | NM Host audit                                    | 2026-05-09 | `fc1809d` |
 | T-24-E-B9   | 외부 audit (Phase B)                             | -      | -         |
 | T-24-E-B10  | 3 OS 수동 검증                                   | -      | -         |
 | T-24-E-C1   | form-detector                                    | -      | -         |

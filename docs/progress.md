@@ -2,8 +2,14 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-09 (Night mode) — **T-24-E-B7 완료 (13/43 sub-tasks).**
+- **Time:** 2026-05-09 (Night mode) — **T-24-E-B8 완료 (15/43 sub-tasks).**
 - **Phase:** Phase 3 — Implementation. M24-E 풀구현 (Phase A~F 43 sub-task, 8주 일정).
+- **T-24-E-B8 완료 ✅** (`fc1809d`):
+  - `secretbank-audit/src/actions.rs` (신규): extension.* action 상수 11종 정의
+  - `ext_pairing.rs`: pairing_request_received 진입 시 EXT_PAIRING_REQUEST audit 추가
+  - `extension_session.rs`: rotate_session_secret 완료 후 EXT_SESSION_REVOKE audit 추가
+  - 신규 테스트 8건 (BA1~BA5, EP11, EX9) 추가, 회귀 0
+  - 검증: Rust 269+ PASS / extension 122 PASS / shared 100 PASS / vitest 628 PASS / clippy 0 / typecheck 0
 - **T-24-E-B7 완료 ✅** (`ba92e60`):
   - `src-tauri/crates/secretbank-nm-host/src/session.rs`: HMAC-SHA256 session token (ST1-12 단위 테스트)
   - `src-tauri/crates/secretbank-app/src/commands/extension_session.rs`: 4 Tauri 커맨드 (EX1-8 단위 테스트)
@@ -17,7 +23,7 @@
   - `extension/lib/pairing.ts`: restoreFromStorage/saveToStorage/clearStorage 헬퍼 추가
   - i18n: 9신규 키 4로케일 (en/ko/ja/zh_CN) + drift detection 28키로 갱신
   - 테스트: 117/117 PASS (신규 25케이스, 회귀 0)
-- **다음**: T-24-E-B8 (NM Host audit) 또는 Phase C 진입 (form-detector)
+- **다음**: T-24-E-B9 (외부 audit, Phase B 완료 후 외부 작업) 또는 T-24-E-B10 (3 OS 수동 검증) 또는 Phase C 진입 (form-detector)
 - **Phase A 완료 ✅** (7/7 sub-tasks):
   - A1 WXT 골격 `bd126bb` / A2 shared types `7d3191d` / A3 password-generator `f8a8a6f`
   - A4 validation `a983000` / A5 i18n `d093ffe` / A6 popup 골격 `edcc2e3`
