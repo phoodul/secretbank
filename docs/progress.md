@@ -2,14 +2,16 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-09 (Night mode) — **M24-E GATE 1 + GATE 2 일괄 승인 완료. Phase A 진입 (T-24-E-A1 WXT 프로젝트 골격).**
+- **Time:** 2026-05-09 (Night mode) — **M24-E Phase A 전체 완료 (A1~A7, 7/43 sub-tasks).**
 - **Phase:** Phase 3 — Implementation. M24-E 풀구현 (Phase A~F 43 sub-task, 8주 일정).
-- **GATE 1 (사양 승인) ✅**: D1~D18 + Q1~Q6 전체 일괄 승인 (2026-05-09). 산출물 = `docs/research_m24e_browser_extension.md` (1370줄, 25+ 출처) + `docs/integrator_report_m24e.md` + `docs/project-decisions.md` [2026-05-09] M24-E GATE 1 항목.
-- **GATE 2 (구현 계획 승인) ✅**: Phase A~F 43 sub-task / 55일 / B HIGH 위험 / B1~B5 완화안 일괄 승인. 산출물 = `docs/architecture.md` 10장 (M24-E 신설) + `docs/task_m24e.md` (Phase A~F 풀 명세) + `docs/implementation_plan_m24e.md` (운용).
-- **task.md 갱신 ✅**: 마일스톤 표 M24-E 추가 (`🔄 0/43`) + T-24-E 블록 → task_m24e.md 참조로 교체.
-- **다음 액션 (현재)**: implementator T-24-E-A1 (WXT 프로젝트 골격) 호출 → Phase A 진입.
-- **Phase A sub-task (7개, 7일)**: A1 WXT 골격 → A2 packages/shared types → A3 password-generator → A4 validation → A5 i18n → A6 popup 골격 → A7 CI 빌드.
-- **Night mode 운용**: GATE 1-4 외 중간 질문 금지. Phase A 종료 시점 (또는 Phase B 진입 전) 다음 GATE 호출.
+- **Phase A 완료 ✅** (7/7 sub-tasks):
+  - A1 WXT 골격 `bd126bb` / A2 shared types `7d3191d` / A3 password-generator `f8a8a6f`
+  - A4 validation `a983000` / A5 i18n `d093ffe` / A6 popup 골격 `edcc2e3`
+  - A7 CI 빌드 매트릭스 `dcd686b` — `.github/workflows/extension-ci.yml` 신규 (Chrome + Firefox matrix)
+- **GATE 1 (사양 승인) ✅**: D1~D18 + Q1~Q6 전체 일괄 승인 (2026-05-09).
+- **GATE 2 (구현 계획 승인) ✅**: Phase A~F 43 sub-task / 55일 / B HIGH 위험 완화안 승인.
+- **다음 액션**: GATE 3 (Phase B 진입 승인) 후 Phase B (NM Host + 페어링 프로토콜) 진입.
+- **Night mode 운용**: GATE 1-4 외 중간 질문 금지. Phase A 종료 → GATE 3 호출 시점.
 
 ### 이전 — 2026-05-09 (Night mode 진입, GATE 1/2 진행 전)
 
