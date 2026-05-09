@@ -2,14 +2,20 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-09 (Night mode) — **T-24-E-B4 완료 (9/43 sub-tasks).**
+- **Time:** 2026-05-09 (Night mode) — **T-24-E-B5 완료 (10/43 sub-tasks).**
 - **Phase:** Phase 3 — Implementation. M24-E 풀구현 (Phase A~F 43 sub-task, 8주 일정).
+- **T-24-E-B5 완료 ✅** (`6ad32f7`):
+  - `extension/entrypoints/popup/PairingDialog.tsx`: 4단계 상태 머신 (uninitialized/pending/paired/error), useReducer, NMClient + PairingSession 통합
+  - `extension/lib/storage.ts`: chrome.storage.local typed wrapper (Zod schema, getPairing/setPairing/clearPairing)
+  - `extension/lib/pairing.ts`: restoreFromStorage/saveToStorage/clearStorage 헬퍼 추가
+  - i18n: 9신규 키 4로케일 (en/ko/ja/zh_CN) + drift detection 28키로 갱신
+  - 테스트: 117/117 PASS (신규 25케이스, 회귀 0)
 - **T-24-E-B4 완료 ✅** (`8b5275f`):
   - Rust: `secretbank-nm-host/src/pairing.rs` — RFC 7748 §6.1 TV1/TV2, ECDH 대칭성, XChaCha round-trip (15 tests)
   - TS: `extension/lib/crypto.ts` + `extension/lib/pairing.ts` — @noble/curves + @noble/ciphers (35 tests)
   - Shared: `NMMessageInitSchema` ext_pub/extension_id 추가, NMMessagePairRequest/PairResponse/Paired 신규
   - 검증: Rust 626 PASS / extension 92 PASS / shared 100 PASS / clippy 0 / typecheck 0
-- **다음**: T-24-E-B5 (확장 PairingDialog UI)
+- **다음**: T-24-E-B6 (Native Messaging channel key HKDF 맞춤 + 암호화 메시지 라우팅)
 - **Phase A 완료 ✅** (7/7 sub-tasks):
   - A1 WXT 골격 `bd126bb` / A2 shared types `7d3191d` / A3 password-generator `f8a8a6f`
   - A4 validation `a983000` / A5 i18n `d093ffe` / A6 popup 골격 `edcc2e3`

@@ -1,5 +1,32 @@
 # Work Log
 
+## 2026-05-09 — T-24-E-B5 PairingDialog UI + storage typed wrapper 완료
+
+### 큰 줄거리
+
+- PairingDialog.tsx: useReducer 4단계 상태 머신 (uninitialized → pending → paired / error)
+- PairingErrorKind: not_installed / rejected / timeout / protocol
+- NMClient + PairingSession B-4 재사용, saveToStorage → chrome.storage.local
+- extension/lib/storage.ts: Zod schema (extensionPriv/desktopPub/deviceId/pairedAt) + getPairing/setPairing/clearPairing
+- pairing.ts: restoreFromStorage / saveToStorage / clearStorage 헬퍼 추가
+- i18n: 9신규 키 4로케일 (en/ko/ja/zh_CN) + I18N_KEYS 19→28 + drift detection 갱신
+- 테스트: 117/117 PASS (신규 25케이스: storage 9 + PairingDialog 16), 회귀 0
+
+### 주요 기술 결정 / 해결 이슈
+
+- vi.hoisted()로 NMClient/PairingSession 목 공유 상태 vi.mock factory 안에서 접근
+- 전역 fake timer 제거 → timeout 테스트만 로컬 vi.useFakeTimers() + fireEvent.click() 사용
+- flushMicrotasks(): setTimeout 쓰지 않고 await Promise.resolve() 루프로 microtask flush
+- T7 위협 모델 주석: extensionPriv base64 평문 저장 한계 + OS 수준 암호화 의존 문서화
+
+### 핵심 commits
+
+| 카테고리 | 커밋 | 의미 |
+| :--- | :--- | :--- |
+| T-24-E-B5 PairingDialog + storage | `6ad32f7` | extension 페어링 UI + storage typed wrapper |
+
+---
+
 ## 2026-05-09 — T-24-E-B4 X25519 ECDH 페어링 프로토콜 구현 완료
 
 ### 큰 줄거리
