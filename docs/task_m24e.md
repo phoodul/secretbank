@@ -771,7 +771,7 @@
 | T-24-E-C4   | autofill + domain-match (T4 phishing 방어)                | 2026-05-09 | `928a798` |
 | T-24-E-C5   | autofill trigger (focus + Cmd/Ctrl+Shift+L)               | 2026-05-09 | `d619e79` |
 | T-24-E-C6+C7+C8 | multi-step + iframe + closed shadow + clickjack 방어  | 2026-05-09 | `f66b737` |
-| T-24-E-D1   | form submit + XHR/fetch hook                              | -          | -         |
+| T-24-E-D1   | form submit + XHR/fetch hook (MAIN world)                 | 2026-05-10 | pending   |
 | T-24-E-D2   | postMessage origin 검증                                   | -          | -         |
 | T-24-E-D3   | SaveBanner                                                | -          | -         |
 | T-24-E-D4   | save-handler 신규/rotation                                | -          | -         |

@@ -63,6 +63,15 @@ globalThis.chrome = {
   },
 };
 
+// ── WXT global stubs (defineContentScript / defineUnlistedScript) ────────────
+// Vitest 환경에는 WXT auto-import 런타임이 없으므로 no-op stub 주입.
+// entrypoint 파일의 default export 를 테스트하지 않고 순수 함수만 테스트하지만,
+// 모듈 import 시 최상위에서 호출되므로 stub 이 없으면 ReferenceError 발생.
+// @ts-ignore
+globalThis.defineContentScript = (def: unknown) => def;
+// @ts-ignore
+globalThis.defineUnlistedScript = (fn: unknown) => fn;
+
 // ── window.matchMedia mock (jsdom 미지원) ─────────────────────────────────────
 // ThemeProvider 의 prefers-color-scheme 감지에 필요.
 // 기본값: light 모드 (matches = false).

@@ -22,6 +22,16 @@ export default defineConfig({
     // D10: 권한 최소화 — A1 에서는 activeTab + storage 만
     // nativeMessaging 은 Phase B-1 에서 추가
     permissions: ["activeTab", "storage"],
+    // D-1: content_scripts 에 MAIN world entry 명시 (WXT unlisted script + manifest 직접 등록).
+    // content-main.ts 는 MAIN world (XHR/fetch hook) — ISOLATED content.ts 와 분리.
+    content_scripts: [
+      {
+        js: ["content-scripts/content-main.js"],
+        matches: ["<all_urls>"],
+        run_at: "document_start",
+        world: "MAIN",
+      },
+    ],
   },
   // A5: i18n — localesDir 기본값은 srcDir/locales (extension/locales).
   //     @wxt-dev/i18n/module 이 default_locale + locales/ 디렉토리 자동 감지.

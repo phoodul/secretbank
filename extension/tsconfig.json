@@ -27,7 +27,8 @@
     "tailwind.config.ts",
     "vitest.config.ts",
     "**/*.test.ts",
-    "**/*.test.tsx"
+    "**/*.test.tsx",
+    ".wxt/types/imports.d.ts"
   ],
-  "exclude": ["node_modules", "dist", ".wxt"]
+  "exclude": ["node_modules", "dist"]
 }
