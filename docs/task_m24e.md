@@ -2,7 +2,7 @@
 
 > 작성자: Planner Agent (claude-opus-4-7)
 > 작성일: 2026-05-09
-> 상태: GATE 2 입력 — 사용자 승인 대기 중
+> 상태: Phase A 진행 중 (A3+A4 완료, A5~A7 대기)
 > 참조: `docs/architecture.md` 10장, `docs/integrator_report_m24e.md`, `docs/project-decisions.md` [2026-05-09]
 > 갱신: **기존 `docs/task.md` 의 T-24-E ("스켈레톤 only") 항목을 본 문서의 Phase A~F 풀구현 sub-task 들로 대체한다.**
 
@@ -751,7 +751,7 @@
 | T-24-E-A1   | WXT 골격 + Tailwind v4 + shadcn/ui               | -      | -         |
 | T-24-E-A2   | packages/shared types                            | -      | -         |
 | T-24-E-A3   | password-generator (Diceware 4 lang + zxcvbn-ts) | 2026-05-09 | (commit pending) |
-| T-24-E-A4   | shared validation                                | -      | -         |
+| T-24-E-A4   | shared validation                                | 2026-05-09 | `a983000` |
 | T-24-E-A5   | i18n (4 lang)                                    | -      | -         |
 | T-24-E-A6   | popup 골격                                       | -      | -         |
 | T-24-E-A7   | CI 빌드 매트릭스                                 | -      | -         |
@@ -793,7 +793,7 @@
 | T-24-E-F7   | Edge Add-ons                                     | -      | -         |
 | T-24-E-F8   | 외부 audit 결과 반영                             | -      | -         |
 
-**총 sub-task: 43** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 — F 의 sub-task 8 중 일부는 외부 작업 의존이라 commit 단위 카운팅에 따라 가변. 마일스톤 표 표기는 `🔄 0/43 완료`).
+**총 sub-task: 43** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 — F 의 sub-task 8 중 일부는 외부 작업 의존이라 commit 단위 카운팅에 따라 가변. 마일스톤 표 표기는 `🔄 2/43 완료`).
 
 > 정정: 위 표는 43 sub-task. project-decisions [2026-05-09] 에 표기된 "약 50 sub-task" 추정 대비 7 차이. 이는 Phase F 의 외부 audit / 스토어 제출이 단일 sub-task 단위로 합쳐졌기 때문 (commit 단위로는 audit 발견 사항 별로 추가 sub-task 가 생성될 수 있음 — F8 의 가변성).
 

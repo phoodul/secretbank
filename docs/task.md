@@ -2510,3 +2510,5 @@ _문서 끝._
 | :------ | :--- | :----- | :-------- |
 | T-24-E-A1 | WXT v0.20 + Tailwind v4 + shadcn/ui Button — extension/ 신규 워크스페이스 + Chrome MV3/Firefox MV2 멀티타깃 + 단일 eslint 구조 (루트 분리) + ext:dev/build/test 편의 스크립트 | 2026-05-09 | `bd126bb` |
 | T-24-E-A2 | packages/shared 워크스페이스 신설 + 공유 타입 (CredentialKind / IssuerRecipe / PairingState / SessionToken / NMMessage) 정의. pnpm-workspace.yaml packages/* 추가 + extension dep 연결 + smoke test 11 PASS | 2026-05-09 | (pending) |
+| T-24-E-A3 | password-generator 모듈 이관 (shared/src/password-generator): Diceware 6단어 4lang (BIP39) + zxcvbn-ts strength + recipe 기반 무작위 생성. 단위 테스트 PASS | 2026-05-09 | `(pending)` |
+| T-24-E-A4 | shared/src/validation: credential (discriminated union api_key/password/credit_card) + recipe (min≤max refine) + pairing (4 variant placeholder) Zod schemas. 48 테스트 PASS (shared 100/52 → 100/100, root 614 PASS 회귀 0) | 2026-05-09 | `a983000` |
