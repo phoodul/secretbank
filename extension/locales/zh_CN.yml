@@ -267,3 +267,28 @@ generator_strength_good:
 generator_strength_strong:
   message: "强"
   description: "密码强度：4分"
+
+# ── G-2-2: SupplyChainBanner ──
+supply_chain_banner_title:
+  message: "已报告安全事件"
+  description: "当主机存在已知安全事件时显示的 SupplyChainBanner 标题"
+
+supply_chain_banner_action_view:
+  message: "查看详情"
+  description: "SupplyChainBanner 主要按钮 — 打开 Secretbank incidents 深度链接"
+
+supply_chain_banner_action_dismiss:
+  message: "7天内不再显示"
+  description: "SupplyChainBanner 次要按钮 — 对此主机隐藏 banner 7 天"
+
+supply_chain_banner_severity_high:
+  message: "高"
+  description: "供应链 banner 高严重性徽章标签"
+
+supply_chain_banner_severity_medium:
+  message: "中"
+  description: "供应链 banner 中严重性徽章标签"
+
+supply_chain_banner_severity_critical:
+  message: "严重"
+  description: "供应链 banner 严重性徽章标签"

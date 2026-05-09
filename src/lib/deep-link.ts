@@ -14,10 +14,13 @@ import { listen } from "@tauri-apps/api/event";
 import { useNavigate } from "react-router-dom";
 
 /** 허용된 deep-link 경로 */
-const ALLOWED_PATHS = new Set(["graph"]);
+const ALLOWED_PATHS = new Set(["graph", "incidents"]);
 
 /** credential id 허용 패턴 — ULID (26자, [0-9A-Z]) */
 const CREDENTIAL_ID_RE = /^[0-9A-Za-z]{1,128}$/;
+
+/** host 허용 패턴 — 도메인 레이블 + 점 조합 (최대 253자) */
+const HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
 
 /**
  * secretbank:// deep-link 이벤트를 구독한다.
@@ -93,5 +96,20 @@ export function handleDeepLink(
       return;
     }
     navigate(`/graph?focus=${encodeURIComponent(credentialId)}`);
+  }
+
+  if (segment === "incidents") {
+    const host = url.searchParams.get("host");
+    if (host === null) {
+      // host 없이 incidents 페이지로 이동 (전체 목록)
+      navigate("/incidents");
+      return;
+    }
+    // host 형식 검증 — 경로 주입 방지
+    if (!host || host.length > 253 || !HOST_RE.test(host)) {
+      console.warn("[deep-link] invalid host:", host);
+      return;
+    }
+    navigate(`/incidents?host=${encodeURIComponent(host)}`);
   }
 }

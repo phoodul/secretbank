@@ -267,3 +267,28 @@ generator_strength_good:
 generator_strength_strong:
   message: "強い"
   description: "パスワード強度: スコア4"
+
+# ── G-2-2: SupplyChainBanner ──
+supply_chain_banner_title:
+  message: "セキュリティインシデントが報告されました"
+  description: "既知のインシデントがあるホストに表示される SupplyChainBanner のタイトル"
+
+supply_chain_banner_action_view:
+  message: "詳細を見る"
+  description: "SupplyChainBanner 主要 CTA — Secretbank incidents ディープリンクを開く"
+
+supply_chain_banner_action_dismiss:
+  message: "7日間非表示"
+  description: "SupplyChainBanner サブ — このホストのバナーを 7 日間非表示にする"
+
+supply_chain_banner_severity_high:
+  message: "高"
+  description: "サプライチェーンバナーの HIGH 重大度バッジラベル"
+
+supply_chain_banner_severity_medium:
+  message: "中"
+  description: "サプライチェーンバナーの MEDIUM 重大度バッジラベル"
+
+supply_chain_banner_severity_critical:
+  message: "重大"
+  description: "サプライチェーンバナーの CRITICAL 重大度バッジラベル"

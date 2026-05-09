@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, RefreshCw, ShieldOff } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -46,11 +47,27 @@ export function IncidentsPage() {
   const { t } = useTranslation("common");
   const [activeTab, setActiveTab] = useState<IncidentTab>("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // G-2-2: deep-link ?host=<host> 파라미터 — 해당 호스트 관련 incident 클라이언트 필터
+  const hostFilter = searchParams.get("host") ?? null;
 
   const filter = tabToFilter(activeTab);
   const { entries, loading, error, refresh, triggerFeedRefresh } = useIncidents(filter);
 
-  const visibleEntries = clientFilter(activeTab, entries);
+  // hostFilter 적용: incident.domain 또는 title 에 host 가 포함된 항목만
+  const filteredByHost = hostFilter
+    ? entries.filter(
+        (e) =>
+          (e.incident.domain !== null &&
+            (e.incident.domain === hostFilter ||
+              e.incident.domain.endsWith(`.${hostFilter}`) ||
+              hostFilter.endsWith(`.${e.incident.domain}`))) ||
+          e.incident.title.toLowerCase().includes(hostFilter.toLowerCase()),
+      )
+    : entries;
+
+  const visibleEntries = clientFilter(activeTab, filteredByHost);
 
   async function handleRefresh() {
     if (refreshing) return;
@@ -74,6 +91,15 @@ export function IncidentsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
+      {/* G-2-2: host 필터 배너 */}
+      {hostFilter !== null && (
+        <div className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center gap-2 rounded-md border px-4 py-2 text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+          <span>
+            {t("incidents.hostFilter", { host: hostFilter, defaultValue: `호스트 필터: ${hostFilter}` })}
+          </span>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold tracking-tight">{t("incidents.title")}</h1>

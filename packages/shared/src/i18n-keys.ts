@@ -168,6 +168,20 @@ export const I18N_KEYS = {
   GENERATOR_STRENGTH_GOOD: "generator_strength_good",
   /** Generator 강도: 강함 */
   GENERATOR_STRENGTH_STRONG: "generator_strength_strong",
+
+  // ── G-2-2: SupplyChainBanner ──
+  /** SupplyChainBanner 제목 — "Security incident reported" */
+  SUPPLY_CHAIN_BANNER_TITLE: "supply_chain_banner_title",
+  /** SupplyChainBanner 주요 CTA — "View details" */
+  SUPPLY_CHAIN_BANNER_ACTION_VIEW: "supply_chain_banner_action_view",
+  /** SupplyChainBanner 보조 — "Dismiss for 7 days" */
+  SUPPLY_CHAIN_BANNER_ACTION_DISMISS: "supply_chain_banner_action_dismiss",
+  /** SupplyChainBanner severity 배지 — HIGH */
+  SUPPLY_CHAIN_BANNER_SEVERITY_HIGH: "supply_chain_banner_severity_high",
+  /** SupplyChainBanner severity 배지 — MEDIUM */
+  SUPPLY_CHAIN_BANNER_SEVERITY_MEDIUM: "supply_chain_banner_severity_medium",
+  /** SupplyChainBanner severity 배지 — CRITICAL */
+  SUPPLY_CHAIN_BANNER_SEVERITY_CRITICAL: "supply_chain_banner_severity_critical",
 } as const;
 
 /**

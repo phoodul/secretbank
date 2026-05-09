@@ -18,12 +18,22 @@ import type { AutocompleteHint } from "../lib/save-handler";
 import { NMClient } from "../lib/nm-client";
 import { mountGeneratorIcon } from "../components/GeneratorIcon";
 import type { IconMount } from "../components/GeneratorIcon";
+import { isDismissed, addDismissedHost, getCachedIncidents, setCachedIncidents } from "../lib/banner-cache";
+import { mountSupplyChainBanner } from "../lib/supply-chain-host";
+import { openSecretbankDeepLink } from "../lib/deep-link";
+import { getSessionToken } from "../lib/storage";
 
 // D-4: NMClient 싱글턴 — content script 생애 동안 유지 (reconnect 내장).
 const _nmClient = new NMClient();
 
 // E-1: new-password input → GeneratorIcon 마운트 맵 (input → IconMount).
 const _iconMounts = new Map<HTMLInputElement, IconMount>();
+
+// G-2-2: 현재 마운트된 supply chain banner unmount 함수
+let _supplyChainUnmount: (() => void) | null = null;
+
+// G-2-2: 마지막으로 체크한 host (SPA watcher 중복 방지)
+let _lastCheckedHost = "";
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -32,6 +42,9 @@ export default defineContentScript({
     installFormSubmitListener(document);
     installMainWorldMessageListener(window);
     installGeneratorIcons(document);
+    // G-2-2: supply chain banner — 페이지 로드 시 즉시 + SPA URL 변경 감지
+    void checkSupplyChainForCurrentHost();
+    installSupplyChainHostWatcher(window);
   },
 });
 
@@ -202,4 +215,116 @@ function passwordPriorityToHint(
   if (priority === "new-password") return "new-password";
   if (priority === "current-password") return "current-password";
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// G-2-2: Supply chain banner 로직
+// ---------------------------------------------------------------------------
+
+/**
+ * 현재 페이지 host 에 대해 incident 체크를 수행하고 banner 를 마운트한다.
+ *
+ * 흐름:
+ *   1. host 추출
+ *   2. isDismissed 체크 → true 면 종료
+ *   3. getCachedIncidents → cache hit 면 캐시 사용 / miss 면 RPC 호출
+ *   4. severity ≥ MEDIUM incident 있으면 banner 마운트
+ */
+export async function checkSupplyChainForCurrentHost(): Promise<void> {
+  const host = document.location?.hostname ?? "";
+  if (!host) return;
+
+  // 동일 host 중복 체크 방지 (SPA watcher 연속 호출 시)
+  if (host === _lastCheckedHost) return;
+  _lastCheckedHost = host;
+
+  // 기존 banner unmount
+  if (_supplyChainUnmount !== null) {
+    _supplyChainUnmount();
+    _supplyChainUnmount = null;
+  }
+
+  try {
+    // dismiss 체크
+    const dismissed = await isDismissed(host);
+    if (dismissed) return;
+
+    // 캐시 조회
+    let response = await getCachedIncidents(host);
+
+    if (response === null) {
+      // RPC 호출 — session token 필요
+      const session = await getSessionToken();
+      if (session === null) return; // 세션 없으면 skip (vault 잠금 상태)
+
+      await _nmClient.connect().catch(() => null);
+      if (!_nmClient.isConnected()) return;
+
+      response = await _nmClient.incidentCheckForHost(host, session.token);
+      // 캐시 저장 (1h TTL)
+      await setCachedIncidents(host, response);
+    }
+
+    // 매칭 없거나 오류 → banner 미표시
+    if (!response.ok || !response.matches || response.matches.length === 0) return;
+
+    // severity ≥ MEDIUM 인 첫 번째 incident (이미 서버에서 필터됨)
+    const topIncident = response.matches[0];
+    if (!topIncident) return;
+
+    // banner 마운트
+    _supplyChainUnmount = mountSupplyChainBanner({
+      host,
+      incident: topIncident,
+      onView: () => {
+        openSecretbankDeepLink("incidents", { host });
+      },
+      onDismiss: () => {
+        void addDismissedHost(host).then(() => {
+          if (_supplyChainUnmount !== null) {
+            _supplyChainUnmount();
+            _supplyChainUnmount = null;
+          }
+        });
+      },
+    });
+  } catch {
+    // 네트워크 오류 / RPC 실패 — silent fail (banner 미표시)
+  }
+}
+
+/**
+ * SPA URL 변경 시 supply chain 체크 재실행.
+ * pushState / replaceState / popstate 감지.
+ */
+export function installSupplyChainHostWatcher(win: Window): () => void {
+  const originalPushState = win.history.pushState.bind(win.history);
+  const originalReplaceState = win.history.replaceState.bind(win.history);
+
+  function onNavigate() {
+    // host 변경 시에만 재체크 (_lastCheckedHost 비교는 checkSupplyChainForCurrentHost 내부)
+    _lastCheckedHost = ""; // 강제 리셋 — URL 변경 시 항상 재체크
+    void checkSupplyChainForCurrentHost();
+  }
+
+  win.history.pushState = function (...args: Parameters<History["pushState"]>) {
+    const result = originalPushState(...args);
+    onNavigate();
+    return result;
+  };
+
+  win.history.replaceState = function (...args: Parameters<History["replaceState"]>) {
+    const result = originalReplaceState(...args);
+    onNavigate();
+    return result;
+  };
+
+  const popstateHandler = () => onNavigate();
+  win.addEventListener("popstate", popstateHandler);
+
+  return () => {
+    win.history.pushState = originalPushState;
+    win.history.replaceState = originalReplaceState;
+    win.removeEventListener("popstate", popstateHandler);
+  };
 }

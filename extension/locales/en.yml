@@ -267,3 +267,28 @@ generator_strength_good:
 generator_strength_strong:
   message: "Strong"
   description: "Password strength label: score 4"
+
+# ── G-2-2: SupplyChainBanner ──
+supply_chain_banner_title:
+  message: "Security incident reported"
+  description: "SupplyChainBanner title shown when a host has a known incident"
+
+supply_chain_banner_action_view:
+  message: "View details"
+  description: "SupplyChainBanner primary CTA — opens Secretbank incidents deep-link"
+
+supply_chain_banner_action_dismiss:
+  message: "Dismiss for 7 days"
+  description: "SupplyChainBanner secondary — hides banner for this host for 7 days"
+
+supply_chain_banner_severity_high:
+  message: "HIGH"
+  description: "Severity badge label for HIGH incidents in supply chain banner"
+
+supply_chain_banner_severity_medium:
+  message: "MEDIUM"
+  description: "Severity badge label for MEDIUM incidents in supply chain banner"
+
+supply_chain_banner_severity_critical:
+  message: "CRITICAL"
+  description: "Severity badge label for CRITICAL incidents in supply chain banner"

@@ -109,8 +109,8 @@ describe("I18N_KEYS 상수 구조", () => {
     expect(I18N_KEYS.SAVE_BUTTON).toBe("save_button");
   });
 
-  it("총 65개의 키가 정의되어 있다 (A5: 10 + A6: 9 + B-5: 9 + B-7: 14 + D-3: 6 + D-6: 6 + E-1: 11 신규)", () => {
-    expect(Object.keys(I18N_KEYS)).toHaveLength(65);
+  it("총 71개의 키가 정의되어 있다 (A5: 10 + A6: 9 + B-5: 9 + B-7: 14 + D-3: 6 + D-6: 6 + E-1: 11 + G-2-2: 6 신규)", () => {
+    expect(Object.keys(I18N_KEYS)).toHaveLength(71);
   });
 
   it("모든 키가 string 타입이다", () => {

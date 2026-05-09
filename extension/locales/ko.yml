@@ -267,3 +267,28 @@ generator_strength_good:
 generator_strength_strong:
   message: "강함"
   description: "비밀번호 강도: 4점"
+
+# ── G-2-2: SupplyChainBanner ──
+supply_chain_banner_title:
+  message: "보안 사고 보고됨"
+  description: "호스트에 알려진 사고가 있을 때 표시되는 SupplyChainBanner 제목"
+
+supply_chain_banner_action_view:
+  message: "자세히 보기"
+  description: "SupplyChainBanner 주요 CTA — Secretbank incidents 딥링크 열기"
+
+supply_chain_banner_action_dismiss:
+  message: "7일간 숨기기"
+  description: "SupplyChainBanner 보조 — 해당 호스트에 대해 7일간 banner 숨기기"
+
+supply_chain_banner_severity_high:
+  message: "높음"
+  description: "공급망 banner HIGH 심각도 배지 라벨"
+
+supply_chain_banner_severity_medium:
+  message: "중간"
+  description: "공급망 banner MEDIUM 심각도 배지 라벨"
+
+supply_chain_banner_severity_critical:
+  message: "심각"
+  description: "공급망 banner CRITICAL 심각도 배지 라벨"
