@@ -229,11 +229,13 @@ async fn process_message(msg: serde_json::Value) -> serde_json::Value {
     match msg_type {
         // D-6: bridge_client 경유 Tauri forward. TM-EXT-BRIDGE-2: session_token 첨부 확인은 bridge 서버 측.
         // T-24-E-E2: recipe RPC 도 동일 bridge 경유 forward.
+        // T-24-E-E4: get_credential_list (popup CredentialList) 도 bridge 경유 forward.
         "credential_list_by_domain"
         | "credential_create"
         | "credential_update"
         | "get_recipe_for_domain"
-        | "upsert_recipe_for_domain" => {
+        | "upsert_recipe_for_domain"
+        | "get_credential_list" => {
             match bridge_client::send(&msg).await {
                 Ok(resp) => resp,
                 Err(bridge_client::BridgeError::PortNotSet) => {

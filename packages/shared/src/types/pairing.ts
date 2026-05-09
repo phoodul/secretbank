@@ -192,6 +192,7 @@ export interface NMMessageUpsertRecipeForDomainResponse {
  * B-4: X25519 페어링 메시지(init/pair_request/pair_response/paired) 추가.
  * D-4: credential CRUD RPC 메시지 추가.
  * E-2: issuer recipe RPC 메시지 추가.
+ * E-4: get_credential_list RPC 메시지 추가.
  */
 export type NMMessage =
   | NMMessageInit
@@ -208,7 +209,38 @@ export type NMMessage =
   | NMMessageGetRecipeForDomain
   | NMMessageGetRecipeForDomainResponse
   | NMMessageUpsertRecipeForDomain
-  | NMMessageUpsertRecipeForDomainResponse;
+  | NMMessageUpsertRecipeForDomainResponse
+  | NMMessageGetCredentialList
+  | NMMessageGetCredentialListResponse;
+
+// ---------------------------------------------------------------------------
+// T-24-E-E4: credential 전체 목록 조회 (popup CredentialList 용)
+// ---------------------------------------------------------------------------
+
+/** credential 카드에 표시할 최소 정보 — plaintext ❌ (password 미포함). */
+export interface CredentialListItem {
+  credential_id: string;
+  issuer: string;
+  domain: string;
+  username?: string;
+}
+
+/** Extension → nm-host: 전체 credential 목록 조회 (도메인 필터 선택 적용) */
+export interface NMMessageGetCredentialList {
+  type: "get_credential_list";
+  /** 도메인 접두사 필터 (없으면 전체). */
+  domain_filter?: string;
+  session_token: string;
+}
+
+/** nm-host → Extension: credential 목록 응답 */
+export interface NMMessageGetCredentialListResponse {
+  type: "get_credential_list_response";
+  ok: boolean;
+  /** vault locked / 오류 시 undefined. */
+  items?: CredentialListItem[];
+  error?: string;
+}
 
 // ---------------------------------------------------------------------------
 // 하위 호환 별칭 (A2 명명 유지 — 외부 consumer 가 직접 import 중)

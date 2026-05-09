@@ -236,6 +236,10 @@ async fn dispatch(msg: &Value, bctx: &BridgeContext) -> Value {
             let domain = msg.get("domain").and_then(|v| v.as_str()).unwrap_or("");
             handle_list_by_domain(domain, bctx).await
         }
+        "get_credential_list" => {
+            let domain_filter = msg.get("domain_filter").and_then(|v| v.as_str());
+            handle_get_credential_list(domain_filter, bctx).await
+        }
         "credential_create" => handle_credential_create(msg, bctx).await,
         "credential_update" => handle_credential_update(msg, bctx).await,
         _ => serde_json::json!({ "ok": false, "error": "unknown_type" }),
@@ -345,6 +349,98 @@ async fn handle_list_by_domain(domain: &str, bctx: &BridgeContext) -> Value {
             })
         }
     }
+}
+
+/// E-4: popup CredentialList 용 전체(또는 도메인 필터) credential 목록 반환.
+///
+/// 반환 필드: credential_id, issuer(name), domain(url 에서 추출), username.
+/// password ❌ — 카드 표시용 최소 정보만.
+async fn handle_get_credential_list(domain_filter: Option<&str>, bctx: &BridgeContext) -> Value {
+    use secretbank_core::CredentialFilter;
+    use secretbank_storage::sqlite::repositories::{
+        credential::CredentialRepo, issuer::IssuerRepo,
+    };
+
+    {
+        let vault = bctx.vault.read().await;
+        if !vault.is_unlocked().await {
+            return serde_json::json!({
+                "type": "get_credential_list_response",
+                "ok": false,
+                "error": "vault_locked"
+            });
+        }
+    }
+
+    let cred_repo = CredentialRepo::new(&bctx.pool);
+    let issuer_repo = IssuerRepo::new(&bctx.pool);
+
+    // Password kind 만 대상 — autofill 은 Password credential 에 적용.
+    let filter = CredentialFilter {
+        kind: Some(secretbank_core::CredentialKind::Password),
+        ..Default::default()
+    };
+
+    let creds = match cred_repo.list(&filter).await {
+        Ok(c) => c,
+        Err(e) => {
+            error!("nm-bridge: get_credential_list 오류: {e}");
+            return serde_json::json!({
+                "type": "get_credential_list_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+
+    // 도메인 추출 헬퍼 — url 필드에서 host 부분만.
+    fn extract_host(url: Option<&str>) -> String {
+        let Some(u) = url else { return String::new() };
+        let u = u
+            .trim_start_matches("https://")
+            .trim_start_matches("http://");
+        u.split('/').next().unwrap_or("").to_string()
+    }
+
+    // 도메인 필터 적용 + 아이템 변환.
+    let mut items: Vec<serde_json::Value> = Vec::with_capacity(creds.len());
+    for cred in &creds {
+        let domain = extract_host(cred.url.as_deref());
+
+        // domain_filter 가 있으면 domain 이 filter 를 포함(prefix)하는 경우만 포함.
+        if let Some(f) = domain_filter {
+            if !f.is_empty() && !domain.contains(f) && !f.contains(&domain) {
+                continue;
+            }
+        }
+
+        // issuer 이름 조회 (없으면 credential name 으로 대체).
+        let issuer_name = issuer_repo
+            .get_by_id(cred.issuer_id)
+            .await
+            .ok()
+            .flatten()
+            .map(|i| i.display_name)
+            .unwrap_or_else(|| cred.name.clone());
+
+        let mut item = serde_json::json!({
+            "credential_id": cred.id.to_string(),
+            "issuer": issuer_name,
+            "domain": domain,
+        });
+        if let Some(u) = &cred.username {
+            if !u.is_empty() {
+                item["username"] = serde_json::Value::String(u.clone());
+            }
+        }
+        items.push(item);
+    }
+
+    serde_json::json!({
+        "type": "get_credential_list_response",
+        "ok": true,
+        "items": items
+    })
 }
 
 async fn handle_credential_create(msg: &Value, bctx: &BridgeContext) -> Value {

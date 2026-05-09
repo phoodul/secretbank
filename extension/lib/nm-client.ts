@@ -34,6 +34,7 @@ import type {
   NMMessageCredentialSaveResponse,
   NMMessageGetRecipeForDomainResponse,
   NMMessageUpsertRecipeForDomainResponse,
+  NMMessageGetCredentialListResponse,
 } from "@secretbank/shared";
 import {
   NMDisconnected,
@@ -372,6 +373,31 @@ export class NMClient {
     return this._rpc<NMMessageUpsertRecipeForDomainResponse>(
       { type: "upsert_recipe_for_domain", domain, recipe, session_token: sessionToken },
       "upsert_recipe_for_domain_response",
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // T-24-E-E4: popup CredentialList 용 전체 목록 조회
+  // -------------------------------------------------------------------------
+
+  /**
+   * 전체(또는 도메인 필터) credential 목록을 반환한다.
+   *
+   * popup CredentialList 에서 호출 — 카드 표시용 최소 정보(issuer/domain/username).
+   * password 는 포함되지 않는다 (T-CRED-1).
+   * T-CRED-1: session_token 첨부 필수.
+   */
+  async credentialListVisible(
+    domainFilter: string | undefined,
+    sessionToken: string,
+  ): Promise<NMMessageGetCredentialListResponse> {
+    return this._rpc<NMMessageGetCredentialListResponse>(
+      {
+        type: "get_credential_list",
+        ...(domainFilter ? { domain_filter: domainFilter } : {}),
+        session_token: sessionToken,
+      },
+      "get_credential_list_response",
     );
   }
 

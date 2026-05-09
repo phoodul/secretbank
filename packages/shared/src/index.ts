@@ -26,6 +26,10 @@ export type {
   NMMessageGetRecipeForDomainResponse,
   NMMessageUpsertRecipeForDomain,
   NMMessageUpsertRecipeForDomainResponse,
+  // E-4: credential 전체 목록 조회
+  CredentialListItem,
+  NMMessageGetCredentialList,
+  NMMessageGetCredentialListResponse,
   // 하위 호환
   NMMessagePair,
 } from "./types/pairing.js";
