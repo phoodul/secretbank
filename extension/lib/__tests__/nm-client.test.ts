@@ -1,0 +1,413 @@
+/**
+ * @file nm-client.test.ts
+ * @license AGPL-3.0-or-later
+ *
+ * NMClient Vitest 테스트.
+ *
+ * chrome.runtime.connectNative / Port 를 stub 으로 대체하여
+ * 실제 네이티브 프로세스 없이 동작을 검증한다.
+ */
+
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { NMClient } from "../nm-client.js";
+import { NMNotInstalled, NMDisconnected } from "../nm-errors.js";
+
+// ---------------------------------------------------------------------------
+// Port stub 팩토리
+// ---------------------------------------------------------------------------
+
+/**
+ * chrome.runtime.Port 를 흉내내는 stub 을 생성한다.
+ *
+ * 반환된 객체를 통해 테스트에서 onMessage / onDisconnect 를 직접 발화할 수 있다.
+ */
+function createPortStub() {
+  const messageListeners: Array<(msg: unknown) => void> = [];
+  const disconnectListeners: Array<() => void> = [];
+
+  const port = {
+    name: "com.secretbank.nm_host",
+    postMessage: vi.fn(),
+    disconnect: vi.fn(),
+    onMessage: {
+      addListener: vi.fn((cb: (msg: unknown) => void) => {
+        messageListeners.push(cb);
+      }),
+      removeListener: vi.fn((cb: (msg: unknown) => void) => {
+        const idx = messageListeners.indexOf(cb);
+        if (idx !== -1) messageListeners.splice(idx, 1);
+      }),
+      hasListener: vi.fn((cb: (msg: unknown) => void) => messageListeners.includes(cb)),
+    },
+    onDisconnect: {
+      addListener: vi.fn((cb: () => void) => {
+        disconnectListeners.push(cb);
+      }),
+      removeListener: vi.fn((cb: () => void) => {
+        const idx = disconnectListeners.indexOf(cb);
+        if (idx !== -1) disconnectListeners.splice(idx, 1);
+      }),
+      hasListener: vi.fn((cb: () => void) => disconnectListeners.includes(cb)),
+    },
+  };
+
+  // 테스트에서 이벤트를 직접 발화하는 헬퍼
+  const dispatch = {
+    /** onMessage 핸들러를 모두 호출한다 */
+    message: (msg: unknown) => {
+      for (const cb of messageListeners) cb(msg);
+    },
+    /** onDisconnect 핸들러를 모두 호출한다 */
+    disconnect: () => {
+      for (const cb of disconnectListeners) cb();
+    },
+  };
+
+  return { port: port as unknown as chrome.runtime.Port, dispatch };
+}
+
+// ---------------------------------------------------------------------------
+// 전역 chrome mock 헬퍼
+// ---------------------------------------------------------------------------
+
+/** chrome.runtime.lastError 를 임시로 설정한다 */
+function setLastError(message: string | undefined) {
+  (globalThis.chrome.runtime as Record<string, unknown>).lastError =
+    message !== undefined ? { message } : undefined;
+}
+
+/** chrome.runtime.connectNative 를 stub port 로 대체한다 */
+function mockConnectNative(port: chrome.runtime.Port) {
+  (globalThis.chrome.runtime as Record<string, unknown>).connectNative = vi.fn(() => port);
+}
+
+// ---------------------------------------------------------------------------
+// 테스트
+// ---------------------------------------------------------------------------
+
+describe("NMClient", () => {
+  let client: NMClient;
+
+  beforeEach(() => {
+    // 각 테스트 전에 새 NMClient 인스턴스와 깨끗한 lastError 상태 준비
+    client = new NMClient();
+    setLastError(undefined);
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    // 타이머 복원 + 남은 reconnect 타이머 정리
+    client.disconnect();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  // ── 1. connect 성공 ───────────────────────────────────────────────────────
+
+  it("connect() 성공 시 isConnected() 가 true 를 반환한다", async () => {
+    const { port } = createPortStub();
+    mockConnectNative(port);
+
+    await client.connect();
+
+    expect(client.isConnected()).toBe(true);
+  });
+
+  it("connect() 는 chrome.runtime.connectNative 를 정확한 호스트 ID 로 호출한다", async () => {
+    const { port } = createPortStub();
+    const spy = vi.fn(() => port);
+    (globalThis.chrome.runtime as Record<string, unknown>).connectNative = spy;
+
+    await client.connect();
+
+    expect(spy).toHaveBeenCalledWith("com.secretbank.nm_host");
+  });
+
+  it("이미 연결된 상태에서 connect() 를 재호출해도 connectNative 가 한 번만 호출된다", async () => {
+    const { port } = createPortStub();
+    const spy = vi.fn(() => port);
+    (globalThis.chrome.runtime as Record<string, unknown>).connectNative = spy;
+
+    await client.connect();
+    await client.connect(); // 두 번째 호출
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  // ── 2. sendMessage ────────────────────────────────────────────────────────
+
+  it("sendMessage() 는 port.postMessage 를 호출한다", async () => {
+    const { port } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    const msg = { type: "init" as const, version: "1" };
+    await client.sendMessage(msg);
+
+    expect(
+      (port as unknown as { postMessage: ReturnType<typeof vi.fn> }).postMessage,
+    ).toHaveBeenCalledWith(msg);
+  });
+
+  it("미연결 상태에서 sendMessage() 는 NMDisconnected 를 throw 한다", async () => {
+    await expect(client.sendMessage({ type: "init", version: "1" })).rejects.toBeInstanceOf(
+      NMDisconnected,
+    );
+  });
+
+  // ── 3. onMessage 핸들러 ───────────────────────────────────────────────────
+
+  it("port.onMessage 발화 시 onMessage 핸들러가 호출된다", async () => {
+    const { port, dispatch } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    const handler = vi.fn();
+    client.onMessage(handler);
+
+    const msg = { type: "init" as const, version: "1" };
+    dispatch.message(msg);
+
+    expect(handler).toHaveBeenCalledWith(msg);
+  });
+
+  it("onMessage 가 반환한 unsubscribe 를 호출하면 핸들러가 더 이상 호출되지 않는다", async () => {
+    const { port, dispatch } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    const handler = vi.fn();
+    const unsub = client.onMessage(handler);
+
+    // 구독 해제
+    unsub();
+    dispatch.message({ type: "init", version: "1" });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  // ── 4. onDisconnect 핸들러 ────────────────────────────────────────────────
+
+  it("port.onDisconnect 발화 시 onDisconnect 핸들러가 호출된다", async () => {
+    const { port, dispatch } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    const handler = vi.fn();
+    client.onDisconnect(handler);
+
+    dispatch.disconnect();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("disconnect() 후 isConnected() 가 false 를 반환한다", async () => {
+    const { port } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    client.disconnect();
+
+    expect(client.isConnected()).toBe(false);
+  });
+
+  // ── 5. NMNotInstalled 검출 ────────────────────────────────────────────────
+
+  it(
+    "onDisconnect 에서 lastError 가 'Specified native messaging host not found.' 이면 " +
+      "onDisconnect 핸들러에 kind='not_installed' 가 전달된다",
+    async () => {
+      const { port, dispatch } = createPortStub();
+      mockConnectNative(port);
+      await client.connect();
+
+      const handler = vi.fn();
+      client.onDisconnect(handler);
+
+      // disconnect 직전 lastError 세팅 (Chrome 동작 시뮬레이션)
+      setLastError("Specified native messaging host not found.");
+      dispatch.disconnect();
+      setLastError(undefined);
+
+      expect(handler).toHaveBeenCalledWith(expect.objectContaining({ kind: "not_installed" }));
+      expect(handler.mock.calls[0][0].error).toBeInstanceOf(NMNotInstalled);
+    },
+  );
+
+  it(
+    "connectNative 직후 onDisconnect 가 즉시 발화 + lastError = NMNotInstalled 이면 " +
+      "connect() 가 NMNotInstalled 로 reject 된다",
+    async () => {
+      // connectNative 가 port 를 반환하지만 즉시 onDisconnect 발화
+      let capturedDisconnectCb: (() => void) | undefined;
+
+      const port = {
+        name: "com.secretbank.nm_host",
+        postMessage: vi.fn(),
+        disconnect: vi.fn(),
+        onMessage: {
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          hasListener: vi.fn(),
+        },
+        onDisconnect: {
+          addListener: vi.fn((cb: () => void) => {
+            capturedDisconnectCb = cb;
+          }),
+          removeListener: vi.fn(),
+          hasListener: vi.fn(),
+        },
+      } as unknown as chrome.runtime.Port;
+
+      (globalThis.chrome.runtime as Record<string, unknown>).connectNative = vi.fn(() => {
+        return port;
+      });
+
+      // connect() 를 호출하고, onDisconnect 리스너가 등록된 직후 발화 시뮬레이션
+      const connectPromise = client.connect();
+
+      // 리스너 등록 후 (다음 마이크로태스크 이전) 동기 발화
+      setLastError("Specified native messaging host not found.");
+      capturedDisconnectCb?.();
+      setLastError(undefined);
+
+      await expect(connectPromise).rejects.toBeInstanceOf(NMNotInstalled);
+    },
+  );
+
+  // ── 6. 지수 백오프 재연결 ────────────────────────────────────────────────
+
+  it("port 단절 시 1s 후 재연결을 시도한다 (첫 번째 backoff)", async () => {
+    const { port: port1, dispatch: dispatch1 } = createPortStub();
+    const { port: port2 } = createPortStub();
+
+    const connectNativeSpy = vi.fn().mockReturnValueOnce(port1).mockReturnValueOnce(port2);
+    (globalThis.chrome.runtime as Record<string, unknown>).connectNative = connectNativeSpy;
+
+    await client.connect();
+    expect(connectNativeSpy).toHaveBeenCalledTimes(1);
+
+    // 첫 번째 단절
+    dispatch1.disconnect();
+
+    // 아직 재연결 전
+    expect(connectNativeSpy).toHaveBeenCalledTimes(1);
+
+    // 1초 경과
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(connectNativeSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("backoff 지연이 1s → 2s → 4s → 8s → 16s 순서로 늘어난다", async () => {
+    // 각 재연결 시도에서 즉시 다시 disconnect 되도록 설정
+    const dispatches: Array<{ dispatch: ReturnType<typeof createPortStub>["dispatch"] }> = [];
+
+    const connectNativeSpy = vi.fn().mockImplementation(() => {
+      const { port, dispatch } = createPortStub();
+      dispatches.push({ dispatch });
+      return port;
+    });
+    (globalThis.chrome.runtime as Record<string, unknown>).connectNative = connectNativeSpy;
+
+    await client.connect();
+    expect(connectNativeSpy).toHaveBeenCalledTimes(1);
+
+    // 1차 단절
+    dispatches[0].dispatch.disconnect();
+
+    // 1s 후 2차 연결 → 즉시 단절
+    await vi.advanceTimersByTimeAsync(999);
+    expect(connectNativeSpy).toHaveBeenCalledTimes(1); // 아직 재연결 전
+
+    await vi.advanceTimersByTimeAsync(1); // 총 1000ms
+    expect(connectNativeSpy).toHaveBeenCalledTimes(2);
+
+    dispatches[1].dispatch.disconnect(); // 2차 단절
+
+    // 2s 후 3차 연결
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(connectNativeSpy).toHaveBeenCalledTimes(3);
+
+    dispatches[2].dispatch.disconnect(); // 3차 단절
+
+    // 4s 후 4차 연결
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(connectNativeSpy).toHaveBeenCalledTimes(4);
+
+    dispatches[3].dispatch.disconnect(); // 4차 단절
+
+    // 8s 후 5차 연결
+    await vi.advanceTimersByTimeAsync(8000);
+    expect(connectNativeSpy).toHaveBeenCalledTimes(5);
+
+    dispatches[4].dispatch.disconnect(); // 5차 단절
+
+    // 16s 후 6차(마지막) 연결
+    await vi.advanceTimersByTimeAsync(16000);
+    expect(connectNativeSpy).toHaveBeenCalledTimes(6);
+  });
+
+  // ── 7. 최대 5회 재연결 후 영구 실패 ─────────────────────────────────────
+
+  it("5회 재연결 실패 후 max_retries_exceeded 로 영구 실패한다", async () => {
+    const dispatches: Array<{ dispatch: ReturnType<typeof createPortStub>["dispatch"] }> = [];
+
+    const connectNativeSpy = vi.fn().mockImplementation(() => {
+      const { port, dispatch } = createPortStub();
+      dispatches.push({ dispatch });
+      return port;
+    });
+    (globalThis.chrome.runtime as Record<string, unknown>).connectNative = connectNativeSpy;
+
+    const disconnectHandler = vi.fn();
+    client.onDisconnect(disconnectHandler);
+
+    await client.connect(); // 1차 연결
+
+    // 6번 단절 (1차 연결 + 5회 재연결 = 총 6개 Port)
+    const delays = [1000, 2000, 4000, 8000, 16000];
+
+    // 1차 단절
+    dispatches[0].dispatch.disconnect();
+
+    for (let i = 0; i < 5; i++) {
+      await vi.advanceTimersByTimeAsync(delays[i]);
+      // i+1 번째 재연결 Port 가 생성됨
+      expect(connectNativeSpy).toHaveBeenCalledTimes(i + 2);
+      if (i < 4) {
+        // 5번째 재연결(i=4) 전까지 단절
+        dispatches[i + 1].dispatch.disconnect();
+      }
+    }
+
+    // 5번째 재연결 Port 단절 → 재시도 소진
+    dispatches[5].dispatch.disconnect();
+
+    // max_retries_exceeded 알림을 받았는지 확인
+    const maxRetriesCall = disconnectHandler.mock.calls.find(
+      (call) => call[0].kind === "max_retries_exceeded",
+    );
+    expect(maxRetriesCall).toBeDefined();
+
+    // 영구 실패 후 connect() 는 즉시 reject
+    await expect(client.connect()).rejects.toBeInstanceOf(NMDisconnected);
+  });
+
+  // ── 8. disconnect() 명시적 호출 후 reconnect 없음 ─────────────────────────
+
+  it("disconnect() 호출 후에는 자동 reconnect 가 발생하지 않는다", async () => {
+    const { port } = createPortStub();
+    const connectNativeSpy = vi.fn(() => port);
+    (globalThis.chrome.runtime as Record<string, unknown>).connectNative = connectNativeSpy;
+
+    await client.connect();
+    client.disconnect();
+
+    // 충분한 시간 경과
+    await vi.advanceTimersByTimeAsync(60000);
+
+    // 최초 1회만 호출
+    expect(connectNativeSpy).toHaveBeenCalledTimes(1);
+  });
+});

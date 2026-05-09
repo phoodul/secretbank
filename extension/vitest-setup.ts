@@ -29,6 +29,37 @@ globalThis.chrome = {
   },
   runtime: {
     id: undefined, // runtime.id 없음 → @wxt-dev/browser 가 chrome 을 선택하도록
+    // lastError 는 각 테스트에서 직접 세팅한다 (기본 null)
+    lastError: undefined as chrome.runtime.LastError | undefined,
+    // connectNative 기본 stub — 각 테스트에서 vi.spyOn / mockImplementation 으로 교체
+    connectNative: (_hostId: string): chrome.runtime.Port => {
+      // 기본 구현: 빈 Port stub 반환 (즉시 연결 성공 시뮬레이션)
+      const listeners = {
+        onMessage: [] as Array<(msg: unknown) => void>,
+        onDisconnect: [] as Array<() => void>,
+      };
+      return {
+        name: _hostId,
+        postMessage: () => {},
+        disconnect: () => {},
+        onMessage: {
+          addListener: (cb: (msg: unknown) => void) => listeners.onMessage.push(cb),
+          removeListener: (cb: (msg: unknown) => void) => {
+            const idx = listeners.onMessage.indexOf(cb);
+            if (idx !== -1) listeners.onMessage.splice(idx, 1);
+          },
+          hasListener: (cb: (msg: unknown) => void) => listeners.onMessage.includes(cb),
+        },
+        onDisconnect: {
+          addListener: (cb: () => void) => listeners.onDisconnect.push(cb),
+          removeListener: (cb: () => void) => {
+            const idx = listeners.onDisconnect.indexOf(cb);
+            if (idx !== -1) listeners.onDisconnect.splice(idx, 1);
+          },
+          hasListener: (cb: () => void) => listeners.onDisconnect.includes(cb),
+        },
+      } as unknown as chrome.runtime.Port;
+    },
   },
 };
 
