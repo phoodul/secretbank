@@ -754,7 +754,7 @@
 | T-24-E-A4   | shared validation                                | 2026-05-09 | `a983000` |
 | T-24-E-A5   | i18n (4 lang YAML + @wxt-dev/i18n + I18N_KEYS)  | 2026-05-09 | `d093ffe` |
 | T-24-E-A6   | popup 골격 (ThemeProvider + Tab 라우팅 + placeholder 4종) | 2026-05-09 | `edcc2e3` |
-| T-24-E-A7   | CI 빌드 매트릭스                                 | 2026-05-09 | TBD |
+| T-24-E-A7   | CI 빌드 매트릭스                                 | 2026-05-09 | `dcd686b` |
 | T-24-E-B1   | nm-host crate                                    | -      | -         |
 | T-24-E-B2   | NM installer (3 OS)                              | -      | -         |
 | T-24-E-B3   | nm-client.ts                                     | -      | -         |
