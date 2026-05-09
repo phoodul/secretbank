@@ -41,6 +41,7 @@ use commands::graph::{blast_radius_for_credential, graph_fetch, graph_for_creden
 use commands::import::{import_csv_commit, import_csv_prepare};
 use commands::incidents::{
     incident_dismiss, incident_feed_refresh, incident_list, incident_matches_for_credential,
+    incident_matches_for_host,
 };
 use commands::issuer::{issuer_get, issuer_list};
 use commands::issuer_recipe::{resolve_issuer_recipe, upsert_issuer_recipe};
@@ -222,6 +223,7 @@ pub fn run(context: tauri::Context) {
             incident_dismiss,
             incident_matches_for_credential,
             incident_feed_refresh,
+            incident_matches_for_host,
             railguard_preview,
             railguard_apply,
             audit_list,
@@ -329,6 +331,7 @@ pub fn run(context: tauri::Context) {
             incident_dismiss,
             incident_matches_for_credential,
             incident_feed_refresh,
+            incident_matches_for_host,
             railguard_preview,
             railguard_apply,
             audit_list,

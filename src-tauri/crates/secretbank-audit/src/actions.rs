@@ -83,6 +83,14 @@ pub const EXT_RECIPE_UPSERT: &str = "extension.recipe.upsert";
 pub const EXT_GRAPH_FETCH: &str = "extension.graph.fetch";
 
 // ---------------------------------------------------------------------------
+// extension.incident.*  (T-24-E-G2-1)
+// ---------------------------------------------------------------------------
+
+/// Extension content-script 가 현재 host 의 incident 조회를 요청한 이벤트.
+/// `incident_check_for_host` nm-host 메시지 / `incident_matches_for_host` Tauri command 처리 시 기록.
+pub const EXT_INCIDENT_LOOKUP: &str = "extension.incident.lookup";
+
+// ---------------------------------------------------------------------------
 // 모든 신규 action 상수 목록 (테스트 순회용)
 // ---------------------------------------------------------------------------
 
@@ -102,6 +110,7 @@ pub const ALL_EXT_ACTIONS: &[&str] = &[
     EXT_SAVE_UPDATE,
     EXT_RECIPE_UPSERT,
     EXT_GRAPH_FETCH,
+    EXT_INCIDENT_LOOKUP,
 ];
 
 // ---------------------------------------------------------------------------

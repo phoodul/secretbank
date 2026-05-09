@@ -231,13 +231,15 @@ async fn process_message(msg: serde_json::Value) -> serde_json::Value {
         // T-24-E-E2: recipe RPC 도 동일 bridge 경유 forward.
         // T-24-E-E4: get_credential_list (popup CredentialList) 도 bridge 경유 forward.
         // T-24-E-G1-1: graph_for_credential (mini-graph) 도 bridge 경유 forward.
+        // T-24-E-G2-1: incident_check_for_host (host incident lookup) 도 bridge 경유 forward.
         "credential_list_by_domain"
         | "credential_create"
         | "credential_update"
         | "get_recipe_for_domain"
         | "upsert_recipe_for_domain"
         | "get_credential_list"
-        | "graph_for_credential" => {
+        | "graph_for_credential"
+        | "incident_check_for_host" => {
             match bridge_client::send(&msg).await {
                 Ok(resp) => resp,
                 Err(bridge_client::BridgeError::PortNotSet) => {

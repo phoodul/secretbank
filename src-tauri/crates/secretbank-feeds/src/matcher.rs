@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use secretbank_core::id::{CredentialId, IncidentMatchId};
 use secretbank_core::models::credential::Credential;
-use secretbank_core::models::incident::{Incident, IncidentMatch, MatchReason};
+use secretbank_core::models::incident::{Incident, IncidentMatch, IncidentSeverity, MatchReason};
 use secretbank_core::models::issuer::Issuer;
 use time::OffsetDateTime;
 
@@ -44,6 +44,140 @@ pub fn match_incident(
     issuers: &[Issuer],
 ) -> Vec<IncidentMatch> {
     match_incident_at(incident, credentials, issuers, OffsetDateTime::now_utc())
+}
+
+// ---------------------------------------------------------------------------
+// Host-only matching (T-24-E-G2-1)
+// ---------------------------------------------------------------------------
+
+/// Matched incident for host-only lookup (no credential context).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HostIncidentMatch {
+    pub incident_id: secretbank_core::id::IncidentId,
+    pub severity: IncidentSeverity,
+    pub title: String,
+    /// Epoch milliseconds (from `detected_at`).
+    pub published_at: Option<i64>,
+    /// String representation of `IncidentSource`.
+    pub source: String,
+}
+
+/// Normalize a host for matching.
+///
+/// Steps: lowercase → trim whitespace → strip trailing dot → strip `www.` prefix.
+pub fn normalize_host(host: &str) -> String {
+    let h = host.to_lowercase();
+    let h = h.trim();
+    let h = h.strip_suffix('.').unwrap_or(h);
+    let h = h.strip_prefix("www.").unwrap_or(h);
+    h.to_string()
+}
+
+/// Match incidents against a bare host using `IssuerRepo.domains[]` (Rule 2 of
+/// `match_incident`).
+///
+/// Algorithm:
+/// 1. Normalise `host` (lowercase + strip `www.` + strip trailing dot).
+/// 2. For each issuer, check if any of its `domains[]` entries subdomain-match
+///    the normalised host (both directions: issuer domain ↔ request host).
+/// 3. For incidents that carry `incident.domain`, also apply the same check
+///    against the normalised host.
+/// 4. Only incidents with severity ≥ MEDIUM are returned (LOW/INFO noise filter).
+/// 5. Results are deduplicated by incident_id and ordered by detected_at DESC
+///    (most recent first).
+///
+/// This intentionally does *not* require credentials — it is used by the
+/// extension content-script banner which has no credential context.
+pub fn match_incidents_by_host(
+    host: &str,
+    incidents: &[Incident],
+    issuers: &[Issuer],
+) -> Vec<HostIncidentMatch> {
+    let norm_host = normalize_host(host);
+    if norm_host.is_empty() {
+        return Vec::new();
+    }
+
+    let mut seen: std::collections::HashSet<secretbank_core::id::IncidentId> =
+        std::collections::HashSet::new();
+    let mut results: Vec<(OffsetDateTime, HostIncidentMatch)> = Vec::new();
+
+    for incident in incidents {
+        // Severity ≥ MEDIUM filter (LOW / INFO skipped).
+        if !is_medium_or_above(incident.severity) {
+            continue;
+        }
+
+        if seen.contains(&incident.id) {
+            continue;
+        }
+
+        let matched = incident_matches_host(incident, &norm_host, issuers);
+
+        if matched {
+            seen.insert(incident.id);
+            let source_str = match incident.source {
+                secretbank_core::models::incident::IncidentSource::Nvd => "nvd",
+                secretbank_core::models::incident::IncidentSource::Ghsa => "ghsa",
+                secretbank_core::models::incident::IncidentSource::Rss => "rss",
+                secretbank_core::models::incident::IncidentSource::Hibp => "hibp",
+            };
+            let published_ms = incident.published_at.map(|dt| dt.unix_timestamp() * 1000);
+            results.push((
+                incident.detected_at,
+                HostIncidentMatch {
+                    incident_id: incident.id,
+                    severity: incident.severity,
+                    title: incident.title.clone(),
+                    published_at: published_ms,
+                    source: source_str.to_string(),
+                },
+            ));
+        }
+    }
+
+    // Most recent first.
+    results.sort_by(|(a_dt, _), (b_dt, _)| b_dt.cmp(a_dt));
+    results.into_iter().map(|(_, m)| m).collect()
+}
+
+/// Returns `true` when `incident.domain` or any issuer domain subdomain-matches `norm_host`.
+fn incident_matches_host(incident: &Incident, norm_host: &str, issuers: &[Issuer]) -> bool {
+    // Check incident.domain directly.
+    if let Some(inc_domain) = incident.domain.as_deref() {
+        let inc_norm = normalize_host(inc_domain);
+        if host_matches_domain(norm_host, &inc_norm) || host_matches_domain(&inc_norm, norm_host) {
+            return true;
+        }
+    }
+
+    // Check via issuer.domains[] — filter to issuers linked to this incident.
+    let relevant_issuers: Vec<&Issuer> = if let Some(iid) = incident.issuer_id {
+        issuers.iter().filter(|iss| iss.id == iid).collect()
+    } else {
+        issuers.iter().collect()
+    };
+
+    for issuer in relevant_issuers {
+        for domain in &issuer.domains {
+            let iss_norm = normalize_host(domain);
+            if host_matches_domain(norm_host, &iss_norm)
+                || host_matches_domain(&iss_norm, norm_host)
+            {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+/// Returns `true` when severity is MEDIUM, HIGH, or CRITICAL.
+fn is_medium_or_above(severity: IncidentSeverity) -> bool {
+    matches!(
+        severity,
+        IncidentSeverity::Medium | IncidentSeverity::High | IncidentSeverity::Critical
+    )
 }
 
 /// Same as `match_incident` but accepts an explicit `now` timestamp for
@@ -869,5 +1003,264 @@ mod tests {
         // IssuerMatch 가 먼저
         assert_eq!(matches[0].reason, MatchReason::IssuerMatch);
         assert_eq!(matches[1].reason, MatchReason::Keyword);
+    }
+
+    // =======================================================================
+    // Host-only matching tests (T-24-E-G2-1)
+    // =======================================================================
+
+    use super::{is_medium_or_above, match_incidents_by_host, normalize_host, HostIncidentMatch};
+
+    fn make_incident_host(
+        issuer_id: Option<IssuerId>,
+        title: &str,
+        domain: Option<&str>,
+        severity: IncidentSeverity,
+    ) -> Incident {
+        let now = fixed_now();
+        Incident {
+            id: IncidentId::new(),
+            source: IncidentSource::Nvd,
+            source_id: "TEST-HOST".to_string(),
+            issuer_id,
+            severity,
+            title: title.to_string(),
+            body: None,
+            url: None,
+            domain: domain.map(|s| s.to_string()),
+            detected_at: now,
+            published_at: None,
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // H-1: normalize_host 기본 케이스
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_normalize_host_lowercase_www_trailing_dot() {
+        assert_eq!(normalize_host("GitHub.Com"), "github.com");
+        assert_eq!(normalize_host("www.github.com"), "github.com");
+        assert_eq!(normalize_host("github.com."), "github.com");
+        assert_eq!(normalize_host("WWW.OPENAI.COM."), "openai.com");
+        assert_eq!(normalize_host("  lastpass.com  "), "lastpass.com");
+    }
+
+    // -----------------------------------------------------------------------
+    // H-2: severity ≥ MEDIUM 필터
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_is_medium_or_above() {
+        assert!(!is_medium_or_above(IncidentSeverity::Info));
+        assert!(!is_medium_or_above(IncidentSeverity::Low));
+        assert!(is_medium_or_above(IncidentSeverity::Medium));
+        assert!(is_medium_or_above(IncidentSeverity::High));
+        assert!(is_medium_or_above(IncidentSeverity::Critical));
+    }
+
+    // -----------------------------------------------------------------------
+    // H-3: github.com → GitHub issuer 도메인 매칭
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_github() {
+        let github = make_issuer_with_domains("github", "GitHub", vec!["github.com"]);
+        let inc = make_incident_host(
+            Some(github.id),
+            "GitHub credential breach",
+            None,
+            IncidentSeverity::High,
+        );
+
+        let matches = match_incidents_by_host("github.com", &[inc.clone()], &[github]);
+        assert_eq!(matches.len(), 1);
+        assert_eq!(matches[0].incident_id, inc.id);
+        assert_eq!(matches[0].title, "GitHub credential breach");
+    }
+
+    // -----------------------------------------------------------------------
+    // H-4: www.github.com + trailing dot 정규화
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_www_normalization() {
+        let github = make_issuer_with_domains("github", "GitHub", vec!["github.com"]);
+        let inc = make_incident_host(
+            None,
+            "GitHub breach",
+            Some("github.com"),
+            IncidentSeverity::High,
+        );
+
+        let matches = match_incidents_by_host("www.github.com.", &[inc.clone()], &[github]);
+        assert_eq!(matches.len(), 1);
+        assert_eq!(matches[0].incident_id, inc.id);
+    }
+
+    // -----------------------------------------------------------------------
+    // H-5: api.openai.com → openai.com 서브도메인 매칭
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_subdomain() {
+        let openai = make_issuer_with_domains("openai", "OpenAI", vec!["openai.com"]);
+        let inc = make_incident_host(
+            Some(openai.id),
+            "OpenAI data leak",
+            None,
+            IncidentSeverity::Critical,
+        );
+
+        let matches = match_incidents_by_host("api.openai.com", &[inc.clone()], &[openai]);
+        assert_eq!(matches.len(), 1);
+        assert_eq!(matches[0].incident_id, inc.id);
+    }
+
+    // -----------------------------------------------------------------------
+    // H-6: lastpass.com 매칭 — incident.domain 필드 경유
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_incident_domain_field() {
+        let inc = make_incident_host(
+            None,
+            "LastPass master password breach",
+            Some("lastpass.com"),
+            IncidentSeverity::Critical,
+        );
+
+        let matches = match_incidents_by_host("lastpass.com", &[inc.clone()], &[]);
+        assert_eq!(matches.len(), 1);
+        assert_eq!(matches[0].incident_id, inc.id);
+    }
+
+    // -----------------------------------------------------------------------
+    // H-7: 가짜 도메인 → 매칭 없음
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_fake_domain_no_match() {
+        let github = make_issuer_with_domains("github", "GitHub", vec!["github.com"]);
+        let inc = make_incident_host(
+            Some(github.id),
+            "GitHub breach",
+            Some("github.com"),
+            IncidentSeverity::High,
+        );
+
+        // 가짜 도메인: evil-github.com 또는 github.com.evil.io → 매칭 ❌
+        let matches1 =
+            match_incidents_by_host("evil-github.com", &[inc.clone()], &[github.clone()]);
+        assert!(
+            matches1.is_empty(),
+            "evil-github.com 은 매칭되지 않아야 한다"
+        );
+
+        let matches2 = match_incidents_by_host("github.com.evil.io", &[inc.clone()], &[github]);
+        assert!(matches2.is_empty(), "suffix attack 은 매칭되지 않아야 한다");
+    }
+
+    // -----------------------------------------------------------------------
+    // H-8: 부분 매칭 (githubexample.com → github.com ❌)
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_partial_match_blocked() {
+        let github = make_issuer_with_domains("github", "GitHub", vec!["github.com"]);
+        let inc = make_incident_host(
+            Some(github.id),
+            "GitHub breach",
+            Some("github.com"),
+            IncidentSeverity::High,
+        );
+
+        let matches = match_incidents_by_host("githubexample.com", &[inc], &[github]);
+        assert!(
+            matches.is_empty(),
+            "부분 문자열 일치는 매칭되지 않아야 한다"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // H-9: severity LOW → 응답에서 제외
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_low_severity_excluded() {
+        let github = make_issuer_with_domains("github", "GitHub", vec!["github.com"]);
+        let inc_low =
+            make_incident_host(Some(github.id), "Low severity", None, IncidentSeverity::Low);
+        let inc_info =
+            make_incident_host(Some(github.id), "Info only", None, IncidentSeverity::Info);
+        let inc_medium = make_incident_host(
+            Some(github.id),
+            "Medium severity",
+            None,
+            IncidentSeverity::Medium,
+        );
+
+        let matches = match_incidents_by_host(
+            "github.com",
+            &[inc_low, inc_info, inc_medium.clone()],
+            &[github],
+        );
+        assert_eq!(matches.len(), 1, "MEDIUM 이상만 반환해야 한다");
+        assert_eq!(matches[0].incident_id, inc_medium.id);
+    }
+
+    // -----------------------------------------------------------------------
+    // H-10: 빈 host → 빈 응답
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_empty_host() {
+        let github = make_issuer_with_domains("github", "GitHub", vec!["github.com"]);
+        let inc = make_incident_host(
+            Some(github.id),
+            "GitHub breach",
+            None,
+            IncidentSeverity::High,
+        );
+
+        let matches = match_incidents_by_host("", &[inc], &[github]);
+        assert!(matches.is_empty(), "빈 host 는 빈 응답이어야 한다");
+    }
+
+    // -----------------------------------------------------------------------
+    // H-11: 여러 incident 가운데 최신 순으로 정렬
+    // -----------------------------------------------------------------------
+    #[test]
+    fn test_match_incidents_by_host_sorted_most_recent_first() {
+        let openai = make_issuer_with_domains("openai", "OpenAI", vec!["openai.com"]);
+
+        let earlier = OffsetDateTime::from_unix_timestamp(1_700_000_000).unwrap();
+        let later = OffsetDateTime::from_unix_timestamp(1_735_000_001).unwrap();
+
+        let inc_old = Incident {
+            id: IncidentId::new(),
+            source: IncidentSource::Nvd,
+            source_id: "OLD".to_string(),
+            issuer_id: Some(openai.id),
+            severity: IncidentSeverity::High,
+            title: "Old incident".to_string(),
+            body: None,
+            url: None,
+            domain: None,
+            detected_at: earlier,
+            published_at: None,
+        };
+        let inc_new = Incident {
+            id: IncidentId::new(),
+            source: IncidentSource::Nvd,
+            source_id: "NEW".to_string(),
+            issuer_id: Some(openai.id),
+            severity: IncidentSeverity::Critical,
+            title: "New incident".to_string(),
+            body: None,
+            url: None,
+            domain: None,
+            detected_at: later,
+            published_at: None,
+        };
+
+        let matches =
+            match_incidents_by_host("openai.com", &[inc_old.clone(), inc_new.clone()], &[openai]);
+        assert_eq!(matches.len(), 2);
+        assert_eq!(
+            matches[0].incident_id, inc_new.id,
+            "최신 incident 가 먼저여야 한다"
+        );
+        assert_eq!(matches[1].incident_id, inc_old.id);
     }
 }

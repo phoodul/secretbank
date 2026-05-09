@@ -36,6 +36,7 @@ import type {
   NMMessageUpsertRecipeForDomainResponse,
   NMMessageGetCredentialListResponse,
   NMMessageGraphForCredentialResponse,
+  NMMessageIncidentCheckForHostResponse,
 } from "@secretbank/shared";
 import {
   NMDisconnected,
@@ -421,6 +422,30 @@ export class NMClient {
     return this._rpc<NMMessageGraphForCredentialResponse>(
       { type: "graph_for_credential", credential_id: credentialId, session_token: sessionToken },
       "graph_for_credential_response",
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // T-24-E-G2-1: host incident 조회 RPC
+  // -------------------------------------------------------------------------
+
+  /**
+   * 현재 방문 중인 host 의 severity ≥ MEDIUM incident 목록을 반환한다.
+   *
+   * extension content-script 가 페이지 host 를 전달하면,
+   * 백엔드가 issuer.domains[] / incident.domain 과 subdomain-safe 매칭 후
+   * severity LOW/INFO 를 제거하여 응답한다.
+   *
+   * credential 컨텍스트 없음 — 외부 사이트 방문 시 사용 가능.
+   * T-CRED-1: session_token 첨부 필수.
+   */
+  async incidentCheckForHost(
+    host: string,
+    sessionToken: string,
+  ): Promise<NMMessageIncidentCheckForHostResponse> {
+    return this._rpc<NMMessageIncidentCheckForHostResponse>(
+      { type: "incident_check_for_host", host, session_token: sessionToken },
+      "incident_check_for_host_response",
     );
   }
 

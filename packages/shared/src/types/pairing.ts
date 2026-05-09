@@ -217,6 +217,7 @@ export interface NMMessageGraphForCredentialResponse {
  * E-2: issuer recipe RPC 메시지 추가.
  * E-4: get_credential_list RPC 메시지 추가.
  * G1-1: graph_for_credential mini-graph RPC 메시지 추가.
+ * G2-1: incident_check_for_host host incident 조회 RPC 메시지 추가.
  */
 export type NMMessage =
   | NMMessageInit
@@ -237,7 +238,9 @@ export type NMMessage =
   | NMMessageGetCredentialList
   | NMMessageGetCredentialListResponse
   | NMMessageGraphForCredential
-  | NMMessageGraphForCredentialResponse;
+  | NMMessageGraphForCredentialResponse
+  | NMMessageIncidentCheckForHost
+  | NMMessageIncidentCheckForHostResponse;
 
 // ---------------------------------------------------------------------------
 // T-24-E-E4: credential 전체 목록 조회 (popup CredentialList 용)
@@ -265,6 +268,27 @@ export interface NMMessageGetCredentialListResponse {
   ok: boolean;
   /** vault locked / 오류 시 undefined. */
   items?: CredentialListItem[];
+  error?: string;
+}
+
+// ---------------------------------------------------------------------------
+// T-24-E-G2-1: host incident 조회 RPC 메시지
+// ---------------------------------------------------------------------------
+
+/** Extension → nm-host: 현재 방문 중인 host 의 incident 목록 조회 */
+export interface NMMessageIncidentCheckForHost {
+  type: "incident_check_for_host";
+  /** 정규화 전 host (예: "github.com", "www.stripe.com") */
+  host: string;
+  session_token: string;
+}
+
+/** nm-host → Extension: host incident 조회 응답 */
+export interface NMMessageIncidentCheckForHostResponse {
+  type: "incident_check_for_host_response";
+  ok: boolean;
+  /** severity ≥ MEDIUM 인 incident 요약 목록 (ok=true 시). 최신 순(detected_at DESC). */
+  matches?: import("./incident.js").IncidentMatchSummary[];
   error?: string;
 }
 

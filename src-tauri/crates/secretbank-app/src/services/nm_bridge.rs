@@ -244,6 +244,8 @@ async fn dispatch(msg: &Value, bctx: &BridgeContext) -> Value {
         "credential_update" => handle_credential_update(msg, bctx).await,
         // T-24-E-G1-1: credential 1-hop mini-graph 조회
         "graph_for_credential" => handle_graph_for_credential(msg, bctx).await,
+        // T-24-E-G2-1: host incident 조회 (severity ≥ MEDIUM)
+        "incident_check_for_host" => handle_incident_check_for_host(msg, bctx).await,
         _ => serde_json::json!({ "ok": false, "error": "unknown_type" }),
     }
 }
@@ -811,6 +813,131 @@ async fn handle_graph_for_credential(msg: &Value, bctx: &BridgeContext) -> Value
         "project_nodes": mini.project_nodes,
         "edges": mini.edges,
         "hidden_count": mini.hidden_count
+    })
+}
+
+// ---------------------------------------------------------------------------
+// T-24-E-G2-1: incident_check_for_host 핸들러
+// ---------------------------------------------------------------------------
+
+/// extension content-script 가 현재 방문 중인 host 의 incident 목록을 조회한다.
+///
+/// 요청 필드:
+///   - `host` (string): 정규화 전 host (예: "github.com", "www.stripe.com")
+///
+/// 응답:
+///   - `type`: "incident_check_for_host_response"
+///   - `ok`: true/false
+///   - `matches`: `[{ incident_id, severity, title, published_at, source }]` (ok=true 시)
+///   - `error`: 오류 코드 (ok=false 시)
+///
+/// severity ≥ MEDIUM 필터링은 `match_incidents_by_host` 내부에서 처리.
+/// audit log: EXT_INCIDENT_LOOKUP 1건 기록.
+async fn handle_incident_check_for_host(msg: &Value, bctx: &BridgeContext) -> Value {
+    use secretbank_audit::actions::EXT_INCIDENT_LOOKUP;
+    use secretbank_core::IncidentFilter;
+    use secretbank_feeds::match_incidents_by_host;
+    use secretbank_storage::sqlite::repositories::incident::IncidentRepo;
+    use secretbank_storage::sqlite::repositories::issuer::IssuerRepo;
+
+    let host = msg.get("host").and_then(|v| v.as_str()).unwrap_or("");
+
+    if host.trim().is_empty() {
+        return serde_json::json!({
+            "type": "incident_check_for_host_response",
+            "ok": true,
+            "matches": []
+        });
+    }
+
+    // vault 잠금 재확인 (defense-in-depth).
+    {
+        let vault = bctx.vault.read().await;
+        if !vault.is_unlocked().await {
+            return serde_json::json!({
+                "type": "incident_check_for_host_response",
+                "ok": false,
+                "error": "vault_locked"
+            });
+        }
+    }
+
+    let incident_repo = IncidentRepo::new(&bctx.pool);
+    let issuer_repo = IssuerRepo::new(&bctx.pool);
+
+    // 전체 active incident 로드 (include_dismissed=false → dismissed 제외).
+    let filter = IncidentFilter {
+        include_dismissed: false,
+        ..Default::default()
+    };
+    let incident_entries = match incident_repo.list_with_matches(&filter).await {
+        Ok(v) => v,
+        Err(e) => {
+            error!("nm-bridge: incident_check_for_host incidents 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "incident_check_for_host_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+    let incidents: Vec<_> = incident_entries
+        .into_iter()
+        .map(|entry| entry.incident)
+        .collect();
+
+    let issuers = match issuer_repo.list().await {
+        Ok(v) => v,
+        Err(e) => {
+            error!("nm-bridge: incident_check_for_host issuers 조회 오류: {e}");
+            return serde_json::json!({
+                "type": "incident_check_for_host_response",
+                "ok": false,
+                "error": "db_error"
+            });
+        }
+    };
+
+    // host-only 매칭 (severity ≥ MEDIUM 필터는 matcher 내부).
+    let matches = match_incidents_by_host(host, &incidents, &issuers);
+
+    // audit log (best-effort).
+    bctx.audit
+        .record(
+            AuditActor::LocalUser,
+            EXT_INCIDENT_LOOKUP,
+            "host",
+            host.to_string(),
+            None,
+        )
+        .await;
+
+    use secretbank_core::models::incident::IncidentSeverity;
+
+    let match_items: Vec<serde_json::Value> = matches
+        .into_iter()
+        .map(|m| {
+            let severity_str = match m.severity {
+                IncidentSeverity::Info => "info",
+                IncidentSeverity::Low => "low",
+                IncidentSeverity::Medium => "medium",
+                IncidentSeverity::High => "high",
+                IncidentSeverity::Critical => "critical",
+            };
+            serde_json::json!({
+                "incident_id": m.incident_id.to_string(),
+                "severity": severity_str,
+                "title": m.title,
+                "published_at": m.published_at,
+                "source": m.source,
+            })
+        })
+        .collect();
+
+    serde_json::json!({
+        "type": "incident_check_for_host_response",
+        "ok": true,
+        "matches": match_items
     })
 }
 

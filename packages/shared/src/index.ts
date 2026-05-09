@@ -33,9 +33,14 @@ export type {
   // G1-1: credential mini-graph RPC
   NMMessageGraphForCredential,
   NMMessageGraphForCredentialResponse,
+  // G2-1: host incident 조회 RPC
+  NMMessageIncidentCheckForHost,
+  NMMessageIncidentCheckForHostResponse,
   // 하위 호환
   NMMessagePair,
 } from "./types/pairing.js";
+// G2-1: incident 타입
+export type { IncidentMatchSummary } from "./types/incident.js";
 // G1-1: mini-graph 타입
 export type { CredentialMiniGraph, ProjectNode, MiniGraphEdge } from "./types/graph.js";
 

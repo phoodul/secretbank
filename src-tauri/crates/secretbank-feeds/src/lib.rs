@@ -10,7 +10,9 @@ pub mod twofa_directory;
 
 pub use ghsa::{GhsaAdvisory, GhsaClient, GhsaError};
 pub use hibp::{HibpBreach, HibpClient, HibpError};
-pub use matcher::{match_incident, match_incident_at};
+pub use matcher::{
+    match_incident, match_incident_at, match_incidents_by_host, normalize_host, HostIncidentMatch,
+};
 pub use nvd::{NvdClient, NvdCve, NvdError};
 pub use pwned_passwords::{PwnedError, PwnedPasswordsClient};
 pub use rss::{RssClient, RssEntry, RssError};

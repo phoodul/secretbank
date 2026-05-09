@@ -552,4 +552,100 @@ describe("NMClient", () => {
     expect(result.ok).toBe(false);
     expect(result.error).toBe("vault_locked");
   });
+
+  // ── 10. T-24-E-G2-1: incidentCheckForHost RPC ────────────────────────────
+
+  it("incidentCheckForHost() 은 올바른 타입으로 요청을 전송하고 matches 배열을 반환한다", async () => {
+    const { port, dispatch } = createPortStub();
+
+    const host = "github.com";
+    const sessionToken = "test-session-token";
+
+    const mockResponse = {
+      type: "incident_check_for_host_response" as const,
+      ok: true,
+      matches: [
+        {
+          incident_id: "01JXXXXXXXXXXXXXXXXXXXXXXX",
+          severity: "high" as const,
+          title: "GitHub credential breach",
+          published_at: 1_735_000_000_000,
+          source: "nvd" as const,
+        },
+        {
+          incident_id: "01JYYYYYYYYYYYYYYYYYYYYYYY",
+          severity: "critical" as const,
+          title: "GitHub supply chain attack",
+          published_at: null,
+          source: "ghsa" as const,
+        },
+      ],
+    };
+
+    mockConnectNative(port);
+    await client.connect();
+
+    const origOnMessage = client.onMessage.bind(client);
+    vi.spyOn(client, "onMessage").mockImplementationOnce((handler) => {
+      const unsub = origOnMessage(handler);
+      Promise.resolve().then(() => dispatch.message(mockResponse));
+      return unsub;
+    });
+
+    const result = await client.incidentCheckForHost(host, sessionToken);
+
+    // 요청 타입 검증
+    const postMessage = (port as unknown as { postMessage: ReturnType<typeof vi.fn> }).postMessage;
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "incident_check_for_host",
+        host,
+        session_token: sessionToken,
+      }),
+    );
+
+    // 응답 내용 검증
+    expect(result.ok).toBe(true);
+    expect(result.matches).toHaveLength(2);
+    expect(result.matches![0].severity).toBe("high");
+    expect(result.matches![1].severity).toBe("critical");
+  });
+
+  it("incidentCheckForHost() 은 5s timeout 후 NMDisconnected 를 throw 한다", async () => {
+    const { port } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    const rpcPromise = client.incidentCheckForHost("github.com", "tok");
+
+    // 5초 초과 — 응답 없음
+    await vi.advanceTimersByTimeAsync(5001);
+
+    await expect(rpcPromise).rejects.toBeInstanceOf(NMDisconnected);
+  });
+
+  it("incidentCheckForHost() 은 ok=false 응답 (vault_locked) 도 수신한다", async () => {
+    const { port, dispatch } = createPortStub();
+
+    const errorResponse = {
+      type: "incident_check_for_host_response" as const,
+      ok: false,
+      error: "vault_locked",
+    };
+
+    mockConnectNative(port);
+    await client.connect();
+
+    const origOnMessage = client.onMessage.bind(client);
+    vi.spyOn(client, "onMessage").mockImplementationOnce((handler) => {
+      const unsub = origOnMessage(handler);
+      Promise.resolve().then(() => dispatch.message(errorResponse));
+      return unsub;
+    });
+
+    const result = await client.incidentCheckForHost("github.com", "tok");
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("vault_locked");
+    expect(result.matches).toBeUndefined();
+  });
 });
