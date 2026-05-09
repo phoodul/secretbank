@@ -11,7 +11,7 @@ import {
   type FormSubmitContext,
   type HookEventContext,
 } from "../content";
-import type { MainToIsolatedMsg } from "../content-main";
+import type { WorldBridgePayload } from "../../lib/world-bridge";
 
 // ── form submit listener 테스트 ───────────────────────────────────────────────
 
@@ -141,29 +141,36 @@ describe("installMainWorldMessageListener — MAIN world postMessage 수신", ()
 
   function sendMainMsg(
     win: JSDOM["window"],
-    payload: Partial<MainToIsolatedMsg>,
+    payload: Partial<WorldBridgePayload> | Record<string, unknown>,
     origin = "https://example.com",
+    source?: EventTarget | null,
   ): void {
     const event = new win.MessageEvent("message", {
       data: payload,
       origin,
+      source: source as MessageEventSource | null | undefined,
     });
     win.dispatchEvent(event);
   }
 
-  it("유효한 secretbank-main-hook 메시지 → onCapture 호출", () => {
+  it("유효한 fetch-post WorldBridgePayload → onCapture 호출", () => {
     const captured: HookEventContext[] = [];
     const stop = installMainWorldMessageListener(win as unknown as Window, (ctx) =>
       captured.push(ctx),
     );
 
-    sendMainMsg(win, {
-      type: "secretbank-main-hook",
-      eventType: "fetch-post",
-      domain: "example.com",
-      actionUrl: "https://example.com/login",
-      timestamp: Date.now(),
-    });
+    // source: win — 브라우저에서 window.postMessage() 호출 시 자동 세팅되는 값을 테스트에서 명시.
+    sendMainMsg(
+      win,
+      {
+        kind: "fetch-post",
+        domain: "example.com",
+        actionUrl: "https://example.com/login",
+        timestamp: Date.now(),
+      },
+      "https://example.com",
+      win,
+    );
 
     expect(captured).toHaveLength(1);
     expect(captured[0]!.eventType).toBe("fetch-post");
@@ -181,8 +188,7 @@ describe("installMainWorldMessageListener — MAIN world postMessage 수신", ()
     sendMainMsg(
       win,
       {
-        type: "secretbank-main-hook",
-        eventType: "fetch-post",
+        kind: "fetch-post",
         domain: "evil.com",
         actionUrl: "https://evil.com/steal",
         timestamp: Date.now(),
@@ -194,13 +200,13 @@ describe("installMainWorldMessageListener — MAIN world postMessage 수신", ()
     stop();
   });
 
-  it("type 이 다른 메시지 → 무시", () => {
+  it("알 수 없는 kind → 무시 (payload 검증 실패)", () => {
     const captured: HookEventContext[] = [];
     const stop = installMainWorldMessageListener(win as unknown as Window, (ctx) =>
       captured.push(ctx),
     );
 
-    sendMainMsg(win, { type: "other-extension-msg" } as unknown as Partial<MainToIsolatedMsg>);
+    sendMainMsg(win, { kind: "unknown-msg", domain: "example.com" });
 
     expect(captured).toHaveLength(0);
     stop();
@@ -212,13 +218,17 @@ describe("installMainWorldMessageListener — MAIN world postMessage 수신", ()
       captured.push(ctx),
     );
 
-    sendMainMsg(win, {
-      type: "secretbank-main-hook",
-      eventType: "xhr-post",
-      domain: "example.com",
-      actionUrl: "https://example.com/login",
-      timestamp: Date.now(),
-    });
+    sendMainMsg(
+      win,
+      {
+        kind: "xhr-post",
+        domain: "example.com",
+        actionUrl: "https://example.com/login",
+        timestamp: Date.now(),
+      },
+      "https://example.com",
+      win,
+    );
 
     expect(captured[0]!.hasPassword).toBe(true);
     stop();
@@ -231,13 +241,17 @@ describe("installMainWorldMessageListener — MAIN world postMessage 수신", ()
     );
     stop();
 
-    sendMainMsg(win, {
-      type: "secretbank-main-hook",
-      eventType: "fetch-post",
-      domain: "example.com",
-      actionUrl: "https://example.com/login",
-      timestamp: Date.now(),
-    });
+    sendMainMsg(
+      win,
+      {
+        kind: "fetch-post",
+        domain: "example.com",
+        actionUrl: "https://example.com/login",
+        timestamp: Date.now(),
+      },
+      "https://example.com",
+      win,
+    );
 
     expect(captured).toHaveLength(0);
   });
@@ -248,38 +262,41 @@ describe("installMainWorldMessageListener — MAIN world postMessage 수신", ()
       captured.push(ctx),
     );
 
-    sendMainMsg(win, {
-      type: "secretbank-main-hook",
-      eventType: "xhr-post",
-      domain: "example.com",
-      actionUrl: "https://example.com/signin",
-      timestamp: Date.now(),
-    });
+    sendMainMsg(
+      win,
+      {
+        kind: "xhr-post",
+        domain: "example.com",
+        actionUrl: "https://example.com/signin",
+        timestamp: Date.now(),
+      },
+      "https://example.com",
+      win,
+    );
 
     expect(captured[0]!.eventType).toBe("xhr-post");
     stop();
   });
 
-  it("payload 에 plaintext credential 없음 — domain/actionUrl/timestamp 만 있음", () => {
-    // T2 방어 검증: payload 에 username/password 필드가 없음을 타입으로 보장.
+  it("payload 에 plaintext credential 없음 — kind/domain/actionUrl/timestamp 만 있음", () => {
+    // T2 방어 검증: WorldBridgePayload 에 username/password 필드가 없음을 타입으로 보장.
     const captured: HookEventContext[] = [];
     const stop = installMainWorldMessageListener(win as unknown as Window, (ctx) =>
       captured.push(ctx),
     );
 
-    const msg: MainToIsolatedMsg = {
-      type: "secretbank-main-hook",
-      eventType: "fetch-post",
+    const msg: WorldBridgePayload = {
+      kind: "fetch-post",
       domain: "example.com",
       actionUrl: "https://example.com/login",
       timestamp: Date.now(),
     };
 
-    // MainToIsolatedMsg 에 username/password 필드가 없음을 타입 검사로 확인.
+    // WorldBridgePayload 에 username/password 필드가 없음을 타입 검사로 확인.
     // @ts-expect-error — 의도적 타입 오류: plaintext 는 인터페이스에 없어야 함.
     const _check: { username: string } = msg;
 
-    sendMainMsg(win, msg);
+    sendMainMsg(win, msg, "https://example.com", win);
     expect(captured[0]!.hasPassword).toBe(true); // DOM 직접 읽음 — payload 에서 온 게 아님.
     stop();
   });

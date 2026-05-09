@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { JSDOM } from "jsdom";
 
 import { isAuthPath } from "../content-main";
-import type { MainToIsolatedMsg } from "../content-main";
+import type { WorldBridgePayload } from "../../lib/world-bridge";
 
 // ── isAuthPath 단위 테스트 ────────────────────────────────────────────────────
 
@@ -94,8 +94,8 @@ describe("XHR/fetch hook — 핵심 로직 단위 검증", () => {
     return false;
   }
 
-  // postToIsolated 로직 — T2: '*' 대신 origin 고정.
-  function postToIsolated(payload: MainToIsolatedMsg, targetOrigin: string): void {
+  // postToIsolated 로직 — T2: '*' 대신 origin 고정 (WorldBridgePayload 기반).
+  function postToIsolated(payload: WorldBridgePayload, targetOrigin: string): void {
     win.postMessage(payload, targetOrigin);
   }
 
@@ -105,9 +105,8 @@ describe("XHR/fetch hook — 핵심 로직 단위 검증", () => {
     const body = new URLSearchParams("username=u&password=p");
 
     if (method === "POST" && isAuthPath(url) && hasFormBody(body)) {
-      const msg: MainToIsolatedMsg = {
-        type: "secretbank-main-hook",
-        eventType: "fetch-post",
+      const msg: WorldBridgePayload = {
+        kind: "fetch-post",
         domain: win.location.hostname,
         actionUrl: url,
         timestamp: Date.now(),
@@ -117,7 +116,7 @@ describe("XHR/fetch hook — 핵심 로직 단위 검증", () => {
 
     expect(postMessageSpy).toHaveBeenCalledTimes(1);
     expect(postMessageSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "secretbank-main-hook", eventType: "fetch-post" }),
+      expect.objectContaining({ kind: "fetch-post" }),
       "https://example.com", // T2: '*' ❌, origin 고정
     );
   });
@@ -129,8 +128,7 @@ describe("XHR/fetch hook — 핵심 로직 단위 검증", () => {
     if (method === "POST" && isAuthPath(url)) {
       postToIsolated(
         {
-          type: "secretbank-main-hook",
-          eventType: "fetch-post",
+          kind: "fetch-post",
           domain: "example.com",
           actionUrl: url,
           timestamp: 0,
@@ -150,8 +148,7 @@ describe("XHR/fetch hook — 핵심 로직 단위 검증", () => {
     if (method === "POST" && isAuthPath(url) && hasFormBody(body)) {
       postToIsolated(
         {
-          type: "secretbank-main-hook",
-          eventType: "fetch-post",
+          kind: "fetch-post",
           domain: "example.com",
           actionUrl: url,
           timestamp: 0,
@@ -187,10 +184,9 @@ describe("XHR/fetch hook — 핵심 로직 단위 검증", () => {
   });
 
   it("payload 에 username/password plaintext 없음 — metadata only (T2 방어)", () => {
-    // MainToIsolatedMsg 인터페이스에 credential 필드가 없음을 타입으로 보장.
-    const msg: MainToIsolatedMsg = {
-      type: "secretbank-main-hook",
-      eventType: "fetch-post",
+    // WorldBridgePayload 에 credential 필드가 없음을 타입으로 보장.
+    const msg: WorldBridgePayload = {
+      kind: "fetch-post",
       domain: "example.com",
       actionUrl: "https://example.com/login",
       timestamp: Date.now(),

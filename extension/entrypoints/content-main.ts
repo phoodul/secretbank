@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/entrypoints/content-main.ts — M24-E Phase D-1 (MAIN world)
+// extension/entrypoints/content-main.ts — M24-E Phase D-1 (MAIN world) / D-2 리팩터
 //
 // MAIN world content script: XMLHttpRequest.prototype.send + window.fetch hook.
 // 수상한 auth endpoint POST 감지 → ISOLATED world 에 metadata only 전달.
@@ -8,7 +8,10 @@
 // 보안 (T2 — postMessage 도청 방어):
 //   plaintext credential 을 postMessage 로 전달 ❌ — metadata(도메인·이벤트타입·URL) only.
 //   실제 input value 는 ISOLATED 측에서 DOM 직접 읽는다.
-//   수신 origin 은 window.location.origin 으로 고정, '*' ❌.
+//   postToWorld() 가 target origin 을 window.location.origin 으로 강제, '*' ❌.
+
+import { postToWorld } from "../lib/world-bridge";
+import type { WorldBridgePayload } from "../lib/world-bridge";
 
 export default defineUnlistedScript(() => {
   installXhrHook();
@@ -28,18 +31,13 @@ export function isAuthPath(urlString: string): boolean {
 const AUTH_PATH_RE = /login|signin|sign-in|signup|sign-up|auth|register/i;
 
 // MAIN → ISOLATED postMessage payload (metadata only — T2 방어).
-export interface MainToIsolatedMsg {
-  type: "secretbank-main-hook";
-  eventType: "xhr-post" | "fetch-post";
-  domain: string; // window.location.hostname
-  actionUrl: string; // 실제 요청 URL (pathname + origin)
-  timestamp: number;
-}
+// D-2: WorldBridgePayload 의 xhr-post | fetch-post variant 를 재export.
+export type MainToIsolatedMsg = Extract<WorldBridgePayload, { kind: "xhr-post" | "fetch-post" }>;
 
-// D-2 에서 world-bridge.ts 로 분리 예정 — D-1 에서는 inline origin 검증 stub.
+// D-2: world-bridge.ts 의 postToWorld 로 위임 — target origin 강제 보장.
 function postToIsolated(payload: MainToIsolatedMsg): void {
-  // origin 을 window.location.origin 으로 고정 — '*' ❌ (T2 방어 stub, D-2 에서 강제).
-  window.postMessage(payload, window.location.origin);
+  // T2: postMessage 도청 방어 — postToWorld 가 origin 을 window.location.origin 으로 강제.
+  postToWorld(payload);
 }
 
 function installXhrHook(): void {
@@ -50,8 +48,7 @@ function installXhrHook(): void {
     const url: string = (this as XHRWithMeta)._sbUrl ?? "";
     if (method.toUpperCase() === "POST" && isAuthPath(url) && hasFormBody(body)) {
       postToIsolated({
-        type: "secretbank-main-hook",
-        eventType: "xhr-post",
+        kind: "xhr-post",
         domain: window.location.hostname,
         actionUrl: toAbsoluteUrl(url),
         timestamp: Date.now(),
@@ -82,8 +79,7 @@ function installFetchHook(): void {
     const url = input instanceof Request ? input.url : String(input);
     if (method === "POST" && isAuthPath(url) && hasFormBody(init?.body)) {
       postToIsolated({
-        type: "secretbank-main-hook",
-        eventType: "fetch-post",
+        kind: "fetch-post",
         domain: window.location.hostname,
         actionUrl: toAbsoluteUrl(url),
         timestamp: Date.now(),
