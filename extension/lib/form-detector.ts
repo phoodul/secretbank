@@ -165,6 +165,7 @@ function collectInputsRecursive(
 ): HTMLInputElement[] {
   const result: HTMLInputElement[] = [];
   const visited = new WeakSet<ShadowRoot>();
+  const visitedDocs = new WeakSet<Document>();
 
   function walk(node: ParentNode): void {
     // 현재 node 의 모든 input.
@@ -172,7 +173,7 @@ function collectInputsRecursive(
     for (const inp of Array.from(inputs)) {
       result.push(inp as HTMLInputElement);
     }
-    // 모든 element 를 traverse 하면서 open shadowRoot 발견 시 재귀.
+    // 모든 element 를 traverse 하면서 open shadowRoot + same-origin iframe 재귀.
     const all = node.querySelectorAll("*");
     for (const el of Array.from(all)) {
       const sr = (el as Element).shadowRoot;
@@ -180,11 +181,32 @@ function collectInputsRecursive(
         visited.add(sr);
         walk(sr);
       }
+      // C-7: same-origin iframe 재귀. cross-origin 은 contentDocument 접근 시
+      // SecurityError 발생하므로 try/catch 로 skip.
+      if (el.tagName === "IFRAME") {
+        const iframeDoc = safeGetIframeDoc(el as HTMLIFrameElement);
+        if (iframeDoc && !visitedDocs.has(iframeDoc)) {
+          visitedDocs.add(iframeDoc);
+          walk(iframeDoc);
+        }
+      }
     }
   }
 
   walk(root);
   return result;
+}
+
+/**
+ * C-7: same-origin iframe 의 contentDocument 를 안전하게 반환.
+ * cross-origin 은 SecurityError 발생 → null.
+ */
+function safeGetIframeDoc(iframe: HTMLIFrameElement): Document | null {
+  try {
+    return iframe.contentDocument ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
