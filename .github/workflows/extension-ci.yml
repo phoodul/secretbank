@@ -1,0 +1,135 @@
+name: Extension CI
+
+# 브라우저 확장 전용 CI — Chrome MV3 + Firefox MV2 빌드 매트릭스 검증
+# 기존 ci.yml (Rust / frontend vitest / e2e / ee-relay) 과 병렬 실행
+# Phase A-7: M24-E 마지막 sub-task
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "extension/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/extension-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "extension/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/extension-ci.yml"
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1: shared + extension 단위 테스트
+  # ──────────────────────────────────────────────
+  extension-test:
+    name: 테스트 (shared + extension)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: pnpm 설치
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Node.js 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: shared 단위 테스트
+        run: pnpm --filter @secretbank/shared test
+
+      - name: extension 단위 테스트
+        run: pnpm --filter @secretbank/extension test
+
+  # ──────────────────────────────────────────────
+  # Job 2: typecheck + lint (extension 전용)
+  # ──────────────────────────────────────────────
+  lint-typecheck:
+    name: Typecheck + Lint (extension)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: pnpm 설치
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Node.js 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: shared typecheck
+        run: pnpm --filter @secretbank/shared typecheck
+
+      - name: extension typecheck
+        run: pnpm --filter @secretbank/extension typecheck
+
+  # ──────────────────────────────────────────────
+  # Job 3: 빌드 매트릭스 (Chrome MV3 + Firefox MV2)
+  # Safari / Edge 는 Phase F 에서 추가
+  # ──────────────────────────────────────────────
+  extension-build:
+    name: 빌드 (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    needs: [extension-test, lint-typecheck]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chrome
+            script: build:chromium
+            artifact_path: extension/dist/chrome-mv3
+            artifact_name: extension-chrome-mv3
+          - browser: firefox
+            script: build:firefox
+            artifact_path: extension/dist/firefox-mv2
+            artifact_name: extension-firefox-mv2
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: pnpm 설치
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Node.js 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: 확장 빌드 (${{ matrix.browser }})
+        run: pnpm --filter @secretbank/extension ${{ matrix.script }}
+
+      - name: 빌드 산출물 업로드 (${{ matrix.browser }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          retention-days: 7
+          if-no-files-found: error

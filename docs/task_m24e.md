@@ -754,7 +754,7 @@
 | T-24-E-A4   | shared validation                                | 2026-05-09 | `a983000` |
 | T-24-E-A5   | i18n (4 lang YAML + @wxt-dev/i18n + I18N_KEYS)  | 2026-05-09 | `d093ffe` |
 | T-24-E-A6   | popup 골격 (ThemeProvider + Tab 라우팅 + placeholder 4종) | 2026-05-09 | `edcc2e3` |
-| T-24-E-A7   | CI 빌드 매트릭스                                 | -      | -         |
+| T-24-E-A7   | CI 빌드 매트릭스                                 | 2026-05-09 | TBD |
 | T-24-E-B1   | nm-host crate                                    | -      | -         |
 | T-24-E-B2   | NM installer (3 OS)                              | -      | -         |
 | T-24-E-B3   | nm-client.ts                                     | -      | -         |
@@ -793,7 +793,7 @@
 | T-24-E-F7   | Edge Add-ons                                     | -      | -         |
 | T-24-E-F8   | 외부 audit 결과 반영                             | -      | -         |
 
-**총 sub-task: 43** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 — F 의 sub-task 8 중 일부는 외부 작업 의존이라 commit 단위 카운팅에 따라 가변. 마일스톤 표 표기는 `🔄 6/43 완료`).
+**총 sub-task: 43** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 — F 의 sub-task 8 중 일부는 외부 작업 의존이라 commit 단위 카운팅에 따라 가변. 마일스톤 표 표기는 `🔄 7/43 완료`).
 
 > 정정: 위 표는 43 sub-task. project-decisions [2026-05-09] 에 표기된 "약 50 sub-task" 추정 대비 7 차이. 이는 Phase F 의 외부 audit / 스토어 제출이 단일 sub-task 단위로 합쳐졌기 때문 (commit 단위로는 audit 발견 사항 별로 추가 sub-task 가 생성될 수 있음 — F8 의 가변성).
 
