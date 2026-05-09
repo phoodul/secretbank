@@ -3,9 +3,14 @@
 // Phase A1: 빈 셸 동작 확인용 최소 UI
 
 import React from "react";
+import type { CredentialKind } from "@secretbank/shared";
 import { Button } from "../../components/ui/button";
 
 export default function App() {
+  // @secretbank/shared 타입 사용 검증 (A2 DoD — 런타임 동작 확인)
+  const _kind: CredentialKind = "password";
+  void _kind;
+
   return (
     // F.2 Spec: 배경/전경색은 CSS 변수 토큰 사용
     <div
