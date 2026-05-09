@@ -144,6 +144,30 @@ export const I18N_KEYS = {
   SAVE_DIALOG_NOTES: "save_dialog_notes",
   /** SaveDialog: 저장 중 버튼 텍스트 */
   SAVE_DIALOG_SAVING: "save_dialog_saving",
+
+  // ── E-1: GeneratorPanel ──
+  /** Generator panel 제목 */
+  GENERATOR_TITLE: "generator_title",
+  /** Generator 모드: Diceware */
+  GENERATOR_MODE_DICEWARE: "generator_mode_diceware",
+  /** Generator 모드: Random */
+  GENERATOR_MODE_RANDOM: "generator_mode_random",
+  /** Generator Diceware 단어 수 */
+  GENERATOR_WORDS_COUNT: "generator_words_count",
+  /** Generator Random 길이 */
+  GENERATOR_LENGTH: "generator_length",
+  /** Generator 결과 사용 버튼 */
+  GENERATOR_USE_THIS: "generator_use_this",
+  /** Generator 재생성 버튼 */
+  GENERATOR_REGENERATE: "generator_regenerate",
+  /** Generator 강도: 매우 취약 */
+  GENERATOR_STRENGTH_WEAK: "generator_strength_weak",
+  /** Generator 강도: 취약 */
+  GENERATOR_STRENGTH_FAIR: "generator_strength_fair",
+  /** Generator 강도: 보통 */
+  GENERATOR_STRENGTH_GOOD: "generator_strength_good",
+  /** Generator 강도: 강함 */
+  GENERATOR_STRENGTH_STRONG: "generator_strength_strong",
 } as const;
 
 /**

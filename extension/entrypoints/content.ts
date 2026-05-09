@@ -16,9 +16,14 @@ import type { WorldBridgePayload } from "../lib/world-bridge";
 import { handleFormSubmit } from "../lib/save-handler";
 import type { AutocompleteHint } from "../lib/save-handler";
 import { NMClient } from "../lib/nm-client";
+import { mountGeneratorIcon } from "../components/GeneratorIcon";
+import type { IconMount } from "../components/GeneratorIcon";
 
 // D-4: NMClient 싱글턴 — content script 생애 동안 유지 (reconnect 내장).
 const _nmClient = new NMClient();
+
+// E-1: new-password input → GeneratorIcon 마운트 맵 (input → IconMount).
+const _iconMounts = new Map<HTMLInputElement, IconMount>();
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -26,8 +31,54 @@ export default defineContentScript({
   main() {
     installFormSubmitListener(document);
     installMainWorldMessageListener(window);
+    installGeneratorIcons(document);
   },
 });
+
+/**
+ * new-password autocomplete input 을 감지하여 GeneratorIcon 을 마운트한다.
+ * C2 SPA watcher 와 호환 — DOM 변경 시 재scan 후 추가/제거.
+ */
+export function installGeneratorIcons(doc: Document): () => void {
+  function syncIcons() {
+    const forms = detectForms(doc);
+    const activeInputs = new Set<HTMLInputElement>();
+
+    for (const form of forms) {
+      // E-1: priority "new-password" 인 password input 만 대상.
+      if (form.passwordPriority !== "new-password") continue;
+      const input = form.passwordInput;
+      activeInputs.add(input);
+
+      if (!_iconMounts.has(input)) {
+        const mount = mountGeneratorIcon(input, doc);
+        _iconMounts.set(input, mount);
+      }
+    }
+
+    // 사라진 input 의 icon 제거.
+    for (const [input, mount] of _iconMounts) {
+      if (!activeInputs.has(input)) {
+        mount.remove();
+        _iconMounts.delete(input);
+      }
+    }
+  }
+
+  syncIcons();
+
+  // MutationObserver — SPA DOM 변경 감지.
+  const observer = new MutationObserver(() => syncIcons());
+  observer.observe(doc.body ?? doc.documentElement, { childList: true, subtree: true });
+
+  return () => {
+    observer.disconnect();
+    for (const mount of _iconMounts.values()) {
+      mount.remove();
+    }
+    _iconMounts.clear();
+  };
+}
 
 // form submit 이벤트가 담는 캡처 컨텍스트.
 export interface FormSubmitContext {

@@ -222,3 +222,48 @@ save_dialog_notes:
 save_dialog_saving:
   message: "保存中…"
   description: "SaveDialog 保存按钮保存中文本"
+
+# ── E-1: GeneratorPanel ──
+generator_title:
+  message: "密码生成器"
+  description: "GeneratorPanel 标题"
+
+generator_mode_diceware:
+  message: "骰子词"
+  description: "生成器模式：密码短语"
+
+generator_mode_random:
+  message: "随机"
+  description: "生成器模式：随机字符"
+
+generator_words_count:
+  message: "单词数"
+  description: "骰子词单词数标签"
+
+generator_length:
+  message: "长度"
+  description: "随机密码长度标签"
+
+generator_use_this:
+  message: "使用此密码"
+  description: "用生成的密码填入输入框的按钮"
+
+generator_regenerate:
+  message: "重新生成"
+  description: "生成新密码的按钮"
+
+generator_strength_weak:
+  message: "非常弱"
+  description: "密码强度：0分"
+
+generator_strength_fair:
+  message: "弱"
+  description: "密码强度：1分"
+
+generator_strength_good:
+  message: "一般"
+  description: "密码强度：2–3分"
+
+generator_strength_strong:
+  message: "强"
+  description: "密码强度：4分"

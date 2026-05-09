@@ -222,3 +222,48 @@ save_dialog_notes:
 save_dialog_saving:
   message: "Saving…"
   description: "SaveDialog save button text while saving"
+
+# ── E-1: GeneratorPanel ──
+generator_title:
+  message: "Password Generator"
+  description: "GeneratorPanel title"
+
+generator_mode_diceware:
+  message: "Diceware"
+  description: "Generator mode radio: passphrase"
+
+generator_mode_random:
+  message: "Random"
+  description: "Generator mode radio: random chars"
+
+generator_words_count:
+  message: "Word count"
+  description: "Diceware word count label"
+
+generator_length:
+  message: "Length"
+  description: "Random password length label"
+
+generator_use_this:
+  message: "Use this password"
+  description: "Button to fill the target input with the generated password"
+
+generator_regenerate:
+  message: "Regenerate"
+  description: "Button to generate a new password"
+
+generator_strength_weak:
+  message: "Very weak"
+  description: "Password strength label: score 0"
+
+generator_strength_fair:
+  message: "Weak"
+  description: "Password strength label: score 1"
+
+generator_strength_good:
+  message: "Good"
+  description: "Password strength label: score 2–3"
+
+generator_strength_strong:
+  message: "Strong"
+  description: "Password strength label: score 4"

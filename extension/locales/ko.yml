@@ -222,3 +222,48 @@ save_dialog_notes:
 save_dialog_saving:
   message: "저장 중…"
   description: "SaveDialog 저장 버튼 저장 중 텍스트"
+
+# ── E-1: GeneratorPanel ──
+generator_title:
+  message: "비밀번호 생성기"
+  description: "GeneratorPanel 제목"
+
+generator_mode_diceware:
+  message: "다이스웨어"
+  description: "생성기 모드: 암호 문구"
+
+generator_mode_random:
+  message: "무작위"
+  description: "생성기 모드: 무작위 문자"
+
+generator_words_count:
+  message: "단어 수"
+  description: "다이스웨어 단어 수 라벨"
+
+generator_length:
+  message: "길이"
+  description: "무작위 비밀번호 길이 라벨"
+
+generator_use_this:
+  message: "이 비밀번호 사용"
+  description: "생성된 비밀번호로 입력 필드를 채우는 버튼"
+
+generator_regenerate:
+  message: "다시 생성"
+  description: "새 비밀번호를 생성하는 버튼"
+
+generator_strength_weak:
+  message: "매우 취약"
+  description: "비밀번호 강도: 0점"
+
+generator_strength_fair:
+  message: "취약"
+  description: "비밀번호 강도: 1점"
+
+generator_strength_good:
+  message: "보통"
+  description: "비밀번호 강도: 2–3점"
+
+generator_strength_strong:
+  message: "강함"
+  description: "비밀번호 강도: 4점"

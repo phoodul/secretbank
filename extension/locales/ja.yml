@@ -222,3 +222,48 @@ save_dialog_notes:
 save_dialog_saving:
   message: "保存中…"
   description: "SaveDialog 保存ボタン保存中テキスト"
+
+# ── E-1: GeneratorPanel ──
+generator_title:
+  message: "パスワードジェネレーター"
+  description: "GeneratorPanel タイトル"
+
+generator_mode_diceware:
+  message: "ダイスウェア"
+  description: "生成モード: パスフレーズ"
+
+generator_mode_random:
+  message: "ランダム"
+  description: "生成モード: ランダム文字"
+
+generator_words_count:
+  message: "単語数"
+  description: "ダイスウェア単語数ラベル"
+
+generator_length:
+  message: "長さ"
+  description: "ランダムパスワード長ラベル"
+
+generator_use_this:
+  message: "このパスワードを使用"
+  description: "生成されたパスワードで入力欄を埋めるボタン"
+
+generator_regenerate:
+  message: "再生成"
+  description: "新しいパスワードを生成するボタン"
+
+generator_strength_weak:
+  message: "非常に弱い"
+  description: "パスワード強度: スコア0"
+
+generator_strength_fair:
+  message: "弱い"
+  description: "パスワード強度: スコア1"
+
+generator_strength_good:
+  message: "普通"
+  description: "パスワード強度: スコア2–3"
+
+generator_strength_strong:
+  message: "強い"
+  description: "パスワード強度: スコア4"
