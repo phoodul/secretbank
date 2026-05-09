@@ -240,17 +240,24 @@ fn manifest_path_macos(browser: Browser) -> Result<PathBuf, InstallError> {
 
 /// Linux: Chrome/Edge = `~/.config/google-chrome/NativeMessagingHosts/...`
 ///        Firefox      = `~/.mozilla/native-messaging-hosts/...`
+///
+/// `dirs::home_dir()` 대신 직접 `HOME` env 를 읽는다. Linux 의 `dirs` 는
+/// passwd entry 우선이라 테스트의 `set_var("HOME", ...)` 가 무시되어 격리 실패.
+/// Chrome/Edge 는 XDG_CONFIG_HOME 우선 (없으면 `$HOME/.config`).
 #[cfg(target_os = "linux")]
 fn manifest_path_linux(browser: Browser) -> Result<PathBuf, InstallError> {
-    let home = dirs::home_dir().ok_or(InstallError::HomeDirNotFound)?;
+    let home = std::env::var("HOME")
+        .map(PathBuf::from)
+        .map_err(|_| InstallError::HomeDirNotFound)?;
+    let xdg_config = std::env::var("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| home.join(".config"));
     match browser {
-        Browser::Chrome => Ok(home
-            .join(".config")
+        Browser::Chrome => Ok(xdg_config
             .join("google-chrome")
             .join("NativeMessagingHosts")
             .join(format!("{HOST_NAME}.json"))),
-        Browser::Edge => Ok(home
-            .join(".config")
+        Browser::Edge => Ok(xdg_config
             .join("microsoft-edge")
             .join("NativeMessagingHosts")
             .join(format!("{HOST_NAME}.json"))),

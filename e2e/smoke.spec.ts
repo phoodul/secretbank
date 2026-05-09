@@ -81,7 +81,7 @@ test.describe("smoke", () => {
 
     await page.goto("/auth/sign-in");
 
-    await expect(page.getByRole("heading", { name: /Connect to API Vault/i })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /Connect to Secretbank/i })).toBeVisible({
       timeout: 10_000,
     });
     await expect(page.getByRole("button", { name: /passkey/i })).toBeVisible();
