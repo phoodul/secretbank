@@ -18,9 +18,11 @@ import type { AutocompleteHint } from "../lib/save-handler";
 import { NMClient } from "../lib/nm-client";
 import { mountGeneratorIcon } from "../components/GeneratorIcon";
 import type { IconMount } from "../components/GeneratorIcon";
-import { isDismissed, addDismissedHost, getCachedIncidents, setCachedIncidents } from "../lib/banner-cache";
+import { isDismissed, addDismissedHost, getCachedIncidents, setCachedIncidents, isRailguardDismissed, addRailguardDismissedHost } from "../lib/banner-cache";
 import { mountSupplyChainBanner } from "../lib/supply-chain-host";
+import { mountRailguardHintBanner } from "../lib/railguard-host";
 import { openSecretbankDeepLink } from "../lib/deep-link";
+import { isAiEditorHost } from "../lib/ai-editor-hosts";
 import { getSessionToken } from "../lib/storage";
 import { pushSiteContextIfEnabled } from "../lib/mcp-push";
 
@@ -36,6 +38,12 @@ let _supplyChainUnmount: (() => void) | null = null;
 // G-2-2: 마지막으로 체크한 host (SPA watcher 중복 방지)
 let _lastCheckedHost = "";
 
+// G-5: 현재 마운트된 railguard hint banner unmount 함수
+let _railguardUnmount: (() => void) | null = null;
+
+// G-5: 마지막으로 체크한 railguard host (SPA watcher 중복 방지)
+let _lastRailguardCheckedHost = "";
+
 // G-4-2: MCP push — form focus 첫 발생 추적 (페이지당 1회)
 let _mcpPushTriggered = false;
 
@@ -49,6 +57,9 @@ export default defineContentScript({
     // G-2-2: supply chain banner — 페이지 로드 시 즉시 + SPA URL 변경 감지
     void checkSupplyChainForCurrentHost();
     installSupplyChainHostWatcher(window);
+    // G-5: RAILGUARD hint banner — AI 에디터 사이트 감지
+    void checkRailguardForCurrentHost();
+    installRailguardHostWatcher(window);
     // G-4-2: MCP context push — DOMContentLoaded 이후 즉시 시도 + form focus 첫 occurrence
     void triggerMcpPushOnPageLoad();
     installMcpPushFormFocusListener(document);
@@ -402,4 +413,95 @@ export function installMcpPushFormFocusListener(doc: Document): () => void {
 
   doc.addEventListener("focusin", handleFocusIn, { capture: true, passive: true });
   return () => doc.removeEventListener("focusin", handleFocusIn, { capture: true });
+}
+
+// ---------------------------------------------------------------------------
+// G-5: RAILGUARD hint banner 로직
+// ---------------------------------------------------------------------------
+
+/**
+ * 현재 페이지 host 가 AI 에디터 사이트인지 확인하고 banner 를 마운트한다.
+ *
+ * 흐름:
+ *   1. host 추출
+ *   2. isAiEditorHost 체크 → 비-AI 사이트면 종료 (false positive 방지)
+ *   3. isRailguardDismissed 체크 → true 면 종료 (7일 TTL)
+ *   4. banner 마운트
+ */
+export async function checkRailguardForCurrentHost(): Promise<void> {
+  const host = document.location?.hostname ?? "";
+  if (!host) return;
+
+  // 동일 host 중복 체크 방지 (SPA watcher 연속 호출 시)
+  if (host === _lastRailguardCheckedHost) return;
+  _lastRailguardCheckedHost = host;
+
+  // 기존 banner unmount
+  if (_railguardUnmount !== null) {
+    _railguardUnmount();
+    _railguardUnmount = null;
+  }
+
+  // 비-AI 사이트 → false positive 방지, 즉시 종료
+  if (!isAiEditorHost(host)) return;
+
+  try {
+    // dismiss 체크 (7일 TTL)
+    const dismissed = await isRailguardDismissed(host);
+    if (dismissed) return;
+
+    // banner 마운트
+    _railguardUnmount = mountRailguardHintBanner({
+      host,
+      onCreate: () => {
+        openSecretbankDeepLink("railguard");
+      },
+      onDismiss: () => {
+        void addRailguardDismissedHost(host).then(() => {
+          if (_railguardUnmount !== null) {
+            _railguardUnmount();
+            _railguardUnmount = null;
+          }
+        });
+      },
+    });
+  } catch {
+    // 네트워크 오류 / 스토리지 실패 — silent fail (banner 미표시)
+  }
+}
+
+/**
+ * SPA URL 변경 시 RAILGUARD banner 체크 재실행.
+ * pushState / replaceState / popstate 감지.
+ */
+export function installRailguardHostWatcher(win: Window): () => void {
+  const originalPushState = win.history.pushState.bind(win.history);
+  const originalReplaceState = win.history.replaceState.bind(win.history);
+
+  function onNavigate() {
+    // host 변경 시에만 재체크 (_lastRailguardCheckedHost 비교는 내부)
+    _lastRailguardCheckedHost = ""; // 강제 리셋 — URL 변경 시 항상 재체크
+    void checkRailguardForCurrentHost();
+  }
+
+  win.history.pushState = function (...args: Parameters<History["pushState"]>) {
+    const result = originalPushState(...args);
+    onNavigate();
+    return result;
+  };
+
+  win.history.replaceState = function (...args: Parameters<History["replaceState"]>) {
+    const result = originalReplaceState(...args);
+    onNavigate();
+    return result;
+  };
+
+  const popstateHandler = () => onNavigate();
+  win.addEventListener("popstate", popstateHandler);
+
+  return () => {
+    win.history.pushState = originalPushState;
+    win.history.replaceState = originalReplaceState;
+    win.removeEventListener("popstate", popstateHandler);
+  };
 }

@@ -321,3 +321,20 @@ blast_radius_kind_deployment:
 mcp_context_indicator:
   message: "MCPコンテキストプッシュ有効"
   description: "G-4-2: ポップアップ右上 MCP 有効インジケーター aria-label。opt-in ON 時のみ表示。"
+
+# ── G-5: RailguardHintBanner ──
+railguard_hint_banner_title:
+  message: "AI サイトで API キー・パスワード漏洩リスク"
+  description: "AI エディターサイト訪問時に表示される RailguardHintBanner のタイトル"
+
+railguard_hint_banner_action_create:
+  message: "RAILGUARD ルールを生成 →"
+  description: "RailguardHintBanner 主要 CTA — secretbank://railguard ディープリンクを開く"
+
+railguard_hint_banner_action_dismiss:
+  message: "1週間非表示"
+  description: "RailguardHintBanner サブ — このホストのバナーを 7 日間非表示にする"
+
+railguard_hint_banner_severity:
+  message: "RAILGUARD"
+  description: "RailguardHintBanner 重大度バッジラベル（amber、AI エディターリスク）"

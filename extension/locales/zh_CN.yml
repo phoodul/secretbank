@@ -321,3 +321,20 @@ blast_radius_kind_deployment:
 mcp_context_indicator:
   message: "MCP 上下文推送已激活"
   description: "G-4-2: 弹出窗口右上角 MCP 激活指示器 aria-label。仅在 opt-in 开启时显示。"
+
+# ── G-5: RailguardHintBanner ──
+railguard_hint_banner_title:
+  message: "AI 站点存在 API 密钥/密码泄露风险"
+  description: "访问 AI 编辑器站点时显示的 RailguardHintBanner 标题"
+
+railguard_hint_banner_action_create:
+  message: "生成 RAILGUARD 规则 →"
+  description: "RailguardHintBanner 主要按钮 — 打开 secretbank://railguard 深度链接"
+
+railguard_hint_banner_action_dismiss:
+  message: "1 周内不再显示"
+  description: "RailguardHintBanner 次要按钮 — 对此主机隐藏 banner 7 天"
+
+railguard_hint_banner_severity:
+  message: "RAILGUARD"
+  description: "RailguardHintBanner 严重性徽章标签（amber，AI 编辑器风险）"

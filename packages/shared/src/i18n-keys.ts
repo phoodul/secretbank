@@ -200,6 +200,16 @@ export const I18N_KEYS = {
   // ── G-4-2: MCP context push 인디케이터 ──
   /** popup 우상단 MCP 활성 인디케이터 aria-label */
   MCP_CONTEXT_INDICATOR: "mcp_context_indicator",
+
+  // ── G-5: RailguardHintBanner ──
+  /** RailguardHintBanner 제목 — "API key / password risk on AI site" */
+  RAILGUARD_HINT_BANNER_TITLE: "railguard_hint_banner_title",
+  /** RailguardHintBanner 주요 CTA — "Generate RAILGUARD rules →" */
+  RAILGUARD_HINT_BANNER_ACTION_CREATE: "railguard_hint_banner_action_create",
+  /** RailguardHintBanner 보조 — "Hide for 1 week" */
+  RAILGUARD_HINT_BANNER_ACTION_DISMISS: "railguard_hint_banner_action_dismiss",
+  /** RailguardHintBanner severity 배지 — "RAILGUARD" */
+  RAILGUARD_HINT_BANNER_SEVERITY: "railguard_hint_banner_severity",
 } as const;
 
 /**

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/lib/__tests__/banner-cache.test.ts — M24-E Phase G-2-2
+// extension/lib/__tests__/banner-cache.test.ts — M24-E Phase G-2-2 / G-5
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -195,5 +195,101 @@ describe("banner-cache — incident 응답 캐시 (1h TTL)", () => {
 
     expect(github?.ok).toBe(true);
     expect(stripe?.ok).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G-5: RAILGUARD dismiss 큐 (7일 TTL)
+// ---------------------------------------------------------------------------
+
+describe("banner-cache — RAILGUARD dismiss 큐 (7일 TTL, G-5)", () => {
+  let storageMock: ReturnType<typeof makeStorageMock>;
+
+  beforeEach(async () => {
+    storageMock = makeStorageMock();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis.chrome.storage as any).local = storageMock;
+    vi.resetModules();
+  });
+
+  it("addRailguardDismissedHost + isRailguardDismissed → true", async () => {
+    const { addRailguardDismissedHost, isRailguardDismissed } = await import("../banner-cache");
+    await addRailguardDismissedHost("chatgpt.com");
+    expect(await isRailguardDismissed("chatgpt.com")).toBe(true);
+  });
+
+  it("dismiss 되지 않은 host → isRailguardDismissed false", async () => {
+    const { isRailguardDismissed } = await import("../banner-cache");
+    expect(await isRailguardDismissed("claude.ai")).toBe(false);
+  });
+
+  it("7일 TTL 만료 후 isRailguardDismissed false", async () => {
+    const { addRailguardDismissedHost, isRailguardDismissed } = await import("../banner-cache");
+
+    // 8일 전으로 시간 조작
+    const past = Date.now() - 8 * 24 * 3600 * 1000;
+    vi.spyOn(Date, "now").mockReturnValueOnce(past);
+    await addRailguardDismissedHost("cursor.com");
+    vi.restoreAllMocks();
+
+    expect(await isRailguardDismissed("cursor.com")).toBe(false);
+  });
+
+  it("6일 후에는 아직 dismiss 유효", async () => {
+    const { addRailguardDismissedHost, isRailguardDismissed } = await import("../banner-cache");
+
+    const past = Date.now() - 6 * 24 * 3600 * 1000;
+    vi.spyOn(Date, "now").mockReturnValueOnce(past);
+    await addRailguardDismissedHost("perplexity.ai");
+    vi.restoreAllMocks();
+
+    expect(await isRailguardDismissed("perplexity.ai")).toBe(true);
+  });
+
+  it("getRailguardDismissedHosts — 만료되지 않은 host 만 반환", async () => {
+    const { addRailguardDismissedHost, getRailguardDismissedHosts } = await import("../banner-cache");
+
+    // 유효한 dismiss
+    await addRailguardDismissedHost("chatgpt.com");
+
+    // 8일 전 dismiss (만료됨)
+    const past = Date.now() - 8 * 24 * 3600 * 1000;
+    vi.spyOn(Date, "now").mockReturnValueOnce(past);
+    await addRailguardDismissedHost("old-ai-site.com");
+    vi.restoreAllMocks();
+
+    const hosts = await getRailguardDismissedHosts();
+    expect(hosts).toContain("chatgpt.com");
+    expect(hosts).not.toContain("old-ai-site.com");
+  });
+
+  it("supply chain dismiss 와 railguard dismiss 는 독립적 저장소 키 사용", async () => {
+    const { addDismissedHost, isDismissed, addRailguardDismissedHost, isRailguardDismissed } =
+      await import("../banner-cache");
+
+    // supply chain 에만 dismiss
+    await addDismissedHost("github.com");
+
+    // railguard 에는 dismiss 안 함
+    expect(await isDismissed("github.com")).toBe(true);
+    expect(await isRailguardDismissed("github.com")).toBe(false);
+
+    // railguard 에 dismiss
+    await addRailguardDismissedHost("chatgpt.com");
+
+    // supply chain 에는 dismiss 안 됨
+    expect(await isDismissed("chatgpt.com")).toBe(false);
+    expect(await isRailguardDismissed("chatgpt.com")).toBe(true);
+  });
+
+  it("여러 AI host 를 각각 railguard dismiss 가능", async () => {
+    const { addRailguardDismissedHost, isRailguardDismissed } = await import("../banner-cache");
+
+    await addRailguardDismissedHost("chatgpt.com");
+    await addRailguardDismissedHost("cursor.com");
+
+    expect(await isRailguardDismissed("chatgpt.com")).toBe(true);
+    expect(await isRailguardDismissed("cursor.com")).toBe(true);
+    expect(await isRailguardDismissed("claude.ai")).toBe(false);
   });
 });

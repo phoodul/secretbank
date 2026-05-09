@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/lib/banner-cache.ts — M24-E Phase G-2-2
+// extension/lib/banner-cache.ts — M24-E Phase G-2-2 / G-5
 //
 // SupplyChainBanner 용 dismiss 큐 + incident 응답 캐시.
+// RailguardHintBanner 용 dismiss 큐 (G-5 추가).
 //
 // 저장소: chrome.storage.local
-//   dismissed_hosts: secretbank_supply_dismissed_v1 — Record<host, dismissed_at_unix_ms>
-//   incident cache:  secretbank_supply_cache_v1     — Record<host, {response, expires_at}>
+//   dismissed_hosts:          secretbank_supply_dismissed_v1    — Record<host, dismissed_at_unix_ms>
+//   incident cache:           secretbank_supply_cache_v1        — Record<host, {response, expires_at}>
+//   railguard dismissed_hosts: secretbank_railguard_dismissed_v1 — Record<host, dismissed_at_unix_ms>
 
 import type { NMMessageIncidentCheckForHostResponse } from "@secretbank/shared";
 
@@ -16,6 +18,7 @@ import type { NMMessageIncidentCheckForHostResponse } from "@secretbank/shared";
 
 const DISMISSED_KEY = "secretbank_supply_dismissed_v1";
 const CACHE_KEY = "secretbank_supply_cache_v1";
+const RAILGUARD_DISMISSED_KEY = "secretbank_railguard_dismissed_v1";
 
 const DISMISS_TTL_MS = 7 * 24 * 3600 * 1000; // 7일
 const INCIDENT_CACHE_TTL_MS = 60 * 60 * 1000; // 1시간
@@ -75,6 +78,54 @@ export async function addDismissedHost(host: string): Promise<void> {
  */
 export async function getDismissedHosts(): Promise<string[]> {
   const record = await _getDismissedRecord();
+  const now = Date.now();
+  return Object.entries(record)
+    .filter(([, dismissedAt]) => now - dismissedAt < DISMISS_TTL_MS)
+    .map(([host]) => host);
+}
+
+// ---------------------------------------------------------------------------
+// G-5: RAILGUARD dismiss 큐 (7일 TTL)
+// ---------------------------------------------------------------------------
+
+/**
+ * RAILGUARD dismiss 레코드를 읽는다.
+ */
+async function _getRailguardDismissedRecord(): Promise<DismissedRecord> {
+  const result = await chrome.storage.local.get(RAILGUARD_DISMISSED_KEY);
+  const raw = result[RAILGUARD_DISMISSED_KEY];
+  if (raw === null || raw === undefined || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+  return raw as DismissedRecord;
+}
+
+/**
+ * host 가 RAILGUARD banner dismiss 상태인지 확인한다 (7일 TTL).
+ *
+ * @returns true 이면 RailguardHintBanner 미표시
+ */
+export async function isRailguardDismissed(host: string): Promise<boolean> {
+  const record = await _getRailguardDismissedRecord();
+  const dismissedAt = record[host];
+  if (dismissedAt === undefined) return false;
+  return Date.now() - dismissedAt < DISMISS_TTL_MS;
+}
+
+/**
+ * host 를 RAILGUARD dismiss 큐에 추가한다 (현재 시각으로 기록).
+ */
+export async function addRailguardDismissedHost(host: string): Promise<void> {
+  const record = await _getRailguardDismissedRecord();
+  record[host] = Date.now();
+  await chrome.storage.local.set({ [RAILGUARD_DISMISSED_KEY]: record });
+}
+
+/**
+ * 유효한(만료되지 않은) RAILGUARD dismiss host 목록을 반환한다.
+ */
+export async function getRailguardDismissedHosts(): Promise<string[]> {
+  const record = await _getRailguardDismissedRecord();
   const now = Date.now();
   return Object.entries(record)
     .filter(([, dismissedAt]) => now - dismissedAt < DISMISS_TTL_MS)

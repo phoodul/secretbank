@@ -66,6 +66,35 @@ describe("handleDeepLink — URL 파싱 + navigate 호출 검증", () => {
   });
 });
 
+// ------------------------------------------------------------------ G-5: railguard
+describe("handleDeepLink — G-5 railguard whitelist", () => {
+  let navigate: (path: string) => void;
+
+  beforeEach(() => {
+    navigate = vi.fn<(path: string) => void>();
+  });
+
+  it("secretbank://railguard → /railguard navigate", () => {
+    handleDeepLink("secretbank://railguard", navigate);
+    expect(navigate).toHaveBeenCalledWith("/railguard");
+  });
+
+  it("secretbank://railguard?foo=bar → /railguard (쿼리 파라미터 무시)", () => {
+    handleDeepLink("secretbank://railguard?foo=bar", navigate);
+    expect(navigate).toHaveBeenCalledWith("/railguard");
+  });
+
+  it("허용되지 않은 경로 (secretbank://settings) → navigate 미호출", () => {
+    handleDeepLink("secretbank://settings", navigate);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("허용되지 않은 경로 (secretbank://vault) → navigate 미호출", () => {
+    handleDeepLink("secretbank://vault", navigate);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
 // ------------------------------------------------------------------ G-3-2: blast_credential
 describe("handleDeepLink — G-3-2 blast_credential 화이트리스트", () => {
   let navigate: (path: string) => void;

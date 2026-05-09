@@ -9,6 +9,9 @@
  * G-3-2: secretbank://graph?blast_credential=<id> → /graph?blast_focus=<id>
  *   (blast radius 시각화 모드 진입)
  *
+ * G-5: secretbank://railguard → /railguard (M5 RAILGUARD 페이지)
+ *   AI 에디터 사이트의 RailguardHintBanner 에서 트리거.
+ *
  * 보안: credential/blast_credential query 파라미터만 허용한다. 임의 경로는 무시한다.
  */
 
@@ -17,7 +20,7 @@ import { listen } from "@tauri-apps/api/event";
 import { useNavigate } from "react-router-dom";
 
 /** 허용된 deep-link 경로 */
-const ALLOWED_PATHS = new Set(["graph", "incidents"]);
+const ALLOWED_PATHS = new Set(["graph", "incidents", "railguard"]);
 
 /** credential id 허용 패턴 — ULID (26자, [0-9A-Z]) */
 const CREDENTIAL_ID_RE = /^[0-9A-Za-z]{1,128}$/;
@@ -127,5 +130,10 @@ export function handleDeepLink(
       return;
     }
     navigate(`/incidents?host=${encodeURIComponent(host)}`);
+  }
+
+  if (segment === "railguard") {
+    // G-5: RAILGUARD 페이지로 이동 (파라미터 불필요)
+    navigate("/railguard");
   }
 }
