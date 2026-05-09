@@ -99,6 +99,15 @@ pub const EXT_INCIDENT_LOOKUP: &str = "extension.incident.lookup";
 pub const EXT_BLAST_RADIUS_PREVIEW: &str = "extension.blast_radius.preview";
 
 // ---------------------------------------------------------------------------
+// extension.mcp.*  (T-24-E-G4-1)
+// ---------------------------------------------------------------------------
+
+/// Extension 이 현재 사이트 컨텍스트를 MCP server queue 에 push 한 이벤트.
+/// `mcp_context_push` nm-host 메시지 처리 시 기록 (opt-in ON + push 성공).
+/// opt-in OFF 시 silently drop — audit log 기록 없음.
+pub const EXT_MCP_CONTEXT_PUSH: &str = "extension.mcp.context_push";
+
+// ---------------------------------------------------------------------------
 // 모든 신규 action 상수 목록 (테스트 순회용)
 // ---------------------------------------------------------------------------
 
@@ -120,6 +129,7 @@ pub const ALL_EXT_ACTIONS: &[&str] = &[
     EXT_GRAPH_FETCH,
     EXT_INCIDENT_LOOKUP,
     EXT_BLAST_RADIUS_PREVIEW,
+    EXT_MCP_CONTEXT_PUSH,
 ];
 
 // ---------------------------------------------------------------------------

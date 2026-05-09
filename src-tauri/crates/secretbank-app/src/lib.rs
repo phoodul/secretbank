@@ -33,6 +33,7 @@ use commands::extension_session::{
     extension_session_issue, extension_session_settings_get, extension_session_settings_set,
     extension_session_verify,
 };
+use commands::extension_settings::{ext_settings_get_mcp_opt_in, ext_settings_set_mcp_opt_in};
 use commands::github::{
     github_install_url, github_list_installations, github_remove_installation,
     github_save_installation, github_scan_repo,
@@ -279,6 +280,8 @@ pub fn run(context: tauri::Context) {
             extension_session_verify,
             extension_session_settings_get,
             extension_session_settings_set,
+            ext_settings_get_mcp_opt_in,
+            ext_settings_set_mcp_opt_in,
         ]);
     }
 
@@ -384,6 +387,8 @@ pub fn run(context: tauri::Context) {
             extension_session_verify,
             extension_session_settings_get,
             extension_session_settings_set,
+            ext_settings_get_mcp_opt_in,
+            ext_settings_set_mcp_opt_in,
         ]);
     }
 

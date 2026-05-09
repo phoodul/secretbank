@@ -18,7 +18,7 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 
 // ---------------------------------------------------------------------------
 // 타입 — Rust SessionTtlOption 과 대칭
@@ -75,6 +76,14 @@ async function setSessionSettings(settings: SessionSettings): Promise<void> {
   return invoke<void>("extension_session_settings_set", { settings });
 }
 
+async function fetchMcpOptIn(): Promise<boolean> {
+  return invoke<boolean>("ext_settings_get_mcp_opt_in");
+}
+
+async function saveMcpOptIn(enabled: boolean): Promise<void> {
+  return invoke<void>("ext_settings_set_mcp_opt_in", { enabled });
+}
+
 // ---------------------------------------------------------------------------
 // 컴포넌트
 // ---------------------------------------------------------------------------
@@ -95,6 +104,11 @@ export function ExtensionSettings() {
   // 저장 중 상태 (중복 클릭 방지)
   const [saving, setSaving] = useState(false);
 
+  // G-4-1: MCP context push opt-in 상태
+  const [mcpOptIn, setMcpOptIn] = useState(false);
+  const [mcpLoading, setMcpLoading] = useState(true);
+  const [mcpSaving, setMcpSaving] = useState(false);
+
   // 초기 로드
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +121,24 @@ export function ExtensionSettings() {
       })
       .catch(() => {
         if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // G-4-1: MCP opt-in 초기 로드
+  useEffect(() => {
+    let cancelled = false;
+    fetchMcpOptIn()
+      .then((val) => {
+        if (!cancelled) {
+          setMcpOptIn(val);
+          setMcpLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setMcpLoading(false);
       });
     return () => {
       cancelled = true;
@@ -141,6 +173,25 @@ export function ExtensionSettings() {
   function handleCancel() {
     setConfirmOpen(false);
     setPending(null);
+  }
+
+  // G-4-1: MCP opt-in toggle 핸들러
+  async function handleMcpToggle(checked: boolean) {
+    if (mcpSaving) return;
+    setMcpSaving(true);
+    try {
+      await saveMcpOptIn(checked);
+      setMcpOptIn(checked);
+      if (checked) {
+        toast.success(t("settings.extensionMcpContextEnabled"));
+      } else {
+        toast.success(t("settings.extensionMcpContextDisabled"));
+      }
+    } catch {
+      toast.error(t("settings.extensionSessionSaveFailed"));
+    } finally {
+      setMcpSaving(false);
+    }
   }
 
   return (
@@ -216,6 +267,45 @@ export function ExtensionSettings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* G-4-1: MCP context push opt-in */}
+      <section aria-labelledby="ext-mcp-context-heading" className="space-y-3 border-t pt-4">
+        <h3 id="ext-mcp-context-heading" className="text-sm font-medium">
+          {t("settings.extensionMcpContextTitle")}
+        </h3>
+        <p className="text-muted-foreground text-xs">
+          {t("settings.extensionMcpContextDescription")}
+        </p>
+
+        {mcpLoading ? (
+          <Skeleton className="h-5 w-10" />
+        ) : (
+          <div className="flex items-center gap-3">
+            <Switch
+              id="ext-mcp-context-switch"
+              checked={mcpOptIn}
+              onCheckedChange={handleMcpToggle}
+              disabled={mcpSaving}
+              aria-describedby="ext-mcp-context-warning"
+            />
+            <label
+              htmlFor="ext-mcp-context-switch"
+              className="cursor-pointer select-none text-sm"
+            >
+              {mcpOptIn ? t("settings.extensionMcpContextEnabled") : t("settings.extensionMcpContextTitle")}
+            </label>
+          </div>
+        )}
+
+        {/* privacy 경고 — 항상 표시 */}
+        <p
+          id="ext-mcp-context-warning"
+          className="text-muted-foreground flex items-start gap-1.5 text-xs"
+        >
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          {t("settings.extensionMcpContextWarning")}
+        </p>
+      </section>
     </section>
   );
 }

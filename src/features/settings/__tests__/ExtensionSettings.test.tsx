@@ -239,4 +239,106 @@ describe("ExtensionSettings", () => {
       expect(toast.error).toHaveBeenCalled();
     });
   });
+
+  // 8. MCP toggle OFF(기본) → ON 클릭 → ext_settings_set_mcp_opt_in(true) + 성공 토스트
+  it("MCP toggle 를 ON 으로 변경하면 ext_settings_set_mcp_opt_in(true) 가 호출되고 성공 토스트가 표시된다", async () => {
+    const user = userEvent.setup();
+
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "extension_session_settings_get") {
+        return Promise.resolve({ ttl: "hours4" });
+      }
+      if (cmd === "ext_settings_get_mcp_opt_in") {
+        return Promise.resolve(false); // 기본 OFF
+      }
+      if (cmd === "ext_settings_set_mcp_opt_in") {
+        return Promise.resolve(undefined);
+      }
+      return Promise.resolve(null);
+    });
+
+    renderComponent();
+
+    // MCP 섹션 로딩 완료 대기
+    await waitFor(() => {
+      expect(screen.getByRole("switch")).toBeInTheDocument();
+    });
+
+    const mcpSwitch = screen.getByRole("switch");
+    expect(mcpSwitch).not.toBeChecked();
+
+    // toggle ON
+    await user.click(mcpSwitch);
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith("ext_settings_set_mcp_opt_in", { enabled: true });
+    });
+
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  // 9. MCP toggle ON → OFF 클릭 → ext_settings_set_mcp_opt_in(false) + 성공 토스트
+  it("MCP toggle 를 ON 에서 OFF 로 변경하면 ext_settings_set_mcp_opt_in(false) 가 호출된다", async () => {
+    const user = userEvent.setup();
+
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "extension_session_settings_get") {
+        return Promise.resolve({ ttl: "hours4" });
+      }
+      if (cmd === "ext_settings_get_mcp_opt_in") {
+        return Promise.resolve(true); // 초기 ON
+      }
+      if (cmd === "ext_settings_set_mcp_opt_in") {
+        return Promise.resolve(undefined);
+      }
+      return Promise.resolve(null);
+    });
+
+    renderComponent();
+
+    await waitFor(() => {
+      const mcpSwitch = screen.getByRole("switch");
+      expect(mcpSwitch).toBeChecked();
+    });
+
+    const mcpSwitch = screen.getByRole("switch");
+    await user.click(mcpSwitch);
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith("ext_settings_set_mcp_opt_in", { enabled: false });
+    });
+
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  // 10. MCP toggle — ext_settings_set_mcp_opt_in 실패 시 에러 토스트
+  it("ext_settings_set_mcp_opt_in 실패 시 에러 토스트가 표시된다", async () => {
+    const user = userEvent.setup();
+
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "extension_session_settings_get") {
+        return Promise.resolve({ ttl: "hours4" });
+      }
+      if (cmd === "ext_settings_get_mcp_opt_in") {
+        return Promise.resolve(false);
+      }
+      if (cmd === "ext_settings_set_mcp_opt_in") {
+        return Promise.reject(new Error("storage error"));
+      }
+      return Promise.resolve(null);
+    });
+
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByRole("switch")).toBeInTheDocument();
+    });
+
+    const mcpSwitch = screen.getByRole("switch");
+    await user.click(mcpSwitch);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+  });
 });

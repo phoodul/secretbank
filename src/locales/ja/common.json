@@ -86,7 +86,12 @@
     "extensionSessionRotateConfirmOk": "適用",
     "extensionSessionRotateConfirmCancel": "キャンセル",
     "extensionSessionSaved": "セッションタイムアウトを更新しました",
-    "extensionSessionSaveFailed": "セッションタイムアウトの更新に失敗しました"
+    "extensionSessionSaveFailed": "セッションタイムアウトの更新に失敗しました",
+    "extensionMcpContextTitle": "MCPコンテキストプッシュ",
+    "extensionMcpContextDescription": "有効にすると、拡張機能が現在のサイトとマッチしたクレデンシャルのメタデータをローカルMCPサーバーに送信します。AIエディター（Claude、Cursorなど）が作業中のサービスを把握できるようになります。シークレット値は送信されません。",
+    "extensionMcpContextWarning": "この機能を有効にすると、現在のサイト情報がMCPを通じてAIエディターと共有されます。いつでも無効にできます。",
+    "extensionMcpContextEnabled": "MCPコンテキストプッシュを有効化しました",
+    "extensionMcpContextDisabled": "MCPコンテキストプッシュを無効化しました"
   },
   "inventory": {
     "title": "インベントリ",

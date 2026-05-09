@@ -86,7 +86,12 @@
     "extensionSessionRotateConfirmOk": "应用",
     "extensionSessionRotateConfirmCancel": "取消",
     "extensionSessionSaved": "会话超时已更新",
-    "extensionSessionSaveFailed": "会话超时更新失败"
+    "extensionSessionSaveFailed": "会话超时更新失败",
+    "extensionMcpContextTitle": "MCP上下文推送",
+    "extensionMcpContextDescription": "启用后，扩展程序会将当前访问的网站及匹配的凭据元数据发送到本地MCP服务器，以便AI编辑器（Claude、Cursor等）了解您正在使用的服务。不会传输任何密钥值。",
+    "extensionMcpContextWarning": "启用此功能后，您的当前网站信息将通过MCP与AI编辑器共享。您随时可以关闭此功能。",
+    "extensionMcpContextEnabled": "MCP上下文推送已启用",
+    "extensionMcpContextDisabled": "MCP上下文推送已禁用"
   },
   "inventory": {
     "title": "清单",

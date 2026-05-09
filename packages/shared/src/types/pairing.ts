@@ -288,6 +288,35 @@ export interface NMMessageBlastRadiusForHostResponse {
 }
 
 // ---------------------------------------------------------------------------
+// T-24-E-G4-1: MCP context push RPC 메시지
+// ---------------------------------------------------------------------------
+
+/** credential 메타 — plaintext ❌, id + name + issuer 만. */
+export interface CredentialMeta {
+  id: string;
+  name: string;
+  issuer: string;
+}
+
+/** Extension → nm-host: 현재 사이트 컨텍스트를 MCP server queue 에 push */
+export interface NMMessageMcpContextPush {
+  type: "mcp_context_push";
+  /** 정규화 전 URL host (예: "github.com") */
+  host: string;
+  /** 해당 host 에 매칭된 credential 메타 목록 (plaintext ❌) */
+  credential_meta: CredentialMeta[];
+  /** Unix timestamp ms (extension 측 시각) */
+  timestamp: number;
+  session_token: string;
+}
+
+/** nm-host → Extension: mcp_context_push ack 응답 */
+export interface NMMessageMcpContextPushResponse {
+  ok: boolean;
+  error?: string;
+}
+
+// ---------------------------------------------------------------------------
 // NMMessage union 갱신 (G3-1 추가)
 // ---------------------------------------------------------------------------
 
@@ -300,6 +329,7 @@ export interface NMMessageBlastRadiusForHostResponse {
  * G1-1: graph_for_credential mini-graph RPC 메시지 추가.
  * G2-1: incident_check_for_host host incident 조회 RPC 메시지 추가.
  * G3-1: blast_radius_for_host autofill/save blast radius preview RPC 메시지 추가.
+ * G4-1: mcp_context_push 현재 사이트 컨텍스트 MCP queue push RPC 메시지 추가.
  */
 export type NMMessage =
   | NMMessageInit
@@ -324,7 +354,8 @@ export type NMMessage =
   | NMMessageIncidentCheckForHost
   | NMMessageIncidentCheckForHostResponse
   | NMMessageBlastRadiusForHost
-  | NMMessageBlastRadiusForHostResponse;
+  | NMMessageBlastRadiusForHostResponse
+  | NMMessageMcpContextPush;
 
 // ---------------------------------------------------------------------------
 // 하위 호환 별칭 (A2 명명 유지 — 외부 consumer 가 직접 import 중)

@@ -59,6 +59,7 @@ use secretbank_storage::age_vault::AgeVaultStorage;
 use secretbank_storage::sqlite::init_pool;
 use secretbank_storage::sqlite::repositories::credential::CredentialRepo;
 use secretbank_storage::sqlite::repositories::issuer::IssuerRepo;
+use secretbank_storage::sqlite::repositories::settings::SettingsRepo;
 use secretbank_storage::sqlite::SqlitePool;
 use secretbank_storage::vault::VaultStorage;
 use secretbank_supply::advisory::{AdvisoryCategory, AdvisorySeverity, OsvClient};
@@ -310,6 +311,22 @@ fn handle_tools_list() -> Result<Value, RpcError> {
                     },
                     "required": ["kind", "project_name"]
                 }
+            },
+            {
+                "name": "current_site_context",
+                "description":
+                    "User's currently visited site context (only available if user has opted in via desktop settings). Returns the most recent browser sites the user visited along with matched credential metadata (id/name/issuer only — no plaintext secrets). Use this to understand which services the user is currently working with. Returns an empty list if the user has not opted in.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of recent site contexts to return (default 5, max 10).",
+                            "minimum": 1,
+                            "maximum": 10
+                        }
+                    }
+                }
             }
         ]
     }))
@@ -331,8 +348,68 @@ async fn handle_tool_call(state: &ServerState, params: &Value) -> Result<Value, 
         "check_railguard_status" => tool_check_railguard_status(&arguments).await,
         "suggest_railguard_template" => tool_suggest_railguard_template(&arguments),
         "check_supply_chain_risk" => tool_check_supply_chain_risk(&arguments).await,
+        "current_site_context" => tool_current_site_context(state, &arguments).await,
         other => Err(RpcError::method_not_found(other)),
     }
+}
+
+// ---------------------------------------------------------------------------
+// G-4-1: current_site_context tool
+// ---------------------------------------------------------------------------
+
+/// 사용자가 opt-in 한 경우에만 최근 방문 사이트 컨텍스트를 반환한다.
+///
+/// opt-in 체크: SQLite settings "extension_mcp_context_opt_in" = "1".
+/// opt-in OFF (기본) → 빈 배열 반환.
+/// opt-in ON → settings "mcp_site_context_queue" JSON array 에서 limit 개 반환.
+async fn tool_current_site_context(state: &ServerState, args: &Value) -> Result<Value, RpcError> {
+    let limit = args
+        .get("limit")
+        .and_then(Value::as_u64)
+        .unwrap_or(5)
+        .min(10) as usize;
+
+    // opt-in 체크
+    let repo = SettingsRepo::new(&state.pool);
+    let opt_in = match repo.get("extension_mcp_context_opt_in").await {
+        Ok(Some(val)) => val == "1",
+        _ => false,
+    };
+
+    if !opt_in {
+        let msg = "MCP context push is disabled. The user has not opted in via Secretbank desktop settings (Settings → Extension → MCP context push).";
+        return Ok(json!({
+            "content": [{ "type": "text", "text": msg }],
+            "contexts": []
+        }));
+    }
+
+    // 큐 읽기 (JSON array stored in settings)
+    let raw = repo
+        .get("mcp_site_context_queue")
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default();
+
+    let all_contexts: Vec<Value> = serde_json::from_str(&raw).unwrap_or_default();
+
+    // 최신 limit 개 (큐는 FIFO — 뒤쪽이 최신)
+    let n = all_contexts.len();
+    let start = n.saturating_sub(limit);
+    let recent: Vec<&Value> = all_contexts[start..].iter().rev().collect();
+
+    let json_text = serde_json::to_string_pretty(&json!({ "contexts": recent }))
+        .map_err(|e| RpcError::internal(e.to_string()))?;
+
+    let summary = format!(
+        "{} recent site context(s) (opt-in: ON, showing up to {limit})",
+        recent.len()
+    );
+
+    Ok(json!({
+        "content": [{ "type": "text", "text": format!("{summary}\n\n{json_text}") }]
+    }))
 }
 
 async fn tool_check_supply_chain_risk(args: &Value) -> Result<Value, RpcError> {
@@ -799,7 +876,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn tools_list_includes_all_five_tools() {
+    async fn tools_list_includes_all_six_tools() {
         let v = handle_tools_list().unwrap();
         let tools = v["tools"].as_array().unwrap();
         let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
@@ -809,6 +886,7 @@ mod tests {
             "check_railguard_status",
             "suggest_railguard_template",
             "check_supply_chain_risk",
+            "current_site_context",
         ] {
             assert!(names.contains(&required), "missing tool {required}");
         }

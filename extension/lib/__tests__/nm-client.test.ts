@@ -748,4 +748,87 @@ describe("NMClient", () => {
     expect(result.affected).toHaveLength(0);
     expect(result.total).toBe(0);
   });
+
+  // ── 12. T-24-E-G4-1: mcpContextPush RPC ─────────────────────────────────
+
+  it("mcpContextPush() 는 올바른 타입으로 요청을 전송하고 ok=true ack 를 반환한다", async () => {
+    const { port, dispatch } = createPortStub();
+
+    const host = "github.com";
+    const sessionToken = "test-session-token";
+    const credentialMeta = [{ id: "cred-1", name: "GitHub Token", issuer: "github" }];
+
+    // ack 응답 — type 필드 없이 { ok: boolean } 형태.
+    const ackResponse = { ok: true };
+
+    mockConnectNative(port);
+    await client.connect();
+
+    // mcpContextPush 는 sendMessage 후 onMessage 구독 패턴.
+    // graphForCredential 과 달리 내부적으로 _rpc 가 아닌 직접 Promise 를 구성하므로
+    // onMessage spy 를 사용해 handler 등록 후 dispatch.
+    const origOnMessage = client.onMessage.bind(client);
+    vi.spyOn(client, "onMessage").mockImplementationOnce((handler) => {
+      const unsub = origOnMessage(handler);
+      Promise.resolve().then(() => dispatch.message(ackResponse));
+      return unsub;
+    });
+
+    const result = await client.mcpContextPush(host, credentialMeta, sessionToken);
+
+    // 요청 필드 검증
+    const postMessage = (port as unknown as { postMessage: ReturnType<typeof vi.fn> }).postMessage;
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "mcp_context_push",
+        host,
+        credential_meta: credentialMeta,
+        session_token: sessionToken,
+      }),
+    );
+
+    // ack 응답 검증
+    expect(result.ok).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+
+  it("mcpContextPush() 는 5s timeout 후 NMDisconnected 를 throw 한다", async () => {
+    const { port } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    // ack 를 절대 dispatch 하지 않아 timeout 유발.
+    let caughtError: unknown;
+    const rpcPromise = client
+      .mcpContextPush("github.com", [], "tok")
+      .catch((e) => {
+        caughtError = e;
+      });
+
+    // 5초 초과
+    await vi.advanceTimersByTimeAsync(5001);
+    await rpcPromise;
+
+    expect(caughtError).toBeInstanceOf(NMDisconnected);
+  });
+
+  it("mcpContextPush() 는 ok=false ack 도 수신한다 (opt-in OFF 등)", async () => {
+    const { port, dispatch } = createPortStub();
+
+    const errorAck = { ok: false, error: "vault_locked" };
+
+    mockConnectNative(port);
+    await client.connect();
+
+    const origOnMessage = client.onMessage.bind(client);
+    vi.spyOn(client, "onMessage").mockImplementationOnce((handler) => {
+      const unsub = origOnMessage(handler);
+      Promise.resolve().then(() => dispatch.message(errorAck));
+      return unsub;
+    });
+
+    const result = await client.mcpContextPush("github.com", [], "tok");
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("vault_locked");
+  });
 });

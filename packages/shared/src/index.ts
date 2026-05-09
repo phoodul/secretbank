@@ -39,6 +39,10 @@ export type {
   // G3-1: blast radius preview RPC
   NMMessageBlastRadiusForHost,
   NMMessageBlastRadiusForHostResponse,
+  // G4-1: MCP context push RPC
+  CredentialMeta,
+  NMMessageMcpContextPush,
+  NMMessageMcpContextPushResponse,
   // 하위 호환
   NMMessagePair,
 } from "./types/pairing.js";

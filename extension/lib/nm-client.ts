@@ -28,6 +28,7 @@
  */
 
 import type {
+  CredentialMeta,
   IssuerRecipe,
   NMMessage,
   NMMessageCredentialListByDomainResponse,
@@ -38,6 +39,7 @@ import type {
   NMMessageGraphForCredentialResponse,
   NMMessageIncidentCheckForHostResponse,
   NMMessageBlastRadiusForHostResponse,
+  NMMessageMcpContextPushResponse,
 } from "@secretbank/shared";
 import {
   NMDisconnected,
@@ -472,6 +474,56 @@ export class NMClient {
       { type: "blast_radius_for_host", host, session_token: sessionToken },
       "blast_radius_for_host_response",
     );
+  }
+
+  // -------------------------------------------------------------------------
+  // T-24-E-G4-1: MCP context push
+  // -------------------------------------------------------------------------
+
+  /**
+   * 현재 사이트 컨텍스트를 MCP server queue 에 push 한다.
+   *
+   * opt-in OFF (기본) 시 nm-host → bridge 에서 silently drop → ok: true 반환.
+   * opt-in ON 시 queue push + audit log 1건 기록.
+   *
+   * privacy 설계:
+   *   - credential plaintext ❌ — id/name/issuer 만 전송.
+   *   - 사용자 opt-in 없이 호출해도 backend 가 silently drop.
+   *
+   * T-CRED-1: session_token 첨부 필수.
+   */
+  async mcpContextPush(
+    host: string,
+    credentialMeta: CredentialMeta[],
+    sessionToken: string,
+  ): Promise<NMMessageMcpContextPushResponse> {
+    const timestamp = Date.now();
+    await this.sendMessage({
+      type: "mcp_context_push",
+      host,
+      credential_meta: credentialMeta,
+      timestamp,
+      session_token: sessionToken,
+    });
+    // mcp_context_push 는 ack-only 응답 (type 없는 단순 { ok: boolean })
+    // → RPC 패턴 대신 fire-and-wait-for-ack 처리.
+    return new Promise<NMMessageMcpContextPushResponse>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        unsub();
+        reject(new NMDisconnected("RPC timeout: mcp_context_push_ack"));
+      }, NMClient.RPC_TIMEOUT_MS);
+
+      const unsub = this.onMessage((msg) => {
+        // ack 응답은 type 필드 없이 { ok: boolean } 형태.
+        // nm-host 에서 bridge forward 후 bridge 응답을 그대로 반환.
+        const raw = msg as unknown as Record<string, unknown>;
+        if ("ok" in raw && typeof raw["ok"] === "boolean") {
+          clearTimeout(timer);
+          unsub();
+          resolve({ ok: raw["ok"] as boolean, error: raw["error"] as string | undefined });
+        }
+      });
+    });
   }
 
   // -------------------------------------------------------------------------

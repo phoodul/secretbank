@@ -90,7 +90,12 @@
     "extensionSessionRotateConfirmOk": "Apply",
     "extensionSessionRotateConfirmCancel": "Cancel",
     "extensionSessionSaved": "Session timeout updated",
-    "extensionSessionSaveFailed": "Failed to update session timeout"
+    "extensionSessionSaveFailed": "Failed to update session timeout",
+    "extensionMcpContextTitle": "MCP context push",
+    "extensionMcpContextDescription": "When enabled, the extension sends your current site and matched credential metadata to the local MCP server so AI editors (Claude, Cursor, etc.) can see what you are working on. No secret values are transmitted.",
+    "extensionMcpContextWarning": "Enabling this shares your browsing site context with AI editors via MCP. You can turn this off at any time.",
+    "extensionMcpContextEnabled": "MCP context push enabled",
+    "extensionMcpContextDisabled": "MCP context push disabled"
   },
   "inventory": {
     "title": "Inventory",

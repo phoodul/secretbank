@@ -32,6 +32,9 @@ use crate::commands::credentials::resolve_issuer_for_domain;
 use crate::context::AppContext;
 use crate::services::sync_emit::SharedDbChangeEmitter;
 
+// G-4-1: MCP context push — opt-in 체크에 사용
+use secretbank_audit::actions::EXT_MCP_CONTEXT_PUSH;
+
 // ---------------------------------------------------------------------------
 // 상수
 // ---------------------------------------------------------------------------
@@ -248,6 +251,8 @@ async fn dispatch(msg: &Value, bctx: &BridgeContext) -> Value {
         "incident_check_for_host" => handle_incident_check_for_host(msg, bctx).await,
         // T-24-E-G3-1: autofill/save 시 host blast radius preview
         "blast_radius_for_host" => handle_blast_radius_for_host(msg, bctx).await,
+        // T-24-E-G4-1: extension MCP context push
+        "mcp_context_push" => handle_mcp_context_push(msg, bctx).await,
         _ => serde_json::json!({ "ok": false, "error": "unknown_type" }),
     }
 }
@@ -1147,6 +1152,128 @@ async fn handle_blast_radius_for_host(msg: &Value, bctx: &BridgeContext) -> Valu
         "total": total,
         "hidden_count": hidden_count
     })
+}
+
+// ---------------------------------------------------------------------------
+// T-24-E-G4-1: mcp_context_push 핸들러
+// ---------------------------------------------------------------------------
+
+/// Extension 이 push 한 현재 사이트 컨텍스트를 MCP server queue 에 저장한다.
+///
+/// 요청 필드:
+///   - `host` (string): 정규화 전 host (예: "github.com")
+///   - `credential_meta`: `[{ id, name, issuer }]` (plaintext ❌)
+///   - `timestamp` (u64): Unix timestamp ms (extension 측 시각)
+///
+/// 응답:
+///   - `{ ok: true }` — 성공 ack (opt-in OFF 시 silently drop 후 ok: true 반환)
+///   - `{ ok: false, error: "..." }` — 검증 실패
+///
+/// 보안:
+///   - opt-in OFF (기본) → silently drop, audit log 없음.
+///   - opt-in ON → queue push + audit log 1건 (EXT_MCP_CONTEXT_PUSH).
+///   - credential plaintext ❌ — id/name/issuer 만 허용.
+async fn handle_mcp_context_push(msg: &Value, bctx: &BridgeContext) -> Value {
+    use secretbank_storage::sqlite::repositories::settings::SettingsRepo;
+
+    let host = msg.get("host").and_then(|v| v.as_str()).unwrap_or("");
+    let timestamp = msg.get("timestamp").and_then(|v| v.as_u64()).unwrap_or(0);
+
+    // credential_meta 파싱 — 실패해도 빈 Vec 로 진행 (데이터 최소화 원칙).
+    let credential_meta: Vec<serde_json::Value> = msg
+        .get("credential_meta")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+
+    // opt-in 체크 (SQLite settings "extension_mcp_context_opt_in").
+    let opt_in: bool = {
+        let repo = SettingsRepo::new(&bctx.pool);
+        match repo.get("extension_mcp_context_opt_in").await {
+            Ok(Some(val)) => val == "1",
+            _ => false, // 기본값 OFF
+        }
+    };
+
+    if !opt_in {
+        // opt-in OFF → silently drop (audit log 없음, ok: true 반환).
+        return serde_json::json!({ "ok": true });
+    }
+
+    if host.trim().is_empty() {
+        return serde_json::json!({ "ok": false, "error": "missing_host" });
+    }
+
+    // credential_meta 를 CredMeta 목록으로 변환 — 유효하지 않은 항목은 skip.
+    let cred_meta_for_audit: Vec<serde_json::Value> = credential_meta
+        .iter()
+        .filter_map(|item| {
+            let id = item.get("id").and_then(|v| v.as_str())?;
+            let name = item.get("name").and_then(|v| v.as_str())?;
+            let issuer = item.get("issuer").and_then(|v| v.as_str())?;
+            Some(serde_json::json!({ "id": id, "name": name, "issuer": issuer }))
+        })
+        .collect();
+
+    let cred_count = cred_meta_for_audit.len();
+
+    // audit log 기록 (EXT_MCP_CONTEXT_PUSH).
+    let payload = serde_json::json!({
+        "host": host,
+        "credential_count": cred_count,
+        "timestamp": timestamp,
+    })
+    .to_string();
+
+    bctx.audit
+        .record(
+            AuditActor::LocalUser,
+            EXT_MCP_CONTEXT_PUSH,
+            "host",
+            host.to_string(),
+            Some(payload),
+        )
+        .await;
+
+    // MCP server queue push.
+    // secretbank-mcp 는 별도 binary 이므로 in-process 큐 대신
+    // 프로세스 간 공유가 어렵다. MVP 구현: 브리지가 SQLite settings 에
+    // 최신 컨텍스트를 JSON 으로 저장 → MCP server 가 tools/call 시 읽는다.
+    // (in-process queue 는 MCP server 가 library 로 통합될 때 전환.)
+    //
+    // 저장 키: "mcp_site_context_queue" (JSON array, 최신 10개)
+    {
+        use secretbank_storage::sqlite::repositories::settings::SettingsRepo;
+
+        let repo = SettingsRepo::new(&bctx.pool);
+        let new_entry = serde_json::json!({
+            "host": host,
+            "credential_meta": cred_meta_for_audit,
+            "timestamp": timestamp,
+        });
+
+        // 기존 큐 읽기
+        let existing_raw = repo
+            .get("mcp_site_context_queue")
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or_default();
+
+        let mut queue: Vec<serde_json::Value> =
+            serde_json::from_str(&existing_raw).unwrap_or_default();
+
+        // FIFO capacity 10
+        queue.push(new_entry);
+        if queue.len() > 10 {
+            queue.remove(0);
+        }
+
+        let serialized = serde_json::to_string(&queue).unwrap_or_else(|_| "[]".to_string());
+        let _ = repo.set("mcp_site_context_queue", Some(&serialized)).await;
+    }
+
+    serde_json::json!({ "ok": true })
 }
 
 // ---------------------------------------------------------------------------

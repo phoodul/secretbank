@@ -90,7 +90,12 @@
     "extensionSessionRotateConfirmOk": "적용",
     "extensionSessionRotateConfirmCancel": "취소",
     "extensionSessionSaved": "세션 만료 시간이 업데이트됐습니다",
-    "extensionSessionSaveFailed": "세션 만료 시간 업데이트에 실패했습니다"
+    "extensionSessionSaveFailed": "세션 만료 시간 업데이트에 실패했습니다",
+    "extensionMcpContextTitle": "MCP 컨텍스트 푸시",
+    "extensionMcpContextDescription": "활성화하면 확장 프로그램이 현재 방문 사이트와 매칭된 credential 메타데이터를 로컬 MCP 서버로 전송합니다. AI 에디터(Claude, Cursor 등)가 작업 중인 서비스를 파악할 수 있게 됩니다. 시크릿 값은 전송되지 않습니다.",
+    "extensionMcpContextWarning": "이 기능을 활성화하면 현재 방문 사이트 정보가 MCP를 통해 AI 에디터와 공유됩니다. 언제든지 끌 수 있습니다.",
+    "extensionMcpContextEnabled": "MCP 컨텍스트 푸시 활성화됨",
+    "extensionMcpContextDisabled": "MCP 컨텍스트 푸시 비활성화됨"
   },
   "inventory": {
     "title": "인벤토리",
