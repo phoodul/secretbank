@@ -173,3 +173,28 @@ session_settings_saved:
 session_settings_save_failed:
   message: "会话超时更新失败"
   description: "设置保存失败时显示的提示"
+
+# ── D-3: SaveBanner ──
+save_banner_title_new:
+  message: "保存到Secretbank？"
+  description: "检测到新凭据时的SaveBanner标题"
+
+save_banner_title_update:
+  message: "更新已保存的密码？"
+  description: "可更新现有凭据时的SaveBanner标题"
+
+save_banner_action_save:
+  message: "保存"
+  description: "新凭据的SaveBanner主要按钮"
+
+save_banner_action_update:
+  message: "更新"
+  description: "现有凭据更新的SaveBanner主要按钮"
+
+save_banner_action_never:
+  message: "不再在此网站显示"
+  description: "永久隐藏该域名banner的按钮"
+
+save_banner_action_dismiss:
+  message: "稍后再说"
+  description: "不保存并临时dismiss的按钮"

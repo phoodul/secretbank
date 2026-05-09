@@ -13,6 +13,7 @@
 import { detectForms } from "../lib/form-detector";
 import { installWorldListener } from "../lib/world-bridge";
 import type { WorldBridgePayload } from "../lib/world-bridge";
+import { mountSaveBanner } from "../lib/save-banner-host";
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -74,7 +75,14 @@ export function installFormSubmitListener(
     if (onCapture) {
       onCapture(ctx);
     }
-    // D-3 에서 SaveBanner 호출 예정 — D-1 에서는 캡처만.
+    // D-3: dummy props 로 banner 표시 (신규/rotation 분기는 D-4 save-handler 에서 교체).
+    mountSaveBanner({
+      kind: "new",
+      siteName: ctx.domain,
+      onSave: () => {},
+      onNever: () => {},
+      onDismiss: () => {},
+    });
   }
 
   doc.addEventListener("submit", handleSubmit, { capture: true });

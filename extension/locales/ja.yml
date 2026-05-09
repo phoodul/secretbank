@@ -173,3 +173,28 @@ session_settings_saved:
 session_settings_save_failed:
   message: "セッションタイムアウトの更新に失敗しました"
   description: "設定保存失敗時に表示されるトースト"
+
+# ── D-3: SaveBanner ──
+save_banner_title_new:
+  message: "Secretbankに保存しますか？"
+  description: "新しいクレデンシャル検出時のSaveBannerタイトル"
+
+save_banner_title_update:
+  message: "保存済みパスワードを更新しますか？"
+  description: "既存クレデンシャル更新可能時のSaveBannerタイトル"
+
+save_banner_action_save:
+  message: "保存"
+  description: "新規クレデンシャル用SaveBanner主要ボタン"
+
+save_banner_action_update:
+  message: "更新"
+  description: "既存クレデンシャル更新用SaveBanner主要ボタン"
+
+save_banner_action_never:
+  message: "このサイトでは表示しない"
+  description: "このドメインでbannerを永久に非表示にするボタン"
+
+save_banner_action_dismiss:
+  message: "後で"
+  description: "保存せずに一時的にdismissするボタン"

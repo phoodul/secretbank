@@ -116,6 +116,20 @@ export const I18N_KEYS = {
   SESSION_SETTINGS_SAVED: "session_settings_saved",
   /** 설정 저장 실패 토스트 */
   SESSION_SETTINGS_SAVE_FAILED: "session_settings_save_failed",
+
+  // ── D-3: SaveBanner ──
+  /** SaveBanner 제목 — 신규 크리덴셜 */
+  SAVE_BANNER_TITLE_NEW: "save_banner_title_new",
+  /** SaveBanner 제목 — 기존 크리덴셜 업데이트 */
+  SAVE_BANNER_TITLE_UPDATE: "save_banner_title_update",
+  /** SaveBanner 기본 버튼 — 신규 저장 */
+  SAVE_BANNER_ACTION_SAVE: "save_banner_action_save",
+  /** SaveBanner 기본 버튼 — 업데이트 */
+  SAVE_BANNER_ACTION_UPDATE: "save_banner_action_update",
+  /** SaveBanner 버튼 — 이 사이트에서 영구 숨김 */
+  SAVE_BANNER_ACTION_NEVER: "save_banner_action_never",
+  /** SaveBanner 버튼 — 일시 dismiss */
+  SAVE_BANNER_ACTION_DISMISS: "save_banner_action_dismiss",
 } as const;
 
 /**

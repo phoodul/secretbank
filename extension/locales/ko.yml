@@ -173,3 +173,28 @@ session_settings_saved:
 session_settings_save_failed:
   message: "세션 만료 시간 업데이트에 실패했습니다"
   description: "설정 저장 실패 시 표시되는 토스트"
+
+# ── D-3: SaveBanner ──
+save_banner_title_new:
+  message: "Secretbank에 저장하시겠어요?"
+  description: "새 크리덴셜 감지 시 SaveBanner 제목"
+
+save_banner_title_update:
+  message: "저장된 비밀번호를 업데이트할까요?"
+  description: "기존 크리덴셜 업데이트 가능 시 SaveBanner 제목"
+
+save_banner_action_save:
+  message: "저장"
+  description: "새 크리덴셜용 SaveBanner 기본 버튼"
+
+save_banner_action_update:
+  message: "업데이트"
+  description: "기존 크리덴셜 업데이트용 SaveBanner 기본 버튼"
+
+save_banner_action_never:
+  message: "이 사이트에서 다시 묻지 않기"
+  description: "해당 도메인에서 banner 를 영구 숨기는 버튼"
+
+save_banner_action_dismiss:
+  message: "나중에"
+  description: "저장 없이 일시적으로 dismiss 하는 버튼"

@@ -173,3 +173,28 @@ session_settings_saved:
 session_settings_save_failed:
   message: "Failed to update session timeout"
   description: "Toast shown when saving session settings fails"
+
+# ── D-3: SaveBanner ──
+save_banner_title_new:
+  message: "Save to Secretbank?"
+  description: "SaveBanner title when a new credential is detected"
+
+save_banner_title_update:
+  message: "Update saved password?"
+  description: "SaveBanner title when an existing credential can be updated"
+
+save_banner_action_save:
+  message: "Save"
+  description: "SaveBanner primary button for new credential"
+
+save_banner_action_update:
+  message: "Update"
+  description: "SaveBanner primary button for existing credential update"
+
+save_banner_action_never:
+  message: "Never for this site"
+  description: "SaveBanner button to permanently suppress banner for this domain"
+
+save_banner_action_dismiss:
+  message: "Not now"
+  description: "SaveBanner button to temporarily dismiss without saving"
