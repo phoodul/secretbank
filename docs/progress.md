@@ -2,7 +2,38 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-09 (Night mode) — **T-24-E-B8 완료 (15/43 sub-tasks).**
+- **Time:** 2026-05-09 (Night mode 종료 — 새 세션 시작 준비) — **🎉 Phase C 클로즈 (25/53 sub-tasks, 47%)**
+- **Phase:** Phase 3 — Implementation. M24-E 풀구현 (Phase A~G 53 sub-task, 11주 일정)
+- **이번 Night mode 세션 누적 commits**:
+  - Phase A 7/7 ✅ (A-1 WXT 골격 → A-7 CI 빌드 매트릭스)
+  - Phase B 10/10 ✅ (B-1 NM Host crate → B-10 3 OS smoke + Win11 ping/pong)
+  - **Phase C 8/8 ✅ (C-1 form-detector → C-8 closed shadow + clickjack 방어)**
+  - GATE 1 (사양) + GATE 2 (계획) + GATE 2-bis (Phase G 신설) 모두 일괄 승인
+  - **점검 7건 fix** (CI all green): Linux installer + shared smoke type drift + extension typecheck (chrome types) + EE Relay workspace 격리 + E2E 리브랜드 + Mutex serialize + Frontend prettier
+- **Phase C 핵심 차별** (1P / Bitwarden / Dashlane 동등 또는 우위):
+  - DOM Clickjacking 방어 3 계층 (closed shadow + MutationObserver + composedPath) — 2025 Marek Tóth 발표 대응 (NordPass/ProtonPass/Dashlane 동일)
+  - subdomain-safe phishing 방어 (matchesIssuer)
+  - cross-realm 안전 (instanceof 대신 tagName)
+  - Shadow DOM 재귀 + composedPath fallback (closed shadow 도 event-driven cover)
+  - same-origin iframe 만 traverse (cross-origin SecurityError skip)
+  - autocomplete 우선순위 + name/id regex fallback (5 fixture 검증)
+- **누적 검증 (회귀 0)**:
+  - cargo test --workspace --lib: **663+ PASS** (586 → +77)
+  - pnpm vitest run (root): 628 PASS
+  - pnpm --filter @secretbank/extension test: **219 PASS** (Phase A 6 → C 219, +213)
+  - pnpm --filter @secretbank/shared test: 100 PASS
+  - extension build: chrome-mv3 + firefox-mv2 OK
+  - typecheck (root + extension + shared + ee/secretbank-relay): 0 error
+  - clippy / fmt / lint / format:check: clean
+  - **CI all green** — Frontend / Rust / EE Relay / E2E smoke 모두 success (`2ab52f8` 부터)
+- **다음 세션 시작점**:
+  1. Phase D — save dialog (6 sub-tasks, MEDIUM 위험): D-1 form submit listener + XHR/fetch hook → D-2 content↔ISOLATED postMessage → D-3 SaveBanner (Shadow DOM 재사용) → D-4 save-handler (신규/rotation 분기) → D-5 Tauri credential 저장 → D-6 popup SaveDialog
+  2. 사용자 액션 대기 (B-9 audit 옵션 A vs C 결정, B-10 3 OS 수동 검증 옵션)
+  3. Phase E (generator + Site Logo) → Phase G (차별화) → Phase F (cross-browser + 스토어)
+- **/resume-project 시 즉시 사용**: `docs/task.md` 마일스톤 표 = `🔄 25/53 완료`. 상세 = `docs/task_m24e.md` + `docs/task_m24e_phase_g.md`. 사양 = `docs/integrator_report_m24e.md` (GATE 1) + `docs/architecture.md` 10장 + `docs/architecture_phase_g.md`.
+- **Night mode 운용 결과**: 한 세션에서 Phase A 7 + Phase B 10 + Phase C 8 = 25 sub-task + GATE 1/2/2-bis + 7 CI fix 처리. implementator agent 호출 상한 도달 후 Phase C-1~C-8 = orchestrator 직접 구현.
+
+### 이전 — 2026-05-09 (Night mode 진행 중, Phase B 진입 직전)
 - **Phase:** Phase 3 — Implementation. M24-E 풀구현 (Phase A~F 43 sub-task, 8주 일정).
 - **T-24-E-B8 완료 ✅** (`fc1809d`):
   - `secretbank-audit/src/actions.rs` (신규): extension.* action 상수 11종 정의
