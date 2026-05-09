@@ -1,4 +1,4 @@
-# Tasks — Secretbank
+﻿# Tasks — Secretbank
 
 > 작성자: Planner Agent
 > 작성일: 2026-04-22
@@ -53,7 +53,7 @@
 | M22 | **JetBrains plugin (IDEA/WebStorm/GoLand/PyCharm/Rider/CLion)** | TBD | TBD | ✅ **M22 v5 완료 — 마일스톤 클로즈** (v1 스켈레톤 / v2 Tool Window 3-tab+ProjectStartup / v3 Graph 탭 JCEF / v4 JS↔Kotlin 브리지+더블클릭 액션 / **v5 JBPopupMenu 컨텍스트 메뉴 (kind 별 메뉴 아이템) + Blast radius 시각화 (primary/secondary/tertiary 3단계 색상 + 비영향권 dim + source 글로우 + 영향 노드 수 배너) + Secretbank blast-radius CLI subcommand + 키보드 (Ctrl+F/Esc/Ctrl+0) + Clear highlight 버튼**). |
 | **M23** | **Vault Charter (recovery 메커니즘) — 출시 블로커** | T-23-A~E | 5 (+1 hotfix) | ✅ **M23 완료 — 마일스톤 클로즈** (A codec crate / B-1 vault format v2 / B-2 initialize_with_charter / B-3 recover_with_charter / B-4 Tauri 커맨드 + audit / C 발급 UI + PDF / D recovery flow UI / E-1 cooldown sidecar / E-2 cooldown UI / unlock anim hotfix). sync 알림은 M9 audit 확장으로 분리. |
 | **M24** | **General password vault — Unified Bento Inventory** | T-24-A~E + Phase 1/1.5/2/3 | 5 + sub | 🔄 **Phase 1 ✅ + 1.5 ✅ + 2-1 ✅ + 2-2A ✅ + 2-2C ✅ + 2-3-a ✅ + 2-4-a ✅ + 2-4-d ✅ + 2-2B-1 ✅ + 2-2B-2 ✅ + 2-2B-3 ✅ + 2-2B-4 ✅ + 2-2B-5 ✅ + 3-A-1 ✅ + 3-A-2 ✅ + 3-A-3 ✅ + 3-A-4 ✅ + 3-A-5 ✅ + 3-A-6 ✅ (2026-05-07)** — Phase 2-2B Watchtower 풀체인 + Phase 3-A 신용카드 backend (CredentialKind::CreditCard + 0012 마이그레이션 + CreditCardMetaRepo) + frontend BIN 유틸 (detectBrand prefix 6자만 / getBrandGradient oklch / formatCardNumber 4-4-4-4 + Amex 4-6-5 / maskCardNumber) + **CreditCardVisual 3D flip 컴포넌트 (motion/react useReducedMotion + 파생 flipped 상태로 GATE 2-4 구조적 보장) + CreditCardForm (자연 순서 + BIN 실시간 감지 + react-number-format PatternFormat + GATE 2-5 청구주소 / GATE 2-6 PIN ❌ / Zod refine 과거 ❌) + CreditCard 4 Tauri commands (create_credit_card / list_credit_cards / reveal_card_number / reveal_cvc with 30s 자동 클리어 + audit log + B.5-1 SecretBox vault.put_secret/get_secret) + CreditCardDetail (FieldRow 6필드 + reveal/copy/toggle + unmount clearTimeout)**. 다음: Phase 3-A-6 (BentoCard 통합 + i18n 4 로케일). |
-| **M24-E** | **Browser Extension (Phase A~F 풀구현)** | T-24-E-A1~F8 | 43 sub-tasks | 🔄 **2/43 완료** — GATE 1 + GATE 2 일괄 승인 (2026-05-09). 상세 명세 = `docs/task_m24e.md`. Phase A (WXT 모노레포) → B (NM Host + 페어링, HIGH 위험) → C (form 감지) → D (save dialog) → E (generator + Site Logo) → F (cross-browser + 스토어 + audit). 8주 일정. |
+| **M24-E** | **Browser Extension (Phase A~F 풀구현)** | T-24-E-A1~F8 | 43 sub-tasks | 🔄 **5/43 완료** — GATE 1 + GATE 2 일괄 승인 (2026-05-09). 상세 명세 = `docs/task_m24e.md`. Phase A (WXT 모노레포) → B (NM Host + 페어링, HIGH 위험) → C (form 감지) → D (save dialog) → E (generator + Site Logo) → F (cross-browser + 스토어 + audit). 8주 일정. |
 | **M25** | **Breach Broadcast (EE relay → 이메일/푸시 fanout)** | TBD | TBD | ⏳ placeholder (M11 모바일 전 v1 = 이메일, M11 후 v2 = 모바일 푸시 합류). 메타데이터 broadcast (Zero-Knowledge 와 양립). [project-decisions 2026-05-06] |
 
 ---
@@ -2509,6 +2509,7 @@ _문서 끝._
 | Task ID | 제목 | 완료일 | 커밋 해시 |
 | :------ | :--- | :----- | :-------- |
 | T-24-E-A1 | WXT v0.20 + Tailwind v4 + shadcn/ui Button — extension/ 신규 워크스페이스 + Chrome MV3/Firefox MV2 멀티타깃 + 단일 eslint 구조 (루트 분리) + ext:dev/build/test 편의 스크립트 | 2026-05-09 | `bd126bb` |
-| T-24-E-A2 | packages/shared 워크스페이스 신설 + 공유 타입 (CredentialKind / IssuerRecipe / PairingState / SessionToken / NMMessage) 정의. pnpm-workspace.yaml packages/* 추가 + extension dep 연결 + smoke test 11 PASS | 2026-05-09 | (pending) |
-| T-24-E-A3 | password-generator 모듈 이관 (shared/src/password-generator): Diceware 6단어 4lang (BIP39) + zxcvbn-ts strength + recipe 기반 무작위 생성. 단위 테스트 PASS | 2026-05-09 | `(pending)` |
+| T-24-E-A2 | packages/shared 워크스페이스 신설 + 공유 타입 (CredentialKind / IssuerRecipe / PairingState / SessionToken / NMMessage) 정의. pnpm-workspace.yaml packages/* 추가 + extension dep 연결 + smoke test 11 PASS | 2026-05-09 | `7d3191d` |
+| T-24-E-A3 | password-generator 모듈 이관 (shared/src/password-generator): Diceware 6단어 4lang (BIP39) + zxcvbn-ts strength + recipe 기반 무작위 생성. 단위 테스트 PASS | 2026-05-09 | `f8a8a6f` |
 | T-24-E-A4 | shared/src/validation: credential (discriminated union api_key/password/credit_card) + recipe (min≤max refine) + pairing (4 variant placeholder) Zod schemas. 48 테스트 PASS (shared 100/52 → 100/100, root 614 PASS 회귀 0) | 2026-05-09 | `a983000` |
+| T-24-E-A5 | @wxt-dev/i18n 4로케일 통합 (en/ko/ja/zh_CN) + I18N_KEYS source-of-truth + drift detection 테스트 21건. extension/locales/*.yml 4개 + extension/lib/i18n.ts 헬퍼 + packages/shared/i18n-keys.ts 상수 + wxt.config.ts 모듈 + vitest 전원 PASS. 모든 검증 회귀 0 (shared 100/52 → 100/100, extension 6 → 27, root 614, rust lib 586, cargo clippy 0) | 2026-05-09 | `d093ffe` |
