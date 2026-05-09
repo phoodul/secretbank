@@ -18,6 +18,7 @@ path = "src/lib.rs"
 tokio = { workspace = true }
 
 # JSON 직렬화
+serde = { workspace = true }
 serde_json = { workspace = true }
 
 # 에러 처리
@@ -30,6 +31,15 @@ tracing-subscriber = { workspace = true }
 # B-4 페어링에서 실제 사용 — B-1 에서는 의존만 추가
 secretbank-crypto = { path = "../secretbank-crypto" }
 
+# B-2: 설치 경로 해석 (3 OS 통일 helper)
+dirs = "5"
+
+[target.'cfg(windows)'.dependencies]
+# B-2 Windows 레지스트리 등록
+winreg = "0.52"
+
 [dev-dependencies]
 tokio = { workspace = true }
 serde_json = { workspace = true }
+# B-2 integration test: 임시 디렉토리 기반 mock filesystem
+tempfile = "3"
