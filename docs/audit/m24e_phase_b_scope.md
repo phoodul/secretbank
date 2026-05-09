@@ -1,7 +1,12 @@
 # M24-E Phase B 외부 보안 audit scope
 
 작성: 2026-05-09 (T-24-E-B9)
-상태: scope 문서 — 사용자 액션 (업체 견적 / 발주 / Q5 옵션 결정) 대기
+**상태 갱신: 2026-05-10** — **옵션 C 채택 (skip + Phase F 종합 audit 통합)**
+
+> **DECISION [2026-05-10]**: 옵션 A (Phase B 단독 audit) → **옵션 C 로 변경**. ARR 0 단계 자가 부담 비합리.
+> Phase F 출시 직전 종합 audit 1회로 통합. 그 사이 NLNet NGI Zero PET (Radically Open Security 무료 audit) 신청 = Phase F 직전 8~12개월 전 시작.
+> 본 scope 문서는 보존 — 향후 종합 audit / NLNet 신청 시 Phase B 영역 명세로 재활용.
+> 상세 결정 근거: `docs/project-decisions.md` [2026-05-10] 항목.
 
 ## 1. Audit 목적
 

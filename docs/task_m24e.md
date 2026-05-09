@@ -763,16 +763,14 @@
 | T-24-E-B6   | 데스크톱 PairingApprovalDialog                            | 2026-05-09 | `21ecccb` |
 | T-24-E-B7   | session token + Settings                                  | 2026-05-09 | `ba92e60` |
 | T-24-E-B8   | NM Host audit                                             | 2026-05-09 | `fc1809d` |
-| T-24-E-B9   | 외부 audit (Phase B)                                      | -          | -         |
-| T-24-E-B10  | 3 OS 수동 검증                                            | -          | -         |
-| T-24-E-C1   | form-detector                                             | -          | -         |
-| T-24-E-C2   | MutationObserver                                          | -          | -         |
-| T-24-E-C3   | Shadow DOM 처리                                           | -          | -         |
-| T-24-E-C4   | autofill                                                  | -          | -         |
-| T-24-E-C5   | autofill 트리거 옵션                                      | -          | -         |
-| T-24-E-C6   | multi-step login                                          | -          | -         |
-| T-24-E-C7   | iframe / cross-origin                                     | -          | -         |
-| T-24-E-C8   | Clickjack 방어                                            | -          | -         |
+| T-24-E-B9   | 외부 audit (Phase B) — **옵션 C 채택 [2026-05-10]** (skip + Phase F 통합) | 2026-05-09 | `ef03358` |
+| T-24-E-B10  | 3 OS 수동 검증 — **옵션 B 채택 [2026-05-10]** (CI smoke + Win11 자동 충분) | 2026-05-09 | `ef03358` |
+| T-24-E-C1   | form-detector (autocomplete + 5 fixtures)                 | 2026-05-09 | `25213d7` |
+| T-24-E-C2   | SPA watcher (MutationObserver + History hook)             | 2026-05-09 | `cfdba3d` |
+| T-24-E-C3   | Shadow DOM 재귀 + composedPath                            | 2026-05-09 | `739ac87` |
+| T-24-E-C4   | autofill + domain-match (T4 phishing 방어)                | 2026-05-09 | `928a798` |
+| T-24-E-C5   | autofill trigger (focus + Cmd/Ctrl+Shift+L)               | 2026-05-09 | `d619e79` |
+| T-24-E-C6+C7+C8 | multi-step + iframe + closed shadow + clickjack 방어  | 2026-05-09 | `f66b737` |
 | T-24-E-D1   | form submit + XHR/fetch hook                              | -          | -         |
 | T-24-E-D2   | postMessage origin 검증                                   | -          | -         |
 | T-24-E-D3   | SaveBanner                                                | -          | -         |
@@ -793,7 +791,7 @@
 | T-24-E-F7   | Edge Add-ons                                              | -          | -         |
 | T-24-E-F8   | 외부 audit 결과 반영                                      | -          | -         |
 
-**총 sub-task: 43** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 — F 의 sub-task 8 중 일부는 외부 작업 의존이라 commit 단위 카운팅에 따라 가변. 마일스톤 표 표기는 `🔄 12/43 완료`).
+**총 sub-task: 53** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 + G 10 = 54 nominal; B-9 옵션 C 채택으로 audit scope 문서만 작성 → B-9 / B-10 = 단일 commit `ef03358`. C-6/C-7/C-8 = 단일 commit `f66b737`. 실제 commit 단위 = 25 commits / 53 sub-tasks). **마일스톤 표 표기**: `🔄 25/53 완료` (Phase A 7 + B 10 + C 8).
 
 > 정정: 위 표는 43 sub-task. project-decisions [2026-05-09] 에 표기된 "약 50 sub-task" 추정 대비 7 차이. 이는 Phase F 의 외부 audit / 스토어 제출이 단일 sub-task 단위로 합쳐졌기 때문 (commit 단위로는 audit 발견 사항 별로 추가 sub-task 가 생성될 수 있음 — F8 의 가변성).
 

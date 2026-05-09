@@ -1,5 +1,39 @@
 # Work Log
 
+## 2026-05-10 — M24-E B-9 옵션 C / B-10 옵션 B 확정 + docs 정리
+
+### 결정 요약
+
+- **B-9 외부 보안 audit**: 옵션 C 채택 (skip + Phase F 종합 audit 통합)
+- **B-10 3 OS 수동 검증**: 옵션 B 채택 (CI smoke + Win11 자동 ping/pong 충분)
+- **Audit 로드맵**: 1000 paid (ARR $20k+) 도달 전 자가 부담 ❌ → NLNet NGI Zero PET (Radically Open Security 무료 audit) 신청 = Phase F 직전 8~12개월 전 시작
+
+### 결정 근거
+
+- 사용자 통찰: "수만~수십만 USD 자가 부담 비합리, 1000 paid 사용자 시점이 audit 임계점"
+- 검증: Cure53 Phase B 단독 $15k~$30k / Trail of Bits 종합 $50k~$200k
+- 1000 paid 까지 신뢰 구축 4가지 = OSS 공개 + 무료 펀딩 (NLNet/OTF) + 자기 검증 (KAT/fuzzing/CodeQL) + responsible disclosure
+
+### 갱신 파일
+
+| 파일 | 변경 |
+| :--- | :--- |
+| `docs/project-decisions.md` | [2026-05-10] B-9/B-10 결정 + audit 로드맵 + 1000 paid 신뢰 구축 4 방법 |
+| `docs/audit/m24e_phase_b_scope.md` | DECISION 박스 추가 — 옵션 A 권고 → 옵션 C 채택 |
+| `docs/task.md` | M24-E 진행 현황 표 19개 sub-task 매핑 보충 (A6/A7/B1-B4/B6-B10/C1-C8) + Status `🔄 25/53 완료` |
+| `docs/task_m24e.md` | B9/B10 + C1~C8 매핑 + 53 sub-task 카운팅 정정 |
+| `docs/progress.md` | 2026-05-10 체크포인트 추가, 다음 = Phase D |
+
+### 검증 결과
+
+- 코드 변경 없음 (docs only). 기존 검증 결과 유지: cargo test --workspace --lib 663+ PASS / pnpm vitest 628 PASS / extension 219 PASS / typecheck 0 / clippy 0 / format ✅
+
+### 다음
+
+- Phase D 진입 — D-1 form submit listener + XHR/fetch hook 부터
+
+---
+
 ## 2026-05-09 — T-24-E-B7 세션 토큰 (HMAC-SHA256) + Settings UI 완료
 
 ### 큰 줄거리

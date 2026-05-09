@@ -2,7 +2,17 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-09 (Night mode 종료 — 새 세션 시작 준비) — **🎉 Phase C 클로즈 (25/53 sub-tasks, 47%)**
+- **Time:** 2026-05-10 — **B-9 옵션 C / B-10 옵션 B 확정 + docs 갱신 완료. Phase D 진입 준비 완료.**
+- **이번 세션 결정**:
+  - **B-9 외부 보안 audit = 옵션 C 채택** (skip + Phase F 종합 audit 통합)
+  - **B-10 3 OS 수동 검증 = 옵션 B 채택** (CI smoke + Win11 자동 ping/pong 충분)
+  - **Audit 로드맵**: ARR $20k+ (1000 paid) 까지 자가 부담 ❌ → NLNet NGI Zero PET 신청 (Phase F 직전, 8~12개월 cycle) = 무료 audit 경로
+  - **갱신 파일**: `docs/project-decisions.md` [2026-05-10] / `docs/audit/m24e_phase_b_scope.md` (DECISION 박스) / `docs/task.md` (M24-E 진행 현황 표 19개 누락 보충 + Status `🔄 25/53 완료`) / `docs/task_m24e.md` (B9/B10 + C1~C8 매핑) / `docs/progress.md`
+- **다음 세션 시작점**:
+  1. **Phase D — save dialog (6 sub-tasks, MEDIUM 위험)**: D-1 form submit listener + XHR/fetch hook → D-2 content↔ISOLATED postMessage origin 검증 → D-3 SaveBanner (Shadow DOM 재사용) → D-4 save-handler (신규/rotation 분기) → D-5 Tauri credential 저장 → D-6 popup SaveDialog
+  2. 사용자 액션 대기 = 없음 (B-9 / B-10 모두 클로즈)
+
+### 이전 — 2026-05-09 (Night mode 종료) — 🎉 Phase C 클로즈 (25/53 sub-tasks, 47%)
 - **Phase:** Phase 3 — Implementation. M24-E 풀구현 (Phase A~G 53 sub-task, 11주 일정)
 - **이번 Night mode 세션 누적 commits**:
   - Phase A 7/7 ✅ (A-1 WXT 골격 → A-7 CI 빌드 매트릭스)

@@ -5,6 +5,73 @@
 
 ---
 
+## [2026-05-10] **M24-E B-9 / B-10 클로즈 + Audit 로드맵** — 옵션 C 채택 + NLNet 무료 audit 경로
+
+### 사용자 통찰
+
+> "수만~수십만 USD 라면 내가 감당할 수 없는 수준인데, 실제 사용자가 그렇게 많지 않은 상태에서도 그렇게 해야 하는 건가?"
+> "년간 20USD 사용자가 적어도 1000명 정도는 있어야 audit 를 받을 수 있는 거 아냐? 그 시점까지는 어떻게 하지?"
+
+### 핵심 결정
+
+**B-9 외부 보안 audit**: **옵션 C 채택** (skip + Phase F 종합 audit 으로 통합)
+
+- 2026-05-09 작성된 `docs/audit/m24e_phase_b_scope.md` 의 옵션 A 권고 → 옵션 C 로 갱신
+- 이유: pre11 무료 베타 단계, ARR 0, 자가 부담 비합리
+- Phase B 단독 audit 비용 ($15k~$30k Cure53 / $20k~$80k 종합) → 출시 직전 종합 audit 한 번에 통합
+
+**B-10 3 OS 수동 검증**: **옵션 B 채택** (CI smoke + Win11 자동 ping/pong 으로 충분)
+
+- macOS / Ubuntu 수동 검증 SKIP — `commit ef03358` 의 `future B-10.5` 표기 유지
+- hotfix 발견 시점에 별도 sub-task 화 (사용자가 macOS / Linux 환경 갖추거나 외부 사용자 발견 시점)
+
+### Audit 자가 부담 임계점 (사용자 직관 검증)
+
+| 단계                        | 사용자          | ARR (연 $20)    | audit 가능성                                |
+| :-------------------------- | :-------------- | :-------------- | :------------------------------------------ |
+| 현재 (pre11)                | 0~10            | ~$0             | ❌                                          |
+| 베타 종료                   | 100~500         | ~$2k~$10k       | ❌ — 운영비 미달                            |
+| **임계점**                  | **1000~2000**   | **~$20k~$40k**  | ✅ **Cure53 Phase B 단독 ($15k~$30k) 가능** |
+| 성숙기                      | 5000+           | ~$100k+         | ✅ Trail of Bits 종합 + bug bounty          |
+
+### 1000 paid 도달 전 신뢰 구축 4가지 방법
+
+1. **OSS 공개 자체가 audit 신호** (AGPL-3.0 셀링 포인트) — 1P/Bitwarden 과 차별점, KeePassXC/Bitwarden 도 자가 부담 audit 전 수년간 이 방법으로 사용자 모음
+2. **무료 audit 펀딩 채널** — Secretbank 가 정확히 타깃:
+   - **NLNet NGI Zero PET** ⭐ — €5k~€50k + Radically Open Security audit (사이클 6~12개월). **Phase F 직전 신청 = 정식 v1.0 시점에 결과**
+   - **OTF Red Team Lab** — Cure53 / iSEC Partners 직접 audit ($0)
+   - **Sovereign Tech Fund** (EU/DE OSS) / **GitHub Security Lab CodeQL** ($0) / **Mozilla MOSS/SOS** ($0~$10k)
+3. **자기 검증 강화** — KAT (RFC 7748 X25519 / RFC 7539 ChaCha20-Poly1305) + `cargo-fuzz` + MIRI + `rustsec audit` + `cargo deny` + CodeQL/Semgrep. 외부 audit 의 70~80% 효과
+4. **Responsible disclosure 채널** — HackerOne/Bugcrowd 채널만 운영 (bounty 없이, 비용 0). 1000 사용자 시점부터 소액 bounty ($50~$500)
+
+### 권장 로드맵
+
+```
+지금~정식 v1.0:
+  → 자기 검증 강화 (KAT + fuzzing + CodeQL/Semgrep)
+  → THREAT_MODEL.md 풀공개 + SECURITY.md PGP/responsible disclosure (이미 존재)
+  → Phase F 직전: NLNet NGI Zero PET 신청 (~12개월 cycle)
+
+v1.0 ~ 1000 paid:
+  → NLNet audit 결과 수령 → 사용자 신뢰 자료 활용
+
+1000+ paid (ARR $20k+):
+  → Cure53 Phase B 단독 audit 자가 부담 ($15k~$30k)
+  → bug bounty 본격 시작
+
+5000+ paid (ARR $100k+):
+  → Trail of Bits 종합 audit
+```
+
+### 영향 범위
+
+- **task_m24e.md** B-9 / B-10 — Status 갱신 (옵션 C / 옵션 B 확정)
+- **docs/audit/m24e_phase_b_scope.md** — Status 박스 갱신 (scope → DECISION-옵션 C)
+- **task.md** M24-E 진행 현황 표 — 누락 19개 sub-task + B-9/B-10 매핑 commit `ef03358` 추가
+- **Phase F 진입 시 액션 추가**: NLNet 신청 (사용자 액션, 8~12개월 전 시작 필요)
+
+---
+
 ## [2026-05-09] **M24-E Phase G 신설** — Secretbank 만의 차별화 기능 통합 (1P 의존성 제거)
 
 ### 사용자 통찰 (Phase B-8 진행 중 제기)

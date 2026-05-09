@@ -2220,7 +2220,7 @@
 
 - **Milestone**: M24-E (M24 와 별개 마일스톤으로 격상)
 - **Priority**: Tier 1 (출시 blocker)
-- **Status**: 🔄 0/43 완료 — GATE 1 + GATE 2 일괄 승인
+- **Status**: 🔄 25/53 완료 — Phase A 7/7 ✅ + Phase B 10/10 ✅ + Phase C 8/8 ✅ + GATE 1/2/2-bis 승인. **B-9 옵션 C / B-10 옵션 B 확정 [2026-05-10]**. 다음 = Phase D (save dialog).
 - **상세 명세**: **`docs/task_m24e.md`** (Phase A~F 43 sub-task, DoD + Files + Tests + Depends + Risk 풀 명세)
 - **구현 계획**: **`docs/implementation_plan_m24e.md`** (Phase 진입 순서 + 검증 절차 + 위험 완화 + audit 일정 + commit 운용)
 - **아키텍처**: `docs/architecture.md` 10장 (M24-E 모노레포 / 5-layer 통신 / 페어링 / Tiered Protection / 위협 모델)
@@ -2513,4 +2513,20 @@ _문서 끝._
 | T-24-E-A3 | password-generator 모듈 이관 (shared/src/password-generator): Diceware 6단어 4lang (BIP39) + zxcvbn-ts strength + recipe 기반 무작위 생성. 단위 테스트 PASS | 2026-05-09 | `f8a8a6f` |
 | T-24-E-A4 | shared/src/validation: credential (discriminated union api_key/password/credit_card) + recipe (min≤max refine) + pairing (4 variant placeholder) Zod schemas. 48 테스트 PASS (shared 100/52 → 100/100, root 614 PASS 회귀 0) | 2026-05-09 | `a983000` |
 | T-24-E-A5 | @wxt-dev/i18n 4로케일 통합 (en/ko/ja/zh_CN) + I18N_KEYS source-of-truth + drift detection 테스트 21건. extension/locales/*.yml 4개 + extension/lib/i18n.ts 헬퍼 + packages/shared/i18n-keys.ts 상수 + wxt.config.ts 모듈 + vitest 전원 PASS. 모든 검증 회귀 0 (shared 100/52 → 100/100, extension 6 → 27, root 614, rust lib 586, cargo clippy 0) | 2026-05-09 | `d093ffe` |
+| T-24-E-A6 | popup 골격 (ThemeProvider + Tab 라우팅) — extension/entrypoints/popup/{App,Settings}.tsx + Tailwind v4 + shadcn/ui Button | 2026-05-09 | `edcc2e3` |
+| T-24-E-A7 | extension CI 빌드 매트릭스 — `.github/workflows/extension-ci.yml` 신규 (Chrome MV3 + Firefox MV2) | 2026-05-09 | `dcd686b` |
+| T-24-E-B1 | secretbank-nm-host crate (stdio 4-byte LE header + 1MB 상한 + ping/pong) — Rust 신규 crate + 단위 테스트 | 2026-05-09 | `3198bf1` |
+| T-24-E-B2 | NM Host installer (Win11 registry / macOS LaunchAgents / Linux ~/.config) 3 OS 등록·해제 + 단위 테스트 | 2026-05-09 | `7145f2d` |
+| T-24-E-B3 | NMClient TypeScript wrapper — chrome.runtime.connectNative + reconnect + Port lifecycle | 2026-05-09 | `465c82c` |
+| T-24-E-B4 | X25519 ECDH + ChaCha20-Poly1305 페어링 protocol 구현 — `secretbank-pairing` crate + KAT (RFC 7748) + cross-language vector | 2026-05-09 | `8b5275f` |
 | T-24-E-B5 | PairingDialog 4단계 상태 머신 (uninitialized/pending/paired/error) + chrome.storage.local typed wrapper (storage.ts, Zod schema) + pairing.ts 헬퍼 (restoreFromStorage/saveToStorage/clearStorage) + i18n 9신규 키 4로케일 + drift detection 28키. 테스트 117/117 PASS (신규 25케이스), 회귀 0. T7 위협 모델 주석 문서화 | 2026-05-09 | `6ad32f7` |
+| T-24-E-B6 | 확장 페어링 dialog Tauri 커맨드 + age vault 에 device-bound priv key 보관 (ext_pairing.rs) | 2026-05-09 | `21ecccb` |
+| T-24-E-B7 | HMAC-SHA256 session token (ST1-12) + 4 Tauri 커맨드 (issue/verify/rotate/Settings) + Settings UI 5-option radio + i18n 14키 4로케일 | 2026-05-09 | `ba92e60` |
+| T-24-E-B8 | NM Host audit log 통합 — 신규 action 11종 (`extension.*`) + EXT_PAIRING_REQUEST / EXT_SESSION_REVOKE 추가 + 단위 테스트 BA1-5 / EP11 / EX9 | 2026-05-09 | `fc1809d` |
+| T-24-E-B9+B10 | Phase B 마무리 — audit scope 문서 (`docs/audit/m24e_phase_b_scope.md`) + 3 OS smoke 매트릭스 + Win11 자동 ping/pong + nm-client.test.ts smoke 신규. **B-9 = 옵션 C (skip + Phase F 통합) 확정 [2026-05-10]** / **B-10 = 옵션 B (CI smoke 충분) 확정** | 2026-05-09 | `ef03358` |
+| T-24-E-C1 | extension/lib/form-detector.ts (autocomplete 우선순위 + name/id regex fallback + 5 fixtures: Google / GitHub / Stripe / 가짜 phishing / multi-step) | 2026-05-09 | `25213d7` |
+| T-24-E-C2 | SPA watcher (MutationObserver + History API hook + debounce 100ms) — SPA 환경 form 재감지 | 2026-05-09 | `cfdba3d` |
+| T-24-E-C3 | Shadow DOM 재귀 traverse + composedPath 헬퍼 (open shadow root) | 2026-05-09 | `739ac87` |
+| T-24-E-C4 | autofill + domain-match (T4 phishing 방어, subdomain-safe matchesIssuer) | 2026-05-09 | `928a798` |
+| T-24-E-C5 | autofill trigger (focus + Cmd/Ctrl+Shift+L hotkey) | 2026-05-09 | `d619e79` |
+| T-24-E-C6+C7+C8 | Phase C 클로즈 — multi-step form 지원 + same-origin iframe traverse + closed shadow + clickjack 방어 3 계층 (closed shadow + MutationObserver + composedPath, 2025 Marek Tóth 발표 대응) | 2026-05-09 | `f66b737` |
