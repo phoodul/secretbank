@@ -16,6 +16,7 @@ use crate::commands::kill_switch::{ConfirmTokenStore, IssuerConfirmTokenStore};
 use crate::import::ImportSessionStore;
 use crate::services::device_identity::DeviceIdentity;
 use crate::services::feed_scheduler::FeedSchedulerHandle;
+use crate::services::nm_bridge::NmBridgeHandle;
 use crate::services::pairing::PairingSessionLock;
 use crate::services::relay_client::RelayClient;
 use crate::services::session::AuthSession;
@@ -125,6 +126,13 @@ pub struct AppContext {
     /// 를 [`AppContext::new`] 에 주입한다.
     pub db_change_emitter: SharedDbChangeEmitter,
 
+    /// D-6: nm-host ↔ Tauri IPC 브리지 핸들.
+    ///
+    /// vault unlock 시 `start_bridge` 로 생성. vault lock 시 drop 으로 자동 종료.
+    /// `SECRETBANK_BRIDGE_PORT` ENV var 를 통해 nm-host 에 포트 전달.
+    /// TM-EXT-BRIDGE-1: 127.0.0.1 전용 bind.
+    pub nm_bridge: Arc<Mutex<Option<NmBridgeHandle>>>,
+
     /// M9 Phase G T092 — in-flight device pairing state.
     ///
     /// 한 시점에 한 페어링만 허용 (initiator 또는 joiner 역할 둘 중 하나).
@@ -182,6 +190,7 @@ impl AppContext {
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
             db_change_emitter,
+            nm_bridge: Arc::new(Mutex::new(None)),
             pairing_session: Arc::new(RwLock::new(None)),
         })
     }

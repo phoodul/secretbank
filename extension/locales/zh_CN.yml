@@ -198,3 +198,27 @@ save_banner_action_never:
 save_banner_action_dismiss:
   message: "稍后再说"
   description: "不保存并临时dismiss的按钮"
+
+save_dialog_saved:
+  message: "已保存！"
+  description: "SaveDialog 保存成功消息"
+
+save_dialog_issuer:
+  message: "发行方"
+  description: "SaveDialog 发行方字段标签"
+
+save_dialog_name:
+  message: "名称"
+  description: "SaveDialog 凭据名称字段标签"
+
+save_dialog_username:
+  message: "用户名"
+  description: "SaveDialog 用户名字段标签（只读）"
+
+save_dialog_notes:
+  message: "备注"
+  description: "SaveDialog 可选备注字段标签"
+
+save_dialog_saving:
+  message: "保存中…"
+  description: "SaveDialog 保存按钮保存中文本"

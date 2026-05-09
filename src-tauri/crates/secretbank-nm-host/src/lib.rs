@@ -5,6 +5,7 @@
 // Chrome/Firefox Native Messaging 프로토콜 (4-byte LE length header + UTF-8 JSON body)
 // 구현체를 공개한다. 통합 테스트는 이 lib crate 를 직접 참조한다.
 
+pub mod bridge_client;
 pub mod installer;
 pub mod pairing;
 pub mod protocol;

@@ -198,3 +198,27 @@ save_banner_action_never:
 save_banner_action_dismiss:
   message: "나중에"
   description: "저장 없이 일시적으로 dismiss 하는 버튼"
+
+save_dialog_saved:
+  message: "저장 완료!"
+  description: "SaveDialog 저장 성공 메시지"
+
+save_dialog_issuer:
+  message: "발급처"
+  description: "SaveDialog 발급처 필드 라벨"
+
+save_dialog_name:
+  message: "이름"
+  description: "SaveDialog credential 이름 필드 라벨"
+
+save_dialog_username:
+  message: "사용자 이름"
+  description: "SaveDialog 사용자 이름 필드 라벨 (읽기 전용)"
+
+save_dialog_notes:
+  message: "메모"
+  description: "SaveDialog 선택적 메모 필드 라벨"
+
+save_dialog_saving:
+  message: "저장 중…"
+  description: "SaveDialog 저장 버튼 저장 중 텍스트"

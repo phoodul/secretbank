@@ -315,6 +315,26 @@ pub async fn vault_unlock(
         tracing::warn!(error = %e, "auth session hydrate 실패 (비치명적)");
     }
 
+    // D-6: nm-host ↔ Tauri IPC 브리지 시작 (TM-EXT-BRIDGE-1: 127.0.0.1 전용).
+    // 실패해도 vault unlock 자체를 막지 않는다.
+    {
+        use crate::services::nm_bridge::{start_bridge, BridgeContext};
+        let bctx = BridgeContext::from_app(&state);
+        match start_bridge(bctx).await {
+            Ok(handle) => {
+                let port = handle.port;
+                // SECRETBANK_BRIDGE_PORT 를 프로세스 ENV 에 기록 — nm-host 자식 프로세스가 상속.
+                std::env::set_var("SECRETBANK_BRIDGE_PORT", port.to_string());
+                tracing::info!(port, "nm-bridge 시작");
+                let mut guard = state.nm_bridge.lock().await;
+                *guard = Some(handle);
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "nm-bridge 시작 실패 (비치명적)");
+            }
+        }
+    }
+
     state
         .audit
         .record(
@@ -365,6 +385,11 @@ pub async fn vault_lock(state: State<'_, AppContext>) -> Result<(), VaultCommand
     // M9 Phase B-1: master_passphrase zeroize (SecretString Drop).
     {
         let mut guard = state.master_passphrase.write().await;
+        *guard = None;
+    }
+    // D-6: nm-bridge 종료 — NmBridgeHandle drop 이 shutdown_tx 에 true 를 전송. TM-EXT-BRIDGE-1.
+    {
+        let mut guard = state.nm_bridge.lock().await;
         *guard = None;
     }
     let mut vault = state.vault.write().await;

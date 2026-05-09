@@ -143,3 +143,53 @@ export async function addNeverSaveDomain(domain: string): Promise<void> {
   if (existing.includes(domain)) return;
   await chrome.storage.local.set({ [NEVER_SAVE_KEY]: [...existing, domain] });
 }
+
+// ---------------------------------------------------------------------------
+// D-6: pending save — SaveBanner "Save" 클릭 시 popup 으로 전달할 임시 데이터
+// ---------------------------------------------------------------------------
+
+const PENDING_SAVE_KEY = "secretbank_pending_save";
+
+/** SaveDialog 에 표시할 pending save 데이터 schema. */
+export const PendingSaveSchema = z.object({
+  /** 저장 종류: 신규 생성 또는 기존 업데이트 */
+  kind: z.enum(["new", "update"]),
+  domain: z.string().min(1),
+  siteName: z.string(),
+  username: z.string(),
+  /** T-CRED-1: password plaintext — popup 닫힘 시 즉시 삭제 필수. */
+  password: z.string(),
+  /** 기존 credential ID (update 시 필수) */
+  credentialId: z.string().optional(),
+  /** resolve_issuer_for_domain 결과 (nm-host 가 반환한 issuer 이름) */
+  issuerName: z.string().optional(),
+  /** 저장 요청 시각 (ms) — 5분 TTL, 이후 자동 무효 */
+  createdAt: z.number().int().positive(),
+});
+
+export type PendingSave = z.infer<typeof PendingSaveSchema>;
+
+/** chrome.storage.local 에 pending save 를 기록한다. */
+export async function setPendingSave(data: PendingSave): Promise<void> {
+  await chrome.storage.local.set({ [PENDING_SAVE_KEY]: data });
+}
+
+/** chrome.storage.local 에서 pending save 를 읽는다. 5분 TTL 초과 시 null 반환. */
+export async function getPendingSave(): Promise<PendingSave | null> {
+  const result = await chrome.storage.local.get(PENDING_SAVE_KEY);
+  const raw = result[PENDING_SAVE_KEY];
+  if (raw === undefined || raw === null) return null;
+  const parsed = PendingSaveSchema.safeParse(raw);
+  if (!parsed.success) return null;
+  // 5분 TTL 검사 — T-CRED-1: 만료된 pending save 는 삭제.
+  if (Date.now() - parsed.data.createdAt > 5 * 60 * 1000) {
+    await clearPendingSave();
+    return null;
+  }
+  return parsed.data;
+}
+
+/** pending save 를 삭제한다. 저장/취소/TTL 만료 시 호출. T-CRED-1. */
+export async function clearPendingSave(): Promise<void> {
+  await chrome.storage.local.remove(PENDING_SAVE_KEY);
+}

@@ -198,3 +198,27 @@ save_banner_action_never:
 save_banner_action_dismiss:
   message: "Not now"
   description: "SaveBanner button to temporarily dismiss without saving"
+
+save_dialog_saved:
+  message: "Saved!"
+  description: "SaveDialog success message"
+
+save_dialog_issuer:
+  message: "Issuer"
+  description: "SaveDialog issuer field label"
+
+save_dialog_name:
+  message: "Name"
+  description: "SaveDialog credential name field label"
+
+save_dialog_username:
+  message: "Username"
+  description: "SaveDialog username field label (read-only)"
+
+save_dialog_notes:
+  message: "Notes"
+  description: "SaveDialog optional notes field label"
+
+save_dialog_saving:
+  message: "Saving…"
+  description: "SaveDialog save button text while saving"

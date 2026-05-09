@@ -130,6 +130,20 @@ export const I18N_KEYS = {
   SAVE_BANNER_ACTION_NEVER: "save_banner_action_never",
   /** SaveBanner 버튼 — 일시 dismiss */
   SAVE_BANNER_ACTION_DISMISS: "save_banner_action_dismiss",
+
+  // ── D-6: SaveDialog (popup) ──
+  /** SaveDialog: 저장 완료 메시지 */
+  SAVE_DIALOG_SAVED: "save_dialog_saved",
+  /** SaveDialog: issuer 필드 라벨 */
+  SAVE_DIALOG_ISSUER: "save_dialog_issuer",
+  /** SaveDialog: name 필드 라벨 */
+  SAVE_DIALOG_NAME: "save_dialog_name",
+  /** SaveDialog: username 필드 라벨 */
+  SAVE_DIALOG_USERNAME: "save_dialog_username",
+  /** SaveDialog: notes 필드 라벨 */
+  SAVE_DIALOG_NOTES: "save_dialog_notes",
+  /** SaveDialog: 저장 중 버튼 텍스트 */
+  SAVE_DIALOG_SAVING: "save_dialog_saving",
 } as const;
 
 /**

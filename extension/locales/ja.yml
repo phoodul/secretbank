@@ -198,3 +198,27 @@ save_banner_action_never:
 save_banner_action_dismiss:
   message: "後で"
   description: "保存せずに一時的にdismissするボタン"
+
+save_dialog_saved:
+  message: "保存完了！"
+  description: "SaveDialog 保存成功メッセージ"
+
+save_dialog_issuer:
+  message: "発行者"
+  description: "SaveDialog 発行者フィールドラベル"
+
+save_dialog_name:
+  message: "名前"
+  description: "SaveDialog 認証情報名フィールドラベル"
+
+save_dialog_username:
+  message: "ユーザー名"
+  description: "SaveDialog ユーザー名フィールドラベル（読み取り専用）"
+
+save_dialog_notes:
+  message: "メモ"
+  description: "SaveDialog 任意メモフィールドラベル"
+
+save_dialog_saving:
+  message: "保存中…"
+  description: "SaveDialog 保存ボタン保存中テキスト"

@@ -2,6 +2,7 @@ pub mod charter_cooldown;
 pub mod device_identity;
 pub mod feed_normalize;
 pub mod feed_scheduler;
+pub mod nm_bridge;
 pub mod pairing;
 pub mod relay_client;
 pub mod session;

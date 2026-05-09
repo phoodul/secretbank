@@ -16,9 +16,10 @@
 //
 // TODO(Phase-F): --ext-id 기본값은 placeholder. Web Store 등록 후 실 ID 로 교체.
 
+use secretbank_nm_host::bridge_client;
 use secretbank_nm_host::installer::{self, Browser};
 use secretbank_nm_host::protocol;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 /// --install / --uninstall / --status 가 없으면 NM 모드로 동작한다.
 #[derive(Debug)]
@@ -194,8 +195,7 @@ async fn run_nm_loop() {
                         break;
                     }
                     Ok(Some(msg)) => {
-                        // B-3 에서 실제 라우팅 구현 예정. 현재는 echo (ack) 반환.
-                        let response = process_message(msg);
+                        let response = process_message(msg).await;
                         if let Err(e) = protocol::write_message(&mut writer, &response).await {
                             error!("응답 쓰기 실패: {e}");
                             break;
@@ -217,49 +217,29 @@ async fn run_nm_loop() {
     }
 }
 
-/// 메시지 처리 함수.
+/// 메시지 처리 함수 — D-6: Tauri desktop 브리지로 forward.
 ///
-/// # nm-host IPC 라우팅 결정 (T-24-E-D5)
+/// credential_{list_by_domain,create,update} 요청을 bridge_client 를 통해
+/// Tauri 프로세스로 전달하고 응답을 반환한다. TM-EXT-ACTOR.
 ///
-/// nm-host 는 독립 binary 이고 Tauri AppContext(vault, SQLite pool) 와 프로세스를
-/// 공유하지 않는다. 따라서 실제 credential 저장/조회를 직접 수행할 수 없다.
-///
-/// 옵션 분석:
-/// - 옵션 A (nm-host 에 secretbank-storage 직접 의존): vault unlock 상태가
-///   nm-host 프로세스에 없으므로 실질적으로 불가.
-/// - 옵션 B/C (Unix socket / named pipe IPC 로 Tauri 프로세스에 forward):
-///   별도 IPC 채널 구현 필요 — 범위 초과, D-6 또는 별도 서브태스크로 미룸.
-///
-/// 현재: stub 응답 유지. 실제 라우팅은 D-6 (popup SaveDialog) 구현 시 함께 설계.
-/// — TM-EXT-ACTOR
-fn process_message(msg: serde_json::Value) -> serde_json::Value {
+/// 브리지 미연결(vault locked) → vault_locked_response 반환.
+async fn process_message(msg: serde_json::Value) -> serde_json::Value {
     let msg_type = msg.get("type").and_then(|v| v.as_str()).unwrap_or("");
 
     match msg_type {
-        // TODO(D-6): 실제 Tauri IPC 라우팅으로 교체.
-        // 현재: 항상 exists=false (도메인 조회 불가 — vault 가 이 프로세스에 없음).
-        "credential_list_by_domain" => {
-            serde_json::json!({
-                "type": "credential_list_by_domain_response",
-                "exists": false
-            })
-        }
-        // TODO(D-6): 실제 Tauri IPC 경유 credential_create_internal 호출로 교체.
-        // actor = AuditActor::Extension(ext_id) 로 기록되어야 함. — TM-EXT-ACTOR
-        "credential_create" => {
-            serde_json::json!({
-                "type": "credential_save_response",
-                "ok": true,
-                "credential_id": "stub-id"
-            })
-        }
-        // TODO(D-6): 실제 Tauri IPC 경유 credential_update_internal 호출로 교체.
-        // actor = AuditActor::Extension(ext_id) 로 기록되어야 함. — TM-EXT-ACTOR
-        "credential_update" => {
-            serde_json::json!({
-                "type": "credential_save_response",
-                "ok": true
-            })
+        // D-6: bridge_client 경유 Tauri forward. TM-EXT-BRIDGE-2: session_token 첨부 확인은 bridge 서버 측.
+        "credential_list_by_domain" | "credential_create" | "credential_update" => {
+            match bridge_client::send(&msg).await {
+                Ok(resp) => resp,
+                Err(bridge_client::BridgeError::PortNotSet) => {
+                    // vault locked — 브리지 포트 없음.
+                    bridge_client::vault_locked_response()
+                }
+                Err(e) => {
+                    warn!("bridge 오류 ({msg_type}): {e}");
+                    bridge_client::vault_locked_response()
+                }
+            }
         }
         _ => {
             serde_json::json!({

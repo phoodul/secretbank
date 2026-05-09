@@ -2220,7 +2220,7 @@
 
 - **Milestone**: M24-E (M24 와 별개 마일스톤으로 격상)
 - **Priority**: Tier 1 (출시 blocker)
-- **Status**: 🔄 29/53 완료 — Phase A 7/7 ✅ + Phase B 10/10 ✅ + Phase C 8/8 ✅ + Phase D 4/6 (D-1 ✅ + D-2 ✅ + D-3 ✅ + D-4 ✅) + GATE 1/2/2-bis 승인. 다음 = D-5 (데스크톱 credential_create/update 라우팅).
+- **Status**: 🔄 30/53 완료 — Phase A 7/7 ✅ + Phase B 10/10 ✅ + Phase C 8/8 ✅ + Phase D 5/6 (D-1 ✅ + D-2 ✅ + D-3 ✅ + D-4 ✅ + D-5 ✅) + GATE 1/2/2-bis 승인. 다음 = D-6 (popup SaveDialog + nm-host↔Tauri IPC 채널).
 - **상세 명세**: **`docs/task_m24e.md`** (Phase A~F 43 sub-task, DoD + Files + Tests + Depends + Risk 풀 명세)
 - **구현 계획**: **`docs/implementation_plan_m24e.md`** (Phase 진입 순서 + 검증 절차 + 위험 완화 + audit 일정 + commit 운용)
 - **아키텍처**: `docs/architecture.md` 10장 (M24-E 모노레포 / 5-layer 통신 / 페어링 / Tiered Protection / 위협 모델)
@@ -2534,3 +2534,4 @@ _문서 끝._
 | T-24-E-D2 | world-bridge.ts 추출 — postToWorld (target origin 두 번째 인수 internal 강제, `'*'` 호출 경로 ❌) + installWorldListener (origin + source 이중 검증, event.source !== win 거부로 D-1 보강) + WorldBridgePayload discriminated union + isValidPayload narrow. content-main / content 모두 bridge 위임으로 리팩터. 신규 16 테스트, 총 268 PASS | 2026-05-10 | `5976b3d` |
 | T-24-E-D3 | SaveBanner Closed Shadow DOM in-page sticky — kind=new/update 분기 + 4 버튼 + 5초 auto-dismiss + hover pause. save-banner-host.ts 가 attachShadow({mode:"closed"}) + module-level single instance 보장 (T3 위협 모델, C-8 패턴 재사용). inline `<style>` + px 기반 + oklch + prefers-color-scheme 다크 + z-index 2147483647. i18n 6키 4언어 (I18N_KEYS 42→48). 신규 20 테스트, 총 288 PASS | 2026-05-10 | `f344a1c` |
 | T-24-E-D4 | save-handler.ts (신규/rotation 분기) — decideSaveKind 결정 트리 (autocomplete=new/current-password × 기존 ✅/❌) + handleFormSubmit (never list → single-flight → session token → credentialListByDomain RPC → mountSaveBanner → onSave/Never/Dismiss). nm-client `_rpc<T>(req, responseType)` 5s timeout request-response + 3 신규 RPC (credentialListByDomain/Create/Update, session token 항상 첨부). storage.ts session token + never save domains 관리. NMMessage union 5개 확장. nm-host stub 분기 (D-5 에서 실제 라우팅). content.ts dummy mount → handleFormSubmit 교체. password finally 에서 null. 신규 23 테스트, 총 311 PASS | 2026-05-10 | `56ce10e` |
+| T-24-E-D5 | extension actor + issuer placeholder + audit_ctx 분기 — AuditActor::Extension(String) variant + 마이그레이션 0013 (CHECK 제약 완화 `OR actor LIKE 'extension:%'`) + credential_create_internal/update_internal 추출 (Tauri command 시그니처 보존, actor 파라미터화: LocalUser vs Extension(ext_id)). resolve_issuer_for_domain (정확 매칭 → domain_to_slug 추론 → idempotent get_or_create_by_slug, github.com→"github"). nm-host main.rs TODO 보강 (vault state 미공유, D-6 IPC 채널). 신규 11 테스트 (audit_ctx 3 + issuer 4 + credentials 4), 회귀 0 | 2026-05-10 | `ed887fa` |

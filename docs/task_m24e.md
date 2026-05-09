@@ -775,8 +775,8 @@
 | T-24-E-D2   | postMessage origin 검증                                   | -          | -         |
 | T-24-E-D3   | SaveBanner (Closed Shadow DOM sticky banner)              | 2026-05-10 | pending   |
 | T-24-E-D4   | save-handler 신규/rotation                                | 2026-05-10 | pending   |
-| T-24-E-D5   | 데스크톱 credential 저장                                  | -          | -         |
-| T-24-E-D6   | popup SaveDialog                                          | -          | -         |
+| T-24-E-D5   | 데스크톱 credential 저장                                  | 2026-05-10 | `ed887fa` |
+| T-24-E-D6   | popup SaveDialog + nm-host↔Tauri IPC 채널                | 2026-05-10 | pending   |
 | T-24-E-E1   | generator inline                                          | -          | -         |
 | T-24-E-E2   | issuer recipe inheritance                                 | -          | -         |
 | T-24-E-E3   | Site Logo                                                 | -          | -         |

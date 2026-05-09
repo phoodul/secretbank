@@ -457,6 +457,7 @@ mod tests {
             auth_session: Arc::new(RwLock::new(None)),
             master_passphrase: Arc::new(RwLock::new(None)),
             db_change_emitter: crate::services::sync_emit::noop_emitter(),
+            nm_bridge: Arc::new(Mutex::new(None)),
             pairing_session: Arc::new(RwLock::new(None)),
         }
     }
