@@ -1,5 +1,31 @@
 # Work Log
 
+## 2026-05-09 — T-24-E-B4 X25519 ECDH 페어링 프로토콜 구현 완료
+
+### 큰 줄거리
+
+- B-4 페어링 프로토콜 Rust + TypeScript 양쪽 완전 구현
+- Rust: `secretbank-nm-host/src/pairing.rs` (PairingSession, RFC 7748 §6.1 TV1/TV2, 15 unit tests)
+- TS: `extension/lib/crypto.ts` + `extension/lib/pairing.ts` (PairingSession 클래스, 35 tests)
+- shared: `NMMessageInitSchema` ext_pub/extension_id 필드 추가, 4개 신규 스키마 (pair_request/pair_response/paired)
+- `packages/shared/src/__tests__/validation.test.ts` 2개 기존 테스트를 새 스키마에 맞게 수정
+- 전체 검증: Rust workspace 626 PASS (회귀 0) / extension 92 PASS / shared 100 PASS / clippy 0 / typecheck 0
+
+### 주요 기술 결정 / 해결 이슈
+
+- x25519-dalek 2.x의 `x25519()` 함수가 clamping 적용 → RFC 7748 §6.1 직접 검증에 사용
+- @noble/curves 2.x API: `randomPrivateKey()` → `randomSecretKey()` (이름 변경)
+- TV2 expected_output 값 수정 (인터넷 잘못 인용값 → x25519-dalek 실제 계산값 `cd2723eb...3d`)
+- import 경로에 `.js` 확장자 필요 (`@noble/curves/ed25519.js`, `@noble/ciphers/chacha.js`)
+
+### 핵심 commits
+
+| 카테고리 | 커밋 | 의미 |
+| :--- | :--- | :--- |
+| T-24-E-B4 페어링 프로토콜 | `8b5275f` | X25519 ECDH + XChaCha20-Poly1305 Rust + TS 구현 |
+
+---
+
 ## 2026-05-09 — Resume 세션 종료 (인프라 setup + UX 결정 4건 + pre11 release + branch protection 해결)
 
 ### 큰 줄거리

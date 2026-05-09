@@ -2,8 +2,14 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-09 (Night mode) — **M24-E Phase A 전체 완료 (A1~A7, 7/43 sub-tasks).**
+- **Time:** 2026-05-09 (Night mode) — **T-24-E-B4 완료 (9/43 sub-tasks).**
 - **Phase:** Phase 3 — Implementation. M24-E 풀구현 (Phase A~F 43 sub-task, 8주 일정).
+- **T-24-E-B4 완료 ✅** (`8b5275f`):
+  - Rust: `secretbank-nm-host/src/pairing.rs` — RFC 7748 §6.1 TV1/TV2, ECDH 대칭성, XChaCha round-trip (15 tests)
+  - TS: `extension/lib/crypto.ts` + `extension/lib/pairing.ts` — @noble/curves + @noble/ciphers (35 tests)
+  - Shared: `NMMessageInitSchema` ext_pub/extension_id 추가, NMMessagePairRequest/PairResponse/Paired 신규
+  - 검증: Rust 626 PASS / extension 92 PASS / shared 100 PASS / clippy 0 / typecheck 0
+- **다음**: T-24-E-B5 (확장 PairingDialog UI)
 - **Phase A 완료 ✅** (7/7 sub-tasks):
   - A1 WXT 골격 `bd126bb` / A2 shared types `7d3191d` / A3 password-generator `f8a8a6f`
   - A4 validation `a983000` / A5 i18n `d093ffe` / A6 popup 골격 `edcc2e3`

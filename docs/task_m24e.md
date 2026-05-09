@@ -758,7 +758,7 @@
 | T-24-E-B1   | nm-host crate (stdio 이벤트 루프 + 프로토콜)     | 2026-05-09 | `3198bf1` |
 | T-24-E-B2   | NM installer (3 OS)                              | 2026-05-09 | `7145f2d` |
 | T-24-E-B3   | nm-client.ts                                     | 2026-05-09 | `465c82c` |
-| T-24-E-B4   | 페어링 protocol                                  | -      | -         |
+| T-24-E-B4   | 페어링 protocol                                  | 2026-05-09 | `8b5275f` |
 | T-24-E-B5   | 확장 PairingDialog                               | -      | -         |
 | T-24-E-B6   | 데스크톱 PairingApprovalDialog                   | -      | -         |
 | T-24-E-B7   | session token + Settings                         | -      | -         |
