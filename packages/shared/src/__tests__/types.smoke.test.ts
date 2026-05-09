@@ -75,14 +75,23 @@ describe("SessionToken", () => {
 });
 
 describe("NMMessage discriminated union", () => {
-  it("init 메시지 구조가 올바르다", () => {
-    const msg: NMMessageInit = { type: "init", version: "1.0" };
+  it("init 메시지 구조가 올바르다 (B-4: extension_id + ext_pub 필수)", () => {
+    const msg: NMMessageInit = {
+      type: "init",
+      extension_id: "abc123",
+      version: "1.0",
+      ext_pub: "base64-x25519-pub",
+    };
     expect(msg.type).toBe("init");
   });
 
-  it("pair 메시지 구조가 올바르다", () => {
-    const msg: NMMessagePair = { type: "pair", code: "123456" };
-    expect(msg.type).toBe("pair");
+  it("pair_request 메시지 구조가 올바르다 (B-4 신규)", () => {
+    const msg: NMMessagePair = {
+      type: "pair_request",
+      extension_id: "abc123",
+      ext_pub: "base64-x25519-pub",
+    };
+    expect(msg.type).toBe("pair_request");
   });
 
   it("reveal 메시지 구조가 올바르다", () => {
@@ -106,9 +115,15 @@ describe("NMMessage discriminated union", () => {
     expect(msg.type).toBe("save");
   });
 
-  it("NMMessage union 이 4가지 타입을 커버한다", () => {
-    expectTypeOf<NMMessage>().toEqualTypeOf<
-      NMMessageInit | NMMessagePair | NMMessageReveal | NMMessageSave
+  it("NMMessage union 이 6가지 타입을 커버한다 (B-4 확장)", () => {
+    // init / pair_request / pair_response / paired / reveal / save
+    expectTypeOf<NMMessage>().toMatchTypeOf<
+      | NMMessageInit
+      | NMMessagePair
+      | NMMessageReveal
+      | NMMessageSave
+      | { type: "pair_response" }
+      | { type: "paired" }
     >();
   });
 });

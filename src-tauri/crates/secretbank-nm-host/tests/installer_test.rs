@@ -95,12 +95,18 @@ fn integration_manifest_path_contains_host_name() {
 fn with_temp_home<F: FnOnce(&TempDir)>(f: F) {
     let tmp = TempDir::new().unwrap();
     // SAFETY: 단일 스레드 테스트 전용. 멀티스레드 시 set_var 는 안전하지 않을 수 있음.
+    //
+    // Linux 의 `dirs::config_dir()` 는 `XDG_CONFIG_HOME` 우선이라 `HOME` 만으로는
+    // 격리 불충분. CI runner (Ubuntu) 에서 XDG_CONFIG_HOME 이 비어있어도 일부
+    // libc 구현은 passwd entry 의 home_dir 을 따른다. 따라서 양쪽 모두 override.
     unsafe {
         std::env::set_var("HOME", tmp.path());
+        std::env::set_var("XDG_CONFIG_HOME", tmp.path().join(".config"));
     }
     f(&tmp);
     unsafe {
         std::env::remove_var("HOME");
+        std::env::remove_var("XDG_CONFIG_HOME");
     }
 }
 
