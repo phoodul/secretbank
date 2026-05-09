@@ -30,6 +30,7 @@ import {
   fromBase64,
   type X25519Keypair,
 } from "./crypto.js";
+import { getPairing, setPairing, clearPairing, type PairingStorage } from "./storage.js";
 
 // ---------------------------------------------------------------------------
 // 타입 정의
@@ -104,6 +105,36 @@ export class PairingSession {
   }
 
   /**
+   * Extension 개인키를 base64 로 반환.
+   * saveToStorage 에서 chrome.storage.local 저장 시 사용된다.
+   *
+   * ⚠️  개인키 노출 — 스토리지 저장 목적으로만 사용할 것.
+   *   위협 모델 T7 참조.
+   */
+  getPrivateKeyB64(): string {
+    return toBase64(this.state.keypair.privateKey);
+  }
+
+  /**
+   * 페어링된 Desktop 공개키를 base64 로 반환.
+   * 페어링 완료 전에는 null.
+   */
+  get desktopPublicKeyB64(): string | null {
+    if (!this.state.channelKey) return null;
+    // channelKey 는 x25519(ext_priv, desktop_pub) 의 결과이므로
+    // desktop_pub 를 별도 저장해야 한다.
+    return this._desktopPubB64;
+  }
+
+  /** Desktop 공개키 base64 (processPairedMessage 에서 저장) */
+  private _desktopPubB64: string | null = null;
+
+  /** 페어링된 디바이스 ID. 페어링 완료 전에는 null. */
+  get pairedDeviceId(): string | null {
+    return this.state.deviceId;
+  }
+
+  /**
    * init 메시지 페이로드 생성.
    * Extension → nm-host 전송용.
    */
@@ -136,6 +167,8 @@ export class PairingSession {
     const rawShared = x25519Dh(this.state.keypair.privateKey, desktopPub);
     this.state.channelKey = rawShared;
     this.state.deviceId = msg.device_id;
+    // desktop_pub 를 별도 보관 — saveToStorage 에서 참조
+    this._desktopPubB64 = msg.desktop_pub;
   }
 
   /**
@@ -167,6 +200,53 @@ export class PairingSession {
     }
     return xchaDecrypt(this.state.channelKey, envelope, aad);
   }
+}
+
+// ---------------------------------------------------------------------------
+// 스토리지 헬퍼 — PairingSession ↔ chrome.storage.local 통합
+// ---------------------------------------------------------------------------
+
+/**
+ * chrome.storage.local 에서 페어링 정보를 읽어 PairingStorage 를 반환한다.
+ *
+ * PairingDialog 가 초기화 시 이미 페어링된 상태인지 확인할 때 사용한다.
+ * PairingSession 은 개인키를 자체 보관하므로, 복원 시에는
+ * 저장된 desktopPub + deviceId 만 반환한다 (개인키 재구성 없음).
+ *
+ * @returns PairingStorage 또는 null (미페어링)
+ */
+export async function restoreFromStorage(): Promise<PairingStorage | null> {
+  return getPairing();
+}
+
+/**
+ * PairingSession 의 페어링 완료 상태를 chrome.storage.local 에 저장한다.
+ *
+ * ⚠️  extensionPriv(개인키)는 base64 평문으로 저장됨 — 위협 모델 T7 참조.
+ *   chrome.storage.local 은 OS 수준 암호화(BitLocker/FileVault)에 의존한다.
+ *   개인키는 페어링 1회용 ephemeral 이므로 재페어링 시 새 키가 생성된다.
+ *
+ * @param session 페어링 완료된 PairingSession
+ */
+export async function saveToStorage(session: PairingSession): Promise<void> {
+  if (!session.isPaired) {
+    throw new Error("saveToStorage: 페어링 미완료 세션은 저장할 수 없습니다.");
+  }
+  const data: PairingStorage = {
+    extensionPriv: session.getPrivateKeyB64(),
+    desktopPub: session.desktopPublicKeyB64 ?? "",
+    deviceId: session.pairedDeviceId ?? "",
+    pairedAt: Date.now(),
+  };
+  await setPairing(data);
+}
+
+/**
+ * chrome.storage.local 에서 페어링 정보를 삭제한다.
+ * 재페어링 시작 전 호출한다.
+ */
+export async function clearStorage(): Promise<void> {
+  await clearPairing();
 }
 
 // ---------------------------------------------------------------------------

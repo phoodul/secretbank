@@ -79,3 +79,40 @@ popup_placeholder_save:
 popup_placeholder_settings:
   message: "设置将在Phase E中实现。在这里配置您的扩展首选项。"
   description: "Phase E实现前在Settings中显示的placeholder"
+
+# ── B-5: PairingDialog 状态消息 ──
+pairing_pending:
+  message: "等待桌面端批准…"
+  description: "等待桌面应用配对确认时显示的状态"
+
+pairing_paired:
+  message: "已配对"
+  description: "配对完成时显示的状态徽章"
+
+pairing_error_not_installed:
+  message: "未安装桌面应用。请安装Secretbank后重试。"
+  description: "找不到原生消息主机时的错误消息"
+
+pairing_error_rejected:
+  message: "桌面应用拒绝了配对请求。"
+  description: "用户在桌面应用中拒绝配对时的错误消息"
+
+pairing_error_timeout:
+  message: "配对超时。请确保桌面应用正在运行。"
+  description: "超时内未完成配对时的错误消息"
+
+pairing_error_protocol:
+  message: "因协议错误导致配对失败。"
+  description: "意外消息格式错误时的错误消息"
+
+pairing_fingerprint_label:
+  message: "设备ID"
+  description: "配对设备ID前显示的标签"
+
+pairing_repair_button:
+  message: "重新配对"
+  description: "已配对状态下启动新配对流程的按钮"
+
+pairing_open_app:
+  message: "请确保Secretbank桌面应用正在运行。"
+  description: "错误状态下引导用户的帮助文本"

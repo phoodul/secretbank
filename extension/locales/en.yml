@@ -79,3 +79,40 @@ popup_placeholder_save:
 popup_placeholder_settings:
   message: "Settings coming in Phase E. Configure your extension preferences here."
   description: "Placeholder shown in Settings before Phase E is implemented"
+
+# ── B-5: PairingDialog 상태 메시지 ──
+pairing_pending:
+  message: "Waiting for desktop approval…"
+  description: "Status shown while awaiting desktop app pairing confirmation"
+
+pairing_paired:
+  message: "Paired"
+  description: "Status badge shown when pairing is complete"
+
+pairing_error_not_installed:
+  message: "Desktop app is not installed. Please install Secretbank and try again."
+  description: "Error message when the native messaging host is not found"
+
+pairing_error_rejected:
+  message: "Pairing was rejected by the desktop app."
+  description: "Error message when the user rejected the pairing in the desktop app"
+
+pairing_error_timeout:
+  message: "Pairing timed out. Make sure the desktop app is running."
+  description: "Error message when pairing did not complete within the timeout"
+
+pairing_error_protocol:
+  message: "Pairing failed due to a protocol error."
+  description: "Error message for unexpected message format errors"
+
+pairing_fingerprint_label:
+  message: "Device ID"
+  description: "Label shown before the paired device ID"
+
+pairing_repair_button:
+  message: "Re-pair"
+  description: "Button to trigger a new pairing flow when already paired"
+
+pairing_open_app:
+  message: "Make sure the Secretbank desktop app is running."
+  description: "Help text shown in error state to guide the user"

@@ -66,6 +66,26 @@ export const I18N_KEYS = {
   POPUP_PLACEHOLDER_SAVE: "popup_placeholder_save",
   /** Settings placeholder — "Coming in Phase E…" */
   POPUP_PLACEHOLDER_SETTINGS: "popup_placeholder_settings",
+
+  // ── B-5: PairingDialog 상태 메시지 ──
+  /** 페어링 대기 중 상태 메시지 */
+  PAIRING_PENDING: "pairing_pending",
+  /** 페어링 완료 상태 배지 */
+  PAIRING_PAIRED: "pairing_paired",
+  /** 에러: nm-host 미설치 */
+  PAIRING_ERROR_NOT_INSTALLED: "pairing_error_not_installed",
+  /** 에러: 사용자 거부 */
+  PAIRING_ERROR_REJECTED: "pairing_error_rejected",
+  /** 에러: 타임아웃 */
+  PAIRING_ERROR_TIMEOUT: "pairing_error_timeout",
+  /** 에러: 프로토콜 오류 */
+  PAIRING_ERROR_PROTOCOL: "pairing_error_protocol",
+  /** 디바이스 ID 레이블 */
+  PAIRING_FINGERPRINT_LABEL: "pairing_fingerprint_label",
+  /** 다시 페어링 버튼 */
+  PAIRING_REPAIR_BUTTON: "pairing_repair_button",
+  /** 에러 상태 도움말 — 데스크톱 앱 실행 확인 안내 */
+  PAIRING_OPEN_APP: "pairing_open_app",
 } as const;
 
 /**

@@ -79,3 +79,40 @@ popup_placeholder_save:
 popup_placeholder_settings:
   message: "設定はPhase Eで実装されます。拡張機能の設定をここで構成してください。"
   description: "Phase E実装前にSettingsに表示されるplaceholder"
+
+# ── B-5: PairingDialog 状態メッセージ ──
+pairing_pending:
+  message: "デスクトップの承認を待機中…"
+  description: "デスクトップアプリのペアリング承認を待っている間に表示される状態"
+
+pairing_paired:
+  message: "ペアリング済み"
+  description: "ペアリング完了時に表示される状態バッジ"
+
+pairing_error_not_installed:
+  message: "デスクトップアプリがインストールされていません。Secretbankをインストールして再試行してください。"
+  description: "ネイティブメッセージングホストが見つからない場合のエラーメッセージ"
+
+pairing_error_rejected:
+  message: "デスクトップアプリによってペアリングが拒否されました。"
+  description: "ユーザーがデスクトップアプリでペアリングを拒否した場合のエラーメッセージ"
+
+pairing_error_timeout:
+  message: "ペアリングがタイムアウトしました。デスクトップアプリが起動していることを確認してください。"
+  description: "タイムアウト内にペアリングが完了しなかった場合のエラーメッセージ"
+
+pairing_error_protocol:
+  message: "プロトコルエラーによりペアリングに失敗しました。"
+  description: "予期しないメッセージ形式エラー時のエラーメッセージ"
+
+pairing_fingerprint_label:
+  message: "デバイスID"
+  description: "ペアリングされたデバイスIDの前に表示されるラベル"
+
+pairing_repair_button:
+  message: "再ペアリング"
+  description: "すでにペアリングされている状態で新しいペアリングフローを開始するボタン"
+
+pairing_open_app:
+  message: "Secretbankデスクトップアプリが起動していることを確認してください。"
+  description: "エラー状態でユーザーを案内するヘルプテキスト"
