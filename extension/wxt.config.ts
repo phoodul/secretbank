@@ -23,10 +23,9 @@ export default defineConfig({
     // nativeMessaging 은 Phase B-1 에서 추가
     permissions: ["activeTab", "storage"],
   },
-  // A5: i18n 옵션 — localesDir 기본값은 srcDir/locales (extension/locales)
-  i18n: {
-    localesDir: "locales",
-  },
+  // A5: i18n — localesDir 기본값은 srcDir/locales (extension/locales).
+  //     @wxt-dev/i18n/module 이 default_locale + locales/ 디렉토리 자동 감지.
+  //     WXT UserConfig 에는 i18n 명시 옵션이 없어 module 기본값에 의존.
   vite: () => ({
     css: {
       postcss: {

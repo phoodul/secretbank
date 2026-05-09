@@ -176,8 +176,11 @@ export class NMClient {
             return;
           }
 
-          // 정상/비정상 단절 → 지수 백오프 재연결
-          this._notifyDisconnect({ kind: "disconnected", error: nmErr ?? new NMDisconnected() });
+          // 정상/비정상 단절 → 지수 백오프 재연결.
+          // nmErr 가 NMDisconnected 인스턴스가 아니면 메시지를 보존한 새 인스턴스로 wrap.
+          const disconnectedErr =
+            nmErr instanceof NMDisconnected ? nmErr : new NMDisconnected(nmErr?.message);
+          this._notifyDisconnect({ kind: "disconnected", error: disconnectedErr });
           this._scheduleReconnect();
         });
 

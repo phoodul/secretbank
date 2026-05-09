@@ -141,7 +141,12 @@ describe("NMClient", () => {
     mockConnectNative(port);
     await client.connect();
 
-    const msg = { type: "init" as const, version: "1" };
+    const msg = {
+      type: "init" as const,
+      version: "1",
+      extension_id: "test-ext",
+      ext_pub: "test-pub",
+    };
     await client.sendMessage(msg);
 
     expect(
@@ -150,9 +155,14 @@ describe("NMClient", () => {
   });
 
   it("미연결 상태에서 sendMessage() 는 NMDisconnected 를 throw 한다", async () => {
-    await expect(client.sendMessage({ type: "init", version: "1" })).rejects.toBeInstanceOf(
-      NMDisconnected,
-    );
+    await expect(
+      client.sendMessage({
+        type: "init",
+        version: "1",
+        extension_id: "test-ext",
+        ext_pub: "test-pub",
+      }),
+    ).rejects.toBeInstanceOf(NMDisconnected);
   });
 
   // ── 3. onMessage 핸들러 ───────────────────────────────────────────────────
@@ -165,7 +175,12 @@ describe("NMClient", () => {
     const handler = vi.fn();
     client.onMessage(handler);
 
-    const msg = { type: "init" as const, version: "1" };
+    const msg = {
+      type: "init" as const,
+      version: "1",
+      extension_id: "test-ext",
+      ext_pub: "test-pub",
+    };
     dispatch.message(msg);
 
     expect(handler).toHaveBeenCalledWith(msg);
@@ -186,7 +201,12 @@ describe("NMClient", () => {
       dispatch.message(msg);
     });
 
-    const probe = { type: "init" as const, version: "ping-pong" };
+    const probe = {
+      type: "init" as const,
+      version: "ping-pong",
+      extension_id: "test-ext",
+      ext_pub: "test-pub",
+    };
     await client.sendMessage(probe);
 
     expect(port.postMessage).toHaveBeenCalledWith(probe);
@@ -204,7 +224,12 @@ describe("NMClient", () => {
 
     // 구독 해제
     unsub();
-    dispatch.message({ type: "init", version: "1" });
+    dispatch.message({
+      type: "init",
+      version: "1",
+      extension_id: "test-ext",
+      ext_pub: "test-pub",
+    });
 
     expect(handler).not.toHaveBeenCalled();
   });

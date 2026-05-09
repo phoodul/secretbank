@@ -144,7 +144,11 @@ jobs:
           cache-dependency-path: ee/secretbank-relay/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # ee/secretbank-relay 는 root pnpm-workspace.yaml 멤버가 아니므로
+        # --ignore-workspace 로 자체 pnpm-lock.yaml 만 사용. (workspace install
+        # 시 멤버 미등록으로 ee 자체 dependencies 가 hoist 되지 않아 typecheck
+        # 의 @cloudflare/workers-types 등을 찾지 못한다.)
+        run: pnpm install --frozen-lockfile --ignore-workspace
 
       - name: Type check
         run: pnpm typecheck

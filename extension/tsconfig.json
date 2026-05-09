@@ -14,7 +14,7 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vitest/globals", "@testing-library/jest-dom", "chrome"]
   },
   "include": [
     "entrypoints/**/*.ts",
