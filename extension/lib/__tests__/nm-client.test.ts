@@ -171,6 +171,29 @@ describe("NMClient", () => {
     expect(handler).toHaveBeenCalledWith(msg);
   });
 
+  // T-24-E-B10: 3 OS smoke — NM Host stdio echo round-trip 자동 검증.
+  // Win 11 자동 검증 = 본 케이스. macOS/Linux 는 future B-10.5.
+  it("B-10 smoke: NM Host stdio echo round-trip — sendMessage → port echo → onMessage", async () => {
+    const { port, dispatch } = createPortStub();
+    mockConnectNative(port);
+    await client.connect();
+
+    const echoes: Array<unknown> = [];
+    client.onMessage((msg) => echoes.push(msg));
+
+    // nm-host echo 시뮬레이션: postMessage 받은 메시지를 즉시 onMessage 로 dispatch.
+    port.postMessage = vi.fn((msg: unknown) => {
+      dispatch.message(msg);
+    });
+
+    const probe = { type: "init" as const, version: "ping-pong" };
+    await client.sendMessage(probe);
+
+    expect(port.postMessage).toHaveBeenCalledWith(probe);
+    expect(echoes).toHaveLength(1);
+    expect(echoes[0]).toEqual(probe);
+  });
+
   it("onMessage 가 반환한 unsubscribe 를 호출하면 핸들러가 더 이상 호출되지 않는다", async () => {
     const { port, dispatch } = createPortStub();
     mockConnectNative(port);
