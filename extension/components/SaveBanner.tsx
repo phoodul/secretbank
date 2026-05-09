@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/components/SaveBanner.tsx — M24-E Phase D-3
+// extension/components/SaveBanner.tsx — M24-E Phase D-3, E-3
 //
 // "Save to Secretbank?" 인페이지 sticky banner.
 // T3: closed shadow DOM 안에서만 렌더됨 — host 페이지 JS/CSS 침범 차단.
+// E-3: Site Logo 표시 (bundled SVG → favicon-proxy → letter fallback).
 
 import React, { useEffect, useRef, useState } from "react";
+import { getSiteLogo, type SiteLogoResult } from "../lib/site-logo.js";
 
 // T3: credential plaintext ❌ — siteName(도메인) 만 표시.
 export interface SaveBannerProps {
@@ -21,6 +23,31 @@ const AUTO_DISMISS_MS = 5000;
 // inline style — Shadow DOM 내 Tailwind 동작 어려움. px 기반 (rem 충돌 방지).
 const BANNER_CSS = `
 :host { all: initial; }
+.sb-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.sb-logo-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.sb-logo-letter {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
 .sb-banner {
   position: fixed;
   top: 16px;
@@ -49,7 +76,6 @@ const BANNER_CSS = `
   font-weight: 600;
   font-size: 13px;
   color: oklch(0.45 0.02 264);
-  margin-bottom: 6px;
 }
 @media (prefers-color-scheme: dark) {
   .sb-site { color: oklch(0.65 0.02 264); }
@@ -103,6 +129,18 @@ const BANNER_CSS = `
 export function SaveBanner({ kind, siteName, onSave, onNever, onDismiss }: SaveBannerProps) {
   const [hovered, setHovered] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [logo, setLogo] = useState<SiteLogoResult | null>(null);
+
+  // E-3: Site Logo 비동기 로드 (banner 마운트 시 1회)
+  useEffect(() => {
+    let cancelled = false;
+    getSiteLogo(siteName).then((result) => {
+      if (!cancelled) setLogo(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [siteName]);
 
   useEffect(() => {
     if (hovered) {
@@ -136,7 +174,26 @@ export function SaveBanner({ kind, siteName, onSave, onNever, onDismiss }: SaveB
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <div className="sb-site">{siteName}</div>
+        {/* E-3: Site Logo + 사이트 이름 */}
+        <div className="sb-logo-wrap">
+          {logo?.kind === "bundled" || logo?.kind === "remote" ? (
+            <img
+              className="sb-logo-img"
+              src={logo.url}
+              alt={siteName}
+              aria-hidden="true"
+            />
+          ) : logo?.kind === "letter" ? (
+            <div
+              className="sb-logo-letter"
+              style={{ background: logo.bg }}
+              aria-hidden="true"
+            >
+              {logo.letter}
+            </div>
+          ) : null}
+          <div className="sb-site">{siteName}</div>
+        </div>
         <div className="sb-title">{title}</div>
         <div className="sb-actions">
           <button className="sb-btn sb-btn-primary" onClick={onSave} type="button">

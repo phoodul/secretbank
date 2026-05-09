@@ -1,0 +1,25 @@
+Secretbank
+Copyright (C) 2024-present Secretbank Contributors
+
+This product includes software and assets from third parties:
+
+-------------------------------------------------------------------------------
+Simple Icons (https://simpleicons.org)
+License: CC0 1.0 Universal (Public Domain Dedication)
+Source: https://github.com/simple-icons/simple-icons
+
+The following SVG icons in extension/public/icons/issuers/ are derived from
+Simple Icons and are released into the public domain under CC0 1.0:
+
+  github.svg   — GitHub logo
+  google.svg   — Google logo (multi-color, from Google Brand Guidelines)
+  aws.svg      — Amazon Web Services logo
+  vercel.svg   — Vercel logo
+  cloudflare.svg — Cloudflare logo
+  openai.svg   — OpenAI logo
+  stripe.svg   — Stripe logo
+
+Simple Icons is not affiliated with, sponsored by, or endorsed by any of the
+respective trademark owners. All trademarks are the property of their
+respective owners.
+-------------------------------------------------------------------------------

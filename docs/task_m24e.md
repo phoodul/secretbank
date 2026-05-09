@@ -779,7 +779,7 @@
 | T-24-E-D6   | popup SaveDialog + nm-host↔Tauri IPC 채널                | 2026-05-10 | pending   |
 | T-24-E-E1   | generator inline                                          | -          | -         |
 | T-24-E-E2   | issuer recipe inheritance                                 | -          | -         |
-| T-24-E-E3   | Site Logo                                                 | -          | -         |
+| T-24-E-E3   | Site Logo (idb-cache + site-logo + 7 SVG + SaveBanner/SaveDialog 통합) | 2026-05-10 | pending   |
 | T-24-E-E4   | popup credential 카드                                     | -          | -         |
 | T-24-E-E5   | 디자인 토큰 동기화                                        | -          | -         |
 | T-24-E-F1   | Chrome Web Store 제출                                     | -          | -         |

@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/components/__tests__/SaveBanner.test.tsx — M24-E Phase D-3
+// extension/components/__tests__/SaveBanner.test.tsx — M24-E Phase D-3, E-3
 
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { SaveBanner } from "../SaveBanner";
+
+// E-3: site-logo mock — 테스트 환경에서 chrome.runtime.getURL / IDB 미사용
+vi.mock("../../lib/site-logo", () => ({
+  getSiteLogo: vi.fn().mockResolvedValue({ kind: "letter", letter: "G", bg: "oklch(0.55 0.18 140)" }),
+  domainToSlug: (d: string) => d.split(".")[0] ?? d,
+}));
 
 describe("SaveBanner — 렌더", () => {
   it("kind=new 일 때 'Save to Secretbank?' 제목이 표시된다", () => {

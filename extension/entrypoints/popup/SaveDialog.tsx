@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// extension/entrypoints/popup/SaveDialog.tsx — M24-E Phase D-6
+// extension/entrypoints/popup/SaveDialog.tsx — M24-E Phase D-6, E-3
 //
 // SaveBanner "Save" 클릭 시 popup 의 Save 탭에서 credential 세부 정보를 편집/확정.
 //
@@ -14,7 +14,8 @@
 // T-CRED-1: password plaintext 는 폼에 표시하지 않음. nm-client 로만 전달.
 // TM-EXT-BRIDGE-2: session token 첨부는 nm-client 내부 처리.
 
-import React, { useCallback, useEffect, useReducer } from "react";
+import React, { useCallback, useEffect, useReducer, useState } from "react";
+import { getSiteLogo, type SiteLogoResult } from "../../lib/site-logo.js";
 import { t } from "../../lib/i18n";
 import { I18N_KEYS } from "@secretbank/shared";
 import { NMClient } from "../../lib/nm-client";
@@ -109,6 +110,20 @@ const nmClient = new NMClient();
 
 export default function SaveDialog() {
   const [state, dispatch] = useReducer(reducer, undefined, initState);
+  const [logo, setLogo] = useState<SiteLogoResult | null>(null);
+
+  // E-3: pending save 의 domain 이 확정되면 Site Logo 로드
+  useEffect(() => {
+    if (state.pending?.domain) {
+      let cancelled = false;
+      getSiteLogo(state.pending.domain).then((result) => {
+        if (!cancelled) setLogo(result);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [state.pending?.domain]);
 
   // 마운트 시 pending save 로드
   useEffect(() => {
@@ -348,6 +363,52 @@ export default function SaveDialog() {
 
   return (
     <div style={containerStyle} role="form" aria-label="Save credential">
+      {/* E-3: Site Logo + 도메인 헤더 */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        {logo?.kind === "bundled" || logo?.kind === "remote" ? (
+          <img
+            src={logo.url}
+            alt={pending.domain}
+            aria-hidden="true"
+            style={{
+              width: "24px",
+              height: "24px",
+              borderRadius: "4px",
+              objectFit: "contain",
+              flexShrink: 0,
+            }}
+          />
+        ) : logo?.kind === "letter" ? (
+          <div
+            aria-hidden="true"
+            style={{
+              width: "24px",
+              height: "24px",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "12px",
+              fontWeight: 700,
+              color: "#fff",
+              background: logo.bg,
+              flexShrink: 0,
+            }}
+          >
+            {logo.letter}
+          </div>
+        ) : null}
+        <span
+          style={{
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            color: "var(--color-muted-foreground)",
+          }}
+        >
+          {pending.domain}
+        </span>
+      </div>
+
       {/* 저장 종류 배지 */}
       <div
         style={{
