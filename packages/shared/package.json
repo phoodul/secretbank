@@ -20,5 +20,10 @@
   "devDependencies": {
     "typescript": "~5.8.3",
     "vitest": "^4.1.5"
+  },
+  "dependencies": {
+    "@zxcvbn-ts/core": "^3.0.4",
+    "@zxcvbn-ts/language-common": "^3.0.4",
+    "@zxcvbn-ts/language-en": "^3.0.2"
   }
 }

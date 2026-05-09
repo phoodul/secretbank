@@ -16,3 +16,12 @@ export type {
   NMMessageReveal,
   NMMessageSave,
 } from "./types/pairing.js";
+
+// password-generator
+export {
+  generateDiceware,
+  getWordlist,
+  estimateStrength,
+  generateFromRecipe,
+} from "./password-generator/index.js";
+export type { DicewareLang, StrengthScore, StrengthResult } from "./password-generator/index.js";

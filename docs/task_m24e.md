@@ -750,7 +750,7 @@
 | :---------- | :----------------------------------------------- | :----- | :-------- |
 | T-24-E-A1   | WXT 골격 + Tailwind v4 + shadcn/ui               | -      | -         |
 | T-24-E-A2   | packages/shared types                            | -      | -         |
-| T-24-E-A3   | password-generator (Diceware 4 lang + zxcvbn-ts) | -      | -         |
+| T-24-E-A3   | password-generator (Diceware 4 lang + zxcvbn-ts) | 2026-05-09 | (commit pending) |
 | T-24-E-A4   | shared validation                                | -      | -         |
 | T-24-E-A5   | i18n (4 lang)                                    | -      | -         |
 | T-24-E-A6   | popup 골격                                       | -      | -         |
