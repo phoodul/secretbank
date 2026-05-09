@@ -1,0 +1,23 @@
+<!doctype html>
+<!-- Google login (multi-step) — password page only.
+     실제 google.com/accounts/* 의 password page 패턴 모방. -->
+<html>
+  <body>
+    <form id="challenge" method="post">
+      <input
+        type="email"
+        name="identifier"
+        autocomplete="username"
+        value="user@example.com"
+        readonly
+      />
+      <input
+        type="password"
+        name="Passwd"
+        autocomplete="current-password"
+        aria-label="Enter your password"
+      />
+      <button type="submit">Next</button>
+    </form>
+  </body>
+</html>

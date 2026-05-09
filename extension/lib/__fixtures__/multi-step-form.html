@@ -1,0 +1,15 @@
+<!doctype html>
+<!-- Multi-step (2 separate forms) — 같은 페이지에 username form + password form 분리.
+     C-1 은 light DOM 1회 scan 만 — 2 form 모두 detect 되어야 함. -->
+<html>
+  <body>
+    <form id="step1-username">
+      <input type="email" name="email" autocomplete="username" />
+      <button type="submit">Next</button>
+    </form>
+    <form id="step2-password" hidden>
+      <input type="password" name="password" autocomplete="current-password" />
+      <button type="submit">Sign in</button>
+    </form>
+  </body>
+</html>
