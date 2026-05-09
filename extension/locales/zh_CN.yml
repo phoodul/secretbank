@@ -41,3 +41,41 @@ credential_list_empty:
 copy_to_clipboard:
   message: "复制到剪贴板"
   description: "复制按钮的工具提示或aria-label"
+
+# ── A6: popup 标签名称 ──
+popup_tabs_pairing:
+  message: "配对"
+  description: "桌面配对选项卡标签"
+
+popup_tabs_credentials:
+  message: "凭据"
+  description: "凭据列表选项卡标签"
+
+popup_tabs_save:
+  message: "保存"
+  description: "凭据保存选项卡标签"
+
+popup_tabs_settings:
+  message: "设置"
+  description: "设置选项卡标签"
+
+popup_theme_toggle:
+  message: "切换主题"
+  description: "亮色/暗色主题切换按钮的aria-label"
+
+# ── A6: placeholder 消息 ──
+popup_placeholder_pairing:
+  message: "桌面配对将在Phase B中实现。请连接您的Secretbank桌面应用。"
+  description: "Phase B实现前在PairingDialog中显示的placeholder"
+
+popup_placeholder_credentials:
+  message: "凭据列表将在Phase C中实现。您保存的密钥将显示在这里。"
+  description: "Phase C实现前在CredentialList中显示的placeholder"
+
+popup_placeholder_save:
+  message: "保存对话框将在Phase D中实现。检测到的凭据将在这里保存。"
+  description: "Phase D实现前在SaveDialog中显示的placeholder"
+
+popup_placeholder_settings:
+  message: "设置将在Phase E中实现。在这里配置您的扩展首选项。"
+  description: "Phase E实现前在Settings中显示的placeholder"

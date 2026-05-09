@@ -44,6 +44,28 @@ export const I18N_KEYS = {
   CREDENTIAL_LIST_EMPTY: "credential_list_empty",
   /** 클립보드 복사 — "Copy to clipboard" */
   COPY_TO_CLIPBOARD: "copy_to_clipboard",
+
+  // ── A6: popup Tab 이름 ──
+  /** Pairing 탭 이름 — "Pairing" */
+  POPUP_TABS_PAIRING: "popup_tabs_pairing",
+  /** Credentials 탭 이름 — "Credentials" */
+  POPUP_TABS_CREDENTIALS: "popup_tabs_credentials",
+  /** Save 탭 이름 — "Save" */
+  POPUP_TABS_SAVE: "popup_tabs_save",
+  /** Settings 탭 이름 — "Settings" */
+  POPUP_TABS_SETTINGS: "popup_tabs_settings",
+  /** Theme 토글 버튼 aria-label — "Toggle theme" */
+  POPUP_THEME_TOGGLE: "popup_theme_toggle",
+
+  // ── A6: placeholder 메시지 ──
+  /** PairingDialog placeholder — "Coming in Phase B…" */
+  POPUP_PLACEHOLDER_PAIRING: "popup_placeholder_pairing",
+  /** CredentialList placeholder — "Coming in Phase C…" */
+  POPUP_PLACEHOLDER_CREDENTIALS: "popup_placeholder_credentials",
+  /** SaveDialog placeholder — "Coming in Phase D…" */
+  POPUP_PLACEHOLDER_SAVE: "popup_placeholder_save",
+  /** Settings placeholder — "Coming in Phase E…" */
+  POPUP_PLACEHOLDER_SETTINGS: "popup_placeholder_settings",
 } as const;
 
 /**

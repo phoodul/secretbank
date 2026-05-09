@@ -41,3 +41,41 @@ credential_list_empty:
 copy_to_clipboard:
   message: "클립보드에 복사"
   description: "복사 버튼 툴팁 또는 aria-label"
+
+# ── A6: popup Tab 이름 ──
+popup_tabs_pairing:
+  message: "페어링"
+  description: "데스크톱 페어링 탭 레이블"
+
+popup_tabs_credentials:
+  message: "크리덴셜"
+  description: "크리덴셜 목록 탭 레이블"
+
+popup_tabs_save:
+  message: "저장"
+  description: "크리덴셜 저장 탭 레이블"
+
+popup_tabs_settings:
+  message: "설정"
+  description: "설정 탭 레이블"
+
+popup_theme_toggle:
+  message: "테마 전환"
+  description: "라이트/다크 테마 토글 버튼 aria-label"
+
+# ── A6: placeholder 메시지 ──
+popup_placeholder_pairing:
+  message: "데스크톱 페어링은 Phase B 에서 구현됩니다. Secretbank 데스크톱 앱과 연결하세요."
+  description: "Phase B 구현 전 PairingDialog 에 표시되는 placeholder"
+
+popup_placeholder_credentials:
+  message: "크리덴셜 목록은 Phase C 에서 구현됩니다. 저장된 시크릿이 여기에 표시됩니다."
+  description: "Phase C 구현 전 CredentialList 에 표시되는 placeholder"
+
+popup_placeholder_save:
+  message: "저장 다이얼로그는 Phase D 에서 구현됩니다. 감지된 크리덴셜을 여기에 저장합니다."
+  description: "Phase D 구현 전 SaveDialog 에 표시되는 placeholder"
+
+popup_placeholder_settings:
+  message: "설정은 Phase E 에서 구현됩니다. 확장 기본 설정을 여기서 구성하세요."
+  description: "Phase E 구현 전 Settings 에 표시되는 placeholder"

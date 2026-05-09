@@ -41,3 +41,41 @@ credential_list_empty:
 copy_to_clipboard:
   message: "クリップボードにコピー"
   description: "コピーボタンのツールチップまたはaria-label"
+
+# ── A6: popup Tab 名 ──
+popup_tabs_pairing:
+  message: "ペアリング"
+  description: "デスクトップペアリングタブのラベル"
+
+popup_tabs_credentials:
+  message: "認証情報"
+  description: "認証情報リストタブのラベル"
+
+popup_tabs_save:
+  message: "保存"
+  description: "認証情報保存タブのラベル"
+
+popup_tabs_settings:
+  message: "設定"
+  description: "設定タブのラベル"
+
+popup_theme_toggle:
+  message: "テーマ切り替え"
+  description: "ライト/ダークテーマ切り替えボタンのaria-label"
+
+# ── A6: placeholder メッセージ ──
+popup_placeholder_pairing:
+  message: "デスクトップペアリングはPhase Bで実装されます。Secretbankデスクトップアプリと接続してください。"
+  description: "Phase B実装前にPairingDialogに表示されるplaceholder"
+
+popup_placeholder_credentials:
+  message: "認証情報リストはPhase Cで実装されます。保存したシークレットがここに表示されます。"
+  description: "Phase C実装前にCredentialListに表示されるplaceholder"
+
+popup_placeholder_save:
+  message: "保存ダイアログはPhase Dで実装されます。検出された認証情報がここに保存されます。"
+  description: "Phase D実装前にSaveDialogに表示されるplaceholder"
+
+popup_placeholder_settings:
+  message: "設定はPhase Eで実装されます。拡張機能の設定をここで構成してください。"
+  description: "Phase E実装前にSettingsに表示されるplaceholder"

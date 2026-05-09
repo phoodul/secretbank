@@ -41,3 +41,41 @@ credential_list_empty:
 copy_to_clipboard:
   message: "Copy to clipboard"
   description: "Tooltip or aria-label for copy button"
+
+# ── A6: popup Tab names ──
+popup_tabs_pairing:
+  message: "Pairing"
+  description: "Tab label for the desktop pairing tab"
+
+popup_tabs_credentials:
+  message: "Credentials"
+  description: "Tab label for the credentials list tab"
+
+popup_tabs_save:
+  message: "Save"
+  description: "Tab label for the save credential tab"
+
+popup_tabs_settings:
+  message: "Settings"
+  description: "Tab label for the settings tab"
+
+popup_theme_toggle:
+  message: "Toggle theme"
+  description: "Aria-label for the light/dark theme toggle button"
+
+# ── A6: placeholder messages ──
+popup_placeholder_pairing:
+  message: "Desktop pairing coming in Phase B. Connect the extension to your Secretbank desktop app."
+  description: "Placeholder shown in PairingDialog before Phase B is implemented"
+
+popup_placeholder_credentials:
+  message: "Credential list coming in Phase C. Your saved secrets will appear here."
+  description: "Placeholder shown in CredentialList before Phase C is implemented"
+
+popup_placeholder_save:
+  message: "Save dialog coming in Phase D. Detected credentials will be saved here."
+  description: "Placeholder shown in SaveDialog before Phase D is implemented"
+
+popup_placeholder_settings:
+  message: "Settings coming in Phase E. Configure your extension preferences here."
+  description: "Placeholder shown in Settings before Phase E is implemented"
