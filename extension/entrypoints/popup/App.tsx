@@ -18,7 +18,7 @@
  *   - 키보드 fully accessible (Radix Tabs 자동 ARIA)
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { CredentialKind } from "@secretbank/shared";
 import { I18N_KEYS } from "@secretbank/shared";
 import { ThemeProvider, useTheme } from "../../components/theme/theme-provider";
@@ -28,6 +28,8 @@ import CredentialList from "./CredentialList";
 import SaveDialog from "./SaveDialog";
 import Settings from "./Settings";
 import { t } from "../../lib/i18n";
+import { getMcpOptInCache } from "../../lib/storage";
+import { NMClient } from "../../lib/nm-client";
 
 // ── 테마 토글 버튼 (sun/moon 아이콘) ──────────────────────────────────────────
 function ThemeToggleButton() {
@@ -66,11 +68,112 @@ function ThemeToggleButton() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// G-4-2: MCP 활성 인디케이터 (opt-in ON 시만 표시)
+// ---------------------------------------------------------------------------
+
+/**
+ * MCP 컨텍스트 push 활성 인디케이터.
+ *
+ * 마운트 시 getMcpOptInCache() 로 캐시 조회,
+ * cache miss 시 ext_settings_get_mcp_opt_in RPC 호출 (세션 토큰 없으면 skip).
+ * 클릭 시 Settings 탭으로 이동.
+ */
+interface McpIndicatorProps {
+  onClickSettings: () => void;
+}
+
+function McpActiveIndicator({ onClickSettings }: McpIndicatorProps) {
+  const [mcpActive, setMcpActive] = useState<boolean>(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchOptIn() {
+      // 1. 캐시 먼저 확인
+      const cached = await getMcpOptInCache();
+      if (cached !== null) {
+        if (!cancelled) setMcpActive(cached);
+        return;
+      }
+
+      // 2. cache miss → RPC 호출 (세션 토큰 필요)
+      try {
+        const { getSessionToken } = await import("../../lib/storage.js");
+        const session = await getSessionToken();
+        if (session === null) return;
+
+        const nm = new NMClient();
+        await nm.connect();
+        const resp = await nm.extSettingsGetMcpOptIn(session.token);
+        nm.disconnect();
+
+        if (!cancelled && resp.ok) {
+          setMcpActive(resp.enabled);
+          // 결과를 캐시에 저장 (5분)
+          const { setMcpOptInCache } = await import("../../lib/storage.js");
+          await setMcpOptInCache(resp.enabled);
+        }
+      } catch {
+        // 연결 실패 / RPC 오류 → 인디케이터 숨김 (fail-safe)
+      }
+    }
+
+    void fetchOptIn();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!mcpActive) return null;
+
+  return (
+    <button
+      aria-label={t(I18N_KEYS.MCP_CONTEXT_INDICATOR)}
+      title={t(I18N_KEYS.MCP_CONTEXT_INDICATOR)}
+      onClick={onClickSettings}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.25rem",
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        padding: "0.1875rem 0.375rem",
+        borderRadius: "9999px",
+        fontSize: "0.6875rem",
+        fontWeight: 600,
+        lineHeight: 1,
+        color: "var(--color-primary)",
+        // 녹색 점 표시는 ::before 대신 인라인 dot span 으로 구현
+        transition: "opacity 150ms",
+      }}
+    >
+      {/* 녹색 활성 점 */}
+      <span
+        aria-hidden="true"
+        style={{
+          display: "inline-block",
+          width: "0.4375rem",
+          height: "0.4375rem",
+          borderRadius: "9999px",
+          background: "oklch(65% 0.22 142)", // 녹색 (design token 없는 경우 oklch 직접 사용)
+          flexShrink: 0,
+        }}
+      />
+      <span>MCP</span>
+    </button>
+  );
+}
+
 // ── 내부 앱 (ThemeProvider 내부에서만 useTheme 호출 가능) ─────────────────────
 function AppInner() {
   // @secretbank/shared 타입 사용 검증 (A2 DoD)
   const _kind: CredentialKind = "password";
   void _kind;
+
+  // G-4-2: Settings 탭으로 이동을 위한 상태
+  const [activeTab, setActiveTab] = useState<string>("pairing");
 
   return (
     // MV3 popup 크기: max 400×600px. body min-width 는 globals.css 에서 320px.
@@ -110,12 +213,17 @@ function AppInner() {
         >
           {t(I18N_KEYS.POPUP_TITLE)}
         </h1>
-        <ThemeToggleButton />
+        {/* 우상단: MCP 인디케이터 + 테마 토글 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+          <McpActiveIndicator onClickSettings={() => setActiveTab("settings")} />
+          <ThemeToggleButton />
+        </div>
       </header>
 
       {/* Tab 라우팅 영역 */}
       <Tabs
-        defaultValue="pairing"
+        value={activeTab}
+        onValueChange={setActiveTab}
         style={{
           flex: 1,
           display: "flex",

@@ -317,3 +317,7 @@ blast_radius_kind_project:
 blast_radius_kind_deployment:
   message: "Deployment"
   description: "BlastRadiusPreviewCard item kind label: deployment"
+
+mcp_context_indicator:
+  message: "MCP context push active"
+  description: "G-4-2: popup top-right MCP active indicator aria-label. Shown only when opt-in is ON."

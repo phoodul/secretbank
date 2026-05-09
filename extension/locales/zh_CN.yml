@@ -317,3 +317,7 @@ blast_radius_kind_project:
 blast_radius_kind_deployment:
   message: "部署"
   description: "BlastRadiusPreviewCard 项目种类标签: deployment"
+
+mcp_context_indicator:
+  message: "MCP 上下文推送已激活"
+  description: "G-4-2: 弹出窗口右上角 MCP 激活指示器 aria-label。仅在 opt-in 开启时显示。"

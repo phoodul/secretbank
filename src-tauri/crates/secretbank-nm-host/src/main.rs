@@ -234,6 +234,7 @@ async fn process_message(msg: serde_json::Value) -> serde_json::Value {
         // T-24-E-G2-1: incident_check_for_host (host incident lookup) 도 bridge 경유 forward.
         // T-24-E-G3-1: blast_radius_for_host (autofill/save blast radius preview) 도 bridge 경유 forward.
         // T-24-E-G4-1: mcp_context_push (MCP context queue push) 도 bridge 경유 forward.
+        // T-24-E-G4-2: ext_settings_get_mcp_opt_in (desktop opt-in 단일 소스 조회) 도 bridge 경유 forward.
         "credential_list_by_domain"
         | "credential_create"
         | "credential_update"
@@ -243,7 +244,8 @@ async fn process_message(msg: serde_json::Value) -> serde_json::Value {
         | "graph_for_credential"
         | "incident_check_for_host"
         | "blast_radius_for_host"
-        | "mcp_context_push" => {
+        | "mcp_context_push"
+        | "ext_settings_get_mcp_opt_in" => {
             match bridge_client::send(&msg).await {
                 Ok(resp) => resp,
                 Err(bridge_client::BridgeError::PortNotSet) => {

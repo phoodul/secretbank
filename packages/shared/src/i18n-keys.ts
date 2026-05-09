@@ -196,6 +196,10 @@ export const I18N_KEYS = {
   BLAST_RADIUS_KIND_PROJECT: "blast_radius_kind_project",
   /** BlastRadiusPreviewCard 항목 종류 라벨: deployment */
   BLAST_RADIUS_KIND_DEPLOYMENT: "blast_radius_kind_deployment",
+
+  // ── G-4-2: MCP context push 인디케이터 ──
+  /** popup 우상단 MCP 활성 인디케이터 aria-label */
+  MCP_CONTEXT_INDICATOR: "mcp_context_indicator",
 } as const;
 
 /**

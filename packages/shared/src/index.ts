@@ -40,9 +40,12 @@ export type {
   NMMessageBlastRadiusForHost,
   NMMessageBlastRadiusForHostResponse,
   // G4-1: MCP context push RPC
-  CredentialMeta,
+  McpCredentialMeta,
   NMMessageMcpContextPush,
   NMMessageMcpContextPushResponse,
+  // G4-2: desktop opt-in 단일 소스 조회 RPC
+  NMMessageExtSettingsGetMcpOptIn,
+  NMMessageExtSettingsGetMcpOptInResponse,
   // 하위 호환
   NMMessagePair,
 } from "./types/pairing.js";

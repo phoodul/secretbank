@@ -2,12 +2,17 @@
  * @file App.test.tsx
  * @license AGPL-3.0-or-later
  *
- * Popup App 렌더 + Tab 라우팅 + 테마 토글 Vitest 테스트.
+ * Popup App 렌더 + Tab 라우팅 + 테마 토글 + MCP 인디케이터 Vitest 테스트.
  *
  * DoD A6:
  *   1. App.tsx 렌더 → 4 Tab + 1 theme 토글 표시
  *   2. 각 Tab 클릭 시 해당 placeholder 컴포넌트 mount
  *   3. 테마 토글 시 document.documentElement classList 변화 (light/dark)
+ *
+ * DoD G-4-2:
+ *   4. opt-in ON 마운트 → MCP 인디케이터 표시
+ *   5. opt-in OFF → 인디케이터 숨김
+ *   6. 인디케이터 클릭 → Settings 탭 이동
  *
  * WXT 빌드 없는 Vitest 환경이므로:
  *   - browser.i18n.getMessage 는 vitest-setup.ts 에서 mock 처리
@@ -16,7 +21,7 @@
 
 import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App";
 
@@ -25,12 +30,46 @@ import App from "../App";
 // browser.i18n.getMessage 를 호출한다. vitest-setup.ts 에서 전역 mock.
 // 추가로 개별 테스트에서 필요한 키를 직접 반환하도록 스파이를 설정한다.
 
+// ---------------------------------------------------------------------------
+// G-4-2: storage/NMClient mock 헬퍼
+// ---------------------------------------------------------------------------
+
+function makeSessionStoreMock(initialData: Record<string, unknown> = {}) {
+  const store: Record<string, unknown> = { ...initialData };
+  return {
+    _store: store,
+    get: vi.fn(async (key: string | string[]) => {
+      const keys = Array.isArray(key) ? key : [key];
+      const result: Record<string, unknown> = {};
+      for (const k of keys) {
+        if (k in store) result[k] = store[k];
+      }
+      return result;
+    }),
+    set: vi.fn(async (items: Record<string, unknown>) => {
+      Object.assign(store, items);
+    }),
+    remove: vi.fn(async () => {}),
+    clear: vi.fn(async () => {}),
+  };
+}
+
 // ── 각 테스트 전 DOM 초기화 ──────────────────────────────────────────────────
 beforeEach(() => {
   // 테마 클래스 초기화
   document.documentElement.classList.remove("light", "dark");
   // localStorage 초기화
   localStorage.clear();
+  // storage session/local mock 기본 상태 복원 (opt-in 없음 = OFF)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis.chrome.storage as any).session = makeSessionStoreMock();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis.chrome.storage as any).local = {
+    get: vi.fn(async () => ({})),
+    set: vi.fn(async () => {}),
+    remove: vi.fn(async () => {}),
+    clear: vi.fn(async () => {}),
+  };
 });
 
 // ── 헬퍼: App 렌더 ───────────────────────────────────────────────────────────
@@ -198,5 +237,87 @@ describe("App — placeholder 컴포넌트", () => {
     // Radix: 활성 탭의 content 는 role="tabpanel" 을 가진다
     const panel = screen.getByRole("tabpanel");
     expect(panel).not.toBeEmptyDOMElement();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G-4-2: MCP 인디케이터 테스트
+// ---------------------------------------------------------------------------
+
+describe("App — MCP 인디케이터 (G-4-2)", () => {
+  it("opt-in 캐시 없음 (기본) → MCP 인디케이터 숨김", async () => {
+    // session store 비어 있음 → getMcpOptInCache() = null → RPC 필요
+    // RPC는 NMClient.connect() 실패 → fail-safe → mcpActive = false
+    renderApp();
+    // 인디케이터가 없어야 한다
+    await waitFor(() => {
+      expect(screen.queryByText("MCP")).toBeNull();
+    }, { timeout: 500 });
+  });
+
+  it("opt-in ON (세션 캐시 있음) → MCP 인디케이터 표시", async () => {
+    // 세션 캐시에 opt-in ON 상태 직접 주입
+    const optInCacheKey = "secretbank_mcp_opt_in_cache_v1";
+    const cache = {
+      enabled: true,
+      expires_at: Date.now() + 5 * 60 * 1000,
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis.chrome.storage as any).session = makeSessionStoreMock({
+      [optInCacheKey]: cache,
+    });
+
+    renderApp();
+
+    // MCP 인디케이터가 표시되어야 한다
+    await waitFor(() => {
+      expect(screen.getByText("MCP")).toBeInTheDocument();
+    }, { timeout: 1000 });
+  });
+
+  it("opt-in OFF (세션 캐시 있음) → MCP 인디케이터 숨김", async () => {
+    const optInCacheKey = "secretbank_mcp_opt_in_cache_v1";
+    const cache = {
+      enabled: false,
+      expires_at: Date.now() + 5 * 60 * 1000,
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis.chrome.storage as any).session = makeSessionStoreMock({
+      [optInCacheKey]: cache,
+    });
+
+    renderApp();
+
+    await waitFor(() => {
+      expect(screen.queryByText("MCP")).toBeNull();
+    }, { timeout: 500 });
+  });
+
+  it("MCP 인디케이터 클릭 시 Settings 탭이 활성화된다", async () => {
+    const user = userEvent.setup();
+    const optInCacheKey = "secretbank_mcp_opt_in_cache_v1";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis.chrome.storage as any).session = makeSessionStoreMock({
+      [optInCacheKey]: {
+        enabled: true,
+        expires_at: Date.now() + 5 * 60 * 1000,
+      },
+    });
+
+    renderApp();
+
+    // MCP 인디케이터 렌더 대기
+    await waitFor(() => {
+      expect(screen.getByText("MCP")).toBeInTheDocument();
+    }, { timeout: 1000 });
+
+    // 클릭
+    const indicator = screen.getByRole("button", { name: /MCP/i });
+    await user.click(indicator);
+
+    // Settings 탭이 활성화되어야 한다
+    const tabs = screen.getAllByRole("tab");
+    // 네 번째 탭 = Settings
+    expect(tabs[3]).toHaveAttribute("data-state", "active");
   });
 });

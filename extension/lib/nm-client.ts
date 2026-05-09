@@ -28,7 +28,7 @@
  */
 
 import type {
-  CredentialMeta,
+  McpCredentialMeta,
   IssuerRecipe,
   NMMessage,
   NMMessageCredentialListByDomainResponse,
@@ -40,6 +40,7 @@ import type {
   NMMessageIncidentCheckForHostResponse,
   NMMessageBlastRadiusForHostResponse,
   NMMessageMcpContextPushResponse,
+  NMMessageExtSettingsGetMcpOptInResponse,
 } from "@secretbank/shared";
 import {
   NMDisconnected,
@@ -494,7 +495,7 @@ export class NMClient {
    */
   async mcpContextPush(
     host: string,
-    credentialMeta: CredentialMeta[],
+    credentialMeta: McpCredentialMeta[],
     sessionToken: string,
   ): Promise<NMMessageMcpContextPushResponse> {
     const timestamp = Date.now();
@@ -524,6 +525,26 @@ export class NMClient {
         }
       });
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // T-24-E-G4-2: desktop MCP opt-in 조회 (옵션 C — single source of truth)
+  // -------------------------------------------------------------------------
+
+  /**
+   * desktop ExtensionSettings 의 MCP opt-in 값을 조회한다.
+   *
+   * opt-in ON = true, OFF = false (기본값 false).
+   * RPC 실패 시 { ok: false, enabled: false } 반환 (fail-safe).
+   * T-CRED-1: session_token 첨부 필수.
+   */
+  async extSettingsGetMcpOptIn(
+    sessionToken: string,
+  ): Promise<NMMessageExtSettingsGetMcpOptInResponse> {
+    return this._rpc<NMMessageExtSettingsGetMcpOptInResponse>(
+      { type: "ext_settings_get_mcp_opt_in", session_token: sessionToken },
+      "ext_settings_get_mcp_opt_in_response",
+    );
   }
 
   // -------------------------------------------------------------------------

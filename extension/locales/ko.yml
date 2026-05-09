@@ -317,3 +317,7 @@ blast_radius_kind_project:
 blast_radius_kind_deployment:
   message: "배포"
   description: "BlastRadiusPreviewCard 항목 종류 라벨: deployment"
+
+mcp_context_indicator:
+  message: "MCP 컨텍스트 푸시 활성"
+  description: "G-4-2: 팝업 우상단 MCP 활성 인디케이터 aria-label. opt-in ON 시만 표시."

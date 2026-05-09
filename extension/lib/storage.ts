@@ -193,3 +193,93 @@ export async function getPendingSave(): Promise<PendingSave | null> {
 export async function clearPendingSave(): Promise<void> {
   await chrome.storage.local.remove(PENDING_SAVE_KEY);
 }
+
+// ---------------------------------------------------------------------------
+// G-4-2: MCP opt-in 응답 캐시 (chrome.storage.session — 탭/세션 범위)
+// ---------------------------------------------------------------------------
+
+/** MCP opt-in 캐시 엔트리 schema (chrome.storage.session) */
+const MCP_OPT_IN_CACHE_KEY = "secretbank_mcp_opt_in_cache_v1";
+const MCP_OPT_IN_CACHE_DEFAULT_TTL_MS = 5 * 60 * 1000; // 5분
+
+interface McpOptInCache {
+  enabled: boolean;
+  expires_at: number;
+}
+
+/**
+ * chrome.storage.session 에서 MCP opt-in 캐시를 읽는다.
+ * 만료되었거나 없으면 null 반환.
+ */
+export async function getMcpOptInCache(): Promise<boolean | null> {
+  try {
+    const result = await chrome.storage.session.get(MCP_OPT_IN_CACHE_KEY);
+    const raw = result[MCP_OPT_IN_CACHE_KEY] as McpOptInCache | undefined;
+    if (raw === undefined || raw === null) return null;
+    if (raw.expires_at < Date.now()) return null;
+    return raw.enabled;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * chrome.storage.session 에 MCP opt-in 캐시를 저장한다.
+ *
+ * @param value opt-in 값 (true = ON)
+ * @param ttl_ms TTL (기본 5분)
+ */
+export async function setMcpOptInCache(
+  value: boolean,
+  ttl_ms: number = MCP_OPT_IN_CACHE_DEFAULT_TTL_MS,
+): Promise<void> {
+  const entry: McpOptInCache = {
+    enabled: value,
+    expires_at: Date.now() + ttl_ms,
+  };
+  await chrome.storage.session.set({ [MCP_OPT_IN_CACHE_KEY]: entry });
+}
+
+// ---------------------------------------------------------------------------
+// G-4-2: MCP 마지막 push 시각 캐시 (chrome.storage.session — host 별 cooldown)
+// ---------------------------------------------------------------------------
+
+/** MCP last push 타임스탬프 맵 키 (chrome.storage.session) */
+const MCP_LAST_PUSH_KEY = "secretbank_mcp_last_push_v1";
+
+/**
+ * chrome.storage.session 에서 특정 host 의 마지막 push 시각(ms)을 읽는다.
+ *
+ * @param host 정규화된 hostname
+ * @returns timestamp ms, 없으면 undefined
+ */
+export async function getMcpLastPush(host: string): Promise<number | undefined> {
+  try {
+    const result = await chrome.storage.session.get(MCP_LAST_PUSH_KEY);
+    const map = result[MCP_LAST_PUSH_KEY] as Record<string, number> | undefined;
+    if (!map || typeof map !== "object") return undefined;
+    const ts = map[host];
+    return typeof ts === "number" ? ts : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * chrome.storage.session 에 특정 host 의 마지막 push 시각을 기록한다.
+ *
+ * @param host 정규화된 hostname
+ * @param timestamp_ms Unix ms
+ */
+export async function setMcpLastPush(host: string, timestamp_ms: number): Promise<void> {
+  try {
+    // 기존 맵을 읽어 merge (다른 host cooldown 보존)
+    const result = await chrome.storage.session.get(MCP_LAST_PUSH_KEY);
+    const existing = (result[MCP_LAST_PUSH_KEY] as Record<string, number> | undefined) ?? {};
+    await chrome.storage.session.set({
+      [MCP_LAST_PUSH_KEY]: { ...existing, [host]: timestamp_ms },
+    });
+  } catch {
+    // session storage 실패 시 silent ignore (cooldown 없이 다음 push 허용)
+  }
+}

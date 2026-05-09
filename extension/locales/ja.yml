@@ -317,3 +317,7 @@ blast_radius_kind_project:
 blast_radius_kind_deployment:
   message: "デプロイ"
   description: "BlastRadiusPreviewCard アイテム種別ラベル: deployment"
+
+mcp_context_indicator:
+  message: "MCPコンテキストプッシュ有効"
+  description: "G-4-2: ポップアップ右上 MCP 有効インジケーター aria-label。opt-in ON 時のみ表示。"

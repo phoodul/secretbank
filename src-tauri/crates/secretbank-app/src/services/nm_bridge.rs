@@ -253,6 +253,8 @@ async fn dispatch(msg: &Value, bctx: &BridgeContext) -> Value {
         "blast_radius_for_host" => handle_blast_radius_for_host(msg, bctx).await,
         // T-24-E-G4-1: extension MCP context push
         "mcp_context_push" => handle_mcp_context_push(msg, bctx).await,
+        // T-24-E-G4-2: desktop opt-in 단일 소스 조회 (옵션 C)
+        "ext_settings_get_mcp_opt_in" => handle_ext_settings_get_mcp_opt_in(msg, bctx).await,
         _ => serde_json::json!({ "ok": false, "error": "unknown_type" }),
     }
 }
@@ -1274,6 +1276,49 @@ async fn handle_mcp_context_push(msg: &Value, bctx: &BridgeContext) -> Value {
     }
 
     serde_json::json!({ "ok": true })
+}
+
+// ---------------------------------------------------------------------------
+// T-24-E-G4-2: ext_settings_get_mcp_opt_in 핸들러
+// ---------------------------------------------------------------------------
+
+/// Desktop ExtensionSettings 의 MCP opt-in 값을 반환한다.
+///
+/// Extension 이 desktop 을 single source of truth 로 사용하는 옵션 C 구현.
+/// 세션 토큰 검증 필수 — 검증 실패 시 `{ ok: false, enabled: false }` 반환.
+///
+/// 응답:
+///   - `{ type: "ext_settings_get_mcp_opt_in_response", ok: true, enabled: bool }`
+///   - `{ type: "ext_settings_get_mcp_opt_in_response", ok: false, enabled: false, error: "..." }`
+async fn handle_ext_settings_get_mcp_opt_in(msg: &Value, bctx: &BridgeContext) -> Value {
+    use secretbank_storage::sqlite::repositories::settings::SettingsRepo;
+
+    // 세션 토큰 검증
+    let token = msg
+        .get("session_token")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    if !verify_session_token(token, bctx).await {
+        return serde_json::json!({
+            "type": "ext_settings_get_mcp_opt_in_response",
+            "ok": false,
+            "enabled": false,
+            "error": "invalid_session"
+        });
+    }
+
+    // SQLite settings 에서 opt-in 값 읽기
+    let repo = SettingsRepo::new(&bctx.pool);
+    let enabled = match repo.get("extension_mcp_context_opt_in").await {
+        Ok(Some(val)) => val == "1",
+        _ => false, // 기본값 OFF
+    };
+
+    serde_json::json!({
+        "type": "ext_settings_get_mcp_opt_in_response",
+        "ok": true,
+        "enabled": enabled
+    })
 }
 
 // ---------------------------------------------------------------------------

@@ -26,6 +26,14 @@ globalThis.chrome = {
       remove: async (_keys: string | string[]) => {},
       clear: async () => {},
     },
+    // G-4-2: chrome.storage.session mock (MCP opt-in 캐시 + last push 타임스탬프)
+    session: {
+      get: async (_keys: string | string[] | Record<string, unknown>) =>
+        ({}) as Record<string, unknown>,
+      set: async (_items: Record<string, unknown>) => {},
+      remove: async (_keys: string | string[]) => {},
+      clear: async () => {},
+    },
   },
   runtime: {
     id: undefined, // runtime.id 없음 → @wxt-dev/browser 가 chrome 을 선택하도록

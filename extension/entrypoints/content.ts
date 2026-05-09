@@ -22,6 +22,7 @@ import { isDismissed, addDismissedHost, getCachedIncidents, setCachedIncidents }
 import { mountSupplyChainBanner } from "../lib/supply-chain-host";
 import { openSecretbankDeepLink } from "../lib/deep-link";
 import { getSessionToken } from "../lib/storage";
+import { pushSiteContextIfEnabled } from "../lib/mcp-push";
 
 // D-4: NMClient 싱글턴 — content script 생애 동안 유지 (reconnect 내장).
 const _nmClient = new NMClient();
@@ -35,6 +36,9 @@ let _supplyChainUnmount: (() => void) | null = null;
 // G-2-2: 마지막으로 체크한 host (SPA watcher 중복 방지)
 let _lastCheckedHost = "";
 
+// G-4-2: MCP push — form focus 첫 발생 추적 (페이지당 1회)
+let _mcpPushTriggered = false;
+
 export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_idle",
@@ -45,6 +49,9 @@ export default defineContentScript({
     // G-2-2: supply chain banner — 페이지 로드 시 즉시 + SPA URL 변경 감지
     void checkSupplyChainForCurrentHost();
     installSupplyChainHostWatcher(window);
+    // G-4-2: MCP context push — DOMContentLoaded 이후 즉시 시도 + form focus 첫 occurrence
+    void triggerMcpPushOnPageLoad();
+    installMcpPushFormFocusListener(document);
   },
 });
 
@@ -305,6 +312,9 @@ export function installSupplyChainHostWatcher(win: Window): () => void {
     // host 변경 시에만 재체크 (_lastCheckedHost 비교는 checkSupplyChainForCurrentHost 내부)
     _lastCheckedHost = ""; // 강제 리셋 — URL 변경 시 항상 재체크
     void checkSupplyChainForCurrentHost();
+    // G-4-2: SPA 이동 시 MCP push 플래그 리셋 (새 host 에 대해 재트리거)
+    _mcpPushTriggered = false;
+    void triggerMcpPushOnPageLoad();
   }
 
   win.history.pushState = function (...args: Parameters<History["pushState"]>) {
@@ -327,4 +337,69 @@ export function installSupplyChainHostWatcher(win: Window): () => void {
     win.history.replaceState = originalReplaceState;
     win.removeEventListener("popstate", popstateHandler);
   };
+}
+
+// ---------------------------------------------------------------------------
+// G-4-2: MCP context push 트리거
+// ---------------------------------------------------------------------------
+
+/**
+ * 페이지 로드 시 (DOMContentLoaded 이후 — runAt: document_idle) MCP push 를 시도한다.
+ *
+ * 흐름:
+ *   1. session token 확인 — 없으면 skip (vault 잠금)
+ *   2. credentialListVisible(host) 로 credential meta 추출
+ *   3. pushSiteContextIfEnabled 호출 (opt-in + cooldown 내부 검사)
+ */
+export async function triggerMcpPushOnPageLoad(): Promise<void> {
+  const host = document.location?.hostname ?? "";
+  if (!host) return;
+
+  const session = await getSessionToken();
+  if (session === null) return; // vault 잠금 — skip
+
+  try {
+    await _nmClient.connect().catch(() => null);
+    if (!_nmClient.isConnected()) return;
+
+    // credential meta 추출 (E-4 credentialListVisible 재사용)
+    const listResp = await _nmClient.credentialListVisible(host, session.token);
+    const credentialMeta = (listResp.items ?? []).map((c) => ({
+      id: c.credential_id,
+      name: c.issuer ?? host,
+      issuer: c.issuer ?? host,
+    }));
+
+    await pushSiteContextIfEnabled(host, credentialMeta, session.token, _nmClient);
+  } catch {
+    // 네트워크 오류 / RPC 실패 — silent fail
+  }
+}
+
+/**
+ * form input 의 focus 첫 발생 시 MCP push 를 트리거한다.
+ *
+ * 페이지당 1회 (이미 triggerMcpPushOnPageLoad 가 실행되었으면 추가 skip).
+ * form input focus 는 사용자가 실제로 페이지와 상호작용 중임을 나타낸다.
+ *
+ * @param doc Document — 테스트 주입을 위해 파라미터화
+ */
+export function installMcpPushFormFocusListener(doc: Document): () => void {
+  function handleFocusIn(event: FocusEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    // input / textarea / select 요소 focus 에만 반응 (form 관련 요소)
+    const tag = target.tagName?.toUpperCase();
+    if (tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") return;
+
+    // 페이지당 1회
+    if (_mcpPushTriggered) return;
+    _mcpPushTriggered = true;
+
+    void triggerMcpPushOnPageLoad();
+  }
+
+  doc.addEventListener("focusin", handleFocusIn, { capture: true, passive: true });
+  return () => doc.removeEventListener("focusin", handleFocusIn, { capture: true });
 }

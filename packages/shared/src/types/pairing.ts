@@ -291,8 +291,13 @@ export interface NMMessageBlastRadiusForHostResponse {
 // T-24-E-G4-1: MCP context push RPC 메시지
 // ---------------------------------------------------------------------------
 
-/** credential 메타 — plaintext ❌, id + name + issuer 만. */
-export interface CredentialMeta {
+/**
+ * MCP context push 용 credential 메타 — plaintext ❌, id + name + issuer 만.
+ *
+ * ⚠️ 주의: packages/shared/src/validation/credential.ts 의 `CredentialMeta` 와
+ * 다른 타입이다. 이름 충돌 방지를 위해 `McpCredentialMeta` 로 명명.
+ */
+export interface McpCredentialMeta {
   id: string;
   name: string;
   issuer: string;
@@ -304,7 +309,7 @@ export interface NMMessageMcpContextPush {
   /** 정규화 전 URL host (예: "github.com") */
   host: string;
   /** 해당 host 에 매칭된 credential 메타 목록 (plaintext ❌) */
-  credential_meta: CredentialMeta[];
+  credential_meta: McpCredentialMeta[];
   /** Unix timestamp ms (extension 측 시각) */
   timestamp: number;
   session_token: string;
@@ -312,6 +317,25 @@ export interface NMMessageMcpContextPush {
 
 /** nm-host → Extension: mcp_context_push ack 응답 */
 export interface NMMessageMcpContextPushResponse {
+  ok: boolean;
+  error?: string;
+}
+
+// ---------------------------------------------------------------------------
+// T-24-E-G4-2: ext_settings_get_mcp_opt_in — desktop opt-in 조회 (옵션 C)
+// ---------------------------------------------------------------------------
+
+/** Extension → nm-host: desktop ExtensionSettings 의 MCP opt-in 값 조회 */
+export interface NMMessageExtSettingsGetMcpOptIn {
+  type: "ext_settings_get_mcp_opt_in";
+  session_token: string;
+}
+
+/** nm-host → Extension: MCP opt-in 응답 */
+export interface NMMessageExtSettingsGetMcpOptInResponse {
+  type: "ext_settings_get_mcp_opt_in_response";
+  /** opt-in ON = true, OFF = false (기본값 false) */
+  enabled: boolean;
   ok: boolean;
   error?: string;
 }
@@ -330,6 +354,7 @@ export interface NMMessageMcpContextPushResponse {
  * G2-1: incident_check_for_host host incident 조회 RPC 메시지 추가.
  * G3-1: blast_radius_for_host autofill/save blast radius preview RPC 메시지 추가.
  * G4-1: mcp_context_push 현재 사이트 컨텍스트 MCP queue push RPC 메시지 추가.
+ * G4-2: ext_settings_get_mcp_opt_in desktop opt-in 단일 소스 조회 추가.
  */
 export type NMMessage =
   | NMMessageInit
@@ -355,7 +380,9 @@ export type NMMessage =
   | NMMessageIncidentCheckForHostResponse
   | NMMessageBlastRadiusForHost
   | NMMessageBlastRadiusForHostResponse
-  | NMMessageMcpContextPush;
+  | NMMessageMcpContextPush
+  | NMMessageExtSettingsGetMcpOptIn
+  | NMMessageExtSettingsGetMcpOptInResponse;
 
 // ---------------------------------------------------------------------------
 // 하위 호환 별칭 (A2 명명 유지 — 외부 consumer 가 직접 import 중)
