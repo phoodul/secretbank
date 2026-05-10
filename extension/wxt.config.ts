@@ -19,9 +19,8 @@ export default defineConfig({
     version: "0.1.0",
     // A5: i18n 모듈이 동작하려면 default_locale 이 반드시 설정되어야 함
     default_locale: "en",
-    // D10: 권한 최소화 — A1 에서는 activeTab + storage 만
-    // nativeMessaging 은 Phase B-1 에서 추가
-    permissions: ["activeTab", "storage"],
+    // D10: 권한 최소화 — F-1 검증 시점 nativeMessaging 누락 발견 (B-3 NMClient 부터 사용 중이었음)
+    permissions: ["activeTab", "storage", "nativeMessaging"],
     // D-1: content_scripts 에 MAIN world entry 명시 (WXT unlisted script + manifest 직접 등록).
     // content-main.ts 는 MAIN world (XHR/fetch hook) — ISOLATED content.ts 와 분리.
     content_scripts: [

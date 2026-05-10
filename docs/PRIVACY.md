@@ -165,7 +165,86 @@ in git history at https://github.com/phoodul/secretbank/commits/main/docs/PRIVAC
 
 ---
 
-## 10. Contact
+## 10. Browser Extension (Chrome / Firefox)
+
+The Secretbank browser extension collects and stores data as described below.
+
+### 10.1 Native Messaging channel
+
+The extension communicates with the Secretbank **desktop app** via the
+browser's Native Messaging API. This channel:
+
+- Carries only encrypted payloads (X25519 key exchange +
+  ChaCha20-Poly1305 AEAD, derived during the one-time pairing step).
+- Is a local loopback — no data exits the device through this channel.
+- Requires the desktop app to be running and paired.
+
+The native host binary (`secretbank-nm-host`) is registered in the OS
+native messaging host manifest. No data from this channel is sent to any
+server.
+
+### 10.2 What the extension stores in `chrome.storage.local`
+
+| Key | Purpose | TTL |
+| :-- | :------ | :-- |
+| `pairing` | Extension ↔ Desktop pairing info (X25519 key pair + device ID + timestamp) | Until re-pair or uninstall |
+| `session_token` | HMAC-SHA256 session token cache — avoids vault re-auth on every popup open | Until expiry (set by desktop) |
+| `secretbank_never_save_domains` | User's "never save on this site" list — array of hostname strings | Permanent (user-managed) |
+| `secretbank_pending_save` | Temporary credential capture from in-page SaveBanner (password plaintext for ≤ 5 min) | 5-minute TTL, deleted immediately after save/cancel |
+| `secretbank_supply_dismissed_v1` | Supply-chain banner dismiss timestamps per hostname | 7-day TTL per entry |
+| `secretbank_supply_cache_v1` | Cached incident-check API responses per hostname | 1-hour TTL |
+| `secretbank_railguard_dismissed_v1` | RAILGUARD hint banner dismiss timestamps per hostname | 7-day TTL per entry |
+
+No credential plaintexts, vault keys, or master passphrase are ever
+written to `chrome.storage.local` beyond the 5-minute pending-save
+window (which is cleared immediately on save or cancel).
+
+The X25519 private key stored under `pairing` is written as base64
+plaintext. It is protected by your OS profile's file-system permissions
+(BitLocker / FileVault / Linux dm-crypt). Threat model detail: see
+`docs/task_m24e.md` T7.
+
+### 10.3 What the extension stores in `chrome.storage.session`
+
+Session storage is cleared when the browser session ends (tab/window
+close or browser restart).
+
+| Key | Purpose | TTL |
+| :-- | :------ | :-- |
+| `secretbank_mcp_opt_in_cache_v1` | Cached opt-in flag for MCP context push (fetched from desktop) | 5-minute TTL |
+| `secretbank_mcp_last_push_v1` | Per-hostname timestamp of last MCP context push (rate-limit) | Until browser session ends |
+
+### 10.4 External network requests made by the extension
+
+| Destination | Purpose | Data sent | User control |
+| :---------- | :------ | :-------- | :----------- |
+| `https://www.google.com/s2/favicons` | Site logo fallback — fetches a favicon for the current site's hostname | **Hostname only** — no user ID, no session token, no vault data | Favicon falls back to letter-avatar if request fails; future release will replace with `api.secretbank.app/favicon/{host}` (self-controlled proxy) |
+
+All other extension network requests go through the local Native
+Messaging channel to the desktop app, which applies its own outbound
+policy (see §2 above).
+
+MCP context push is **opt-in and off by default**. When enabled, only
+credential metadata (ID + name + issuer) — never plaintext secrets — is
+forwarded to the desktop app's MCP queue, which remains on-device.
+
+### 10.5 Permissions used by the extension
+
+| Permission | Why it is needed |
+| :--------- | :--------------- |
+| `activeTab` | Read the current page's URL and hostname for autofill matching, credential saving, and supply-chain banner |
+| `storage` | `chrome.storage.local` and `chrome.storage.session` — see §10.2 and §10.3 |
+| `nativeMessaging` | Communicate with the Secretbank desktop app over an encrypted local channel |
+| `scripting` (optional, if added) | Inject autofill values into form fields |
+| `contextMenus` (optional, if added) | Right-click autofill shortcut |
+
+The extension targets `<all_urls>` in its content script in order to
+detect credential-entry forms on any website. It does **not** read page
+content beyond identifying form fields; no page text is sent anywhere.
+
+---
+
+## 11. Contact
 
 - privacy@secretbank.app — privacy questions, deletion requests.
 - security@secretbank.app — vulnerabilities (PGP, see SECURITY.md).
