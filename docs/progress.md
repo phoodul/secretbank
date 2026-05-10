@@ -2,7 +2,19 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-10 (새벽 ~06:00) — **🎉 M24-E 풀체인 클로즈 (53/53 sub-task, 100%) — 1P 동등 + 1P 우위 차별 5종 모두 구현. hackernews 권유 가능 시점 도달.**
+- **Time:** 2026-05-10 (오전, resume 세션) — **F-1 스토어 제출 보강: extension 아이콘 4 사이즈 PNG 자동 생성** (Chrome Web Store 제출 blocker 해소).
+- **이번 resume 세션 작업**:
+  - 사용자 선택 = A (스토어 제출 보강 — B-1 아이콘 PNG 4 사이즈)
+  - `extension/scripts/generate-icons.ps1` 신규 (System.Drawing.Bitmap HighQualityBicubic, src-tauri/icons/icon.png 512×512 → public/icon/{16,32,48,128}.png)
+  - WXT 자동 인식 검증: chrome-mv3 + firefox-mv2 두 manifest 모두 `"icons":{"16":"icon/16.png",...}` 자동 등록 ✅
+  - 회귀 0: extension build (chrome+firefox) 성공 + extension test 650 PASS + manifest-validation 20/20 PASS
+  - 사용자 행동 단축: Chrome / Edge / Firefox 3 스토어 제출 시 동일 PNG 세트 사용 (DRY)
+- **남은 사용자 액션** (자동화 ❌):
+  - 스크린샷 5+ 촬영 (popup CredentialList + autofill flow + SaveBanner + GeneratorPanel + MiniGraph hover)
+  - Chrome Web Store 제출 ($5 일회) → Microsoft Edge Add-ons (무료) → Firefox AMO (무료)
+  - dogfooding 1주 → Show HN
+
+### 이전 — 2026-05-10 (새벽 ~06:00) — 🎉 M24-E 풀체인 클로즈 (53/53 sub-task, 100%) — 1P 동등 + 1P 우위 차별 5종 모두 구현. hackernews 권유 가능 시점 도달.
 - **이번 세션 (resume → Night mode) 통계**:
   - Phase D 6/6 ✅ (D-1 hook → D-2 bridge → D-3 banner → D-4 handler → D-5 actor+issuer → D-6 IPC+dialog)
   - Phase E 5/5 ✅ (E-1 generator inline → E-2 recipe inheritance → E-3 Site Logo → E-4 popup card → E-5 design tokens) — **1P 동등 dogfooding 가능 시점 도달**
