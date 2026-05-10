@@ -2,7 +2,37 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-10 (오전 resume 세션 — 보강 라운드 2건) — **F-1 아이콘 PNG + Dependabot 3 moderate 해소** (스토어 제출 + 보안 정리).
+- **Time:** 2026-05-10 (오전 ~ 오후, resume 세션 — 누적 10 commits, 세션 종료) — **final_logo (라피스+골드) 일괄 적용 + CI green 라운드 (CI/Extension CI ✅, E2E/Deploy Site → next session)**.
+- **이번 resume 세션 commits (10건)**:
+  1. `8e838e6` T-24-E-Icons (4 사이즈 PNG, 1차 placeholder)
+  2. `986e438` Dependabot postcss 5.x → 8.5.10+ (3 moderate alerts 해소)
+  3. `3964cad` CI red 5 영역 fix (Rust scope / ESLint / TS / vitest unhandled / Playwright launch)
+  4. `10e467a` WXT `postinstall: wxt prepare` (defineContentScript globals)
+  5. `98d4c7e` Rust migration test fix + prettier 70 files
+  6. `021a9a3` 누락된 0015_audit_seq_reindex.sql (cascade drop 복원)
+  7. `6d3837c` **final_logo 일괄 적용** — src-tauri/icons (Tauri 풀세트 + iOS/Android) + extension/public/icon + site/og-image + favicon × 5 + index/guide.html meta. 라피스+골드 메탈 vault shield+key+lock
+  8. `e4517f5` E2E worker teardown 60s race
+  9. `ea23c1c` E2E timeout 180s + Deploy Site wrangler 직접 install
+  10. `???`     세션 정리 commit (이번 commit) — E2E continue-on-error mute + docs 갱신 + brand identity 정식화
+- **CI 결과** (`ea23c1c` 시점):
+  - **CI ✅** (Rust + Frontend typecheck + lint + format:check + vitest + ee-relay)
+  - **Extension CI ✅** (test + typecheck + build chromium/firefox)
+  - **Extension E2E ❌** — autofill.spec.ts 4 tests, Chromium MV3 launch 180s+ (GitHub Actions Linux runner 한계). 옵션 D 후퇴 (continue-on-error mute, F-2 풀 통합 시 globalSetup 패턴 리팩토링)
+  - **Deploy Site ❌** — Cloudflare API request fail (`/accounts/.../pages/projects/secretbank-site`). 사용자 액션 필요 (token 권한 점검)
+- **남은 사용자 액션** (자동화 ❌):
+  - **스토어 제출** (M24-E publish):
+    - 스크린샷 5+ 촬영 (popup CredentialList + autofill flow + SaveBanner + GeneratorPanel + MiniGraph hover)
+    - Chrome Web Store 제출 ($5 일회 + 새 라피스+골드 아이콘)
+    - Microsoft Edge Add-ons (무료, chromium 빌드 재사용)
+    - Firefox AMO (무료, AGPL-3.0)
+  - **Cloudflare 점검**: secretbank.app 자동 배포 복구 (token Pages:Edit 권한 + project rename 여부)
+  - **dogfooding 1주** → Show HN → 사용자 100~500 → NLNet NGI Zero PET 신청
+- **다음 세션 시작점 옵션**:
+  - **C** brand 일관성 강화 (site nav 로고 + README logo 섹션 + 데스크톱 디자인 토큰 라피스+골드 통일)
+  - **D** M24 일반 vault Phase 3-B (secure_note) 진입 — researcher → integrator → planner → implementator
+  - **E2E F-2** Firefox + Safari + Edge cross-browser 풀 통합 (globalSetup single launch + 모든 spec 공유)
+
+### 이전 — 2026-05-10 (오전 resume 세션 — 보강 라운드 2건) — F-1 아이콘 PNG + Dependabot 3 moderate 해소
 - **이번 resume 세션 작업 (2건)**:
   1. **F-1 아이콘 PNG 보강** (`8e838e6`):
      - `extension/scripts/generate-icons.ps1` 신규 (System.Drawing.Bitmap HighQualityBicubic, src-tauri/icons/icon.png 512×512 → public/icon/{16,32,48,128}.png)

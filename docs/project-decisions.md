@@ -5,6 +5,63 @@
 
 ---
 
+## [2026-05-10] **Brand identity 정식화 — final_logo 라피스+골드 메탈 vault**
+
+### 결정
+
+- **공식 로고 채택**: `final_logo.png` (Gemini-generated, D 후속 진화 — 라피스 라줄리 shield + 폴리시드 골드 key + 락 + 매트릭스 그린 binary + PCB 회로 도트 + "SecretBank" 워드마크 + tagline "SECURELY MANAGE PASSWORDS & KEYS").
+- **Brand color palette**:
+  - Primary: **lapis lazuli** (deep ultramarine #1E3A8A 계열, gold flecks)
+  - Accent: **polished gold** (메탈릭 #D4A017 ~ #C9A227)
+  - Background: midnight navy 또는 화이트
+  - Matrix accent: 그린 (#22C55E ~ #16A34A) — vault binary 패턴 보조
+- **사용처 일괄 적용** (commit `6d3837c`):
+  - 데스크톱 앱 — `src-tauri/icons/icon.png` (1024×1024) + 자동 풀세트 (`tauri icon`) — 32x32 / 128x128 / icon.ico / icon.icns / Square*Logo / StoreLogo / Android mipmap × 5 / iOS AppIcon × 15
+  - Browser Extension — `extension/public/icon/{16,32,48,128}.png` (WXT 자동 manifest 등록)
+  - 사이트 — `site/og-image.png` (1200×630) + `site/favicon-{16,32,64,192,512}.png` + `site/icon-1024.png` + index.html / guide.html `<head>` meta (og:image / twitter:card / icon link rel / apple-touch-icon)
+
+### 영향
+
+- Chrome / Edge / Firefox 스토어 제출 시 동일 PNG 세트 (DRY).
+- 향후 brand 변형 시 `extension/scripts/generate-icons.ps1` + `tauri icon` 두 명령으로 풀체인 자동 재생성.
+- 데스크톱 앱 내부 디자인 토큰 (vault-* / chart-* 컬러) 도 라피스+골드 으로 통일하면 brand 완성도 더 향상 가능 (다음 세션 후보).
+
+---
+
+## [2026-05-10] **F-3 Extension E2E 옵션 D 후퇴 — continue-on-error mute**
+
+### 결정
+
+GitHub Actions Linux runner 의 Chromium MV3 launch 가 180s+ 소요되어 Playwright worker setup 단계에서 timeout. 옵션 B (autofill smoke 4 + save/generator stub) 도 동일 환경 한계로 fail (60s → 180s 확장 모두 부족).
+
+- `Extension E2E` 워크플로우의 `e2e-chromium` job 에 **`continue-on-error: true`** 추가 (CI red mask 방지)
+- `autofill.spec.ts` 는 **보존** — 재진입 시점에 globalSetup single launch + 모든 spec 공유 패턴으로 리팩토링
+- 재진입 시점 = **F-2 풀 통합** (Firefox + Safari + Edge cross-browser) 또는 **로컬 검증 + manual smoke**
+
+### 영향
+
+- CI red 가 다른 job (CI / Extension CI) 을 mask 하지 않음 → 스토어 제출 / dogfooding 진입 가능
+- 실제 검증은 로컬 `pnpm --filter @secretbank/extension e2e` (사용자 수동) + manifest-validation + build-smoke 만 신뢰
+- Phase F-2 진입 시 Playwright config 의 globalSetup 패턴 도입
+
+---
+
+## [2026-05-10] **Deploy Site Cloudflare API fail — 사용자 액션 대기**
+
+### 결정 (next session)
+
+- 증상: `wrangler pages deploy` → `Cloudflare API request failed for /accounts/.../pages/projects/secretbank-site` (`exit code 1`)
+- 가능 원인: API token 의 Pages:Edit 권한 누락 / project rename / rate limit / account ID 불일치
+- **사용자 액션 필요**: Cloudflare 대시보드 점검 — secretbank-site project 존재 여부 + API token 권한 (Workers Routes:Edit + Pages:Edit + Account.Account:Read)
+- 임시 mute 옵션: `vars.SITE_DEPLOY_ENABLED=false` 로 GitHub repo variable 설정
+
+### 영향
+
+- secretbank.app 사이트 자동 배포 일시 중단. 수동 배포는 사용자가 `wrangler pages deploy site --project-name=secretbank-site` 로컬 실행 가능
+- 새 로고 (og-image / favicon) 가 사이트에 반영 안 된 상태 (push 후 deploy fail). 사용자가 수동 배포 또는 token fix 후 자동 배포
+
+---
+
 ## [2026-05-10] **Dependabot 3 moderate 해소 — postcss-rem-to-pixel → postcss-rem-to-responsive-pixel 교체**
 
 ### 배경

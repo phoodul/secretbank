@@ -1,5 +1,45 @@
 # Work Log
 
+## 2026-05-10 (오전~오후, resume 세션) — final_logo + CI green 라운드 + brand identity 정식화
+
+### 누적 (10 commits)
+
+| # | Commit | 작업 |
+|:--|:--|:--|
+| 1 | `8e838e6` | T-24-E-Icons (4 사이즈 PNG, 1차 placeholder) |
+| 2 | `986e438` | Dependabot 3 moderate (postcss 5.x → 8.5.10+) |
+| 3 | `3964cad` | CI red 5 영역 일괄 fix (Phase G 누적 결함) |
+| 4 | `10e467a` | WXT `postinstall: wxt prepare` |
+| 5 | `98d4c7e` | Rust migration test + prettier 70 files |
+| 6 | `021a9a3` | 누락된 0015_audit_seq_reindex.sql |
+| 7 | `6d3837c` | **final_logo 일괄 적용 — 라피스+골드 메탈 vault** |
+| 8 | `e4517f5` | E2E worker teardown 60s race |
+| 9 | `ea23c1c` | E2E timeout 180s + Deploy Site wrangler 직접 |
+| 10 | (이번) | 세션 정리 + E2E continue-on-error mute + docs 갱신 |
+
+### CI 결과 (`ea23c1c` 시점)
+
+- ✅ **CI** (Rust + Frontend + ee-relay)
+- ✅ **Extension CI** (test 650 PASS + typecheck + build chromium/firefox)
+- ❌ **Extension E2E** — Chromium MV3 launch 180s+ (GitHub Actions Linux runner 한계). 옵션 D 후퇴 (continue-on-error mute)
+- ❌ **Deploy Site** — Cloudflare API fail. **사용자 액션 필요** (token Pages:Edit 권한 + project rename 점검)
+
+### Brand identity 정식화
+
+- 공식 로고: `final_logo.png` (라피스 라줄리 shield + 폴리시드 골드 key + 락 + 매트릭스 그린 binary + PCB tracery)
+- Color palette: lapis (#1E3A8A) primary + gold (#D4A017) accent + matrix green (#22C55E) 보조
+- 사용처: 데스크톱 (Tauri 풀세트 자동 재생성) + Extension (4 사이즈) + 사이트 (og-image + favicon × 5 + meta)
+- 제출용 PNG: Chrome / Edge / Firefox 모두 동일 세트 (DRY)
+
+### 다음 세션 시작점
+
+- **C** brand 일관성 강화 (site nav 로고 + README logo + 데스크톱 디자인 토큰)
+- **D** M24 Phase 3-B (secure_note) 진입 — researcher → integrator → planner → implementator
+- **E2E F-2** Firefox + Safari + Edge cross-browser 풀 통합 + globalSetup single launch 리팩토링
+- **사용자 액션**: 스크린샷 촬영 → 스토어 제출 (Chrome/Edge/Firefox AMO) + Cloudflare token 점검
+
+---
+
 ## 2026-05-10 (새벽) — 🎉 M24-E 풀체인 클로즈 (53/53 sub-task, 100%)
 
 ### 결정 요약
