@@ -14,15 +14,6 @@
     />
     <meta property="og:url" content="https://secretbank.app" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://secretbank.app/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://secretbank.app/og-image.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />
     <title>Secretbank — secrets manager that understands your dependency graph</title>
     <link rel="canonical" href="https://secretbank.app" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -197,11 +188,6 @@
         align-items: center;
         gap: 0.5rem;
       }
-      .wordmark {
-        height: 32px;
-        width: auto;
-        flex-shrink: 0;
-      }
       /* ─────────────────── Logo mark — VaultMechanism unlock 장면 ─────────────────── */
       .logo-mark {
         width: 36px;
@@ -346,26 +332,6 @@
       .hero {
         text-align: center;
         padding: 5rem 1rem 4rem;
-        position: relative;
-        overflow: hidden;
-      }
-      .matrix-rain {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-        opacity: 0.18;
-        pointer-events: none;
-      }
-      .hero > *:not(.matrix-rain) {
-        position: relative;
-        z-index: 1;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .matrix-rain {
-          display: none;
-        }
       }
       .hero .eyebrow {
         display: inline-flex;
@@ -1280,8 +1246,128 @@
       <!-- ─────────── Header ─────────── -->
       <header class="site-nav">
         <a href="#" class="logo">
-          <img src="/logo-mark.png" alt="" class="logo-mark" />
-          <img src="/wordmark.png" alt="Secretbank" class="wordmark" />
+          <!-- VaultMechanism unlock 장면을 압축한 logo:
+               육각형 frame + 황동 reactor disc + 4 cardinal reticle + 회전 sweep arc -->
+          <svg
+            class="logo-mark"
+            viewBox="0 0 40 40"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <defs>
+              <radialGradient id="vault-backdrop" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#1e3a8a" stop-opacity="0.95" />
+                <stop offset="60%" stop-color="#0f1c4a" stop-opacity="0.7" />
+                <stop offset="100%" stop-color="#0a1628" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="vault-halo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#f4d369" stop-opacity="0.7" />
+                <stop offset="40%" stop-color="#d4af37" stop-opacity="0.4" />
+                <stop offset="100%" stop-color="#b8932b" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="vault-brass" cx="35%" cy="30%" r="80%">
+                <stop offset="0%" stop-color="#fde68a" />
+                <stop offset="35%" stop-color="#d4af37" />
+                <stop offset="100%" stop-color="#7c5e1a" />
+              </radialGradient>
+              <linearGradient id="sweep-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#4a6cf7" stop-opacity="0" />
+                <stop offset="60%" stop-color="#4a6cf7" stop-opacity="0.3" />
+                <stop offset="95%" stop-color="#60a5fa" stop-opacity="1" />
+                <stop offset="100%" stop-color="#93c5fd" stop-opacity="1" />
+              </linearGradient>
+              <filter id="vault-glow" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="0.8" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            <!-- Lapis backdrop — vault chamber depth -->
+            <circle cx="20" cy="20" r="19.5" fill="url(#vault-backdrop)" />
+
+            <!-- Outer dashed ring — slow rotation (tumbler outer rim) -->
+            <g class="outer-dash">
+              <circle
+                cx="20"
+                cy="20"
+                r="17.5"
+                fill="none"
+                stroke="#d4af37"
+                stroke-width="0.4"
+                stroke-dasharray="0.8 2.4"
+                opacity="0.55"
+              />
+            </g>
+
+            <!-- Crosshair reticle — 4 cardinal markers (fixed) -->
+            <g stroke="#f4d369" stroke-width="0.7" stroke-linecap="round" opacity="0.9">
+              <line x1="20" y1="2.5" x2="20" y2="5.5" />
+              <line x1="37.5" y1="20" x2="34.5" y2="20" />
+              <line x1="20" y1="37.5" x2="20" y2="34.5" />
+              <line x1="2.5" y1="20" x2="5.5" y2="20" />
+            </g>
+
+            <!-- Sweep arc — fast rotation (radar/unlocking scan) -->
+            <g class="sweep-arc">
+              <path
+                d="M 20 5 A 15 15 0 0 1 32 14"
+                stroke="url(#sweep-grad)"
+                stroke-width="1.2"
+                fill="none"
+                stroke-linecap="round"
+                filter="url(#vault-glow)"
+              />
+              <circle cx="32" cy="14" r="0.9" fill="#93c5fd" filter="url(#vault-glow)" />
+            </g>
+
+            <!-- Hexagonal frame (signature shape) -->
+            <polygon
+              points="20,9 29.5,14.5 29.5,25.5 20,31 10.5,25.5 10.5,14.5"
+              fill="#1e3a8a"
+              fill-opacity="0.55"
+              stroke="#d4af37"
+              stroke-width="0.6"
+            />
+
+            <!-- 6 cardinal connector dashes (hex → inner disc) -->
+            <g stroke="#d4af37" stroke-width="0.5" stroke-linecap="round" opacity="0.75">
+              <line x1="20" y1="10" x2="20" y2="14" />
+              <line x1="27.7" y1="14.5" x2="24.3" y2="16.5" />
+              <line x1="27.7" y1="25.5" x2="24.3" y2="23.5" />
+              <line x1="20" y1="30" x2="20" y2="26" />
+              <line x1="12.3" y1="25.5" x2="15.7" y2="23.5" />
+              <line x1="12.3" y1="14.5" x2="15.7" y2="16.5" />
+            </g>
+
+            <!-- Halo bloom (soft golden glow around core) -->
+            <circle cx="20" cy="20" r="6.5" fill="url(#vault-halo)" class="halo-pulse" />
+
+            <!-- Inner brass disc with specular -->
+            <circle
+              cx="20"
+              cy="20"
+              r="4"
+              fill="url(#vault-brass)"
+              stroke="#7c5e1a"
+              stroke-width="0.2"
+            />
+            <ellipse cx="19" cy="19" rx="1.1" ry="0.7" fill="#fef9c3" opacity="0.7" />
+
+            <!-- Bright reactor core (white-hot pulse) -->
+            <circle
+              cx="20"
+              cy="20"
+              r="1.4"
+              fill="#fef3c7"
+              class="core-pulse"
+              filter="url(#vault-glow)"
+            />
+            <circle cx="20" cy="20" r="0.5" fill="#ffffff" />
+          </svg>
+          <span>Secret<span style="color: var(--lapis)">bank</span></span>
         </a>
         <nav class="nav-links">
           <a href="#features">Features</a>
@@ -1297,7 +1383,6 @@
 
       <!-- ─────────── Hero ─────────── -->
       <section class="hero">
-        <canvas id="matrix-rain" class="matrix-rain" aria-hidden="true"></canvas>
         <div class="eyebrow">
           <span class="dot"></span>
           v0.1.0-pre · Free · AGPL-3.0 · Works offline
@@ -2373,47 +2458,6 @@
           { threshold: 0.12 },
         );
         els.forEach((el) => io.observe(el));
-      })();
-
-      // Matrix rain — hero 배경 0/1 흘러내리는 동적 장면 (Matrix 영화 톤)
-      (function () {
-        const canvas = document.getElementById("matrix-rain");
-        if (!canvas) return;
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-        const ctx = canvas.getContext("2d");
-        const fontSize = 14;
-        const dpr = window.devicePixelRatio || 1;
-        let cols, drops;
-
-        function resize() {
-          const w = canvas.clientWidth;
-          const h = canvas.clientHeight;
-          canvas.width = w * dpr;
-          canvas.height = h * dpr;
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          cols = Math.max(1, Math.floor(w / fontSize));
-          drops = new Array(cols).fill(0).map(() => (Math.random() * h) / fontSize);
-        }
-
-        function draw() {
-          const w = canvas.clientWidth;
-          const h = canvas.clientHeight;
-          ctx.fillStyle = "rgba(10, 22, 40, 0.08)";
-          ctx.fillRect(0, 0, w, h);
-          ctx.fillStyle = "#22c55e";
-          ctx.font = fontSize + "px monospace";
-          for (let i = 0; i < cols; i++) {
-            const ch = Math.random() < 0.5 ? "0" : "1";
-            ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
-            if (drops[i] * fontSize > h && Math.random() > 0.975) drops[i] = 0;
-            drops[i]++;
-          }
-          requestAnimationFrame(draw);
-        }
-
-        resize();
-        window.addEventListener("resize", resize);
-        draw();
       })();
     </script>
   </body>
