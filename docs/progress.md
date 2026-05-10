@@ -2,7 +2,34 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-10 (오전 ~ 오후, resume 세션 — 누적 10 commits, 세션 종료) — **final_logo (라피스+골드) 일괄 적용 + CI green 라운드 (CI/Extension CI ✅, E2E/Deploy Site → next session)**.
+- **Time:** 2026-05-10 (저녁 resume 세션 — v0.1.0-pre12 release cut + dogfooding 진입). **M24-E 53/53 + Phase 3-A 신용카드 + final_logo 라피스+골드 정식 release 공개 (`v0.1.0-pre12` prerelease, 2026-05-10 10:18 UTC)**. 사용자 dogfooding 시작 가능.
+- **이번 resume 세션 commits (1건)**:
+  1. `ff41897` chore(release): version bump 0.1.0-pre11 → 0.1.0-pre12 — 24 파일 (root/shared/extension/vscode package.json + tauri.conf + workspace+14 crate Cargo.toml + winget + homebrew Cask + CHANGELOG [0.1.0-pre12] 섹션 신설 + project-decisions prettier auto-format) version 동기화.
+- **v0.1.0-pre12 release 결과**:
+  - ✅ **Draft 빌드 성공** — 10 assets (Win .exe+.sig / macOS universal .dmg + .app.tar.gz + .sig / Linux .AppImage+.sig + .deb + .rpm + latest.json) 모두 GitHub Releases 에 업로드.
+  - ✅ **Draft → Public publish 완료** (`gh release edit v0.1.0-pre12 --draft=false --prerelease`). prerelease 마킹 유지 (v0.1.0 정식 stable 아님). `--latest` 는 prerelease 와 충돌 → 미사용.
+  - ❌ **`publish-updater-manifest` job 실패** (pre11 과 동일 원인) — site/latest.json + releases.json 자동 commit 이 branch protection 에 막힘 (GH006). `secretbank.app/api/latest` 가 pre11 그대로 남아있음 → Tauri auto-updater 가 pre12 로 강제 갱신 안 함. dogfooding 흐름엔 무영향 (사용자가 직접 다운로드).
+  - ❌ **CI fail → rerun green** (3m17s) — `DependencyGraph.blastRadius.test.tsx > Esc 키 다운 시 선택 해제` 1건 flaky (로컬 4 PASS / CI 1차 fail / CI rerun PASS). 코드 fix 불필요.
+  - ✅ Extension CI / Extension E2E success (`ea23c1c` 이후 안정).
+- **Dogfooding 시작 명령** (Windows):
+  ```powershell
+  $url = "https://github.com/phoodul/secretbank/releases/download/v0.1.0-pre12/Secretbank_0.1.0-pre12_x64-setup.exe"
+  $out = "$env:TEMP\Secretbank_0.1.0-pre12_x64-setup.exe"
+  Invoke-WebRequest -Uri $url -OutFile $out
+  Start-Process -FilePath $out
+  ```
+- **남은 사용자 액션** (자동화 ❌):
+  - **Dogfooding 1주** — daily driver 사용 + 발견 이슈 GitHub Issues 또는 다음 세션 보고
+  - **스토어 제출** (M24-E publish): 스크린샷 5+ 촬영 → Chrome ($5) / Edge (무료) / Firefox AMO (무료)
+  - **Cloudflare 점검**: secretbank.app/api/latest 자동 배포 복구 (publish-updater-manifest branch protection bypass 또는 PAT 사용)
+  - dogfooding 1주 후 → Show HN → 사용자 100~500 → NLNet NGI Zero PET 신청
+- **다음 세션 시작점 옵션**:
+  - **A** Dogfooding 결과 정리 + 발견 이슈 fix 라운드
+  - **B** M24 일반 vault Phase 3-B (secure_note) 진입
+  - **C** Cloudflare publish-updater-manifest branch protection 영구 해결 (release.yml 의 push 방식 변경: GITHUB_TOKEN → PAT, 또는 별도 sync workflow 분리)
+  - **D** Brand 일관성 강화 (site nav 로고 + README logo 섹션 + 데스크톱 디자인 토큰 라피스+골드 통일)
+
+### 이전 — 2026-05-10 (오전 ~ 오후, resume 세션 — 누적 10 commits, 세션 종료) — final_logo (라피스+골드) 일괄 적용 + CI green 라운드 (CI/Extension CI ✅, E2E/Deploy Site → next session)
 - **이번 resume 세션 commits (10건)**:
   1. `8e838e6` T-24-E-Icons (4 사이즈 PNG, 1차 placeholder)
   2. `986e438` Dependabot postcss 5.x → 8.5.10+ (3 moderate alerts 해소)

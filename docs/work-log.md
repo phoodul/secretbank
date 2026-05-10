@@ -1,5 +1,39 @@
 # Work Log
 
+## 2026-05-10 (저녁 resume 세션) — v0.1.0-pre12 release cut + dogfooding 진입
+
+### 1 commit
+
+| # | Commit | 작업 |
+|:--|:--|:--|
+| 1 | `ff41897` | chore(release): version bump 0.1.0-pre11 → 0.1.0-pre12 — 24 파일 동기화 + CHANGELOG [0.1.0-pre12] |
+
+### Release 결과 (v0.1.0-pre12 prerelease, 2026-05-10 10:18 UTC)
+
+- ✅ **Draft 빌드 성공** — 10 assets (Win .exe+.sig / macOS universal .dmg + .app.tar.gz + .sig / Linux AppImage+.sig + .deb + .rpm + latest.json) 모두 GitHub Releases 업로드.
+- ✅ **Draft → Public publish 완료** (`gh release edit v0.1.0-pre12 --draft=false --prerelease`). prerelease 마킹 유지. `--latest` 는 prerelease 와 충돌 → 미사용.
+- ❌ **`publish-updater-manifest` job 실패** (pre11 과 동일) — site/{latest,releases}.json 자동 commit 이 branch protection (GH006) 에 막힘. `secretbank.app/api/latest` pre11 그대로. dogfooding 흐름엔 무영향 (직접 다운로드).
+- ❌ **CI fail → rerun green** (3m17s) — `DependencyGraph.blastRadius.test.tsx > Esc 키 다운 시 선택 해제` 1건 flaky. 로컬 4 PASS, CI rerun PASS.
+- ✅ Extension CI / Extension E2E success.
+
+### Dogfooding 시작 명령 (Windows)
+
+```powershell
+$url = "https://github.com/phoodul/secretbank/releases/download/v0.1.0-pre12/Secretbank_0.1.0-pre12_x64-setup.exe"
+$out = "$env:TEMP\Secretbank_0.1.0-pre12_x64-setup.exe"
+Invoke-WebRequest -Uri $url -OutFile $out
+Start-Process -FilePath $out
+```
+
+### 다음 세션 시작점
+
+- **A** Dogfooding 결과 정리 + 발견 이슈 fix
+- **B** M24 Phase 3-B (secure_note)
+- **C** Cloudflare publish-updater-manifest 영구 해결
+- **D** Brand 일관성 (site nav 로고 + README + 데스크톱 토큰)
+
+---
+
 ## 2026-05-10 (오전~오후, resume 세션) — final_logo + CI green 라운드 + brand identity 정식화
 
 ### 누적 (10 commits)
