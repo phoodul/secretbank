@@ -16,7 +16,7 @@
   - Background: midnight navy 또는 화이트
   - Matrix accent: 그린 (#22C55E ~ #16A34A) — vault binary 패턴 보조
 - **사용처 일괄 적용** (commit `6d3837c`):
-  - 데스크톱 앱 — `src-tauri/icons/icon.png` (1024×1024) + 자동 풀세트 (`tauri icon`) — 32x32 / 128x128 / icon.ico / icon.icns / Square*Logo / StoreLogo / Android mipmap × 5 / iOS AppIcon × 15
+  - 데스크톱 앱 — `src-tauri/icons/icon.png` (1024×1024) + 자동 풀세트 (`tauri icon`) — 32x32 / 128x128 / icon.ico / icon.icns / Square\*Logo / StoreLogo / Android mipmap × 5 / iOS AppIcon × 15
   - Browser Extension — `extension/public/icon/{16,32,48,128}.png` (WXT 자동 manifest 등록)
   - 사이트 — `site/og-image.png` (1200×630) + `site/favicon-{16,32,64,192,512}.png` + `site/icon-1024.png` + index.html / guide.html `<head>` meta (og:image / twitter:card / icon link rel / apple-touch-icon)
 
@@ -24,7 +24,7 @@
 
 - Chrome / Edge / Firefox 스토어 제출 시 동일 PNG 세트 (DRY).
 - 향후 brand 변형 시 `extension/scripts/generate-icons.ps1` + `tauri icon` 두 명령으로 풀체인 자동 재생성.
-- 데스크톱 앱 내부 디자인 토큰 (vault-* / chart-* 컬러) 도 라피스+골드 으로 통일하면 brand 완성도 더 향상 가능 (다음 세션 후보).
+- 데스크톱 앱 내부 디자인 토큰 (vault-_ / chart-_ 컬러) 도 라피스+골드 으로 통일하면 brand 완성도 더 향상 가능 (다음 세션 후보).
 
 ---
 

@@ -7,7 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Continuing development beyond v0.1.0-pre8. Major upcoming work: M24 (general-password vault), browser autofill, automation hooks, mobile.
+Continuing development beyond v0.1.0-pre12. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+
+## [0.1.0-pre12] - 2026-05-10
+
+First release with the full Browser Extension chain (Chrome MV3 + Firefox MV2), the unified Bento credit-card kind, and the new lapis+gold brand identity.
+
+### Added — Browser Extension (M24-E, 53/53 sub-tasks)
+
+- **Autofill (Phase C)** — form-detector + fill-handler with Shadow-DOM-aware traversal, autocomplete priority + name/id regex fallback, subdomain-safe phishing defense, DOM Clickjacking 3-layer mitigation (closed shadow + MutationObserver + composedPath, the 2025 Marek Tóth disclosure).
+- **Save dialog (Phase D)** — XHR/fetch hook + form submit listener, content↔ISOLATED postMessage with origin verification, SaveBanner Shadow DOM, save-handler routing for new/rotation, Tauri credential persistence.
+- **Generator + brand (Phase E)** — inline password generator on save, recipe inheritance, Site Logo card on the popup, lapis+gold design tokens.
+- **Differentiators (Phase G, 1Password cannot do these)** — inline dependency mini-graph (CredentialCard hover, SVG fan-out), supply-chain banner (NVD/GHSA breach in-page warnings), blast-radius preview on save, MCP context push (opt-in, 5-min cooldown), RAILGUARD AI-editor sidebar warning (8 hosts).
+- **Cross-browser (Phase F)** — Chrome / Firefox / Edge / Safari placeholder. Playwright Chromium E2E + web-ext build smoke. Store submission packages (Chrome $5, Edge free, Firefox AMO free).
+- **Native Messaging Host (Phase B)** — pairing dialog with HMAC-SHA256 session token, configurable TTL (5 options), audit-log integration.
+
+### Added — Unified Bento Inventory (M24)
+
+- **Phase 3-A: Credit-card kind** — CredentialKind::CreditCard + 0012 migration, BIN detection prefix-only, react-number-format pattern (4-4-4-4 / Amex 4-6-5), 3D flip via `motion/react` with `useReducedMotion`, billing-address optional, no PIN by Zod refine, 30-second auto-clear on reveal with audit log.
+- **Phase 2-2B: Watchtower** — bulk security score with health badges per credential, breach feed integration.
+
+### Added — brand identity
+
+- **final_logo** lapis + gold metallic vault shield + key + lock, applied across Tauri icons (Windows / macOS / Linux full set + iOS + Android), browser extension `public/icon/{16,32,48,128}.png`, `site/og-image`, favicons (5 sizes), `index.html` / `guide.html` meta tags.
+- Brand identity formalized in `docs/project-decisions.md`.
+
+### Fixed — security
+
+- `postcss < 8.5.10` (3 moderate Dependabot alerts: GHSA-566m-qj78-rww5, GHSA-7fh5-64p2-3v2j, GHSA-qx2v-qp2m-jg93). Replaced unmaintained `postcss-rem-to-pixel@4.1.2` (transitive postcss 5.2.18) with `postcss-rem-to-responsive-pixel@^7.0.4` (postcss 8 peer, actively maintained).
+- `hono` 4.12.15 → 4.12.18 (2 moderate alerts).
+
+### Fixed — CI
+
+- Rust migration test pinned against new `0015_audit_seq_reindex` migration.
+- WXT `postinstall: wxt prepare` runs in CI to produce `defineContentScript` / auto-imports types.
+- Extension E2E worker teardown 60s race + Playwright Chromium MV3 launch budget.
+- 5 areas patched in one round: Rust scope / ESLint / TS / vitest unhandled / Playwright launch.
 
 ## [0.1.0-pre8] - 2026-05-03
 

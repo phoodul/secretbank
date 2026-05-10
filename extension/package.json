@@ -1,7 +1,7 @@
 {
   "name": "@secretbank/extension",
   "private": true,
-  "version": "0.1.0-pre11",
+  "version": "0.1.0-pre12",
   "description": "Secretbank browser extension — save, fill, and manage secrets across the web",
   "license": "AGPL-3.0-or-later",
   "type": "module",

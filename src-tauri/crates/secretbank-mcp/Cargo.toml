@@ -1,6 +1,6 @@
 [package]
 name = "secretbank-mcp"
-version = "0.1.0-pre11"
+version = "0.1.0-pre12"
 edition = "2021"
 description = "Secretbank MCP server — Model Context Protocol bridge for Claude / Cursor / Continue"
 
