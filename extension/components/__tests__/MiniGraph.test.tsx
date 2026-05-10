@@ -145,7 +145,9 @@ describe("CredentialCard — hover 200ms delay + MiniGraph 통합", () => {
 
     fireEvent.mouseEnter(card);
     // 200ms 미만 경과 (100ms)
-    act(() => { vi.advanceTimersByTime(100); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
 
     expect(fetchFn).not.toHaveBeenCalled();
     expect(screen.queryByTestId("project-node")).not.toBeInTheDocument();
@@ -193,9 +195,13 @@ describe("CredentialCard — hover 200ms delay + MiniGraph 통합", () => {
     const card = screen.getByRole("article");
 
     fireEvent.mouseEnter(card);
-    act(() => { vi.advanceTimersByTime(100); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
     fireEvent.mouseLeave(card);
-    act(() => { vi.advanceTimersByTime(200); });
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
 
     expect(fetchFn).not.toHaveBeenCalled();
   });
@@ -205,7 +211,9 @@ describe("CredentialCard — hover 200ms delay + MiniGraph 통합", () => {
     const card = screen.getByRole("article");
 
     fireEvent.mouseEnter(card);
-    act(() => { vi.advanceTimersByTime(500); });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
 
     expect(screen.queryByTestId("project-node")).not.toBeInTheDocument();
     expect(screen.queryByTestId("minigraph-loading")).not.toBeInTheDocument();

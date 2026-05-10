@@ -185,11 +185,8 @@ export async function resolveRecipeForDomain(
 
   // source 결정
   const hasHeuristic = heuristic.min !== undefined || heuristic.max !== undefined;
-  const source: ResolvedRecipe["source"] = dbSource === "user"
-    ? "user"
-    : hasHeuristic
-      ? "heuristic"
-      : "default";
+  const source: ResolvedRecipe["source"] =
+    dbSource === "user" ? "user" : hasHeuristic ? "heuristic" : "default";
 
   return { recipe: merged, source };
 }

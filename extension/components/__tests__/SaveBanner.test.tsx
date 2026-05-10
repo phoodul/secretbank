@@ -10,7 +10,9 @@ import type { BlastRadiusForHostResponse } from "@secretbank/shared";
 
 // E-3: site-logo mock — 테스트 환경에서 chrome.runtime.getURL / IDB 미사용
 vi.mock("../../lib/site-logo", () => ({
-  getSiteLogo: vi.fn().mockResolvedValue({ kind: "letter", letter: "G", bg: "oklch(0.55 0.18 140)" }),
+  getSiteLogo: vi
+    .fn()
+    .mockResolvedValue({ kind: "letter", letter: "G", bg: "oklch(0.55 0.18 140)" }),
   domainToSlug: (d: string) => d.split(".")[0] ?? d,
 }));
 

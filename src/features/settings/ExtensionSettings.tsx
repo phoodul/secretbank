@@ -288,11 +288,10 @@ export function ExtensionSettings() {
               disabled={mcpSaving}
               aria-describedby="ext-mcp-context-warning"
             />
-            <label
-              htmlFor="ext-mcp-context-switch"
-              className="cursor-pointer select-none text-sm"
-            >
-              {mcpOptIn ? t("settings.extensionMcpContextEnabled") : t("settings.extensionMcpContextTitle")}
+            <label htmlFor="ext-mcp-context-switch" className="cursor-pointer select-none text-sm">
+              {mcpOptIn
+                ? t("settings.extensionMcpContextEnabled")
+                : t("settings.extensionMcpContextTitle")}
             </label>
           </div>
         )}

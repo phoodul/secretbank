@@ -3,7 +3,7 @@
 /// applies all migrations automatically, and tears down after each test.
 ///
 /// Verify that all expected tables are created by the migration.
-/// (M0 11 tables + M20 supply chain 3 tables + 0011 security 2 tables + 0012 credit card 1 table = 17 total.)
+/// (M0 11 + M20 supply 3 + 0011 security 2 + 0012 credit card 1 + 0014 issuer_recipes 1 = 18 total.)
 #[sqlx::test(migrations = "./migrations")]
 async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     let tables: Vec<(String,)> = sqlx::query_as(
@@ -29,6 +29,8 @@ async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
         "incident",
         "incident_match",
         "issuer",
+        // 0014 — issuer recipe inheritance (preset / heuristic / user override)
+        "issuer_recipes",
         // M20 — supply chain risk graph (0005_supply.sql)
         "package",
         "package_advisory",
@@ -58,8 +60,11 @@ async fn migrations_apply_cleanly(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     Ok(())
 }
 
-/// Verify that all 19 required indexes are present after migration.
-/// (M0 core 5 + 0006 kind/url 2 + M20 supply 5 + 0011 security 2 + 0012 credit_card 1 = total verified 19)
+/// Verify that all 20 required indexes are present after migration.
+/// (M0 core 5 + 0006 kind/url 2 + M20 supply 5 + 0011 security 2 + 0012 credit_card 1
+///  + 0014 issuer_recipes 1 + 0015 idx_audit_seq reindex = total 20.
+///  idx_audit_seq 는 0001 정의 → 0013 audit_log DROP+RENAME 시 cascade drop →
+///  0015 에서 재생성.)
 #[sqlx::test(migrations = "./migrations")]
 async fn indexes_created(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
     let indexes: Vec<(String,)> = sqlx::query_as(
@@ -84,6 +89,8 @@ async fn indexes_created(pool: sqlx::SqlitePool) -> sqlx::Result<()> {
         "idx_credit_card_meta_brand",
         "idx_incident_issuer_detected",
         "idx_incident_match_unique",
+        // 0014 — issuer_recipes domain lookup
+        "idx_issuer_recipes_domain",
         "idx_match_credential",
         // M20 — supply chain 인덱스
         "idx_package_advisory_pkg",

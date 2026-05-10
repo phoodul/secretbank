@@ -250,9 +250,12 @@ describe("App — MCP 인디케이터 (G-4-2)", () => {
     // RPC는 NMClient.connect() 실패 → fail-safe → mcpActive = false
     renderApp();
     // 인디케이터가 없어야 한다
-    await waitFor(() => {
-      expect(screen.queryByText("MCP")).toBeNull();
-    }, { timeout: 500 });
+    await waitFor(
+      () => {
+        expect(screen.queryByText("MCP")).toBeNull();
+      },
+      { timeout: 500 },
+    );
   });
 
   it("opt-in ON (세션 캐시 있음) → MCP 인디케이터 표시", async () => {
@@ -270,9 +273,12 @@ describe("App — MCP 인디케이터 (G-4-2)", () => {
     renderApp();
 
     // MCP 인디케이터가 표시되어야 한다
-    await waitFor(() => {
-      expect(screen.getByText("MCP")).toBeInTheDocument();
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("MCP")).toBeInTheDocument();
+      },
+      { timeout: 1000 },
+    );
   });
 
   it("opt-in OFF (세션 캐시 있음) → MCP 인디케이터 숨김", async () => {
@@ -288,9 +294,12 @@ describe("App — MCP 인디케이터 (G-4-2)", () => {
 
     renderApp();
 
-    await waitFor(() => {
-      expect(screen.queryByText("MCP")).toBeNull();
-    }, { timeout: 500 });
+    await waitFor(
+      () => {
+        expect(screen.queryByText("MCP")).toBeNull();
+      },
+      { timeout: 500 },
+    );
   });
 
   it("MCP 인디케이터 클릭 시 Settings 탭이 활성화된다", async () => {
@@ -307,9 +316,12 @@ describe("App — MCP 인디케이터 (G-4-2)", () => {
     renderApp();
 
     // MCP 인디케이터 렌더 대기
-    await waitFor(() => {
-      expect(screen.getByText("MCP")).toBeInTheDocument();
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("MCP")).toBeInTheDocument();
+      },
+      { timeout: 1000 },
+    );
 
     // 클릭
     const indicator = screen.getByRole("button", { name: /MCP/i });

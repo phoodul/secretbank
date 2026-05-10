@@ -202,7 +202,9 @@ export function SupplyChainBanner({ host, incident, onView, onDismiss }: SupplyC
         role="alert"
         aria-label={`보안 사고: ${host}`}
       >
-        <span className="scb-icon" aria-hidden="true">⚠</span>
+        <span className="scb-icon" aria-hidden="true">
+          ⚠
+        </span>
         <div className="scb-body">
           <span className="scb-host">{host}</span>
           {ago && ` 이(가) ${ago} 보안 사고가 보고됐습니다`}

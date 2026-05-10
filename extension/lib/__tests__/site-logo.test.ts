@@ -109,10 +109,7 @@ describe("getSiteLogo — remote favicon", () => {
   });
 
   it("favicon fetch timeout(AbortError) → letter fallback", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new DOMException("Aborted", "AbortError")),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new DOMException("Aborted", "AbortError")));
 
     const result = await getSiteLogo("slow.example");
     expect(result.kind).toBe("letter");
@@ -158,29 +155,20 @@ describe("getSiteLogo — remote favicon", () => {
 
 describe("getSiteLogo — letter fallback", () => {
   it("letter 는 대문자 단일 문자", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new Error("network error")),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network error")));
     const result = await getSiteLogo("unknown.xyz");
     expect(result.kind).toBe("letter");
     expect(result.letter).toMatch(/^[A-Z]$/);
   });
 
   it("bg 는 oklch CSS 값", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new Error("network error")),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network error")));
     const result = await getSiteLogo("myapp.io");
     expect(result.bg).toMatch(/^oklch\(/);
   });
 
   it("같은 도메인은 항상 같은 bg 반환 (결정적)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new Error("network error")),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network error")));
     const r1 = await getSiteLogo("deterministic.com");
     _resetDbForTest(); // 캐시 리셋
     (globalThis as unknown as Record<string, unknown>).indexedDB = new IDBFactory();
@@ -190,10 +178,7 @@ describe("getSiteLogo — letter fallback", () => {
   });
 
   it("다른 도메인은 다른 bg (대부분)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new Error("network error")),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network error")));
     const r1 = await getSiteLogo("aaa.com");
     const r2 = await getSiteLogo("zzz.com");
     // 해시 충돌 가능성 있으나 이 두 도메인은 다른 hue

@@ -54,10 +54,7 @@ export type { IncidentMatchSummary } from "./types/incident.js";
 // G1-1: mini-graph 타입
 export type { CredentialMiniGraph, ProjectNode, MiniGraphEdge } from "./types/graph.js";
 // G3-1: blast radius preview 타입
-export type {
-  BlastRadiusItem,
-  BlastRadiusForHostResponse,
-} from "./types/blast-radius.js";
+export type { BlastRadiusItem, BlastRadiusForHostResponse } from "./types/blast-radius.js";
 
 // password-generator
 export {

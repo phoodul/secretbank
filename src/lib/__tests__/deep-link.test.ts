@@ -136,10 +136,7 @@ describe("handleDeepLink — G-3-2 blast_credential 화이트리스트", () => {
   });
 
   it("blast_credential 과 credential 동시 존재 → blast_credential 우선", () => {
-    handleDeepLink(
-      "secretbank://graph?blast_credential=BLAST01&credential=CRED01",
-      navigate,
-    );
+    handleDeepLink("secretbank://graph?blast_credential=BLAST01&credential=CRED01", navigate);
     expect(navigate).toHaveBeenCalledWith("/graph?blast_focus=BLAST01");
     expect(navigate).not.toHaveBeenCalledWith("/graph?focus=CRED01");
   });

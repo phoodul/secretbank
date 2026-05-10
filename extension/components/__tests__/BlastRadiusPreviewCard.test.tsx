@@ -39,12 +39,7 @@ function makeItems(count: number): BlastRadiusItem[] {
 describe("BlastRadiusPreviewCard — 렌더", () => {
   it("total=0 이면 렌더하지 않는다", () => {
     const { container } = render(
-      <BlastRadiusPreviewCard
-        items={[]}
-        total={0}
-        hiddenCount={0}
-        onViewDetails={vi.fn()}
-      />,
+      <BlastRadiusPreviewCard items={[]} total={0} hiddenCount={0} onViewDetails={vi.fn()} />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -157,12 +152,7 @@ describe("BlastRadiusPreviewCard — 인터랙션", () => {
   it("total=0 일 때 클릭해도 onViewDetails 미호출 (렌더 안 됨)", () => {
     const onViewDetails = vi.fn();
     const { container } = render(
-      <BlastRadiusPreviewCard
-        items={[]}
-        total={0}
-        hiddenCount={0}
-        onViewDetails={onViewDetails}
-      />,
+      <BlastRadiusPreviewCard items={[]} total={0} hiddenCount={0} onViewDetails={onViewDetails} />,
     );
     expect(container.firstChild).toBeNull();
     expect(onViewDetails).not.toHaveBeenCalled();

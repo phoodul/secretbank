@@ -226,11 +226,7 @@ function SiteLogo({ domain }: { domain: string }) {
 
   // letter fallback
   return (
-    <div
-      className="cred-logo-letter"
-      style={{ background: logo.bg }}
-      aria-hidden="true"
-    >
+    <div className="cred-logo-letter" style={{ background: logo.bg }} aria-hidden="true">
       {logo.letter}
     </div>
   );
@@ -388,10 +384,7 @@ export function CredentialCard({
           />
         )}
         {miniGraphStatus === "ready" && miniGraphData !== null && (
-          <MiniGraph
-            data={miniGraphData}
-            onClick={handleDeepLink}
-          />
+          <MiniGraph data={miniGraphData} onClick={handleDeepLink} />
         )}
         {/* error: 조용히 fail — UI 변화 없음 */}
       </div>

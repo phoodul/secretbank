@@ -39,32 +39,27 @@ const SKIP_BUILD = process.env["SKIP_FIREFOX_BUILD"] === "true";
 // beforeAll: 빌드 아티팩트 준비
 // ---------------------------------------------------------------------------
 
-beforeAll(
-  () => {
-    if (SKIP_BUILD) return;
+beforeAll(() => {
+  if (SKIP_BUILD) return;
 
-    // manifest.json 이 이미 있으면 재빌드 생략 (build-smoke.test.ts 와 병렬 실행 방지)
-    if (fs.existsSync(MANIFEST_PATH)) {
-      console.info("[manifest-validation] 기존 dist/firefox-mv2/manifest.json 사용");
-      return;
-    }
+  // manifest.json 이 이미 있으면 재빌드 생략 (build-smoke.test.ts 와 병렬 실행 방지)
+  if (fs.existsSync(MANIFEST_PATH)) {
+    console.info("[manifest-validation] 기존 dist/firefox-mv2/manifest.json 사용");
+    return;
+  }
 
-    console.info("[manifest-validation] dist 없음 — 빌드 실행");
-    try {
-      execSync("pnpm build:firefox", {
-        cwd: EXT_ROOT,
-        stdio: "pipe",
-        timeout: 120_000,
-      });
-    } catch (err: unknown) {
-      const error = err as { stderr?: Buffer; stdout?: Buffer };
-      throw new Error(
-        `Firefox 빌드 실패:\n${error.stderr?.toString()}\n${error.stdout?.toString()}`,
-      );
-    }
-  },
-  150_000,
-);
+  console.info("[manifest-validation] dist 없음 — 빌드 실행");
+  try {
+    execSync("pnpm build:firefox", {
+      cwd: EXT_ROOT,
+      stdio: "pipe",
+      timeout: 120_000,
+    });
+  } catch (err: unknown) {
+    const error = err as { stderr?: Buffer; stdout?: Buffer };
+    throw new Error(`Firefox 빌드 실패:\n${error.stderr?.toString()}\n${error.stdout?.toString()}`);
+  }
+}, 150_000);
 
 // ---------------------------------------------------------------------------
 // 헬퍼
@@ -161,9 +156,7 @@ describe("Firefox MV2 manifest — content_scripts", () => {
   it("<all_urls> match 패턴을 가진 script 가 존재한다", () => {
     const { content_scripts } = loadManifest();
     const hasAllUrls = (content_scripts as Record<string, unknown>[]).some(
-      (cs) =>
-        Array.isArray(cs["matches"]) &&
-        (cs["matches"] as string[]).includes("<all_urls>"),
+      (cs) => Array.isArray(cs["matches"]) && (cs["matches"] as string[]).includes("<all_urls>"),
     );
     expect(hasAllUrls).toBe(true);
   });
@@ -194,8 +187,7 @@ describe("Firefox MV2 manifest — content_scripts", () => {
 describe("Firefox MV2 manifest — browser_action", () => {
   it("browser_action 또는 page_action 이 존재한다", () => {
     const manifest = loadManifest();
-    const hasAction =
-      "browser_action" in manifest || "page_action" in manifest;
+    const hasAction = "browser_action" in manifest || "page_action" in manifest;
     expect(hasAction).toBe(true);
   });
 
@@ -233,9 +225,7 @@ describe("Firefox MV2 manifest — gecko 설정 (권고)", () => {
 
   it("browser_specific_settings.gecko.id 가 있다면 올바른 형식(@x@y)이다", () => {
     const manifest = loadManifest();
-    const bss = manifest["browser_specific_settings"] as
-      | Record<string, unknown>
-      | undefined;
+    const bss = manifest["browser_specific_settings"] as Record<string, unknown> | undefined;
     const gecko = bss?.["gecko"] as Record<string, unknown> | undefined;
     const geckoId = gecko?.["id"];
 

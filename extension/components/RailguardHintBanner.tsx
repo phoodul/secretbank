@@ -148,15 +148,15 @@ export function RailguardHintBanner({ host, onCreate, onDismiss }: RailguardHint
   return (
     <>
       <style>{BANNER_CSS}</style>
-      <div
-        className="rhb-banner"
-        role="alert"
-        aria-label={`RAILGUARD 경고: ${host}`}
-      >
+      <div className="rhb-banner" role="alert" aria-label={`RAILGUARD 경고: ${host}`}>
         <div className="rhb-header">
-          <span className="rhb-icon" aria-hidden="true">⚠</span>
+          <span className="rhb-icon" aria-hidden="true">
+            ⚠
+          </span>
           <div className="rhb-body">
-            <div className="rhb-badge" aria-label="AI 에디터 위험 경고">RAILGUARD</div>
+            <div className="rhb-badge" aria-label="AI 에디터 위험 경고">
+              RAILGUARD
+            </div>
             <p className="rhb-text">
               AI 에 API 키·비밀번호 입력 시 secretbank Kill Switch 적용 ❌. 키 노출 위험.
             </p>

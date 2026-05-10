@@ -13,68 +13,32 @@ import { RailguardHintBanner } from "../RailguardHintBanner";
 
 describe("RailguardHintBanner — 렌더", () => {
   it("role=alert 로 접근성 마크업", () => {
-    render(
-      <RailguardHintBanner
-        host="chatgpt.com"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
-    );
+    render(<RailguardHintBanner host="chatgpt.com" onCreate={vi.fn()} onDismiss={vi.fn()} />);
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 
   it("RAILGUARD 배지가 표시된다", () => {
-    render(
-      <RailguardHintBanner
-        host="cursor.com"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
-    );
+    render(<RailguardHintBanner host="cursor.com" onCreate={vi.fn()} onDismiss={vi.fn()} />);
     expect(screen.getByText("RAILGUARD")).toBeInTheDocument();
   });
 
   it("키 노출 위험 경고 텍스트가 표시된다", () => {
-    render(
-      <RailguardHintBanner
-        host="claude.ai"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
-    );
+    render(<RailguardHintBanner host="claude.ai" onCreate={vi.fn()} onDismiss={vi.fn()} />);
     expect(screen.getByText(/키 노출 위험/)).toBeInTheDocument();
   });
 
   it("'RAILGUARD 룰 생성' 버튼이 있다 (1순위 CTA)", () => {
-    render(
-      <RailguardHintBanner
-        host="chatgpt.com"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
-    );
+    render(<RailguardHintBanner host="chatgpt.com" onCreate={vi.fn()} onDismiss={vi.fn()} />);
     expect(screen.getByRole("button", { name: "RAILGUARD 룰 자동 생성" })).toBeInTheDocument();
   });
 
   it("'1주 숨기기' 버튼이 있다 (secondary)", () => {
-    render(
-      <RailguardHintBanner
-        host="chatgpt.com"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
-    );
+    render(<RailguardHintBanner host="chatgpt.com" onCreate={vi.fn()} onDismiss={vi.fn()} />);
     expect(screen.getByRole("button", { name: "이 도메인 1주일 미표시" })).toBeInTheDocument();
   });
 
   it("Kill Switch 경고 텍스트 포함", () => {
-    render(
-      <RailguardHintBanner
-        host="poe.com"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
-    );
+    render(<RailguardHintBanner host="poe.com" onCreate={vi.fn()} onDismiss={vi.fn()} />);
     expect(screen.getByText(/Kill Switch/)).toBeInTheDocument();
   });
 });
@@ -86,11 +50,7 @@ describe("RailguardHintBanner — 렌더", () => {
 describe("RailguardHintBanner — amber severity 색상", () => {
   it("RAILGUARD 배지가 amber 배경색을 가진다", () => {
     const { container } = render(
-      <RailguardHintBanner
-        host="cursor.com"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
+      <RailguardHintBanner host="cursor.com" onCreate={vi.fn()} onDismiss={vi.fn()} />,
     );
     // style 태그에서 amber 색상 확인 (oklch hue ~65)
     const styleEl = container.querySelector("style");
@@ -99,11 +59,7 @@ describe("RailguardHintBanner — amber severity 색상", () => {
 
   it("banner 가 position:fixed right:12px 으로 sidebar 고정", () => {
     const { container } = render(
-      <RailguardHintBanner
-        host="chatgpt.com"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
+      <RailguardHintBanner host="chatgpt.com" onCreate={vi.fn()} onDismiss={vi.fn()} />,
     );
     const styleEl = container.querySelector("style");
     expect(styleEl?.textContent).toMatch(/position:\s*fixed/);
@@ -112,11 +68,7 @@ describe("RailguardHintBanner — amber severity 색상", () => {
 
   it("z-index 2147483647 (최대값)", () => {
     const { container } = render(
-      <RailguardHintBanner
-        host="claude.ai"
-        onCreate={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
+      <RailguardHintBanner host="claude.ai" onCreate={vi.fn()} onDismiss={vi.fn()} />,
     );
     const styleEl = container.querySelector("style");
     expect(styleEl?.textContent).toMatch(/z-index:\s*2147483647/);
@@ -130,26 +82,14 @@ describe("RailguardHintBanner — amber severity 색상", () => {
 describe("RailguardHintBanner — 액션 핸들러", () => {
   it("'RAILGUARD 룰 생성' 클릭 시 onCreate 호출", () => {
     const onCreate = vi.fn();
-    render(
-      <RailguardHintBanner
-        host="chatgpt.com"
-        onCreate={onCreate}
-        onDismiss={vi.fn()}
-      />,
-    );
+    render(<RailguardHintBanner host="chatgpt.com" onCreate={onCreate} onDismiss={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "RAILGUARD 룰 자동 생성" }));
     expect(onCreate).toHaveBeenCalledTimes(1);
   });
 
   it("'1주 숨기기' 클릭 시 onDismiss 호출", () => {
     const onDismiss = vi.fn();
-    render(
-      <RailguardHintBanner
-        host="cursor.com"
-        onCreate={vi.fn()}
-        onDismiss={onDismiss}
-      />,
-    );
+    render(<RailguardHintBanner host="cursor.com" onCreate={vi.fn()} onDismiss={onDismiss} />);
     fireEvent.click(screen.getByRole("button", { name: "이 도메인 1주일 미표시" }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
@@ -158,11 +98,7 @@ describe("RailguardHintBanner — 액션 핸들러", () => {
     const onCreate = vi.fn();
     const onDismiss = vi.fn();
     render(
-      <RailguardHintBanner
-        host="gemini.google.com"
-        onCreate={onCreate}
-        onDismiss={onDismiss}
-      />,
+      <RailguardHintBanner host="gemini.google.com" onCreate={onCreate} onDismiss={onDismiss} />,
     );
     fireEvent.click(screen.getByRole("button", { name: "RAILGUARD 룰 자동 생성" }));
     expect(onCreate).toHaveBeenCalledTimes(1);
@@ -172,13 +108,7 @@ describe("RailguardHintBanner — 액션 핸들러", () => {
   it("dismiss 후 create 는 독립 동작", () => {
     const onCreate = vi.fn();
     const onDismiss = vi.fn();
-    render(
-      <RailguardHintBanner
-        host="perplexity.ai"
-        onCreate={onCreate}
-        onDismiss={onDismiss}
-      />,
-    );
+    render(<RailguardHintBanner host="perplexity.ai" onCreate={onCreate} onDismiss={onDismiss} />);
     fireEvent.click(screen.getByRole("button", { name: "이 도메인 1주일 미표시" }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(onCreate).not.toHaveBeenCalled();

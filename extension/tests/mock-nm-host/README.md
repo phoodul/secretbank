@@ -13,22 +13,22 @@ Secretbank 브라우저 확장의 F-3/F-4 E2E 테스트(Playwright Chromium / Mo
 
 ## 지원 메시지 타입
 
-| 요청 type | 응답 type | 비고 |
-|:--|:--|:--|
-| `ping` | `pong` | 연결 확인 |
-| `init` / `pairing_request` | `paired` | mock 공개키 포함 |
-| `get_credential_list` | `get_credential_list_response` | 3개 fixture credential |
-| `credential_list_by_domain` | `credential_list_by_domain_response` | domain 매칭 시 1개 |
-| `credential_create` | `credential_save_response` | `{ ok: true, credential_id: "fixture-uuid" }` |
-| `credential_update` | `credential_save_response` | `{ ok: true }` |
-| `graph_for_credential` | `graph_for_credential_response` | 3개 project_nodes |
-| `incident_check_for_host` | `incident_check_for_host_response` | `github.com` 트리거 시 1건 |
-| `blast_radius_for_host` | `blast_radius_for_host_response` | `github.com` 트리거 시 3건 |
-| `mcp_context_push` | `{ ok: true }` | ack-only |
-| `ext_settings_get_mcp_opt_in` | `ext_settings_get_mcp_opt_in_response` | 기본 `enabled: false` |
-| `get_recipe_for_domain` | `get_recipe_for_domain_response` | `github.com` preset 포함 |
-| `upsert_recipe_for_domain` | `upsert_recipe_for_domain_response` | `{ ok: true }` |
-| 알 수 없는 type | `{ type: "error", ... }` | |
+| 요청 type                     | 응답 type                              | 비고                                          |
+| :---------------------------- | :------------------------------------- | :-------------------------------------------- |
+| `ping`                        | `pong`                                 | 연결 확인                                     |
+| `init` / `pairing_request`    | `paired`                               | mock 공개키 포함                              |
+| `get_credential_list`         | `get_credential_list_response`         | 3개 fixture credential                        |
+| `credential_list_by_domain`   | `credential_list_by_domain_response`   | domain 매칭 시 1개                            |
+| `credential_create`           | `credential_save_response`             | `{ ok: true, credential_id: "fixture-uuid" }` |
+| `credential_update`           | `credential_save_response`             | `{ ok: true }`                                |
+| `graph_for_credential`        | `graph_for_credential_response`        | 3개 project_nodes                             |
+| `incident_check_for_host`     | `incident_check_for_host_response`     | `github.com` 트리거 시 1건                    |
+| `blast_radius_for_host`       | `blast_radius_for_host_response`       | `github.com` 트리거 시 3건                    |
+| `mcp_context_push`            | `{ ok: true }`                         | ack-only                                      |
+| `ext_settings_get_mcp_opt_in` | `ext_settings_get_mcp_opt_in_response` | 기본 `enabled: false`                         |
+| `get_recipe_for_domain`       | `get_recipe_for_domain_response`       | `github.com` preset 포함                      |
+| `upsert_recipe_for_domain`    | `upsert_recipe_for_domain_response`    | `{ ok: true }`                                |
+| 알 수 없는 type               | `{ type: "error", ... }`               |                                               |
 
 ## 설치 (F-3/F-4 E2E 실행 전)
 
@@ -44,12 +44,12 @@ EXT_ID="abcdefghijklmnopqrstuvwxyz123456" bash extension/tests/mock-nm-host/inst
 
 등록되는 경로:
 
-| 브라우저 | Linux | macOS |
-|:--|:--|:--|
-| Chrome | `~/.config/google-chrome/NativeMessagingHosts/` | `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/` |
-| Chromium | `~/.config/chromium/NativeMessagingHosts/` | `~/Library/Application Support/Chromium/NativeMessagingHosts/` |
-| Edge | `~/.config/microsoft-edge/NativeMessagingHosts/` | `~/Library/Application Support/Microsoft Edge/NativeMessagingHosts/` |
-| Firefox | `~/.mozilla/native-messaging-hosts/` | `~/Library/Application Support/Mozilla/NativeMessagingHosts/` |
+| 브라우저 | Linux                                            | macOS                                                                |
+| :------- | :----------------------------------------------- | :------------------------------------------------------------------- |
+| Chrome   | `~/.config/google-chrome/NativeMessagingHosts/`  | `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/`  |
+| Chromium | `~/.config/chromium/NativeMessagingHosts/`       | `~/Library/Application Support/Chromium/NativeMessagingHosts/`       |
+| Edge     | `~/.config/microsoft-edge/NativeMessagingHosts/` | `~/Library/Application Support/Microsoft Edge/NativeMessagingHosts/` |
+| Firefox  | `~/.mozilla/native-messaging-hosts/`             | `~/Library/Application Support/Mozilla/NativeMessagingHosts/`        |
 
 ### Windows
 
@@ -90,9 +90,21 @@ SB_MOCK_FIXTURE_PATH=/path/to/my-fixtures.json node extension/tests/mock-nm-host
   ],
   "domain_match": { "domain": "example.com", "credential_id": "my-id" },
   "pairing": { "desktop_pub": "<base64>", "device_id": "dev-id" },
-  "graph": { "center_id": "my-id", "center_label": "MyIssuer", "project_nodes": [], "edges": [], "hidden_count": 0 },
+  "graph": {
+    "center_id": "my-id",
+    "center_label": "MyIssuer",
+    "project_nodes": [],
+    "edges": [],
+    "hidden_count": 0
+  },
   "incident": { "trigger_host": "example.com", "matches": [] },
-  "blast_radius": { "trigger_host": "example.com", "credential_id": "my-id", "affected": [], "total": 0, "hidden_count": 0 },
+  "blast_radius": {
+    "trigger_host": "example.com",
+    "credential_id": "my-id",
+    "affected": [],
+    "total": 0,
+    "hidden_count": 0
+  },
   "recipe": { "domain": "example.com", "found": false, "recipe": null, "source": "preset" },
   "mcp_opt_in": { "enabled": false }
 }

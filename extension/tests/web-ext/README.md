@@ -4,12 +4,12 @@
 
 Firefox 브라우저 확장 E2E 에는 네 가지 접근 방식이 있다:
 
-| 옵션 | 수단 | 장점 | 단점 |
-|------|------|------|------|
-| **A** | web-ext + Selenium | 표준적, 실제 Firefox 실행 | geckodriver 설치, 복잡한 CI setup |
-| **B** | web-ext run + smoke | 단순, profile 로딩 검증 | 깊은 E2E 불가, CI headless 문제 |
-| **C** | Playwright Firefox | 한 도구로 Chromium + Firefox | MV3 미지원 (Firefox는 MV2 기본) |
-| **D (채택)** | build smoke + manifest validation | 단순, CI 즉시 통합 가능 | 실제 브라우저 실행 없음 |
+| 옵션         | 수단                              | 장점                         | 단점                              |
+| ------------ | --------------------------------- | ---------------------------- | --------------------------------- |
+| **A**        | web-ext + Selenium                | 표준적, 실제 Firefox 실행    | geckodriver 설치, 복잡한 CI setup |
+| **B**        | web-ext run + smoke               | 단순, profile 로딩 검증      | 깊은 E2E 불가, CI headless 문제   |
+| **C**        | Playwright Firefox                | 한 도구로 Chromium + Firefox | MV3 미지원 (Firefox는 MV2 기본)   |
+| **D (채택)** | build smoke + manifest validation | 단순, CI 즉시 통합 가능      | 실제 브라우저 실행 없음           |
 
 **옵션 D 채택 이유**:
 
@@ -23,9 +23,9 @@ Firefox 브라우저 확장 E2E 에는 네 가지 접근 방식이 있다:
 
 ## 테스트 파일
 
-| 파일 | 내용 |
-|------|------|
-| `build-smoke.test.ts` | Firefox 빌드 실행 → `dist/firefox-mv2/` 폴더·주요 entry 파일 존재 확인 |
+| 파일                          | 내용                                                                                                 |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `build-smoke.test.ts`         | Firefox 빌드 실행 → `dist/firefox-mv2/` 폴더·주요 entry 파일 존재 확인                               |
 | `manifest-validation.test.ts` | `manifest.json` Firefox MV2 스펙 준수 검증 (필수 필드, permissions, content_scripts, browser_action) |
 
 ## 실행 방법
@@ -85,6 +85,7 @@ pip install selenium             # Python Selenium (또는 npm install selenium-
 ### MV3 전환 시
 
 Firefox 121+ 에서 MV3 정식 지원이 완료되면:
+
 1. `wxt.config.ts` 에서 firefox 타겟 MV3 활성화
 2. `manifest-validation.test.ts` 의 `manifest_version` 기대값을 `3` 으로 변경
 3. `browser_action` → `action` 필드 검증으로 업데이트

@@ -416,8 +416,7 @@ export default function SaveDialog() {
           alignSelf: "flex-start",
           padding: "0.125rem 0.5rem",
           borderRadius: "var(--radius-full, 9999px)",
-          background:
-            pending.kind === "new" ? "var(--color-primary)" : "var(--color-muted)",
+          background: pending.kind === "new" ? "var(--color-primary)" : "var(--color-muted)",
           color:
             pending.kind === "new"
               ? "var(--color-primary-foreground)"

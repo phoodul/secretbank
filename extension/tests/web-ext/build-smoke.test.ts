@@ -52,9 +52,7 @@ beforeAll(
       const error = err as { stderr?: Buffer; stdout?: Buffer; message?: string };
       const stderr = error.stderr?.toString() ?? "";
       const stdout = error.stdout?.toString() ?? "";
-      throw new Error(
-        `Firefox 빌드 실패:\nstdout: ${stdout}\nstderr: ${stderr}`,
-      );
+      throw new Error(`Firefox 빌드 실패:\nstdout: ${stdout}\nstderr: ${stderr}`);
     }
   },
   150_000, // beforeAll timeout: 2.5분
@@ -150,22 +148,15 @@ describe("주요 entry 파일 존재", () => {
 
 describe("browser_action (MV2 popup)", () => {
   it("browser_action 필드가 존재한다 (MV2 popup 등록)", () => {
-    const manifest = JSON.parse(
-      fs.readFileSync(path.join(FIREFOX_DIST, "manifest.json"), "utf-8"),
-    );
+    const manifest = JSON.parse(fs.readFileSync(path.join(FIREFOX_DIST, "manifest.json"), "utf-8"));
     // MV2: browser_action 또는 page_action
-    const hasAction =
-      "browser_action" in manifest || "page_action" in manifest;
+    const hasAction = "browser_action" in manifest || "page_action" in manifest;
     expect(hasAction).toBe(true);
   });
 
   it("browser_action.default_popup 이 popup.html 을 가리킨다", () => {
-    const manifest = JSON.parse(
-      fs.readFileSync(path.join(FIREFOX_DIST, "manifest.json"), "utf-8"),
-    );
-    const popup =
-      manifest.browser_action?.default_popup ??
-      manifest.page_action?.default_popup;
+    const manifest = JSON.parse(fs.readFileSync(path.join(FIREFOX_DIST, "manifest.json"), "utf-8"));
+    const popup = manifest.browser_action?.default_popup ?? manifest.page_action?.default_popup;
     expect(popup).toBeTruthy();
     // popup.html 또는 경로 포함 여부 확인
     expect(String(popup)).toContain("popup");

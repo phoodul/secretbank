@@ -18,7 +18,14 @@ import type { AutocompleteHint } from "../lib/save-handler";
 import { NMClient } from "../lib/nm-client";
 import { mountGeneratorIcon } from "../components/GeneratorIcon";
 import type { IconMount } from "../components/GeneratorIcon";
-import { isDismissed, addDismissedHost, getCachedIncidents, setCachedIncidents, isRailguardDismissed, addRailguardDismissedHost } from "../lib/banner-cache";
+import {
+  isDismissed,
+  addDismissedHost,
+  getCachedIncidents,
+  setCachedIncidents,
+  isRailguardDismissed,
+  addRailguardDismissedHost,
+} from "../lib/banner-cache";
 import { mountSupplyChainBanner } from "../lib/supply-chain-host";
 import { mountRailguardHintBanner } from "../lib/railguard-host";
 import { openSecretbankDeepLink } from "../lib/deep-link";

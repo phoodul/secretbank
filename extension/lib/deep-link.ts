@@ -24,17 +24,12 @@
  * 성공: chrome.tabs.create 로 secretbank:// URL 열기
  * 실패: clipboard 에 URL 복사 (G-1-3 deep-link 미등록 시 사용자가 수동 붙여넣기)
  */
-export function openSecretbankDeepLink(
-  path: string,
-  params: Record<string, string> = {},
-): void {
+export function openSecretbankDeepLink(path: string, params: Record<string, string> = {}): void {
   const query = Object.entries(params)
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
     .join("&");
 
-  const url = query
-    ? `secretbank://${path}?${query}`
-    : `secretbank://${path}`;
+  const url = query ? `secretbank://${path}?${query}` : `secretbank://${path}`;
 
   // chrome.tabs.create 로 deep-link 열기 시도
   chrome.tabs.create({ url }, () => {

@@ -31,9 +31,7 @@ const __dirname = path.dirname(__filename);
 const MAX_MESSAGE_SIZE = 1_048_576;
 
 /** fixture 파일 경로 (환경 변수 override 가능) */
-const FIXTURE_PATH =
-  process.env.SB_MOCK_FIXTURE_PATH ??
-  path.join(__dirname, "fixtures.json");
+const FIXTURE_PATH = process.env.SB_MOCK_FIXTURE_PATH ?? path.join(__dirname, "fixtures.json");
 
 // ---------------------------------------------------------------------------
 // fixture 로드
@@ -218,7 +216,9 @@ function readMessage(readable) {
           try {
             parsed = JSON.parse(bodyStr);
           } catch (e) {
-            return reject(new Error(`JSON 파싱 실패: ${e.message} — body: ${bodyStr.slice(0, 100)}`));
+            return reject(
+              new Error(`JSON 파싱 실패: ${e.message} — body: ${bodyStr.slice(0, 100)}`),
+            );
           }
           resolve(parsed);
         }
@@ -316,9 +316,7 @@ function handleMessage(msg, fixtures) {
       const m = fixtures.domain_match;
       const domain = msg.domain ?? "";
       const matched =
-        m.domain === domain ||
-        domain.endsWith(`.${m.domain}`) ||
-        m.domain.endsWith(`.${domain}`);
+        m.domain === domain || domain.endsWith(`.${m.domain}`) || m.domain.endsWith(`.${domain}`);
       return {
         type: "credential_list_by_domain_response",
         exists: matched,

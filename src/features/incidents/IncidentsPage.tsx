@@ -96,7 +96,10 @@ export function IncidentsPage() {
         <div className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center gap-2 rounded-md border px-4 py-2 text-sm">
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
           <span>
-            {t("incidents.hostFilter", { host: hostFilter, defaultValue: `호스트 필터: ${hostFilter}` })}
+            {t("incidents.hostFilter", {
+              host: hostFilter,
+              defaultValue: `호스트 필터: ${hostFilter}`,
+            })}
           </span>
         </div>
       )}

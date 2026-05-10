@@ -213,18 +213,9 @@ export function SaveBanner({
         {/* E-3: Site Logo + 사이트 이름 */}
         <div className="sb-logo-wrap">
           {logo?.kind === "bundled" || logo?.kind === "remote" ? (
-            <img
-              className="sb-logo-img"
-              src={logo.url}
-              alt={siteName}
-              aria-hidden="true"
-            />
+            <img className="sb-logo-img" src={logo.url} alt={siteName} aria-hidden="true" />
           ) : logo?.kind === "letter" ? (
-            <div
-              className="sb-logo-letter"
-              style={{ background: logo.bg }}
-              aria-hidden="true"
-            >
+            <div className="sb-logo-letter" style={{ background: logo.bg }} aria-hidden="true">
               {logo.letter}
             </div>
           ) : null}
@@ -251,14 +242,17 @@ export function SaveBanner({
             영향 범위 확인 중…
           </div>
         )}
-        {kind === "update" && blastRadius !== undefined && blastRadius !== null && blastRadius.total > 0 && (
-          <BlastRadiusPreviewCard
-            items={blastRadius.affected as BlastRadiusItem[]}
-            total={blastRadius.total}
-            hiddenCount={blastRadius.hidden_count}
-            onViewDetails={onViewBlastRadius ?? (() => {})}
-          />
-        )}
+        {kind === "update" &&
+          blastRadius !== undefined &&
+          blastRadius !== null &&
+          blastRadius.total > 0 && (
+            <BlastRadiusPreviewCard
+              items={blastRadius.affected as BlastRadiusItem[]}
+              total={blastRadius.total}
+              hiddenCount={blastRadius.hidden_count}
+              onViewDetails={onViewBlastRadius ?? (() => {})}
+            />
+          )}
         <div className="sb-actions">
           <button className="sb-btn sb-btn-primary" onClick={onSave} type="button">
             {primaryLabel}

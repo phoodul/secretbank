@@ -26,10 +26,7 @@ import { test, expect } from "./fixtures.js";
 
 test.describe("Autofill E2E (Chromium MV3)", () => {
   // ── Smoke: extension 로딩 확인 ──────────────────────────────────────────
-  test("extension service worker 가 정상 부팅되어야 한다", async ({
-    context,
-    extensionId,
-  }) => {
+  test("extension service worker 가 정상 부팅되어야 한다", async ({ context, extensionId }) => {
     // CI 에서 headless 환경이면 service worker 미부팅 가능 — skip
     if (!extensionId) {
       test.skip(true, "Extension service worker 미부팅 — headless 환경 건너뜀");
@@ -39,10 +36,7 @@ test.describe("Autofill E2E (Chromium MV3)", () => {
   });
 
   // ── Smoke: 가짜 사이트 로딩 확인 ────────────────────────────────────────
-  test("가짜 사이트가 login form 을 서빙해야 한다", async ({
-    page,
-    fakeSiteServer,
-  }) => {
+  test("가짜 사이트가 login form 을 서빙해야 한다", async ({ page, fakeSiteServer }) => {
     void fakeSiteServer; // fixture 시작 보장
     await page.goto(FAKE_SITE_ORIGIN);
     await expect(page.locator('[data-testid="username-input"]')).toBeVisible();

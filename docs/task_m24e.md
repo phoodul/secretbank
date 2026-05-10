@@ -746,50 +746,50 @@
 
 ## 진행 현황 — M24-E (orchestrator 가 commit 직후 즉시 갱신)
 
-| Sub-task ID | 제목                                                      | 완료일     | 커밋 해시 |
-| :---------- | :-------------------------------------------------------- | :--------- | :-------- |
-| T-24-E-A1   | WXT 골격 + Tailwind v4 + shadcn/ui                        | 2026-05-09 | `bd126bb` |
-| T-24-E-A2   | packages/shared types                                     | 2026-05-09 | `7d3191d` |
-| T-24-E-A3   | password-generator (Diceware 4 lang + zxcvbn-ts)          | 2026-05-09 | `f8a8a6f` |
-| T-24-E-A4   | shared validation                                         | 2026-05-09 | `a983000` |
-| T-24-E-A5   | i18n (4 lang YAML + @wxt-dev/i18n + I18N_KEYS)            | 2026-05-09 | `d093ffe` |
-| T-24-E-A6   | popup 골격 (ThemeProvider + Tab 라우팅 + placeholder 4종) | 2026-05-09 | `edcc2e3` |
-| T-24-E-A7   | CI 빌드 매트릭스                                          | 2026-05-09 | `dcd686b` |
-| T-24-E-B1   | nm-host crate (stdio 이벤트 루프 + 프로토콜)              | 2026-05-09 | `3198bf1` |
-| T-24-E-B2   | NM installer (3 OS)                                       | 2026-05-09 | `7145f2d` |
-| T-24-E-B3   | nm-client.ts                                              | 2026-05-09 | `465c82c` |
-| T-24-E-B4   | 페어링 protocol                                           | 2026-05-09 | `8b5275f` |
-| T-24-E-B5   | 확장 PairingDialog                                        | 2026-05-09 | `6ad32f7` |
-| T-24-E-B6   | 데스크톱 PairingApprovalDialog                            | 2026-05-09 | `21ecccb` |
-| T-24-E-B7   | session token + Settings                                  | 2026-05-09 | `ba92e60` |
-| T-24-E-B8   | NM Host audit                                             | 2026-05-09 | `fc1809d` |
-| T-24-E-B9   | 외부 audit (Phase B) — **옵션 C 채택 [2026-05-10]** (skip + Phase F 통합) | 2026-05-09 | `ef03358` |
-| T-24-E-B10  | 3 OS 수동 검증 — **옵션 B 채택 [2026-05-10]** (CI smoke + Win11 자동 충분) | 2026-05-09 | `ef03358` |
-| T-24-E-C1   | form-detector (autocomplete + 5 fixtures)                 | 2026-05-09 | `25213d7` |
-| T-24-E-C2   | SPA watcher (MutationObserver + History hook)             | 2026-05-09 | `cfdba3d` |
-| T-24-E-C3   | Shadow DOM 재귀 + composedPath                            | 2026-05-09 | `739ac87` |
-| T-24-E-C4   | autofill + domain-match (T4 phishing 방어)                | 2026-05-09 | `928a798` |
-| T-24-E-C5   | autofill trigger (focus + Cmd/Ctrl+Shift+L)               | 2026-05-09 | `d619e79` |
-| T-24-E-C6+C7+C8 | multi-step + iframe + closed shadow + clickjack 방어  | 2026-05-09 | `f66b737` |
-| T-24-E-D1   | form submit + XHR/fetch hook (MAIN world)                 | 2026-05-10 | pending   |
-| T-24-E-D2   | postMessage origin 검증                                   | -          | -         |
-| T-24-E-D3   | SaveBanner (Closed Shadow DOM sticky banner)              | 2026-05-10 | pending   |
-| T-24-E-D4   | save-handler 신규/rotation                                | 2026-05-10 | pending   |
-| T-24-E-D5   | 데스크톱 credential 저장                                  | 2026-05-10 | `ed887fa` |
-| T-24-E-D6   | popup SaveDialog + nm-host↔Tauri IPC 채널                | 2026-05-10 | pending   |
-| T-24-E-E1   | generator inline                                          | -          | -         |
-| T-24-E-E2   | issuer recipe inheritance                                 | -          | -         |
-| T-24-E-E3   | Site Logo (idb-cache + site-logo + 7 SVG + SaveBanner/SaveDialog 통합) | 2026-05-10 | pending   |
-| T-24-E-E4   | popup credential 카드                                     | -          | -         |
-| T-24-E-E5   | 디자인 토큰 동기화                                        | 2026-05-10 | pending   |
-| T-24-E-F1   | Chrome Web Store 제출                                     | -          | -         |
-| T-24-E-F2   | Firefox AMO 제출                                          | -          | -         |
-| T-24-E-F3   | Playwright E2E                                            | 2026-05-10 | 48e9fa0   |
-| T-24-E-F4   | web-ext E2E                                               | -          | -         |
-| T-24-E-F5   | Mock NM Host                                              | 2026-05-10 | pending   |
-| T-24-E-F6   | Safari Xcode wrapper — **보류 (사용자 결정 대기, placeholder 완료)** | 2026-05-10 | pending   |
-| T-24-E-F7   | Edge Add-ons                                              | -          | -         |
-| T-24-E-F8   | 외부 audit 결과 반영 — **옵션 C (B-9 결정 따름, placeholder 완료)** | 2026-05-10 | pending   |
+| Sub-task ID     | 제목                                                                       | 완료일     | 커밋 해시 |
+| :-------------- | :------------------------------------------------------------------------- | :--------- | :-------- |
+| T-24-E-A1       | WXT 골격 + Tailwind v4 + shadcn/ui                                         | 2026-05-09 | `bd126bb` |
+| T-24-E-A2       | packages/shared types                                                      | 2026-05-09 | `7d3191d` |
+| T-24-E-A3       | password-generator (Diceware 4 lang + zxcvbn-ts)                           | 2026-05-09 | `f8a8a6f` |
+| T-24-E-A4       | shared validation                                                          | 2026-05-09 | `a983000` |
+| T-24-E-A5       | i18n (4 lang YAML + @wxt-dev/i18n + I18N_KEYS)                             | 2026-05-09 | `d093ffe` |
+| T-24-E-A6       | popup 골격 (ThemeProvider + Tab 라우팅 + placeholder 4종)                  | 2026-05-09 | `edcc2e3` |
+| T-24-E-A7       | CI 빌드 매트릭스                                                           | 2026-05-09 | `dcd686b` |
+| T-24-E-B1       | nm-host crate (stdio 이벤트 루프 + 프로토콜)                               | 2026-05-09 | `3198bf1` |
+| T-24-E-B2       | NM installer (3 OS)                                                        | 2026-05-09 | `7145f2d` |
+| T-24-E-B3       | nm-client.ts                                                               | 2026-05-09 | `465c82c` |
+| T-24-E-B4       | 페어링 protocol                                                            | 2026-05-09 | `8b5275f` |
+| T-24-E-B5       | 확장 PairingDialog                                                         | 2026-05-09 | `6ad32f7` |
+| T-24-E-B6       | 데스크톱 PairingApprovalDialog                                             | 2026-05-09 | `21ecccb` |
+| T-24-E-B7       | session token + Settings                                                   | 2026-05-09 | `ba92e60` |
+| T-24-E-B8       | NM Host audit                                                              | 2026-05-09 | `fc1809d` |
+| T-24-E-B9       | 외부 audit (Phase B) — **옵션 C 채택 [2026-05-10]** (skip + Phase F 통합)  | 2026-05-09 | `ef03358` |
+| T-24-E-B10      | 3 OS 수동 검증 — **옵션 B 채택 [2026-05-10]** (CI smoke + Win11 자동 충분) | 2026-05-09 | `ef03358` |
+| T-24-E-C1       | form-detector (autocomplete + 5 fixtures)                                  | 2026-05-09 | `25213d7` |
+| T-24-E-C2       | SPA watcher (MutationObserver + History hook)                              | 2026-05-09 | `cfdba3d` |
+| T-24-E-C3       | Shadow DOM 재귀 + composedPath                                             | 2026-05-09 | `739ac87` |
+| T-24-E-C4       | autofill + domain-match (T4 phishing 방어)                                 | 2026-05-09 | `928a798` |
+| T-24-E-C5       | autofill trigger (focus + Cmd/Ctrl+Shift+L)                                | 2026-05-09 | `d619e79` |
+| T-24-E-C6+C7+C8 | multi-step + iframe + closed shadow + clickjack 방어                       | 2026-05-09 | `f66b737` |
+| T-24-E-D1       | form submit + XHR/fetch hook (MAIN world)                                  | 2026-05-10 | pending   |
+| T-24-E-D2       | postMessage origin 검증                                                    | -          | -         |
+| T-24-E-D3       | SaveBanner (Closed Shadow DOM sticky banner)                               | 2026-05-10 | pending   |
+| T-24-E-D4       | save-handler 신규/rotation                                                 | 2026-05-10 | pending   |
+| T-24-E-D5       | 데스크톱 credential 저장                                                   | 2026-05-10 | `ed887fa` |
+| T-24-E-D6       | popup SaveDialog + nm-host↔Tauri IPC 채널                                  | 2026-05-10 | pending   |
+| T-24-E-E1       | generator inline                                                           | -          | -         |
+| T-24-E-E2       | issuer recipe inheritance                                                  | -          | -         |
+| T-24-E-E3       | Site Logo (idb-cache + site-logo + 7 SVG + SaveBanner/SaveDialog 통합)     | 2026-05-10 | pending   |
+| T-24-E-E4       | popup credential 카드                                                      | -          | -         |
+| T-24-E-E5       | 디자인 토큰 동기화                                                         | 2026-05-10 | pending   |
+| T-24-E-F1       | Chrome Web Store 제출                                                      | -          | -         |
+| T-24-E-F2       | Firefox AMO 제출                                                           | -          | -         |
+| T-24-E-F3       | Playwright E2E                                                             | 2026-05-10 | 48e9fa0   |
+| T-24-E-F4       | web-ext E2E                                                                | -          | -         |
+| T-24-E-F5       | Mock NM Host                                                               | 2026-05-10 | pending   |
+| T-24-E-F6       | Safari Xcode wrapper — **보류 (사용자 결정 대기, placeholder 완료)**       | 2026-05-10 | pending   |
+| T-24-E-F7       | Edge Add-ons                                                               | -          | -         |
+| T-24-E-F8       | 외부 audit 결과 반영 — **옵션 C (B-9 결정 따름, placeholder 완료)**        | 2026-05-10 | pending   |
 
 **총 sub-task: 53** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 + G 10 = 54 nominal; B-9 옵션 C 채택으로 audit scope 문서만 작성 → B-9 / B-10 = 단일 commit `ef03358`. C-6/C-7/C-8 = 단일 commit `f66b737`. F-6 + F-8 = placeholder docs [2026-05-10]). **마일스톤 표 표기**: `✅ 53/53 완료 — M24-E 클로즈 [2026-05-10]`.
 

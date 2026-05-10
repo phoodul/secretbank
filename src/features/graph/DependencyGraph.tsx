@@ -36,7 +36,13 @@ interface InnerGraphProps {
   focusNodeId?: string;
 }
 
-function InnerGraph({ payload, direction, onToggle, nodesDraggable, focusNodeId }: InnerGraphProps) {
+function InnerGraph({
+  payload,
+  direction,
+  onToggle,
+  nodesDraggable,
+  focusNodeId,
+}: InnerGraphProps) {
   const { t } = useTranslation("common");
   const { fitView, setCenter } = useReactFlow();
   const { zoom } = useViewport();

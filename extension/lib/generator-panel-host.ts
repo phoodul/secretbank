@@ -20,10 +20,7 @@ export interface MountOptions {
   targetInput: HTMLInputElement;
 }
 
-export function mountGeneratorPanel(
-  options: MountOptions,
-  doc: Document = document,
-): () => void {
+export function mountGeneratorPanel(options: MountOptions, doc: Document = document): () => void {
   // 기존 panel 이 있으면 먼저 unmount (single panel 유지).
   if (activeRoot !== null) {
     activeRoot.unmount();

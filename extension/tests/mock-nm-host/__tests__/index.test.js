@@ -128,9 +128,24 @@ describe("NM 프로토콜 — 4-byte LE header", () => {
 
 const defaultFixtures = {
   credentials: [
-    { credential_id: "fixture-cred-001", issuer: "GitHub", domain: "github.com", username: "fixture-user-1" },
-    { credential_id: "fixture-cred-002", issuer: "Stripe", domain: "stripe.com", username: "fixture-user-2" },
-    { credential_id: "fixture-cred-003", issuer: "AWS", domain: "console.aws.amazon.com", username: "fixture-user-3" },
+    {
+      credential_id: "fixture-cred-001",
+      issuer: "GitHub",
+      domain: "github.com",
+      username: "fixture-user-1",
+    },
+    {
+      credential_id: "fixture-cred-002",
+      issuer: "Stripe",
+      domain: "stripe.com",
+      username: "fixture-user-2",
+    },
+    {
+      credential_id: "fixture-cred-003",
+      issuer: "AWS",
+      domain: "console.aws.amazon.com",
+      username: "fixture-user-3",
+    },
   ],
   domain_match: { domain: "github.com", credential_id: "fixture-cred-001" },
   pairing: {
@@ -155,7 +170,13 @@ const defaultFixtures = {
   incident: {
     trigger_host: "github.com",
     matches: [
-      { incident_id: "inc-001", title: "GitHub Token Leak", severity: "HIGH", detected_at: 1746820000000, cve_id: "CVE-2025-0001" },
+      {
+        incident_id: "inc-001",
+        title: "GitHub Token Leak",
+        severity: "HIGH",
+        detected_at: 1746820000000,
+        cve_id: "CVE-2025-0001",
+      },
     ],
   },
   blast_radius: {
@@ -172,7 +193,12 @@ const defaultFixtures = {
   recipe: {
     domain: "github.com",
     found: true,
-    recipe: { username_selector: "#login_field", password_selector: "#password", submit_selector: "[type=submit]", otp_selector: null },
+    recipe: {
+      username_selector: "#login_field",
+      password_selector: "#password",
+      submit_selector: "[type=submit]",
+      otp_selector: null,
+    },
     source: "preset",
   },
   mcp_opt_in: { enabled: false },
@@ -186,7 +212,11 @@ function handleMessage(msg, fixtures = defaultFixtures) {
       return { type: "pong" };
     case "init":
     case "pairing_request":
-      return { type: "paired", desktop_pub: fixtures.pairing.desktop_pub, device_id: fixtures.pairing.device_id };
+      return {
+        type: "paired",
+        desktop_pub: fixtures.pairing.desktop_pub,
+        device_id: fixtures.pairing.device_id,
+      };
     case "get_credential_list": {
       let items = fixtures.credentials;
       if (msg.domain_filter) items = items.filter((c) => c.domain.includes(msg.domain_filter));
@@ -195,39 +225,92 @@ function handleMessage(msg, fixtures = defaultFixtures) {
     case "credential_list_by_domain": {
       const m = fixtures.domain_match;
       const domain = msg.domain ?? "";
-      const matched = m.domain === domain || domain.endsWith(`.${m.domain}`) || m.domain.endsWith(`.${domain}`);
-      return { type: "credential_list_by_domain_response", exists: matched, credential_id: matched ? m.credential_id : undefined };
+      const matched =
+        m.domain === domain || domain.endsWith(`.${m.domain}`) || m.domain.endsWith(`.${domain}`);
+      return {
+        type: "credential_list_by_domain_response",
+        exists: matched,
+        credential_id: matched ? m.credential_id : undefined,
+      };
     }
     case "credential_create":
       return { type: "credential_save_response", ok: true, credential_id: "fixture-uuid" };
     case "credential_update":
-      return { type: "credential_save_response", ok: true, credential_id: msg.credential_id ?? "fixture-uuid" };
+      return {
+        type: "credential_save_response",
+        ok: true,
+        credential_id: msg.credential_id ?? "fixture-uuid",
+      };
     case "graph_for_credential": {
       const g = fixtures.graph;
-      return { type: "graph_for_credential_response", ok: true, center_id: g.center_id, center_label: g.center_label, project_nodes: g.project_nodes, edges: g.edges, hidden_count: g.hidden_count };
+      return {
+        type: "graph_for_credential_response",
+        ok: true,
+        center_id: g.center_id,
+        center_label: g.center_label,
+        project_nodes: g.project_nodes,
+        edges: g.edges,
+        hidden_count: g.hidden_count,
+      };
     }
     case "incident_check_for_host": {
       const inc = fixtures.incident;
       const host = msg.host ?? "";
-      const triggered = host === inc.trigger_host || host.endsWith(`.${inc.trigger_host}`) || inc.trigger_host.endsWith(`.${host}`);
-      return { type: "incident_check_for_host_response", ok: true, matches: triggered ? inc.matches : [] };
+      const triggered =
+        host === inc.trigger_host ||
+        host.endsWith(`.${inc.trigger_host}`) ||
+        inc.trigger_host.endsWith(`.${host}`);
+      return {
+        type: "incident_check_for_host_response",
+        ok: true,
+        matches: triggered ? inc.matches : [],
+      };
     }
     case "blast_radius_for_host": {
       const br = fixtures.blast_radius;
       const host = msg.host ?? "";
-      const triggered = host === br.trigger_host || host.endsWith(`.${br.trigger_host}`) || br.trigger_host.endsWith(`.${host}`);
-      if (triggered) return { type: "blast_radius_for_host_response", ok: true, credential_id: br.credential_id, affected: br.affected, total: br.total, hidden_count: br.hidden_count };
-      return { type: "blast_radius_for_host_response", ok: true, credential_id: null, affected: [], total: 0, hidden_count: 0 };
+      const triggered =
+        host === br.trigger_host ||
+        host.endsWith(`.${br.trigger_host}`) ||
+        br.trigger_host.endsWith(`.${host}`);
+      if (triggered)
+        return {
+          type: "blast_radius_for_host_response",
+          ok: true,
+          credential_id: br.credential_id,
+          affected: br.affected,
+          total: br.total,
+          hidden_count: br.hidden_count,
+        };
+      return {
+        type: "blast_radius_for_host_response",
+        ok: true,
+        credential_id: null,
+        affected: [],
+        total: 0,
+        hidden_count: 0,
+      };
     }
     case "mcp_context_push":
       return { ok: true };
     case "ext_settings_get_mcp_opt_in":
-      return { type: "ext_settings_get_mcp_opt_in_response", ok: true, enabled: fixtures.mcp_opt_in?.enabled ?? false };
+      return {
+        type: "ext_settings_get_mcp_opt_in_response",
+        ok: true,
+        enabled: fixtures.mcp_opt_in?.enabled ?? false,
+      };
     case "get_recipe_for_domain": {
       const r = fixtures.recipe;
       const domain = msg.domain ?? "";
       const matched = r.domain === domain || domain.endsWith(`.${r.domain}`);
-      if (matched && r.found) return { type: "get_recipe_for_domain_response", domain, found: true, recipe: r.recipe, source: r.source };
+      if (matched && r.found)
+        return {
+          type: "get_recipe_for_domain_response",
+          domain,
+          found: true,
+          recipe: r.recipe,
+          source: r.source,
+        };
       return { type: "get_recipe_for_domain_response", domain, found: false };
     }
     case "upsert_recipe_for_domain":
@@ -246,7 +329,12 @@ describe("handleMessage — 메시지 타입별 응답", () => {
 
   describe("pairing_request → paired", () => {
     it("init 메시지 → paired 응답 + mock 공개키", () => {
-      const res = handleMessage({ type: "init", extension_id: "ext-abc", version: "1", ext_pub: "mock-pub" });
+      const res = handleMessage({
+        type: "init",
+        extension_id: "ext-abc",
+        version: "1",
+        ext_pub: "mock-pub",
+      });
       expect(res.type).toBe("paired");
       expect(res.desktop_pub).toBeTruthy();
       expect(res.device_id).toBeTruthy();
@@ -267,27 +355,43 @@ describe("handleMessage — 메시지 타입별 응답", () => {
     });
 
     it("domain_filter 매칭 시 해당 항목만", () => {
-      const res = handleMessage({ type: "get_credential_list", domain_filter: "stripe", session_token: "tok" });
+      const res = handleMessage({
+        type: "get_credential_list",
+        domain_filter: "stripe",
+        session_token: "tok",
+      });
       expect(res.items).toHaveLength(1);
       expect(res.items[0].domain).toBe("stripe.com");
     });
 
     it("domain_filter 미매칭 시 빈 배열", () => {
-      const res = handleMessage({ type: "get_credential_list", domain_filter: "neverexists.example", session_token: "tok" });
+      const res = handleMessage({
+        type: "get_credential_list",
+        domain_filter: "neverexists.example",
+        session_token: "tok",
+      });
       expect(res.items).toHaveLength(0);
     });
   });
 
   describe("credential_list_by_domain", () => {
     it("일치하는 도메인 → exists: true + credential_id", () => {
-      const res = handleMessage({ type: "credential_list_by_domain", domain: "github.com", session_token: "tok" });
+      const res = handleMessage({
+        type: "credential_list_by_domain",
+        domain: "github.com",
+        session_token: "tok",
+      });
       expect(res.type).toBe("credential_list_by_domain_response");
       expect(res.exists).toBe(true);
       expect(res.credential_id).toBe("fixture-cred-001");
     });
 
     it("다른 도메인 → exists: false", () => {
-      const res = handleMessage({ type: "credential_list_by_domain", domain: "neverexists.example", session_token: "tok" });
+      const res = handleMessage({
+        type: "credential_list_by_domain",
+        domain: "neverexists.example",
+        session_token: "tok",
+      });
       expect(res.exists).toBe(false);
       expect(res.credential_id).toBeUndefined();
     });
@@ -295,14 +399,27 @@ describe("handleMessage — 메시지 타입별 응답", () => {
 
   describe("credential_create / credential_update", () => {
     it("credential_create → ok: true + fixture-uuid", () => {
-      const res = handleMessage({ type: "credential_create", domain: "new.com", username: "u", password: "p", site_name: "New", session_token: "tok" });
+      const res = handleMessage({
+        type: "credential_create",
+        domain: "new.com",
+        username: "u",
+        password: "p",
+        site_name: "New",
+        session_token: "tok",
+      });
       expect(res.type).toBe("credential_save_response");
       expect(res.ok).toBe(true);
       expect(res.credential_id).toBe("fixture-uuid");
     });
 
     it("credential_update → ok: true + 전달된 credential_id 보존", () => {
-      const res = handleMessage({ type: "credential_update", credential_id: "my-cred", username: "u", password: "p2", session_token: "tok" });
+      const res = handleMessage({
+        type: "credential_update",
+        credential_id: "my-cred",
+        username: "u",
+        password: "p2",
+        session_token: "tok",
+      });
       expect(res.ok).toBe(true);
       expect(res.credential_id).toBe("my-cred");
     });
@@ -310,7 +427,11 @@ describe("handleMessage — 메시지 타입별 응답", () => {
 
   describe("graph_for_credential", () => {
     it("mini-graph 3개 project_nodes 반환", () => {
-      const res = handleMessage({ type: "graph_for_credential", credential_id: "fixture-cred-001", session_token: "tok" });
+      const res = handleMessage({
+        type: "graph_for_credential",
+        credential_id: "fixture-cred-001",
+        session_token: "tok",
+      });
       expect(res.type).toBe("graph_for_credential_response");
       expect(res.ok).toBe(true);
       expect(res.project_nodes).toHaveLength(3);
@@ -320,7 +441,11 @@ describe("handleMessage — 메시지 타입별 응답", () => {
 
   describe("incident_check_for_host", () => {
     it("트리거 호스트(github.com) → matches 1개", () => {
-      const res = handleMessage({ type: "incident_check_for_host", host: "github.com", session_token: "tok" });
+      const res = handleMessage({
+        type: "incident_check_for_host",
+        host: "github.com",
+        session_token: "tok",
+      });
       expect(res.type).toBe("incident_check_for_host_response");
       expect(res.ok).toBe(true);
       expect(res.matches).toHaveLength(1);
@@ -328,14 +453,22 @@ describe("handleMessage — 메시지 타입별 응답", () => {
     });
 
     it("비트리거 호스트 → matches 빈 배열", () => {
-      const res = handleMessage({ type: "incident_check_for_host", host: "stripe.com", session_token: "tok" });
+      const res = handleMessage({
+        type: "incident_check_for_host",
+        host: "stripe.com",
+        session_token: "tok",
+      });
       expect(res.matches).toHaveLength(0);
     });
   });
 
   describe("blast_radius_for_host", () => {
     it("트리거 호스트 → credential_id + affected 3개", () => {
-      const res = handleMessage({ type: "blast_radius_for_host", host: "github.com", session_token: "tok" });
+      const res = handleMessage({
+        type: "blast_radius_for_host",
+        host: "github.com",
+        session_token: "tok",
+      });
       expect(res.type).toBe("blast_radius_for_host_response");
       expect(res.ok).toBe(true);
       expect(res.credential_id).toBe("fixture-cred-001");
@@ -344,7 +477,11 @@ describe("handleMessage — 메시지 타입별 응답", () => {
     });
 
     it("비트리거 호스트 → credential_id: null, affected: []", () => {
-      const res = handleMessage({ type: "blast_radius_for_host", host: "nope.example", session_token: "tok" });
+      const res = handleMessage({
+        type: "blast_radius_for_host",
+        host: "nope.example",
+        session_token: "tok",
+      });
       expect(res.credential_id).toBeNull();
       expect(res.affected).toHaveLength(0);
       expect(res.total).toBe(0);
@@ -353,7 +490,13 @@ describe("handleMessage — 메시지 타입별 응답", () => {
 
   describe("mcp_context_push", () => {
     it("→ { ok: true }", () => {
-      const res = handleMessage({ type: "mcp_context_push", host: "github.com", credential_meta: [], timestamp: Date.now(), session_token: "tok" });
+      const res = handleMessage({
+        type: "mcp_context_push",
+        host: "github.com",
+        credential_meta: [],
+        timestamp: Date.now(),
+        session_token: "tok",
+      });
       expect(res.ok).toBe(true);
     });
   });
@@ -368,14 +511,21 @@ describe("handleMessage — 메시지 타입별 응답", () => {
 
     it("fixture override — enabled: true", () => {
       const fixtures = { ...defaultFixtures, mcp_opt_in: { enabled: true } };
-      const res = handleMessage({ type: "ext_settings_get_mcp_opt_in", session_token: "tok" }, fixtures);
+      const res = handleMessage(
+        { type: "ext_settings_get_mcp_opt_in", session_token: "tok" },
+        fixtures,
+      );
       expect(res.enabled).toBe(true);
     });
   });
 
   describe("get_recipe_for_domain / upsert_recipe_for_domain", () => {
     it("일치 도메인 → found: true + recipe 포함", () => {
-      const res = handleMessage({ type: "get_recipe_for_domain", domain: "github.com", session_token: "tok" });
+      const res = handleMessage({
+        type: "get_recipe_for_domain",
+        domain: "github.com",
+        session_token: "tok",
+      });
       expect(res.type).toBe("get_recipe_for_domain_response");
       expect(res.found).toBe(true);
       expect(res.recipe).toBeTruthy();
@@ -383,12 +533,21 @@ describe("handleMessage — 메시지 타입별 응답", () => {
     });
 
     it("미매칭 도메인 → found: false", () => {
-      const res = handleMessage({ type: "get_recipe_for_domain", domain: "nope.example", session_token: "tok" });
+      const res = handleMessage({
+        type: "get_recipe_for_domain",
+        domain: "nope.example",
+        session_token: "tok",
+      });
       expect(res.found).toBe(false);
     });
 
     it("upsert → ok: true", () => {
-      const res = handleMessage({ type: "upsert_recipe_for_domain", domain: "github.com", recipe: {}, session_token: "tok" });
+      const res = handleMessage({
+        type: "upsert_recipe_for_domain",
+        domain: "github.com",
+        recipe: {},
+        session_token: "tok",
+      });
       expect(res.type).toBe("upsert_recipe_for_domain_response");
       expect(res.ok).toBe(true);
     });

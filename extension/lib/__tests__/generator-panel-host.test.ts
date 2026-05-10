@@ -46,8 +46,15 @@ describe("mountGeneratorPanel — host element + closed shadow", () => {
     const { mountGeneratorPanel } = await import("../generator-panel-host");
     // getBoundingClientRect mock (jsdom 은 항상 0 반환).
     targetInput.getBoundingClientRect = () => ({
-      top: 100, left: 50, right: 300, bottom: 130,
-      width: 250, height: 30, x: 50, y: 100, toJSON: () => ({}),
+      top: 100,
+      left: 50,
+      right: 300,
+      bottom: 130,
+      width: 250,
+      height: 30,
+      x: 50,
+      y: 100,
+      toJSON: () => ({}),
     });
     mountGeneratorPanel({ targetInput }, doc);
     const host = doc.getElementById("secretbank-generator-panel-host");
@@ -57,8 +64,15 @@ describe("mountGeneratorPanel — host element + closed shadow", () => {
   it("host 의 shadowRoot 가 null (closed shadow)", async () => {
     const { mountGeneratorPanel } = await import("../generator-panel-host");
     targetInput.getBoundingClientRect = () => ({
-      top: 100, left: 50, right: 300, bottom: 130,
-      width: 250, height: 30, x: 50, y: 100, toJSON: () => ({}),
+      top: 100,
+      left: 50,
+      right: 300,
+      bottom: 130,
+      width: 250,
+      height: 30,
+      x: 50,
+      y: 100,
+      toJSON: () => ({}),
     });
     mountGeneratorPanel({ targetInput }, doc);
     const host = doc.getElementById("secretbank-generator-panel-host");
@@ -69,8 +83,15 @@ describe("mountGeneratorPanel — host element + closed shadow", () => {
   it("host 의 z-index 가 2147483647", async () => {
     const { mountGeneratorPanel } = await import("../generator-panel-host");
     targetInput.getBoundingClientRect = () => ({
-      top: 100, left: 50, right: 300, bottom: 130,
-      width: 250, height: 30, x: 50, y: 100, toJSON: () => ({}),
+      top: 100,
+      left: 50,
+      right: 300,
+      bottom: 130,
+      width: 250,
+      height: 30,
+      x: 50,
+      y: 100,
+      toJSON: () => ({}),
     });
     mountGeneratorPanel({ targetInput }, doc);
     const host = doc.getElementById("secretbank-generator-panel-host");
@@ -80,8 +101,15 @@ describe("mountGeneratorPanel — host element + closed shadow", () => {
   it("unmount 함수 호출 시 host 가 DOM 에서 제거된다", async () => {
     const { mountGeneratorPanel } = await import("../generator-panel-host");
     targetInput.getBoundingClientRect = () => ({
-      top: 100, left: 50, right: 300, bottom: 130,
-      width: 250, height: 30, x: 50, y: 100, toJSON: () => ({}),
+      top: 100,
+      left: 50,
+      right: 300,
+      bottom: 130,
+      width: 250,
+      height: 30,
+      x: 50,
+      y: 100,
+      toJSON: () => ({}),
     });
     const unmount = mountGeneratorPanel({ targetInput }, doc);
     expect(doc.getElementById("secretbank-generator-panel-host")).not.toBeNull();
@@ -92,13 +120,27 @@ describe("mountGeneratorPanel — host element + closed shadow", () => {
   it("두 번 mount 시 이전 host 가 제거되고 새 host 하나만 존재한다", async () => {
     const { mountGeneratorPanel } = await import("../generator-panel-host");
     targetInput.getBoundingClientRect = () => ({
-      top: 100, left: 50, right: 300, bottom: 130,
-      width: 250, height: 30, x: 50, y: 100, toJSON: () => ({}),
+      top: 100,
+      left: 50,
+      right: 300,
+      bottom: 130,
+      width: 250,
+      height: 30,
+      x: 50,
+      y: 100,
+      toJSON: () => ({}),
     });
     const input2 = doc.createElement("input");
     input2.getBoundingClientRect = () => ({
-      top: 200, left: 50, right: 300, bottom: 230,
-      width: 250, height: 30, x: 50, y: 200, toJSON: () => ({}),
+      top: 200,
+      left: 50,
+      right: 300,
+      bottom: 230,
+      width: 250,
+      height: 30,
+      x: 50,
+      y: 200,
+      toJSON: () => ({}),
     });
     doc.body.appendChild(input2);
 
@@ -112,8 +154,15 @@ describe("mountGeneratorPanel — host element + closed shadow", () => {
   it("isGeneratorPanelOpen() — mount 후 true", async () => {
     const { mountGeneratorPanel, isGeneratorPanelOpen } = await import("../generator-panel-host");
     targetInput.getBoundingClientRect = () => ({
-      top: 100, left: 50, right: 300, bottom: 130,
-      width: 250, height: 30, x: 50, y: 100, toJSON: () => ({}),
+      top: 100,
+      left: 50,
+      right: 300,
+      bottom: 130,
+      width: 250,
+      height: 30,
+      x: 50,
+      y: 100,
+      toJSON: () => ({}),
     });
     mountGeneratorPanel({ targetInput }, doc);
     expect(isGeneratorPanelOpen()).toBe(true);
@@ -122,8 +171,15 @@ describe("mountGeneratorPanel — host element + closed shadow", () => {
   it("isGeneratorPanelOpen() — unmount 후 false", async () => {
     const { mountGeneratorPanel, isGeneratorPanelOpen } = await import("../generator-panel-host");
     targetInput.getBoundingClientRect = () => ({
-      top: 100, left: 50, right: 300, bottom: 130,
-      width: 250, height: 30, x: 50, y: 100, toJSON: () => ({}),
+      top: 100,
+      left: 50,
+      right: 300,
+      bottom: 130,
+      width: 250,
+      height: 30,
+      x: 50,
+      y: 100,
+      toJSON: () => ({}),
     });
     const unmount = mountGeneratorPanel({ targetInput }, doc);
     unmount();

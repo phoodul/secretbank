@@ -71,12 +71,7 @@ export function GeneratorIcon({ targetInput, onActivate }: GeneratorIconProps) {
   return (
     <>
       <style>{ICON_CSS}</style>
-      <button
-        type="button"
-        className="gi-btn"
-        aria-label="Generate password"
-        onClick={handleClick}
-      >
+      <button type="button" className="gi-btn" aria-label="Generate password" onClick={handleClick}>
         {KEY_SVG}
       </button>
     </>
@@ -122,9 +117,7 @@ export function mountGeneratorIcon(
   const root: Root = createRoot(mountPoint);
 
   function render() {
-    root.render(
-      React.createElement(GeneratorIcon, { targetInput, onActivate: activate }),
-    );
+    root.render(React.createElement(GeneratorIcon, { targetInput, onActivate: activate }));
   }
   render();
 

@@ -9,7 +9,10 @@
 
 import React from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { RailguardHintBanner, type RailguardHintBannerProps } from "../components/RailguardHintBanner";
+import {
+  RailguardHintBanner,
+  type RailguardHintBannerProps,
+} from "../components/RailguardHintBanner";
 
 const HOST_ID = "secretbank-railguard-hint-host";
 

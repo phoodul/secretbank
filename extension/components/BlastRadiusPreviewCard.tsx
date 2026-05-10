@@ -225,9 +225,7 @@ export function BlastRadiusPreviewCard({
               {item.label}
             </span>
           ))}
-          {hiddenCount > 0 && (
-            <span className="sbr-hidden">+{hiddenCount}개 더</span>
-          )}
+          {hiddenCount > 0 && <span className="sbr-hidden">+{hiddenCount}개 더</span>}
         </div>
         <div className="sbr-footer">
           <button

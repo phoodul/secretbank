@@ -115,11 +115,7 @@ export async function idbGet<T>(key: string): Promise<CacheEntry<T> | null> {
  * @param value 저장할 값
  * @param ttl_ms TTL 밀리초 (기본 86400000 = 24h)
  */
-export async function idbSet<T>(
-  key: string,
-  value: T,
-  ttl_ms: number = 86_400_000,
-): Promise<void> {
+export async function idbSet<T>(key: string, value: T, ttl_ms: number = 86_400_000): Promise<void> {
   const entry: CacheEntry<T> = {
     value,
     expires_at: Date.now() + ttl_ms,

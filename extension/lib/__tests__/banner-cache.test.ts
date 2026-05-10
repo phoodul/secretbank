@@ -247,7 +247,8 @@ describe("banner-cache — RAILGUARD dismiss 큐 (7일 TTL, G-5)", () => {
   });
 
   it("getRailguardDismissedHosts — 만료되지 않은 host 만 반환", async () => {
-    const { addRailguardDismissedHost, getRailguardDismissedHosts } = await import("../banner-cache");
+    const { addRailguardDismissedHost, getRailguardDismissedHosts } =
+      await import("../banner-cache");
 
     // 유효한 dismiss
     await addRailguardDismissedHost("chatgpt.com");

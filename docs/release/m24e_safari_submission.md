@@ -13,26 +13,26 @@ Last updated: 2026-05-10.
 
 ## 진입 조건 (4가지 모두 충족 필요)
 
-| # | 조건 | 담당 | 현재 상태 |
-| :- | :--- | :--- | :-------- |
-| 1 | F-1 (Chrome) + F-2 (Firefox) + F-7 (Edge) 심사 통과 + 사용자 피드백 수집 완료 | 자동 (CI) + 사용자 제출 | 대기 중 |
-| 2 | Apple Developer Program $99/년 결제 결정 및 가입 | **사용자 액션 필수** | 미결정 |
-| 3 | macOS 환경 확보 (Xcode 16+ + Mac App Store 접근) | 사용자 환경 | 미확인 |
-| 4 | macos-latest CI runner 비용 수용 결정 (GitHub Actions, Linux 대비 8배) | **사용자 결정 필수** | 미결정 |
+| #   | 조건                                                                          | 담당                    | 현재 상태 |
+| :-- | :---------------------------------------------------------------------------- | :---------------------- | :-------- |
+| 1   | F-1 (Chrome) + F-2 (Firefox) + F-7 (Edge) 심사 통과 + 사용자 피드백 수집 완료 | 자동 (CI) + 사용자 제출 | 대기 중   |
+| 2   | Apple Developer Program $99/년 결제 결정 및 가입                              | **사용자 액션 필수**    | 미결정    |
+| 3   | macOS 환경 확보 (Xcode 16+ + Mac App Store 접근)                              | 사용자 환경             | 미확인    |
+| 4   | macos-latest CI runner 비용 수용 결정 (GitHub Actions, Linux 대비 8배)        | **사용자 결정 필수**    | 미결정    |
 
 ---
 
 ## Safari 제출의 Chrome / Firefox / Edge 와의 핵심 차이
 
-| 항목 | Chrome / Firefox / Edge | Safari (F-6) |
-| :--- | :--- | :--- |
-| 등록비 | $5 일회 (Chrome) / 무료 | **$99/년** (Apple Developer Program) |
-| 빌드 타겟 | `dist/chromium-mv3/` 또는 `dist/firefox-mv2/` | **Xcode wrapper 별도 생성** |
-| CI 플랫폼 | ubuntu-latest | **macos-latest ($0.08/분 — Linux 8배)** |
-| 심사 기간 | 1~7일 | **수 주** (Apple 직원 심사) |
-| 개발 환경 | 어느 OS 가능 | **macOS 전용** (Xcode 16+ 필수) |
-| WXT 지원 | 공식 지원 | 커뮤니티 패키지 (maintenance 상태 확인 필요) |
-| 심사 가이드라인 | Chrome / Firefox / Edge 정책 | **Apple App Store Review Guidelines** 별도 검토 필요 |
+| 항목            | Chrome / Firefox / Edge                       | Safari (F-6)                                         |
+| :-------------- | :-------------------------------------------- | :--------------------------------------------------- |
+| 등록비          | $5 일회 (Chrome) / 무료                       | **$99/년** (Apple Developer Program)                 |
+| 빌드 타겟       | `dist/chromium-mv3/` 또는 `dist/firefox-mv2/` | **Xcode wrapper 별도 생성**                          |
+| CI 플랫폼       | ubuntu-latest                                 | **macos-latest ($0.08/분 — Linux 8배)**              |
+| 심사 기간       | 1~7일                                         | **수 주** (Apple 직원 심사)                          |
+| 개발 환경       | 어느 OS 가능                                  | **macOS 전용** (Xcode 16+ 필수)                      |
+| WXT 지원        | 공식 지원                                     | 커뮤니티 패키지 (maintenance 상태 확인 필요)         |
+| 심사 가이드라인 | Chrome / Firefox / Edge 정책                  | **Apple App Store Review Guidelines** 별도 검토 필요 |
 
 ---
 
@@ -48,7 +48,7 @@ export default defineConfig({
   // 기존: ['chromium', 'firefox']
   runner: {
     binaries: {
-      safari: 'open',
+      safari: "open",
     },
   },
 });
@@ -77,17 +77,17 @@ name: Extension Safari
 on:
   push:
     branches: [main]
-    paths: ['extension/**']
+    paths: ["extension/**"]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest          # $0.08/분 — Linux 대비 8배 비용
+    runs-on: macos-latest # $0.08/분 — Linux 대비 8배 비용
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter extension build:safari
       - name: Convert to Xcode project
@@ -130,12 +130,12 @@ jobs:
 
 ## 비용 합산
 
-| 항목 | 비용 | 비고 |
-| :--- | :--- | :--- |
-| Apple Developer Program | $99/년 | 연간 갱신 필수 |
-| macos-latest CI | $0.08/분 | Linux $0.008/분 대비 8배 |
-| (참고) F-1 + F-2 + F-7 합계 | $5 일회 | Chrome $5 + Edge 무료 + Firefox 무료 |
-| **Safari 포함 첫 해 합계** | **$104+** | CI 사용량에 따라 추가 |
+| 항목                        | 비용      | 비고                                 |
+| :-------------------------- | :-------- | :----------------------------------- |
+| Apple Developer Program     | $99/년    | 연간 갱신 필수                       |
+| macos-latest CI             | $0.08/분  | Linux $0.008/분 대비 8배             |
+| (참고) F-1 + F-2 + F-7 합계 | $5 일회   | Chrome $5 + Edge 무료 + Firefox 무료 |
+| **Safari 포함 첫 해 합계**  | **$104+** | CI 사용량에 따라 추가                |
 
 ---
 

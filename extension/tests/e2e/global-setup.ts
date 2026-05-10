@@ -14,11 +14,7 @@ export default async function globalSetup() {
   process.env.PLAYWRIGHT_USER_DATA_DIR = tmpDir;
 
   // globalTeardown 에서 삭제할 수 있도록 경로 파일에 기록
-  fs.writeFileSync(
-    path.join(os.tmpdir(), "sb-e2e-user-data-dir.txt"),
-    tmpDir,
-    "utf-8",
-  );
+  fs.writeFileSync(path.join(os.tmpdir(), "sb-e2e-user-data-dir.txt"), tmpDir, "utf-8");
 
   process.stderr.write(`[global-setup] user-data-dir: ${tmpDir}\n`);
 }

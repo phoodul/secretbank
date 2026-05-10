@@ -34,7 +34,8 @@ function CredentialNodeInner({ data }: NodeProps<Node<GraphNodeData>>) {
           status === "tertiary" && "outline outline-1 outline-offset-1",
           status === "dimmed" && "opacity-35",
           // deep-link focus highlight: ring + glow
-          focused && "ring-2 ring-offset-2 ring-vault-warning shadow-[0_0_12px_2px] shadow-vault-warning/50",
+          focused &&
+            "ring-2 ring-offset-2 ring-vault-warning shadow-[0_0_12px_2px] shadow-vault-warning/50",
         )}
         style={
           isRevoked

@@ -341,7 +341,9 @@ export default function CredentialList() {
         <style>{LIST_CSS}</style>
         <div className="cl-root">
           <div className="cl-state">
-            <div className="cl-state-icon" aria-hidden="true">⏳</div>
+            <div className="cl-state-icon" aria-hidden="true">
+              ⏳
+            </div>
             <p className="cl-state-title">Loading…</p>
           </div>
         </div>
@@ -355,7 +357,9 @@ export default function CredentialList() {
         <style>{LIST_CSS}</style>
         <div className="cl-root">
           <div className="cl-state">
-            <div className="cl-state-icon" aria-hidden="true">🔒</div>
+            <div className="cl-state-icon" aria-hidden="true">
+              🔒
+            </div>
             <p className="cl-state-title">Vault is locked</p>
             <p className="cl-state-msg">
               Open the Secretbank desktop app and unlock your vault, then refresh.
@@ -379,13 +383,18 @@ export default function CredentialList() {
         <style>{LIST_CSS}</style>
         <div className="cl-root">
           <div className="cl-state">
-            <div className="cl-state-icon" aria-hidden="true">⚠️</div>
+            <div className="cl-state-icon" aria-hidden="true">
+              ⚠️
+            </div>
             <p className="cl-state-title">Connection error</p>
             <p className="cl-state-msg">{state.errorMsg}</p>
             <button
               type="button"
               className="cl-action-btn"
-              onClick={() => { dispatch({ type: "RELOAD" }); void load(); }}
+              onClick={() => {
+                dispatch({ type: "RELOAD" });
+                void load();
+              }}
             >
               Retry
             </button>
@@ -395,17 +404,20 @@ export default function CredentialList() {
     );
   }
 
-  if (state.phase === "empty" || (state.phase === "ready" && displayed.length === 0 && !state.query)) {
+  if (
+    state.phase === "empty" ||
+    (state.phase === "ready" && displayed.length === 0 && !state.query)
+  ) {
     return (
       <>
         <style>{LIST_CSS}</style>
         <div className="cl-root">
           <div className="cl-state">
-            <div className="cl-state-icon" aria-hidden="true">🗝️</div>
+            <div className="cl-state-icon" aria-hidden="true">
+              🗝️
+            </div>
             <p className="cl-state-title">No credentials saved</p>
-            <p className="cl-state-msg">
-              Save a password from any website to see it here.
-            </p>
+            <p className="cl-state-msg">Save a password from any website to see it here.</p>
             <button
               type="button"
               className="cl-action-btn cl-action-btn-ghost"
