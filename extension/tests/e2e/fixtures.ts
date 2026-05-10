@@ -253,7 +253,12 @@ export const test = base.extend<FakeSiteFixture>({
     try {
       await use(context);
     } finally {
-      await context.close();
+      // Chromium MV3 + Xvfb 환경에서 service worker 가 남아 close 가 hang 하는
+      // 경우 worker teardown 60s 를 초과한다. 30s race 로 강제 break.
+      await Promise.race([
+        context.close(),
+        new Promise<void>((resolve) => setTimeout(resolve, 30_000)),
+      ]);
     }
   },
 

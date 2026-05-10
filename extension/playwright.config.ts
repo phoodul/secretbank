@@ -37,8 +37,9 @@ export default defineConfig({
     ...(process.env.CI ? [["github"] as ["github"]] : []),
   ],
 
-  // 전체 재시도: CI 에서 flakiness 완충
-  retries: process.env.CI ? 1 : 0,
+  // 재시도 0 — Chromium MV3 + Xvfb 환경에서 worker teardown 이 느려 retry 시
+  // 누적 시간 폭증 (4 tests × 2 × 60s teardown = 8분). 첫 실패 시 즉시 보고.
+  retries: 0,
 
   use: {
     // 스크린샷/영상은 실패 시만
