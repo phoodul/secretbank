@@ -1,5 +1,64 @@
 # Work Log
 
+## 2026-05-10 (새벽) — 🎉 M24-E 풀체인 클로즈 (53/53 sub-task, 100%)
+
+### 결정 요약
+
+이번 세션은 resume → Night mode 연속 실행으로 Phase D + E + G + F 모두 완료. 1P 동등 + 1P 우위 차별 5종 모두 구현. **hackernews 권유 가능 시점 도달**.
+
+### 28 sub-task commits + 1 store matrix
+
+**Phase D (save dialog, 6/6)** — `013987c` D-1 form hook + `5976b3d` D-2 world-bridge + `f344a1c` D-3 SaveBanner + `56ce10e` D-4 save-handler + `ed887fa` D-5 actor+issuer + `fcbba5c` D-6 IPC+dialog
+
+**Phase E (1P 동등 dogfooding 시점, 5/5)** — `87809ed` E-1 generator inline + `7892db0` E-2 recipe inheritance + `8dc6374` E-3 Site Logo + `c5e2e39` E-4 popup card + `43cb49f` E-5 design tokens
+
+**Phase G (1P 우위 차별 5종, 10/10)** — `8c658cd` G-1-1 mini-graph 어댑터 + `82dd99b` G-1-2 SVG fan-out + `5f4fd28` G-1-3 deep-link + `54d8647` G-2-1 incident 매칭 + `6bead7d` G-2-2 in-page banner + `c4c6dd9` G-3-1 blast radius 어댑터 + `7237949` G-3-2 SaveBanner 통합 + `c31e556` G-4-1 MCP push 백엔드 + `a8439c0` G-4-2 트리거 + 인디케이터 + `b23ac1b` G-5 RAILGUARD
+
+**Phase F (스토어 + E2E + audit, 8/8)** — `83dbf16` F-5 Mock NM Host + `48e9fa0` F-3 Playwright Chromium 옵션 B + `6344917` F-4 Firefox build smoke 옵션 D + `4c50cb3` F-1 Chrome submit + nativeMessaging 권한 보강 + `820de77` F-2 Firefox AMO + F-7 Edge + store matrix + `348e6f3` F-6 Safari + F-8 audit placeholder
+
+### 1P 우위 차별 기능 5종
+
+- **G-1 Inline 의존성 mini-graph** — popup CredentialCard hover SVG fan-out (220×110, MAX_VISIBLE=5 + "+N more") + Tauri secretbank://graph?credential=<id> deep-link → 데스크톱 GraphPage focus highlight
+- **G-2 Supply chain banner** — 사용자 방문 사이트의 NVD/GHSA breach 자동 in-page 경고 (Closed Shadow DOM, severity 색상, 7일 dismiss + 1h cache) + 데스크톱 IncidentsPage `?host=` 필터 진입
+- **G-3 Blast radius preview** — 비번 변경 시 SaveBanner inline 카드 (이 변경이 N개 항목에 영향 + Folder/Server SVG 아이콘 + hidden_count) + secretbank://graph?blast_credential=<id> blast mode 진입
+- **G-4 MCP context push** — opt-in 강제 (desktop SQLite settings, 기본 OFF) + 5분 cooldown per host + popup 인디케이터 (controlled Tabs), AI 에디터 MCP query 시 최근 site context 응답 (capacity 10 FIFO)
+- **G-5 RAILGUARD AI 에디터 sidebar 경고** — chatgpt/cursor/cursor.sh/copilot/gemini/claude.ai/poe/perplexity 8 host 매칭 시 amber 경고 (Closed Shadow DOM) + RAILGUARD 룰 자동 생성 secretbank://railguard deep-link
+
+### 인프라 보강 (이번 세션)
+
+- `loop-counter.sh` — implementator 상한 20 → 80, 세션 50 → 200 (Night mode 자동 진행 빈도 반영)
+- nativeMessaging 권한 누락 발견 + 보강 (B-3 NMClient 부터 사용 중이었으나 manifest 누락, F-1 검증 시점 발견)
+- McpCredentialMeta 이름 충돌 해결 (validation/credential.ts CredentialMeta 와)
+- nm-host 와 desktop Tauri 간 TCP IPC 채널 신설 (D-6, dynamic port + 4-byte LE prefix + JSON + HMAC session token verify, vault unlock 시 자동 시작/lock 시 Drop 자동 종료)
+
+### 검증 결과 (회귀 0)
+
+| 항목 | 결과 |
+| :--- | :--- |
+| cargo test --workspace --lib | 290+6 PASS (G-4-1 시점) |
+| cargo clippy -D warnings | 0 warnings |
+| cargo fmt --check | OK |
+| pnpm vitest run (root) | 654 PASS |
+| pnpm --filter @secretbank/extension test | 650 PASS (F-4 web-ext 34 추가) |
+| pnpm --filter @secretbank/shared test | 100 PASS |
+| extension build:chromium | OK (4.36 MB) |
+| extension build:firefox | OK (4.36 MB) |
+| typecheck (root + extension + shared) | 0 error |
+
+### 남은 사용자 액션 (자동화 ❌)
+
+- **Chrome Web Store** — Developer 계정 등록 ($5 일회) + listing 입력 + 5+ 스크린샷 + Listing 제출 (`docs/release/m24e_chrome_submission.md` 참조)
+- **Microsoft Edge Add-ons** — Microsoft Partner Center 등록 (무료) + chromium-mv3 빌드 100% 재사용 + listing 제출 (`docs/release/m24e_edge_submission.md`)
+- **Firefox AMO** — Mozilla Add-ons 계정 등록 (무료) + firefox-mv2 빌드 + AGPL-3.0 소스코드 자동 충족 + gecko.id `secretbank@secretbank.app` (`docs/release/m24e_firefox_submission.md`)
+- (선택) Apple Dev $99/년 + Safari Mac App Store (`docs/release/m24e_safari_submission.md`)
+- 아이콘 16/32/48/128 PNG 생성 (현재 manifest icons 필드 없음)
+
+### 다음 마일스톤
+
+M24-E 출시 → dogfooding (GitHub Releases installer 1주, daily driver) → Show HN (hackernews "Show HN: Secretbank — secret manager that maps your dependency graph") → 사용자 피드백 100~500 명 수집 → NLNet NGI Zero PET 신청 (Phase F 직전 8~12개월 전, 무료 audit 경로) → M24 일반 vault Phase 3-B (secure_note) → 3-C (passkey) → 4 (카테고리) → 5 (TOTP autofill) → M11 모바일.
+
+---
+
 ## 2026-05-10 — M24-E B-9 옵션 C / B-10 옵션 B 확정 + docs 정리
 
 ### 결정 요약

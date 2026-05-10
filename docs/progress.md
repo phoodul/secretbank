@@ -2,7 +2,43 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-10 — **B-9 옵션 C / B-10 옵션 B 확정 + docs 갱신 완료. Phase D 진입 준비 완료.**
+- **Time:** 2026-05-10 (새벽 ~06:00) — **🎉 M24-E 풀체인 클로즈 (53/53 sub-task, 100%) — 1P 동등 + 1P 우위 차별 5종 모두 구현. hackernews 권유 가능 시점 도달.**
+- **이번 세션 (resume → Night mode) 통계**:
+  - Phase D 6/6 ✅ (D-1 hook → D-2 bridge → D-3 banner → D-4 handler → D-5 actor+issuer → D-6 IPC+dialog)
+  - Phase E 5/5 ✅ (E-1 generator inline → E-2 recipe inheritance → E-3 Site Logo → E-4 popup card → E-5 design tokens) — **1P 동등 dogfooding 가능 시점 도달**
+  - Phase G 10/10 ✅ (G-1-1 ~ G-1-3 mini-graph 풀체인 + G-2-1+G-2-2 supply chain 풀체인 + G-3-1+G-3-2 blast radius 풀체인 + G-4-1+G-4-2 MCP context push 풀체인 + G-5 RAILGUARD)
+  - Phase F 8/8 ✅ (F-1 Chrome submit + nativeMessaging 권한 보강 + F-2 Firefox AMO + F-3 Playwright Chromium + F-4 Firefox build smoke + F-5 Mock NM Host + F-6 Safari placeholder + F-7 Edge Add-ons + F-8 audit placeholder)
+  - 누적 28 sub-task commits (D 6 + E 5 + G 10 + F 7) + 1 store matrix
+  - implementator 호출 상한 20 → 80 상향 + 세션 50 → 200 상향 (.claude/hooks/loop-counter.sh 수정)
+- **차별 기능 5종 (1P 절대 못함, Phase G)**:
+  - **G-1 Inline 의존성 mini-graph** — popup CredentialCard hover SVG fan-out (220×110, 5 + "+N more") + Tauri secretbank://graph?credential=<id> deep-link
+  - **G-2 Supply chain banner** — 사용자 방문 사이트의 NVD/GHSA breach 자동 in-page 경고 + 데스크톱 IncidentsPage 진입
+  - **G-3 Blast radius preview** — 비번 변경 시 SaveBanner inline 카드 (이 변경이 N개 항목에 영향 + Folder/Server SVG 아이콘) + secretbank://graph?blast_credential=<id>
+  - **G-4 MCP context push** — opt-in 강제 + 5분 cooldown per host + popup 인디케이터, AI 에디터 (Claude/Cursor/Copilot) MCP query 시 최근 site context 응답
+  - **G-5 RAILGUARD AI 에디터 sidebar 경고** — chatgpt/cursor/claude.ai/copilot/gemini/poe/perplexity 8 host 매칭 시 amber 경고 + RAILGUARD 룰 자동 생성 deep-link
+- **누적 검증 (회귀 0)**:
+  - cargo test --workspace --lib: 290+6 PASS (G-4-1 시점)
+  - pnpm vitest run (root): 654 PASS
+  - pnpm --filter @secretbank/extension test: 582 PASS (G-5 시점) / 650 PASS (F-4 시점, web-ext 34 추가)
+  - extension build: chrome-mv3 + firefox-mv2 OK
+  - typecheck (root + extension + shared + ee/secretbank-relay): 0 error
+  - clippy / fmt / lint / format:check: clean
+- **다음 세션 시작점 — M24-E 출시 + dogfooding**:
+  1. **사용자 액션 (스토어 제출)**:
+     - Chrome Web Store ($5 일회 + listing + 5+ 스크린샷, `docs/release/m24e_chrome_submission.md`)
+     - Microsoft Edge Add-ons (무료 + chromium 빌드 재사용, `docs/release/m24e_edge_submission.md`)
+     - Firefox AMO (무료 + AGPL-3.0 소스코드 자동 충족 + gecko.id, `docs/release/m24e_firefox_submission.md`)
+     - (선택) Apple Dev $99/년 + Safari (`docs/release/m24e_safari_submission.md`)
+  2. **자동 가능 보강**:
+     - 아이콘 16/32/48/128 PNG 생성 (현재 manifest icons 필드 ❌)
+     - F-3 Playwright spec 추가 (save / generator Shadow DOM selector)
+     - F-4 Firefox 풀 E2E (Selenium/web-ext) — Phase F-2 후속
+  3. **dogfooding 1주** → Show HN (hackernews) → 사용자 피드백
+  4. **NLNet NGI Zero PET 신청** (8~12개월 cycle, 무료 audit 경로) — Phase F 종합 audit 결과 수령 시점
+  5. **다음 마일스톤**: M24 일반 vault (Phase 3-B secure_note / 3-C passkey / 4 카테고리 / 5 TOTP autofill) → M11 모바일
+
+### 이전 — 2026-05-10 (Phase D 진입 직전 — B-9/B-10 클로즈)
+
 - **이번 세션 결정**:
   - **B-9 외부 보안 audit = 옵션 C 채택** (skip + Phase F 종합 audit 통합)
   - **B-10 3 OS 수동 검증 = 옵션 B 채택** (CI smoke + Win11 자동 ping/pong 충분)

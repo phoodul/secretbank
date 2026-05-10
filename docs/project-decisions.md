@@ -5,6 +5,34 @@
 
 ---
 
+## [2026-05-10] 🎉 **M24-E 풀체인 클로즈 — 53/53 sub-task (100%), 1P 동등 + 1P 우위 차별 5종 모두 구현**
+
+### 결정 (실행 결과 기록)
+
+이번 세션에서 Phase D + E + G + F 모두 완료. **hackernews 권유 가능 시점 도달**. 1P 동등 (autofill + save + generator + Site Logo + popup card) + 1P 우위 차별 5종 (G-1 mini-graph / G-2 supply chain / G-3 blast radius / G-4 MCP push / G-5 RAILGUARD) 모두 구현.
+
+### 새 결정
+
+1. **F-3 Playwright E2E = 옵션 B 채택** (autofill smoke 4 + save/generator stub) — Shadow DOM selector 점진 보강 사유
+2. **F-4 Firefox E2E = 옵션 D 채택** (build smoke + manifest validation 만, web-ext+Selenium 풀 통합 ❌) — Chromium F-3 풀 E2E 가 시나리오 커버 + Phase F-2 정식 정비
+3. **nm-host ↔ desktop IPC = TCP localhost** (D-6) — 옵션 1 채택 (단순함 우선, dynamic port 127.0.0.1:0 + HMAC session token verify, vault unlock 자동 시작/lock 자동 Drop 종료)
+4. **MCP queue 공유 = SQLite 중간 저장소** (G-4-1 MVP) — secretbank-mcp 별도 binary 라 in-process queue 불가, mcp_site_context_queue JSON array 중간 저장
+5. **MCP opt-in single source of truth = desktop ExtensionSettings** (G-4-2 옵션 C) — extension 매 push 전 RPC + 5분 cache, privacy 안전성 우선
+6. **F-6 Safari 보류** — Apple Dev $99/년 비용 + macos-latest CI $0.08/분 (Linux 8배), 사용자 1000+ ROI 검증 후 진입 권장
+7. **F-8 외부 audit = B-9 결정 따름** (옵션 C, NLNet NGI Zero PET 무료 audit 경로) — Phase F 종합 audit 으로 통합
+
+### 영향
+
+- **사용자 액션 (자동화 ❌)**: Chrome Web Store $5 / Edge 무료 / Firefox AMO 무료 제출 + 아이콘 PNG 생성 + 스크린샷 5+ 촬영 + listing 입력
+- **다음 마일스톤**: M24-E 출시 → dogfooding 1주 → Show HN (hackernews) → 사용자 피드백 100~500 → NLNet 신청 → M24 일반 vault (3-B/3-C/4/5) → M11 모바일
+
+### 인프라 결정 (이번 세션)
+
+- `loop-counter.sh` — implementator 상한 20 → 80 / 세션 50 → 200 (Night mode 자동 진행 빈도 반영)
+- nativeMessaging 권한 누락 발견 + 보강 (B-3 NMClient 부터 사용 중이었으나 manifest 누락, F-1 검증 시점 발견)
+
+---
+
 ## [2026-05-10] **M24-E B-9 / B-10 클로즈 + Audit 로드맵** — 옵션 C 채택 + NLNet 무료 audit 경로
 
 ### 사용자 통찰

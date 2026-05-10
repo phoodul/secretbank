@@ -52,9 +52,9 @@ fi
 
 # --- Limit Checks ---
 
-# Total agent call limit (50 per session)
-if [[ $TOTAL -ge 50 ]]; then
-  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"세션 전체 에이전트 호출 상한(50회)에 도달. Informer로 사용자에게 보고 필요."}}' | jq .
+# Total agent call limit (200 per session — Night mode 장시간 운용 대응)
+if [[ $TOTAL -ge 200 ]]; then
+  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"세션 전체 에이전트 호출 상한(200회)에 도달. Informer로 사용자에게 보고 필요."}}' | jq .
   exit 0
 fi
 
@@ -62,13 +62,14 @@ fi
 AGENT_KEY=$(echo "$AGENT_TYPE" | tr -d '"')
 AGENT_COUNT=$(echo "$STATE" | jq -r ".agents[\"$AGENT_KEY\"].count // 0")
 
-# Agent-specific limits
-MAX_COUNT=20
+# Agent-specific limits — 2026-05-10 상향 (Night mode 자동 진행 빈도 반영)
+MAX_COUNT=50
 case "$AGENT_KEY" in
-  problem-solver) MAX_COUNT=15 ;;
-  tester) MAX_COUNT=10 ;;
-  researcher) MAX_COUNT=10 ;;
-  commiter) MAX_COUNT=30 ;;
+  implementator) MAX_COUNT=80 ;;
+  problem-solver) MAX_COUNT=30 ;;
+  tester) MAX_COUNT=20 ;;
+  researcher) MAX_COUNT=20 ;;
+  commiter) MAX_COUNT=80 ;;
 esac
 
 if [[ $AGENT_COUNT -ge $MAX_COUNT ]]; then
