@@ -62,11 +62,16 @@ jobs:
           sed -i "s|/media/\([a-z-]*\)\.webm|/media/\1.webm?v=${SHORT_SHA}|g" site/index.html
           grep -c "?v=${SHORT_SHA}" site/index.html || true
 
+      # wrangler-action@v3 가 root pnpm-lock.yaml 검출 → pnpm exec wrangler
+      # 시도 → root 에 wrangler dep 없음 → "Command 'wrangler' not found".
+      # 직접 npm install -g + npx 로 우회 (action 의 PM 자동검출 회피).
+      - name: Install wrangler globally
+        run: npm install -g wrangler@^3
+
+      # --commit-message 는 영문 SHA 로 명시. Cloudflare Pages API 가
+      # 한글 commit message 를 "Invalid UTF-8" (code 8000111) 로 reject.
       - name: Deploy site/ to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          # accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}  # 필요 시 활성화
-          # --commit-message 는 영문 SHA 로 명시. Cloudflare Pages API 가
-          # 한글 commit message 를 "Invalid UTF-8" (code 8000111) 로 reject.
-          command: pages deploy site --project-name=secretbank-site --branch=main --commit-hash=${{ github.sha }} --commit-message=${{ github.sha }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}  # 필요 시 활성화
+        run: wrangler pages deploy site --project-name=secretbank-site --branch=main --commit-hash=${{ github.sha }} --commit-message=${{ github.sha }}

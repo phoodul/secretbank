@@ -24,8 +24,9 @@ export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: "**/*.spec.ts",
 
-  // timeout — extension service worker 부팅 시간 고려
-  timeout: 60_000,
+  // timeout — Chromium MV3 + Xvfb (CI Linux) launch 가 60s+ 소요되는 사례 관찰.
+  // launch (~30~70s) + service worker 부팅 (~5s) + 실제 검증 + close race (≤30s).
+  timeout: 180_000,
 
   // extension context 는 직렬 실행 필수
   workers: 1,
