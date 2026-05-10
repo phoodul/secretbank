@@ -30,6 +30,7 @@
     "**/*.test.tsx",
     "playwright.config.ts",
     "tests/e2e/**/*.ts",
+    "tests/web-ext/**/*.ts",
     ".wxt/types/imports.d.ts"
   ],
   "exclude": ["node_modules", "dist"]

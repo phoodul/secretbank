@@ -15,7 +15,12 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./vitest-setup.ts"],
-    include: ["components/**/__tests__/**/*.test.{ts,tsx,js}", "**/__tests__/**/*.test.{ts,tsx,js}"],
+    include: [
+      "components/**/__tests__/**/*.test.{ts,tsx,js}",
+      "**/__tests__/**/*.test.{ts,tsx,js}",
+      // F-4: Firefox build smoke + manifest validation (각 파일에 @vitest-environment node 지정)
+      "tests/web-ext/**/*.test.{ts,tsx,js}",
+    ],
     exclude: ["node_modules", "dist", ".wxt", "tests/e2e/**"],
   },
 });

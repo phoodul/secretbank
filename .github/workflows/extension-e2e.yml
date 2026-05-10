@@ -1,7 +1,8 @@
-name: Extension E2E (Chromium)
+name: Extension E2E
 
 # F-3: Playwright E2E — Chromium MV3 + Mock NM Host.
-# F-4 (Firefox) 는 별도 job 으로 추가 예정.
+# F-4: Firefox build smoke + manifest validation (옵션 D, 실제 브라우저 실행 없음).
+#      Firefox 풀 E2E (web-ext + Selenium/geckodriver) 는 Phase F-2 에서 정비.
 #
 # 실행 조건:
 #   - main 브랜치 push (extension/** 변경 시)
@@ -110,9 +111,57 @@ jobs:
           retention-days: 7
 
   # ────────────────────────────────────────────────────────────────────────────
-  # Firefox E2E (F-4) — TODO: F-4 commit 시 추가
+  # Firefox MV2 Build Smoke + Manifest Validation (F-4, 옵션 D)
+  #
+  # 옵션 D 채택 이유:
+  #   - WXT firefox 빌드는 MV2 기본값 → Playwright Firefox MV3 extension 로딩 미지원
+  #   - Chromium 풀 E2E (F-3) 로 autofill/save/generator 시나리오 커버됨
+  #   - Firefox 고유 회귀(manifest 형식, entry 누락)는 build smoke 으로 충분히 감지
+  #   - Firefox 풀 E2E (web-ext + Selenium/geckodriver) 는 Phase F-2 (Safari/Edge) 시 정비
   # ────────────────────────────────────────────────────────────────────────────
-  # e2e-firefox:
-  #   name: E2E Firefox MV2
-  #   runs-on: ubuntu-latest
-  #   # TODO: web-ext 기반 F-4 구현 후 활성화
+  firefox-build:
+    name: Firefox MV2 Build Smoke (F-4)
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. 소스 체크아웃 ───────────────────────────────────────────────────
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      # ── 2. pnpm 설치 ────────────────────────────────────────────────────────
+      - name: pnpm 설치
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      # ── 3. Node.js 설치 ─────────────────────────────────────────────────────
+      - name: Node.js 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # ── 4. 의존성 설치 ──────────────────────────────────────────────────────
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      # ── 5. Firefox MV2 빌드 ─────────────────────────────────────────────────
+      - name: Extension 빌드 (Firefox MV2)
+        run: pnpm --filter @secretbank/extension build:firefox
+
+      # ── 6. Build smoke + manifest validation ────────────────────────────────
+      #       SKIP_FIREFOX_BUILD=true — 5번 step 에서 이미 빌드했으므로 재빌드 생략
+      - name: Firefox build smoke + manifest validation
+        run: pnpm --filter @secretbank/extension exec vitest run tests/web-ext --reporter=verbose
+        env:
+          CI: "true"
+          SKIP_FIREFOX_BUILD: "true"
+
+      # ── 7. 빌드 아티팩트 업로드 (실패 시) ─────────────────────────────────
+      - name: Firefox dist 업로드 (실패 시)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-dist-mv2
+          path: extension/dist/firefox-mv2/
+          retention-days: 7
