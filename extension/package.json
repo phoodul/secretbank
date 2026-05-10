@@ -12,6 +12,7 @@
     "build:chromium": "wxt build",
     "build:firefox": "wxt build --browser firefox",
     "zip": "wxt zip && wxt zip --browser firefox",
+    "postinstall": "wxt prepare",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
