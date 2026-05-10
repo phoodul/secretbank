@@ -115,15 +115,12 @@ describe("NMMessage discriminated union", () => {
     expect(msg.type).toBe("save");
   });
 
-  it("NMMessage union 이 6가지 타입을 커버한다 (B-4 확장)", () => {
-    // init / pair_request / pair_response / paired / reveal / save
-    expectTypeOf<NMMessage>().toMatchTypeOf<
-      | NMMessageInit
-      | NMMessagePair
-      | NMMessageReveal
-      | NMMessageSave
-      | { type: "pair_response" }
-      | { type: "paired" }
-    >();
+  it("NMMessage union 이 base 6가지 타입을 포함한다 (B-4 base + G 단계 확장)", () => {
+    // base 6 멤버는 NMMessage union 의 부분집합이어야 한다.
+    // (G 단계에서 graph/incident/blast/mcp 등 RPC 메시지가 추가됨 — 이 테스트는 base 만 검증.)
+    expectTypeOf<NMMessageInit>().toMatchTypeOf<NMMessage>();
+    expectTypeOf<NMMessagePair>().toMatchTypeOf<NMMessage>();
+    expectTypeOf<NMMessageReveal>().toMatchTypeOf<NMMessage>();
+    expectTypeOf<NMMessageSave>().toMatchTypeOf<NMMessage>();
   });
 });

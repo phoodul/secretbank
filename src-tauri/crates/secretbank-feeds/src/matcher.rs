@@ -1009,7 +1009,7 @@ mod tests {
     // Host-only matching tests (T-24-E-G2-1)
     // =======================================================================
 
-    use super::{is_medium_or_above, match_incidents_by_host, normalize_host, HostIncidentMatch};
+    use super::{is_medium_or_above, match_incidents_by_host, normalize_host};
 
     fn make_incident_host(
         issuer_id: Option<IssuerId>,

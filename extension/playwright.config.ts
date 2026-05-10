@@ -55,20 +55,9 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         channel: undefined, // Playwright 내장 Chromium 사용
         headless: false,
-        launchOptions: {
-          args: [
-            // Manifest V3 unpacked extension 로딩
-            `--load-extension=${EXTENSION_PATH}`,
-            `--disable-extensions-except=${EXTENSION_PATH}`,
-            // 격리된 임시 user-data-dir (각 실행마다 fixture 제공)
-            // globalSetup 에서 tmpdir 생성 후 PLAYWRIGHT_USER_DATA_DIR 로 전달
-            ...(process.env.PLAYWRIGHT_USER_DATA_DIR
-              ? [`--user-data-dir=${process.env.PLAYWRIGHT_USER_DATA_DIR}`]
-              : []),
-          ],
-          // headless: false 와 함께 최대화 없이 작은 창 (CI GPU 없음 고려)
-          slowMo: process.env.CI ? 0 : 0,
-        },
+        // launchOptions / args 는 fixtures.ts 의 context fixture 에서
+        // chromium.launchPersistentContext(userDataDir, { args }) 로 전달.
+        // (Playwright 1.54+ 는 --user-data-dir 를 launch args 로 reject.)
       },
     },
   ],

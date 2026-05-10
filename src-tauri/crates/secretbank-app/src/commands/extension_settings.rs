@@ -113,7 +113,7 @@ mod tests {
     use crate::audit_ctx::AuditCtx;
     use crate::commands::kill_switch::{ConfirmTokenStore, IssuerConfirmTokenStore};
     use crate::context::AppContext;
-    use crate::services::device_identity::ensure_device_keys;
+    use crate::services::device_identity::{ensure_device_keys, DeviceIdentity};
 
     use super::*;
 

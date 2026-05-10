@@ -14,11 +14,10 @@
 //     CI 에서는 install.sh 가 NM manifest 를 ~/.config/chromium/NativeMessagingHosts/ 에 등록.
 //   - extId 추출에 실패하면 테스트를 skip 처리 (NM manifest 에 EXT_ID 가 맞지 않으면 NM 통신 불가).
 
-import { test as base, chromium, type BrowserContext } from "@playwright/test";
+import { test as base, chromium, type BrowserContext, type Page } from "@playwright/test";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 
@@ -144,9 +143,7 @@ export function stopFakeSite(server: http.Server): Promise<void> {
  * @param context BrowserContext (--load-extension 으로 로딩된 Chromium)
  * @returns 확장 ID 문자열 | undefined (service worker 미부팅 시)
  */
-export async function extractExtensionId(
-  context: BrowserContext,
-): Promise<string | undefined> {
+export async function extractExtensionId(context: BrowserContext): Promise<string | undefined> {
   // service worker 가 부팅되길 최대 10초 대기
   const deadline = Date.now() + 10_000;
   while (Date.now() < deadline) {
@@ -219,6 +216,10 @@ export function updateNmManifestExtId(extId: string): void {
 // ---------------------------------------------------------------------------
 
 interface FakeSiteFixture {
+  /** Persistent BrowserContext (extension loaded). base context 를 override. */
+  context: BrowserContext;
+  /** Persistent context 의 첫 번째 page. base page 를 override. */
+  page: Page;
   /** 가짜 사이트 서버 (이미 listen 중) */
   fakeSiteServer: http.Server;
   /** 확장 ID (undefined = service worker 미부팅) */
@@ -227,6 +228,10 @@ interface FakeSiteFixture {
 
 /**
  * base test 를 확장하는 fixture.
+ * - context: chromium.launchPersistentContext 로 unpacked extension 로딩
+ *   (Playwright 1.54+ 는 --user-data-dir 를 launch args 로 reject 하므로
+ *   API 가 받는 첫 인자로 userDataDir 전달이 필수.)
+ * - page: persistent context 의 기본 페이지 (없으면 newPage)
  * - fakeSiteServer: 각 테스트 전 시작, 후 종료
  * - extensionId: BrowserContext 에서 추출
  *
@@ -235,6 +240,28 @@ interface FakeSiteFixture {
  *   test("autofill", async ({ page, fakeSiteServer, extensionId }) => { ... });
  */
 export const test = base.extend<FakeSiteFixture>({
+  context: async ({}, use) => {
+    // PLAYWRIGHT_USER_DATA_DIR (globalSetup 에서 mkdtemp) 또는 즉석 tmpdir.
+    const userDataDir =
+      process.env.PLAYWRIGHT_USER_DATA_DIR ||
+      fs.mkdtempSync(path.join(os.tmpdir(), "sb-e2e-fixture-"));
+
+    const context = await chromium.launchPersistentContext(userDataDir, {
+      headless: false,
+      args: [`--load-extension=${EXTENSION_PATH}`, `--disable-extensions-except=${EXTENSION_PATH}`],
+    });
+    try {
+      await use(context);
+    } finally {
+      await context.close();
+    }
+  },
+
+  page: async ({ context }, use) => {
+    const page = context.pages()[0] || (await context.newPage());
+    await use(page);
+  },
+
   fakeSiteServer: async ({}, use) => {
     let server: http.Server | undefined;
     try {

@@ -501,10 +501,7 @@ function GlyphRing({ state }: { state: VaultState }) {
   const [codes, setCodes] = useState<string[]>(FINAL_CODES);
 
   useEffect(() => {
-    if (state !== "verifying") {
-      setCodes(FINAL_CODES);
-      return;
-    }
+    if (state !== "verifying") return;
     const interval = setInterval(() => {
       setCodes(
         FINAL_CODES.map(() =>
@@ -515,7 +512,10 @@ function GlyphRing({ state }: { state: VaultState }) {
         ),
       );
     }, 70);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      setCodes(FINAL_CODES);
+    };
   }, [state]);
 
   const motionCfg: RingMotion = {

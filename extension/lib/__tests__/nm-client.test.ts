@@ -520,12 +520,17 @@ describe("NMClient", () => {
     mockConnectNative(port);
     await client.connect();
 
-    const rpcPromise = client.graphForCredential("cred-id", "tok");
+    // unhandled rejection 방지: rpcPromise 를 catch 로 silencing 후 별도 검증.
+    let caughtError: unknown;
+    const rpcPromise = client.graphForCredential("cred-id", "tok").catch((e) => {
+      caughtError = e;
+    });
 
     // 5초 초과 — 응답 없음
     await vi.advanceTimersByTimeAsync(5001);
+    await rpcPromise;
 
-    await expect(rpcPromise).rejects.toBeInstanceOf(NMDisconnected);
+    expect(caughtError).toBeInstanceOf(NMDisconnected);
   });
 
   it("graphForCredential() 은 타입 호환 응답 (ok=false) 도 수신한다", async () => {
@@ -616,12 +621,17 @@ describe("NMClient", () => {
     mockConnectNative(port);
     await client.connect();
 
-    const rpcPromise = client.incidentCheckForHost("github.com", "tok");
+    // unhandled rejection 방지: rpcPromise 를 catch 로 silencing 후 별도 검증.
+    let caughtError: unknown;
+    const rpcPromise = client.incidentCheckForHost("github.com", "tok").catch((e) => {
+      caughtError = e;
+    });
 
     // 5초 초과 — 응답 없음
     await vi.advanceTimersByTimeAsync(5001);
+    await rpcPromise;
 
-    await expect(rpcPromise).rejects.toBeInstanceOf(NMDisconnected);
+    expect(caughtError).toBeInstanceOf(NMDisconnected);
   });
 
   it("incidentCheckForHost() 은 ok=false 응답 (vault_locked) 도 수신한다", async () => {
@@ -707,11 +717,9 @@ describe("NMClient", () => {
 
     // unhandled rejection 방지: rpcPromise 를 catch 로 silencing 후 별도 검증.
     let caughtError: unknown;
-    const rpcPromise = client
-      .blastRadiusForHost("github.com", "tok")
-      .catch((e) => {
-        caughtError = e;
-      });
+    const rpcPromise = client.blastRadiusForHost("github.com", "tok").catch((e) => {
+      caughtError = e;
+    });
 
     // 5초 초과 — 응답 없음
     await vi.advanceTimersByTimeAsync(5001);
@@ -799,11 +807,9 @@ describe("NMClient", () => {
 
     // ack 를 절대 dispatch 하지 않아 timeout 유발.
     let caughtError: unknown;
-    const rpcPromise = client
-      .mcpContextPush("github.com", [], "tok")
-      .catch((e) => {
-        caughtError = e;
-      });
+    const rpcPromise = client.mcpContextPush("github.com", [], "tok").catch((e) => {
+      caughtError = e;
+    });
 
     // 5초 초과
     await vi.advanceTimersByTimeAsync(5001);

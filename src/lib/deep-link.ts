@@ -26,7 +26,8 @@ const ALLOWED_PATHS = new Set(["graph", "incidents", "railguard"]);
 const CREDENTIAL_ID_RE = /^[0-9A-Za-z]{1,128}$/;
 
 /** host 허용 패턴 — 도메인 레이블 + 점 조합 (최대 253자) */
-const HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
+const HOST_RE =
+  /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
 /**
  * secretbank:// deep-link 이벤트를 구독한다.
@@ -61,10 +62,7 @@ export function useDeepLink(): void {
  * deep-link URL 을 파싱하고 허용된 경우에만 navigate 한다.
  * @internal — export for unit testing
  */
-export function handleDeepLink(
-  raw: string,
-  navigate: (path: string) => void,
-): void {
+export function handleDeepLink(raw: string, navigate: (path: string) => void): void {
   let url: URL;
   try {
     url = new URL(raw);
