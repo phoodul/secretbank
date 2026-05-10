@@ -1,23 +1,23 @@
 {
-  "version": "0.1.0-pre11",
-  "notes": "Secretbank v0.1.0-pre11 — see CHANGELOG.md",
-  "pub_date": "2026-05-08T13:43:12Z",
+  "version": "0.1.0-pre12",
+  "notes": "Secretbank v0.1.0-pre12 — see CHANGELOG.md",
+  "pub_date": "2026-05-10T10:18:54Z",
   "platforms": {
     "darwin-x86_64": {
-      "url": "https://secretbank.app/download/v0.1.0-pre11/Secretbank.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeGY3RFphNTZ6NEJ0MEtQakV2NE5WWE5YMWxpUGdndGhYdTg3R0ZpaHJhdzd3NnJMazIyMHhtTWFEdWxnZCtUMHkzVFpLckRmTlYwK0xOQzdlU21SS0FVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MjQ3NzIzCWZpbGU6U2VjcmV0YmFuay5hcHAudGFyLmd6CmQ1MnpxQ3YwVDROYTAzTWVLaWZMQVlrMnFzWm1sa2pPb0cxK3VUUHNMUXBPTkl4UytZN1J5VlZYWnlxSEQxUE55dE1VMkowOXo3Z053WmloTVNQUUFBPT0K"
+      "url": "https://secretbank.app/download/v0.1.0-pre12/Secretbank.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeGZhUExqU0krbDVnVzVOSGpjYW1ySlpHWUJRS01pM1BHU0JKc0xuWk5QdEhzZHpTdTFHbXVVSVV2MEJ6clVtNDZKQWFqNWVhb1NoaHdwUlBNVlZZSGdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NDA2NzUyCWZpbGU6U2VjcmV0YmFuay5hcHAudGFyLmd6ClZPVldMUEgxZWQ4OWpVT3ZnQ3pCS2JwcWt6REkyNlRVN1JmSGxVSTRKVjRZNk84ZC9JMVBhU1JaSTdMcklkck1XOGJGeXd5VnlyZWFhQzVqT2NXVUJBPT0K"
     },
     "darwin-aarch64": {
-      "url": "https://secretbank.app/download/v0.1.0-pre11/Secretbank.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeGY3RFphNTZ6NEJ0MEtQakV2NE5WWE5YMWxpUGdndGhYdTg3R0ZpaHJhdzd3NnJMazIyMHhtTWFEdWxnZCtUMHkzVFpLckRmTlYwK0xOQzdlU21SS0FVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MjQ3NzIzCWZpbGU6U2VjcmV0YmFuay5hcHAudGFyLmd6CmQ1MnpxQ3YwVDROYTAzTWVLaWZMQVlrMnFzWm1sa2pPb0cxK3VUUHNMUXBPTkl4UytZN1J5VlZYWnlxSEQxUE55dE1VMkowOXo3Z053WmloTVNQUUFBPT0K"
+      "url": "https://secretbank.app/download/v0.1.0-pre12/Secretbank.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeGZhUExqU0krbDVnVzVOSGpjYW1ySlpHWUJRS01pM1BHU0JKc0xuWk5QdEhzZHpTdTFHbXVVSVV2MEJ6clVtNDZKQWFqNWVhb1NoaHdwUlBNVlZZSGdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NDA2NzUyCWZpbGU6U2VjcmV0YmFuay5hcHAudGFyLmd6ClZPVldMUEgxZWQ4OWpVT3ZnQ3pCS2JwcWt6REkyNlRVN1JmSGxVSTRKVjRZNk84ZC9JMVBhU1JaSTdMcklkck1XOGJGeXd5VnlyZWFhQzVqT2NXVUJBPT0K"
     },
     "windows-x86_64": {
-      "url": "https://secretbank.app/download/v0.1.0-pre11/Secretbank_0.1.0-pre11_x64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeFlWVUE4elRpbGRZcjVCRkZoOGZ4Ry9zTFd5UTF1UTZab3BFZy8xcUhPUzdOV2FjczBFbWVCMlM1T1l6RzZ5T1FlSG00ZUdkU2EyUWZsZThUZytRcHdZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MjQ3NzQyCWZpbGU6U2VjcmV0YmFua18wLjEuMC1wcmUxMV94NjQtc2V0dXAuZXhlCnJNeEV1MEtGVEdWaE1Zdk5ua3dEMG1TTFV0VlV2dVVwc1NYNUJaaGFnWEZjQXpjK3RlOTBEakRRU1JEcHJHK1ZqUGc5amRuK1dwVmpFOGJoTEpvVkJ3PT0K"
+      "url": "https://secretbank.app/download/v0.1.0-pre12/Secretbank_0.1.0-pre12_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeFZobE9oS2VYT3g3aG1sZUpPc2NJWW56YmlyQ2dGQjVWaHJ6QzQ0SjdJUjBCLzd3UndYbkFaSTBZNHVDSk1CYjlxbThtalVqTk5qaFhEYnV1dmViMmdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NDA2NzgwCWZpbGU6U2VjcmV0YmFua18wLjEuMC1wcmUxMl94NjQtc2V0dXAuZXhlCmRKM1JqYUt5WlQ2eFV6Q0NuY1J4UCtLOWNQQnYvYVIxQ1d1ZTVLeTl0RUdRWEtIMFRoeUVXeXM1c1I5VW5udGxheWFTWTl2OFRmeHpINU9nSnF1Q0NnPT0K"
     },
     "linux-x86_64": {
-      "url": "https://secretbank.app/download/v0.1.0-pre11/Secretbank_0.1.0-pre11_amd64.AppImage",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeFI4MjFBbjk3SHdhbUVHQi9FZkZudlRDelRDYXpvYXdJRGNTL2JwSDdyRHB4WHoyZFk4MUNCQ2hCTXFhUnpjeWIyMkl0TEFZS2hyYXBnRlBTbkYvOXd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MjQ3NjA1CWZpbGU6U2VjcmV0YmFua18wLjEuMC1wcmUxMV9hbWQ2NC5BcHBJbWFnZQpBZ0k2UnQrU0tHNFB3QmVrcmFoaGZWQVUvOFN2Mi9LQThvaWJIY0p5UmRkODRVR3RzcXhtSnlwRkl1dmlHQmRHeDczbFRFM1htVEd4UlhJMVIwSXhEdz09Cg=="
+      "url": "https://secretbank.app/download/v0.1.0-pre12/Secretbank_0.1.0-pre12_amd64.AppImage",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTT2dYRVNqUDFLeGZWZk4vU0ZWNFFkR1NQb2o5MlBhSGVoR0ZJZmpTRXJkOWppQ1BWdlpmZ0pEaHZsNkRGQ29WK1FnS2pLNzExb3I0aHBPSkQwN2p2RmhQeGVRMUxpMFFrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NDA2NjQ2CWZpbGU6U2VjcmV0YmFua18wLjEuMC1wcmUxMl9hbWQ2NC5BcHBJbWFnZQplZkFERlBNRXRjSFhhbWEweTQxSFRicUl0aWR2U2tvc0grUTdSRW9uMFZ1TktPdTR0cVZkWEgwamZUdkRRQzQyN2dGamVaS2RRSGlpSkxxRk53T21EUT09Cg=="
     }
   }
 }
