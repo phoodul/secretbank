@@ -2,13 +2,19 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-10 (오전, resume 세션) — **F-1 스토어 제출 보강: extension 아이콘 4 사이즈 PNG 자동 생성** (Chrome Web Store 제출 blocker 해소).
-- **이번 resume 세션 작업**:
-  - 사용자 선택 = A (스토어 제출 보강 — B-1 아이콘 PNG 4 사이즈)
-  - `extension/scripts/generate-icons.ps1` 신규 (System.Drawing.Bitmap HighQualityBicubic, src-tauri/icons/icon.png 512×512 → public/icon/{16,32,48,128}.png)
-  - WXT 자동 인식 검증: chrome-mv3 + firefox-mv2 두 manifest 모두 `"icons":{"16":"icon/16.png",...}` 자동 등록 ✅
-  - 회귀 0: extension build (chrome+firefox) 성공 + extension test 650 PASS + manifest-validation 20/20 PASS
-  - 사용자 행동 단축: Chrome / Edge / Firefox 3 스토어 제출 시 동일 PNG 세트 사용 (DRY)
+- **Time:** 2026-05-10 (오전 resume 세션 — 보강 라운드 2건) — **F-1 아이콘 PNG + Dependabot 3 moderate 해소** (스토어 제출 + 보안 정리).
+- **이번 resume 세션 작업 (2건)**:
+  1. **F-1 아이콘 PNG 보강** (`8e838e6`):
+     - `extension/scripts/generate-icons.ps1` 신규 (System.Drawing.Bitmap HighQualityBicubic, src-tauri/icons/icon.png 512×512 → public/icon/{16,32,48,128}.png)
+     - WXT 자동 인식 검증: chrome-mv3 + firefox-mv2 두 manifest 모두 `"icons":{"16":"icon/16.png",...}` 자동 등록 ✅
+     - 검증: extension test 650 PASS / manifest-validation 20/20 PASS
+  2. **Dependabot 3 moderate 해소** (이번 commit):
+     - 3 alerts 모두 `postcss < 8.5.10` (#24 GHSA-566m-qj78-rww5 / #25 GHSA-7fh5-64p2-3v2j / #26 GHSA-qx2v-qp2m-jg93)
+     - 추적: extension devDep `postcss-rem-to-pixel@4.1.2` (2017 마지막 release) 가 transitive `postcss@5.2.18` 끌어옴
+     - 교체: `postcss-rem-to-pixel` → `postcss-rem-to-responsive-pixel@^7.0.4` (postcss 8 peer + 2026-04 active maintained)
+     - API 100% 호환 (rootValue=16, propList=['*'], default transformUnit='px')
+     - dedupe: 3 versions (5.2.18 / 8.5.10 / 8.5.14) → 2 versions (8.5.10 / 8.5.14), 13 packages 제거
+     - 검증: extension build (chrome+firefox) 성공 / extension test 650 PASS / typecheck 0 / web-ext 34 PASS / 회귀 0
 - **남은 사용자 액션** (자동화 ❌):
   - 스크린샷 5+ 촬영 (popup CredentialList + autofill flow + SaveBanner + GeneratorPanel + MiniGraph hover)
   - Chrome Web Store 제출 ($5 일회) → Microsoft Edge Add-ons (무료) → Firefox AMO (무료)

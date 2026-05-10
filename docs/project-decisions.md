@@ -5,6 +5,27 @@
 
 ---
 
+## [2026-05-10] **Dependabot 3 moderate 해소 — postcss-rem-to-pixel → postcss-rem-to-responsive-pixel 교체**
+
+### 배경
+
+GitHub Dependabot 이 3건 (#24/#25/#26, 모두 GHSA `postcss < 8.5.10`) 을 alert. 추적 결과 `postcss-rem-to-pixel@4.1.2` (extension devDep) 가 transitive 로 `postcss@5.2.18` (2017 release) 을 끌어옴. postcss-rem-to-pixel 자체가 2017 마지막 release, postcss 5.x peer dep 만 명시 → maintained 대체로 교체 필요.
+
+### 결정
+
+1. **`postcss-rem-to-pixel` → `postcss-rem-to-responsive-pixel@^7.0.4` 교체** — postcss 8 peer + 2026-04 last release (active maintained, TypeScript 재작성)
+2. **API 100% 호환 유지** — `rootValue: 16` + `propList: ['*']` 동일, default `transformUnit: 'px'` 그대로
+3. **lockfile dedupe 결과**: 3 versions of postcss (5.2.18 / 8.5.10 / 8.5.14) → 2 versions (8.5.10 / 8.5.14) — 13 패키지 제거
+4. **검증 회귀 0**: extension build (chrome+firefox) 성공 / extension test 650 PASS / typecheck 0 / web-ext (build-smoke + manifest-validation) 34 PASS
+
+### 영향
+
+- 3 alerts 자동 close (push 후 GitHub Dependabot 재스캔)
+- Shadow DOM rem→px 변환 동작 그대로 (옵션 동일, default 단위 px)
+- 향후 비슷한 ancient transitive dep 발견 시 동일 패턴 (npm view + peerDeps 확인 + maintained 대체)
+
+---
+
 ## [2026-05-10] 🎉 **M24-E 풀체인 클로즈 — 53/53 sub-task (100%), 1P 동등 + 1P 우위 차별 5종 모두 구현**
 
 ### 결정 (실행 결과 기록)
