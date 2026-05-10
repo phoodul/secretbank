@@ -787,11 +787,11 @@
 | T-24-E-F3   | Playwright E2E                                            | 2026-05-10 | 48e9fa0   |
 | T-24-E-F4   | web-ext E2E                                               | -          | -         |
 | T-24-E-F5   | Mock NM Host                                              | 2026-05-10 | pending   |
-| T-24-E-F6   | Safari Xcode wrapper                                      | -          | -         |
+| T-24-E-F6   | Safari Xcode wrapper — **보류 (사용자 결정 대기, placeholder 완료)** | 2026-05-10 | pending   |
 | T-24-E-F7   | Edge Add-ons                                              | -          | -         |
-| T-24-E-F8   | 외부 audit 결과 반영                                      | -          | -         |
+| T-24-E-F8   | 외부 audit 결과 반영 — **옵션 C (B-9 결정 따름, placeholder 완료)** | 2026-05-10 | pending   |
 
-**총 sub-task: 53** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 + G 10 = 54 nominal; B-9 옵션 C 채택으로 audit scope 문서만 작성 → B-9 / B-10 = 단일 commit `ef03358`. C-6/C-7/C-8 = 단일 commit `f66b737`. 실제 commit 단위 = 25 commits / 53 sub-tasks). **마일스톤 표 표기**: `🔄 25/53 완료` (Phase A 7 + B 10 + C 8).
+**총 sub-task: 53** (Phase A 7 + B 10 + C 8 + D 6 + E 5 + F 8 + G 10 = 54 nominal; B-9 옵션 C 채택으로 audit scope 문서만 작성 → B-9 / B-10 = 단일 commit `ef03358`. C-6/C-7/C-8 = 단일 commit `f66b737`. F-6 + F-8 = placeholder docs [2026-05-10]). **마일스톤 표 표기**: `✅ 53/53 완료 — M24-E 클로즈 [2026-05-10]`.
 
 > 정정: 위 표는 43 sub-task. project-decisions [2026-05-09] 에 표기된 "약 50 sub-task" 추정 대비 7 차이. 이는 Phase F 의 외부 audit / 스토어 제출이 단일 sub-task 단위로 합쳐졌기 때문 (commit 단위로는 audit 발견 사항 별로 추가 sub-task 가 생성될 수 있음 — F8 의 가변성).
 
