@@ -28,7 +28,10 @@ import type { Env } from "../env";
 
 export const download = new Hono<{ Bindings: Env }>();
 
-const GH_API = "https://api.github.com/repos/phoodul/secretbank/releases?per_page=1";
+// per_page=5 로 받아서 published_at desc 첫 번째 사용. GitHub edge cache
+// 가 region 별로 stale 응답 (옛 pre9 시점) 반환 케이스 회피 — release 중
+// 가장 최근 published 본을 코드에서 직접 선택.
+const GH_API_BASE = "https://api.github.com/repos/phoodul/secretbank/releases?per_page=5";
 
 // KV cache key + TTL. GitHub API rate limit (60/h per IP, IPs shared across
 // Cloudflare Workers) means uncached calls quickly 403. 5-min cache cuts
@@ -49,6 +52,8 @@ interface ReleaseAsset {
 interface Release {
   tag_name: string;
   assets: ReleaseAsset[];
+  published_at: string;
+  draft: boolean;
 }
 
 const PLATFORM_PATTERNS: Record<string, RegExp> = {
@@ -81,8 +86,11 @@ async function fetchLatestRelease(env: Env): Promise<FetchResult> {
 
   let resp: Response;
   try {
-    // cf.cacheTtl=0 — Cloudflare 의 fetch sub-request cache 완전 우회
-    resp = await fetch(GH_API, {
+    // URL 에 unique cache buster query param 추가 — Cloudflare Worker
+    // fetch sub-request cache 가 URL 기반이라 매 분 다른 URL = 매 분 cache miss.
+    const cb = Math.floor(Date.now() / 60000); // 1분 단위 bucket
+    const url = `${GH_API_BASE}&_cb=${cb}`;
+    resp = await fetch(url, {
       headers,
       cf: { cacheTtl: 0, cacheEverything: false },
     } as RequestInit);
@@ -94,7 +102,12 @@ async function fetchLatestRelease(env: Env): Promise<FetchResult> {
     return { ok: false, status: resp.status, body: body.slice(0, 300) };
   }
   const arr = (await resp.json()) as Release[];
-  const release = arr[0];
+  // published_at desc 정렬 (draft 제외). prerelease 포함.
+  const candidates = arr.filter((r) => !r.draft && r.assets && r.assets.length > 0);
+  candidates.sort(
+    (a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
+  );
+  const release = candidates[0] ?? arr[0];
   if (!release) return { ok: false, status: 200, body: "empty releases array" };
 
   // Cache for CACHE_TTL_S (write is fire-and-forget; failure not fatal)
