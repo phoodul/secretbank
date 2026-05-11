@@ -5,7 +5,65 @@
 
 ---
 
+## [2026-05-11] **Brand identity 변경 — final_logo 폐기, VaultMechanism 채택**
+
+### 결정
+
+- **공식 로고 = VaultMechanism inline SVG** (site nav 의 정적 SVG: 라피스 backdrop + 황동 hex frame + brass disc + reactor core + sweep arc). viewBox 0 0 40 40. site/favicon.svg 로 별도 추출.
+- **이전 final_logo (Gemini-generated, [2026-05-10] 결정) 폐기**. 사용자 평가: "기존 logo 가 더 마음에 든다" + "황금키 루비 버전은 폐기".
+- **데스크탑 icon ↔ site favicon 통일** (single source): `site/favicon.svg` → Playwright chromium 1024×1024 master → `pnpm tauri icon` 풀세트.
+
+### 이유
+
+- final_logo 의 "라피스 shield + 황금 key + 루비 padlock + matrix binary" 디자인이 사용자 평가상 별로. 텍스트 wordmark 의 "SecretBank" capital B 표기도 brand spelling ("Secretbank") 와 불일치.
+- nav inline SVG 의 단순 + 메탈릭 vault 모티브가 brand identity 에 더 적합.
+
+### 영향
+
+- site/favicon.svg + .ico + 16/32/48/180/192/512 PNG (commit `df05247`)
+- src-tauri/icons/ 16 자산 자동 재생성 (commit `c3abec1` — image_only 단일 commit `23e38cf` 는 사용자 폐기 결정으로 즉시 교체)
+- `logo_image/final_logo*.png` 자산 — git tracked 상태 유지 (history) but 더 이상 사용 X
+- 이전 [2026-05-10] 의 brand color palette (라피스 + 황동 메탈릭 + matrix 그린 등) 는 그대로 유효 — 단 logo 자체만 교체
+
+---
+
+## [2026-05-11] **Distribution 영구 정책 — Binary 다운로드 = secretbank.app stream proxy**
+
+### 결정
+
+- 모든 desktop binary (installer + `.sig` + `latest.json` manifest) 의 다운로드 경로는 **`secretbank.app` 도메인 자체**에서 stream proxy 로 serve.
+- **github.com URL 노출 절대 금지** — 302 redirect 도 X.
+- GitHub Releases 는 **internal storage 로만** 사용 (Cloudflare Worker `secretbank-relay` 가 GitHub API 로 fetch + stream forward).
+
+### 이유
+
+- 사용자 명시 (Night mode 라운드): "github에서 다운로드 받기는 이용하지 않을 계획이야" + "무조건 도메인에서 binary 직접 다운로드 해야해. 이건 앞으로 박아둬."
+- Brand 신뢰 + 사용자 UX 측면에서 GitHub 의존성을 사용자에게 노출하지 않음.
+
+### 구현 (commit `f7dad9d` ~ `0429be0`)
+
+- `ee/secretbank-relay/src/routes/download.ts` — `/download/<platform>` (win/mac/appimage/deb/rpm) + `/download/latest.json` endpoint
+- KV 캐싱 5분 TTL (TOKEN_CACHE 재사용) — rate limit 회피 1차
+- 옵셔널 `GITHUB_API_TOKEN` secret — 인증 시 5000/h per token (vs 60/h per shared Worker IP)
+- Cloudflare 대시보드: secretbank-relay Worker 에 `secretbank.app/download/*` Route (Fail closed)
+
+### 영향
+
+- site/index.html 의 download card link 가 이미 `secretbank.app/download/...` 패턴 사용 — 코드 변경 없음
+- 큐: Worker 에 `/download/:tag/:filename` + `/api/latest` + `/releases.json` route 추가 (별도 라운드, site UI 완전 호환)
+- 큐: Cloudflare Pages 배포 fix (별도 라운드 — site 변경분 반영)
+- 미래: R2/S3 외부 storage 이전 옵션 — 사용자가 명시하지 않는 한 default 는 GitHub Releases backend + Worker stream proxy
+
+### 메모리
+
+- `~/.claude/projects/.../memory/project_distribution_policy.md` (영구) — 향후 redirect 제안 금지
+
+---
+
 ## [2026-05-10] **Brand identity 정식화 — final_logo 라피스+골드 메탈 vault**
+
+> ⚠️ **상태 [2026-05-11 갱신]**: 이 결정은 **폐기**. 위 [2026-05-11 Brand identity 변경] 참조. final_logo 자산은 사용하지 않음.
+
 
 ### 결정
 

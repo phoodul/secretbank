@@ -2,26 +2,63 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-10 (저녁 resume 세션 — v0.1.0-pre12 release cut + dogfooding 진입). **M24-E 53/53 + Phase 3-A 신용카드 + final_logo 라피스+골드 정식 release 공개 (`v0.1.0-pre12` prerelease, 2026-05-10 10:18 UTC)**. 사용자 dogfooding 시작 가능.
-- **이번 resume 세션 commits (1건)**:
-  1. `ff41897` chore(release): version bump 0.1.0-pre11 → 0.1.0-pre12 — 24 파일 (root/shared/extension/vscode package.json + tauri.conf + workspace+14 crate Cargo.toml + winget + homebrew Cask + CHANGELOG [0.1.0-pre12] 섹션 신설 + project-decisions prettier auto-format) version 동기화.
+- **Time:** 2026-05-11 ~ 2026-05-12 (resume 세션 — favicon/icon 통일 라운드 + OAuth backend fix + v0.1.0-pre13 release + binary 다운로드 secretbank.app 정책 박음). **dogfooding 의 OAuth 로그인 막힘 해소** + 영구 distribution 정책 (`memory/project_distribution_policy.md`) 박음.
+- **이번 resume 세션 commits (11건)**:
+  1. `df05247` feat(site): nav VaultMechanism 로고 → favicon (SVG + 6 PNG + multi-size ICO)
+  2. `23e38cf` feat(tauri): 데스크탑 로고 → image_only.png (사용자 폐기 결정으로 다음 commit 에서 교체)
+  3. `c3abec1` feat(tauri): 데스크탑 로고 → site favicon 과 통일 (VaultMechanism, source 1개)
+  4. `922709b` chore(relay): GOOGLE_OAUTH_CLIENT_ID 새 값으로 교체 (`522239075495-...`)
+  5. `130c76c` fix(relay): .npmrc ignore-workspace=true (불완전 — pnpm 9 honour 안 함)
+  6. `7e0b9d8` fix(ci): pnpm install --ignore-workspace CLI flag (실제 fix, deploy-relay 통과)
+  7. `6ab2a4d` chore(release): version bump 0.1.0-pre12 → 0.1.0-pre13 (DEFAULT_RELAY_URL `secretbank.app` → `relay.secretbank.app`)
+  8. `f7dad9d` feat(relay): /download/* stream proxy (binary 다운로드 = secretbank.app 정책)
+  9. `666b35d` fix(relay): /download error response 에 GitHub API status + body 포함
+  10. `5d751bc` fix(relay): /download KV 캐싱 5분 TTL (rate limit 회피 1차)
+  11. `0429be0` feat(relay): /download GitHub PAT 인증 지원 (rate limit 영구 fix)
+- **v0.1.0-pre13 release 결과**:
+  - ✅ 빌드 3 OS 모두 success, draft → public publish (`gh release edit v0.1.0-pre13 --draft=false --prerelease`)
+  - ✅ 새 데스크탑 icon (VaultMechanism, favicon SVG 기반) 자동 반영
+  - ✅ DEFAULT_RELAY_URL fix → 새 installer 의 OAuth 가 `relay.secretbank.app` 호출
+  - ❌ publish-updater-manifest 여전히 fail (branch protection, 이전 pre12 와 동일 패턴)
+- **OAuth backend 완전 동작 ✅** (curl `https://relay.secretbank.app/auth/oauth/google/start` → 200 + authorize_url with new client_id):
+  - Custom domain `relay.secretbank.app` 연결 (사용자가 Cloudflare 대시보드에서)
+  - 3 secret 주입 (`GOOGLE_OAUTH_CLIENT_SECRET`, `JWT_SIGNING_KEY`, `GITHUB_OAUTH_CLIENT_SECRET`)
+  - 새 Google OAuth client (Path B, Desktop app type) 발급
+  - GitHub OAuth App rename "API Vault" → "Secretbank" + Homepage URL + callback URL 갱신 (secret 보존)
+- **Binary 다운로드 영구 정책 (memory 박음)**: 모든 desktop binary 는 `secretbank.app` 도메인에서 직접 stream proxy. github.com URL 노출 금지 (302 redirect 도 X). Worker `/download/<platform>` endpoint = GitHub API `releases?per_page=1` → asset stream. KV 캐싱 5분 TTL + GitHub PAT 인증 (사용자 액션 대기 — `GITHUB_API_TOKEN` 시크릿 미주입 상태).
+- **사용자 액션 (download-proxy 라운드)**:
+  - ✅ Cloudflare 대시보드: 옛 `download-proxy` Worker 삭제 + secretbank-relay 에 Route `secretbank.app/download/*` 추가 (Fail closed)
+  - ⏳ **GitHub PAT 발급 + `wrangler secret put GITHUB_API_TOKEN`** — 미주입 시 unauthenticated 60/h IP 공유 cap 도달로 502 (마지막 응답: `API rate limit exceeded for 104.23.251.21`)
+- **남은 큐 작업** (PAT 검증 후):
+  - Worker 에 `/download/:tag/:filename` route 추가 — site/index.html JS 의 download card URL 패턴 (`secretbank.app/download/v0.1.0-pre13/<filename>`) 호환
+  - Worker 에 `/api/latest` + `/releases.json` route 추가 — site UI 의 fetchReleases 호환
+  - Cloudflare Pages 배포 fix (별도 라운드, token / project name 점검)
+  - dogfooding 실제 진행 — `secretbank.app/download/win` 으로 pre13 받기 → 설치 → Google/GitHub 로그인 검증
+- **이전 세션 (2026-05-10) 의 v0.1.0-pre12 release cut**: 아래 "이전" 섹션 참조.
+- **이번 resume 세션 commits (4건)**:
+  1. `ff41897` chore(release): version bump 0.1.0-pre11 → 0.1.0-pre12 — 24 파일 동기화 + CHANGELOG [0.1.0-pre12]
+  2. `1a7e035` docs: v0.1.0-pre12 release cut + dogfooding 진입 체크포인트
+  3. `54ee200` fix(site): latest.json pre11 → pre12 수동 갱신 (publish-updater-manifest 우회) — .sig 3종 다운로드 후 jq 로 정확한 base64 재구성
+  4. `000ca76` feat(site): RFC 9116 .well-known/security.txt — Cloudflare Security Insight "Security.txt not configured" 해소
 - **v0.1.0-pre12 release 결과**:
   - ✅ **Draft 빌드 성공** — 10 assets (Win .exe+.sig / macOS universal .dmg + .app.tar.gz + .sig / Linux .AppImage+.sig + .deb + .rpm + latest.json) 모두 GitHub Releases 에 업로드.
   - ✅ **Draft → Public publish 완료** (`gh release edit v0.1.0-pre12 --draft=false --prerelease`). prerelease 마킹 유지 (v0.1.0 정식 stable 아님). `--latest` 는 prerelease 와 충돌 → 미사용.
   - ❌ **`publish-updater-manifest` job 실패** (pre11 과 동일 원인) — site/latest.json + releases.json 자동 commit 이 branch protection 에 막힘 (GH006). `secretbank.app/api/latest` 가 pre11 그대로 남아있음 → Tauri auto-updater 가 pre12 로 강제 갱신 안 함. dogfooding 흐름엔 무영향 (사용자가 직접 다운로드).
   - ❌ **CI fail → rerun green** (3m17s) — `DependencyGraph.blastRadius.test.tsx > Esc 키 다운 시 선택 해제` 1건 flaky (로컬 4 PASS / CI 1차 fail / CI rerun PASS). 코드 fix 불필요.
   - ✅ Extension CI / Extension E2E success (`ea23c1c` 이후 안정).
-- **Dogfooding 시작 명령** (Windows):
-  ```powershell
-  $url = "https://github.com/phoodul/secretbank/releases/download/v0.1.0-pre12/Secretbank_0.1.0-pre12_x64-setup.exe"
-  $out = "$env:TEMP\Secretbank_0.1.0-pre12_x64-setup.exe"
-  Invoke-WebRequest -Uri $url -OutFile $out
-  Start-Process -FilePath $out
-  ```
+- **Dogfooding 시작 (일반 사용자 흐름, secretbank.app 우회)**:
+  - 브라우저로 https://github.com/phoodul/secretbank/releases/tag/v0.1.0-pre12 접속
+  - Assets 섹션 펼치기 → `Secretbank_0.1.0-pre12_x64-setup.exe` (Win) / `Secretbank_0.1.0-pre12_universal.dmg` (macOS) / `Secretbank_0.1.0-pre12_amd64.AppImage` (Linux) 클릭
+  - SmartScreen 경고 시 "추가 정보" → "실행" (코드 사인 인증서 미적용 상태)
+- **Cloudflare Pages Deploy 깨짐 진단 결과** (이번 세션):
+  - `wrangler pages deploy` API call → `Cloudflare API (/accounts/6f04212fcad5f073ed4e36af9b723eea/pages/projects/secretbank-site) failed`
+  - 원인 후보 3가지: (1) project 이름이 `secretbank-site` 아니라 옛 `api-vault-site` 그대로, (2) `CLOUDFLARE_API_TOKEN` 의 Pages:Edit 권한 부족, (3) Account ID mismatch
+  - 영향: site/latest.json 갱신해도 secretbank.app 에 반영 안됨 + security.txt 도 미배포 (단 GitHub Releases 직접 다운로드는 OK)
+  - 사용자 점검 단계: Cloudflare 대시보드 → Workers & Pages 에서 project 이름 확인 → 필요 시 `.github/workflows/deploy-site.yml:77` 의 `--project-name` 갱신 또는 Cloudflare 에서 새 token 발급 후 `gh secret set CLOUDFLARE_API_TOKEN` (token 값 채팅에 노출 ❌)
 - **남은 사용자 액션** (자동화 ❌):
   - **Dogfooding 1주** — daily driver 사용 + 발견 이슈 GitHub Issues 또는 다음 세션 보고
   - **스토어 제출** (M24-E publish): 스크린샷 5+ 촬영 → Chrome ($5) / Edge (무료) / Firefox AMO (무료)
-  - **Cloudflare 점검**: secretbank.app/api/latest 자동 배포 복구 (publish-updater-manifest branch protection bypass 또는 PAT 사용)
+  - **Cloudflare 점검** (위 단계 참조)
   - dogfooding 1주 후 → Show HN → 사용자 100~500 → NLNet NGI Zero PET 신청
 - **다음 세션 시작점 옵션**:
   - **A** Dogfooding 결과 정리 + 발견 이슈 fix 라운드
