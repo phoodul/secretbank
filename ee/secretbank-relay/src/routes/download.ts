@@ -62,14 +62,18 @@ async function fetchLatestRelease(env: Env): Promise<FetchResult> {
   const cached = await env.TOKEN_CACHE.get(CACHE_KEY, "json");
   if (cached) return { ok: true, release: cached as Release };
 
+  const headers: Record<string, string> = {
+    "user-agent": "secretbank-relay",
+    accept: "application/vnd.github+json",
+  };
+  // Authenticated calls = 5000/h per token vs 60/h per shared Worker IP.
+  if (env.GITHUB_API_TOKEN) {
+    headers["authorization"] = `Bearer ${env.GITHUB_API_TOKEN}`;
+  }
+
   let resp: Response;
   try {
-    resp = await fetch(GH_API, {
-      headers: {
-        "user-agent": "secretbank-relay",
-        accept: "application/vnd.github+json",
-      },
-    });
+    resp = await fetch(GH_API, { headers });
   } catch (e) {
     return { ok: false, status: 0, body: `fetch threw: ${String(e).slice(0, 200)}` };
   }

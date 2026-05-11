@@ -30,4 +30,12 @@ export interface Env {
   GITHUB_OAUTH_CLIENT_SECRET: string;
   GOOGLE_OAUTH_CLIENT_ID: string;
   GOOGLE_OAUTH_CLIENT_SECRET: string;
+
+  /**
+   * GitHub API token (read-only, no scope needed). Used by /download/* to
+   * authenticate calls to api.github.com — unauthenticated requests are
+   * capped at 60/h per Worker IP (shared, easily exhausted by other tenants).
+   * With this token: 5000/h per token. Optional — missing means unauthenticated.
+   */
+  GITHUB_API_TOKEN?: string;
 }
