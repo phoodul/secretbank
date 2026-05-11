@@ -4,6 +4,7 @@ import type { Env } from "./env";
 import { oauthAuth } from "./routes/auth/oauth";
 import { passkeyAuth } from "./routes/auth/passkey";
 import { refreshAuth } from "./routes/auth/refresh";
+import { download } from "./routes/download";
 import { health } from "./routes/health";
 import { githubIntegrations } from "./routes/integrations/github";
 import { sync } from "./routes/sync";
@@ -19,5 +20,6 @@ app.route("/auth/refresh", refreshAuth);
 app.route("/integrations/github", githubIntegrations);
 app.route("/sync", sync);
 app.route("/pair", pair);
+app.route("/download", download);
 
 export default app;
