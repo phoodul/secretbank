@@ -33,10 +33,12 @@ const GH_API = "https://api.github.com/repos/phoodul/secretbank/releases?per_pag
 // KV cache key + TTL. GitHub API rate limit (60/h per IP, IPs shared across
 // Cloudflare Workers) means uncached calls quickly 403. 5-min cache cuts
 // upstream calls to ≤12/h per Worker IP regardless of inbound download traffic.
-// v2 = cache key 변경으로 옛 download-proxy Worker 가 박은 stale 데이터
-// (assets 비어있는 pre9 등) 무효화. 다음 cache invalidation 필요 시 v3 으로.
-const CACHE_KEY = "download:latest-release-v2";
-const CACHE_TTL_S = 300;
+// v3 = Cloudflare Worker fetch sub-request cache (GitHub API 응답의
+// `Cache-Control: public, max-age=60` 헤더에 따라 edge cache) 가 stale
+// pre9 응답을 캐싱한 채로 v2 KV 에 박았던 케이스 무효화.
+const CACHE_KEY = "download:latest-release-v3";
+// TTL 60초 = 자동 만료로 stale data 영향 ≤1분.
+const CACHE_TTL_S = 60;
 
 interface ReleaseAsset {
   name: string;
@@ -67,6 +69,10 @@ async function fetchLatestRelease(env: Env): Promise<FetchResult> {
   const headers: Record<string, string> = {
     "user-agent": "secretbank-relay",
     accept: "application/vnd.github+json",
+    // GitHub API 응답의 max-age=60 을 Cloudflare Worker fetch sub-request
+    // cache 가 honour 하면서 옛 release 응답 (pre9 시점) 을 그대로 stale
+    // 반환하던 케이스 차단.
+    "cache-control": "no-store",
   };
   // Authenticated calls = 5000/h per token vs 60/h per shared Worker IP.
   if (env.GITHUB_API_TOKEN) {
@@ -75,7 +81,11 @@ async function fetchLatestRelease(env: Env): Promise<FetchResult> {
 
   let resp: Response;
   try {
-    resp = await fetch(GH_API, { headers });
+    // cf.cacheTtl=0 — Cloudflare 의 fetch sub-request cache 완전 우회
+    resp = await fetch(GH_API, {
+      headers,
+      cf: { cacheTtl: 0, cacheEverything: false },
+    } as RequestInit);
   } catch (e) {
     return { ok: false, status: 0, body: `fetch threw: ${String(e).slice(0, 200)}` };
   }
