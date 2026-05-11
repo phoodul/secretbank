@@ -33,7 +33,9 @@ const GH_API = "https://api.github.com/repos/phoodul/secretbank/releases?per_pag
 // KV cache key + TTL. GitHub API rate limit (60/h per IP, IPs shared across
 // Cloudflare Workers) means uncached calls quickly 403. 5-min cache cuts
 // upstream calls to ≤12/h per Worker IP regardless of inbound download traffic.
-const CACHE_KEY = "download:latest-release";
+// v2 = cache key 변경으로 옛 download-proxy Worker 가 박은 stale 데이터
+// (assets 비어있는 pre9 등) 무효화. 다음 cache invalidation 필요 시 v3 으로.
+const CACHE_KEY = "download:latest-release-v2";
 const CACHE_TTL_S = 300;
 
 interface ReleaseAsset {
