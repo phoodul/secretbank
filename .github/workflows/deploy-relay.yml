@@ -33,7 +33,11 @@ jobs:
           cache-dependency-path: ee/secretbank-relay/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # --ignore-workspace: ee/secretbank-relay 는 root pnpm-workspace.yaml
+        # (., extension, packages/*) 외부. 이 flag 없이 install 하면 pnpm 이
+        # root workspace 만 인식 → ee/secretbank-relay/node_modules 가 빈 채로
+        # typecheck 가 @cloudflare/workers-types 못 찾음.
+        run: pnpm install --frozen-lockfile --ignore-workspace
 
       - name: Type check
         run: pnpm typecheck
@@ -67,7 +71,11 @@ jobs:
           cache-dependency-path: ee/secretbank-relay/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # --ignore-workspace: ee/secretbank-relay 는 root pnpm-workspace.yaml
+        # (., extension, packages/*) 외부. 이 flag 없이 install 하면 pnpm 이
+        # root workspace 만 인식 → ee/secretbank-relay/node_modules 가 빈 채로
+        # typecheck 가 @cloudflare/workers-types 못 찾음.
+        run: pnpm install --frozen-lockfile --ignore-workspace
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
