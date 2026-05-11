@@ -35,7 +35,7 @@ use url::Url;
 const DEFAULT_RELAY_URL: &str = if cfg!(debug_assertions) {
     "http://localhost:8787"
 } else {
-    "https://secretbank.app"
+    "https://relay.secretbank.app"
 };
 
 /// SQLite settings key used to override the relay URL at runtime.

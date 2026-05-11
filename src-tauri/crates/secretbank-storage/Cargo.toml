@@ -1,6 +1,6 @@
 [package]
 name = "secretbank-storage"
-version = "0.1.0-pre12"
+version = "0.1.0-pre13"
 edition = "2021"
 
 [features]

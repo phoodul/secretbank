@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Continuing development beyond v0.1.0-pre12. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+Continuing development beyond v0.1.0-pre13. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+
+## [0.1.0-pre13] - 2026-05-11
+
+### Fixed
+- **OAuth login (Google + GitHub)**: `DEFAULT_RELAY_URL` now points to
+  `https://relay.secretbank.app` instead of `https://secretbank.app`. The
+  former routed to Cloudflare Pages (405 Method Not Allowed on POST), the
+  latter routes to the Cloudflare Workers relay. Previously OAuth start
+  threw `RelayError::Decode` and surfaced as `[object Object]` in the
+  SignIn page.
+- New site favicon + desktop app icon set rendered from the same
+  VaultMechanism inline SVG (nav logo) — replaces the prior 1×1 transparent
+  placeholder (favicon) and the centre-misaligned white-square icon set.
+
+### Notes
+- Desktop installer must be re-downloaded — `DEFAULT_RELAY_URL` is a
+  compile-time constant.
+- Relay-side change: `wrangler.toml` `routes` un-commented + custom domain
+  `relay.secretbank.app` linked + `GOOGLE_OAUTH_CLIENT_SECRET`,
+  `JWT_SIGNING_KEY`, `GITHUB_OAUTH_CLIENT_SECRET` injected via `wrangler
+  secret put`. Deploy workflow fix: `pnpm install --ignore-workspace`
+  (ee/secretbank-relay is outside the root workspace).
 
 ## [0.1.0-pre12] - 2026-05-10
 

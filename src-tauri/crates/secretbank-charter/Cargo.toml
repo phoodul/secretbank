@@ -1,6 +1,6 @@
 [package]
 name = "secretbank-charter"
-version = "0.1.0-pre12"
+version = "0.1.0-pre13"
 edition = "2021"
 description = "Vault Charter — Diceware-based recovery codec + Shamir 2-of-3 split for Secretbank"
 
