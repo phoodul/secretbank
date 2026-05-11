@@ -49,23 +49,36 @@ const PLATFORM_PATTERNS: Record<string, RegExp> = {
   rpm: /\.x86_64\.rpm$/,
 };
 
-async function fetchLatestRelease(): Promise<Release | null> {
-  const resp = await fetch(GH_API, {
-    headers: {
-      "user-agent": "secretbank-relay",
-      accept: "application/vnd.github+json",
-    },
-  });
-  if (!resp.ok) return null;
+type FetchResult = { ok: true; release: Release } | { ok: false; status: number; body: string };
+
+async function fetchLatestRelease(): Promise<FetchResult> {
+  let resp: Response;
+  try {
+    resp = await fetch(GH_API, {
+      headers: {
+        "user-agent": "secretbank-relay",
+        accept: "application/vnd.github+json",
+      },
+    });
+  } catch (e) {
+    return { ok: false, status: 0, body: `fetch threw: ${String(e).slice(0, 200)}` };
+  }
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => "<no body>");
+    return { ok: false, status: resp.status, body: body.slice(0, 300) };
+  }
   const arr = (await resp.json()) as Release[];
-  return arr[0] ?? null;
+  const release = arr[0];
+  if (!release) return { ok: false, status: 200, body: "empty releases array" };
+  return { ok: true, release };
 }
 
 download.get("/latest.json", async (c) => {
-  const release = await fetchLatestRelease();
-  if (!release) {
-    return c.json({ error: "github_api_failed" }, 502);
+  const result = await fetchLatestRelease();
+  if (!result.ok) {
+    return c.json({ error: "github_api_failed", status: result.status, body: result.body }, 502);
   }
+  const release = result.release;
   const manifest = release.assets.find((a) => a.name === "latest.json");
   if (!manifest) {
     return c.json({ error: "manifest_not_found", version: release.tag_name }, 404);
@@ -99,10 +112,11 @@ download.get("/:platform", async (c) => {
     );
   }
 
-  const release = await fetchLatestRelease();
-  if (!release) {
-    return c.json({ error: "github_api_failed" }, 502);
+  const result = await fetchLatestRelease();
+  if (!result.ok) {
+    return c.json({ error: "github_api_failed", status: result.status, body: result.body }, 502);
   }
+  const release = result.release;
   const asset = release.assets.find((a) => pattern.test(a.name));
   if (!asset) {
     return c.json(
