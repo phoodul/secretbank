@@ -30,6 +30,12 @@ export const download = new Hono<{ Bindings: Env }>();
 
 const GH_API = "https://api.github.com/repos/phoodul/secretbank/releases?per_page=1";
 
+// KV cache key + TTL. GitHub API rate limit (60/h per IP, IPs shared across
+// Cloudflare Workers) means uncached calls quickly 403. 5-min cache cuts
+// upstream calls to ≤12/h per Worker IP regardless of inbound download traffic.
+const CACHE_KEY = "download:latest-release";
+const CACHE_TTL_S = 300;
+
 interface ReleaseAsset {
   name: string;
   browser_download_url: string;
@@ -51,7 +57,11 @@ const PLATFORM_PATTERNS: Record<string, RegExp> = {
 
 type FetchResult = { ok: true; release: Release } | { ok: false; status: number; body: string };
 
-async function fetchLatestRelease(): Promise<FetchResult> {
+async function fetchLatestRelease(env: Env): Promise<FetchResult> {
+  // KV hit — skip GitHub call entirely
+  const cached = await env.TOKEN_CACHE.get(CACHE_KEY, "json");
+  if (cached) return { ok: true, release: cached as Release };
+
   let resp: Response;
   try {
     resp = await fetch(GH_API, {
@@ -70,11 +80,16 @@ async function fetchLatestRelease(): Promise<FetchResult> {
   const arr = (await resp.json()) as Release[];
   const release = arr[0];
   if (!release) return { ok: false, status: 200, body: "empty releases array" };
+
+  // Cache for CACHE_TTL_S (write is fire-and-forget; failure not fatal)
+  await env.TOKEN_CACHE.put(CACHE_KEY, JSON.stringify(release), {
+    expirationTtl: CACHE_TTL_S,
+  });
   return { ok: true, release };
 }
 
 download.get("/latest.json", async (c) => {
-  const result = await fetchLatestRelease();
+  const result = await fetchLatestRelease(c.env);
   if (!result.ok) {
     return c.json({ error: "github_api_failed", status: result.status, body: result.body }, 502);
   }
@@ -112,7 +127,7 @@ download.get("/:platform", async (c) => {
     );
   }
 
-  const result = await fetchLatestRelease();
+  const result = await fetchLatestRelease(c.env);
   if (!result.ok) {
     return c.json({ error: "github_api_failed", status: result.status, body: result.body }, 502);
   }
