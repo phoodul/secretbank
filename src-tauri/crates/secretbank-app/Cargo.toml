@@ -1,6 +1,6 @@
 [package]
 name = "secretbank-app"
-version = "0.1.0-pre15"
+version = "0.1.0-pre16"
 description = "Secretbank runtime — Tauri builder and command registration"
 authors = ["secretbank contributors"]
 edition = "2021"

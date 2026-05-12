@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Continuing development beyond v0.1.0-pre15. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+Continuing development beyond v0.1.0-pre16. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+
+## [0.1.0-pre16] - 2026-05-13
+
+### Fixed
+- **redirect_uri 의 `?provider=...` query string 제거**: pre15 의
+  `com.googleusercontent.apps.<id>://oauth2redirect?provider=google` 가
+  여전히 `400 invalid_request` reject. Google native app redirect URI
+  검증은 정확한 형식 매칭 (RFC 6749 query 보존과 무관). query 제거 후
+  `parseOAuthCallbackUrl` 가 scheme 으로만 provider 추론.
 
 ## [0.1.0-pre15] - 2026-05-12
 

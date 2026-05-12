@@ -32,12 +32,13 @@ export type OAuthProvider = "github" | "google";
 //
 // - GitHub: `app.secretbank://auth/callback` (GitHub OAuth App 의 callback
 //   URL 등록과 일치).
-// `?provider=...` query 박음: OAuth provider 는 redirect 시 redirect_uri 의
-// query string 보존 (RFC 6749 §4.1.2) — callback URL 에 provider 가 그대로
-// echo 되어 parseOAuthCallbackUrl 가 어떤 provider 의 callback 인지 구분.
+// Query string 제거: Google 의 native app redirect URI 검증이 정확한
+// 형식 매칭 (RFC 6749 의 query 보존 이론과 별개로 Google 자체 정책).
+// `?provider=google` 추가 시 400 invalid_request reject 됨.
+// provider 구분은 parseOAuthCallbackUrl 가 scheme 으로 추론.
 const GOOGLE_REDIRECT_URI =
-  "com.googleusercontent.apps.522239075495-b72lmghgcgeei7ddm9h2957le92c8oo1://oauth2redirect?provider=google";
-const GITHUB_REDIRECT_URI = "app.secretbank://auth/callback?provider=github";
+  "com.googleusercontent.apps.522239075495-b72lmghgcgeei7ddm9h2957le92c8oo1://oauth2redirect";
+const GITHUB_REDIRECT_URI = "app.secretbank://auth/callback";
 
 interface OAuthStartResponse {
   state: string;
