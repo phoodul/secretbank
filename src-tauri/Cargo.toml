@@ -135,6 +135,9 @@ tauri-plugin-fs = "2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
+# single-instance + deep-link feature: OS deep-link 가 새 process 띄울 때
+# 기존 instance 로 URL forward (vault unlock 상태 보존).
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 tauri-plugin-biometric = "2"

@@ -22,6 +22,10 @@ Continuing development beyond v0.1.0-pre14. Upcoming work: M24 Phase 3-B (secure
   deep-link 호환).
 - `use-deep-link-callback.ts` 의 `CALLBACK_PREFIXES` array 로 둘 다 매칭
   (in-flight 옛 release 호환).
+- **OAuth callback 시 새 instance + vault 잠김** 이슈:
+  `tauri-plugin-single-instance` (deep-link feature) 추가. OS 가 deep-link
+  를 새 process 로 띄울 때 기존 unlock 된 instance 로 URL forward + window
+  focus. 이전엔 callback 마다 새 process → vault 잠김 화면.
 
 ### Notes (사용자 액션)
 - GitHub OAuth App settings 의 Authorization callback URL 을

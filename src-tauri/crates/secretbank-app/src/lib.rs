@@ -93,70 +93,90 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run(context: tauri::Context) {
-    let mut builder = tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
-            let data_dir = app
-                .path()
-                .app_data_dir()
-                .expect("failed to resolve app data dir");
+    let mut builder = tauri::Builder::default();
 
-            // M9 Phase D-2 — db:changed Tauri emitter (production). AppContext
-            // 는 mutating 커맨드들이 호출할 수 있도록 Arc<dyn DbChangeEmitter> 를
-            // 보유한다. setup 시점에 만들어 ctx 에 주입.
-            let db_change_emitter: std::sync::Arc<dyn services::sync_emit::DbChangeEmitter> =
-                std::sync::Arc::new(TauriDbChangeEmitter::new(app.handle().clone()));
-
-            let ctx = tauri::async_runtime::block_on(AppContext::new(data_dir, db_change_emitter))
-                .expect("failed to initialise AppContext");
-
-            let seed_count = tauri::async_runtime::block_on(setup::seed_issuer_presets(&ctx.pool))
-                .expect("failed to seed issuer presets");
-            tracing::info!("issuer preset seed: {} rows inserted", seed_count);
-
-            // 피드 스케줄러 시작 (기본값: RSS 만 활성, NVD/GHSA 는 API key 없으면 비활성)
-            // `spawn_feed_scheduler` 내부 `JoinSet::spawn` 은 tokio 런타임 context 를
-            // 동기적으로 요구하므로 반드시 `block_on` 안에서 호출한다.
-            let scheduler_config = FeedSchedulerConfig {
-                emitter: Some(std::sync::Arc::new(TauriEmitter::new(app.handle().clone()))),
-                ..Default::default()
-            };
-            tauri::async_runtime::block_on(async {
-                let scheduler_handle = spawn_feed_scheduler(ctx.pool.clone(), scheduler_config);
-                *ctx.feed_scheduler.lock().await = Some(scheduler_handle);
-            });
-
-            app.manage(ctx);
-
-            // M8 Auth — listen for `Secretbank://auth/callback?code=...&state=...`
-            // OS-level deep links and forward them to the renderer.
-            //
-            // - `register_all` ensures dev builds receive deep links too;
-            //   production builds rely on the bundle's OS registration.
-            // - The callback fires on a Tauri-managed thread, so we capture an
-            //   `AppHandle` clone and use `Manager::emit` to broadcast a
-            //   `deep-link` event carrying the matched URLs.
-            #[cfg(all(
-                feature = "tauri-plugins",
-                not(any(target_os = "android", target_os = "ios"))
-            ))]
-            {
-                use tauri_plugin_deep_link::DeepLinkExt;
-                if let Err(e) = app.deep_link().register_all() {
-                    tracing::warn!("deep_link.register_all failed: {e}");
-                }
-                let handle = app.handle().clone();
-                app.deep_link().on_open_url(move |event| {
-                    let urls: Vec<String> = event.urls().iter().map(|u| u.to_string()).collect();
-                    tracing::info!("deep-link received: {:?}", urls);
-                    if let Err(e) = handle.emit("deep-link", urls) {
-                        tracing::warn!("deep-link emit failed: {e}");
-                    }
-                });
+    // single-instance plugin: OS 가 deep-link 를 새 process 로 띄울 때 기존
+    // instance 로 forward (vault unlock 상태 보존). deep-link feature 활성화로
+    // tauri-plugin-deep-link 의 on_open_url 이 기존 instance 에서 호출됨.
+    // **반드시 first plugin 으로 등록** (Tauri 문서 권장).
+    #[cfg(all(
+        feature = "tauri-plugins",
+        not(any(target_os = "android", target_os = "ios"))
+    ))]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            use tauri::Manager;
+            tracing::info!("single-instance: 새 process 시도 → 기존 window focus");
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
             }
+        }));
+    }
 
-            Ok(())
+    builder = builder.plugin(tauri_plugin_opener::init()).setup(|app| {
+        let data_dir = app
+            .path()
+            .app_data_dir()
+            .expect("failed to resolve app data dir");
+
+        // M9 Phase D-2 — db:changed Tauri emitter (production). AppContext
+        // 는 mutating 커맨드들이 호출할 수 있도록 Arc<dyn DbChangeEmitter> 를
+        // 보유한다. setup 시점에 만들어 ctx 에 주입.
+        let db_change_emitter: std::sync::Arc<dyn services::sync_emit::DbChangeEmitter> =
+            std::sync::Arc::new(TauriDbChangeEmitter::new(app.handle().clone()));
+
+        let ctx = tauri::async_runtime::block_on(AppContext::new(data_dir, db_change_emitter))
+            .expect("failed to initialise AppContext");
+
+        let seed_count = tauri::async_runtime::block_on(setup::seed_issuer_presets(&ctx.pool))
+            .expect("failed to seed issuer presets");
+        tracing::info!("issuer preset seed: {} rows inserted", seed_count);
+
+        // 피드 스케줄러 시작 (기본값: RSS 만 활성, NVD/GHSA 는 API key 없으면 비활성)
+        // `spawn_feed_scheduler` 내부 `JoinSet::spawn` 은 tokio 런타임 context 를
+        // 동기적으로 요구하므로 반드시 `block_on` 안에서 호출한다.
+        let scheduler_config = FeedSchedulerConfig {
+            emitter: Some(std::sync::Arc::new(TauriEmitter::new(app.handle().clone()))),
+            ..Default::default()
+        };
+        tauri::async_runtime::block_on(async {
+            let scheduler_handle = spawn_feed_scheduler(ctx.pool.clone(), scheduler_config);
+            *ctx.feed_scheduler.lock().await = Some(scheduler_handle);
         });
+
+        app.manage(ctx);
+
+        // M8 Auth — listen for `Secretbank://auth/callback?code=...&state=...`
+        // OS-level deep links and forward them to the renderer.
+        //
+        // - `register_all` ensures dev builds receive deep links too;
+        //   production builds rely on the bundle's OS registration.
+        // - The callback fires on a Tauri-managed thread, so we capture an
+        //   `AppHandle` clone and use `Manager::emit` to broadcast a
+        //   `deep-link` event carrying the matched URLs.
+        #[cfg(all(
+            feature = "tauri-plugins",
+            not(any(target_os = "android", target_os = "ios"))
+        ))]
+        {
+            use tauri_plugin_deep_link::DeepLinkExt;
+            if let Err(e) = app.deep_link().register_all() {
+                tracing::warn!("deep_link.register_all failed: {e}");
+            }
+            let handle = app.handle().clone();
+            app.deep_link().on_open_url(move |event| {
+                let urls: Vec<String> = event.urls().iter().map(|u| u.to_string()).collect();
+                tracing::info!("deep-link received: {:?}", urls);
+                if let Err(e) = handle.emit("deep-link", urls) {
+                    tracing::warn!("deep-link emit failed: {e}");
+                }
+            });
+        }
+
+        Ok(())
+    });
 
     #[cfg(feature = "tauri-plugins")]
     {
