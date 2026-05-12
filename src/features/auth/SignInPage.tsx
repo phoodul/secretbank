@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
+import { stringifyAuthError } from "./error";
 import { OAuthButton, type OAuthProvider } from "./OAuthButton";
 import { PasskeyButton } from "./PasskeyButton";
 import { useDeepLinkCallback, type OAuthCallbackPayload } from "./use-deep-link-callback";
@@ -90,8 +91,7 @@ export function SignInPage() {
           handleSuccess(session);
         })
         .catch((err: unknown) => {
-          const message = err instanceof Error ? err.message : String(err);
-          handleError(message);
+          handleError(stringifyAuthError(err));
         });
     },
     [handleError, handleSuccess, t],

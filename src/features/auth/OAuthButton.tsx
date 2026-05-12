@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { stringifyAuthError } from "./error";
 
 export type OAuthProvider = "github" | "google";
 
@@ -50,8 +51,7 @@ export function OAuthButton({ provider, busy, disabled, onStart, onError }: OAut
       });
       onStart(provider, resp.state);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      onError(message);
+      onError(stringifyAuthError(err));
     }
   }
 
