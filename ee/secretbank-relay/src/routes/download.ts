@@ -199,3 +199,78 @@ download.get("/:platform", async (c) => {
     },
   });
 });
+
+/**
+ * GET /download/<tag>/<filename> — Specific tag + filename stream proxy.
+ *
+ * site/index.html 의 download grid JS classify() 가 만드는 URL 패턴
+ * (`secretbank.app/download/v0.1.0-pre13/Secretbank_..._x64-setup.exe`)
+ * 호환. site 의 "Previous versions" 섹션에서 옛 release 자산도 가져옴.
+ */
+const TAG_RE = /^v\d+\.\d+\.\d+(?:-[\w.]+)?$/;
+const SAFE_FILENAME_RE = /^[a-zA-Z0-9._-]+$/;
+
+download.get("/:tag/:filename", async (c) => {
+  const tag = c.req.param("tag");
+  const filename = c.req.param("filename");
+  if (!TAG_RE.test(tag)) return c.json({ error: "invalid_tag", tag }, 404);
+  if (!SAFE_FILENAME_RE.test(filename)) {
+    return c.json({ error: "invalid_filename", filename }, 404);
+  }
+
+  const env = c.env;
+  const headers: Record<string, string> = {
+    "user-agent": "secretbank-relay",
+    accept: "application/vnd.github+json",
+    "cache-control": "no-store",
+  };
+  if (env.GITHUB_API_TOKEN) headers["authorization"] = `Bearer ${env.GITHUB_API_TOKEN}`;
+
+  const cb = Math.floor(Date.now() / 60000);
+  const apiUrl = `https://api.github.com/repos/phoodul/secretbank/releases/tags/${tag}?_cb=${cb}`;
+  let metaResp: Response;
+  try {
+    metaResp = await fetch(apiUrl, {
+      headers,
+      cf: { cacheTtl: 0, cacheEverything: false },
+    } as RequestInit);
+  } catch (e) {
+    return c.json({ error: "github_api_failed", body: String(e).slice(0, 200) }, 502);
+  }
+  if (!metaResp.ok) {
+    const body = await metaResp.text().catch(() => "<no body>");
+    return c.json(
+      { error: "release_not_found", tag, status: metaResp.status, body: body.slice(0, 200) },
+      404,
+    );
+  }
+  const release = (await metaResp.json()) as Release;
+  const asset = release.assets.find((a) => a.name === filename);
+  if (!asset) {
+    return c.json(
+      {
+        error: "asset_not_found",
+        tag,
+        filename,
+        available: release.assets.map((a) => a.name),
+      },
+      404,
+    );
+  }
+
+  const upstream = await fetch(asset.browser_download_url, {
+    headers: { "user-agent": "secretbank-relay" },
+  });
+  if (!upstream.ok) {
+    return c.json({ error: "asset_fetch_failed", status: upstream.status }, 502);
+  }
+  return new Response(upstream.body, {
+    status: 200,
+    headers: {
+      "content-type": "application/octet-stream",
+      "content-disposition": `attachment; filename="${asset.name}"`,
+      "content-length": String(asset.size),
+      "cache-control": "public, max-age=600",
+    },
+  });
+});
