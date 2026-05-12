@@ -23,9 +23,16 @@ export interface OAuthCallbackPayload {
 
 export type OAuthCallbackHandler = (payload: OAuthCallbackPayload) => void;
 
-// 옛 `Secretbank://auth/callback` 도 호환 — installer 갱신 전 in-flight
-// OAuth callback 받을 케이스. 새 release 사용자는 `app.secretbank://` 만 사용.
-const CALLBACK_PREFIXES = ["app.secretbank://auth/callback", "Secretbank://auth/callback"];
+// Provider 별 prefix:
+// - Google: com.googleusercontent.apps.<client_id>://oauth2redirect
+//   (Google docs 표준, 2-segment reverse-DNS 검증 우회)
+// - GitHub: app.secretbank://auth/callback
+// - Legacy: Secretbank://auth/callback (옛 installer in-flight 호환)
+const CALLBACK_PREFIXES = [
+  "com.googleusercontent.apps.522239075495-b72lmghgcgeei7ddm9h2957le92c8oo1://oauth2redirect",
+  "app.secretbank://auth/callback",
+  "Secretbank://auth/callback",
+];
 
 /**
  * `Secretbank://auth/callback?provider=github&code=...&state=...` URL 을
@@ -39,10 +46,20 @@ export function parseOAuthCallbackUrl(raw: string): OAuthCallbackPayload | null 
   } catch {
     return null;
   }
-  const provider = parsed.searchParams.get("provider");
   const code = parsed.searchParams.get("code");
   const state = parsed.searchParams.get("state");
-  if (!provider || !code || !state) return null;
+  if (!code || !state) return null;
+
+  // explicit `?provider=...` query 우선. 없으면 scheme 으로 추론.
+  let provider = parsed.searchParams.get("provider");
+  if (!provider) {
+    if (parsed.protocol.startsWith("com.googleusercontent.apps.")) {
+      provider = "google";
+    } else if (parsed.protocol === "app.secretbank:" || parsed.protocol === "secretbank:") {
+      provider = "github"; // 그 외 OAuth provider 는 향후 추가 시 분기
+    }
+  }
+  if (!provider) return null;
   return { provider, code, state };
 }
 

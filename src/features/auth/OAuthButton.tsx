@@ -21,12 +21,23 @@ import { Button } from "@/components/ui/button";
 
 export type OAuthProvider = "github" | "google";
 
-// Google Desktop OAuth 정책 (2022+): redirect URI 의 custom URI scheme 은
-// "reverse-DNS notation of a domain you control" 만 허용. secretbank.app
-// 도메인 → reverse-DNS = "app.secretbank". 옛 `Secretbank://` 단순 단어
-// scheme 은 `400 invalid_request` 로 reject. GitHub OAuth App 의 callback
-// URL 도 같이 갱신 필요 (Authorization callback URL = "app.secretbank://auth/callback").
-const REDIRECT_URI = "app.secretbank://auth/callback";
+// Provider 별 redirect URI 분리:
+//
+// - Google: `com.googleusercontent.apps.<client_id>://oauth2redirect`
+//   Google 자동 등록 scheme — `app.secretbank://` (2-segment reverse-DNS) 가
+//   여전히 `400 invalid_request` reject 됨 (TLD `.app` 검증 한계로 추정).
+//   Google docs: "Custom URI scheme ... or has a Google-specific scheme
+//   like com.googleusercontent.apps.123-abcdef:/oauth2redirect"
+//   client_id 부분은 wrangler.toml 의 GOOGLE_OAUTH_CLIENT_ID 와 일치해야 함.
+//
+// - GitHub: `app.secretbank://auth/callback` (GitHub OAuth App 의 callback
+//   URL 등록과 일치).
+// `?provider=...` query 박음: OAuth provider 는 redirect 시 redirect_uri 의
+// query string 보존 (RFC 6749 §4.1.2) — callback URL 에 provider 가 그대로
+// echo 되어 parseOAuthCallbackUrl 가 어떤 provider 의 callback 인지 구분.
+const GOOGLE_REDIRECT_URI =
+  "com.googleusercontent.apps.522239075495-b72lmghgcgeei7ddm9h2957le92c8oo1://oauth2redirect?provider=google";
+const GITHUB_REDIRECT_URI = "app.secretbank://auth/callback?provider=github";
 
 interface OAuthStartResponse {
   state: string;
@@ -47,9 +58,10 @@ export function OAuthButton({ provider, busy, disabled, onStart, onError }: OAut
   async function handleClick() {
     if (busy) return;
     try {
+      const redirectUri = provider === "google" ? GOOGLE_REDIRECT_URI : GITHUB_REDIRECT_URI;
       const resp = await invoke<OAuthStartResponse>("auth_oauth_start", {
         provider,
-        redirectUri: REDIRECT_URI,
+        redirectUri,
       });
       onStart(provider, resp.state);
     } catch (err) {

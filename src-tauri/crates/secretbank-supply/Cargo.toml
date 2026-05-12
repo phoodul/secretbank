@@ -1,6 +1,6 @@
 [package]
 name = "secretbank-supply"
-version = "0.1.0-pre14"
+version = "0.1.0-pre15"
 edition = "2021"
 description = "Secretbank — supply chain risk graph (package / advisory / usage)"
 

@@ -1,6 +1,6 @@
 [package]
 name = "secretbank-feeds"
-version = "0.1.0-pre14"
+version = "0.1.0-pre15"
 edition = "2021"
 
 [dependencies]

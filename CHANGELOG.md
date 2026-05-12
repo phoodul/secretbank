@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Continuing development beyond v0.1.0-pre14. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+Continuing development beyond v0.1.0-pre15. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+
+## [0.1.0-pre15] - 2026-05-12
+
+### Fixed
+- **Google OAuth `app.secretbank://` 도 `400 invalid_request` reject**:
+  Google 의 reverse-DNS 검증이 2-segment scheme + `.app` TLD 통과 못 함.
+  Google docs 권장의 **`com.googleusercontent.apps.<client_id>://oauth2redirect`**
+  scheme (Google 자동 등록) 으로 교체.
+- **`parseOAuthCallbackUrl` provider 추론**: redirect URI 에 `?provider=...`
+  query 박음 (RFC 6749 §4.1.2 query 보존). callback 시 query 가 없으면
+  scheme 으로 provider 추론 (fallback).
+- Provider 별 redirect URI 분리:
+  - Google: `com.googleusercontent.apps.<id>://oauth2redirect?provider=google`
+  - GitHub: `app.secretbank://auth/callback?provider=github`
 
 ## [0.1.0-pre14] - 2026-05-12
 
