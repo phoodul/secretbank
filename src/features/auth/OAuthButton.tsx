@@ -21,7 +21,12 @@ import { Button } from "@/components/ui/button";
 
 export type OAuthProvider = "github" | "google";
 
-const REDIRECT_URI = "Secretbank://auth/callback";
+// Google Desktop OAuth 정책 (2022+): redirect URI 의 custom URI scheme 은
+// "reverse-DNS notation of a domain you control" 만 허용. secretbank.app
+// 도메인 → reverse-DNS = "app.secretbank". 옛 `Secretbank://` 단순 단어
+// scheme 은 `400 invalid_request` 로 reject. GitHub OAuth App 의 callback
+// URL 도 같이 갱신 필요 (Authorization callback URL = "app.secretbank://auth/callback").
+const REDIRECT_URI = "app.secretbank://auth/callback";
 
 interface OAuthStartResponse {
   state: string;

@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Continuing development beyond v0.1.0-pre13. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+Continuing development beyond v0.1.0-pre14. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+
+## [0.1.0-pre14] - 2026-05-12
+
+### Fixed
+- **Google OAuth `400 invalid_request`**: redirect URI scheme 을
+  `Secretbank://auth/callback` → `app.secretbank://auth/callback` 으로 교체.
+  Google 의 Desktop OAuth 정책 (2022+) 이 "reverse-DNS notation of a
+  domain you control" 만 허용. `secretbank.app` 도메인의 reverse-DNS =
+  `app.secretbank`.
+- Tauri `tauri.conf.json` 의 `plugins.deep-link.desktop.schemes` 에
+  `"app.secretbank"` 추가 (기존 `"secretbank"` 도 유지 — graph 등 in-app
+  deep-link 호환).
+- `use-deep-link-callback.ts` 의 `CALLBACK_PREFIXES` array 로 둘 다 매칭
+  (in-flight 옛 release 호환).
+
+### Notes (사용자 액션)
+- GitHub OAuth App settings 의 Authorization callback URL 을
+  `app.secretbank://auth/callback` 으로 갱신 필요. (이전엔
+  `Secretbank://auth/callback`.)
 
 ## [0.1.0-pre13] - 2026-05-11
 
