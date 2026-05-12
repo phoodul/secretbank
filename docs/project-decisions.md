@@ -5,6 +5,40 @@
 
 ---
 
+## [2026-05-13] **OAuth flow → loopback HTTP server (RFC 8252)**
+
+### 결정
+
+- 모든 OAuth provider (Google + GitHub + 향후 추가) 의 redirect URI 는 **`http://127.0.0.1:<port>` loopback IP** 만 사용 (RFC 8252 native app 표준).
+- Custom URI scheme (`Secretbank://`, `app.secretbank://`, `com.googleusercontent.apps...://`) 사용 절대 금지.
+- 구현: **`tauri-plugin-oauth` 2.x** + `tauri-plugin-single-instance` (deep-link feature).
+
+### 이유
+
+- Google docs 명시: "Custom URI schemes are no longer supported due to the risk of app impersonation" (2026+).
+- 추측 4 라운드 (pre13~16) 의 scheme 변경 모두 `400 invalid_request` reject 후 검색으로 정확한 root cause 발견.
+- RFC 8252 의 loopback IP 는 Google + GitHub + 다른 표준 OAuth provider 모두 호환.
+
+### 구현 (commit `3ba2ebf` 외)
+
+- `auth_oauth_start` Tauri command 의 `redirect_uri` 인자 제거. 내부에서 `tauri_plugin_oauth::start(callback)` → port 동적 할당 + `http://127.0.0.1:<port>` 만듦.
+- callback closure 가 받은 URL + provider 를 `oauth-callback` Tauri event 로 emit (payload `{provider, url}`).
+- `useDeepLinkCallback` 의 listen 대상 event 변경 (`deep-link` → `oauth-callback`) + payload object.
+- `parseOAuthCallbackUrl` 가 loopback host (`127.0.0.1`, `localhost`) 검증 + provider 는 event payload field.
+- `stringifyAuthError` 헬퍼 (`src/features/auth/error.ts`) — `AuthCommandError` 의 `{code,status,body}` 객체를 `[object Object]` 대신 실제 메시지로.
+
+### 사용자 액션 (영구)
+
+- **GitHub OAuth App** 의 Authorization callback URL = **`http://127.0.0.1`** (또는 `http://localhost` — 우리 desktop 의 host 와 일치해야 함; 현재 `127.0.0.1` 사용).
+- **Google Cloud Console** 의 Desktop OAuth client — redirect URI 등록 불필요 (loopback 자동 인식).
+- D1 schema migrations 가 production 에 적용되어 있어야 함: `pnpm wrangler d1 migrations apply secretbank-relay --remote`.
+
+### 메모리
+
+- (memory 박음 — 향후 추측 라운드 방지) "OAuth flow = loopback HTTP server. custom URI scheme 절대 X. tauri-plugin-oauth 사용."
+
+---
+
 ## [2026-05-11] **Brand identity 변경 — final_logo 폐기, VaultMechanism 채택**
 
 ### 결정

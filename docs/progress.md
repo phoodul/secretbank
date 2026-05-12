@@ -2,7 +2,35 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-11 ~ 2026-05-12 (resume 세션 — favicon/icon 통일 라운드 + OAuth backend fix + v0.1.0-pre13 release + binary 다운로드 secretbank.app 정책 박음). **dogfooding 의 OAuth 로그인 막힘 해소** + 영구 distribution 정책 (`memory/project_distribution_policy.md`) 박음.
+- **Time:** 2026-05-11 ~ 2026-05-13 (3-day resume 세션 — favicon/icon 통일 + OAuth loopback 재작성 + binary 다운로드 정책 + dogfooding Google OAuth + 동기화 동작 확인). **Google OAuth + 동기화 ✅** + 영구 OAuth flow (RFC 8252 loopback) + 영구 distribution 정책 박음.
+- **이번 resume 세션 누적 commits 약 25+ (origin/main HEAD `42e0512`)**:
+  - **Favicon/Icon 라운드** (`df05247` → `23e38cf` revert → `c3abec1` 통일): site nav VaultMechanism SVG → favicon (SVG + 6 PNG + ICO) + 데스크탑 icon 통일 (image_only.png 폐기, favicon SVG single source).
+  - **OAuth backend setup** (`922709b`, `130c76c`, `7e0b9d8`): new Google OAuth client_id (`522239075495-...`) + deploy-relay CI fix (--ignore-workspace).
+  - **release pre13** (`6ab2a4d`): DEFAULT_RELAY_URL `secretbank.app` → `relay.secretbank.app`. 사용자 액션: Cloudflare custom domain + 3 secrets (GOOGLE/GITHUB_OAUTH_CLIENT_SECRET, JWT_SIGNING_KEY) 주입.
+  - **`/download/*` stream proxy** (`f7dad9d` ~ `0429be0`): secretbank.app/download/<platform> + KV 캐싱 + GitHub PAT 인증. 옛 download-proxy Worker 삭제 + secretbank-relay Routes 추가.
+  - **stale cache 진단 라운드** (`d4dcd5b` ~ `1a6e0d6`): cache key v1→v2→v3 + cf.cacheTtl=0 + URL cache buster + per_page 5→30 (PAT 인증 시 draft 포함 회피). `/_debug` endpoint 로 root cause 정확히 발견.
+  - **OAuth scheme 추측 4 라운드 (pre14 ~ pre16)** — 모두 reject. memory 의 "반복 실패 시 즉시 검색" 룰 4번 위반 후 검색 → 정답 발견.
+  - **release pre17 (`3ba2ebf`)**: **OAuth flow 전체 재작성 — loopback HTTP server (RFC 8252)**. tauri-plugin-oauth 2.x + tauri-plugin-single-instance (deep-link feature) 추가. 정답 path.
+  - **frontend stringifier** (`42e0512`): `stringifyAuthError` 헬퍼 — AuthCommandError 의 `{code,status,body}` 객체를 `[object Object]` 대신 실제 메시지로.
+  - **Site Worker routes** (`95ecacc`, `db9c4ac`): `/api/latest` + `/releases.json` + `/download/<tag>/<filename>` — site index.html download grid JS 호환.
+- **검증 결과 (2026-05-13)**:
+  - ✅ Google OAuth: 새 client + Path B Desktop type + test users + loopback redirect URI → 로그인 완료 + 동기화 작동.
+  - ✅ `secretbank.app/download/<platform>` 5 platform 모두 200 OK + binary stream.
+  - ⏳ GitHub OAuth: `redirect_uri not associated` (사용자가 GitHub OAuth App callback URL 을 `http://127.0.0.1` 으로 갱신 안 함) — 사용자 액션 1회 남음.
+- **Root causes 정확히 발견 (검색 + wrangler tail)**:
+  - OAuth `[object Object]`: D1 production database 의 oauth_account table 미존재 → `wrangler d1 migrations apply secretbank-relay --remote` 로 해소.
+  - OAuth `400 invalid_request`: custom URI scheme 모두 2026+ deprecated → loopback IP RFC 8252 표준.
+  - OAuth callback 시 새 instance + vault 잠김: tauri-plugin-single-instance 미설치.
+  - `/download/*` stale pre9 응답: PAT 인증 시 GitHub API 가 draft releases 포함 반환 → per_page=30 + filter !draft.
+- **영구 정책 (memory 박음)**:
+  - [Distribution] Binary 다운로드 = secretbank.app stream proxy. github.com URL 노출 금지 (`project_distribution_policy.md`).
+  - [Brand] VaultMechanism inline SVG = single brand source (favicon + 데스크탑 icon 통일).
+  - [OAuth] RFC 8252 loopback HTTP server 만 사용. custom URI scheme 절대 X.
+- **다음 세션 시작점 옵션**:
+  - **A** GitHub OAuth 검증 + dogfooding 1주 본격 시작
+  - **B** publish-updater-manifest workflow 영구 해결 (PAT 또는 별도 sync workflow) — Tauri auto-updater 동작 활성화
+  - **C** site/index.html 의 download UI 가 실제로 채워지도록 Cloudflare Pages 배포 fix (`/api/latest` + `/releases.json` Worker route 동작 검증 + secretbank-site Pages 깨짐 점검)
+  - **D** M24 Phase 3-B (secure_note) 진입
 - **이번 resume 세션 commits (11건)**:
   1. `df05247` feat(site): nav VaultMechanism 로고 → favicon (SVG + 6 PNG + multi-size ICO)
   2. `23e38cf` feat(tauri): 데스크탑 로고 → image_only.png (사용자 폐기 결정으로 다음 commit 에서 교체)
