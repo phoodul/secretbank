@@ -22,7 +22,7 @@ describe("OAuthButton", () => {
     vi.clearAllMocks();
   });
 
-  it("renders provider label and invokes auth_oauth_start with redirect_uri", async () => {
+  it("renders provider label and invokes auth_oauth_start (loopback, provider only)", async () => {
     mockInvoke.mockResolvedValue({
       state: "deadbeef",
       authorize_url: "https://github.com/login/oauth/authorize?...",
@@ -35,10 +35,11 @@ describe("OAuthButton", () => {
     expect(screen.getByRole("button")).toHaveTextContent(/GitHub/i);
     await userEvent.click(screen.getByRole("button"));
 
+    // redirect_uri 인자 제거됨 — backend 가 tauri-plugin-oauth 로 loopback
+    // server 동적 할당 후 자체적으로 redirect_uri 만듦.
     await waitFor(() =>
       expect(mockInvoke).toHaveBeenCalledWith("auth_oauth_start", {
         provider: "github",
-        redirectUri: "Secretbank://auth/callback",
       }),
     );
     expect(onStart).toHaveBeenCalledWith("github", "deadbeef");

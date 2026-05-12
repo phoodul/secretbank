@@ -433,27 +433,72 @@ async fn exchange_oauth_callback(
 
 /// `POST /auth/oauth/:provider/start` + open the OS browser.
 ///
-/// `redirect_uri` should be the desktop app's deep-link URL (e.g.
-/// `Secretbank://auth/callback`). The relay echoes it inside the OAuth
-/// `redirect_uri` query parameter so the provider redirects back to it after
-/// the user consents.
+/// 흐름 (RFC 8252 + Google native app guidelines):
+/// 1. tauri-plugin-oauth 가 임시 loopback HTTP server (`http://127.0.0.1:<port>`)
+///    를 띄움. Google/GitHub 의 custom URI scheme 은 2026+ 모두 deprecated 라
+///    loopback IP 만 안전한 redirect URI.
+/// 2. redirect_uri 를 relay 의 `/auth/oauth/:provider/start` 에 전송 →
+///    state + authorize_url 받음.
+/// 3. OS 기본 브라우저로 authorize_url 열어 사용자 동의 받음.
+/// 4. 동의 후 OAuth provider 가 redirect 해서 loopback server 가 callback URL
+///    (code+state) 받음 → `oauth-callback` Tauri event 로 emit.
+#[cfg(all(
+    feature = "tauri-plugins",
+    not(any(target_os = "android", target_os = "ios"))
+))]
 #[tauri::command]
 pub async fn auth_oauth_start(
     provider: String,
-    redirect_uri: String,
     state: State<'_, AppContext>,
     app_handle: tauri::AppHandle,
 ) -> Result<OAuthStartResponse, AuthCommandError> {
     let provider = sanitise_provider(&provider)?.to_owned();
-    ensure_nonblank("redirect_uri", &redirect_uri)?;
 
+    // 1. loopback server 시작 — port 동적 할당. callback closure 안에서
+    //    받은 URL + provider 를 `oauth-callback` Tauri event 로 emit.
+    let app_for_callback = app_handle.clone();
+    let provider_for_callback = provider.clone();
+    let port = tauri_plugin_oauth::start(move |url| {
+        use tauri::Emitter;
+        let payload = serde_json::json!({
+            "provider": provider_for_callback,
+            "url": url,
+        });
+        if let Err(e) = app_for_callback.emit("oauth-callback", payload) {
+            tracing::warn!("oauth-callback emit failed: {e}");
+        }
+    })
+    .map_err(|e| AuthCommandError::Internal {
+        message: format!("oauth loopback start: {e}"),
+    })?;
+
+    let redirect_uri = format!("http://127.0.0.1:{port}");
+    tracing::info!("oauth loopback: provider={provider} redirect_uri={redirect_uri}");
+
+    // 2. relay 호출
     let resp = fetch_oauth_authorize(&state, &provider, &redirect_uri).await?;
 
-    // Open the browser only after the relay accepted the request — failing
-    // earlier avoids spawning a browser tab the user cannot complete.
+    // 3. OS 기본 브라우저 open
     open_external_url(&app_handle, &resp.authorize_url)?;
 
     Ok(resp)
+}
+
+/// Fallback `auth_oauth_start` when oauth plugin disabled (e.g. test builds).
+#[cfg(any(
+    not(feature = "tauri-plugins"),
+    target_os = "android",
+    target_os = "ios"
+))]
+#[tauri::command]
+pub async fn auth_oauth_start(
+    _provider: String,
+    _state: State<'_, AppContext>,
+    _app_handle: tauri::AppHandle,
+) -> Result<OAuthStartResponse, AuthCommandError> {
+    Err(AuthCommandError::Internal {
+        message: "oauth loopback not available on this platform/build".to_string(),
+    })
 }
 
 /// `POST /auth/oauth/:provider/callback` — exchange `code` + `state` for a

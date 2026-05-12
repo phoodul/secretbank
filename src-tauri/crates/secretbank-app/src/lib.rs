@@ -189,6 +189,13 @@ pub fn run(context: tauri::Context) {
             .plugin(tauri_plugin_deep_link::init())
             .plugin(tauri_plugin_http::init())
             .plugin(tauri_plugin_fs::init());
+
+        // OAuth loopback HTTP server — Google/GitHub custom URI scheme 모두
+        // deprecated (2026+). 표준 RFC 8252: redirect_uri = http://127.0.0.1:<port>
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        {
+            builder = builder.plugin(tauri_plugin_oauth::init());
+        }
     }
 
     // tauri-plugins feature 에 따라 등록하는 커맨드가 달라진다.

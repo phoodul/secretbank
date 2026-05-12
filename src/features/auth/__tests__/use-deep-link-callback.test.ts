@@ -2,28 +2,54 @@ import { describe, expect, it } from "vitest";
 
 import { parseOAuthCallbackUrl } from "../use-deep-link-callback";
 
-describe("parseOAuthCallbackUrl", () => {
-  it("parses well-formed callback URL with provider/code/state", () => {
-    const url = "Secretbank://auth/callback?provider=github&code=the-code&state=deadbeef";
-    expect(parseOAuthCallbackUrl(url)).toEqual({
+describe("parseOAuthCallbackUrl — loopback HTTP callback", () => {
+  it("parses well-formed loopback callback (provider via event field)", () => {
+    expect(
+      parseOAuthCallbackUrl({
+        provider: "github",
+        url: "http://127.0.0.1:8765/?code=the-code&state=deadbeef",
+      }),
+    ).toEqual({
       provider: "github",
       code: "the-code",
       state: "deadbeef",
     });
   });
 
-  it("returns null when scheme/path do not match", () => {
-    expect(parseOAuthCallbackUrl("https://example.com/callback?code=x&state=y")).toBeNull();
-    expect(parseOAuthCallbackUrl("Secretbank://other?provider=google&code=x&state=y")).toBeNull();
+  it("accepts localhost as well as 127.0.0.1", () => {
+    expect(
+      parseOAuthCallbackUrl({
+        provider: "google",
+        url: "http://localhost:54321/?code=c&state=s",
+      }),
+    ).toEqual({ provider: "google", code: "c", state: "s" });
   });
 
-  it("returns null when any required param is missing", () => {
-    expect(parseOAuthCallbackUrl("Secretbank://auth/callback?code=x&state=y")).toBeNull();
-    expect(parseOAuthCallbackUrl("Secretbank://auth/callback?provider=github&state=y")).toBeNull();
-    expect(parseOAuthCallbackUrl("Secretbank://auth/callback?provider=github&code=x")).toBeNull();
+  it("rejects non-loopback host (anti-CSRF)", () => {
+    expect(
+      parseOAuthCallbackUrl({
+        provider: "google",
+        url: "https://evil.com/?code=x&state=y",
+      }),
+    ).toBeNull();
+  });
+
+  it("returns null when code/state missing", () => {
+    expect(
+      parseOAuthCallbackUrl({ provider: "github", url: "http://127.0.0.1:8765/?state=y" }),
+    ).toBeNull();
+    expect(
+      parseOAuthCallbackUrl({ provider: "github", url: "http://127.0.0.1:8765/?code=x" }),
+    ).toBeNull();
+  });
+
+  it("returns null when provider missing", () => {
+    expect(
+      parseOAuthCallbackUrl({ provider: "", url: "http://127.0.0.1:8765/?code=x&state=y" }),
+    ).toBeNull();
   });
 
   it("returns null on malformed URL", () => {
-    expect(parseOAuthCallbackUrl("not a url")).toBeNull();
+    expect(parseOAuthCallbackUrl({ provider: "github", url: "not a url" })).toBeNull();
   });
 });

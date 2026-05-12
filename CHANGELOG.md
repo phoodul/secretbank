@@ -7,7 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Continuing development beyond v0.1.0-pre16. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+Continuing development beyond v0.1.0-pre17. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+
+## [0.1.0-pre17] - 2026-05-13
+
+### Fixed
+- **OAuth flow 전체 재작성** — custom URI scheme 모두 deprecated 후
+  loopback HTTP server (RFC 8252) 로 전환. pre13~pre16 시도 (`Secretbank://`,
+  `app.secretbank://`, `com.googleusercontent.apps...://`) 모두 Google
+  공식 "Custom URI schemes are no longer supported due to the risk of app
+  impersonation" 정책에 reject. 정답은 `http://127.0.0.1:<port>` loopback.
+
+### Changed
+- `tauri-plugin-oauth` 2.x 추가. `auth_oauth_start` Tauri command 의
+  `redirect_uri` 인자 제거 — backend 가 동적 port 의 loopback HTTP server
+  띄움 + callback 받아 `oauth-callback` Tauri event (payload `{provider,
+  url}`) 로 emit.
+- `useDeepLinkCallback` (옛 `deep-link` event listener + Vec<String> payload)
+  → `oauth-callback` event + `{provider, url}` object payload. 옛 in-app
+  deep-link (graph 등) 은 별도 listener 라 영향 없음.
+- `parseOAuthCallbackUrl` 가 loopback URL (`http://127.0.0.1` / `http://localhost`)
+  검증 + provider 는 event payload 의 별도 field 에서 받음.
+
+### Notes (사용자 액션)
+- GitHub OAuth App 의 Authorization callback URL 을
+  `app.secretbank://auth/callback` → **`http://localhost`** 또는
+  **`http://127.0.0.1`** 로 갱신 (GitHub 가 wildcard port 인식).
+- Google Cloud Console: Desktop type OAuth client 그대로 사용 — loopback
+  이 native default 라 redirect URI 등록 불필요.
 
 ## [0.1.0-pre16] - 2026-05-13
 

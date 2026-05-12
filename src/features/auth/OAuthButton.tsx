@@ -21,24 +21,10 @@ import { Button } from "@/components/ui/button";
 
 export type OAuthProvider = "github" | "google";
 
-// Provider 별 redirect URI 분리:
-//
-// - Google: `com.googleusercontent.apps.<client_id>://oauth2redirect`
-//   Google 자동 등록 scheme — `app.secretbank://` (2-segment reverse-DNS) 가
-//   여전히 `400 invalid_request` reject 됨 (TLD `.app` 검증 한계로 추정).
-//   Google docs: "Custom URI scheme ... or has a Google-specific scheme
-//   like com.googleusercontent.apps.123-abcdef:/oauth2redirect"
-//   client_id 부분은 wrangler.toml 의 GOOGLE_OAUTH_CLIENT_ID 와 일치해야 함.
-//
-// - GitHub: `app.secretbank://auth/callback` (GitHub OAuth App 의 callback
-//   URL 등록과 일치).
-// Query string 제거: Google 의 native app redirect URI 검증이 정확한
-// 형식 매칭 (RFC 6749 의 query 보존 이론과 별개로 Google 자체 정책).
-// `?provider=google` 추가 시 400 invalid_request reject 됨.
-// provider 구분은 parseOAuthCallbackUrl 가 scheme 으로 추론.
-const GOOGLE_REDIRECT_URI =
-  "com.googleusercontent.apps.522239075495-b72lmghgcgeei7ddm9h2957le92c8oo1://oauth2redirect";
-const GITHUB_REDIRECT_URI = "app.secretbank://auth/callback";
+// redirect_uri = Backend 가 tauri-plugin-oauth 로 띄운 임시 loopback HTTP
+// server (`http://127.0.0.1:<port>`). Google/GitHub 의 custom URI scheme 은
+// 2026+ 모두 deprecated. Backend `auth_oauth_start` 가 port 동적 할당 +
+// callback 받아 `oauth-callback` Tauri event 로 forward.
 
 interface OAuthStartResponse {
   state: string;
@@ -59,10 +45,8 @@ export function OAuthButton({ provider, busy, disabled, onStart, onError }: OAut
   async function handleClick() {
     if (busy) return;
     try {
-      const redirectUri = provider === "google" ? GOOGLE_REDIRECT_URI : GITHUB_REDIRECT_URI;
       const resp = await invoke<OAuthStartResponse>("auth_oauth_start", {
         provider,
-        redirectUri,
       });
       onStart(provider, resp.state);
     } catch (err) {

@@ -18,10 +18,14 @@ vi.mock("@simplewebauthn/browser", () => ({
   startRegistration: vi.fn(),
 }));
 
-// Capture the registered deep-link listener so tests can fire synthetic events.
-const deepLinkListeners: Array<(event: { payload: string[] }) => void> = [];
+// Capture the registered oauth-callback listener so tests can fire synthetic events.
+interface RawOAuthEvent {
+  provider: string;
+  url: string;
+}
+const deepLinkListeners: Array<(event: { payload: RawOAuthEvent }) => void> = [];
 const mockListen = vi.fn(async (_event: string, cb: unknown) => {
-  deepLinkListeners.push(cb as (event: { payload: string[] }) => void);
+  deepLinkListeners.push(cb as (event: { payload: RawOAuthEvent }) => void);
   return () => {
     const idx = deepLinkListeners.indexOf(cb as never);
     if (idx >= 0) deepLinkListeners.splice(idx, 1);
@@ -99,10 +103,13 @@ describe("SignInPage", () => {
     // listener should be registered after mount + click
     await waitFor(() => expect(deepLinkListeners.length).toBeGreaterThan(0));
 
-    // Fire a synthetic deep-link event with the matching state
+    // Fire a synthetic oauth-callback event with the matching state
     const fire = deepLinkListeners[0];
     fire({
-      payload: ["Secretbank://auth/callback?provider=github&code=the-code&state=deadbeef"],
+      payload: {
+        provider: "github",
+        url: "http://127.0.0.1:8765/?code=the-code&state=deadbeef",
+      },
     });
 
     await waitFor(() =>
@@ -133,7 +140,10 @@ describe("SignInPage", () => {
 
     const fire = deepLinkListeners[0];
     fire({
-      payload: ["Secretbank://auth/callback?provider=github&code=the-code&state=BAD"],
+      payload: {
+        provider: "github",
+        url: "http://127.0.0.1:8765/?code=the-code&state=BAD",
+      },
     });
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());

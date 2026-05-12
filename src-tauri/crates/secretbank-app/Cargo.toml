@@ -1,6 +1,6 @@
 [package]
 name = "secretbank-app"
-version = "0.1.0-pre16"
+version = "0.1.0-pre17"
 description = "Secretbank runtime — Tauri builder and command registration"
 authors = ["secretbank contributors"]
 edition = "2021"
@@ -22,6 +22,7 @@ tauri-plugins = [
     "dep:tauri-plugin-fs",
     "dep:tauri-plugin-updater",
     "dep:tauri-plugin-single-instance",
+    "dep:tauri-plugin-oauth",
     "dep:tauri-plugin-biometric",
 ]
 
@@ -73,10 +74,11 @@ tauri-plugin-deep-link = { version = "2", optional = true }
 tauri-plugin-http     = { version = "2", optional = true }
 tauri-plugin-fs       = { version = "2", optional = true }
 
-# updater + single-instance: desktop-only (Windows, macOS, Linux).
+# updater + single-instance + oauth: desktop-only (Windows, macOS, Linux).
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = { version = "2", optional = true }
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"], optional = true }
+tauri-plugin-oauth = { version = "2", optional = true }
 
 # biometric: mobile-only (Android, iOS)
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
