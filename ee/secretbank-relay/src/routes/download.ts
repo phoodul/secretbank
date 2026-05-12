@@ -64,32 +64,28 @@ const PLATFORM_PATTERNS: Record<string, RegExp> = {
   rpm: /\.x86_64\.rpm$/,
 };
 
-type FetchResult = { ok: true; release: Release } | { ok: false; status: number; body: string };
+export type FetchResult =
+  | { ok: true; release: Release }
+  | { ok: false; status: number; body: string };
+export type FetchListResult =
+  | { ok: true; releases: Release[] }
+  | { ok: false; status: number; body: string };
 
-async function fetchLatestRelease(env: Env): Promise<FetchResult> {
-  // KV hit — skip GitHub call entirely
-  const cached = await env.TOKEN_CACHE.get(CACHE_KEY, "json");
-  if (cached) return { ok: true, release: cached as Release };
-
+async function fetchReleasesRaw(
+  env: Env,
+): Promise<{ ok: true; arr: Release[] } | { ok: false; status: number; body: string }> {
   const headers: Record<string, string> = {
     "user-agent": "secretbank-relay",
     accept: "application/vnd.github+json",
-    // GitHub API 응답의 max-age=60 을 Cloudflare Worker fetch sub-request
-    // cache 가 honour 하면서 옛 release 응답 (pre9 시점) 을 그대로 stale
-    // 반환하던 케이스 차단.
     "cache-control": "no-store",
   };
-  // Authenticated calls = 5000/h per token vs 60/h per shared Worker IP.
   if (env.GITHUB_API_TOKEN) {
     headers["authorization"] = `Bearer ${env.GITHUB_API_TOKEN}`;
   }
-
+  const cb = Math.floor(Date.now() / 60000);
+  const url = `${GH_API_BASE}&_cb=${cb}`;
   let resp: Response;
   try {
-    // URL 에 unique cache buster query param 추가 — Cloudflare Worker
-    // fetch sub-request cache 가 URL 기반이라 매 분 다른 URL = 매 분 cache miss.
-    const cb = Math.floor(Date.now() / 60000); // 1분 단위 bucket
-    const url = `${GH_API_BASE}&_cb=${cb}`;
     resp = await fetch(url, {
       headers,
       cf: { cacheTtl: 0, cacheEverything: false },
@@ -102,15 +98,27 @@ async function fetchLatestRelease(env: Env): Promise<FetchResult> {
     return { ok: false, status: resp.status, body: body.slice(0, 300) };
   }
   const arr = (await resp.json()) as Release[];
-  // published_at desc 정렬 (draft 제외). prerelease 포함.
-  const candidates = arr.filter((r) => !r.draft && r.assets && r.assets.length > 0);
-  candidates.sort(
-    (a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
-  );
-  const release = candidates[0] ?? arr[0];
-  if (!release) return { ok: false, status: 200, body: "empty releases array" };
+  return { ok: true, arr };
+}
 
-  // Cache for CACHE_TTL_S (write is fire-and-forget; failure not fatal)
+export async function fetchAllPublishedReleases(env: Env): Promise<FetchListResult> {
+  const raw = await fetchReleasesRaw(env);
+  if (!raw.ok) return { ok: false, status: raw.status, body: raw.body };
+  const published = raw.arr.filter((r) => !r.draft && r.assets && r.assets.length > 0);
+  published.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+  return { ok: true, releases: published };
+}
+
+export async function fetchLatestRelease(env: Env): Promise<FetchResult> {
+  // KV hit — skip GitHub call entirely
+  const cached = await env.TOKEN_CACHE.get(CACHE_KEY, "json");
+  if (cached) return { ok: true, release: cached as Release };
+
+  const list = await fetchAllPublishedReleases(env);
+  if (!list.ok) return { ok: false, status: list.status, body: list.body };
+  const release = list.releases[0];
+  if (!release) return { ok: false, status: 200, body: "no published releases with assets" };
+
   await env.TOKEN_CACHE.put(CACHE_KEY, JSON.stringify(release), {
     expirationTtl: CACHE_TTL_S,
   });

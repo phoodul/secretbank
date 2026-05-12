@@ -9,6 +9,7 @@ import { health } from "./routes/health";
 import { githubIntegrations } from "./routes/integrations/github";
 import { sync } from "./routes/sync";
 import { pair } from "./routes/pair";
+import { siteApi, releasesHandler } from "./routes/site-api";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -21,5 +22,7 @@ app.route("/integrations/github", githubIntegrations);
 app.route("/sync", sync);
 app.route("/pair", pair);
 app.route("/download", download);
+app.route("/api", siteApi);
+app.get("/releases.json", releasesHandler);
 
 export default app;
