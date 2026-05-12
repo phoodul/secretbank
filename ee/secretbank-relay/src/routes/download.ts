@@ -117,6 +117,54 @@ async function fetchLatestRelease(env: Env): Promise<FetchResult> {
   return { ok: true, release };
 }
 
+// Diagnostic endpoint: dump raw GitHub API response + cached + commit info.
+// Tag any deploy via VERSION_TAG to verify production code freshness.
+download.get("/_debug", async (c) => {
+  const env = c.env;
+  const cached = await env.TOKEN_CACHE.get(CACHE_KEY, "json");
+
+  const cb = Math.floor(Date.now() / 60000);
+  const url = `${GH_API_BASE}&_cb=${cb}`;
+  const headers: Record<string, string> = {
+    "user-agent": "secretbank-relay",
+    accept: "application/vnd.github+json",
+    "cache-control": "no-store",
+  };
+  if (env.GITHUB_API_TOKEN) headers["authorization"] = `Bearer ${env.GITHUB_API_TOKEN}`;
+
+  let raw: unknown = null;
+  let status = 0;
+  try {
+    const resp = await fetch(url, {
+      headers,
+      cf: { cacheTtl: 0, cacheEverything: false },
+    } as RequestInit);
+    status = resp.status;
+    raw = await resp.json();
+  } catch (e) {
+    raw = String(e);
+  }
+
+  return c.json({
+    commit: "4e69813",
+    cache_key: CACHE_KEY,
+    cache_ttl: CACHE_TTL_S,
+    cached_tag: cached ? (cached as Release).tag_name : null,
+    cached_asset_count: cached ? (cached as Release).assets.length : null,
+    fetch_url: url,
+    fetch_status: status,
+    has_pat: !!env.GITHUB_API_TOKEN,
+    raw_releases: Array.isArray(raw)
+      ? (raw as Release[]).map((r) => ({
+          tag: r.tag_name,
+          assets: r.assets?.length ?? 0,
+          published: r.published_at,
+          draft: r.draft,
+        }))
+      : raw,
+  });
+});
+
 download.get("/latest.json", async (c) => {
   const result = await fetchLatestRelease(c.env);
   if (!result.ok) {
