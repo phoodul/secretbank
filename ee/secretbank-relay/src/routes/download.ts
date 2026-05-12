@@ -28,10 +28,10 @@ import type { Env } from "../env";
 
 export const download = new Hono<{ Bindings: Env }>();
 
-// per_page=5 로 받아서 published_at desc 첫 번째 사용. GitHub edge cache
-// 가 region 별로 stale 응답 (옛 pre9 시점) 반환 케이스 회피 — release 중
-// 가장 최근 published 본을 코드에서 직접 선택.
-const GH_API_BASE = "https://api.github.com/repos/phoodul/secretbank/releases?per_page=5";
+// per_page=30 — PAT 인증 시 GitHub API 가 draft releases 도 반환 (repo
+// owner 권한). 옛 draft (pre9, pre5, dryrun 등) 가 created_at 순으로 앞에
+// 깔려있어 per_page=5 로는 publish 된 pre13/12/11 까지 도달 못 함.
+const GH_API_BASE = "https://api.github.com/repos/phoodul/secretbank/releases?per_page=30";
 
 // KV cache key + TTL. GitHub API rate limit (60/h per IP, IPs shared across
 // Cloudflare Workers) means uncached calls quickly 403. 5-min cache cuts
@@ -146,7 +146,7 @@ download.get("/_debug", async (c) => {
   }
 
   return c.json({
-    commit: "4e69813",
+    commit: "7c276bb-perPage30",
     cache_key: CACHE_KEY,
     cache_ttl: CACHE_TTL_S,
     cached_tag: cached ? (cached as Release).tag_name : null,
