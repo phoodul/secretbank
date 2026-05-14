@@ -399,6 +399,8 @@
     "scanError": "스캔 실패",
     "noDetectedKeys": "감지된 API 키가 없습니다",
     "noDetectedHint": ".env 또는 설정 파일이 포함된 폴더를 드롭하여 자격증명을 찾으세요.",
+    "noDetectedBackHome": "홈으로 돌아가기",
+    "noDetectedScanAnother": "다른 폴더 스캔",
     "reviewTitle": "감지된 키 {{count}}개 검토",
     "reviewSubtitle": "{{project}} 프로젝트로 가져올 키를 선택하세요.",
     "reviewTableLabel": "감지된 키 목록",

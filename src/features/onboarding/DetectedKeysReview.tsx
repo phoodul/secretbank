@@ -290,9 +290,17 @@ export function DetectedKeysReview({
 
   if (detected.length === 0) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-center">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
         <p className="text-lg font-medium">{t("onboarding.noDetectedKeys")}</p>
-        <p className="text-sm text-muted-foreground">{t("onboarding.noDetectedHint")}</p>
+        <p className="max-w-md text-sm text-muted-foreground">{t("onboarding.noDetectedHint")}</p>
+        <div className="mt-2 flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/")}>
+            {t("onboarding.noDetectedBackHome")}
+          </Button>
+          <Button variant="secondary" onClick={() => navigate("/welcome")}>
+            {t("onboarding.noDetectedScanAnother")}
+          </Button>
+        </div>
       </div>
     );
   }

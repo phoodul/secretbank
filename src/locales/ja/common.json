@@ -388,6 +388,8 @@
     "scanError": "スキャン失敗",
     "noDetectedKeys": "検出されたAPIキーはありません",
     "noDetectedHint": ".envや設定ファイルを含むフォルダをドロップして認証情報を見つけてください。",
+    "noDetectedBackHome": "ホームに戻る",
+    "noDetectedScanAnother": "別のフォルダをスキャン",
     "reviewTitle": "検出された{{count}}個のキーを確認",
     "reviewSubtitle": "{{project}} プロジェクトにインポートするキーを選択してください。",
     "reviewTableLabel": "検出されたキー",

@@ -399,6 +399,8 @@
     "scanError": "Scan failed",
     "noDetectedKeys": "No API keys detected",
     "noDetectedHint": "Drop a folder that contains .env or config files to find credentials.",
+    "noDetectedBackHome": "Back to home",
+    "noDetectedScanAnother": "Scan another folder",
     "reviewTitle": "Review {{count}} detected keys",
     "reviewSubtitle": "Select keys to import into project {{project}}.",
     "reviewTableLabel": "Detected keys",

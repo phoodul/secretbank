@@ -388,6 +388,8 @@
     "scanError": "扫描失败",
     "noDetectedKeys": "未检测到 API 密钥",
     "noDetectedHint": "拖入包含 .env 或配置文件的文件夹来查找凭证。",
+    "noDetectedBackHome": "返回首页",
+    "noDetectedScanAnother": "扫描其他文件夹",
     "reviewTitle": "已检测到 {{count}} 个密钥，请确认",
     "reviewSubtitle": "选择要导入到项目 {{project}} 的密钥。",
     "reviewTableLabel": "已检测的密钥",
