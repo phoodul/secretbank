@@ -60,9 +60,48 @@ pub fn scan_path(path: &Path) -> Vec<DetectedKey> {
         return scan_file(path);
     }
 
+    // Real `.env` files are almost always listed in `.gitignore`, so respecting
+    // ignore rules would silently exclude exactly the files the user wants to
+    // import. We disable all ignore-file layers and instead hand-skip well-known
+    // noise directories (node_modules, .git, build outputs, language caches).
     let walker = ignore::WalkBuilder::new(path)
         .hidden(false) // include dot-files like .env
         .follow_links(false)
+        .git_ignore(false)
+        .git_global(false)
+        .git_exclude(false)
+        .ignore(false)
+        .parents(false)
+        .filter_entry(|e| {
+            if e.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                let name = e.file_name().to_str().unwrap_or("");
+                !matches!(
+                    name,
+                    "node_modules"
+                        | ".git"
+                        | "target"
+                        | "dist"
+                        | "build"
+                        | "out"
+                        | ".next"
+                        | ".nuxt"
+                        | ".turbo"
+                        | ".svelte-kit"
+                        | "vendor"
+                        | ".venv"
+                        | "venv"
+                        | "__pycache__"
+                        | ".pnpm-store"
+                        | ".cargo"
+                        | ".cache"
+                        | ".gradle"
+                        | ".idea"
+                        | ".vscode"
+                )
+            } else {
+                true
+            }
+        })
         .build();
 
     let mut results = Vec::new();
@@ -328,19 +367,53 @@ mod tests {
         assert!((results[0].confidence - 0.95).abs() < 0.001);
     }
 
-    // ── scan_path — gitignored file is excluded ───────────────────────────
+    // ── scan_path — gitignored .env file is STILL scanned ────────────────
+    // Real .env files are almost always listed in .gitignore — respecting
+    // ignore rules would silently exclude the very files the user wants
+    // to import. The scanner must walk past gitignore.
 
     #[test]
-    fn scan_respects_gitignore() {
+    fn scan_finds_gitignored_env_file() {
         let dir = TempDir::new().unwrap();
-        write_file(&dir, ".gitignore", "secrets.env\n");
-        write_file(&dir, "secrets.env", "SECRET=sk-proj-AAAAAAAAAAAAAAAAAAAA\n");
+        write_file(&dir, ".gitignore", ".env\n");
+        write_file(
+            &dir,
+            ".env",
+            "OPENAI_API_KEY=sk-proj-AAAAAAAAAAAAAAAAAAAA\n",
+        );
 
         let results = scan_path(dir.path());
-        assert!(
-            results.is_empty(),
-            "gitignored file should not produce results, got {results:?}"
+        assert_eq!(
+            results.len(),
+            1,
+            "gitignored .env should still be detected, got {results:?}"
         );
+        assert_eq!(results[0].issuer_slug.as_deref(), Some("openai"));
+    }
+
+    // ── scan_path — node_modules subtree is skipped ──────────────────────
+
+    #[test]
+    fn scan_skips_node_modules() {
+        let dir = TempDir::new().unwrap();
+        write_file(
+            &dir,
+            "node_modules/some-pkg/.env",
+            "AWS_ACCESS_KEY=AKIA0123456789ABCDEF\n",
+        );
+        write_file(
+            &dir,
+            ".env",
+            "OPENAI_API_KEY=sk-proj-AAAAAAAAAAAAAAAAAAAA\n",
+        );
+
+        let results = scan_path(dir.path());
+        assert_eq!(
+            results.len(),
+            1,
+            "only top-level .env should match, node_modules must be pruned, got {results:?}"
+        );
+        assert_eq!(results[0].issuer_slug.as_deref(), Some("openai"));
     }
 
     // ── scan_path — subdirectory config.ts ────────────────────────────────
