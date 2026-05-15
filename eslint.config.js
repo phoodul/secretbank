@@ -56,7 +56,7 @@ export default tseslint.config(
   },
   // scripts/ 와 e2e/ 는 Node 환경 — node globals 적용 + commonjs 허용.
   {
-    files: ["scripts/**/*.{ts,js}", "e2e/**/*.{ts,js}", "*.config.{ts,js}"],
+    files: ["scripts/**/*.{ts,js,mjs}", "e2e/**/*.{ts,js,mjs}", "*.config.{ts,js,mjs}"],
     languageOptions: {
       globals: { ...globals.node, ...globals.browser },
       parserOptions: { ecmaVersion: 2022 },
