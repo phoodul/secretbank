@@ -57,17 +57,17 @@ describe("OnboardingScanPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("path 쿼리가 있으면 env_scan_folder 를 호출하고 스캐닝 표시한다", async () => {
+  it("path 쿼리가 있으면 env_scan_prepare 를 호출하고 스캐닝 표시한다", async () => {
     invokeSpy.mockImplementation((cmd: string) => {
       if (cmd === "credential_list") return Promise.resolve([]);
-      if (cmd === "env_scan_folder") return new Promise(() => undefined); // pending
+      if (cmd === "env_scan_prepare") return new Promise(() => undefined); // pending
       return Promise.resolve(null);
     });
 
     renderWithPath("?path=/foo/bar");
 
     await waitFor(() => {
-      expect(invokeSpy).toHaveBeenCalledWith("env_scan_folder", { path: "/foo/bar" });
+      expect(invokeSpy).toHaveBeenCalledWith("env_scan_prepare", { path: "/foo/bar" });
     });
     expect(screen.getByText(/scanning|스캔 중|スキャン中/i)).toBeInTheDocument();
   });
@@ -75,17 +75,22 @@ describe("OnboardingScanPage", () => {
   it("스캔 완료 시 DetectedKeysReview 로 전환된다", async () => {
     invokeSpy.mockImplementation((cmd: string) => {
       if (cmd === "credential_list") return Promise.resolve([]);
-      if (cmd === "env_scan_folder")
-        return Promise.resolve([
-          {
-            file_path: "/foo/bar/.env",
-            line: 1,
-            env_var_name: "OPENAI_API_KEY",
-            issuer_slug: "openai",
-            value_hint: "aaaa",
-            confidence: 0.95,
-          },
-        ]);
+      if (cmd === "env_scan_prepare")
+        return Promise.resolve({
+          sessionId: "test-session",
+          entries: [
+            {
+              file_path: "/foo/bar/.env",
+              line: 1,
+              env_var_name: "OPENAI_API_KEY",
+              issuer_slug: "openai",
+              value_hint: "aaaa",
+              confidence: 0.95,
+            },
+          ],
+          expiresAtUnixMs: Date.now() + 5 * 60 * 1000,
+          scannedPath: "/foo/bar",
+        });
       return Promise.resolve(null);
     });
 

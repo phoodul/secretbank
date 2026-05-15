@@ -61,7 +61,7 @@ use commands::projects::{
     project_create, project_delete, project_get, project_list, project_update,
 };
 use commands::railguard::{railguard_apply, railguard_preview};
-use commands::scanner::env_scan_folder;
+use commands::scanner::{env_scan_commit, env_scan_prepare};
 use commands::security_check::{
     dismiss_security_alert, list_security_alerts, run_security_check, undismiss_security_alert,
 };
@@ -245,7 +245,8 @@ pub fn run(context: tauri::Context) {
             usage_list_for_project,
             settings_get,
             settings_set,
-            env_scan_folder,
+            env_scan_prepare,
+            env_scan_commit,
             graph_fetch,
             blast_radius_for_credential,
             blast_radius_for_host,
@@ -356,7 +357,8 @@ pub fn run(context: tauri::Context) {
             usage_list_for_project,
             settings_get,
             settings_set,
-            env_scan_folder,
+            env_scan_prepare,
+            env_scan_commit,
             graph_fetch,
             blast_radius_for_credential,
             blast_radius_for_host,

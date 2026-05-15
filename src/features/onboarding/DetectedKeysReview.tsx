@@ -20,6 +20,8 @@ import { useImportDetected } from "./use-import-detected";
 
 export interface DetectedKeysReviewProps {
   detected: DetectedKey[];
+  /** Backend session id returned by `env_scan_prepare` — required for commit. */
+  sessionId: string;
   /** Absolute path scanned — used as Project local_path + folder name. */
   scannedPath: string;
   /** Existing credentials, for duplicate detection via hash_hint. */
@@ -51,6 +53,7 @@ type RowStatus =
 
 export function DetectedKeysReview({
   detected,
+  sessionId,
   scannedPath,
   existingCredentials,
   onImportComplete,
@@ -161,11 +164,12 @@ export function DetectedKeysReview({
   const [userOverrides, setUserOverrides] = useState<Map<number, false | "new">>(new Map());
 
   // Effective decisions derived from rowStatuses + userOverrides.
+  // issuer-less entries are now allowed — backend uses a fallback issuer.
   const decisions = useMemo((): Map<number, ImportDecision> => {
     const m = new Map<number, ImportDecision>();
-    detected.forEach((dk, idx) => {
+    detected.forEach((_dk, idx) => {
       const status = rowStatuses[idx];
-      if (status === "already_tracked" || !dk.issuer_slug) return;
+      if (status === "already_tracked") return;
       const override = userOverrides.get(idx);
       if (override === false) return; // user deselected
       if (status === "new") {
@@ -240,6 +244,7 @@ export function DetectedKeysReview({
   async function handleImport() {
     if (selectedCount === 0) return;
     const result = await importSelected({
+      sessionId,
       detected,
       selectedDecisions: decisions,
       projectName,
@@ -346,7 +351,7 @@ export function DetectedKeysReview({
           const preset = dk.issuer_slug ? findPreset(dk.issuer_slug) : undefined;
           const Icon = preset?.icon ?? KeyRound;
           const checked = decisions.has(idx);
-          const disabled = isAlreadyTracked || !dk.issuer_slug;
+          const disabled = isAlreadyTracked;
           const currentDecision = decisions.get(idx);
           const isReplaceMode =
             currentDecision !== undefined &&

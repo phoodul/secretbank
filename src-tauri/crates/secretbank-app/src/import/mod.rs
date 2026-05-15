@@ -128,6 +128,89 @@ impl Default for ImportSessionStore {
 }
 
 // ---------------------------------------------------------------------------
+// EnvScanSession — folder-scan equivalent of ImportSession.
+//
+// Holds plaintext values (in SecretBox) from a `.env`-style scan until the
+// frontend calls the commit command. Same TTL + one-shot semantics.
+// ---------------------------------------------------------------------------
+
+use secretbank_connectors::env_scanner::DetectedKeyWithValue;
+
+/// Plaintext detected keys awaiting commit into the vault.
+pub struct EnvScanSession {
+    pub id: String,
+    pub created_at: Instant,
+    pub ttl: Duration,
+    /// Absolute path that was scanned (file or directory).
+    pub scanned_path: String,
+    /// Detected entries with plaintext values (SecretBox).
+    pub entries: Vec<DetectedKeyWithValue>,
+}
+
+impl EnvScanSession {
+    pub fn is_expired(&self) -> bool {
+        self.created_at.elapsed() >= self.ttl
+    }
+}
+
+/// In-memory store for `EnvScanSession` — mirrors `ImportSessionStore`.
+pub struct EnvScanSessionStore {
+    inner: Mutex<HashMap<String, EnvScanSession>>,
+    ttl: Duration,
+}
+
+impl EnvScanSessionStore {
+    pub fn new() -> Self {
+        Self::new_with_ttl(DEFAULT_SESSION_TTL)
+    }
+
+    pub fn new_with_ttl(ttl: Duration) -> Self {
+        Self {
+            inner: Mutex::new(HashMap::new()),
+            ttl,
+        }
+    }
+
+    pub fn insert(&self, scanned_path: String, entries: Vec<DetectedKeyWithValue>) -> String {
+        let id = Self::new_id();
+        let session = EnvScanSession {
+            id: id.clone(),
+            created_at: Instant::now(),
+            ttl: self.ttl,
+            scanned_path,
+            entries,
+        };
+
+        let mut guard = self.inner.lock().expect("env scan session lock poisoned");
+        self.sweep_expired_locked(&mut guard);
+        guard.insert(id.clone(), session);
+        id
+    }
+
+    pub fn take(&self, id: &str) -> Option<EnvScanSession> {
+        let mut guard = self.inner.lock().expect("env scan session lock poisoned");
+        self.sweep_expired_locked(&mut guard);
+        guard.remove(id).filter(|s| !s.is_expired())
+    }
+
+    fn sweep_expired_locked(&self, map: &mut HashMap<String, EnvScanSession>) {
+        map.retain(|_, s| !s.is_expired());
+    }
+
+    fn new_id() -> String {
+        use rand::Rng;
+        let bytes: [u8; 16] = rand::thread_rng().gen();
+        bytes.iter().map(|b| format!("{:02x}", b)).collect()
+    }
+}
+
+impl Default for EnvScanSessionStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 

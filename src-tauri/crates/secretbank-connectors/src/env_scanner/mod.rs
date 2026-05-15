@@ -4,9 +4,21 @@ pub mod parser;
 
 use std::path::Path;
 
+use secrecy::SecretBox;
+
 use entropy::shannon_entropy;
 use issuers::match_issuer;
 use parser::{parse_env_file, parse_generic_strings};
+
+/// `DetectedKey` paired with the plaintext value, for in-process handoff to
+/// an `ImportSession`-style store.
+///
+/// **Never serialize this to the frontend** — the `value` is the raw secret.
+/// `secrecy::SecretBox` provides automatic zeroize on drop.
+pub struct DetectedKeyWithValue {
+    pub meta: DetectedKey,
+    pub value: SecretBox<String>,
+}
 
 /// A single detected high-entropy or issuer-matched credential found during a
 /// file-system scan.
@@ -56,6 +68,17 @@ const ENTROPY_THRESHOLD: f64 = 3.5;
 /// I/O errors on individual files are logged with `tracing::warn` and skipped;
 /// the function always returns a (possibly empty) `Vec`.
 pub fn scan_path(path: &Path) -> Vec<DetectedKey> {
+    scan_path_with_values(path)
+        .into_iter()
+        .map(|dkv| dkv.meta)
+        .collect()
+}
+
+/// Same as [`scan_path`], but each result also carries the plaintext value
+/// wrapped in `SecretBox<String>`. Intended for backend session stores that
+/// commit the secrets into the vault. The plaintext **must not** be serialized
+/// to the frontend.
+pub fn scan_path_with_values(path: &Path) -> Vec<DetectedKeyWithValue> {
     if path.is_file() {
         return scan_file(path);
     }
@@ -163,8 +186,8 @@ fn is_scannable(path: &Path) -> bool {
     false
 }
 
-/// Scan a single file and return all detected keys.
-fn scan_file(path: &Path) -> Vec<DetectedKey> {
+/// Scan a single file and return all detected keys (with plaintext values).
+fn scan_file(path: &Path) -> Vec<DetectedKeyWithValue> {
     // Size guard.
     if let Ok(meta) = std::fs::metadata(path) {
         if meta.len() > MAX_FILE_SIZE {
@@ -215,64 +238,73 @@ fn scan_file(path: &Path) -> Vec<DetectedKey> {
 }
 
 /// Process `.env`-style content: extract `KEY=value` pairs, evaluate each value.
-fn parse_env_entries(content: &str, path_str: &str) -> Vec<DetectedKey> {
+fn parse_env_entries(content: &str, path_str: &str) -> Vec<DetectedKeyWithValue> {
     let mut results = Vec::new();
     for (line, key, value) in parse_env_file(content) {
-        if let Some(dk) = evaluate_value(&value, path_str, line, Some(key)) {
-            results.push(dk);
+        if let Some(dkv) = evaluate_value(value, path_str, line, Some(key)) {
+            results.push(dkv);
         }
     }
     results
 }
 
 /// Process generic text (JSON/TS/JS): extract string literals, evaluate each.
-fn parse_generic_entries(content: &str, path_str: &str) -> Vec<DetectedKey> {
+fn parse_generic_entries(content: &str, path_str: &str) -> Vec<DetectedKeyWithValue> {
     let mut results = Vec::new();
     for (line, value) in parse_generic_strings(content, MIN_GENERIC_STRING_LEN) {
-        if let Some(dk) = evaluate_value(&value, path_str, line, None) {
-            results.push(dk);
+        if let Some(dkv) = evaluate_value(value, path_str, line, None) {
+            results.push(dkv);
         }
     }
     results
 }
 
-/// Evaluate a single candidate value and return a `DetectedKey` if it passes
-/// issuer-regex or entropy thresholds, or `None` if it should be discarded.
+/// Evaluate a single candidate value and return a `DetectedKeyWithValue` if it
+/// passes issuer-regex or entropy thresholds, or `None` if it should be
+/// discarded. Takes ownership of `value` so the plaintext can be moved into
+/// the returned `SecretBox` without an extra clone.
 fn evaluate_value(
-    value: &str,
+    value: String,
     path_str: &str,
     line: u32,
     env_var_name: Option<String>,
-) -> Option<DetectedKey> {
+) -> Option<DetectedKeyWithValue> {
     if value.is_empty() {
         return None;
     }
 
-    let hint = value_hint(value);
+    let hint = value_hint(&value);
 
     // 1. Issuer regex match — highest priority.
-    if let Some(slug) = match_issuer(value) {
-        return Some(DetectedKey {
-            file_path: path_str.to_string(),
-            line,
-            env_var_name,
-            issuer_slug: Some(slug.to_string()),
-            value_hint: hint,
-            confidence: 0.95,
+    if let Some(slug) = match_issuer(&value) {
+        let slug_owned = slug.to_string();
+        return Some(DetectedKeyWithValue {
+            meta: DetectedKey {
+                file_path: path_str.to_string(),
+                line,
+                env_var_name,
+                issuer_slug: Some(slug_owned),
+                value_hint: hint,
+                confidence: 0.95,
+            },
+            value: SecretBox::new(Box::new(value)),
         });
     }
 
     // 2. Entropy-only detection.
-    let entropy = shannon_entropy(value);
+    let entropy = shannon_entropy(&value);
     if entropy > ENTROPY_THRESHOLD && value.len() >= MIN_ENTROPY_VALUE_LEN {
         let confidence = (0.40 + (entropy - ENTROPY_THRESHOLD) * 0.30_f64).min(0.85);
-        return Some(DetectedKey {
-            file_path: path_str.to_string(),
-            line,
-            env_var_name,
-            issuer_slug: None,
-            value_hint: hint,
-            confidence,
+        return Some(DetectedKeyWithValue {
+            meta: DetectedKey {
+                file_path: path_str.to_string(),
+                line,
+                env_var_name,
+                issuer_slug: None,
+                value_hint: hint,
+                confidence,
+            },
+            value: SecretBox::new(Box::new(value)),
         });
     }
 

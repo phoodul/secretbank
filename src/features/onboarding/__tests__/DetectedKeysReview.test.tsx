@@ -100,6 +100,7 @@ function renderReview(
     <MemoryRouter>
       <DetectedKeysReview
         detected={detected}
+        sessionId="test-session"
         scannedPath={scannedPath}
         existingCredentials={existing}
       />
@@ -185,7 +186,7 @@ describe("DetectedKeysReview", () => {
     expect(checkboxes[0]).toBeDisabled();
   });
 
-  it("Import 클릭 → project_create → credential_create × n → usage_create × n 순서로 호출", async () => {
+  it("Import 클릭 → 단일 env_scan_commit 호출로 vault 저장 (project+creds+usages 일괄)", async () => {
     const detected = [
       mockDetected({ env_var_name: "OPENAI_API_KEY", value_hint: "aaaa" }),
       mockDetected({
@@ -199,9 +200,16 @@ describe("DetectedKeysReview", () => {
     invokeSpy.mockImplementation((cmd: string) => {
       if (cmd === "railguard_preview") return Promise.resolve([]);
       if (cmd === "project_list") return Promise.resolve([]);
-      if (cmd === "project_create") return Promise.resolve("01HZPROJECT00000000000000");
-      if (cmd === "credential_create") return Promise.resolve("01HZCRED00000000000000000");
-      if (cmd === "usage_create") return Promise.resolve("01HZUSAGE0000000000000000");
+      if (cmd === "env_scan_commit") {
+        return Promise.resolve({
+          projectId: "01HZPROJECT00000000000000",
+          projectName: "my-project",
+          credentialsCreated: 2,
+          usagesCreated: 2,
+          failed: 0,
+          rows: [],
+        });
+      }
       return Promise.resolve(null);
     });
 
@@ -220,31 +228,25 @@ describe("DetectedKeysReview", () => {
           (c) =>
             c !== "railguard_preview" && c !== "project_list" && c !== "usage_list_for_project",
         );
-      expect(commands).toEqual([
-        "project_create",
-        "credential_create",
-        "usage_create",
-        "credential_create",
-        "usage_create",
-      ]);
+      expect(commands).toEqual(["env_scan_commit"]);
     });
 
-    const projectCall = invokeSpy.mock.calls.find((c) => c[0] === "project_create");
-    expect(projectCall?.[1]).toMatchObject({
-      input: expect.objectContaining({
-        name: "my-project",
-        local_path: "/home/u/my-project",
-      }),
+    const commitCall = invokeSpy.mock.calls.find((c) => c[0] === "env_scan_commit");
+    expect(commitCall?.[1]).toMatchObject({
+      sessionId: "test-session",
+      selectedIndices: [0, 1],
+      projectName: "my-project",
     });
   });
 
-  it("issuer 매칭 실패(entropy-only) 항목은 기본 선택되지 않는다", () => {
+  it("issuer 매칭 실패(entropy-only) 항목도 체크 가능하고 기본 선택된다 (Fix B)", () => {
     const detected = [
       mockDetected({ issuer_slug: null, env_var_name: "UNKNOWN", value_hint: "cccc" }),
     ];
     renderReview(detected);
     const [cb] = screen.getAllByRole("checkbox");
-    expect(cb).not.toBeChecked();
+    expect(cb).toBeChecked();
+    expect(cb).not.toBeDisabled();
   });
 
   it("RAILGUARD CTA 배너가 표시되고 /railguard?projectPath=... 링크를 포함한다", async () => {
@@ -410,8 +412,7 @@ describe("DetectedKeysReview", () => {
     await waitFor(() => {
       const cmds = invokeSpy.mock.calls.map((c) => c[0] as string);
       expect(cmds).toContain("credential_rotate_value");
-      expect(cmds).not.toContain("credential_create");
-      expect(cmds).not.toContain("project_create");
+      expect(cmds).not.toContain("env_scan_commit");
     });
 
     const rotateCall = invokeSpy.mock.calls.find((c) => c[0] === "credential_rotate_value");
@@ -496,9 +497,16 @@ describe("DetectedKeysReview", () => {
           },
         ]);
       }
-      if (cmd === "project_create") return Promise.resolve("01HZNEWPROJECT000000000");
-      if (cmd === "credential_create") return Promise.resolve("01HZNEWCRED0000000000");
-      if (cmd === "usage_create") return Promise.resolve("01HZNEWUSAGE000000000");
+      if (cmd === "env_scan_commit") {
+        return Promise.resolve({
+          projectId: "01HZNEWPROJECT000000000",
+          projectName: "proj",
+          credentialsCreated: 1,
+          usagesCreated: 1,
+          failed: 0,
+          rows: [],
+        });
+      }
       return Promise.resolve(null);
     });
 
@@ -509,7 +517,7 @@ describe("DetectedKeysReview", () => {
       expect(screen.queryByTestId("rotated-badge-0")).not.toBeInTheDocument();
     });
 
-    // Import button should exist and clicking creates a new credential.
+    // Import button should exist and clicking issues a single env_scan_commit.
     const user = userEvent.setup();
     const importButton = screen.getByRole("button", {
       name: /import 1 key|1개 가져오기|1個インポート|导入 1 个/i,
@@ -522,7 +530,7 @@ describe("DetectedKeysReview", () => {
         .filter(
           (c) => !["railguard_preview", "project_list", "usage_list_for_project"].includes(c),
         );
-      expect(cmds).toContain("credential_create");
+      expect(cmds).toContain("env_scan_commit");
       expect(cmds).not.toContain("credential_rotate_value");
     });
   });
@@ -562,9 +570,16 @@ describe("DetectedKeysReview", () => {
           },
         ]);
       }
-      if (cmd === "project_create") return Promise.resolve("01HZNEWPROJECT000000001");
-      if (cmd === "credential_create") return Promise.resolve("01HZNEWCRED0000000001");
-      if (cmd === "usage_create") return Promise.resolve("01HZNEWUSAGE000000001");
+      if (cmd === "env_scan_commit") {
+        return Promise.resolve({
+          projectId: "01HZNEWPROJECT000000001",
+          projectName: "proj",
+          credentialsCreated: 1,
+          usagesCreated: 1,
+          failed: 0,
+          rows: [],
+        });
+      }
       return Promise.resolve(null);
     });
 
@@ -583,7 +598,7 @@ describe("DetectedKeysReview", () => {
 
     await waitFor(() => {
       const cmds = invokeSpy.mock.calls.map((c) => c[0] as string);
-      expect(cmds).toContain("credential_create");
+      expect(cmds).toContain("env_scan_commit");
       expect(cmds).not.toContain("credential_rotate_value");
     });
   });

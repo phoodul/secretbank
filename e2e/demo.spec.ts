@@ -519,13 +519,31 @@ const DETECTED_KEYS = [
 ];
 
 test("demo: save-credential", async ({ page }) => {
-  // Drop-zone 시나리오 — `/onboarding/scan?path=...` 가 env_scan_folder 호출 →
-  // DetectedKeysReview 가 발견된 키들을 보여줌. 사용자가 매핑하고 import.
+  // Drop-zone 시나리오 — `/onboarding/scan?path=...` 가 env_scan_prepare 호출 →
+  // DetectedKeysReview 가 발견된 키들을 보여줌. 사용자가 매핑하고 env_scan_commit.
   const map: CommandMap = {
     ...makeUnlockedBase(),
     credential_list: { kind: "ok", value: [] },
-    credential_create: { kind: "ok", value: "cred-new-id" },
-    env_scan_folder: { kind: "ok", value: DETECTED_KEYS },
+    env_scan_prepare: {
+      kind: "ok",
+      value: {
+        sessionId: "demo-session",
+        entries: DETECTED_KEYS,
+        expiresAtUnixMs: Date.now() + 5 * 60 * 1000,
+        scannedPath: "/Users/demo/Projects/billing",
+      },
+    },
+    env_scan_commit: {
+      kind: "ok",
+      value: {
+        projectId: "demo-project",
+        projectName: "billing",
+        credentialsCreated: DETECTED_KEYS.length,
+        usagesCreated: DETECTED_KEYS.length,
+        failed: 0,
+        rows: [],
+      },
+    },
     railguard_preview: { kind: "ok", value: { sites: [] } },
   };
   await page.addInitScript({ content: buildInitScript(map, onboardingDoneSettings) });

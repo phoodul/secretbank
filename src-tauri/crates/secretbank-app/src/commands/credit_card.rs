@@ -435,6 +435,7 @@ mod tests {
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
             import_sessions: Arc::new(crate::import::ImportSessionStore::new()),
+            env_scan_sessions: Arc::new(crate::import::EnvScanSessionStore::new()),
             relay_client: Arc::new(
                 crate::services::relay_client::RelayClient::new(
                     url::Url::parse("http://localhost").unwrap(),
@@ -568,6 +569,7 @@ mod tests {
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
             import_sessions: Arc::new(crate::import::ImportSessionStore::new()),
+            env_scan_sessions: Arc::new(crate::import::EnvScanSessionStore::new()),
             relay_client: Arc::new(
                 crate::services::relay_client::RelayClient::new(
                     url::Url::parse("http://localhost").unwrap(),
@@ -645,6 +647,7 @@ mod tests {
             kill_switch_tokens: Arc::new(ConfirmTokenStore::default()),
             issuer_kill_switch_tokens: Arc::new(IssuerConfirmTokenStore::default()),
             import_sessions: Arc::new(crate::import::ImportSessionStore::new()),
+            env_scan_sessions: Arc::new(crate::import::EnvScanSessionStore::new()),
             relay_client: Arc::new(
                 crate::services::relay_client::RelayClient::new(
                     url::Url::parse("http://localhost").unwrap(),

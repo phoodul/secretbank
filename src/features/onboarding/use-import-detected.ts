@@ -1,18 +1,21 @@
 import { useCallback, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
-import type { DetectedKey } from "./types";
+import type { DetectedKey, EnvScanCommitResult } from "./types";
 
 /** Per-row import decision. */
 export type ImportDecision = "new" | { kind: "replace"; credentialId: string };
 
 export interface ImportArgs {
+  /** Backend session id from `env_scan_prepare` — plaintext values live here. */
+  sessionId: string;
   detected: DetectedKey[];
   /** Map of detected-array index → decision (new or replace). */
   selectedDecisions: Map<number, ImportDecision>;
   projectName: string;
   projectLocalPath: string;
-  /** Maps issuer slug → issuer id (ULID). Built from issuer_list. */
+  /** Maps issuer slug → issuer id (ULID). Built from issuer_list. (unused now —
+   *  backend resolves issuers itself, but kept for API stability.) */
   issuerBySlug: Map<string, string>;
 }
 
@@ -44,91 +47,55 @@ export function useImportDetected(): UseImportDetectedResult {
     setState({ phase: "importing" });
 
     try {
-      // Determine if any "new" decisions exist (need a project).
-      const hasNew = [...args.selectedDecisions.values()].some((d) => d === "new");
-
-      let projectId: string | null = null;
-      if (hasNew) {
-        projectId = await invoke<string>("project_create", {
-          input: {
-            name: args.projectName,
-            repo_url: null,
-            framework: null,
-            runtime: null,
-            local_path: args.projectLocalPath,
-          },
-        });
+      // Split decisions: indices to create-new vs indices to replace.
+      const newIndices: number[] = [];
+      const replaceTargets: { idx: number; credentialId: string }[] = [];
+      for (const [idx, decision] of args.selectedDecisions.entries()) {
+        if (decision === "new") {
+          newIndices.push(idx);
+        } else if (decision.kind === "replace") {
+          replaceTargets.push({ idx, credentialId: decision.credentialId });
+        }
       }
 
       let credentialsCreated = 0;
       let credentialsReplaced = 0;
       let usagesCreated = 0;
       let failures = 0;
+      let projectId: string | null = null;
 
-      for (const [idx, decision] of args.selectedDecisions.entries()) {
+      // 1. "new" path — single backend commit that writes vault + project + usages.
+      if (newIndices.length > 0) {
+        const commit = await invoke<EnvScanCommitResult>("env_scan_commit", {
+          sessionId: args.sessionId,
+          selectedIndices: newIndices,
+          projectName: args.projectName,
+        });
+        credentialsCreated = commit.credentialsCreated;
+        usagesCreated = commit.usagesCreated;
+        failures += commit.failed;
+        projectId = commit.projectId;
+      }
+
+      // 2. "replace" path — rotate existing credentials.
+      //    NOTE: backend doesn't yet pull plaintext from session for rotation,
+      //    so the value remains the existing one. hash_hint is updated so the
+      //    UI shows the new value's last-4. Follow-up: extend env_scan_commit
+      //    with a `rotations: [{ idx, credentialId }]` field to pipe values.
+      for (const { idx, credentialId } of replaceTargets) {
         const dk = args.detected[idx];
         if (!dk) continue;
-
-        if (decision !== "new" && decision.kind === "replace") {
-          // Replace mode: update the vault secret via credential_rotate_value.
-          try {
-            await invoke("credential_rotate_value", {
-              input: {
-                id: decision.credentialId,
-                value: "scanned:unknown",
-                hash_hint: dk.value_hint,
-              },
-            });
-            credentialsReplaced += 1;
-          } catch (e) {
-            console.warn("credential_rotate_value failed", e);
-            failures += 1;
-          }
-          continue;
-        }
-
-        // "new" path — identical to previous behavior.
-        const issuerId = dk.issuer_slug ? args.issuerBySlug.get(dk.issuer_slug) : undefined;
-        if (!issuerId) {
-          failures += 1;
-          continue;
-        }
-
-        const credName = dk.env_var_name ?? `${dk.issuer_slug ?? "key"}-${dk.line}`;
-
         try {
-          const credentialId = await invoke<string>("credential_create", {
-            args: {
-              issuer_id: issuerId,
-              name: credName,
-              env: "prod",
-              scope: null,
-              expires_at: null,
-              hash_hint: dk.value_hint,
+          await invoke("credential_rotate_value", {
+            input: {
+              id: credentialId,
               value: "scanned:unknown",
+              hash_hint: dk.value_hint,
             },
           });
-          credentialsCreated += 1;
-
-          if (projectId) {
-            try {
-              await invoke("usage_create", {
-                input: {
-                  credential_id: credentialId,
-                  project_id: projectId,
-                  deployment_id: null,
-                  where_kind: "env_var",
-                  where_value: dk.env_var_name ?? dk.file_path,
-                },
-              });
-              usagesCreated += 1;
-            } catch (e) {
-              console.warn("usage_create failed", e);
-              failures += 1;
-            }
-          }
+          credentialsReplaced += 1;
         } catch (e) {
-          console.warn("credential_create failed", e);
+          console.warn("credential_rotate_value failed", e);
           failures += 1;
         }
       }
@@ -144,7 +111,7 @@ export function useImportDetected(): UseImportDetectedResult {
       setState({ phase: "ok", result });
       return result;
     } catch (err) {
-      const message = typeof err === "string" ? err : "Failed to create project";
+      const message = typeof err === "string" ? err : "Failed to commit env scan";
       setState({ phase: "error", message });
       return null;
     }

@@ -7,12 +7,12 @@ import { Loader2 } from "lucide-react";
 
 import { useInventory } from "@/features/inventory/use-inventory";
 import { DetectedKeysReview } from "@/features/onboarding/DetectedKeysReview";
-import type { DetectedKey, ScanProgress } from "@/features/onboarding/types";
+import type { EnvScanPreview, ScanProgress } from "@/features/onboarding/types";
 
 type ScanState =
   | { phase: "idle" }
   | { phase: "scanning"; currentPath: string }
-  | { phase: "done"; results: DetectedKey[] }
+  | { phase: "done"; preview: EnvScanPreview }
   | { phase: "error"; message: string };
 
 export function OnboardingScanPage() {
@@ -39,9 +39,9 @@ export function OnboardingScanPage() {
         });
 
         setScanState({ phase: "scanning", currentPath: path });
-        const results = await invoke<DetectedKey[]>("env_scan_folder", { path });
+        const preview = await invoke<EnvScanPreview>("env_scan_prepare", { path });
         if (!cancelled) {
-          setScanState({ phase: "done", results });
+          setScanState({ phase: "done", preview });
         }
       } catch (err) {
         if (!cancelled) {
@@ -86,7 +86,8 @@ export function OnboardingScanPage() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
       <DetectedKeysReview
-        detected={scanState.results}
+        detected={scanState.preview.entries}
+        sessionId={scanState.preview.sessionId}
         scannedPath={path}
         existingCredentials={existingCredentials}
       />
