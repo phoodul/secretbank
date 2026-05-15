@@ -1,7 +1,7 @@
 {
   "name": "secretbank",
   "private": true,
-  "version": "0.1.0-pre17",
+  "version": "0.1.0-pre18",
   "type": "module",
   "scripts": {
     "dev": "vite",

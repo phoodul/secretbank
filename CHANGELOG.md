@@ -7,7 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Continuing development beyond v0.1.0-pre17. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+Continuing development beyond v0.1.0-pre18. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+
+## [0.1.0-pre18] - 2026-05-15
+
+dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일괄 수정.
+
+### Fixed
+- **(A) `.gitignore` 무시** — env_scanner 가 ignore 룰을 존중하던 탓에 실제
+  사용 중인 `.env` (거의 항상 gitignored) 가 스캔에서 누락되던 문제. ignore
+  레이어 비활성 + `node_modules` / `.git` / `target` / `dist` / `.next` 등
+  18개 노이즈 디렉토리는 `filter_entry` 로 prune.
+- **(B) Issuer 미인식 entry import 허용** — 체크박스가 `!dk.issuer_slug` 로
+  강제 disabled 되어 entropy-only 매칭 항목을 가져올 수 없던 문제. backend
+  가 fallback issuer (DB 첫 항목) 로 NOT NULL 제약 만족.
+- **(C) Empty state 탈출구 추가** — 결과 0건 화면에 텍스트만 있고 navigate
+  버튼이 없어 사용자가 앱을 강제 종료해야 했던 문제. "홈으로" / "다른 폴더
+  스캔" 두 버튼 추가 (4개 locale i18n).
+- **(D) 평문 값 vault 자동 저장** — 핵심 missing feature. 기존엔 frontend 가
+  `value: "scanned:unknown"` placeholder 만 저장해서 사용자가 한 건씩 수동
+  rotate 해야 했음. CSV import 의 prepare/commit 패턴 차용.
+
+### Added
+- `DetectedKeyWithValue` (`secretbank-connectors`) — `DetectedKey` + 평문
+  `SecretBox<String>` 페어. drop 시 zeroize (secrecy crate).
+- `EnvScanSessionStore` (`secretbank-app/import`) — 5분 TTL, one-shot take,
+  random 16-byte hex session ID. `ImportSessionStore` 와 같은 패턴.
+- `env_scan_prepare` Tauri command — 스캔 → 세션에 평문 보관 → preview 반환
+  (`{ sessionId, entries, expiresAtUnixMs, scannedPath }`).
+- `env_scan_commit` Tauri command — `session_id + selectedIndices +
+  projectName` → vault `put_secret` + credential + project + usage 일괄 저장
+  (vault write lock 1회만 획득).
+
+### Changed
+- `secretbank-connectors::env_scanner::scan_path` 는 thin wrapper —
+  내부적으로 `scan_path_with_values` 호출 후 평문 strip.
+- 옛 `env_scan_folder` Tauri command 제거 — frontend 가 새 prepare/commit
+  쌍 사용. wire protocol breaking change.
 
 ## [0.1.0-pre17] - 2026-05-13
 
