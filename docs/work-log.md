@@ -1,5 +1,36 @@
 # Work Log
 
+## 2026-05-14 ~ 2026-05-15 (resume 세션) — dogfooding 4건 root cause fix + v0.1.0-pre18 release + Cloudflare 보안 이슈 6/8 해소
+
+### 5 commits
+
+| # | Commit | 작업 |
+|:--|:--|:--|
+| 1 | `2232e5d` | fix(onboarding): 감지 키 0건 empty state — Back 버튼 추가 (Fix C) |
+| 2 | `afae06a` | fix(scanner): .gitignore 무시 — 실제 .env 파일도 스캔 (Fix A) |
+| 3 | `e949b36` | fix(onboarding): 폴더 스캔 → vault 자동 저장 — prepare/commit + issuer-less (Fix D+B) |
+| 4 | `0c1998f` | chore(release): version bump 0.1.0-pre17 → 0.1.0-pre18 + CHANGELOG |
+| 5 | `1a16eba` | fix(ci): eslint scripts/ glob 에 .mjs 포함 (no-undef CI red 해소) |
+
+### 핵심 성과
+
+- **dogfooding 발견 4개 root cause 일괄 해결** (A: .gitignore bypass / B: issuer-less import / C: empty state 탈출구 / D: 평문 vault 자동 저장)
+- **CSV import 의 prepare/commit 패턴 차용** — `EnvScanSessionStore` + `env_scan_prepare`/`env_scan_commit` Tauri commands. 평문은 5분 TTL 세션에 보관 (drop 시 zeroize), commit 시 vault `put_secret` + project + credential + usage 일괄 저장 (vault write lock 1회만)
+- **v0.1.0-pre18 release** — 10 assets 빌드 + publish, 5 platform 다운로드 200 OK
+- **Cloudflare 보안 이슈 6/8 해소** — 2FA 활성화, api-vault.app archive + auto-renewal OFF, secretbank.app Block AI bots ON (17개 AI Training 차단, Search/Archiver/AI Search Allow 유지)
+
+### 검증
+
+- Rust app lib 287/287 ✅, connectors 36/36 ✅
+- Frontend onboarding 37/37 ✅
+- Clippy app lib clean ✅
+
+### 남은 사용자 액션 (다음 세션)
+
+- 실제 dogfooding 검증 — secretbank.app/download/win 다운로드 → 설치 → 폴더 드롭
+- Cloudflare Security Center 에서 stale 이슈 2건 "Archive selected" (2FA + Security.txt)
+- GitHub OAuth App callback URL 을 `http://127.0.0.1` 로 갱신 + curl 검증
+
 ## 2026-05-10 (저녁 resume 세션) — v0.1.0-pre12 release cut + dogfooding 진입
 
 ### 1 commit

@@ -2,7 +2,49 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-11 ~ 2026-05-13 (3-day resume 세션 — favicon/icon 통일 + OAuth loopback 재작성 + binary 다운로드 정책 + dogfooding Google OAuth + 동기화 동작 확인). **Google OAuth + 동기화 ✅** + 영구 OAuth flow (RFC 8252 loopback) + 영구 distribution 정책 박음.
+- **Time:** 2026-05-14 ~ 2026-05-15 (resume 세션 — dogfooding 발견 4개 root cause 일괄 수정 + v0.1.0-pre18 release cut + Cloudflare 보안 이슈 6/8 해소). 사용자 시간 부족으로 조기 종료.
+- **이번 세션 commits (5건)**:
+  1. `2232e5d` fix(onboarding): 감지 키 0건 empty state — Back 버튼 추가 (Fix C)
+  2. `afae06a` fix(scanner): .gitignore 무시 — 실제 .env 파일도 스캔 (Fix A)
+  3. `e949b36` fix(onboarding): 폴더 스캔 → vault 자동 저장 — prepare/commit 패턴 + issuer-less import 허용 (Fix D+B)
+  4. `0c1998f` chore(release): version bump 0.1.0-pre17 → 0.1.0-pre18 + CHANGELOG
+  5. `1a16eba` fix(ci): eslint scripts/ glob 에 .mjs 포함 (no-undef CI red 해소)
+- **dogfooding 발견 root cause 4건 모두 해결**:
+  - **A** `.gitignore` 무시 — `ignore::WalkBuilder` 가 ignore 룰 존중 → 실제 사용 중인 `.env` (거의 항상 gitignored) 누락. 모든 ignore layer 비활성 + 18개 노이즈 디렉토리는 `filter_entry` 로 prune.
+  - **B** issuer 미인식 entry import 차단 — 체크박스 `!dk.issuer_slug` 강제 disabled 제거. backend `env_scan_commit` 가 fallback issuer (DB 첫 항목) 로 NOT NULL 제약 만족.
+  - **C** Empty state 탈출구 부재 — "홈으로" / "다른 폴더 스캔" 두 버튼 (4 locale i18n).
+  - **D** 평문 값 vault 저장 안 됨 (`value: "scanned:unknown"` placeholder) — CSV import 의 prepare/commit 패턴 차용.
+    - secretbank-connectors: `DetectedKeyWithValue` 추가 + `scan_path_with_values()`. evaluate_value 가 `SecretBox<String>` 평문 페어로 반환 (drop 시 zeroize).
+    - secretbank-app/import: `EnvScanSessionStore` (5분 TTL, one-shot, random 16-byte hex).
+    - `env_scan_prepare` Tauri command: 스캔 → 세션 보관 → preview 반환. `env_scan_commit`: session_id + 선택 인덱스 + project_name → vault `put_secret` + credential + project + usage 일괄 저장 (vault write lock 1회만 획득). 옛 `env_scan_folder` 제거.
+    - Frontend: `OnboardingScanPage` + `DetectedKeysReview` + `use-import-detected` 일관 갱신. 단일 `env_scan_commit` 호출.
+- **검증**:
+  - Rust app lib 287/287 ✅, connectors 36/36 ✅
+  - Frontend onboarding 37/37 ✅ (5건 wire protocol 갱신: project_create+credential_create+usage_create 다중 → env_scan_commit 단일)
+  - Clippy app lib clean ✅
+  - e2e/demo.spec.ts mock 갱신
+- **v0.1.0-pre18 release 결과**:
+  - ✅ Draft 빌드 성공 (10 assets: Win .exe+.sig / macOS .dmg + .app.tar.gz + .sig / Linux .AppImage+.sig + .deb + .rpm + latest.json)
+  - ✅ Draft → public publish 완료 (`gh release edit --draft=false --prerelease`)
+  - ✅ `secretbank.app/download/<platform>` 5 platform 모두 200 OK (win 9.5MB / mac 30.8MB / appimage 92.6MB / deb 16.5MB / rpm 16.5MB)
+  - ❌ publish-updater-manifest job 실패 (pre12~pre17 와 동일 패턴, branch protection) — Tauri auto-updater 만 영향, dogfooding 흐름엔 무영향
+- **Cloudflare 보안 이슈 진전 (8/8 → 5/5 → 3/5)**:
+  - ✅ Cloudflare 계정 2FA 활성화 (Microsoft Authenticator + 백업 코드 분리 저장)
+  - ✅ api-vault.app archive 2건 (Block AI bots + Security.txt) — auto-renewal OFF + 만료 대기 (zone 자동 삭제). Cloudflare Registrar 등록 도메인이라 zone 단독 삭제 불가능 우회.
+  - ✅ secretbank.app AI Labyrinth 이슈 사라짐 (자동)
+  - ✅ secretbank.app **Block AI bots** toggle ON (17개 AI Training 차단, Search Engine/Archiver/AI Search Result 는 Allow 유지 — SEO 보존)
+  - ✅ Managed robots.txt 이미 ON 확인 (응답에 Cloudflare Managed content marker)
+  - ⏳ 남은 3건 (다음 세션):
+    - 2FA "Users without MFA" Moderate — stale scan (실제 활성화됨, archive 만 필요)
+    - secretbank.app Security.txt — stale scan (실제 200 OK, archive 만 필요)
+    - Turnstile (account-level, 선택 — form 없으니 skip 가능)
+- **남은 사용자 액션 (다음 세션)**:
+  - **Phase A** dogfooding 실제 검증 — secretbank.app/download/win 다운로드 → 설치 → gitignored `.env` 가 있는 프로젝트 폴더 드래그앤드롭 → 키 발견 + import + vault reveal 검증
+  - **Phase B-4** Cloudflare Security Center → Security Insights → 2FA + Security.txt 두 행 체크 → "Archive selected" 클릭
+  - **Phase C** GitHub OAuth App callback URL 을 `http://127.0.0.1` 로 갱신 + relay backend curl 검증
+- **이전 세션 (2026-05-11 ~ 2026-05-13)**: 3-day resume — favicon/icon 통일 + OAuth loopback 재작성 + binary 다운로드 정책 + Google OAuth 동기화 검증 ✅. 상세는 아래 "이전" 섹션.
+
+### 이전 — 2026-05-11 ~ 2026-05-13 (3-day resume 세션) — favicon/icon 통일 + OAuth loopback 재작성 + binary 다운로드 정책 + dogfooding Google OAuth + 동기화 동작 확인. **Google OAuth + 동기화 ✅** + 영구 OAuth flow (RFC 8252 loopback) + 영구 distribution 정책 박음.
 - **이번 resume 세션 누적 commits 약 25+ (origin/main HEAD `42e0512`)**:
   - **Favicon/Icon 라운드** (`df05247` → `23e38cf` revert → `c3abec1` 통일): site nav VaultMechanism SVG → favicon (SVG + 6 PNG + ICO) + 데스크탑 icon 통일 (image_only.png 폐기, favicon SVG single source).
   - **OAuth backend setup** (`922709b`, `130c76c`, `7e0b9d8`): new Google OAuth client_id (`522239075495-...`) + deploy-relay CI fix (--ignore-workspace).
