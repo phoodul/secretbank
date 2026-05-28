@@ -2,7 +2,19 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-05-14 ~ 2026-05-15 (resume 세션 — dogfooding 발견 4개 root cause 일괄 수정 + v0.1.0-pre18 release cut + Cloudflare 보안 이슈 6/8 해소). 사용자 시간 부족으로 조기 종료.
+- **Time:** 2026-05-29 (resume 세션 — publish-updater-manifest 영구 fix, 옵션 D)
+- **commit:** `4ccb0e9` fix(ci): publish-updater-manifest 의 redundant main push 제거
+- **Root cause 확정:** publish-updater-manifest job 의 `git push origin HEAD:main` step 이 branch protection (4 required status checks, `enforce_admins: false`) 에 막혀 매 release `GH006` 실패. 이게 같은 job 을 fail 시켜 → `publish-release`(draft→public) skip → 사용자가 매번 수동 `gh release edit --draft=false` 하던 원인.
+- **핵심 발견:** 그 push step 은 **이미 redundant dead code**. pre13 에서 relay Worker `/api/latest` + `/releases.json` 라우트 도입 후, 두 endpoint 모두 GitHub Release 의 `latest.json` asset 을 라이브 stream/proxy (`ee/secretbank-relay/src/routes/site-api.ts`). 정적 `site/*.json` 을 읽는 소비자 0건 (전역 grep 확인). 라이브 검증: `secretbank.app/api/latest` → `0.1.0-pre18` + `/releases.json` → `v0.1.0-pre18` = auto-updater 이미 작동 중.
+- **수정:** `release.yml` 의 "Checkout main" + "Update site/...push" 두 step 삭제 (대체 설명 주석 추가), step 1 (latest.json asset 업로드) 유지. PAT·secret·branch protection 변경 불필요. 부수효과로 draft→public 자동화 복구. YAML 파싱 검증 OK.
+- **검증 한계:** end-to-end 는 real tag push 로만 확인 가능 (`dry_run` 은 이 job skip). step 1 은 pre18 에서 이미 성공·라이브 서빙 입증되어 신뢰도 높음. **다음 release(pre19/v0.1.0) 가 첫 실증.**
+- **부수:** `.gitignore` 에 `1PasswordExport-*.csv` 추가 (dogfooding 용 실제 평문 export 커밋 차단, 적용 확인). 정적 `site/latest.json`(pre11 freeze)/`site/releases.json` 는 dead 지만 Worker 라우트에 가려져 무해 — 삭제는 선택 cleanup 으로 보류.
+- **메모 정정:** 이전 세션들의 "auto-updater 만 영향" 표현은 pre12 시절 모델 기준 — pre13 Worker 라우트 도입으로 outdated 였음.
+- **다음 세션 후보:** (A) dogfooding 실제 검증 — secretbank.app/download/win 설치 → gitignored `.env` 스캔 → import → reveal / (B) Cloudflare Security Center archive 2행 / (C) GitHub OAuth callback URL `http://127.0.0.1` 갱신 / (E) M24 Phase 3-B secure_note / (F) site download UI Pages 배포 fix.
+
+---
+
+### 이전 — 2026-05-14 ~ 2026-05-15 (resume 세션 — dogfooding 발견 4개 root cause 일괄 수정 + v0.1.0-pre18 release cut + Cloudflare 보안 이슈 6/8 해소). 사용자 시간 부족으로 조기 종료.
 - **이번 세션 commits (5건)**:
   1. `2232e5d` fix(onboarding): 감지 키 0건 empty state — Back 버튼 추가 (Fix C)
   2. `afae06a` fix(scanner): .gitignore 무시 — 실제 .env 파일도 스캔 (Fix A)
