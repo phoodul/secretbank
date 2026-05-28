@@ -98,3 +98,7 @@ extension/.output/
 
 # logo source materials (작업 자료 — 실제 사용은 src-tauri/icons + extension/public/icon + site/og-image.png)
 logo_image/
+
+# dogfooding 용 평문 vault export (절대 커밋 금지 — 실제 비밀번호 포함)
+1PasswordExport-*.csv
+*-export-*.csv

@@ -326,69 +326,13 @@ jobs:
 
           gh release upload "$TAG" latest.json --clobber
 
-      # site/latest.json + site/releases.json 자동 갱신 — main 에 commit + push.
-      # 사용자 결정 [2026-05-08]: Previous releases UI 유지 + (d) release.yml 자동 생성.
-      - name: Checkout main for site/ commit
-        uses: actions/checkout@v6
-        with:
-          ref: main
-          fetch-depth: 1
-          path: main-checkout
-
-      - name: Update site/latest.json + site/releases.json on main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
-        shell: bash
-        working-directory: main-checkout
-        run: |
-          set -euo pipefail
-          cp ../latest.json site/latest.json
-
-          # site/releases.json 자동 생성 — 최근 20 release (메타데이터만, URL 은 site/index.html 의 classify() 에서 동적 구성)
-          gh release list --limit 20 --json tagName,name,publishedAt,isPrerelease,isDraft 2>/dev/null \
-            | jq --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
-              {
-                generated_at: $now,
-                releases: [
-                  .[]
-                  | select(.isDraft == false)
-                  | {
-                      tag_name: .tagName,
-                      name: .name,
-                      prerelease: .isPrerelease,
-                      published_at: .publishedAt,
-                      assets: []
-                    }
-                ]
-              }
-            ' > site/releases.json
-
-          # release 별 asset 메타데이터 (name + size) 채우기 — gh release view 로 각 tag 조회
-          TMP=$(mktemp)
-          jq -r '.releases[].tag_name' site/releases.json > "$TMP"
-          while IFS= read -r tag; do
-            ASSETS=$(gh release view "$tag" --json assets 2>/dev/null \
-              | jq '[.assets[] | {name: .name, size: .size}]' || echo "[]")
-            jq --arg tag "$tag" --argjson assets "$ASSETS" '
-              .releases |= map(if .tag_name == $tag then .assets = $assets else . end)
-            ' site/releases.json > site/releases.json.tmp
-            mv site/releases.json.tmp site/releases.json
-          done < "$TMP"
-          rm -f "$TMP"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/latest.json site/releases.json
-          if git diff --staged --quiet; then
-            echo "[skip] site/ 파일 변경 없음"
-            exit 0
-          fi
-          git commit -m "chore(release): $TAG site/{latest,releases}.json 자동 갱신 [skip ci]"
-          # 동시 release 가 없는 solo 환경이지만 안전장치
-          git pull --rebase origin main
-          git push origin HEAD:main
+      # NOTE: 옛 "site/{latest,releases}.json 을 main 에 commit+push" step 제거됨.
+      # secretbank.app/api/latest + /releases.json 는 relay Worker (ee/secretbank-relay
+      # /src/routes/site-api.ts) 가 GitHub Release asset 을 라이브 stream/proxy 하므로
+      # 정적 site/*.json 을 읽는 소비자가 없다. push step 은 branch protection
+      # (required status checks) 에 막혀 매 release 실패 → publish-release(draft→public)
+      # 까지 skip 시키던 redundant dead code 였다. 위 latest.json asset 업로드만으로
+      # auto-updater + site download grid 모두 충족.
 
   publish-release:
     needs: [create-release, build-tauri, publish-updater-manifest]
