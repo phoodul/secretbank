@@ -24,7 +24,10 @@ struct PresetSeed {
     domains: &'static [&'static str],
 }
 
-static PRESETS: [PresetSeed; 10] = [
+/// Number of real provider presets (excludes the synthetic "unknown" bucket).
+pub const UNCATEGORIZED_SLUG: &str = "unknown";
+
+static PRESETS: [PresetSeed; 11] = [
     PresetSeed {
         slug: "openai",
         display_name: "OpenAI",
@@ -154,6 +157,22 @@ static PRESETS: [PresetSeed; 10] = [
             "pages.dev",
         ],
     },
+    // 미분류 버킷 — 실제 provider 가 아니다. issuer-regex 에 안 맞는 키
+    // (scan/import fallback) 와 URL 미인식 수동 추가가 여기로 들어간다.
+    // 이전엔 fallback 이 "알파벳 첫 issuer"(BINARY 정렬상 AWS)로 떨어져
+    // 무관한 키가 AWS 로 오분류됐다.
+    PresetSeed {
+        slug: UNCATEGORIZED_SLUG,
+        display_name: "Uncategorized",
+        docs_url: None,
+        issue_url: None,
+        status_url: None,
+        security_feed_url: None,
+        icon_key: "unknown",
+        default_primary_label: None,
+        default_secondary_label: None,
+        domains: &[],
+    },
 ];
 
 // ---------------------------------------------------------------------------
@@ -224,15 +243,15 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn seed_inserts_10_presets() {
+    async fn seed_inserts_11_presets() {
         let (pool, _dir) = make_pool().await;
 
         let inserted = seed_issuer_presets(&pool).await.expect("seed");
-        assert_eq!(inserted, 10, "first run should insert exactly 10 rows");
+        assert_eq!(inserted, 11, "first run should insert exactly 11 rows");
 
         let repo = IssuerRepo::new(&pool);
         let list = repo.list().await.expect("list");
-        assert_eq!(list.len(), 10, "issuer table should contain 10 rows");
+        assert_eq!(list.len(), 11, "issuer table should contain 11 rows");
     }
 
     #[tokio::test]
@@ -240,14 +259,14 @@ mod tests {
         let (pool, _dir) = make_pool().await;
 
         let first = seed_issuer_presets(&pool).await.expect("first seed");
-        assert_eq!(first, 10);
+        assert_eq!(first, 11);
 
         let second = seed_issuer_presets(&pool).await.expect("second seed");
         assert_eq!(second, 0, "second run should insert 0 rows (all exist)");
 
         let repo = IssuerRepo::new(&pool);
         let list = repo.list().await.expect("list");
-        assert_eq!(list.len(), 10, "count must still be 10 after second seed");
+        assert_eq!(list.len(), 11, "count must still be 11 after second seed");
     }
 
     #[tokio::test]
@@ -271,6 +290,7 @@ mod tests {
             "anthropic",
             "paddle",
             "cloudflare",
+            "unknown",
         ]
         .iter()
         .map(|s| s.to_string())

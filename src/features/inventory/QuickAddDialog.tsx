@@ -201,8 +201,9 @@ export function QuickAddDialog({
     const preset = values.url ? matchIssuerByUrl(values.url) : undefined;
     const matchedIssuer = preset ? issuers.find((i) => i.slug === preset.slug) : undefined;
 
-    // issuer 없으면 첫 번째 issuers 또는 빈 문자열 (backend 가 generic 처리)
-    const issuer_id = matchedIssuer?.id ?? issuers[0]?.id ?? "";
+    // issuer 미인식 시 "Uncategorized" 버킷으로 (이전엔 issuers[0]=AWS 로 오분류).
+    const uncategorizedId = issuers.find((i) => i.slug === "unknown")?.id;
+    const issuer_id = matchedIssuer?.id ?? uncategorizedId ?? issuers[0]?.id ?? "";
 
     const urlVal = values.url?.trim() || undefined;
     const usernameVal = values.username?.trim() || undefined;

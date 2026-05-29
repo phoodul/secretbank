@@ -326,12 +326,14 @@ pub async fn do_import_csv_commit(
         .map(|i| (i.slug.clone(), i.id))
         .collect();
 
-    // "unknown" issuer fallback: list 에서 첫 번째 issuer 또는 None
-    // credential insert 는 issuer_id 가 NOT NULL 이므로 없으면 Internal 에러.
-    let fallback_issuer_id: Option<IssuerId> = {
-        let all = IssuerRepo::new(&ctx.pool).list().await?;
-        all.into_iter().next().map(|i| i.id)
-    };
+    // issuer-regex 에 안 맞는 행은 "Uncategorized" 버킷으로.
+    // (이전엔 "DB 첫 issuer" 로 떨어졌는데, BINARY 정렬상 첫 항목이 AWS 라
+    //  무관한 키가 전부 AWS 로 오분류됐다.)
+    let fallback_issuer_id: Option<IssuerId> = Some(
+        IssuerRepo::new(&ctx.pool)
+            .get_or_create_by_slug(crate::setup::UNCATEGORIZED_SLUG, "Uncategorized")
+            .await?,
+    );
 
     // 4. vault write lock 획득 (루프 전에 한 번만)
     let mut vault = ctx.vault.write().await;
@@ -828,6 +830,72 @@ mod tests {
             .expect("vault must have the secret");
         let value = String::from_utf8(secret.expose_secret().clone()).unwrap();
         assert_eq!(value, "ghp_secret123");
+    }
+
+    // -----------------------------------------------------------------------
+    // T_commit_fallback: issuer 미매칭 행은 "unknown"(Uncategorized) 버킷으로,
+    //   절대 AWS(BINARY 정렬상 알파벳 첫 issuer)로 가지 않는다.
+    //   그래프 AWS 오분류 회귀 방지.
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn commit_unmatched_issuer_falls_back_to_uncategorized_not_aws() {
+        let (_dir, pool) = make_pool().await;
+        let pool = Arc::new(pool);
+        let vault = make_unlocked_vault().await;
+        let ctx = make_ctx(pool.clone(), vault);
+
+        // 어떤 preset 도메인과도 안 맞는 URL → matched_issuer_slug == None → fallback
+        let mut tmp = NamedTempFile::new().expect("tempfile");
+        std::io::Write::write_all(
+            &mut tmp,
+            b"name,url,username,password\nMyApp,https://no-such-provider.example,bob,supersecret123",
+        )
+        .unwrap();
+
+        let preview = do_import_csv_prepare(tmp.path().to_str().unwrap(), &ctx)
+            .await
+            .expect("prepare");
+        assert_eq!(preview.rows.len(), 1);
+        assert!(
+            preview.rows[0].matched_issuer_slug.is_none(),
+            "example domain must not match any preset issuer"
+        );
+
+        let result = do_import_csv_commit(&preview.session_id, &[0], &ctx)
+            .await
+            .expect("commit must succeed");
+        assert_eq!(result.imported, 1);
+
+        let cred_id_str = result.rows[0]
+            .credential_id
+            .as_ref()
+            .expect("credential_id");
+        let cred_id: secretbank_core::CredentialId =
+            cred_id_str.parse().expect("parse credential id");
+        let cred = CredentialRepo::new(&pool)
+            .get_by_id(cred_id)
+            .await
+            .expect("get_by_id")
+            .expect("credential exists");
+
+        let issuer_repo = IssuerRepo::new(&pool);
+        let unknown_id = issuer_repo
+            .get_or_create_by_slug("unknown", "Uncategorized")
+            .await
+            .expect("unknown issuer");
+        let aws_id = issuer_repo
+            .get_or_create_by_slug("aws", "AWS")
+            .await
+            .expect("aws issuer");
+
+        assert_eq!(
+            cred.issuer_id, unknown_id,
+            "미매칭 키는 Uncategorized 버킷으로 가야 한다"
+        );
+        assert_ne!(
+            cred.issuer_id, aws_id,
+            "미매칭 키가 AWS 로 오분류되면 안 된다 (회귀)"
+        );
     }
 
     // -----------------------------------------------------------------------

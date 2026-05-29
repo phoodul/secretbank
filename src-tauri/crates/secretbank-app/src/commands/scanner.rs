@@ -208,8 +208,14 @@ pub async fn do_env_scan_commit(
     let slug_to_id: HashMap<String, IssuerId> =
         issuers.iter().map(|i| (i.slug.clone(), i.id)).collect();
 
-    // issuer 가 없는 entry 도 import 가능하도록 fallback issuer 사용 (DB 첫 issuer).
-    let fallback_issuer_id: Option<IssuerId> = issuers.into_iter().next().map(|i| i.id);
+    // issuer-regex 에 안 맞는 entry 는 "Uncategorized" 버킷으로.
+    // (이전엔 "DB 첫 issuer" 로 떨어졌는데, BINARY 정렬상 첫 항목이 AWS 라
+    //  무관한 키가 전부 AWS 로 오분류됐다.)
+    let fallback_issuer_id: Option<IssuerId> = Some(
+        IssuerRepo::new(&ctx.pool)
+            .get_or_create_by_slug(crate::setup::UNCATEGORIZED_SLUG, "Uncategorized")
+            .await?,
+    );
 
     // 4. 선택된 항목 중 적어도 하나라도 있을 때만 Project 생성 (없으면 dry pass)
     let project_id: Option<ProjectId> = if !selected_indices.is_empty() {

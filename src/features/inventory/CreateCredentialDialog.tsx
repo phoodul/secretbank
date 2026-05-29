@@ -277,7 +277,8 @@ export function CreateCredentialDialog({
                 onSubmit={async (
                   values: CreditCardFormValues & { brand: CardBrand; last_4: string },
                 ) => {
-                  const issuerId = issuers[0]?.id ?? "";
+                  const issuerId =
+                    issuers.find((i) => i.slug === "unknown")?.id ?? issuers[0]?.id ?? "";
                   try {
                     await invoke("create_credit_card", {
                       input: {
