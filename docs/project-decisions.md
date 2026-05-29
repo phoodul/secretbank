@@ -98,7 +98,6 @@
 
 > ⚠️ **상태 [2026-05-11 갱신]**: 이 결정은 **폐기**. 위 [2026-05-11 Brand identity 변경] 참조. final_logo 자산은 사용하지 않음.
 
-
 ### 결정
 
 - **공식 로고 채택**: `final_logo.png` (Gemini-generated, D 후속 진화 — 라피스 라줄리 shield + 폴리시드 골드 key + 락 + 매트릭스 그린 binary + PCB 회로 도트 + "SecretBank" 워드마크 + tagline "SECURELY MANAGE PASSWORDS & KEYS").

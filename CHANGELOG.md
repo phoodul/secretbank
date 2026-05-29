@@ -14,6 +14,7 @@ Continuing development beyond v0.1.0-pre18. Upcoming work: M24 Phase 3-B (secure
 dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일괄 수정.
 
 ### Fixed
+
 - **(A) `.gitignore` 무시** — env_scanner 가 ignore 룰을 존중하던 탓에 실제
   사용 중인 `.env` (거의 항상 gitignored) 가 스캔에서 누락되던 문제. ignore
   레이어 비활성 + `node_modules` / `.git` / `target` / `dist` / `.next` 등
@@ -29,6 +30,7 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
   rotate 해야 했음. CSV import 의 prepare/commit 패턴 차용.
 
 ### Added
+
 - `DetectedKeyWithValue` (`secretbank-connectors`) — `DetectedKey` + 평문
   `SecretBox<String>` 페어. drop 시 zeroize (secrecy crate).
 - `EnvScanSessionStore` (`secretbank-app/import`) — 5분 TTL, one-shot take,
@@ -36,10 +38,11 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
 - `env_scan_prepare` Tauri command — 스캔 → 세션에 평문 보관 → preview 반환
   (`{ sessionId, entries, expiresAtUnixMs, scannedPath }`).
 - `env_scan_commit` Tauri command — `session_id + selectedIndices +
-  projectName` → vault `put_secret` + credential + project + usage 일괄 저장
+projectName` → vault `put_secret` + credential + project + usage 일괄 저장
   (vault write lock 1회만 획득).
 
 ### Changed
+
 - `secretbank-connectors::env_scanner::scan_path` 는 thin wrapper —
   내부적으로 `scan_path_with_values` 호출 후 평문 strip.
 - 옛 `env_scan_folder` Tauri command 제거 — frontend 가 새 prepare/commit
@@ -48,6 +51,7 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
 ## [0.1.0-pre17] - 2026-05-13
 
 ### Fixed
+
 - **OAuth flow 전체 재작성** — custom URI scheme 모두 deprecated 후
   loopback HTTP server (RFC 8252) 로 전환. pre13~pre16 시도 (`Secretbank://`,
   `app.secretbank://`, `com.googleusercontent.apps...://`) 모두 Google
@@ -55,10 +59,11 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
   impersonation" 정책에 reject. 정답은 `http://127.0.0.1:<port>` loopback.
 
 ### Changed
+
 - `tauri-plugin-oauth` 2.x 추가. `auth_oauth_start` Tauri command 의
   `redirect_uri` 인자 제거 — backend 가 동적 port 의 loopback HTTP server
   띄움 + callback 받아 `oauth-callback` Tauri event (payload `{provider,
-  url}`) 로 emit.
+url}`) 로 emit.
 - `useDeepLinkCallback` (옛 `deep-link` event listener + Vec<String> payload)
   → `oauth-callback` event + `{provider, url}` object payload. 옛 in-app
   deep-link (graph 등) 은 별도 listener 라 영향 없음.
@@ -66,6 +71,7 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
   검증 + provider 는 event payload 의 별도 field 에서 받음.
 
 ### Notes (사용자 액션)
+
 - GitHub OAuth App 의 Authorization callback URL 을
   `app.secretbank://auth/callback` → **`http://localhost`** 또는
   **`http://127.0.0.1`** 로 갱신 (GitHub 가 wildcard port 인식).
@@ -75,6 +81,7 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
 ## [0.1.0-pre16] - 2026-05-13
 
 ### Fixed
+
 - **redirect_uri 의 `?provider=...` query string 제거**: pre15 의
   `com.googleusercontent.apps.<id>://oauth2redirect?provider=google` 가
   여전히 `400 invalid_request` reject. Google native app redirect URI
@@ -84,6 +91,7 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
 ## [0.1.0-pre15] - 2026-05-12
 
 ### Fixed
+
 - **Google OAuth `app.secretbank://` 도 `400 invalid_request` reject**:
   Google 의 reverse-DNS 검증이 2-segment scheme + `.app` TLD 통과 못 함.
   Google docs 권장의 **`com.googleusercontent.apps.<client_id>://oauth2redirect`**
@@ -98,6 +106,7 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
 ## [0.1.0-pre14] - 2026-05-12
 
 ### Fixed
+
 - **Google OAuth `400 invalid_request`**: redirect URI scheme 을
   `Secretbank://auth/callback` → `app.secretbank://auth/callback` 으로 교체.
   Google 의 Desktop OAuth 정책 (2022+) 이 "reverse-DNS notation of a
@@ -114,6 +123,7 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
   focus. 이전엔 callback 마다 새 process → vault 잠김 화면.
 
 ### Notes (사용자 액션)
+
 - GitHub OAuth App settings 의 Authorization callback URL 을
   `app.secretbank://auth/callback` 으로 갱신 필요. (이전엔
   `Secretbank://auth/callback`.)
@@ -121,6 +131,7 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
 ## [0.1.0-pre13] - 2026-05-11
 
 ### Fixed
+
 - **OAuth login (Google + GitHub)**: `DEFAULT_RELAY_URL` now points to
   `https://relay.secretbank.app` instead of `https://secretbank.app`. The
   former routed to Cloudflare Pages (405 Method Not Allowed on POST), the
@@ -132,12 +143,13 @@ dogfooding 라운드 — 폴더 드래그앤드롭 흐름의 4건 root cause 일
   placeholder (favicon) and the centre-misaligned white-square icon set.
 
 ### Notes
+
 - Desktop installer must be re-downloaded — `DEFAULT_RELAY_URL` is a
   compile-time constant.
 - Relay-side change: `wrangler.toml` `routes` un-commented + custom domain
   `relay.secretbank.app` linked + `GOOGLE_OAUTH_CLIENT_SECRET`,
   `JWT_SIGNING_KEY`, `GITHUB_OAUTH_CLIENT_SECRET` injected via `wrangler
-  secret put`. Deploy workflow fix: `pnpm install --ignore-workspace`
+secret put`. Deploy workflow fix: `pnpm install --ignore-workspace`
   (ee/secretbank-relay is outside the root workspace).
 
 ## [0.1.0-pre12] - 2026-05-10
