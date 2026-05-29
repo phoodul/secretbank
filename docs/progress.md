@@ -2,6 +2,25 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-05-30 (Night mode) — dogfooding 발견 2건 fix + 2개 기능 구현. **미푸시 커밋 다수, push 사용자 승인 대기 (Night mode).**
+- **이번 세션 커밋 (HEAD `40ba40d`, origin/main `09aab89` 대비 미푸시 6건 → 그 중 3건은 이미 push 됨 `94fb227`)**:
+  - `4ccb0e9` fix(ci): publish-updater-manifest redundant main push 제거 (이미 push)
+  - `be2cdd0` docs 체크포인트 (이미 push)
+  - `9132770` fix(scanner): 미매칭 키 AWS→Uncategorized 오분류 수정 (이미 push)
+  - `ed21251` style: prettier 포맷 3파일 (이미 push)
+  - `94fb227` fix(deps): tmp/uuid 취약점 override (이미 push)
+  - `77336e8` feat(inventory): **API Key/비밀번호 값 교체(rotation) UI** — 미푸시
+  - `40ba40d` feat(inventory): **"기타(Other)" 종류 + 사용자 정의 타입명** — 미푸시
+- **rotation (77336e8)**: 백엔드 `credential_rotate_value` 는 기존 완비, 프론트 Rotate 버튼이 disabled placeholder 였음. RotateValueDialog 신규 + 버튼 활성화 (credit_card/revoked 제외, primary 값만). CredentialDetail 테스트 갱신. i18n 4로케일.
+- **Other (40ba40d)**: CredentialKind::Other + `custom_kind_label` 컬럼(마이그레이션 0016). QuickAddDialog/CreateCredentialDialog 에 "기타" 선택 + 종류명 입력. BentoCard 값 라벨 표시. storage 라운드트립 테스트 + QuickAddDialog Other 플로우 테스트.
+- **검증 (회귀 0)**: app lib 288, storage 전체, core, cli, frontend vitest 657 (+Other 테스트), typecheck/lint/prettier/rustfmt clean.
+- **⚠️ 발견 — 기존 환경 취약 테스트 (이번 작업과 무관, 미수정)**: `secretbank-feeds::twofa_directory::tfa3_expired_cache_refetches` 가 로컬에서 결정적 실패. 원인 = `twofa_directory.rs:343` 의 `Instant::now().checked_sub(CACHE_TTL + 1s)` 가 **머신 uptime < CACHE_TTL 일 때 underflow → None → now() 폴백 → 캐시 미만료 → wiremock .expect(2) 위반**. 최근 재부팅 머신에서만 실패, CI 는 통과. 1줄 robustness fix 가능하나 요청 범위 밖이라 보류 — 사용자 결정 대기.
+- **다음 세션 후보**: (a) 미푸시 2 feature 커밋 push (사용자 승인), (b) 2FA 테스트 robustness fix, (c) env 스캐너 과도하게 넓은 정규식(vercel/cloudflare/paddle) 정밀화, (d) dogfooding 계속.
+
+---
+
+### 이전 체크포인트
+
 - **Time:** 2026-05-29 (resume 세션 — publish-updater-manifest 영구 fix, 옵션 D)
 - **commit:** `4ccb0e9` fix(ci): publish-updater-manifest 의 redundant main push 제거
 - **Root cause 확정:** publish-updater-manifest job 의 `git push origin HEAD:main` step 이 branch protection (4 required status checks, `enforce_admins: false`) 에 막혀 매 release `GH006` 실패. 이게 같은 job 을 fail 시켜 → `publish-release`(draft→public) skip → 사용자가 매번 수동 `gh release edit --draft=false` 하던 원인.
