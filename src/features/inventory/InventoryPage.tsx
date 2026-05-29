@@ -97,7 +97,8 @@ export function InventoryPage() {
     username?: string;
     value?: string;
     name?: string;
-    kind: "api_key" | "password";
+    kind: "api_key" | "password" | "other";
+    custom_kind_label?: string;
   } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 

@@ -290,6 +290,7 @@ pub async fn do_env_scan_commit(
             username: None,
             primary_label: None,
             secondary_label: None,
+            custom_kind_label: None,
         };
 
         if let Err(e) = cred_repo

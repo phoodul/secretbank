@@ -205,10 +205,14 @@ export function BentoCard({ credential, onSelect, securityAlerts }: BentoCardPro
   const isPwRevealed = revealedPw !== null;
   const isSkRevealed = revealedSk !== null;
 
-  // PW row 라벨: primary_label 우선, 없으면 kind fallback
+  // PW row 라벨: primary_label 우선 → kind="other" 면 사용자 정의 종류명 → kind fallback
   const pwLabel =
     credential.primary_label ??
-    (credential.kind === "api_key" ? t("inventory.card.keyLabel") : t("inventory.card.pwLabel"));
+    (credential.kind === "other"
+      ? credential.custom_kind_label || t("inventory.card.pwLabel")
+      : credential.kind === "api_key"
+        ? t("inventory.card.keyLabel")
+        : t("inventory.card.pwLabel"));
 
   // Secondary row 라벨: secondary_label 우선, 없으면 "Secret" fallback
   const skLabel = credential.secondary_label ?? t("inventory.card.secondaryLabel");

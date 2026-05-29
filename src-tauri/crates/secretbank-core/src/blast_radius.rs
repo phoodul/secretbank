@@ -192,6 +192,7 @@ mod tests {
             secondary_value_ref: None,
             primary_label: None,
             secondary_label: None,
+            custom_kind_label: None,
         }
     }
 

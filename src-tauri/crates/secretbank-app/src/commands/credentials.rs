@@ -685,6 +685,7 @@ mod tests {
             username: None,
             primary_label: None,
             secondary_label: None,
+            custom_kind_label: None,
         };
         let vault_ref = format!("credentials/{id}");
         repo.insert_with_id(Some(id), &input, vault_ref.clone())

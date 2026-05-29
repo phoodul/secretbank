@@ -57,7 +57,7 @@ import type { CardBrand } from "@/lib/card-utils";
 
 const schema = z
   .object({
-    kind: z.enum(["api_key", "password", "credit_card"]),
+    kind: z.enum(["api_key", "password", "credit_card", "other"]),
     issuer_id: z.string().min(1),
     name: z.string().min(1).max(100),
     url: z
@@ -83,6 +83,7 @@ const schema = z
     has_secondary: z.boolean(),
     secondary_value: z.string().optional(),
     secondary_label: z.string().optional(),
+    custom_kind_label: z.string().optional(),
   })
   .refine(
     (data) =>
@@ -148,6 +149,7 @@ export function CreateCredentialDialog({
       has_secondary: false,
       secondary_value: "",
       secondary_label: "",
+      custom_kind_label: "",
     },
   });
 
@@ -188,6 +190,8 @@ export function CreateCredentialDialog({
           hash_hint: hashHint,
           primary_label: primaryLabelVal,
           secondary_label: values.has_secondary ? values.secondary_label : undefined,
+          custom_kind_label:
+            values.kind === "other" ? values.custom_kind_label?.trim() || undefined : undefined,
           value: values.value,
           secondary_value: values.has_secondary ? values.secondary_value : undefined,
         },
@@ -264,12 +268,34 @@ export function CreateCredentialDialog({
                       <SelectItem value="api_key">{t("inventory.kindApiKey")}</SelectItem>
                       <SelectItem value="password">{t("inventory.kindPassword")}</SelectItem>
                       <SelectItem value="credit_card">Credit Card</SelectItem>
+                      <SelectItem value="other">{t("quickAdd.kindToggle.other")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* kind=other 일 때 사용자 정의 종류명 */}
+            {kind === "other" && (
+              <FormField
+                control={form.control}
+                name="custom_kind_label"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("quickAdd.fields.customKind")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t("quickAdd.fields.customKindPlaceholder")}
+                        autoComplete="off"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Credit card form — replaces all other fields when kind=credit_card */}
             {isCreditCard && (

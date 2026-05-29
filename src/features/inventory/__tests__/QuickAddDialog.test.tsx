@@ -102,7 +102,8 @@ function renderDialog(
       username?: string;
       value?: string;
       name?: string;
-      kind: "api_key" | "password";
+      kind: "api_key" | "password" | "other";
+      custom_kind_label?: string;
     }) => void;
   } = {},
 ) {
@@ -236,6 +237,39 @@ describe("QuickAddDialog", () => {
       });
     });
 
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  it("4b. 기타(Other) 선택 + 종류명 입력 → custom_kind_label 포함 호출", async () => {
+    mockReadText.mockResolvedValue(null as unknown as string);
+    const user = userEvent.setup();
+    const onSuccess = vi.fn();
+
+    renderDialog({ onSuccess });
+    expect(await screen.findByText("Quick Add")).toBeInTheDocument();
+
+    // kind=Other 선택
+    await user.click(screen.getByRole("button", { name: /^other$/i }));
+
+    // 종류명 입력 (Other 선택 시 노출되는 필드)
+    const customKindInput = await screen.findByPlaceholderText(/Token, SSH key/i);
+    await user.type(customKindInput, "Deploy Token");
+
+    // 값 입력
+    const passwordInput = screen.getByPlaceholderText(/password|api key/i);
+    await user.type(passwordInput, "tok_abcdef123456");
+
+    await user.click(screen.getByRole("button", { name: /add credential/i }));
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith("credential_create", {
+        args: expect.objectContaining({
+          kind: "other",
+          custom_kind_label: "Deploy Token",
+          value: "tok_abcdef123456",
+        }),
+      });
+    });
     expect(onSuccess).toHaveBeenCalled();
   });
 

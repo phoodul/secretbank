@@ -672,6 +672,7 @@ mod tests {
             username: None,
             primary_label: None,
             secondary_label: None,
+            custom_kind_label: None,
         };
         repo.insert_with_id(Some(cred_id), &input, format!("credentials/{cred_id}"))
             .await
@@ -944,6 +945,7 @@ mod tests {
                 username: None,
                 primary_label: None,
                 secondary_label: None,
+                custom_kind_label: None,
             };
             cred_repo
                 .insert_with_id(Some(cred_id), &input, format!("credentials/{cred_id}"))
@@ -971,6 +973,7 @@ mod tests {
                 username: None,
                 primary_label: None,
                 secondary_label: None,
+                custom_kind_label: None,
             };
             cred_repo
                 .insert_with_id(Some(cred_id), &input, format!("credentials/{cred_id}"))
@@ -1073,6 +1076,7 @@ mod tests {
                         username: None,
                         primary_label: None,
                         secondary_label: None,
+                        custom_kind_label: None,
                     },
                     format!("credentials/{cred_id}"),
                 )
@@ -1204,6 +1208,7 @@ mod tests {
                 username: None,
                 primary_label: None,
                 secondary_label: None,
+                custom_kind_label: None,
             };
             repo.insert_with_id(Some(c), &input, format!("credentials/{c}"))
                 .await
@@ -1300,6 +1305,7 @@ mod tests {
             username: None,
             primary_label: None,
             secondary_label: None,
+            custom_kind_label: None,
         };
         let repo = CredentialRepo::new(&pool);
         repo.insert_with_id(Some(cred_id), &input, vault_ref.clone())

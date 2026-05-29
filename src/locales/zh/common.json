@@ -790,11 +790,14 @@
       "url": "URL",
       "username": "用户名 / ID",
       "password": "密码 / API 密钥",
-      "name": "名称（可选）"
+      "name": "名称（可选）",
+      "customKind": "类型名称",
+      "customKindPlaceholder": "例如 Token、SSH key、License"
     },
     "kindToggle": {
       "apiKey": "API 密钥",
-      "password": "密码"
+      "password": "密码",
+      "other": "其他"
     },
     "submit": "添加凭证",
     "cancel": "取消",

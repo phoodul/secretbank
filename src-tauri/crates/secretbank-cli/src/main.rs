@@ -1151,6 +1151,7 @@ async fn cmd_add(
         },
         primary_label: None,
         secondary_label: None,
+        custom_kind_label: None,
     };
 
     cred_repo
@@ -1182,6 +1183,7 @@ async fn cmd_add(
                     CredentialKind::ApiKey => "api_key",
                     CredentialKind::Password => "password",
                     CredentialKind::CreditCard => "credit_card",
+                    CredentialKind::Other => "other",
                 },
                 "env": match env {
                     Env::Dev => "dev",

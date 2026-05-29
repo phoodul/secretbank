@@ -790,11 +790,14 @@
       "url": "URL",
       "username": "ユーザー名 / ID",
       "password": "パスワード / API キー",
-      "name": "名前 (任意)"
+      "name": "名前 (任意)",
+      "customKind": "種類名",
+      "customKindPlaceholder": "例: Token, SSH key, License"
     },
     "kindToggle": {
       "apiKey": "API キー",
-      "password": "パスワード"
+      "password": "パスワード",
+      "other": "その他"
     },
     "submit": "認証情報を追加",
     "cancel": "キャンセル",

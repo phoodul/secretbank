@@ -132,6 +132,7 @@ pub async fn create_credit_card(
         username: None,
         primary_label: Some("Card Number".to_string()),
         secondary_label: Some("CVC".to_string()),
+        custom_kind_label: None,
     };
 
     let cred_repo = CredentialRepo::new(&state.pool);
@@ -521,6 +522,7 @@ mod tests {
                     username: None,
                     primary_label: None,
                     secondary_label: None,
+                    custom_kind_label: None,
                 },
                 vault_ref.clone(),
             )
@@ -745,6 +747,7 @@ mod tests {
                     username: None,
                     primary_label: None,
                     secondary_label: None,
+                    custom_kind_label: None,
                 },
                 format!("credit_cards/{cred_id}/card_number"),
             )
@@ -834,6 +837,7 @@ mod tests {
                     username: None,
                     primary_label: None,
                     secondary_label: None,
+                    custom_kind_label: None,
                 },
                 format!("credit_cards/{cred_id_str}/card_number"),
             )
@@ -893,6 +897,7 @@ mod tests {
             username: None,
             primary_label: Some("Card Number".to_string()),
             secondary_label: Some("CVC".to_string()),
+            custom_kind_label: None,
         };
 
         let cred_repo = CredentialRepo::new(&ctx.pool);

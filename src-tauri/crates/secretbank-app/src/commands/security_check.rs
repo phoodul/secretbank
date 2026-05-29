@@ -525,6 +525,7 @@ mod tests {
             username: None,
             primary_label: None,
             secondary_label: None,
+            custom_kind_label: None,
         };
         repo.insert_with_id(Some(id), &input, vault_ref.clone())
             .await

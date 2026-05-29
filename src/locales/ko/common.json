@@ -801,11 +801,14 @@
       "url": "URL",
       "username": "사용자명 / ID",
       "password": "비밀번호 / API 키",
-      "name": "이름 (선택)"
+      "name": "이름 (선택)",
+      "customKind": "종류명",
+      "customKindPlaceholder": "예: Token, SSH key, License"
     },
     "kindToggle": {
       "apiKey": "API 키",
-      "password": "비밀번호"
+      "password": "비밀번호",
+      "other": "기타"
     },
     "submit": "자격증명 추가",
     "cancel": "취소",

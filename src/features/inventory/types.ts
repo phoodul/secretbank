@@ -1,7 +1,7 @@
 export type Env = "dev" | "staging" | "prod";
 export type CredentialStatus = "active" | "revoked" | "compromised";
 /** Rust CredentialKind (serde rename_all = "snake_case") */
-export type CredentialKind = "api_key" | "password" | "credit_card";
+export type CredentialKind = "api_key" | "password" | "credit_card" | "other";
 
 // ---------------------------------------------------------------------------
 // Security score (T040) — mirrors secretbank_core::security_score
@@ -56,6 +56,8 @@ export interface CredentialSummary {
   primary_label: string | null;
   /** Display label for the secondary value. null when no secondary exists. */
   secondary_label: string | null;
+  /** kind="other" 일 때 사용자 정의 종류명 (예: "Token", "SSH key"). 그 외 null. */
+  custom_kind_label?: string | null;
   // credit_card 전용 — kind="credit_card" 일 때만 non-null (B.5-3)
   card_brand?: import("@/lib/card-utils").CardBrand;
   /** 마지막 4자리만 저장 (B.5-3: 전체 카드번호 금지) */
@@ -127,4 +129,6 @@ export interface CredentialFull {
   primary_label: string | null;
   /** Display label for the secondary value. null when no secondary exists. */
   secondary_label: string | null;
+  /** kind="other" 일 때 사용자 정의 종류명. 그 외 null. */
+  custom_kind_label?: string | null;
 }

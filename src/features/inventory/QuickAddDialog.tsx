@@ -49,9 +49,10 @@ const URL_PATTERN = /^https?:\/\/.+/;
 const schema = z.object({
   url: z.string().optional(),
   username: z.string().optional(),
-  kind: z.enum(["api_key", "password"]),
+  kind: z.enum(["api_key", "password", "other"]),
   value: z.string().min(1, { message: "__required__" }),
   name: z.string().optional(),
+  custom_kind_label: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -70,7 +71,8 @@ export interface QuickAddDialogProps {
     username?: string;
     value?: string;
     name?: string;
-    kind: "api_key" | "password";
+    kind: "api_key" | "password" | "other";
+    custom_kind_label?: string;
   }) => void;
 }
 
@@ -101,6 +103,7 @@ export function QuickAddDialog({
       kind: "password",
       value: "",
       name: "",
+      custom_kind_label: "",
     },
   });
 
@@ -208,6 +211,8 @@ export function QuickAddDialog({
     const urlVal = values.url?.trim() || undefined;
     const usernameVal = values.username?.trim() || undefined;
     const hashHint = values.value.slice(-4);
+    const customKindLabel =
+      values.kind === "other" ? values.custom_kind_label?.trim() || undefined : undefined;
 
     try {
       await invoke<string>("credential_create", {
@@ -223,6 +228,7 @@ export function QuickAddDialog({
           hash_hint: hashHint,
           primary_label: undefined,
           secondary_label: undefined,
+          custom_kind_label: customKindLabel,
           value: values.value,
           secondary_value: undefined,
         },
@@ -254,6 +260,8 @@ export function QuickAddDialog({
       value: values.value,
       name: values.name?.trim() || undefined,
       kind: values.kind,
+      custom_kind_label:
+        values.kind === "other" ? values.custom_kind_label?.trim() || undefined : undefined,
     });
     // password state 비움
     form.setValue("value", "");
@@ -407,7 +415,7 @@ export function QuickAddDialog({
                 </button>
                 <button
                   type="button"
-                  className={`px-3 py-1 text-sm rounded-r-md transition-colors ${
+                  className={`px-3 py-1 text-sm transition-colors ${
                     kind === "api_key"
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -417,8 +425,41 @@ export function QuickAddDialog({
                 >
                   {t("quickAdd.kindToggle.apiKey")}
                 </button>
+                <button
+                  type="button"
+                  className={`px-3 py-1 text-sm rounded-r-md transition-colors ${
+                    kind === "other"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => form.setValue("kind", "other")}
+                  aria-pressed={kind === "other"}
+                >
+                  {t("quickAdd.kindToggle.other")}
+                </button>
               </div>
             </div>
+
+            {/* kind=other 일 때 사용자 정의 종류명 입력 */}
+            {kind === "other" && (
+              <FormField
+                control={form.control}
+                name="custom_kind_label"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("quickAdd.fields.customKind")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t("quickAdd.fields.customKindPlaceholder")}
+                        autoComplete="off"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <DialogFooter className="mt-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               {/* 전체 옵션 보기 */}

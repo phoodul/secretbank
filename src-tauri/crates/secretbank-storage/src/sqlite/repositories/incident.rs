@@ -744,6 +744,7 @@ mod tests {
                 username: None,
                 primary_label: None,
                 secondary_label: None,
+                custom_kind_label: None,
             },
             format!("vault/credentials/{name}"),
         )

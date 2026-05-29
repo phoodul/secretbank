@@ -48,8 +48,8 @@ impl<'a> CredentialRepo<'a> {
             r#"INSERT INTO credential
                (id, issuer_id, name, env, scope, vault_ref, created_at, expires_at,
                 owner, rotation_policy_days, rotation_runbook_id, status, hash_hint,
-                kind, url, username, primary_label, secondary_label)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?)"#,
+                kind, url, username, primary_label, secondary_label, custom_kind_label)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?)"#,
         )
         .bind(&id_str)
         .bind(&issuer_id_str)
@@ -68,6 +68,7 @@ impl<'a> CredentialRepo<'a> {
         .bind(&input.username)
         .bind(&input.primary_label)
         .bind(&input.secondary_label)
+        .bind(&input.custom_kind_label)
         .execute(self.pool)
         .await?;
 
@@ -80,7 +81,7 @@ impl<'a> CredentialRepo<'a> {
             r#"SELECT id, issuer_id, name, env, scope, vault_ref, created_at,
                       last_rotated_at, expires_at, owner, rotation_policy_days,
                       rotation_runbook_id, status, hash_hint, kind, url, username,
-                      secondary_value_ref, primary_label, secondary_label
+                      secondary_value_ref, primary_label, secondary_label, custom_kind_label
                FROM credential WHERE id = ?"#,
         )
         .bind(&id_str)
@@ -98,7 +99,8 @@ impl<'a> CredentialRepo<'a> {
         let mut qb = sqlx::QueryBuilder::new(
             "SELECT id, issuer_id, name, env, scope, vault_ref, created_at, last_rotated_at, \
              expires_at, owner, rotation_policy_days, rotation_runbook_id, status, hash_hint, \
-             kind, url, username, secondary_value_ref, primary_label, secondary_label \
+             kind, url, username, secondary_value_ref, primary_label, secondary_label, \
+             custom_kind_label \
              FROM credential WHERE 1=1",
         );
 
@@ -147,6 +149,7 @@ impl<'a> CredentialRepo<'a> {
                     has_secondary: cred.secondary_value_ref.is_some(),
                     primary_label: cred.primary_label,
                     secondary_label: cred.secondary_label,
+                    custom_kind_label: cred.custom_kind_label,
                 })
             })
             .collect()
@@ -241,7 +244,7 @@ impl<'a> CredentialRepo<'a> {
             r#"SELECT id, issuer_id, name, env, scope, vault_ref, created_at,
                       last_rotated_at, expires_at, owner, rotation_policy_days,
                       rotation_runbook_id, status, hash_hint, kind, url, username,
-                      secondary_value_ref, primary_label, secondary_label
+                      secondary_value_ref, primary_label, secondary_label, custom_kind_label
                FROM credential ORDER BY id ASC"#,
         )
         .fetch_all(self.pool)
@@ -297,6 +300,7 @@ fn row_to_credential(r: &sqlx::sqlite::SqliteRow) -> Result<Credential, StorageE
         secondary_value_ref,
         primary_label: r.try_get("primary_label")?,
         secondary_label: r.try_get("secondary_label")?,
+        custom_kind_label: r.try_get("custom_kind_label")?,
     })
 }
 
@@ -305,6 +309,7 @@ pub(crate) fn kind_to_str(kind: CredentialKind) -> &'static str {
         CredentialKind::ApiKey => "api_key",
         CredentialKind::Password => "password",
         CredentialKind::CreditCard => "credit_card",
+        CredentialKind::Other => "other",
     }
 }
 
@@ -313,6 +318,7 @@ pub(crate) fn str_to_kind(s: &str) -> Result<CredentialKind, StorageError> {
         "api_key" => Ok(CredentialKind::ApiKey),
         "password" => Ok(CredentialKind::Password),
         "credit_card" => Ok(CredentialKind::CreditCard),
+        "other" => Ok(CredentialKind::Other),
         other => Err(StorageError::Parse(format!("invalid kind: {other}"))),
     }
 }

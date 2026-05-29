@@ -113,6 +113,7 @@ fn test_input(issuer_id: secretbank_core::IssuerId) -> CredentialInput {
         username: None,
         primary_label: None,
         secondary_label: None,
+        custom_kind_label: None,
     }
 }
 

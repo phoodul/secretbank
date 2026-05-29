@@ -38,6 +38,9 @@ pub enum CredentialKind {
     Password,
     /// Payment card — metadata in `credit_card_meta`, secret in age vault.
     CreditCard,
+    /// User-defined type (e.g. Token, SSH key, License). The free-text type
+    /// name is stored in `custom_kind_label`.
+    Other,
 }
 
 /// Full credential record as stored in the database.
@@ -85,6 +88,10 @@ pub struct Credential {
     /// `None` iff `secondary_value_ref` is `None`.
     #[serde(default)]
     pub secondary_label: Option<String>,
+    /// User-defined type name when `kind == Other` (e.g. "Token", "SSH key").
+    /// `None` for the built-in kinds.
+    #[serde(default)]
+    pub custom_kind_label: Option<String>,
 }
 
 /// Input for creating a new credential (no id, vault_ref, or timestamps).
@@ -112,6 +119,9 @@ pub struct CredentialInput {
     /// Display label for the secondary value. Required when `secondary_value` is provided.
     #[serde(default)]
     pub secondary_label: Option<String>,
+    /// User-defined type name when `kind == Other` (e.g. "Token", "SSH key").
+    #[serde(default)]
+    pub custom_kind_label: Option<String>,
 }
 
 /// Lightweight summary used in list views.
@@ -146,6 +156,9 @@ pub struct CredentialSummary {
     /// Display label for the secondary value. `None` when no secondary exists.
     #[serde(default)]
     pub secondary_label: Option<String>,
+    /// User-defined type name when `kind == Other`.
+    #[serde(default)]
+    pub custom_kind_label: Option<String>,
 }
 
 /// Partial update — all fields optional.

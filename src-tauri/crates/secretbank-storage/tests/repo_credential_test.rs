@@ -46,6 +46,7 @@ async fn credential_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError>
         username: None,
         primary_label: None,
         secondary_label: None,
+        custom_kind_label: None,
     };
 
     // insert
@@ -94,6 +95,71 @@ async fn credential_crud_roundtrip(pool: SqlitePool) -> Result<(), StorageError>
 }
 
 #[sqlx::test(migrations = "./migrations")]
+async fn credential_other_kind_custom_label_roundtrip(
+    pool: SqlitePool,
+) -> Result<(), StorageError> {
+    use secretbank_core::CredentialKind;
+
+    let issuer_id = make_issuer(&pool).await;
+    let repo = CredentialRepo::new(&pool);
+
+    let input = CredentialInput {
+        issuer_id,
+        name: "CI deploy token".to_string(),
+        env: Env::Prod,
+        scope: None,
+        rotation_policy_days: None,
+        rotation_runbook_id: None,
+        expires_at: None,
+        owner: None,
+        hash_hint: None,
+        kind: CredentialKind::Other,
+        url: None,
+        username: None,
+        primary_label: None,
+        secondary_label: None,
+        custom_kind_label: Some("Token".to_string()),
+    };
+
+    let id = repo
+        .insert(
+            &input,
+            format!("credentials/{}", secretbank_core::CredentialId::new()),
+        )
+        .await?;
+
+    // get_by_id 라운드트립
+    let cred = repo.get_by_id(id).await?.expect("credential should exist");
+    assert_eq!(
+        cred.kind,
+        CredentialKind::Other,
+        "kind must persist as Other"
+    );
+    assert_eq!(
+        cred.custom_kind_label.as_deref(),
+        Some("Token"),
+        "custom_kind_label must round-trip"
+    );
+
+    // list summary 에도 반영
+    let summaries = repo.list(&CredentialFilter::default()).await?;
+    let summary = summaries.iter().find(|s| s.id == id).expect("in list");
+    assert_eq!(summary.kind, CredentialKind::Other);
+    assert_eq!(summary.custom_kind_label.as_deref(), Some("Token"));
+
+    // kind 필터로도 조회됨
+    let only_other = repo
+        .list(&CredentialFilter {
+            kind: Some(CredentialKind::Other),
+            ..Default::default()
+        })
+        .await?;
+    assert!(only_other.iter().any(|s| s.id == id));
+
+    Ok(())
+}
+
+#[sqlx::test(migrations = "./migrations")]
 async fn credential_filter_by_env(pool: SqlitePool) -> Result<(), StorageError> {
     let issuer_id = make_issuer(&pool).await;
     let repo = CredentialRepo::new(&pool);
@@ -114,6 +180,7 @@ async fn credential_filter_by_env(pool: SqlitePool) -> Result<(), StorageError> 
         username: None,
         primary_label: None,
         secondary_label: None,
+        custom_kind_label: None,
     };
     let dev_input = CredentialInput {
         issuer_id,

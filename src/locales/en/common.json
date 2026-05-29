@@ -801,11 +801,14 @@
       "url": "URL",
       "username": "Username / ID",
       "password": "Password / API Key",
-      "name": "Name (optional)"
+      "name": "Name (optional)",
+      "customKind": "Type name",
+      "customKindPlaceholder": "e.g. Token, SSH key, License"
     },
     "kindToggle": {
       "apiKey": "API Key",
-      "password": "Password"
+      "password": "Password",
+      "other": "Other"
     },
     "submit": "Add credential",
     "cancel": "Cancel",

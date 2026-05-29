@@ -395,6 +395,7 @@ pub async fn do_import_csv_commit(
             username: row.username.clone(),
             primary_label: None,
             secondary_label: None,
+            custom_kind_label: None,
         };
 
         // SQLite insert
@@ -609,6 +610,7 @@ mod tests {
             username: None,
             primary_label: None,
             secondary_label: None,
+            custom_kind_label: None,
         };
         let vault_ref = format!("credentials/{id}");
         repo.insert_with_id(Some(id), &input, vault_ref.clone())

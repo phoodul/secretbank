@@ -523,6 +523,7 @@ async fn handle_credential_create(msg: &Value, bctx: &BridgeContext) -> Value {
         },
         primary_label: None,
         secondary_label: None,
+        custom_kind_label: None,
     };
 
     if let Err(e) = cred_repo
