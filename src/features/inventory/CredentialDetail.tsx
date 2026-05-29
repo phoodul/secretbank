@@ -36,12 +36,12 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { UsageSection } from "./UsageSection";
 import { IncidentsForCredential } from "@/features/incidents/IncidentsForCredential";
 import { AuditForCredential } from "@/features/audit/AuditForCredential";
 import { KillSwitchDialog } from "@/features/kill-switch/KillSwitchDialog";
+import { RotateValueDialog } from "./RotateValueDialog";
 import type { CredentialFull } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -169,6 +169,7 @@ export function CredentialDetail({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [killSwitchOpen, setKillSwitchOpen] = useState(false);
+  const [rotateOpen, setRotateOpen] = useState(false);
 
   // unlisten ref — Drawer 닫힐 때 정리
   const unlistenRef = useRef<UnlistenFn | null>(null);
@@ -290,6 +291,7 @@ export function CredentialDetail({
     if (!isOpen) {
       setDeleteDialogOpen(false);
       setKillSwitchOpen(false);
+      setRotateOpen(false);
       setRemaining(0);
       onClose();
     }
@@ -348,48 +350,44 @@ export function CredentialDetail({
             </div>
 
             {/* === 2. Primary actions === */}
-            <TooltipProvider>
-              <div className="flex gap-2">
-                {/* Copy value */}
-                <Button size="sm" onClick={handleCopy}>
-                  {t("inventory.copyValue")}
+            <div className="flex gap-2">
+              {/* Copy value */}
+              <Button size="sm" onClick={handleCopy}>
+                {t("inventory.copyValue")}
+              </Button>
+
+              {/* Rotate — credit_card / revoked 는 비활성, 그 외 값 교체 다이얼로그 */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setRotateOpen(true)}
+                disabled={cred.kind === "credit_card" || cred.status === "revoked"}
+              >
+                {t("inventory.rotate")}
+              </Button>
+
+              {/* Revoke — outline-styled destructive so the action reads
+                  as dangerous (red border + text) without competing with
+                  the filled red CTA in the INCIDENTS section below.  Both
+                  entries dispatch the same handler — top button is the
+                  always-available intent; the INCIDENTS one fires when an
+                  active incident makes revocation urgent. */}
+              {cred?.status === "revoked" ? (
+                <Button size="sm" variant="outline" disabled>
+                  {t("killSwitch.revoked")}
                 </Button>
-
-                {/* Rotate — disabled placeholder */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={0} className="inline-flex">
-                      <Button size="sm" variant="outline" disabled>
-                        {t("inventory.rotate")}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>{t("inventory.m7ComingSoon")}</TooltipContent>
-                </Tooltip>
-
-                {/* Revoke — outline-styled destructive so the action reads
-                    as dangerous (red border + text) without competing with
-                    the filled red CTA in the INCIDENTS section below.  Both
-                    entries dispatch the same handler — top button is the
-                    always-available intent; the INCIDENTS one fires when an
-                    active incident makes revocation urgent. */}
-                {cred?.status === "revoked" ? (
-                  <Button size="sm" variant="outline" disabled>
-                    {t("killSwitch.revoked")}
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:ring-destructive/40"
-                    data-testid="credential-detail-revoke-btn"
-                    onClick={handleRevokeRequested}
-                  >
-                    {t("killSwitch.revoke")}
-                  </Button>
-                )}
-              </div>
-            </TooltipProvider>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:ring-destructive/40"
+                  data-testid="credential-detail-revoke-btn"
+                  onClick={handleRevokeRequested}
+                >
+                  {t("killSwitch.revoke")}
+                </Button>
+              )}
+            </div>
 
             {/* === 3. Copy progress === */}
             {remaining > 0 && (
@@ -505,6 +503,17 @@ export function CredentialDetail({
           onDeleted();
         }}
       />
+
+      {/* Rotate value Dialog */}
+      {credentialId !== null && (
+        <RotateValueDialog
+          open={rotateOpen}
+          onOpenChange={setRotateOpen}
+          credentialId={credentialId}
+          credentialName={cred?.name ?? ""}
+          onRotated={fetchDetail}
+        />
+      )}
 
       {/* Delete confirmation AlertDialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

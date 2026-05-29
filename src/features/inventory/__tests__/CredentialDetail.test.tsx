@@ -140,17 +140,24 @@ describe("CredentialDetail", () => {
   });
 
   // ------------------------------------------------------------------
-  // 테스트 3: Rotate/Revoke 버튼 disabled
+  // 테스트 3: active api_key 의 Rotate 버튼이 활성화 + 클릭 시 교체 다이얼로그
   // ------------------------------------------------------------------
-  it("Rotate 버튼이 disabled 상태다", async () => {
+  it("active api_key 의 Rotate 버튼이 활성화 상태이고 클릭 시 교체 다이얼로그가 열린다", async () => {
     renderDetail();
 
     await waitFor(() => {
       expect(screen.getByText("OpenAI API Key")).toBeInTheDocument();
     });
 
+    const user = userEvent.setup();
     const rotateBtn = screen.getByRole("button", { name: /rotate/i });
-    expect(rotateBtn).toBeDisabled();
+    expect(rotateBtn).not.toBeDisabled();
+
+    await user.click(rotateBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Rotate value")).toBeInTheDocument();
+    });
   });
 
   it("active 자격증명의 Revoke 버튼이 활성화 상태다", async () => {
