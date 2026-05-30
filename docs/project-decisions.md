@@ -2730,3 +2730,26 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - branch protection 의 Required status checks: Rust / Frontend / E2E smoke / EE Relay 4개 (CONTRIBUTING.md 가 강제)
   - AI 리뷰는 인간 reviewer 대체가 아닌 보조 — 자동 approve/block 금지 (claude-pr-review.yml prompt 에 명시)
 - **비용**: 동일 repo PR 만 트리거되도록 라벨 정책으로 제한 — Anthropic API 비용 폭증 방지.
+
+## 2026-05-30 — 미분류 자격증명 fallback = 전용 "Uncategorized" issuer
+
+- **결정:** issuer-regex 에 안 맞는 키(엔트로피 감지분 등)와 URL 미인식 수동 추가는 `slug="unknown"` / display `"Uncategorized"` 전용 issuer 로 분류한다. setup.rs 시드에 11번째 항목으로 포함 (실제 provider 아님).
+- **이유:** 기존 fallback 이 `IssuerRepo::list()` 첫 항목이었는데, SQLite BINARY 정렬상 `"AWS" < "Anthropic"` 이라 첫 항목이 AWS → 무관한 키가 전부 AWS 로 오분류되어 그래프 오염. 사용자 dogfooding 에서 발견.
+- **영향:** scanner.rs(env_scan_commit) + import.rs(CSV) + QuickAddDialog + CreateCredentialDialog fallback 모두 Uncategorized 로 통일. 기존 잘못 태깅된 데이터는 사용자 동의로 그대로 둠 (신규 분류만 교정).
+
+## 2026-05-30 — API Key/비밀번호 값 교체(rotation) = primary 값만
+
+- **결정:** 수동 rotation 은 primary 시크릿 값만 교체한다 (이중 시크릿의 secondary 는 범위 밖). credit_card / revoked 상태는 비활성.
+- **이유:** 대부분 API Key/비밀번호 사례를 커버하고 백엔드 `credential_rotate_value` 현재 구현(vault_ref 덮어쓰기)과 일치. 단순성 우선.
+- **영향:** RotateValueDialog 신규. 백엔드 명령은 기존 것 재사용 (신규 백엔드 작업 없음). vault 값 덮어쓰기 + last_rotated_at·hash_hint 갱신 + audit.
+
+## 2026-05-30 — "기타(Other)" 종류 = 자유 입력 종류명
+
+- **결정:** Token/SSH key/License 등 preset 에 없는 종류는 `CredentialKind::Other` + `custom_kind_label`(자유 텍스트, 매번 입력)로 저장한다. 자동완성/재사용 카탈로그 없음.
+- **이유:** 가장 단순하고 유연. 종류명 카탈로그 관리 오버헤드 회피.
+- **영향:** 마이그레이션 0016 (`credential.custom_kind_label TEXT`). QuickAddDialog·CreateCredentialDialog 양쪽 + BentoCard 값 라벨 표시.
+
+## 2026-05-30 — dogfooding "저장/스캔 안 됨"의 진짜 원인 = 손상된 로컬 vault.db (코드 아님)
+
+- **결정/사실:** API 저장·폴더 drag&drop 실패는 코드 결함이 아니라 dev 빌드와 설치본이 공유하던 `%APPDATA%\app.secretbank\vault.db` 의 migration VersionMismatch(손상) 때문. 신선 설치본에서는 정상 작동 확인.
+- **영향:** dev 진단 시 실제 볼트 디렉토리를 절대 destructive 하게 다루지 않는다 (세션 중 실제 볼트 삭제 사고 발생). 손상 DB 의심 시 dev 는 **별도 identifier/data dir** 사용 검토 필요 (후속 백로그).

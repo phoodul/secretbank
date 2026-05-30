@@ -1,5 +1,28 @@
 # Work Log
 
+## 2026-05-29 ~ 2026-05-30 (resume → Night mode) — CI fix + dogfooding 버그 2건 + 신규 기능 2건 (rotation, Other 종류)
+
+### commits (origin/main `09aab89` → `a5a3dbb`, CI all green)
+
+| # | Commit | 작업 |
+|:--|:--|:--|
+| 1 | `4ccb0e9` | fix(ci): publish-updater-manifest 의 redundant main push 제거 (Worker 가 /api/latest 라이브 서빙 → 정적 site/*.json dead. branch protection GH006 실패 + draft→public skip 원인 제거) |
+| 2 | `be2cdd0` | docs 체크포인트 |
+| 3 | `9132770` | fix(scanner): 미매칭 키 AWS→Uncategorized 오분류 수정 (fallback 이 BINARY 정렬 첫 issuer=AWS 였음. "unknown" 시드 + scanner/import/QuickAdd/CreateCredential fallback 교체) |
+| 4 | `ed21251` | style: prettier 포맷 3파일 (CI format:check 통과) |
+| 5 | `94fb227` | fix(deps): tmp/uuid transitive 취약점 override (Dependabot high+medium, pnpm.overrides) |
+| 6 | `77336e8` | feat(inventory): **API Key/비밀번호 값 교체(rotation) UI** (RotateValueDialog + 버튼 활성화, 백엔드 기존 명령 재사용) |
+| 7 | `40ba40d` | feat(inventory): **"기타(Other)" 종류 + 사용자 정의 타입명** (CredentialKind::Other + custom_kind_label 컬럼 0016) |
+| 8 | `a5a3dbb` | docs 체크포인트 |
+
+### 핵심
+- **dogfooding "API 저장/drag&drop 안 됨" = 코드 버그 아니라 손상된 로컬 vault.db** (migration VersionMismatch). 신선 설치본에서 정상. 세션 중 dev 진단용 위험한 복구 스니펫으로 실제 볼트 폴더 삭제 사고 발생. 교훈은 메모리에 기록.
+- **AWS 그래프 오분류**: 사용자 관찰이 정확. 미매칭 키가 전부 AWS 로 → Uncategorized 버킷으로 수정.
+- **rotation**: 백엔드 `credential_rotate_value` 는 완비, 프론트만 미구현이었음.
+- **Other**: 양쪽 dialog + BentoCard 표시 + i18n 4로케일.
+- **검증 회귀 0**: app 288 / storage 전체 / frontend 657 / typecheck·lint·fmt clean / CI green.
+- **⚠️ 미해결(무관)**: `secretbank-feeds::twofa_directory::tfa3_expired_cache_refetches` 가 로컬 저-uptime 머신에서 `Instant::checked_sub` underflow 로 실패 (CI 통과). robustness fix 보류.
+
 ## 2026-05-14 ~ 2026-05-15 (resume 세션) — dogfooding 4건 root cause fix + v0.1.0-pre18 release + Cloudflare 보안 이슈 6/8 해소
 
 ### 5 commits
