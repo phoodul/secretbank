@@ -2,6 +2,17 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-06-02 (resume) — Dependabot vitest **critical CVE (#34~37)** 정식 해소 + CLA 워크플로우 fix. **로컬 커밋 완료, push + PR #6 close 는 사용자 승인 대기.**
+- **근본 원인 2건**: (1) vitest `<4.1.0` 임의 파일 읽기 (패치 4.1.0 only, 취약 2곳) — Dependabot PR #6 은 download-proxy 만 + pool-workers 0.8.71 유지로 peer 충돌. (2) CLA 액션 `@v2` 이동 태그 부재 → 전 PR CLA 체크 실패 → 보안 PR 머지 차단.
+- **fix**: relay·download-proxy 양쪽 `vitest ^4.1.5` + `@cloudflare/vitest-pool-workers ^0.16.11`. pool-workers 0.16 breaking config API (`defineWorkersConfig`→`cloudflareTest` 플러그인) 를 공식 docs+codemod 로 마이그레이션. tsconfig types `/types` 서브패스. CLA `@v2`→`@v2.6.1`.
+- **검증 (회귀 0)**: relay 71/71 + download-proxy 14/14 + 양쪽 typecheck clean + prettier clean. esbuild 0.25.12 (CVE 안전), vitest 4.1.8.
+- **교훈**: EE 패키지(루트 워크스페이스 밖)는 디렉터리 진입 후 `--ignore-workspace` 로만 install/test. `pnpm -C` + 중첩 `ee/` 는 ENOENT 유발.
+- **다음**: push → 4 알림 auto-close 확인 → `gh pr close 6` → (이후) dogfooding 재개.
+
+---
+
+### 이전 체크포인트 (2026-05-30)
+
 - **Time:** 2026-05-30 (Night mode) — dogfooding 발견 2건 fix + 2개 기능 구현. **미푸시 커밋 다수, push 사용자 승인 대기 (Night mode).**
 - **이번 세션 커밋 (HEAD `40ba40d`, origin/main `09aab89` 대비 미푸시 6건 → 그 중 3건은 이미 push 됨 `94fb227`)**:
   - `4ccb0e9` fix(ci): publish-updater-manifest redundant main push 제거 (이미 push)

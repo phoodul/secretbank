@@ -5,6 +5,30 @@
 
 ---
 
+## [2026-06-02] **EE 워커 테스트 스택 vitest 4 마이그레이션 + CLA 워크플로우 fix**
+
+### 배경
+
+- Dependabot critical 알림 4건 — vitest `< 4.1.0` 임의 파일 읽기·실행 (UI 서버 listening 시). 패치는 **4.1.0 only** (3.x 백포트 없음).
+- 취약 위치 2곳: `ee/secretbank-relay`, `ee/cloudflare/download-proxy` (둘 다 `vitest ^3.2.0` + `@cloudflare/vitest-pool-workers ^0.8.71`).
+- Dependabot PR #6 은 `download-proxy` 만 vitest 4.1 로 올리고 `pool-workers 0.8.71` 유지 → **peer 충돌** (`pool-workers@0.8.71` peer = vitest `2.0~3.2.x`). CI 에 download-proxy 테스트 잡이 없어 미검출. relay 는 PR 자체가 없었음.
+
+### 결정
+
+- vitest 4.1 을 지원하는 건 `@cloudflare/vitest-pool-workers@^0.16.x` 뿐 → **두 패키지를 함께 bump** (`vitest ^4.1.5` + `pool-workers ^0.16.11`), relay·download-proxy 양쪽 동시.
+- pool-workers 0.16 은 **breaking config API** — `@cloudflare/vitest-pool-workers/config` 의 `defineWorkersConfig`/`defineWorkersProject` 제거. 새 패턴 = `vitest/config` 의 `defineConfig` + `@cloudflare/vitest-pool-workers` 의 `cloudflareTest` 플러그인 (공식 docs + 동봉 codemod `vitest-v3-to-v4` 로 확인). relay 는 async (readD1Migrations) 이므로 `cloudflareTest(async () => ...)` 팩토리 사용.
+- tsconfig `types`: `@cloudflare/vitest-pool-workers` → `@cloudflare/vitest-pool-workers/types` (`cloudflare:test` 모듈 선언이 `/types` 서브패스로 이동).
+- esbuild override `^0.25.0` → `>=0.25.0` (pool-workers 0.16 의 esbuild 0.27.3 허용 + CVE 플로어 유지. 실제 트리는 vite 제약으로 0.25.12 단일 해소).
+- **Dependabot PR #6 은 close** (불완전 + peer 깨짐, 본 커밋이 대체).
+- CLA 워크플로우 `contributor-assistant/github-action@v2` → `@v2.6.1`. **`v2` 이동 태그가 존재하지 않아** 모든 PR 의 CLA 체크가 `Unable to resolve action` 으로 실패 → 보안 PR 머지 차단의 직접 원인. `allowlist: dependabot[bot]` 은 이미 설정돼 있어 액션 버전만 고치면 봇 PR 은 자동 통과.
+
+### 검증 (회귀 0)
+
+- relay 71/71 PASS + typecheck clean / download-proxy 14/14 PASS + typecheck clean / prettier clean.
+- esbuild 0.25.12 (>=0.25.0, GHSA dev-server CVE 안전).
+
+---
+
 ## [2026-05-13] **OAuth flow → loopback HTTP server (RFC 8252)**
 
 ### 결정

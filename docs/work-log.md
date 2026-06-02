@@ -1,5 +1,42 @@
 # Work Log
 
+## 2026-06-02 (resume) — Dependabot vitest critical CVE 정식 해소 + CLA 워크플로우 fix
+
+### 컨텍스트
+
+세션 복원 직후 사용자가 Dependabot 문제 제기. 진단 결과 **두 가지 별개 근본 원인**:
+
+1. **vitest critical CVE (알림 #34~37)** — `< 4.1.0` 임의 파일 읽기·실행. 패치는 4.1.0 only. 취약 2곳(relay, download-proxy). Dependabot PR #6 은 download-proxy 만 + pool-workers 0.8.71 유지 → peer 충돌 (CI 미검출), relay 는 PR 없음.
+2. **CLA 워크플로우 깨짐** — `contributor-assistant/github-action@v2` (이동 태그 부재) → 모든 PR CLA 체크 `Unable to resolve action` 실패 → 보안 PR `UNSTABLE` 머지 차단.
+
+### 변경
+
+| 파일 | 변경 |
+|:--|:--|
+| `ee/secretbank-relay/{package.json,pnpm-lock.yaml}` | `vitest ^3.2.0→^4.1.5`, `@cloudflare/vitest-pool-workers ^0.8.71→^0.16.11`, esbuild override `^0.25.0→>=0.25.0` |
+| `ee/secretbank-relay/vitest.config.ts` | `defineWorkersConfig(async)` → `defineConfig` + `cloudflareTest(async()=>...)` (D1 readD1Migrations 보존) |
+| `ee/secretbank-relay/tsconfig.json` | types `@cloudflare/vitest-pool-workers` → `/types` |
+| `ee/cloudflare/download-proxy/*` | 동일 4종 (config 는 plain object 형태) |
+| `.github/workflows/cla.yml` | CLA 액션 `@v2` → `@v2.6.1` |
+
+### 핵심
+
+- pool-workers 0.16 = breaking config API. 새 패턴은 공식 docs + 동봉 codemod(`vitest-v3-to-v4`) 로 확인 (추측 X). relay 의 async D1 migration 은 `cloudflareTest` 의 async 팩토리로 이전.
+- **혼합 install 사고** — 처음에 `pnpm -C ...` (without `--ignore-workspace`) 가 루트 워크스페이스를 잡아 node_modules 오염 + `pnpm -C` 가 중첩 `ee/` 경로에서 ENOENT(`...\vitest-pool-workers\ee`) 유발. 해결: EE 패키지는 **디렉터리 진입 후 `--ignore-workspace`** 로만 install/test (2026-05-13 `7e0b9d8` 와 동일 교훈), `pnpm -C` 회피. 잠긴 node_modules 는 cmd `rmdir /s /q` 로 클린 삭제 후 재설치.
+- Dependabot PR #6 은 close 대상 (불완전 + peer 깨짐).
+
+### 검증 (회귀 0)
+
+- relay: 71/71 PASS, typecheck clean
+- download-proxy: 14/14 PASS, typecheck clean
+- prettier --check (변경 7 파일) clean
+- esbuild 트리 0.25.12 (CVE 안전), vitest 4.1.8 (≥4.1.0 패치)
+
+### 남은 액션 (사용자 승인 대기)
+
+- push origin/main → 4 critical 알림 자동 close 확인
+- Dependabot PR #6 close (`gh pr close 6`)
+
 ## 2026-05-29 ~ 2026-05-30 (resume → Night mode) — CI fix + dogfooding 버그 2건 + 신규 기능 2건 (rotation, Other 종류)
 
 ### commits (origin/main `09aab89` → `a5a3dbb`, CI all green)
