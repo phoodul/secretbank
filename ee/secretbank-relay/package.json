@@ -12,7 +12,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply secretbank-relay --remote"
   },
   "dependencies": {
-    "@simplewebauthn/server": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.21",
     "jose": "^5.0.0"
