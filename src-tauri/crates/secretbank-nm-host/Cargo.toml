@@ -15,7 +15,9 @@ path = "src/lib.rs"
 
 [dependencies]
 # Async runtime — io-std (stdin/stdout 비동기), signal (ctrl-c)
-tokio = { workspace = true }
+# `net`: bridge_client.rs 의 TcpStream (확장 브리지). feature unification 에
+# 의존하지 않도록 직접 사용하는 feature 를 명시 (resolver 2 격리/플랫폼 대응).
+tokio = { workspace = true, features = ["net"] }
 
 # JSON 직렬화
 serde = { workspace = true }
