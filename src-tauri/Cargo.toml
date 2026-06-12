@@ -28,7 +28,7 @@ ulid = { version = "1", features = ["serde"] }
 # (conflicting impl) under the full feature set — breaks the build. Pin to 0.3.47
 # until time ships a fix (≥0.3.49). Cargo.lock is gitignored, so this Cargo.toml
 # constraint is the durable pin (CI resolves fresh without --locked).
-time = { version = "=0.3.47", features = ["serde", "formatting", "parsing", "macros"] }
+time = { version = "=0.3.48", features = ["serde", "formatting", "parsing", "macros"] }
 
 # HTTP
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "gzip"] }
