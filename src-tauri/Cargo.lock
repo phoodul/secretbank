@@ -5693,7 +5693,7 @@ dependencies = [
  "ed25519-dalek",
  "hex",
  "rand 0.8.6",
- "rand_core 0.6.4",
+ "rand_core 0.9.5",
  "reqwest 0.12.28",
  "secrecy",
  "secretbank-audit",
@@ -5740,7 +5740,7 @@ name = "secretbank-audit"
 version = "0.1.0-pre18"
 dependencies = [
  "ed25519-dalek",
- "rand_core 0.6.4",
+ "rand_core 0.9.5",
  "serde",
  "serde_bytes",
  "serde_json",
