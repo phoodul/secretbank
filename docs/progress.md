@@ -2,6 +2,16 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-06-12 (resume) — Dependabot 보안 알림 **3종(#43 critical shell-quote / #38 high react-router / #39~42 medium hono ×4)** 일괄 해소. 커밋 `eb6acc9`. **push + PR #7 close 는 사용자 승인 대기.**
+- **조치**: shell-quote 1.7.3→1.8.4 (root pnpm.overrides, wxt dev 툴링 transitive) / react-router-dom 7.14.2→7.17.0 (≥7.15.0 DoS 패치) / hono 4.12.18→4.12.25 (relay, ≥4.12.21).
+- **검증 (회귀 0)**: frontend 657/657 + relay 71/71 + 양쪽 typecheck clean + lint 0 error + prettier clean.
+- **이전 보류 액션 완료 확인**: 2026-06-02 의 push + PR #6 close 모두 반영됨 (origin/main = b2eb8bd). vitest critical 알림 #34~37 close 확인.
+- **다음**: push → 6 알림 자동 close 확인 → `gh pr close 7` → dogfooding 재개.
+
+---
+
+### 이전 체크포인트 (2026-06-02)
+
 - **Time:** 2026-06-02 (resume) — Dependabot vitest **critical CVE (#34~37)** 정식 해소 + CLA 워크플로우 fix. **로컬 커밋 완료, push + PR #6 close 는 사용자 승인 대기.**
 - **근본 원인 2건**: (1) vitest `<4.1.0` 임의 파일 읽기 (패치 4.1.0 only, 취약 2곳) — Dependabot PR #6 은 download-proxy 만 + pool-workers 0.8.71 유지로 peer 충돌. (2) CLA 액션 `@v2` 이동 태그 부재 → 전 PR CLA 체크 실패 → 보안 PR 머지 차단.
 - **fix**: relay·download-proxy 양쪽 `vitest ^4.1.5` + `@cloudflare/vitest-pool-workers ^0.16.11`. pool-workers 0.16 breaking config API (`defineWorkersConfig`→`cloudflareTest` 플러그인) 를 공식 docs+codemod 로 마이그레이션. tsconfig types `/types` 서브패스. CLA `@v2`→`@v2.6.1`.

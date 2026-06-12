@@ -1,5 +1,36 @@
 # Work Log
 
+## 2026-06-12 (resume) — Dependabot 보안 알림 3종 해소 (shell-quote/react-router/hono)
+
+### 컨텍스트
+
+세션 복원 시 6건의 open Dependabot 알림 발견 (지난 2026-06-02 세션 이후 신규 누적). vitest CVE(#34~37)는 이미 close 확인. PR #6 close 완료 확인.
+
+### 변경 (커밋 `eb6acc9`)
+
+| 알림 | 심각도 | 패키지 | 조치 |
+|:--|:--|:--|:--|
+| #43 | 🔴 critical | shell-quote 1.7.3→1.8.4 | `quote()` 개행 미이스케이프. `wxt→web-ext-run→fx-runner` transitive → root `pnpm.overrides` 핀 |
+| #38 | 🟠 high | react-router 7.14.2→7.17.0 | `__manifest` unbounded path DoS (≥7.15.0). `react-router-dom` bump |
+| #39~42 | 🟡 medium ×4 | hono 4.12.18→4.12.25 | Set-Cookie injection / mount prefix / IPv6 deny 우회 / JWT scheme (≥4.12.21) |
+
+### 핵심
+
+- shell-quote 는 확장 dev 툴링(web-ext-run) deep transitive — 런타임 코드 아님. override 1.7.3→1.8.4 는 patch-level API 호환.
+- relay 는 standalone pnpm → `--ignore-workspace` 로 install (메모리 룰 준수). hono 4.12.25 resolve.
+- Dependabot PR #7(hono)은 package.json 만 + lockfile 미갱신 + CLA 봇 실패로 BLOCKED → 본 커밋으로 대체, push 후 close 예정.
+
+### 검증 (회귀 0)
+
+- frontend 657/657 PASS + typecheck clean
+- relay 71/71 PASS + typecheck clean
+- lint 0 error (21 warning 기존, 무관) + prettier clean
+
+### 남은 액션 (사용자 승인 대기)
+
+- push origin/main → 6 알림 자동 close 확인
+- `gh pr close 7`
+
 ## 2026-06-02 (resume) — Dependabot vitest critical CVE 정식 해소 + CLA 워크플로우 fix
 
 ### 컨텍스트
