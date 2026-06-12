@@ -1,11 +1,53 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
+# Dependabot version updates + 보안 알림 커버리지.
+# 보안 알림은 의존성 그래프 기반이며, 여기 등록된 매니페스트(특히 커밋된
+# src-tauri/Cargo.lock)가 그래프에 올라가야 cargo 취약점도 감지된다.
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # --- Rust (Tauri 백엔드 워크스페이스) ---
+  - package-ecosystem: "cargo"
+    directory: "/src-tauri"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      cargo-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # --- npm: 루트 pnpm 워크스페이스 (앱 프론트엔드 + extension + packages/shared) ---
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # --- npm: EE Cloudflare Worker relay (독립 pnpm 프로젝트) ---
+  - package-ecosystem: "npm"
+    directory: "/ee/secretbank-relay"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # --- npm: EE download-proxy (독립 pnpm 프로젝트) ---
+  - package-ecosystem: "npm"
+    directory: "/ee/cloudflare/download-proxy"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # --- npm: VS Code 확장 (자체 package-lock.json) ---
+  - package-ecosystem: "npm"
+    directory: "/vscode-extension"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # --- GitHub Actions (워크플로우 액션 버전 — CLA @v2 같은 이동 태그 사고 방지) ---
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10

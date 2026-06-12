@@ -1,0 +1,45 @@
+name: CodeQL
+
+# 정적 보안 분석 (code scanning). Dependabot(의존성)·secret scanning 과 보완.
+# JS/TS(프론트엔드·확장) + Rust(Tauri 백엔드) 둘 다 build-mode: none 으로
+# 빌드 없이 분석 — Linux native deps / 긴 cargo build 불필요.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 매주 월요일 05:23 UTC — 신규 쿼리/규칙 반영을 위한 정기 재스캔
+    - cron: "23 5 * * 1"
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: rust
+            build-mode: none
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

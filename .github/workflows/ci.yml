@@ -37,18 +37,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src-tauri/target
-          # Cargo.lock 은 .gitignore — Cargo.toml hash 로 key 생성 (version bump 시 자동 invalidate)
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/**/Cargo.toml') }}
+          # Cargo.lock 커밋됨 — lock hash 로 key 생성 (의존성 변경 시 자동 invalidate)
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: cargo fmt --check
         run: cargo fmt --all --manifest-path src-tauri/Cargo.toml -- --check
 
+      # --locked: 커밋된 Cargo.lock 을 강제. 의존성 재해석 금지 → 재현 빌드 +
+      # transitive 신규(broken) 릴리스 자동 채택 방지. lock 갱신 필요 시 CI fail.
       - name: cargo clippy
-        run: cargo clippy --workspace --manifest-path src-tauri/Cargo.toml -- -D warnings
+        run: cargo clippy --workspace --locked --manifest-path src-tauri/Cargo.toml -- -D warnings
 
       - name: cargo test
-        run: cargo test --workspace --manifest-path src-tauri/Cargo.toml
+        run: cargo test --workspace --locked --manifest-path src-tauri/Cargo.toml
 
   frontend:
     name: Frontend (typecheck / lint / format / vitest)

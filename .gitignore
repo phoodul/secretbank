@@ -15,7 +15,8 @@ build/
 !.env.example
 
 # tauri
-src-tauri/Cargo.lock
+# Cargo.lock 은 의도적으로 커밋한다 (바이너리/앱 = 재현 빌드 + GitHub 의존성
+# 그래프 등록으로 cargo Dependabot 보안 알림 활성화). CI 는 --locked 로 검증.
 
 # debug logs
 npm-debug.log*
