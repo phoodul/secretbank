@@ -2,13 +2,15 @@
 
 ## Last Checkpoint
 
-- **Time:** 2026-06-12 (resume) — Dependabot 보안 알림 **3종(#43 critical shell-quote / #38 high react-router / #39~42 medium hono ×4)** 일괄 해소. 커밋 `eb6acc9`. **push + PR #7 close 는 사용자 승인 대기.**
-- **조치**: shell-quote 1.7.3→1.8.4 (root pnpm.overrides, wxt dev 툴링 transitive) / react-router-dom 7.14.2→7.17.0 (≥7.15.0 DoS 패치) / hono 4.12.18→4.12.25 (relay, ≥4.12.21).
-- **검증 (회귀 0)**: frontend 657/657 + relay 71/71 + 양쪽 typecheck clean + lint 0 error + prettier clean.
-- **push 완료**: `bc8d2e8` push → 6 알림 전부 자동 close (open: 0) + PR #7 close ✅.
-- **후속 CI red 해소 (`e7c9c0b`)**: rustc 1.96.0 상승 + Cargo.lock gitignore + CI `--locked` 미사용 → 오늘 릴리스된 broken `time` 0.3.48(E0119) 자동 채택이 원인. `time =0.3.47` 핀 + `secretbank-nm-host` tokio `net` feature 명시로 수정. **CI 4잡 전부 green 확인**. (후속 권장: Cargo.lock 커밋 + `--locked` — 사용자 결정 대기.)
-- **현재 HEAD**: `e7c9c0b` (origin/main 동기화, CI all green).
-- **다음**: dogfooding 재개 (production installer 다운로드→설치→실행).
+- **Time:** 2026-06-12 (resume) — **보안 라운드 풀체인 완료**. Dependabot 알림 6건 해소 → CI rustc 1.96 red 해소 → 보안 커버리지 강화(Cargo.lock/--locked/dependabot/CodeQL) → CodeQL 23건 처리. **전부 push, origin/main = `0ec96f4`, CI·CodeQL all green.**
+- **① Dependabot 6건 (`eb6acc9`)**: shell-quote 1.7.3→1.8.4 (root pnpm.overrides) / react-router-dom 7.14.2→7.17.0 / hono 4.12.18→4.12.25. push 시 6 알림 자동 close + PR #7 close ✅.
+- **② CI red 해소 (`e7c9c0b`)**: rustc 1.96.0 상승 + Cargo.lock gitignore + `--locked` 미사용 → 오늘 릴리스된 broken `time` 0.3.48(E0119) 자동 채택이 원인. `time =0.3.47` 핀 + nm-host tokio `net` feature 명시.
+- **③ 보안 커버리지 강화 (`88e38c2`)**: `src-tauri/Cargo.lock` 커밋(gitignore 해제) → cargo Dependabot 알림 활성화. CI `--locked`. dependabot.yml 전 생태계(cargo+npm 4+actions). CodeQL(JS/TS+Rust) 신규.
+- **④ CodeQL 23건 (`ba8d31d`)**: quoteArg = 실제 수정(exec→execFile, `state: fixed`) + 나머지 22 dismiss(오탐/테스트). **open code-scanning 0**.
+- **검증**: frontend 657 + relay 71 + Rust 전 크레이트(1.96.0) + CI 4잡 + CodeQL 2잡 all green. **GitHub 보안 탭 전 범주 0 (Dependabot/secret/code-scanning).**
+- **현재 HEAD**: `0ec96f4` (origin/main 동기화).
+- **잔여 사항(블로킹 아님)**: `time` 핀은 임시 — ≥0.3.49 수정 릴리스 시 해제. dirty `.claude/scheduled_tasks.lock` 1건(런타임 lock, 커밋 대상 아님).
+- **다음 세션**: dogfooding 재개 (production installer 다운로드→설치→실행).
 
 ---
 

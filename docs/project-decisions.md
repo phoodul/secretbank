@@ -5,7 +5,7 @@
 
 ---
 
-## [2026-06-12] **Dependabot 보안 알림 3종 해소 + `time` 0.3.47 핀 (rustc 1.96 / broken 0.3.48 대응)**
+## [2026-06-12] **보안 라운드 — Dependabot 6건 + `time` 0.3.47 핀(rustc 1.96/broken 0.3.48) + 보안 커버리지 강화(Cargo.lock 커밋·--locked·CodeQL)**
 
 ### 배경
 
@@ -23,14 +23,19 @@
   - 영향: 0.3.48 의 minor 보안 개선(subsecond 자릿수 cap)을 일시 포기. 우리 사용은 Rfc3339 well-known 파싱 위주라 저위험. **time ≥0.3.49(수정 릴리스) 시 핀 해제 재검토.**
 - **`secretbank-nm-host` tokio `net` feature 명시**: `bridge_client.rs` 의 TcpStream 이 직접 쓰는 feature 를 선언하지 않고 unification 에 의존하던 것을 교정 (resolver 2 격리/플랫폼 안전).
 
-### 후속 (미적용 — 사용자 결정 대기)
+### 추가 결정 — 보안 커버리지 강화 (사용자 승인 후 구현 완료, `88e38c2`/`ba8d31d`)
 
-- 보안 앱 특성상 **`Cargo.lock` 커밋 + CI `cargo` 명령에 `--locked` 도입** 검토. 재현 가능 빌드(supply-chain 무결성) + transitive 신규 릴리스로 인한 surprise CI red 방지. 현재 gitignore 정책은 "항상 최신 의존성 테스트" 의도로 보이나, 오늘 같은 broken transitive 자동 채택 리스크가 그 trade-off.
+- **`src-tauri/Cargo.lock` 정책 반전 = 커밋한다** (기존 gitignore 폐지). 근거: (1) 바이너리/데스크톱 앱은 재현 빌드가 정석, (2) GitHub 의존성 그래프 등록 → **그동안 사각지대였던 cargo(Rust) Dependabot 보안 알림 활성화**, (3) broken transitive(오늘 time 0.3.48 같은) 자동 채택 차단. "항상 최신 의존성 테스트" 의도는 Dependabot 주간 업데이트로 대체.
+- **CI `--locked`**: `cargo clippy/test` 에 추가. lock 갱신 필요 시 CI fail (의도). cache key 도 `Cargo.lock` hash 기반으로 전환.
+- **dependabot.yml 전 생태계 등록**: `cargo`(/src-tauri) + `npm` 4곳(루트 워크스페이스 / ee-relay / download-proxy / vscode-extension) + `github-actions`(CLA @v2 같은 이동 태그 사고 방지).
+- **CodeQL code scanning 도입** (`codeql.yml`): JS/TS + Rust(build-mode none, GA). push/PR/주간 스케줄. 그동안 미설정이던 정적 분석 공백 해소.
+- **CodeQL 첫 스캔 23건 처리** (전부 warning, 실위험 0): `vscode-extension` `runCli` 를 **`exec`→`execFile` 로 리팩터**(셸 경유 명령 주입 벡터 제거, `quoteArg` 삭제) = 실제 수정. 나머지 22건(CSPRNG/역직렬화 버퍼 + 테스트 시드)은 오탐으로 dismiss. → **open code-scanning 0**.
 
 ### 검증
 
 - frontend 657/657 + relay 71/71 + 양쪽 typecheck/lint/prettier clean.
-- rustc 1.96.0: `cargo check/clippy --workspace` clean + 전 크레이트 test ok. CI 4잡(Rust/Frontend/EE Relay/E2E) 전부 green (`e7c9c0b`).
+- rustc 1.96.0: `cargo check/clippy --workspace --locked` clean + 전 크레이트 test ok.
+- 최종(`0ec96f4`): CI 4잡 + CodeQL 2잡 all green. **GitHub 보안 탭 전 범주 0 (Dependabot/secret/code-scanning).**
 
 ---
 
