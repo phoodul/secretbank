@@ -5,8 +5,10 @@
 - **Time:** 2026-06-12 (resume) — Dependabot 보안 알림 **3종(#43 critical shell-quote / #38 high react-router / #39~42 medium hono ×4)** 일괄 해소. 커밋 `eb6acc9`. **push + PR #7 close 는 사용자 승인 대기.**
 - **조치**: shell-quote 1.7.3→1.8.4 (root pnpm.overrides, wxt dev 툴링 transitive) / react-router-dom 7.14.2→7.17.0 (≥7.15.0 DoS 패치) / hono 4.12.18→4.12.25 (relay, ≥4.12.21).
 - **검증 (회귀 0)**: frontend 657/657 + relay 71/71 + 양쪽 typecheck clean + lint 0 error + prettier clean.
-- **이전 보류 액션 완료 확인**: 2026-06-02 의 push + PR #6 close 모두 반영됨 (origin/main = b2eb8bd). vitest critical 알림 #34~37 close 확인.
-- **다음**: push → 6 알림 자동 close 확인 → `gh pr close 7` → dogfooding 재개.
+- **push 완료**: `bc8d2e8` push → 6 알림 전부 자동 close (open: 0) + PR #7 close ✅.
+- **후속 CI red 해소 (`e7c9c0b`)**: rustc 1.96.0 상승 + Cargo.lock gitignore + CI `--locked` 미사용 → 오늘 릴리스된 broken `time` 0.3.48(E0119) 자동 채택이 원인. `time =0.3.47` 핀 + `secretbank-nm-host` tokio `net` feature 명시로 수정. **CI 4잡 전부 green 확인**. (후속 권장: Cargo.lock 커밋 + `--locked` — 사용자 결정 대기.)
+- **현재 HEAD**: `e7c9c0b` (origin/main 동기화, CI all green).
+- **다음**: dogfooding 재개 (production installer 다운로드→설치→실행).
 
 ---
 

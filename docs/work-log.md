@@ -26,10 +26,20 @@
 - relay 71/71 PASS + typecheck clean
 - lint 0 error (21 warning 기존, 무관) + prettier clean
 
-### 남은 액션 (사용자 승인 대기)
+### push 결과 (완료)
 
-- push origin/main → 6 알림 자동 close 확인
-- `gh pr close 7`
+- push `bc8d2e8` → Dependabot 6 알림 전부 자동 close (open: 0 확인) ✅
+- `gh pr close 7` 완료 ✅
+
+### 후속 — rustc 1.96.0 로 인한 CI Rust red 해소 (커밋 `e7c9c0b`)
+
+push 직후 CI Rust 잡 red. 메모리 룰(CI 자동 monitor+fix)대로 직접 진단:
+
+- **근본 원인**: CI `dtolnay/rust-toolchain@stable` 이 rustc **1.96.0**(2026-05-25)로 상승. **`src-tauri/Cargo.lock` 은 gitignore 됨**(`.gitignore:18`) + CI 가 `--locked` 미사용 → 매 실행 의존성 재해석 → **오늘(2026-06-12) 릴리스된 broken `time` 0.3.48** 을 자동 채택. 0.3.48 은 reflexive `From<HourBase>` impl 도입으로 full feature set 에서 E0119(conflicting impl) → cookie/sqlx-core/tauri-utils 컴파일 불가 (1.95/1.96 양쪽 로컬 재현).
+- **수정 1**: `src-tauri/Cargo.toml` time `"0.3"` → `"=0.3.47"` (0.3.47 은 1.96.0 정상). Cargo.lock gitignore 라 Cargo.toml 이 durable pin. time ≥0.3.49 시 해제.
+- **수정 2 (부수 발견)**: `secretbank-nm-host` 의 `bridge_client.rs` TcpStream 이 tokio `net` feature 미선언 → feature unification 의존. 직접 명시로 교정.
+- **검증 (1.96.0)**: `cargo check/clippy --workspace` clean + 전 크레이트 test ok. (nm-host `installer_test` 의 os error 740 = Windows 관리자 권한 필요한 레지스트리 테스트, Linux CI 무관.) **CI 4잡 전부 green 확인 (`e7c9c0b`)**.
+- **후속 권장(미적용)**: 보안 앱 특성상 `Cargo.lock` 커밋 + CI `--locked` 도입 검토 (재현 빌드 + transitive 자동 채택으로 인한 surprise red 방지). 사용자 결정 대기.
 
 ## 2026-06-02 (resume) — Dependabot vitest critical CVE 정식 해소 + CLA 워크플로우 fix
 

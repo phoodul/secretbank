@@ -5,6 +5,35 @@
 
 ---
 
+## [2026-06-12] **Dependabot 보안 알림 3종 해소 + `time` 0.3.47 핀 (rustc 1.96 / broken 0.3.48 대응)**
+
+### 배경
+
+- Dependabot 알림 6건 신규 누적: critical shell-quote(#43), high react-router(#38), medium hono ×4(#39~42).
+- 보안 fix push 직후 CI Rust 잡 red — `dtolnay/rust-toolchain@stable` 이 rustc **1.96.0**(2026-05-25)로 상승하며 표면화.
+
+### 결정
+
+- **shell-quote**: `wxt→web-ext-run→fx-runner` transitive (확장 dev 툴링, 런타임 아님) → root `pnpm.overrides` 에 `shell-quote@<1.8.4: ^1.8.4` 핀.
+- **react-router**: `react-router-dom` `^7.14.2` → `^7.17.0` (≥7.15.0 에서 `__manifest` DoS 패치).
+- **hono**: relay `^4.12.18` → `^4.12.21` (실제 4.12.25 resolve). Dependabot PR #7 은 lockfile 미갱신 + CLA 봇 실패로 BLOCKED → 직접 처리 후 close (2026-06-02 PR #6 선례와 동일).
+- **`time` = `=0.3.47` 정확 핀** (`src-tauri/Cargo.toml`):
+  - 이유: `time` 0.3.48(2026-06-12 릴리스)이 reflexive `From<HourBase>` impl 도입 → full feature set 에서 E0119(conflicting impl)로 컴파일 불가. 0.3.47 은 rustc 1.96.0 에서 정상.
+  - `src-tauri/Cargo.lock` 은 gitignore(`​.gitignore:18`) + CI 가 `--locked` 미사용 → CI 가 매 실행 의존성을 새로 해석해 broken 0.3.48 을 자동 채택. 따라서 **Cargo.toml 제약이 유일한 durable pin**.
+  - 영향: 0.3.48 의 minor 보안 개선(subsecond 자릿수 cap)을 일시 포기. 우리 사용은 Rfc3339 well-known 파싱 위주라 저위험. **time ≥0.3.49(수정 릴리스) 시 핀 해제 재검토.**
+- **`secretbank-nm-host` tokio `net` feature 명시**: `bridge_client.rs` 의 TcpStream 이 직접 쓰는 feature 를 선언하지 않고 unification 에 의존하던 것을 교정 (resolver 2 격리/플랫폼 안전).
+
+### 후속 (미적용 — 사용자 결정 대기)
+
+- 보안 앱 특성상 **`Cargo.lock` 커밋 + CI `cargo` 명령에 `--locked` 도입** 검토. 재현 가능 빌드(supply-chain 무결성) + transitive 신규 릴리스로 인한 surprise CI red 방지. 현재 gitignore 정책은 "항상 최신 의존성 테스트" 의도로 보이나, 오늘 같은 broken transitive 자동 채택 리스크가 그 trade-off.
+
+### 검증
+
+- frontend 657/657 + relay 71/71 + 양쪽 typecheck/lint/prettier clean.
+- rustc 1.96.0: `cargo check/clippy --workspace` clean + 전 크레이트 test ok. CI 4잡(Rust/Frontend/EE Relay/E2E) 전부 green (`e7c9c0b`).
+
+---
+
 ## [2026-06-02] **EE 워커 테스트 스택 vitest 4 마이그레이션 + CLA 워크플로우 fix**
 
 ### 배경
