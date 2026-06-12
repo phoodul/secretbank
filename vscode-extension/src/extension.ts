@@ -19,7 +19,7 @@
  */
 
 import * as vscode from "vscode";
-import { exec, ExecException } from "node:child_process";
+import { execFile, ExecFileException } from "node:child_process";
 
 interface CredentialSummary {
   id: string;
@@ -128,10 +128,13 @@ interface RunResult {
 
 function runCli(args: string[], stdinPassphrase?: string): Promise<RunResult> {
   return new Promise((resolve, reject) => {
-    const child = exec(
-      `${quoteArg(cliPath())} ${args.map(quoteArg).join(" ")}`,
+    // execFile (not exec): args 는 argv 배열로 직접 전달되어 셸을 거치지 않는다.
+    // → shell metacharacter ($, 백틱, \, 따옴표) 주입 벡터 원천 제거 (수동 quoting 불필요).
+    const child = execFile(
+      cliPath(),
+      args,
       { maxBuffer: 32 * 1024 * 1024 },
-      (err: ExecException | null, stdout: string, stderr: string) => {
+      (err: ExecFileException | null, stdout: string, stderr: string) => {
         if (err) {
           reject(new Error(`Secretbank CLI failed (${err.code ?? "?"}): ${stderr || err.message}`));
           return;
@@ -143,11 +146,6 @@ function runCli(args: string[], stdinPassphrase?: string): Promise<RunResult> {
       child.stdin.end(stdinPassphrase + "\n");
     }
   });
-}
-
-function quoteArg(s: string): string {
-  if (/^[A-Za-z0-9_./:-]+$/.test(s)) return s;
-  return `"${s.replace(/"/g, '\\"')}"`;
 }
 
 // ---------------------------------------------------------------------------
