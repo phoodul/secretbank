@@ -5,6 +5,32 @@
 
 ---
 
+## [2026-06-14~15] **Dependabot — 보안 알림 8건 해소 정책 + 운용 자동화(grouping·cooldown·auto-merge)**
+
+### 배경
+
+세션 복원 직후 Dependabot 알림 8건 + 버전업 PR 29건 누적 발견. esbuild 보안 업데이트가 `security_update_not_possible` 로 매번 실패(상위 vite 8 이 0.27.x 까지만 허용, 새 advisory 는 0.28.1 요구). "왜 계속 생기나" 분석 → 4대 구조적 원인(넓은 표면 / 상위 잠금 / 자동화 부재 / 톱니파).
+
+### 결정 — 알림 해소 방식 (`a7b40d7`)
+
+- **상위가 transitive 를 패치 버전 미만으로 캡할 때 = `pnpm.overrides` 로 강제**. esbuild 를 root + ee/secretbank-relay + ee/cloudflare/download-proxy 3곳에 `0.28.1` 핀. 기존 shell-quote/tmp/uuid override 패턴과 동일.
+- **tauri 가 잠그는 transitive 는 dismiss(tolerable_risk)**: glib 0.18.5(#17, `glib=^0.18` 잠금)·rand 0.7.3(#18, phf 0.8 build-dep). bump 불가 + 저위험(Linux GTK iterator / 빌드전용). **tauri major(gtk-rs/phf 상승) 시 재평가** — 그게 유일한 근본 fix. 다음 세션 재조사 금지.
+- tauri/tar/rpassword 등 patch 는 `cargo update --precise` 로 즉시 해소.
+
+### 결정 — 재발 방지 자동화 (`91f6d73`)
+
+- **grouping 전 6 생태계로 확대**: minor+patch 를 생태계당 1 PR 로 묶음. major 는 그룹 제외(개별 PR, 사람 검토).
+- **cooldown(전 생태계)**: patch 3일 / minor 5일 / major 7일 / default 5일. 갓 배포된(침해 가능) 버전 즉시 채택 차단. **보안 업데이트(security-updates)는 cooldown 미적용 = 즉시.** Dependabot 은 YAML 앵커/커스텀 키 미지원 → 항목마다 인라인.
+- **auto-merge 워크플로우**(`.github/workflows/dependabot-auto-merge.yml`): `dependabot/fetch-metadata`(SHA 핀 = 이동 태그 사고 교훈) + `gh pr merge --auto --squash`. **patch/minor 만, major 영구 수동.** 머지는 branch protection 4개 필수 체크(Rust/Frontend/E2E smoke/EE Relay) 통과 시에만 → bad bump 은 PR 열린 채. 사전 확인: `allow_auto_merge` ON / required review 0 / **CLAAssistant 비필수**(Dependabot CLA 실패가 머지 안 막음).
+
+### 영향
+
+- 앞으로 생태계당 PR 1개 + patch/minor 자동 머지 → 사람은 major·진짜 보안 알림만 검토.
+- 기존 29 PR 백로그는 **다음 Dependabot run 이 그룹 PR 로 supersede**(개별 자동 close) — 무위험 대기 선택(사용자 승인 2026-06-15).
+- 더 보수적으로 가려면 group 을 dev/prod 분리해 prod-minor 도 수동화 가능(현재는 1차 단순안).
+
+---
+
 ## [2026-06-12] **보안 라운드 — Dependabot 6건 + `time` 0.3.47 핀(rustc 1.96/broken 0.3.48) + 보안 커버리지 강화(Cargo.lock 커밋·--locked·CodeQL)**
 
 ### 배경
