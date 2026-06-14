@@ -2,6 +2,8 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-06-15 (resume 연속) — **Dependabot 자동화 구축**(`91f6d73`). "왜 계속 생기나" 분석(4대 구조적 원인) 후 ③④(자동화 부재·톱니파) 제거. grouping 을 전 6 생태계로 확대(minor+patch) + cooldown(patch 3/minor 5/major 7일, 보안 업데이트는 즉시) + auto-merge 워크플로우(fetch-metadata SHA핀 + `gh pr merge --auto`, patch/minor 만·major 제외). 사전 확인: allow_auto_merge ON / required review 0 / CLAAssistant 비필수. **다음 Dependabot run 부터 PR 1개/생태계 + 자동 머지.** ⚠️ 기존 29 PR 백로그는 다음 run 에서 supersede 또는 수동 가속 — 사용자 결정 대기. (상세 work-log 2026-06-15)
+
 - **Time:** 2026-06-14 (resume) — **Dependabot 보안 알림 8건 전체 해소**. 사용자 "dependabot 문제" 보고 → esbuild 자동업데이트 실패 + Rust 5건 진단·처리. **push, origin/main = `a7b40d7`, 보안 탭 clean(open 0), CI 전 게이트 green.**
 - **핵심 (`a7b40d7`)**: esbuild 가 `security_update_not_possible` 로 매번 실패(상위 vite 8 이 0.27.x 까지만 허용, 새 advisory GHSA-gv7w-rqvm-qjhr 는 0.28.1 요구) → `pnpm.overrides` 로 0.28.1 강제(root + ee/secretbank-relay + ee/cloudflare/download-proxy 3곳). tauri 2.11.0→2.11.1(Origin Confusion IPC) + tar 0.4.46 + rpassword 7.5.0 은 `cargo update --precise`.
 - **dismiss 2건(tolerable_risk)**: glib #17(atk→gtk 0.18→tauri 가 `glib=^0.18` 잠금, 0.20 불가, Linux GTK) + rand #18(phf 0.8→tauri-utils **build-dep**, 런타임 미포함). tauri 상위 gtk-rs/phf bump 시 재평가.

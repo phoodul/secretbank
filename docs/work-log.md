@@ -1,5 +1,46 @@
 # Work Log
 
+## 2026-06-15 (resume 연속) — Dependabot 자동화 (grouping + cooldown + auto-merge)
+
+### 컨텍스트
+
+사용자가 "dependabot 문제가 계속 생기는 이유"를 물음 → 4대 구조적 원인 분석:
+①넓은 의존성 표면(6 생태계) ②상위 우산(tauri/vite)이 transitive 잠금 ③auto-merge·
+grouping 자동화 부재로 버전업 PR 29건 눈덩이 ④주간 스케줄+수동정리 톱니파. ①②는
+제품 특성상 불가피, **③④는 자동화로 제거 가능** → 사용자 "진행해줘".
+
+### 변경 (커밋 `91f6d73`)
+
+- **dependabot.yml grouping 확대**: 기존 root/cargo 외 ee/secretbank-relay·
+  download-proxy·vscode-extension·github-actions 에도 `minor+patch` 그룹 추가 →
+  dep 하나당 PR 1개 → 생태계당 1개. major 는 그룹 제외(개별 PR, 사람 검토).
+- **cooldown(전 생태계)**: patch 3일 / minor 5일 / major 7일 / default 5일. 갓 배포된
+  버전 즉시 채택 차단(supply-chain 방어). 보안 업데이트는 cooldown 미적용 = 즉시.
+  (Dependabot 은 YAML 앵커/커스텀 키 미지원 → 항목마다 인라인)
+- **.github/workflows/dependabot-auto-merge.yml 신규**: `dependabot/fetch-metadata`
+  (SHA 핀 `25dd0e3` = v3.1.0) + `gh pr merge --auto --squash`. patch/minor 만,
+  **major 제외**. 머지는 branch protection 4개 필수 체크 통과 시에만 발생.
+
+### 검증·근거
+
+- 공식 문서로 cooldown 서브키 + fetch-metadata 패턴 verbatim 확인(Verify-Before-Implement).
+- 사전 확인: `allow_auto_merge: true` 이미 ON / required review 0 / 필수 체크 4개
+  (Rust·Frontend·E2E smoke·EE Relay) — **CLAAssistant 는 필수 아님** → Dependabot CLA
+  실패가 머지 막지 않음 / `strict: false`(up-to-date 강제 없음).
+- 두 YAML 파싱 OK. 워크플로우 "Dependabot auto-merge" active 등록 확인.
+
+### 안전성 (시크릿 매니저 보수 정책)
+
+bad bump 이 CI 깨면 머지 안 됨(PR 열린 채) + major 영구 수동 + cooldown 으로 침해
+릴리스 즉시 채택 차단 + AGPL 투명성. 더 보수적으로 가려면 prod-minor 도 수동화 가능
+(group 을 dev/prod 분리) — 현재는 1차 단순안.
+
+### 미처리
+
+- **기존 29 PR 백로그**: 새 grouping/cooldown 은 다음 Dependabot run 부터 적용. 기존
+  개별 PR 은 다음 run 에서 그룹 PR 로 supersede(자동 close)되거나, 가속하려면 수동 트리거.
+  사용자 결정 대기.
+
 ## 2026-06-14 (resume) — Dependabot 보안 알림 8건 전체 해소 (esbuild 자동실패 + Rust)
 
 ### 컨텍스트
