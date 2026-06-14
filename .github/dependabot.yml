@@ -2,6 +2,15 @@
 # 보안 알림은 의존성 그래프 기반이며, 여기 등록된 매니페스트(특히 커밋된
 # src-tauri/Cargo.lock)가 그래프에 올라가야 cargo 취약점도 감지된다.
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# 운용 정책 (2026-06-14):
+#  - groups: 생태계마다 minor+patch 를 1개 PR 로 묶어 PR 눈덩이 방지.
+#    major 는 그룹 제외 → 개별 PR → 사람이 검토(.github/workflows/dependabot-auto-merge.yml
+#    이 major 는 auto-merge 하지 않음).
+#  - cooldown: 갓 배포된(침해 가능성 있는) 버전을 즉시 채택하지 않도록 지연.
+#    시크릿 매니저 supply-chain 방어. 보안 업데이트(security-updates)는 cooldown 미적용 = 즉시.
+#  - auto-merge: patch/minor 는 CI 4개 필수 체크 통과 + cooldown 경과 후 자동 머지.
+# (Dependabot 은 YAML 앵커/커스텀 키를 지원하지 않으므로 cooldown 을 항목마다 인라인)
 version: 2
 updates:
   # --- Rust (Tauri 백엔드 워크스페이스) ---
@@ -10,6 +19,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
     groups:
       cargo-minor-patch:
         update-types: ["minor", "patch"]
@@ -20,6 +34,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
     groups:
       npm-minor-patch:
         update-types: ["minor", "patch"]
@@ -30,6 +49,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
+    groups:
+      relay-minor-patch:
+        update-types: ["minor", "patch"]
 
   # --- npm: EE download-proxy (독립 pnpm 프로젝트) ---
   - package-ecosystem: "npm"
@@ -37,6 +64,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
+    groups:
+      download-proxy-minor-patch:
+        update-types: ["minor", "patch"]
 
   # --- npm: VS Code 확장 (자체 package-lock.json) ---
   - package-ecosystem: "npm"
@@ -44,6 +79,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
+    groups:
+      vscode-minor-patch:
+        update-types: ["minor", "patch"]
 
   # --- GitHub Actions (워크플로우 액션 버전 — CLA @v2 같은 이동 태그 사고 방지) ---
   - package-ecosystem: "github-actions"
@@ -51,3 +94,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]

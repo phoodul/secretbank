@@ -1,0 +1,35 @@
+name: Dependabot auto-merge
+
+# Dependabot 의 patch/minor PR 을 CI(main branch protection 의 4개 필수 체크) 통과 +
+# dependabot.yml 의 cooldown 경과 후 자동 머지한다. major 는 제외 → 사람이 검토.
+# 목적: 버전업 PR 눈덩이 제거 → 진짜 손볼 보안 알림만 남기기.
+#
+# 안전장치:
+#  - gh pr merge --auto 는 머지를 "예약"만 하며, 실제 머지는 branch protection 의
+#    필수 status check 4개(Rust / Frontend / E2E smoke / EE Relay)가 green 일 때만 일어난다.
+#    bad bump 이 CI 를 깨면 머지되지 않고 PR 이 열린 채 남는다.
+#  - major 업데이트는 enable 자체를 건너뛴다(아래 if).
+#  - cooldown(dependabot.yml)이 갓 배포된 버전의 즉시 채택을 막는다(supply-chain 방어).
+#  - 액션은 이동 태그(@v3) 대신 SHA 핀 (CLA @v2 이동 태그 사고 교훈).
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Enable auto-merge (patch/minor only; major 는 수동 검토)
+        if: ${{ steps.meta.outputs.update-type != 'version-update:semver-major' }}
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
