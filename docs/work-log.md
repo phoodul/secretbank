@@ -1,5 +1,45 @@
 # Work Log
 
+## 2026-06-14 (resume) — Dependabot 보안 알림 8건 전체 해소 (esbuild 자동실패 + Rust)
+
+### 컨텍스트
+
+세션 복원 직후 사용자가 "dependabot 문제" 보고. 진단 결과 3층 문제: ① esbuild 보안
+업데이트가 `security_update_not_possible` 로 매번 빨갛게 실패(상위 vite 8 이 esbuild
+0.27.x 까지만 허용, 새 advisory 는 0.28.1 요구) ② Rust 알림 5건 ③ 누적 버전업 PR 29건.
+사용자 결정: 보안 알림 8건 전체 처리 + 검증 통과 시 push.
+
+### 변경 (커밋 `a7b40d7`)
+
+| 알림 | 심각도 | 패키지 | 조치 |
+|:--|:--|:--|:--|
+| #47/#48/#49 | 🔴 high×2 + low | esbuild →0.28.1 | `pnpm.overrides` 핀. root(vite 8) + ee/secretbank-relay + ee/cloudflare/download-proxy 3곳. Dependabot 가 못 올리던 것을 override 로 우회 (GHSA-gv7w-rqvm-qjhr) |
+| #44 | 🟠 medium | tauri 2.11.0→2.11.1 | Origin Confusion: 원격 페이지의 로컬 IPC 호출 (GHSA-7gmj-67g7-phm9). `cargo update --precise` |
+| #46 | 🟠 medium | tar 0.4.45→0.4.46 | PAX header desync (GHSA-3pv8-6f4r-ffg2) |
+| #45 | 🟡 low | rpassword 7.4.0→7.5.0 | 입력 중단 시 부분 노출 (GHSA-2p6r-x3vv-xqm2) |
+| #17 | 🟠 medium | glib 0.18.5 | **dismiss(tolerable_risk)**: atk→gtk 0.18→muda→tauri 가 `glib=^0.18` 잠금, 0.20 선택 불가. Linux GTK VariantStrIter unsoundness, 앱 경로 미사용 |
+| #18 | 🟡 low | rand 0.7.3 | **dismiss(tolerable_risk)**: phf_generator 0.8→...→tauri-utils **build-dep**. 런타임 미포함, custom-logger 경로 미사용. tauri 가 phf 0.8 잠금 |
+
+### 핵심
+
+- esbuild override 형식: root 는 security-pin 스타일 `"esbuild@<0.28.1": "^0.28.1"`, ee 는 기존 `>=0.25.0` → `>=0.28.1`. 3곳 모두 install 시 0.28.1 resolve 확인.
+- esbuild 0.28.1 이 vite 8 빌드/transform 을 안 깸 — root `vite build` + vitest 657 통과로 실증.
+- glib/rand 는 tauri 상위가 gtk-rs/phf 를 bump 하기 전엔 수정 불가. 이전 CodeQL 세션의 dismiss 패턴 동일 적용. tauri 메이저 갱신 시 재평가 대상.
+
+### 검증 (회귀 0)
+
+- root: `vite build` 성공 + vitest **657/657** PASS + typecheck clean
+- ee/secretbank-relay **71/71** / ee/cloudflare/download-proxy **14/14** (각 `--ignore-workspace`)
+- Rust: app lib **288** + 전 크레이트 통과 (단 `secretbank-feeds::tfa3_expired_cache_refetches` 는 기존 머신-uptime 의존 flaky, 무관)
+- CI clippy 게이트(`--all-targets` 미사용)는 영향 없음 — `tests/protocol_roundtrip.rs:41 json!(3.14)` approx_constant lint 은 CI 미검사 범위
+- **push 후 Dependabot 재스캔 → open 알림 0 (6건 자동 close + 2건 dismiss). 보안 탭 clean 회복.**
+
+### 미처리 (다음 세션 후보)
+
+- 누적 버전업 PR 29건 (major: typescript 6 / sqlx 0.9 / rand 0.9.4 / plugin-react 5 등 선별 필요)
+- `tfa3_expired_cache_refetches` flaky 1줄 robustness fix
+- dogfooding (production installer)
+
 ## 2026-06-12 (resume) — Dependabot 보안 알림 3종 해소 (shell-quote/react-router/hono)
 
 ### 컨텍스트

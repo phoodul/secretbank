@@ -2,6 +2,18 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-06-14 (resume) — **Dependabot 보안 알림 8건 전체 해소**. 사용자 "dependabot 문제" 보고 → esbuild 자동업데이트 실패 + Rust 5건 진단·처리. **push, origin/main = `a7b40d7`, 보안 탭 clean(open 0), CI 전 게이트 green.**
+- **핵심 (`a7b40d7`)**: esbuild 가 `security_update_not_possible` 로 매번 실패(상위 vite 8 이 0.27.x 까지만 허용, 새 advisory GHSA-gv7w-rqvm-qjhr 는 0.28.1 요구) → `pnpm.overrides` 로 0.28.1 강제(root + ee/secretbank-relay + ee/cloudflare/download-proxy 3곳). tauri 2.11.0→2.11.1(Origin Confusion IPC) + tar 0.4.46 + rpassword 7.5.0 은 `cargo update --precise`.
+- **dismiss 2건(tolerable_risk)**: glib #17(atk→gtk 0.18→tauri 가 `glib=^0.18` 잠금, 0.20 불가, Linux GTK) + rand #18(phf 0.8→tauri-utils **build-dep**, 런타임 미포함). tauri 상위 gtk-rs/phf bump 시 재평가.
+- **검증**: root build+vitest 657 / relay 71 / download-proxy 14 / Rust app lib 288. push 후 CI Rust+Frontend+EE Relay+E2E smoke+CodeQL(rust+JS) 전부 success. 6 알림 자동 close + 2 dismiss → **open 0**.
+- **비게이트**: CLAAssistant 실패 = 메인테이너 직접 push 고정 패턴(직전 `0a745e8` 도 동일). E2E Chromium MV3 = continue-on-error mute.
+- **잔여(블로킹 아님)**: ① **누적 Dependabot 버전업 PR 29건** — push 시마다 rebase+CI cascade(100+ 큐) 유발, 선별 정리 필요(major: typescript 6/sqlx 0.9/rand 0.9.4/plugin-react 5). ② `tfa3_expired_cache_refetches` 머신-uptime flaky 1줄 fix. ③ `time` 핀(≥0.3.49 시 해제).
+- **다음 세션**: 29 PR 정리 또는 dogfooding(production installer).
+
+---
+
+### 이전 체크포인트 (2026-06-12) — 보안 라운드 풀체인 완료
+
 - **Time:** 2026-06-12 (resume) — **보안 라운드 풀체인 완료**. Dependabot 알림 6건 해소 → CI rustc 1.96 red 해소 → 보안 커버리지 강화(Cargo.lock/--locked/dependabot/CodeQL) → CodeQL 23건 처리. **전부 push, origin/main = `0ec96f4`, CI·CodeQL all green.**
 - **① Dependabot 6건 (`eb6acc9`)**: shell-quote 1.7.3→1.8.4 (root pnpm.overrides) / react-router-dom 7.14.2→7.17.0 / hono 4.12.18→4.12.25. push 시 6 알림 자동 close + PR #7 close ✅.
 - **② CI red 해소 (`e7c9c0b`)**: rustc 1.96.0 상승 + Cargo.lock gitignore + `--locked` 미사용 → 오늘 릴리스된 broken `time` 0.3.48(E0119) 자동 채택이 원인. `time =0.3.47` 핀 + nm-host tokio `net` feature 명시.
