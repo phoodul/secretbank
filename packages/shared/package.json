@@ -24,7 +24,7 @@
   "dependencies": {
     "@zxcvbn-ts/core": "^3.0.4",
     "@zxcvbn-ts/language-common": "^3.0.4",
-    "@zxcvbn-ts/language-en": "^3.0.2",
+    "@zxcvbn-ts/language-en": "^4.1.1",
     "zod": "^4.3.6"
   }
 }
