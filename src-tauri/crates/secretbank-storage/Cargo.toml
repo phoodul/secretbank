@@ -27,7 +27,7 @@ tempfile = "3"
 secretbank-crypto = { path = "../secretbank-crypto" }
 secretbank-charter = { path = "../secretbank-charter" }
 x25519-dalek = { version = "2", features = ["static_secrets"] }
-bech32 = "0.9"
+bech32 = "0.12"
 
 [dev-dependencies]
 tokio = { workspace = true }
