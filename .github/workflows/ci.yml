@@ -34,7 +34,7 @@ jobs:
             librsvg2-dev
 
       - name: Cache cargo target
-        uses: actions/cache@v6
+        uses: actions/cache@v6.1.0
         with:
           path: src-tauri/target
           # Cargo.lock 커밋됨 — lock hash 로 key 생성 (의존성 변경 시 자동 invalidate)
@@ -106,7 +106,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v6
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}

@@ -113,7 +113,7 @@ jobs:
           cache: pnpm
 
       - name: Cache cargo
-        uses: actions/cache@v6
+        uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
