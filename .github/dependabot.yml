@@ -99,6 +99,8 @@ updates:
         update-types: ["minor", "patch"]
 
   # --- GitHub Actions (워크플로우 액션 버전 — CLA @v2 같은 이동 태그 사고 방지) ---
+  # NOTE: github-actions 생태계는 cooldown 의 semver-*-days 세분 키를 지원하지
+  # 않는다(액션은 semver 를 엄격히 따르지 않음). default-days 만 사용.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -106,9 +108,6 @@ updates:
     open-pull-requests-limit: 10
     cooldown:
       default-days: 5
-      semver-patch-days: 3
-      semver-minor-days: 5
-      semver-major-days: 7
     groups:
       actions-minor-patch:
         update-types: ["minor", "patch"]
