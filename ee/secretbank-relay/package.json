@@ -15,7 +15,7 @@
     "@simplewebauthn/server": "^13.3.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.26",
-    "jose": "^5.0.0"
+    "jose": "^6.2.3"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.16.18",
