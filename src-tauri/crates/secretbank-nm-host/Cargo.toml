@@ -62,7 +62,7 @@ dirs = "5"
 
 [target.'cfg(windows)'.dependencies]
 # B-2 Windows 레지스트리 등록
-winreg = "0.55"
+winreg = "0.56"
 
 [dev-dependencies]
 tokio = { workspace = true }
