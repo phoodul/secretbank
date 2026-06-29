@@ -50,7 +50,7 @@ jobs:
 
       # ── 2. pnpm 설치 ────────────────────────────────────────────────────────
       - name: pnpm 설치
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
@@ -137,7 +137,7 @@ jobs:
 
       # ── 2. pnpm 설치 ────────────────────────────────────────────────────────
       - name: pnpm 설치
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
