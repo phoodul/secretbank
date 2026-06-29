@@ -27,6 +27,16 @@ updates:
     groups:
       cargo-minor-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # rand/rand_core 0.9 는 chacha20poly1305(aead) 가 rand_core 0.6 을 잠그고
+      # 있어 채택 불가 — OsRng 가 aead::rand_core 0.6 의 RngCore/CryptoRng trait 를
+      # 구현하지 않아 E0277. aead/chacha20poly1305/age 스택이 rand_core 0.9 로
+      # 올라올 때까지 보류 (2026-06-29 결정, docs/project-decisions.md ADR).
+      # 0.8.x patch 는 계속 허용. >=0.9 만 차단.
+      - dependency-name: "rand"
+        versions: [">=0.9.0"]
+      - dependency-name: "rand_core"
+        versions: [">=0.9.0"]
 
   # --- npm: 루트 pnpm 워크스페이스 (앱 프론트엔드 + extension + packages/shared) ---
   - package-ecosystem: "npm"
