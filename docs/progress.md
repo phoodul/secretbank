@@ -2,6 +2,8 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-06-29 (Night mode) — **생성 시점 Project 묶기 기능 구현**. 사용자 요구: 한 프로젝트에 그 프로젝트가 쓰는 비번·카드·API·MCP 설정을 한 곳에 모으기. QuickAdd + CreateCredential(+credit_card 경로) 에 선택적 Project 콤보박스(인라인 생성) 추가 → 생성 직후 그룹 전용 Usage 자동 연결(모델 Credential→Usage→Project 재사용, 백엔드 변경 0). 신규: `ProjectCombobox.tsx` + `link-credential-to-project.ts`. UsageSection 빈 where_value="프로젝트로 묶임" 표시. i18n en/ko/ja/zh. **검증**: typecheck/lint(0 err)/prettier clean, 인벤토리 vitest 167 통과(신규 4). **Night mode: 로컬 커밋만, push 보류(사용자 승인 대기)**.
+
 - **Time:** 2026-06-29 (resume) — **Dependabot 백로그 32 → 14건 정리**. ①gh-actions major 8건 머지(#8/9/10/11/13/14/54/68) ②ee 독립 lockfile 5건 수동 batch 핀+close(#25/58/60/62/64, commit 370b1b3) ③rand/rand_core 0.9 채택불가 → dependabot.yml `>=0.9.0` ignore+close(#32/#33, 820b7fc) ④TS6 적용 3건(root/ee/dlproxy, baseUrl 제거+paths 상대경로, 0f6eb3d, push 후 #42/#27/#19 close). **보류 14건**: vscode TS6(#12)·@types/node(#55)·Rust 크립토DB(sqlx0.9/hkdf/bech32/directories/dirs/toml)·프론트런타임(vite8/plugin-react5/zxcvbn4/jose6) = 전용 마이그레이션 세션. 보수 정책상 크립토/DB/빌드체인 breaking 분리. **다음 세션: dogfooding(production installer) 또는 보류 major 마이그레이션.**
 
 - **Time:** 2026-06-15 (resume 연속) — **Dependabot 자동화 구축**(`91f6d73`). "왜 계속 생기나" 분석(4대 구조적 원인) 후 ③④(자동화 부재·톱니파) 제거. grouping 을 전 6 생태계로 확대(minor+patch) + cooldown(patch 3/minor 5/major 7일, 보안 업데이트는 즉시) + auto-merge 워크플로우(fetch-metadata SHA핀 + `gh pr merge --auto`, patch/minor 만·major 제외). 사전 확인: allow_auto_merge ON / required review 0 / CLAAssistant 비필수. **다음 Dependabot run 부터 PR 1개/생태계 + 자동 머지.** ⚠️ 기존 29 PR 백로그는 다음 run 에서 supersede 또는 수동 가속 — 사용자 결정 대기. (상세 work-log 2026-06-15)

@@ -268,13 +268,20 @@ export function UsageSection({ credentialId, usages, onChanged }: UsageSectionPr
                       </span>
                     )}
                   </span>
-                  <div className="text-muted-foreground flex items-center gap-1.5 text-[10px]">
-                    <Badge variant="outline" className="h-4 px-1 text-[9px]">
-                      {t(whereKindLabelKey(u.where_kind))}
-                    </Badge>
-                    <Link2 className="size-2.5 shrink-0" aria-hidden />
-                    <span className="truncate font-mono">{u.where_value}</span>
-                  </div>
+                  {u.where_value.trim() === "" ? (
+                    // 그룹 전용 연결 (생성 시 Project 로만 묶음 — where 상세 없음)
+                    <span className="text-muted-foreground text-[10px]">
+                      {t("inventory.usageGroupedOnly")}
+                    </span>
+                  ) : (
+                    <div className="text-muted-foreground flex items-center gap-1.5 text-[10px]">
+                      <Badge variant="outline" className="h-4 px-1 text-[9px]">
+                        {t(whereKindLabelKey(u.where_kind))}
+                      </Badge>
+                      <Link2 className="size-2.5 shrink-0" aria-hidden />
+                      <span className="truncate font-mono">{u.where_value}</span>
+                    </div>
+                  )}
                 </div>
                 <Button
                   size="sm"

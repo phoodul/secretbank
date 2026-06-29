@@ -44,6 +44,8 @@ import {
 } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 
+import { ProjectCombobox } from "./ProjectCombobox";
+import { linkCredentialToProject } from "./link-credential-to-project";
 import { useIssuers } from "./use-issuers";
 import { findPreset } from "./issuer-presets";
 import { matchIssuerByUrl } from "./match-issuer-by-url";
@@ -132,6 +134,8 @@ export function CreateCredentialDialog({
   const [issuerPopoverOpen, setIssuerPopoverOpen] = useState(false);
   // Track whether the user manually selected an issuer — when true, URL auto-detect is disabled.
   const [issuerLockedByUser, setIssuerLockedByUser] = useState(false);
+  // 선택적 "관련 Project" 묶기 — 모든 종류(카드 포함) 공통. "" = 묶지 않음.
+  const [projectId, setProjectId] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -177,7 +181,7 @@ export function CreateCredentialDialog({
         : values.primary_label;
 
     try {
-      await invoke<string>("credential_create", {
+      const credentialId = await invoke<string>("credential_create", {
         args: {
           kind: values.kind,
           issuer_id: values.issuer_id,
@@ -197,8 +201,18 @@ export function CreateCredentialDialog({
         },
       });
 
+      // 선택한 Project 로 묶기 — 실패해도 자격증명 생성은 유지(경고만).
+      if (projectId) {
+        try {
+          await linkCredentialToProject(credentialId, projectId);
+        } catch {
+          toast.warning(t("inventory.projectLinkFailed"));
+        }
+      }
+
       toast.success(t("inventory.credentialSaved"));
       form.reset();
+      setProjectId("");
       setShowValue(false);
       setShowSecondaryValue(false);
       setIssuerLockedByUser(false);
@@ -213,6 +227,7 @@ export function CreateCredentialDialog({
   function handleOpenChange(next: boolean) {
     if (!next) {
       form.reset();
+      setProjectId("");
       setShowValue(false);
       setShowSecondaryValue(false);
       setIssuerPopoverOpen(false);
@@ -297,6 +312,19 @@ export function CreateCredentialDialog({
               />
             )}
 
+            {/* 관련 Project 묶기 (선택) — 모든 종류 공통. 한 프로젝트에 로그인·카드·API 통합 보관. */}
+            <FormItem>
+              <FormLabel>{t("inventory.fieldProject")}</FormLabel>
+              <FormControl>
+                <ProjectCombobox
+                  value={projectId}
+                  onChange={setProjectId}
+                  disabled={isSubmitting}
+                />
+              </FormControl>
+              <p className="text-muted-foreground text-xs">{t("inventory.fieldProjectHint")}</p>
+            </FormItem>
+
             {/* Credit card form — replaces all other fields when kind=credit_card */}
             {isCreditCard && (
               <CreditCardForm
@@ -306,7 +334,7 @@ export function CreateCredentialDialog({
                   const issuerId =
                     issuers.find((i) => i.slug === "unknown")?.id ?? issuers[0]?.id ?? "";
                   try {
-                    await invoke("create_credit_card", {
+                    const summary = await invoke<{ credential_id: string }>("create_credit_card", {
                       input: {
                         issuer_id: issuerId,
                         name: values.cardholder_name?.trim()
@@ -322,8 +350,17 @@ export function CreateCredentialDialog({
                         cvc_plain: values.cvc_plain,
                       },
                     });
+                    // 카드도 선택한 Project 로 묶기 (한 프로젝트에 카드·비번·API 통합 보관).
+                    if (projectId && summary?.credential_id) {
+                      try {
+                        await linkCredentialToProject(summary.credential_id, projectId);
+                      } catch {
+                        toast.warning(t("inventory.projectLinkFailed"));
+                      }
+                    }
                     toast.success(t("inventory.credentialSaved"));
                     form.reset();
+                    setProjectId("");
                     onOpenChange(false);
                     onSuccess();
                   } catch {

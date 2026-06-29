@@ -39,6 +39,8 @@ import { Input } from "@/components/ui/input";
 
 import { matchIssuerByUrl } from "./match-issuer-by-url";
 import { useIssuers } from "./use-issuers";
+import { ProjectCombobox } from "./ProjectCombobox";
+import { linkCredentialToProject } from "./link-credential-to-project";
 
 // ---------------------------------------------------------------------------
 // Zod schema
@@ -92,6 +94,8 @@ export function QuickAddDialog({
   const [showValue, setShowValue] = useState(false);
   const [fromClipboard, setFromClipboard] = useState(false);
   const [detectedIssuerName, setDetectedIssuerName] = useState<string | null>(null);
+  // 선택적 "관련 Project" 묶기. "" = 묶지 않음.
+  const [projectId, setProjectId] = useState("");
 
   const clipboardReadDone = useRef(false);
 
@@ -140,6 +144,7 @@ export function QuickAddDialog({
       setFromClipboard(false);
       setDetectedIssuerName(null);
       setShowValue(false);
+      setProjectId("");
       form.reset();
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -215,7 +220,7 @@ export function QuickAddDialog({
       values.kind === "other" ? values.custom_kind_label?.trim() || undefined : undefined;
 
     try {
-      await invoke<string>("credential_create", {
+      const credentialId = await invoke<string>("credential_create", {
         args: {
           kind: values.kind,
           issuer_id,
@@ -234,11 +239,21 @@ export function QuickAddDialog({
         },
       });
 
+      // 선택한 Project 로 묶기 — 실패해도 자격증명 생성은 유지(경고만).
+      if (projectId) {
+        try {
+          await linkCredentialToProject(credentialId, projectId);
+        } catch {
+          toast.warning(t("inventory.projectLinkFailed"));
+        }
+      }
+
       toast.success(t("quickAdd.success", { name }));
 
       // password state 즉시 비움
       form.setValue("value", "");
       form.reset();
+      setProjectId("");
 
       onOpenChange(false);
       onSuccess();
@@ -272,6 +287,7 @@ export function QuickAddDialog({
     if (!next) {
       form.setValue("value", "");
       form.reset();
+      setProjectId("");
     }
     onOpenChange(next);
   }
@@ -396,6 +412,18 @@ export function QuickAddDialog({
                 </FormItem>
               )}
             />
+
+            {/* 관련 Project 묶기 (선택) */}
+            <FormItem>
+              <FormLabel>{t("inventory.fieldProject")}</FormLabel>
+              <FormControl>
+                <ProjectCombobox
+                  value={projectId}
+                  onChange={setProjectId}
+                  disabled={isSubmitting}
+                />
+              </FormControl>
+            </FormItem>
 
             {/* Kind toggle */}
             <div className="flex items-center gap-2">

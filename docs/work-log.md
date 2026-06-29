@@ -1,5 +1,38 @@
 # Work Log
 
+## 2026-06-29 (Night mode) — 생성 시점 Project 묶기 기능
+
+### 요구
+사용자: API 키뿐 아니라 비밀번호·결제카드 등 모든 종류를 "관련 Project" 로 묶어
+한 프로젝트(예: secretbank)에 그 프로젝트가 쓰는 로그인·카드·API·MCP 설정을 한 곳에
+모으고 싶다. 기존엔 생성 후 상세화면 Usage 에서만 연결 가능 → 생성 시점 기능 부재.
+
+### 구현 (Night mode — 로컬 커밋, push 보류)
+- **신규** `ProjectCombobox.tsx`: 재사용 Project 선택 콤보박스(Popover+cmdk) + 인라인
+  "+ 새 프로젝트 생성"(`project_create`). 선택사항(미선택 가능).
+- **신규** `link-credential-to-project.ts`: 그룹 전용 Usage 생성 헬퍼
+  (`where_kind: env_var`, `where_value: ""`). 모델(Credential→Usage→Project) 그대로,
+  백엔드 변경 0.
+- **QuickAddDialog / CreateCredentialDialog**: Project 필드 추가, 생성 직후 선택 시
+  자동 연결. CreateCredentialDialog 의 **credit_card 경로도 포함**
+  (`create_credit_card` → `CreditCardSummary.credential_id` 로 연결) → 카드·비번·API
+  한 프로젝트로 묶임.
+- **UsageSection**: 빈 where_value 를 "프로젝트로 묶임" 으로 표시(env 배지 숨김).
+- **i18n**: en/ko/ja/zh 에 9개 키 추가(fieldProject/projectCreateNew/usageGroupedOnly 등).
+  나머지 11 로케일은 fallbackLng=en 으로 폴백(parity 테스트 없음 확인).
+
+### 검증 (회귀 0)
+- typecheck clean / lint 0 error(21 warnings = 기존 baseline) / prettier clean
+- 인벤토리 vitest 167 통과(신규: ProjectCombobox 3 + QuickAdd "프로젝트 선택→
+  usage_create 연결" 통합 1). 프로젝트 feature 테스트 포함 179 통과.
+- 교훈: 테스트 mock 이 invoke 전체에 단일값 반환 → `project_list` 가 배열 아님 →
+  `Array.isArray` 가드 필수. `Date.now()` 는 react-compiler lint(impure) 차단 →
+  낙관적 항목 타임스탬프 0. 컴포넌트+함수 동시 export 는 react-refresh 경고 → 헬퍼 분리.
+
+### 보류 (사용자 승인 대기)
+- **push**: Night mode 정책상 차단 → 사용자 승인 후 push.
+- UI 라이브 스크린샷 검증: dogfooding 시.
+
 ## 2026-06-29 (resume) — Dependabot 백로그 32건 정리
 
 ### 컨텍스트

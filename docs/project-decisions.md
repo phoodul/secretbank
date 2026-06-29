@@ -5,6 +5,19 @@
 
 ---
 
+## [2026-06-29] **생성 시점 Project 묶기 — 모든 종류(API/비번/카드/기타)를 한 프로젝트로 그룹**
+
+- **요구**: "secretbank 프로젝트 하나에 그 프로젝트가 쓰는 사이트 ID/PW, 결제카드, API 키, MCP 설정 관련 내용을 한 곳에 모아 저장"하고 싶다. 기존엔 생성 후 상세화면 Usage 에서만 연결 가능 → 생성 시점에 Project 지정 기능 부재.
+- **결정**: 자격증명 **생성 다이얼로그에서 선택적 Project 필드** 제공. 데이터 모델(Credential → Usage → Project)을 그대로 사용 — 생성 직후 선택한 Project 로 **그룹 전용 Usage** 레코드 자동 생성. 백엔드 스키마/명령 변경 없음(`usage_create` 재사용).
+  - **적용 범위**: QuickAddDialog(빠른 입력) + CreateCredentialDialog(상세) **둘 다**. CreateCredentialDialog 의 **credit_card 경로(`create_credit_card`)도 포함** — 반환 `CreditCardSummary.credential_id` 로 동일 연결. → 카드·비번·API 모두 한 프로젝트로 묶임.
+  - **인라인 생성**: Project 콤보박스에서 이름 입력 시 "+ 생성" 으로 새 프로젝트 즉석 생성(`project_create`). 미리 만들 필요 없음.
+  - **단순 묶기**: 생성 시엔 where 상세(env 변수명/파일경로)를 받지 않음. 그룹 전용 Usage = `where_kind: "env_var"`, `where_value: ""`(빈 값). 상세 where 입력은 기존 상세화면 Usage 섹션에 유지.
+  - **표시**: UsageSection 은 빈 `where_value` 를 "프로젝트로 묶임" 으로 표시(env 배지 숨김). ProjectDetail 의 "Linked credentials" 는 `where_value` 무관하게 credential_id 로 그룹 표시 → 그룹 전용 연결도 정상 노출.
+- **구현**: `src/features/inventory/ProjectCombobox.tsx`(재사용 콤보박스 + 인라인 생성) + `link-credential-to-project.ts`(그룹 전용 Usage 헬퍼). i18n en/ko/ja/zh(나머지 11 로케일 en 폴백). 검증: typecheck/lint(0 error)/prettier clean, 인벤토리 테스트 167 통과(ProjectCombobox 3 + QuickAdd 연결 통합 1 신규).
+- **Night mode 산출물**: 로컬 커밋만(push 보류 — 사용자 승인 대기). UI 라이브 스크린샷 검증은 dogfooding 시 수행 예정.
+
+---
+
 ## [2026-06-29] **Dependabot 백로그 32건 정리 — 처리군별 disposition + 보류 major 목록**
 
 직전 세션의 누적 Dependabot PR 백로그(스냅샷 32건, 세션 중 그룹 auto-merge 로 일부 흡수)를 처리군별로 분류·정리.

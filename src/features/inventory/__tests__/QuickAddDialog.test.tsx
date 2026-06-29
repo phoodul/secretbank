@@ -318,6 +318,58 @@ describe("QuickAddDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("7. Project 선택 후 submit → credential_create + usage_create 로 묶는다", async () => {
+    mockReadText.mockResolvedValue(null as unknown as string);
+    const user = userEvent.setup();
+
+    const PROJECT_ID = "01J0000000000000000000000P";
+    const CRED_ID = "01HZNEWCREDID00000000000";
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "issuer_list") return Promise.resolve(MOCK_ISSUERS);
+      if (cmd === "project_list")
+        return Promise.resolve([
+          {
+            id: PROJECT_ID,
+            name: "Secretbank",
+            repo_url: null,
+            framework: null,
+            runtime: null,
+            local_path: null,
+            created_at: 1700000000000,
+            updated_at: 1700000000000,
+          },
+        ]);
+      if (cmd === "credential_create") return Promise.resolve(CRED_ID);
+      if (cmd === "usage_create") return Promise.resolve("01J0000000000000000000000U");
+      return Promise.resolve(undefined);
+    });
+
+    renderDialog();
+    expect(await screen.findByText("Quick Add")).toBeInTheDocument();
+
+    // 비밀번호 입력
+    await user.type(screen.getByPlaceholderText(/password/i), "s3cret-value");
+
+    // Project 선택 (콤보박스 열고 선택)
+    await user.click(screen.getByRole("combobox", { name: /project/i }));
+    await user.click(await screen.findByText("Secretbank"));
+
+    // submit
+    await user.click(screen.getByRole("button", { name: /add credential/i }));
+
+    await waitFor(() =>
+      expect(mockInvoke).toHaveBeenCalledWith("usage_create", {
+        input: {
+          credential_id: CRED_ID,
+          project_id: PROJECT_ID,
+          deployment_id: null,
+          where_kind: "env_var",
+          where_value: "",
+        },
+      }),
+    );
+  });
+
   // unused variable 경고 억제를 위한 참조 (실제 사용 목적)
   it("mockToast 참조 (lint 억제)", () => {
     expect(mockToast).toBeDefined();
