@@ -103,7 +103,7 @@ jobs:
       # ── 10. 테스트 결과 업로드 (실패 시) ──────────────────────────────────
       - name: Playwright 리포트 업로드 (실패 시)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-chromium
           path: extension/playwright-report/
@@ -111,7 +111,7 @@ jobs:
 
       - name: 스크린샷/영상 업로드 (실패 시)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-test-results-chromium
           path: extension/test-results/
@@ -167,7 +167,7 @@ jobs:
       # ── 7. 빌드 아티팩트 업로드 (실패 시) ─────────────────────────────────
       - name: Firefox dist 업로드 (실패 시)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: firefox-dist-mv2
           path: extension/dist/firefox-mv2/
