@@ -1,5 +1,36 @@
 # Work Log
 
+## 2026-06-29 (resume) — Dependabot 백로그 32건 정리
+
+### 컨텍스트
+직전 세션이 남긴 누적 Dependabot PR 백로그(스냅샷 32건). 세션 진입 시점에 주간
+Dependabot run 의 그룹 PR(#66 "15 updates"/#69/#70 winreg 등 비-breaking cargo)이
+auto-merge 로 흡수 중이었음 → 자동화(grouping+cooldown+auto-merge) 정상 작동 확인.
+
+### 처리 결과 (32 → 14건)
+- **gh-actions major 8건 머지**: #8/9/10/11/13/14/54/68. 필수 체크 4개 green,
+  CLA·E2E-Chromium 비필수라 무시하고 squash merge. (#54 는 base 상승 후 머지)
+- **ee 독립 lockfile 5건 해소 + close**: #25/58/60/62/64. Dependabot 이
+  `ee/secretbank-relay`(독립 pnpm) lockfile 갱신 못해 frozen-lockfile 실패 →
+  cooldown 준수 정확 버전 핀 + lockfile 재생성 batch(370b1b3) 후 PR close.
+  검증: typecheck/vitest 71·frozen 통과.
+- **rand/rand_core 0.9 채택 불가 → ignore + close**: #32/#33. aead 가 rand_core
+  0.6 잠금(E0277). dependabot.yml `>=0.9.0` ignore(820b7fc) → 재생성 차단.
+- **TypeScript 6.0.3 적용 3건**: #42/#27/#19 (root/ee/dlproxy). baseUrl deprecate
+  대응으로 root/extension tsconfig baseUrl 제거 + paths 상대경로화(0f6eb3d).
+  typecheck 전부 통과. → push 후 PR close 예정.
+
+### 보류 (open 14건, 전용 세션)
+- vscode TS6(#12, Node16+node:/fetch 타입), @types/node 26(#55)
+- Rust 크립토/DB breaking: sqlx 0.9(#35)·hkdf(#34)·bech32(#73)·directories(#36)·dirs(#72)·toml(#71)
+- 프론트 런타임: vite 8(#52)·plugin-react 5(#43)·zxcvbn 4(#40/#41/#44)·jose 6(#30)
+- 근거: 시크릿 매니저 보수 정책 — 크립토/DB/빌드체인 breaking 은 전용 마이그레이션 세션 분리.
+
+### 교훈
+- ee 독립 pnpm 프로젝트는 Dependabot 이 lockfile 을 못 고침 → ee bump 은 항상 수동 batch.
+- cargo 0.x "minor" 는 semver 상 breaking 일 수 있음(rand). 그룹 auto-merge 가
+  build 깨지는 건 자동으로 PR 에 남겨 개별 검토 유도 → 정책대로 동작.
+
 ## 2026-06-15 (resume 연속) — Dependabot 자동화 (grouping + cooldown + auto-merge)
 
 ### 컨텍스트

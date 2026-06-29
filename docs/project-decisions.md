@@ -5,6 +5,22 @@
 
 ---
 
+## [2026-06-29] **Dependabot 백로그 32건 정리 — 처리군별 disposition + 보류 major 목록**
+
+직전 세션의 누적 Dependabot PR 백로그(스냅샷 32건, 세션 중 그룹 auto-merge 로 일부 흡수)를 처리군별로 분류·정리.
+
+- **머지(13건)**: gh-actions major 8건(`actions/checkout 4→7`, `setup-node 4→6`, `upload-artifact 4→7`, `cache 4→6`, `pnpm/action-setup 4→6`, `wrangler-action 3→4`, `codeql-action 3→4`, `github-script 7→9`) — 필수 체크 4개(Rust/Frontend/E2E smoke/EE Relay) green, CLA·E2E-Chromium 은 비필수라 무시하고 squash merge. (정책상 major 는 auto-merge 제외 = 사람 검토 → 검토 후 수동 머지)
+- **ee 독립 lockfile 구조적 실패 해소(5건, #25/58/60/62/64)**: Dependabot 이 `ee/secretbank-relay`(워크스페이스 밖 독립 pnpm, `--ignore-workspace`)의 lockfile 을 PR 에서 갱신하지 못해 매번 `ERR_PNPM_OUTDATED_LOCKFILE` 로 frozen-lockfile 실패. **결정: 향후 ee Dependabot PR 은 수동으로 lockfile 재생성 후 batch 적용** (워크스페이스 편입은 [[ee_standalone_pnpm]] 정책상 금지, `--no-frozen-lockfile` 은 supply-chain 무결성 훼손이라 금지). cooldown 준수 위해 Dependabot 제안 정확 버전으로 핀(commit 370b1b3).
+- **rand/rand_core 0.9 = 채택 불가(#32/#33)**: `chacha20poly1305`(aead) 가 `rand_core 0.6` 을 잠가 `OsRng` 가 aead 의 `rand_core 0.6` trait 미구현(E0277). **결정: dependabot.yml cargo 블록에 `>=0.9.0` ignore 등록 → 재생성 차단**. aead/age 스택이 rand_core 0.9 로 올라오면 해제 후 재시도(commit 820b7fc).
+- **TypeScript 6.0.3 적용(3건, #42/#27/#19)**: root/extension/ee-relay/download-proxy 에 TS6 적용. TS6 가 `baseUrl` 을 deprecate(TS5101, TS7 제거 예정) → root/extension tsconfig 에서 baseUrl 제거 + paths 를 tsconfig 상대경로(`@/* → ./src/*`)로 전환. typecheck 전부 통과(commit 0f6eb3d).
+- **보류(this session 미적용, open 유지)**:
+  - **vscode-extension TS6(#12)**: TS6 + `module: Node16` + `node:` import/`fetch` 타입 깨짐. tsconfig `types: ["node"]`/moduleResolution 마이그레이션 필요 → 전용 세션 보류.
+  - **Rust 크립토/DB breaking**: `sqlx 0.8→0.9`(#35, DB 계층), `hkdf 0.13`(#34), `bech32 0.12`(#73), `directories 6`(#36), `dirs 6`(#72), `toml 1.1`(#71). 볼트 핵심 계층 → 전용 마이그레이션 세션에서 개별 검증.
+  - **프론트 런타임**: `vite 8`(#52, esbuild override 영향), `@vitejs/plugin-react 5`(#43), `@zxcvbn-ts/* 4`(#40/#41/#44, 비번 강도, 3개 동반), `jose 6`(#30, 릴레이 JWT 보안), `@types/node 26`(#55, vscode).
+- 결정 근거: 시크릿 매니저 보수 정책 — 크립토/DB/빌드체인 breaking 을 한 세션에 무리하게 올리지 않고 전용 마이그레이션 세션으로 분리.
+
+---
+
 ## [2026-06-14~15] **Dependabot — 보안 알림 8건 해소 정책 + 운용 자동화(grouping·cooldown·auto-merge)**
 
 ### 배경
