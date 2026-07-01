@@ -31,5 +31,5 @@ bech32 = "0.9"
 
 [dev-dependencies]
 tokio = { workspace = true }
-sqlx  = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "macros", "migrate", "time", "uuid"] }
+sqlx  = { version = "0.9", default-features = false, features = ["runtime-tokio", "sqlite", "macros", "migrate", "time", "uuid"] }
 secretbank-core = { path = "../secretbank-core" }
