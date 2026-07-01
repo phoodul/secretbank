@@ -1,5 +1,35 @@
 # Work Log
 
+## 2026-07-01 — v0.1.0-pre19 릴리스 cut (다운로드 라이브)
+
+### 배경
+사용자: "새로운 버전을 다운로드 받을 수 있게 해줘". pre18(2026-05-15) 이후 미릴리스
+누적분(생성 시점 Project 묶기 · 기타 종류 · rotation UI · 스캐너 fix · VS Code
+execFile 보안 · Dependabot/TS6/CodeQL 정리)을 pre19 로 릴리스.
+
+### 절차
+- `pnpm version:bump --prerelease 0.1.0-pre19` — 20파일 동기화(package.json/
+  tauri.conf.json/Cargo.toml 15크레이트/winget/homebrew). CHANGELOG [0.1.0-pre19] 작성.
+- **Cargo.lock 워크스페이스 버전 동기화** — Cargo.lock 커밋(2026-06-12) 이후 첫
+  릴리스라 신규 이슈: 버전 bump 시 lock 이 stale → CI Rust `--locked` 깨짐. `cargo
+  update --workspace` 로 15개 버전 문자열만 동기화(외부 deps 무변경, 110 unchanged).
+- 커밋 `a1dfb17` push → main CI 전 잡 green(Rust --locked 정합성 확인). 태그
+  `v0.1.0-pre19` push → release.yml 트리거.
+
+### 결과 (전 잡 success)
+- create-release + build-tauri 3 OS(ubuntu/windows/macos-universal) +
+  publish-updater-manifest + publish-release 모두 success.
+- ⭐ **draft→public 자동 승격(publish-release) 첫 성공** — 2026-05-29 `4ccb0e9`
+  (redundant main push 제거) fix 의 첫 실증. 이전 pre 들은 이 단계가 branch
+  protection 에 막혀 수동 `gh release edit --draft=false` 했음. 이제 자동.
+- 검증: GitHub Release public(10 assets: exe/dmg/app.tar.gz/AppImage/deb/rpm+sig+
+  latest.json), `secretbank.app/api/latest`=0.1.0-pre19, `secretbank.app/download/win`
+  200 + `Secretbank_0.1.0-pre19_x64-setup.exe`(9.5MB) 스트림. github.com 미노출.
+
+### 교훈
+- Cargo.lock 커밋 후 릴리스는 version-bump 뒤 **`cargo update --workspace` 필수**
+  (안 하면 CI Rust --locked red). version-bump.ts 는 lock 을 안 건드림.
+
 ## 2026-06-29 (Night mode) — 생성 시점 Project 묶기 기능
 
 ### 요구
