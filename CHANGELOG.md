@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Continuing development beyond v0.1.0-pre18. Upcoming work: M24 Phase 3-B (secure_note), Phase 3-C (passkey), browser-extension store submission, mobile.
+Continuing development beyond v0.1.0-pre19. Upcoming work: M24 Phase 3-C (passkey), browser-extension store submission, mobile. (자유 형식 secure_note 는 보류 — 2026-07-01 결정.)
+
+## [0.1.0-pre19] - 2026-07-01
+
+pre18 이후 인벤토리 UX 개선 + 보안/의존성 정리 라운드.
+
+### Added
+
+- **생성 시점 Project 묶기** — 자격증명(API 키·비밀번호·결제카드·기타) 추가 시
+  "관련 Project" 를 선택(또는 그 자리에서 인라인 생성)해 하나의 프로젝트로 묶어
+  저장. 프로젝트 상세화면에서 그 프로젝트가 쓰는 로그인·카드·API 를 한 곳에서
+  확인. QuickAdd(빠른 입력) + 상세 다이얼로그 + 결제카드 경로 모두 지원.
+- **"기타(Other)" 종류 + 사용자 정의 타입명** — API 키/비밀번호 외에 SSH key ·
+  Token · License 등 임의 종류를 직접 이름 붙여 저장.
+- **값 교체(rotation) UI** — 기존 API 키/비밀번호 값을 앱에서 바로 교체.
+
+### Fixed
+
+- env 스캐너가 미매칭 키를 AWS 로 오분류하던 문제 → Uncategorized 버킷으로 정정.
+
+### Security
+
+- VS Code 확장의 CLI 호출을 `exec` → `execFile` 로 전환해 셸 경유 명령 주입
+  벡터 제거.
+- Dependabot 보안 알림 다수 해소 + 자동화(grouping · cooldown · auto-merge) 구축,
+  TypeScript 6 및 다수 의존성 최신화, CodeQL 경보 정리.
 
 ## [0.1.0-pre18] - 2026-05-15
 

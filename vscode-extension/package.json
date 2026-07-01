@@ -2,7 +2,7 @@
   "name": "secretbank",
   "displayName": "Secretbank",
   "description": "Dependency-graph-aware secrets manager with supply-chain risk detection — list / reveal credentials and scan dependencies for known secret-exfil history without leaving your editor.",
-  "version": "0.1.0-pre18",
+  "version": "0.1.0-pre19",
   "publisher": "secretbank",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://github.com/phoodul/secretbank",

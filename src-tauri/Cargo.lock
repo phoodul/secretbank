@@ -5700,7 +5700,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "secretbank-app",
  "serde",
@@ -5723,7 +5723,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-app"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5775,7 +5775,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-audit"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "ed25519-dalek",
  "rand_core 0.6.4",
@@ -5791,7 +5791,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-charter"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "argon2",
  "blahaj",
@@ -5807,7 +5807,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-cli"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "anyhow",
  "arboard",
@@ -5830,7 +5830,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-connectors"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "async-trait",
  "csv",
@@ -5853,7 +5853,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-core"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "petgraph",
  "secrecy",
@@ -5867,7 +5867,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-crypto"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "argon2",
  "chacha20poly1305",
@@ -5884,7 +5884,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-feeds"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "chrono",
  "feed-rs",
@@ -5910,7 +5910,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-mcp"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "anyhow",
  "clap",
@@ -5933,7 +5933,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-nm-host"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "base64 0.22.1",
  "chacha20poly1305",
@@ -5957,7 +5957,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-railguard"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "serde",
  "thiserror 2.0.18",
@@ -5966,7 +5966,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-storage"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "age",
  "async-trait",
@@ -5992,7 +5992,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-supply"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 dependencies = [
  "async-trait",
  "reqwest 0.12.28",
@@ -6014,7 +6014,7 @@ dependencies = [
 
 [[package]]
 name = "secretbank-sync"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 
 [[package]]
 name = "security-framework"

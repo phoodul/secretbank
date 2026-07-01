@@ -1,6 +1,6 @@
 [package]
 name = "secretbank-nm-host"
-version = "0.1.0-pre18"
+version = "0.1.0-pre19"
 edition = "2021"
 description = "Secretbank Native Messaging Host — Chrome/Firefox extension bridge (stdio JSON protocol)"
 license = "AGPL-3.0-or-later"
