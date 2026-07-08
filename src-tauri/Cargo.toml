@@ -89,14 +89,14 @@ once_cell = "1"
 csv = "1"
 
 # Manifest parsing (M20)
-toml = "0.8"
+toml = "1.1"
 semver = { version = "1", features = ["serde"] }
 serde_yaml = "0.9"
 
 # CLI (M18)
 clap = { version = "4", features = ["derive"] }
 rpassword = "7"
-directories = "5"
+directories = "6"
 arboard = "3"
 
 # Tauri

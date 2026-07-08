@@ -58,7 +58,7 @@ chacha20poly1305 = { workspace = true }
 x25519-dalek = { workspace = true }
 
 # B-2: 설치 경로 해석 (3 OS 통일 helper)
-dirs = "5"
+dirs = "6"
 
 [target.'cfg(windows)'.dependencies]
 # B-2 Windows 레지스트리 등록
