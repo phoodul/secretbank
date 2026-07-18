@@ -49,7 +49,7 @@ keyring = { version = "3", features = ["windows-native", "apple-native", "sync-s
 hex = "0.4"
 
 # HMAC (B-7 session token)
-hmac = "0.12"
+hmac = "0.13"
 
 # Timing-safe comparison
 subtle = "2.6"
