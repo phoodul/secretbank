@@ -94,8 +94,10 @@ function InnerGraph({
   ]);
 
   // Persist node position when the user finishes dragging
+  // 첫 인자 타입은 @xyflow/react 버전마다 다르다 (React.MouseEvent →
+  // MouseEvent | TouchEvent). 사용하지 않으므로 unknown 으로 받아 양쪽 모두 호환.
   const onNodeDragStop = useCallback(
-    (_: React.MouseEvent, node: Node<GraphNodeData>) => {
+    (_: unknown, node: Node<GraphNodeData>) => {
       savePosition(node.id, { x: node.position.x, y: node.position.y });
     },
     [savePosition],

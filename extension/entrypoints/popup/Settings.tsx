@@ -66,7 +66,9 @@ async function getCachedSettings(): Promise<SessionSettings | null> {
     const result = await chrome.storage.local.get("session_settings");
     const raw = result["session_settings"];
     if (!raw || typeof raw !== "object") return null;
-    if (typeof raw.ttl !== "string") return null;
+    // chrome.storage 타입 정의 버전에 따라 raw 가 any / object 로 좁혀진다.
+    // 명시적 캐스트로 양쪽 모두에서 컴파일되게 한다.
+    if (typeof (raw as { ttl?: unknown }).ttl !== "string") return null;
     return raw as SessionSettings;
   } catch {
     return null;
