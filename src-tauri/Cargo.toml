@@ -23,7 +23,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 
 # ID / time
-ulid = { version = "1", features = ["serde"] }
+ulid = { version = "3", features = ["serde"] }
 # 0.3.48 (2026-06-12) introduced a reflexive `From<HourBase>` impl that hits E0119
 # (conflicting impl) under the full feature set — breaks the build. Pin to 0.3.47
 # until time ships a fix (≥0.3.49). Cargo.lock is gitignored, so this Cargo.toml
