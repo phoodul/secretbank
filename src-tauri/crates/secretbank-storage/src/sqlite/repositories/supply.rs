@@ -39,7 +39,7 @@ impl<'a> PackageRepo<'a> {
         name: &str,
         now_ms: i64,
     ) -> Result<String, StorageError> {
-        let id = Ulid::new().to_string();
+        let id = Ulid::generate().to_string();
         let row = sqlx::query(
             r#"INSERT INTO package (id, ecosystem, name, first_seen_at, last_seen_at)
                VALUES (?, ?, ?, ?, ?)
@@ -123,7 +123,7 @@ impl<'a> PackageAdvisoryRepo<'a> {
         modified_at: i64,
         references_json: Option<&str>,
     ) -> Result<String, StorageError> {
-        let id = Ulid::new().to_string();
+        let id = Ulid::generate().to_string();
         let row = sqlx::query(
             r#"INSERT INTO package_advisory
                (id, package_id, source, source_id, severity, category, summary, detail,
@@ -222,7 +222,7 @@ impl<'a> PackageUsageRepo<'a> {
         detected_at: i64,
         dep_kind: &str,
     ) -> Result<String, StorageError> {
-        let id = Ulid::new().to_string();
+        let id = Ulid::generate().to_string();
         let row = sqlx::query(
             r#"INSERT INTO package_usage
                (id, project_id, package_id, version, manifest_path, detected_at, dep_kind)

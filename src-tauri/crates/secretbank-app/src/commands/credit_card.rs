@@ -402,7 +402,7 @@ mod tests {
     async fn seed_issuer(pool: &sqlx::SqlitePool) -> IssuerId {
         IssuerRepo::new(pool)
             .insert(&IssuerInput {
-                slug: format!("test-issuer-{}", ulid::Ulid::new()),
+                slug: format!("test-issuer-{}", ulid::Ulid::generate()),
                 display_name: "Test Issuer".to_string(),
                 docs_url: None,
                 issue_url: None,

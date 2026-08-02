@@ -163,7 +163,7 @@ pub fn append(
     let signature: Signature = signing_key.sign(&canonical);
 
     Ok(AuditLog {
-        id: ulid::Ulid::new().to_string(),
+        id: ulid::Ulid::generate().to_string(),
         seq,
         device_id: input.device_id,
         actor: input.actor,
@@ -418,7 +418,7 @@ mod tests {
 
         // Construct a fake prev entry at seq = i64::MAX
         let fake_prev = AuditLog {
-            id: ulid::Ulid::new().to_string(),
+            id: ulid::Ulid::generate().to_string(),
             seq: i64::MAX,
             device_id: Some("dev".to_string()),
             actor: AuditActor::LocalUser,

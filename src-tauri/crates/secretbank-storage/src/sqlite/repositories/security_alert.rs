@@ -57,7 +57,7 @@ impl<'a> SecurityAlertRepo<'a> {
         alert_meta: &str,
         checked_at: &str,
     ) -> Result<String, StorageError> {
-        let id = Ulid::new().to_string();
+        let id = Ulid::generate().to_string();
         sqlx::query(
             r#"INSERT INTO security_alerts (id, credential_id, alert_kind, alert_meta, checked_at)
                VALUES (?, ?, ?, ?, ?)"#,
@@ -196,7 +196,7 @@ impl<'a> SecurityAlertRepo<'a> {
 
         // 2. 신규 alert insert
         for (kind, meta) in alerts {
-            let id = Ulid::new().to_string();
+            let id = Ulid::generate().to_string();
             sqlx::query(
                 r#"INSERT INTO security_alerts (id, credential_id, alert_kind, alert_meta, checked_at)
                    VALUES (?, ?, ?, ?, ?)"#,
