@@ -1,5 +1,60 @@
 # Work Log
 
+## 2026-08-02 — Dependabot 누적 원인 규명 + 일괄 해소
+
+### 배경
+사용자: "dependabot 문제가 여전히 계속 들어오고 있어. 문제가 뭔지 확인하고 해결해줘."
+열린 PR 24건 / 보안 알림 25건. 6/15 에 auto-merge 자동화를 넣었는데도 계속 쌓임.
+
+### 진단 — auto-merge 는 정상 작동 중이었다
+origin/main 이 로컬보다 16커밋 앞서 있었고 그 대부분이 자동 머지된 Dependabot
+커밋이었다. 즉 "자동화가 안 돈다"가 아니라 **특정 PR 들만 CI red 로 영구 차단**된
+것이 원인. 차단 요인을 하나씩 분리:
+
+1. **ee/\* lockfile 을 Dependabot 이 갱신 못 함** — 루트 `pnpm-workspace.yaml` 때문에
+   하위 디렉터리에서 pnpm 을 돌리면 스코프가 루트로 잡힌다(로컬 재현:
+   `Scope: all 3 workspace projects`, ee lock 무변경). `--ignore-workspace` CLI flag 가
+   필요한데 Dependabot 은 못 붙인다(.npmrc 의 동명 설정은 pnpm 이 무시).
+   → package.json 만 바뀐 PR → `--frozen-lockfile` 이 항상 실패.
+   **relay 는 필수 체크(EE Relay)라 영구 차단됐고, download-proxy 는 필수 체크가 없어
+   stale lockfile 인 채로 반복 자동 머지되고 있었다** (#86/92/99/106/114 — 잠재 파손).
+2. **루트 그룹 PR(#118)의 타입 에러 2곳** — xyflow `OnNodeDrag` 첫 인자가
+   `React.MouseEvent` → `MouseEvent | TouchEvent`, chrome.storage 결과가 `object` 로
+   좁혀져 `.ttl` 접근 불가. 42개 묶음이라 하나만 깨져도 전체 차단.
+3. **prettier 3.8 → 3.9** — union 타입 레이아웃 규칙이 바뀌어 33파일 재포맷 필요.
+   Dependabot 이 할 수 없는 작업이라 그룹 PR 이 계속 red.
+4. **cargo 0.x 오분류** — 0.12→0.13 은 Cargo 에선 breaking 인데 SemVer 상 minor 라
+   hkdf/hmac/sha2/bech32/chacha20poly1305 **크립토 크레이트에 auto-merge 가 켜져 있었다**.
+   CI 가 막아 사고는 없었지만 API 가 우연히 호환되면 그대로 들어갈 구멍.
+5. **stale wrangler override** — `pnpm.overrides.wrangler ^4.59.1` 이 직접 devDep 보다
+   느슨해 override 적용 후 기대 specifier 와 lockfile 이 불일치.
+
+### 처리
+- `39f187f` toml 1.1 + directories 6 + dirs 6 (이전 세션 미푸시분 rebase)
+- `ad97f72` @zxcvbn-ts v3 → v4 (ZxcvbnFactory + crackTimes 구조 변경)
+- `1ee1c48` 타입 호환 선제 수정 → 그룹 PR 차단 해제
+- `7dd638b` ee lockfile 직접 동기화 / `7841f58` wrangler override 정렬
+- `52a7bbd` dependabot ee/\* 제외 + cargo 0.x auto-merge 가드
+- `3750a12` 보안 알림 25건 → 1건 (transitive override 확장 + react-router-dom 7.18)
+- `eacae79` ulid 3.0 (`Ulid::new()` → `Ulid::generate()`, 문자열 표현 동일)
+- `5dc349d` age 잠금 크립토 5건 + sqlx 0.9 dependabot ignore
+- `933cab4` prettier 3.9.6 + 전체 재포맷
+- PR 정리: superseded/차단 12건 close, cargo 0.x 6건 auto-merge 해제. **24 → 5건**.
+
+### 핵심 발견 — age 0.12 가 크립토 잠금을 한 번에 푼다
+sha2 0.11 / hmac 0.13 / hkdf 0.13 / chacha20poly1305 0.11 / bech32 0.12 **+ rand 0.9**
+는 전부 `age` 0.11.3 · `age-core` 0.11.0 이 구세대를 잠근 결과다. **age 0.12.1 이 이미
+릴리스돼 있어 그 업그레이드 하나가 6건을 동시에 해제한다.** 볼트 암호화 핵심이라
+기존 볼트 파일 복호화 호환성 검증과 함께 전용 세션에서 진행.
+
+### 교훈
+- **필수 체크가 없는 경로는 Dependabot 이 깨진 상태로 머지한다.** download-proxy 가
+  몇 달째 lockfile 없이 package.json 만 머지되고 있었음. 새 하위 프로젝트를 추가하면
+  필수 체크에 포함시키거나 Dependabot 대상에서 빼야 한다.
+- pnpm override 는 **optional peer 해석에는 적용되지 않는다**. vitest 의 optional peer 인
+  vite 는 override 로 못 올리고 명시적 devDependency 로만 고정 가능(lock 재생성 ·
+  `pnpm cache delete` · `--force` 모두 무효 확인).
+
 ## 2026-07-01 — v0.1.0-pre19 릴리스 cut (다운로드 라이브)
 
 ### 배경

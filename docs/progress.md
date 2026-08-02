@@ -2,6 +2,19 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-08-02 (resume) — **Dependabot 누적 원인 규명 + 일괄 해소**. 사용자 "dependabot 문제가 여전히 계속 들어온다" → 구조적 원인 5건 확인·제거. **origin/main = `933cab4`**, 열린 PR **24 → 5**, 열린 보안 알림 **25 → 1**.
+  - **RC1 ee/\* lockfile 영구 red** — 루트 `pnpm-workspace.yaml` 탓에 하위 디렉터리 pnpm 이 루트 스코프로 잡혀 Dependabot 이 `ee/*/pnpm-lock.yaml` 을 갱신 불가(`--ignore-workspace` 필요, `.npmrc` 는 pnpm 이 무시). 로컬 재현 완료. package.json 만 바뀐 PR → `--frozen-lockfile` 항상 실패. **relay 는 필수 체크라 영구 차단, download-proxy 는 필수 체크가 없어 stale lock 인 채 자동 머지되고 있었음(잠재 파손)**. → dependabot.yml 에서 ee/\* 제외 + 월간 수동 batch 로 전환(`52a7bbd`), lockfile 직접 동기화(`7dd638b`).
+  - **RC2 루트 그룹 PR 타입 에러** — xyflow `OnNodeDrag` 인자 변경 + chrome.storage `ttl` 좁힘. 양 버전 호환으로 main 선제 수정(`1ee1c48`).
+  - **RC3 cargo 0.x 오분류** — 0.12→0.13 이 SemVer minor 라 크립토 크레이트에 auto-merge 가 켜져 있었음. 워크플로우 가드 추가 + 해당 PR 6건 auto-merge 해제.
+  - **RC4 prettier 3.8 → 3.9** — union 타입 레이아웃 규칙 변경으로 33파일 재포맷 필요. Dependabot 이 못 하는 작업이라 그룹 PR 이 계속 red. main 선제 재포맷(`933cab4`).
+  - **RC5 stale wrangler override** — `pnpm.overrides.wrangler ^4.59.1` 이 직접 devDep 보다 느슨해 `--frozen-lockfile` 불일치(`7841f58`).
+  - **보안 25건 해소(`3750a12`)**: undici / js-yaml / brace-expansion(1.x·5.x) / adm-zip / @babel/core / vite / shell-quote override + react-router-dom 7.18. ee 는 sharp override + **vite 를 명시 devDep 으로 고정**(vitest 의 optional peer 라 override 가 해석에 안 먹힘 — lock 재생성·cache delete·--force 모두 무효 확인).
+  - **채택**: ulid 3.0(`eacae79`, `Ulid::new()`→`generate()` 6파일, 문자열 표현 동일해 DB 호환) / toml 1.1 + directories 6 + dirs 6(`39f187f`).
+  - **⭐ 다음 세션 최우선 후보 — `age` 0.11.3 → 0.12.1 업그레이드**: sha2 0.11 · hmac 0.13 · hkdf 0.13 · chacha20poly1305 0.11 · bech32 0.12 **+ rand 0.9** 가 전부 age 잠금이며, age 0.12 하나로 6건이 동시에 풀린다. 볼트 암호화 핵심이라 **기존 볼트 파일 복호화 호환성 검증 필수**. 그때까지 dependabot ignore(`5dc349d`).
+  - **남은 열린 PR 5건**: #120 npm 그룹(rebase 요청함, 이제 green 예상) · #43 plugin-react 5 · #97 vscode TS7 · #98 @types/node 26 · #103 setup-node 7.
+  - **남은 보안 알림 1건**: react-router `>=7.12.0 <8.3.0` RSC CSRF — RSC 모드 미사용, 8.x major 필요.
+  - **검증**: root vitest 661 / extension 650 + build / relay 71 / proxy 14 / Rust workspace lib 726 / typecheck · lint(0 error) · format:check · clippy clean.
+
 - **Time:** 2026-07-01 — **v0.1.0-pre19 릴리스 cut + 다운로드 라이브**. pre18 이후 첫 릴리스(생성 시점 Project 묶기 + 기타 종류 + rotation + 보안/의존성 정리 포함). version-bump 20파일 + Cargo.lock 워크스페이스 동기화(첫 Cargo.lock 커밋 이후 릴리스라 `--locked` 정합성 신규 처리), 태그 `v0.1.0-pre19` push. **릴리스 빌드 전 잡 success**(3 OS + publish-updater-manifest + publish-release). ⭐ **draft→public 자동 승격(publish-release) 첫 실증 성공**(2026-05-29 `4ccb0e9` fix 검증). 검증: GitHub Release public(10 assets), `secretbank.app/api/latest`=0.1.0-pre19, `secretbank.app/download/win` 200+pre19 .exe 스트림. **다음: dogfooding(pre19 installer 다운로드→설치→실행) 또는 Dependabot 보류 major.**
 
 - **Time:** 2026-06-29 (Night mode) — **생성 시점 Project 묶기 기능 구현**. 사용자 요구: 한 프로젝트에 그 프로젝트가 쓰는 비번·카드·API·MCP 설정을 한 곳에 모으기. QuickAdd + CreateCredential(+credit_card 경로) 에 선택적 Project 콤보박스(인라인 생성) 추가 → 생성 직후 그룹 전용 Usage 자동 연결(모델 Credential→Usage→Project 재사용, 백엔드 변경 0). 신규: `ProjectCombobox.tsx` + `link-credential-to-project.ts`. UsageSection 빈 where_value="프로젝트로 묶임" 표시. i18n en/ko/ja/zh. **검증**: typecheck/lint(0 err)/prettier clean, 인벤토리 vitest 167 통과(신규 4). **push 완료(사용자 승인) → origin/main `46fad23`, CI 전 잡(Frontend/Rust/EE Relay/E2E smoke) success.** 후속: 자유 형식 Secure Note(여러 줄 메모)는 사용자 확인 결과 **불필요**로 보류(Other+커스텀 타입명으로 충분, project-decisions 2026-07-01). **다음 세션: dogfooding(production installer) 또는 Dependabot 보류 major 마이그레이션.**
