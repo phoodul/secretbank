@@ -51,7 +51,7 @@ secretbank-supply = { path = "../secretbank-supply" }
 secretbank-charter = { path = "../secretbank-charter" }
 secretbank-nm-host = { path = "../secretbank-nm-host" }
 tokio-util = { workspace = true }
-ed25519-dalek = { version = "2", features = ["rand_core"] }
+ed25519-dalek = { version = "3", features = ["rand_core"] }
 rand_core = { version = "0.6", features = ["std"] }
 hex = { workspace = true }
 rand = { workspace = true }
