@@ -2906,3 +2906,21 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   breaking 업데이트에 auto-merge 가 이미 켜져 있었다**(#34/#35/#73/#79/#80/#89). CI 가 막아
   실사고는 없었으나, API 표면이 우연히 호환되면 breaking 이 자동 머지될 수 있는 구멍이었다.
 - **영향:** 크립토·DB 크레이트 0.x 업데이트는 항상 사람이 검토. patch 는 계속 자동.
+
+## 2026-08-02 — 열린 보안 알림 25건 일괄 해소 (pnpm.overrides 확장)
+
+- **결정:** 루트 `pnpm.overrides` 에 undici / js-yaml / brace-expansion(1.x·5.x 두 범위) /
+  adm-zip / @babel/core / vite(7.x) 를 추가하고 stale 해진 `shell-quote@<1.8.4` 를
+  `<1.9.0` 으로 갱신. 직접 의존 `react-router-dom` 은 ^7.17.0 → ^7.18.0.
+  `ee/*` 는 `sharp@<0.35.0` override 추가.
+- **이유:** 2026-06-14 "open 0" 이후 두 달 간 전이 의존성 취약점이 25건 누적. 대부분
+  Dependabot 이 직접 PR 로 못 고치는 transitive 라 override 가 유일한 경로.
+- **`ee/*` 의 vite 는 override 로 안 잡혀 명시적 devDependency 로 고정:**
+  vite 는 vitest 의 **optional peer** 라 `autoInstallPeers` 가 설치하는데, pnpm override 가
+  peer 범위 문자열만 바꾸고 실제 해석에는 적용되지 않아 6.4.2 가 그대로 남았다
+  (lockfile 삭제 후 재생성 · `pnpm cache delete vite` · `--force` 모두 무효 확인).
+  `devDependencies.vite: ^6.4.3` 을 직접 넣어 해결.
+- **영향:** 회귀 0 — root vitest 661 / extension 650 / relay 71 / proxy 14 / typecheck ·
+  lint(0 error) · extension build 모두 통과.
+- **남는 알림:** react-router `>=7.12.0 <8.3.0` RSC CSRF 는 8.x major 요구. RSC 모드를
+  쓰지 않으므로 major 마이그레이션 전까지 보류.
