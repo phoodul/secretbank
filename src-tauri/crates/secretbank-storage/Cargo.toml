@@ -21,7 +21,7 @@ serde_json = { workspace = true }
 secrecy   = { workspace = true }
 zeroize   = { workspace = true }
 async-trait = { workspace = true }
-age = "0.11"
+age = "0.12"
 rmp-serde = "1"
 tempfile = "3"
 secretbank-crypto = { path = "../secretbank-crypto" }
