@@ -16,12 +16,13 @@
  * en + common dictionary 를 기반으로 점수를 산출한다.
  */
 
-import { zxcvbn, zxcvbnOptions } from "@zxcvbn-ts/core";
+import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { adjacencyGraphs, dictionary as commonDictionary } from "@zxcvbn-ts/language-common";
-import { dictionary as enDictionary } from "@zxcvbn-ts/language-en";
+import { dictionary as enDictionary, translations } from "@zxcvbn-ts/language-en";
 
-// zxcvbn-ts 옵션 초기화 (모듈 로드 시 1회)
-zxcvbnOptions.setOptions({
+// zxcvbn-ts v4: 싱글턴 setOptions 대신 인스턴스 생성 (모듈 로드 시 1회)
+const estimator = new ZxcvbnFactory({
+  translations,
   graphs: adjacencyGraphs,
   dictionary: {
     ...commonDictionary,
@@ -58,11 +59,11 @@ export interface StrengthResult {
  * // { score: 4, crackTimeSeconds: 1e15, feedback: undefined }
  */
 export function estimateStrength(password: string): StrengthResult {
-  const result = zxcvbn(password);
+  const result = estimator.check(password);
 
-  // crackTimesSeconds 는 여러 시나리오를 제공한다.
+  // crackTimes 는 여러 시나리오를 제공한다.
   // 온라인(throttled) 공격 시나리오를 기준으로 사용.
-  const crackTimeSeconds = result.crackTimesSeconds.onlineThrottling100PerHour as number;
+  const crackTimeSeconds = result.crackTimes.onlineThrottlingXPerHour.seconds;
 
   // warning 과 suggestions 를 하나의 문자열로 병합
   const warning = result.feedback.warning ?? "";
