@@ -53,35 +53,24 @@ updates:
       npm-minor-patch:
         update-types: ["minor", "patch"]
 
-  # --- npm: EE Cloudflare Worker relay (독립 pnpm 프로젝트) ---
-  - package-ecosystem: "npm"
-    directory: "/ee/secretbank-relay"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    cooldown:
-      default-days: 5
-      semver-patch-days: 3
-      semver-minor-days: 5
-      semver-major-days: 7
-    groups:
-      relay-minor-patch:
-        update-types: ["minor", "patch"]
-
-  # --- npm: EE download-proxy (독립 pnpm 프로젝트) ---
-  - package-ecosystem: "npm"
-    directory: "/ee/cloudflare/download-proxy"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    cooldown:
-      default-days: 5
-      semver-patch-days: 3
-      semver-minor-days: 5
-      semver-major-days: 7
-    groups:
-      download-proxy-minor-patch:
-        update-types: ["minor", "patch"]
+  # --- npm: EE 독립 pnpm 프로젝트 (secretbank-relay / cloudflare/download-proxy) ---
+  #
+  # ⛔ 의도적으로 등록하지 않는다 (2026-08-02 결정).
+  #
+  # 이유: 루트에 pnpm-workspace.yaml 이 있어서 하위 디렉터리에서 pnpm 을 실행하면
+  # 스코프가 루트 워크스페이스로 잡힌다. 그래서 `ee/*/pnpm-lock.yaml` 을 갱신하려면
+  # `--ignore-workspace` CLI flag 가 필수인데(.npmrc 의 ignore-workspace 는 pnpm 이
+  # 무시한다 — ee/secretbank-relay/.npmrc 주석 참조), Dependabot 은 이 flag 를 붙일
+  # 수 없다. 결과적으로 Dependabot 은 package.json 만 바꾼 PR 을 열고, lockfile 이
+  # 없으니 CI 의 `pnpm install --frozen-lockfile` 이 specifier mismatch 로 항상
+  # 실패한다 → auto-merge 불가 → 매주 머지 불가능한 PR 이 누적됐다
+  # (#25/58/60/62/64 수동 close, 이어서 #93/#101/#105/#115).
+  #
+  # 대신: 월 1회 직접 갱신한다. 각 디렉터리에서
+  #   pnpm update --ignore-workspace && pnpm typecheck && pnpm test
+  # 를 돌리고 lockfile 을 함께 커밋한다. major 는 그때 개별 검토.
+  # 보안 취약점 PR 은 이 파일(version updates)과 무관하게 계속 생성되므로
+  # 보안 커버리지에는 구멍이 없다.
 
   # --- npm: VS Code 확장 (자체 package-lock.json) ---
   - package-ecosystem: "npm"

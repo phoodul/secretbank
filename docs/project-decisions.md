@@ -2874,3 +2874,35 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 
 - **결정/사실:** API 저장·폴더 drag&drop 실패는 코드 결함이 아니라 dev 빌드와 설치본이 공유하던 `%APPDATA%\app.secretbank\vault.db` 의 migration VersionMismatch(손상) 때문. 신선 설치본에서는 정상 작동 확인.
 - **영향:** dev 진단 시 실제 볼트 디렉토리를 절대 destructive 하게 다루지 않는다 (세션 중 실제 볼트 삭제 사고 발생). 손상 DB 의심 시 dev 는 **별도 identifier/data dir** 사용 검토 필요 (후속 백로그).
+
+## 2026-08-02 — Dependabot 에서 `ee/*` 독립 pnpm 프로젝트 제외 (월간 수동 batch 로 전환)
+
+- **결정:** `.github/dependabot.yml` 에서 `/ee/secretbank-relay` 와 `/ee/cloudflare/download-proxy`
+  두 npm 생태계 항목을 제거한다. 대신 월 1회 각 디렉터리에서
+  `pnpm update --ignore-workspace && pnpm typecheck && pnpm test` 로 직접 갱신하고
+  lockfile 을 함께 커밋한다.
+- **이유:** 루트 `pnpm-workspace.yaml` 때문에 하위 디렉터리에서 pnpm 을 실행하면 스코프가
+  루트 워크스페이스로 잡힌다(로컬 재현: `Scope: all 3 workspace projects`, `ee/.../pnpm-lock.yaml`
+  무변경). `ee/*` lockfile 을 갱신하려면 `--ignore-workspace` CLI flag 가 필수인데
+  (`.npmrc` 의 `ignore-workspace` 는 pnpm 이 무시), Dependabot 은 이 flag 를 못 붙인다.
+  그래서 Dependabot 은 `package.json` 만 바꾼 PR 을 열고, CI 의 `pnpm install --frozen-lockfile`
+  이 specifier mismatch 로 **항상** 실패 → auto-merge 영구 불가 → 매주 머지 불가능한 PR 누적
+  (#25/58/60/62/64 수동 close, 이어서 #93/#101/#105/#115).
+- **대안 검토:** ① 봇이 PR 브랜치에 lockfile 을 push → GITHUB_TOKEN push 는 CI 를 재트리거하지
+  않아 PAT 또는 workflow_dispatch 배관이 필요하고, 사람 커밋이 얹히면 Dependabot 이 이후
+  자동 rebase 를 포기한다. ② `ee/*` 를 루트 workspace 에 편입 → lockfile 1개로 문제 소멸하지만
+  "ee 는 독립 pnpm 프로젝트" 정책을 뒤집고 deploy-relay·wrangler 번들 경로 수정이 따른다.
+  둘 다 비용 대비 이득이 낮아 보류.
+- **영향:** 보안 취약점 PR 은 version updates 설정과 무관하게 계속 생성되므로 보안 커버리지에
+  구멍 없음. `ee/*` 정기 버전업만 수동 트랙으로 이동.
+
+## 2026-08-02 — cargo `0.x` crate 의 semver-minor 는 auto-merge 제외
+
+- **결정:** `.github/workflows/dependabot-auto-merge.yml` 에서 `package-ecosystem == 'cargo'`
+  이면서 `previous-version` 이 `0.` 으로 시작하는 semver-minor 업데이트는 auto-merge 를
+  활성화하지 않는다 (major 제외 조건에 추가).
+- **이유:** Cargo 세계에서 `0.12 → 0.13` 은 breaking 이지만 Dependabot 은 SemVer 규칙대로
+  minor 로 분류한다. 그 결과 hkdf/hmac/sha2/bech32/chacha20poly1305 같은 **크립토 크레이트의
+  breaking 업데이트에 auto-merge 가 이미 켜져 있었다**(#34/#35/#73/#79/#80/#89). CI 가 막아
+  실사고는 없었으나, API 표면이 우연히 호환되면 breaking 이 자동 머지될 수 있는 구멍이었다.
+- **영향:** 크립토·DB 크레이트 0.x 업데이트는 항상 사람이 검토. patch 는 계속 자동.

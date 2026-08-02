@@ -27,8 +27,16 @@ jobs:
         id: meta
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
 
-      - name: Enable auto-merge (patch/minor only; major 는 수동 검토)
-        if: ${{ steps.meta.outputs.update-type != 'version-update:semver-major' }}
+      # cargo 의 0.x crate 는 SemVer 상 minor 로 분류되지만 Cargo 세계에서는
+      # 0.12 → 0.13 이 breaking 이다 (hkdf/hmac/sha2/chacha20poly1305 등 크립토
+      # 크레이트가 여기 해당). CI 가 막아주긴 하나 API 표면이 우연히 호환될 때
+      # breaking 이 자동 머지될 수 있어 명시적으로 제외한다.
+      - name: Enable auto-merge (patch/minor only; major 와 cargo 0.x minor 는 수동 검토)
+        if: >-
+          ${{ steps.meta.outputs.update-type != 'version-update:semver-major'
+          && !(steps.meta.outputs.package-ecosystem == 'cargo'
+               && startsWith(steps.meta.outputs.previous-version, '0.')
+               && steps.meta.outputs.update-type == 'version-update:semver-minor') }}
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
