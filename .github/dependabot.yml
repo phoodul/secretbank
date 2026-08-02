@@ -37,6 +37,26 @@ updates:
         versions: [">=0.9.0"]
       - dependency-name: "rand_core"
         versions: [">=0.9.0"]
+      # age 0.11.3 / age-core 0.11.0 이 RustCrypto 구세대(sha2 0.10 / hmac 0.12 /
+      # hkdf 0.12 / chacha20poly1305 0.10 / bech32 0.9)를 잠그고 있다. 우리 크레이트만
+      # 올리면 같은 트레이트의 서로 다른 세대가 한 트리에 공존해 E0277 이 난다
+      # (rand 0.9 와 동일한 구조). **재검토 트리거: age 0.11 → 0.12 업그레이드**
+      # — age 0.12.1 이 이미 릴리스돼 있어 그 마이그레이션이 이 5건을 한 번에 푼다.
+      # (2026-08-02 조사, docs/project-decisions.md ADR)
+      - dependency-name: "sha2"
+        versions: [">=0.11.0"]
+      - dependency-name: "hmac"
+        versions: [">=0.13.0"]
+      - dependency-name: "hkdf"
+        versions: [">=0.13.0"]
+      - dependency-name: "chacha20poly1305"
+        versions: [">=0.11.0"]
+      - dependency-name: "bech32"
+        versions: [">=0.10.0"]
+      # tauri-plugin-sql 2.4.0 이 sqlx 0.8 을 요구한다. 상위 플러그인이 0.9 로
+      # 올라오기 전까지 채택 불가. 재검토 트리거: tauri-plugin-sql sqlx 0.9 지원.
+      - dependency-name: "sqlx"
+        versions: [">=0.9.0"]
 
   # --- npm: 루트 pnpm 워크스페이스 (앱 프론트엔드 + extension + packages/shared) ---
   - package-ecosystem: "npm"

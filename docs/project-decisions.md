@@ -2924,3 +2924,19 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   lint(0 error) · extension build 모두 통과.
 - **남는 알림:** react-router `>=7.12.0 <8.3.0` RSC CSRF 는 8.x major 요구. RSC 모드를
   쓰지 않으므로 major 마이그레이션 전까지 보류.
+
+## 2026-08-02 — Rust 크립토 major 5건은 `age` 0.12 업그레이드가 선행 조건 (dependabot ignore)
+
+- **사실:** sha2 0.11 / hmac 0.13 / hkdf 0.13 / chacha20poly1305 0.11 / bech32 0.12 는
+  모두 `age` 0.11.3 · `age-core` 0.11.0 이 구세대(sha2 0.10 / hmac 0.12 / hkdf 0.12 /
+  chacha20poly1305 0.10 / bech32 0.9)를 잠그고 있어 단독 채택이 불가능하다.
+  우리 크레이트만 올리면 같은 트레이트의 두 세대가 한 트리에 공존해 E0277
+  (2026-06-29 rand 0.9 건과 동일한 구조).
+- **결정:** dependabot.yml cargo `ignore` 에 5건을 등록해 PR 재생성을 멈추고, PR
+  #34/#73/#79/#80/#89 는 닫는다.
+- **⭐ 해제 경로:** **`age` 0.11.3 → 0.12.1 업그레이드가 이 5건 + rand 0.9 를 한 번에
+  푼다.** age 0.12.1 은 이미 릴리스돼 있다. 볼트 암호화 핵심이라 전용 세션에서
+  다뤄야 하며, 마이그레이션 시 기존 볼트 파일 복호화 호환성 검증이 필수.
+- **sqlx 0.9 (#35) 도 동일 구조:** `tauri-plugin-sql` 2.4.0 이 sqlx 0.8 을 요구.
+  재검토 트리거는 tauri-plugin-sql 의 sqlx 0.9 지원.
+- **ulid 3.0 (#117) 은 외부 잠금이 없어 이번에 채택** (eacae79).
