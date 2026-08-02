@@ -78,7 +78,7 @@ urlencoding = "2"
 url = "2.5"
 
 # Base64url (M8 — relay salt_auth/salt_enc 디코드)
-base64 = "0.22"
+base64 = "0.23"
 
 # File scanning / env parsing
 regex = "1"
