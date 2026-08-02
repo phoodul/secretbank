@@ -123,8 +123,7 @@ describe("BulkRevokeDialog", () => {
 
     // listen 콜백을 외부에서 트리거할 수 있도록 캡처
     let progressCallback:
-      | ((event: { payload: { revoked: number; total: number } }) => void)
-      | null = null;
+      ((event: { payload: { revoked: number; total: number } }) => void) | null = null;
     mockListen.mockImplementation((eventName, handler) => {
       if (eventName === "kill-switch:progress") {
         progressCallback = handler as typeof progressCallback;

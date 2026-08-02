@@ -36,14 +36,15 @@ tauri-plugin-keyring은 HuakunShen이 개발한 커뮤니티 플러그인으로,
 - Stronghold: 공식 문서상 Android/iOS "Full support" 표기 있으나 [출처 #1], 실제 구현에서 확인된 한계는 아직 커뮤니티 문서 부족.
 - tauri-plugin-keyring: 커뮤니티 플러그인으로 Android 지원 갭 존재. GitHub 디스커션에서 "Android support remains a gap in current solutions"로 언급됨 [출처 #2].
 
-**암호화 강도 비교**  
-| 항목 | Stronghold | OS Keyring |
-|---|---|---|
-| 암호화 알고리즘 | XChaCha20-Poly1305 | OS 의존(AES-256/Secure Enclave) |
-| KDF | Argon2id | OS 의존 |
-| 저장 위치 | 로컬 파일(.stronghold) | OS 자격증명 저장소 |
-| 대용량 지원 | 가능 | 플랫폼 제한(~4KB~수MB) |
-| v3 지속성 | 폐기 예정 | 유지 |
+**암호화 강도 비교**
+
+| 항목            | Stronghold             | OS Keyring                      |
+| --------------- | ---------------------- | ------------------------------- |
+| 암호화 알고리즘 | XChaCha20-Poly1305     | OS 의존(AES-256/Secure Enclave) |
+| KDF             | Argon2id               | OS 의존                         |
+| 저장 위치       | 로컬 파일(.stronghold) | OS 자격증명 저장소              |
+| 대용량 지원     | 가능                   | 플랫폼 제한(~~4KB~~수MB)        |
+| v3 지속성       | 폐기 예정              | 유지                            |
 
 **잠정 권장**: 볼트 파일 암호화에는 **Stronghold**(v2 기간 동안)를 사용하되, 마스터 패스프레이즈는 **OS Keyring**에 저장하는 계층 구조. v3 전환 시점에 대비해 Stronghold 의존성을 추상화 레이어로 분리 설계 권장.
 
@@ -198,25 +199,27 @@ Canvas/WebGL 기반으로 10,000+ 노드도 처리 가능하며, `hideEdgesOnVie
 - `first_location_detected`, `has_more_locations` 필드 추가 (2025-06-24 GA)
 - 알림 해제 검토 요청 REST API 추가 (2025-04-18)
 
-**필요 권한 스코프**  
-| 접근 방식 | 필요 스코프 |
-|---|---|
+**필요 권한 스코프**
+
+| 접근 방식           | 필요 스코프                   |
+| ------------------- | ----------------------------- |
 | OAuth/PAT (classic) | `repo` 또는 `security_events` |
-| 공개 레포만 | `public_repo` |
-| 사용자 역할 | 저장소/조직 관리자 |
+| 공개 레포만         | `public_repo`                 |
+| 사용자 역할         | 저장소/조직 관리자            |
 
 **GitHub Actions Secrets API**  
 `GET/PUT/DELETE /repos/{owner}/{repo}/actions/secrets/{secret_name}` — Actions 시크릿 CRUD.  
 필요 PAT 스코프: `repo` [출처 #13].
 
-**GitHub App vs OAuth App**  
-| 항목 | GitHub App | OAuth App |
-|---|---|---|
-| 권한 방식 | Fine-grained permissions | Broad scopes |
+**GitHub App vs OAuth App**
+
+| 항목        | GitHub App                       | OAuth App    |
+| ----------- | -------------------------------- | ------------ |
+| 권한 방식   | Fine-grained permissions         | Broad scopes |
 | 레이트 리밋 | 15,000 req/hr (Enterprise Cloud) | 5,000 req/hr |
-| 토큰 수명 | 단기(설치 토큰) | 장기 PAT |
-| 접근 범위 | 특정 저장소 선택 가능 | 전체 계정 |
-| 권장 | **권장** (2025 공식) | 레거시 |
+| 토큰 수명   | 단기(설치 토큰)                  | 장기 PAT     |
+| 접근 범위   | 특정 저장소 선택 가능            | 전체 계정    |
+| 권장        | **권장** (2025 공식)             | 레거시       |
 
 GitHub 공식 문서는 OAuth App 대비 GitHub App을 명시적으로 권장("preferred to OAuth apps because they use fine-grained permissions") [출처 #14].
 
@@ -265,14 +268,15 @@ Tauri 백엔드(Rust)에서 각 LLM 제공사 API를 직접 호출하는 추상�
 - 추가 의존성 없음
 - 구현 비용 높지만 Zero-Knowledge 아키텍처와 완벽 정합
 
-**비교표**  
-| 항목 | LiteLLM | Vercel AI SDK | 직접 추상화(Rust) |
-|---|---|---|---|
-| 키 관리 기능 | Virtual Keys + 예산 관리 | 없음 | 완전 커스텀 |
-| Tauri 직접 통합 | 불가(Python) | 가능(JS) | 가능(Rust) |
-| Zero-Knowledge 호환 | 서버 의존 | 불가 | 완전 호환 |
-| 지원 LLM 수 | 100+ 통합 제공 | OpenAI/Anthropic 등 주요사 | 직접 구현 필요 |
-| 1인 운영 부담 | 중간(Python 서버 관리) | 낮음 | 중간(구현 비용) |
+**비교표**
+
+| 항목                | LiteLLM                  | Vercel AI SDK              | 직접 추상화(Rust) |
+| ------------------- | ------------------------ | -------------------------- | ----------------- |
+| 키 관리 기능        | Virtual Keys + 예산 관리 | 없음                       | 완전 커스텀       |
+| Tauri 직접 통합     | 불가(Python)             | 가능(JS)                   | 가능(Rust)        |
+| Zero-Knowledge 호환 | 서버 의존                | 불가                       | 완전 호환         |
+| 지원 LLM 수         | 100+ 통합 제공           | OpenAI/Anthropic 등 주요사 | 직접 구현 필요    |
+| 1인 운영 부담       | 중간(Python 서버 관리)   | 낮음                       | 중간(구현 비용)   |
 
 **Secretbank Phase 2 맥락**  
 initial_idea.md에서 "LLM 모델 관리"는 Phase 2 별도 탭/앱으로 분리 판단 예정으로 표기됨 [이미 수집됨]. Phase 2 전까지 우선순위 낮음.
@@ -316,15 +320,16 @@ Rekor는 Merkle tree 기반 소프트웨어 공급망 투명성 로그다 [출�
 - **장점**: 외부 검증 가능(누구나 트리 검증), 강력한 불변성 보증
 - **단점**: 외부 서비스 의존, 1인 운영 복잡도 증가, Secretbank의 오프라인 로컬 사용 시 불가
 
-**Merkle Tree vs Hash Chain 비교**  
-| 항목 | Hash Chain | Merkle Tree |
-|---|---|---|
-| 구현 복잡도 | 낮음 | 중간 |
-| 부분 검증 | O(n) | O(log n) |
-| 순서 보증 | 강함 | 강함 |
-| 1인 구현 가능 | 용이 | 가능하나 더 복잡 |
-| Rust 구현체 | 다수 | Trillian, Rekor(Go) |
-| 로컬 동작 | 완전 | 완전 |
+**Merkle Tree vs Hash Chain 비교**
+
+| 항목          | Hash Chain | Merkle Tree         |
+| ------------- | ---------- | ------------------- |
+| 구현 복잡도   | 낮음       | 중간                |
+| 부분 검증     | O(n)       | O(log n)            |
+| 순서 보증     | 강함       | 강함                |
+| 1인 구현 가능 | 용이       | 가능하나 더 복잡    |
+| Rust 구현체   | 다수       | Trillian, Rekor(Go) |
+| 로컬 동작     | 완전       | 완전                |
 
 **Secretbank에서의 실용성 판단**  
 감사 로그 크기(일반 사용자: 수천~수만 건)에서는 Hash Chain의 O(n) 검증 비용이 실질적 문제가 되지 않는다. ed25519 서명 체인 방식이 구현 단순성, Rust 생태계 지원, 외부 의존성 없음 측면에서 Secretbank에 최적.
@@ -428,13 +433,14 @@ GitHub 레포 `dieharders/example-tauri-v2-python-server-sidecar`에서 Tauri v2
 **LiteLLM 번들링 현실성**  
 LiteLLM은 의존성이 매우 크다(`litellm` 패키지: 설치 시 100MB+ 수준). PyInstaller로 패키징 시 최종 바이너리가 수백MB에 달할 수 있어 배포 크기 문제가 발생한다.
 
-**대안 비교**  
-| 방법 | 장점 | 단점 |
-|---|---|---|
-| 사이드카(PyInstaller) | 기존 Python 코드 재활용 | 배포 크기 큼, 플랫폼별 빌드 필요 |
-| Rust 포팅 | 배포 크기 작음, 네이티브 성능 | 구현 비용 높음 |
-| WASM | 이식성 좋음 | Python-WASM 성숙도 낮음 |
-| 서버 분리 | 모든 플랫폼 지원 | 서버 비용, Zero-Knowledge 위반 가능성 |
+**대안 비교**
+
+| 방법                  | 장점                          | 단점                                  |
+| --------------------- | ----------------------------- | ------------------------------------- |
+| 사이드카(PyInstaller) | 기존 Python 코드 재활용       | 배포 크기 큼, 플랫폼별 빌드 필요      |
+| Rust 포팅             | 배포 크기 작음, 네이티브 성능 | 구현 비용 높음                        |
+| WASM                  | 이식성 좋음                   | Python-WASM 성숙도 낮음               |
+| 서버 분리             | 모든 플랫폼 지원              | 서버 비용, Zero-Knowledge 위반 가능성 |
 
 **Secretbank 맥락**  
 LiteLLM은 Phase 2 기능으로 우선순위 낮음. Phase 2에서 LLM 관리 기능이 필요할 때 검토. 현재 MVP에서는 불필요.
@@ -580,7 +586,7 @@ API 키 메타데이터(이름, 프로젝트 연결, 만료일 등)는 일반 JS
 | Cloudflare KV           | 완전                                 | 100K reads/day, 1K writes/day     | Workers Paid 포함   | 높음                 | 키-값 저장            |
 | Supabase                | 부분(1주 비활성 시 pause) [출처 #35] | 2 프로젝트, 500MB DB, 50K MAU     | $25/월(Pro)         | 중간(PostgREST 기반) | 실시간 구독 기능 풍부 |
 | Deno Deploy             | 완전                                 | 100K req/day, 1GB storage         | $10/월              | 높음                 | TypeScript 전용       |
-| Fly.io                  | 부분(sleep 가능)                     | 없음(무료 크레딧 소진 후)         | ~$5~10/월           | 중간                 | 전체 서버 운영        |
+| Fly.io                  | 부분(sleep 가능)                     | 없음(무료 크레딧 소진 후)         | ~~$5~~10/월         | 중간                 | 전체 서버 운영        |
 | Railway                 | 부분                                 | $5 크레딧/월                      | 사용량 기반         | 중간                 | 더 일반적인 PaaS      |
 
 **Cloudflare Workers + D1 상세 분석**
@@ -601,11 +607,12 @@ API 키 메타데이터(이름, 프로젝트 연결, 만료일 등)는 일반 JS
 - Cloudflare Workers: D1 단일 DB → D1 샤딩 → D1 + Hyperdrive(외부 Postgres 연결) → 엔터프라이즈 Postgres(Neon/PlanetScale)로 무중단 마이그레이션 가능.
 - Supabase: Free → Pro($25) → Team($599) → Enterprise. MAU 기반 과금으로 5,000만 시 비용 매우 큼.
 
-**1인 운영 $0~$50/월 수용량 (E2EE 동기화 서버)**  
-| 플랫폼 | $0 범위 | $50/월 범위 |
-|---|---|---|
-| Cloudflare Workers+D1 | ~5K MAU(일일 읽기/쓰기 기준) | ~500K MAU |
-| Supabase | 50K MAU(인증 기준) | ~200K MAU |
+**1인 운영 $0~$50/월 수용량 (E2EE 동기화 서버)**
+
+| 플랫폼                | $0 범위                      | $50/월 범위 |
+| --------------------- | ---------------------------- | ----------- |
+| Cloudflare Workers+D1 | ~5K MAU(일일 읽기/쓰기 기준) | ~500K MAU   |
+| Supabase              | 50K MAU(인증 기준)           | ~200K MAU   |
 
 **잠정 권장**: **Cloudflare Workers + D1 + KV** — scale-to-zero 완전 지원, 글로벌 엣지, E2EE 릴레이 이상적 구조, 무료 티어 충분, 5,000만 사용자까지 확장 경로 명확. Supabase는 실시간 구독 기능이 필요한 경우 보조로 고려.
 

@@ -604,11 +604,11 @@ form submit 감지 → in-page sticky banner (Shadow DOM, 상단 고정)
 
 M24-E 브라우저 확장은 Secretbank 의 daily driver 진입을 가능하게 하는 핵심 마일스톤이다. Researcher 보고서가 제시한 18개 결정 항목 (D1~D18) 은 모두 근거가 명확하며, project-decisions.md 의 기존 결정과 충돌하는 항목은 D17 하나뿐이다 (첫 출시 브라우저 범위, Q1 에서 해소 가능). WXT + Native Messaging + 1P 모델의 조합은 Zero-Knowledge 원칙과 Tiered Protection 모델을 모두 만족하며, KeePassXC-Browser 를 OSS 참조 모델로 활용하는 방향은 audit 비용을 현실적으로 절감한다.
 
-Phase B (Native Messaging Host) 가 전체 구현의 최고 위험 지점이다. OS별 installer 등록과 페어링 프로토콜 모두 미검증 영역이며, Phase B 블로킹이 발생하면 전체 M24-E 일정이 지연된다. Phase B 시작 전 세 OS 환경 (Windows / macOS / Linux) 에서 NM host 수동 연결 검증을 선행하고, Phase B 완료 직후 페어링 흐름 단독 보안 리뷰를 진행하는 것을 강력 권고한다. 아래 요약 표에서 D1~D18 과 Q1~Q6 를 한눈에 확인하고, GATE 1 에서 일괄 승인 / 부분 수정 / 거부 중 선택하면 된다.
+Phase B (Native Messaging Host) 가 전체 구현의 최고 위험 지점이다. OS별 installer 등록과 페어링 프로토콜 모두 미검증 영역이며, Phase B 블로킹이 발생하면 전체 M24-E 일정이 지연된다. Phase B 시작 전 세 OS 환경 (Windows / macOS / Linux) 에서 NM host 수동 연결 검증을 선행하고, Phase B 완료 직후 페어링 흐름 단독 보안 리뷰를 진행하는 것을 강력 권고한다. 아래 요약 표에서 D1~~D18 과 Q1~~Q6 를 한눈에 확인하고, GATE 1 에서 일괄 승인 / 부분 수정 / 거부 중 선택하면 된다.
 
 ---
 
-## 8. GATE 1 요약 표 — D1~D18 + Q1~Q6
+## 8. GATE 1 요약 표 — D1~~D18 + Q1~~Q6
 
 ### 결정 항목 (D1~D18) — 일괄 승인 대상
 
@@ -642,7 +642,7 @@ Phase B (Native Messaging Host) 가 전체 구현의 최고 위험 지점이다.
 | Q3  | 페어링 UX = QR 코드 / one-time PIN / 자동 페어링?  | A: PIN / B: QR / C: 자동 승인 다이얼로그              | C (자동, 마찰 최소)                     |
 | Q4  | password session token 유지 시간?                  | 30분 / 1시간 / 4시간 / 8시간 / 사용자 설정            | 기본 4시간 + 사용자 설정                |
 | Q5  | Phase B 완료 후 외부 보안 감사?                    | A: Phase B 후 페어링만 / B: Phase F 후 종합 / C: 없음 | A 권고 (단 일정 미확정이면 C 도 현실적) |
-| Q6  | 첫 commit 단위 = Phase 단위 vs sub-task 분할?      | A: Phase 단위 (7~10일) / B: sub-task (1~2일)          | B (sub-task 분할)                       |
+| Q6  | 첫 commit 단위 = Phase 단위 vs sub-task 분할?      | A: Phase 단위 (7~~10일) / B: sub-task (1~~2일)        | B (sub-task 분할)                       |
 
 ---
 

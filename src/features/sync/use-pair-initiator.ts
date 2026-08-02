@@ -17,13 +17,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type PairInitiatorStatus =
-  | "idle"
-  | "starting"
-  | "waiting_for_joiner"
-  | "finalizing"
-  | "completed"
-  | "error"
-  | "cancelled";
+  "idle" | "starting" | "waiting_for_joiner" | "finalizing" | "completed" | "error" | "cancelled";
 
 interface InitiatorStartResult {
   pin: string;

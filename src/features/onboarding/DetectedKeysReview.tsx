@@ -47,9 +47,7 @@ function confidenceTone(c: number): "default" | "warning" | "info" {
 
 /** Per-detected-key classification for the rotation scan. */
 type RowStatus =
-  | "new"
-  | "already_tracked"
-  | { kind: "rotated"; credentialId: string; credentialName: string };
+  "new" | "already_tracked" | { kind: "rotated"; credentialId: string; credentialName: string };
 
 export function DetectedKeysReview({
   detected,

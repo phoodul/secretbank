@@ -53,9 +53,7 @@ interface CreateVaultDialogProps {
 }
 
 type Phase =
-  | { kind: "input" }
-  | { kind: "issuing" }
-  | { kind: "issued"; issuance: CharterIssuanceDto };
+  { kind: "input" } | { kind: "issuing" } | { kind: "issued"; issuance: CharterIssuanceDto };
 
 /**
  * 새 볼트 초기화 + Vault Charter 발급 다이얼로그.

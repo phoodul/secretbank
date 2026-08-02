@@ -65,11 +65,9 @@ const PLATFORM_PATTERNS: Record<string, RegExp> = {
 };
 
 export type FetchResult =
-  | { ok: true; release: Release }
-  | { ok: false; status: number; body: string };
+  { ok: true; release: Release } | { ok: false; status: number; body: string };
 export type FetchListResult =
-  | { ok: true; releases: Release[] }
-  | { ok: false; status: number; body: string };
+  { ok: true; releases: Release[] } | { ok: false; status: number; body: string };
 
 async function fetchReleasesRaw(
   env: Env,

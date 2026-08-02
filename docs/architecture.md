@@ -1063,7 +1063,7 @@ matrix:
 
 ## 10. M24-E — Browser Extension (Phase 3 진입, 2026-05-09 신설)
 
-> 본 섹션은 [2026-05-09] M24-E GATE 1 일괄 승인 (D1~D18 + Q1~Q6) 결과를 반영한다.
+> 본 섹션은 [2026-05-09] M24-E GATE 1 일괄 승인 (D1~~D18 + Q1~~Q6) 결과를 반영한다.
 > 상세 결정 근거는 `docs/integrator_report_m24e.md`, `docs/research_m24e_browser_extension.md` 참조.
 > **기존 1~9장은 변경 없음.** 본 10장은 M24-E 전용 신규 섹션.
 

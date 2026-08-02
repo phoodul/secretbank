@@ -22,9 +22,7 @@ export interface Issuer {
 }
 
 type FetchState =
-  | { phase: "loading" }
-  | { phase: "ok"; data: Issuer[] }
-  | { phase: "error"; message: string };
+  { phase: "loading" } | { phase: "ok"; data: Issuer[] } | { phase: "error"; message: string };
 
 export interface UseIssuersResult {
   issuers: Issuer[];

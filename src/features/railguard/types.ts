@@ -27,9 +27,7 @@ export interface RuleFileApplied {
  * `{kind: "append"}`, `{kind: "skip_existing"}`.
  */
 export type ApplyMode =
-  | { kind: "overwrite"; backup: boolean }
-  | { kind: "append" }
-  | { kind: "skip_existing" };
+  { kind: "overwrite"; backup: boolean } | { kind: "append" } | { kind: "skip_existing" };
 
 export interface RenderContext {
   project_name: string;

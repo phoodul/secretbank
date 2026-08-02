@@ -15,9 +15,9 @@
 | :---------------------------------------- | :------------------------------------------------ | :------------------------------------- |
 | `docs/architecture.md` 10장 (M24-E)       | 모듈 경계 / 통신 흐름 / 위협 모델 / UI 분리       | 본 plan 의 구조 정합성 근거            |
 | `docs/task_m24e.md`                       | 43 sub-task 의 DoD / Files Touched / Tests / Risk | 본 plan 의 실행 단위                   |
-| `docs/integrator_report_m24e.md`          | CRAAP 평가 + D1~D18 + Q1~Q6 일괄 승인 근거        | 본 plan 의 결정 근거                   |
+| `docs/integrator_report_m24e.md`          | CRAAP 평가 + D1~~D18 + Q1~~Q6 일괄 승인 근거      | 본 plan 의 결정 근거                   |
 | `docs/research_m24e_browser_extension.md` | 25+ 출처 연구 자료                                | 본 plan 의 detail / API 사용 패턴 참조 |
-| `docs/project-decisions.md` [2026-05-09]  | D1~D18 + Q1~Q6 확정 결정                          | 본 plan 이 따르는 단일 진리 (SoT)      |
+| `docs/project-decisions.md` [2026-05-09]  | D1~~D18 + Q1~~Q6 확정 결정                        | 본 plan 이 따르는 단일 진리 (SoT)      |
 
 ---
 
@@ -55,7 +55,7 @@ M24-E 마일스톤 클로즈
 
 ### 1.3 Night mode 운용 규칙 (Q6 결정 = sub-task 분할)
 
-- 1 sub-task = 1~2 일치 작업 = 1 commit (또는 hotfix 가 필요하면 2~3 commits)
+- 1 sub-task = 1~~2 일치 작업 = 1 commit (또는 hotfix 가 필요하면 2~~3 commits)
 - Phase 진입 시점은 사용자 승인 GATE
 - Phase 내부에서는 사용자 중간 질문 ❌ — sub-task 별 자동 진행
 - sub-task 간 의존성은 `docs/task_m24e.md` 의 의존성 그래프 따름

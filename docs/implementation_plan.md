@@ -43,7 +43,7 @@
 | M10  | Apple Developer Program                                                    | $99/년         | 즉시                  |
 | M10  | Google Play Console                                                        | $25 일회       | 즉시                  |
 | M13  | 도메인 (secretbank.app 등)                                                 | ~$30/년        | 즉시                  |
-| M13  | SignPath.io 또는 Azure Trusted Signing                                     | ~$15~50/월     | 심사 1~3일            |
+| M13  | SignPath.io 또는 Azure Trusted Signing                                     | ~~$15~~50/월   | 심사 1~3일            |
 | M13  | 변호사 법률 리뷰 (Privacy/ToS)                                             | $500~1500 일회 | 1~2주                 |
 
 ### 개발 환경 prerequisites
@@ -597,10 +597,10 @@ T059 ~ T068 (10 Must)
 # docs/runbooks/github-app-registration.md
 Permissions:
   Repository:
-    contents: read          # .env 스캔용
+    contents: read # .env 스캔용
     secret_scanning_alerts: read
-    actions: read            # Actions Secrets 목록
-    actions: write           # Pro 전용, 자동 rotation
+    actions: read # Actions Secrets 목록
+    actions: write # Pro 전용, 자동 rotation
   Organization:
     secret_scanning_alerts: read
 Webhooks: off (Phase 2에서 활성화)
@@ -1359,11 +1359,7 @@ WebDataSource 는 릴레이 `/sync/deltas` 로 받은 CRDT 를 SecSync 복호화
 ```ts
 it("WebDataSource throws on mutating calls", async () => {
   const ds = new WebDataSource();
-  await expect(
-    ds.createCredential({
-      /* ... */
-    }),
-  ).rejects.toThrow("Read-only in web viewer");
+  await expect(ds.createCredential({/* ... */})).rejects.toThrow("Read-only in web viewer");
 });
 ```
 

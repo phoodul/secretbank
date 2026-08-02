@@ -44,9 +44,7 @@ const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 // ---------------------------------------------------------------------------
 
 type FetchState =
-  | { phase: "loading" }
-  | { phase: "ok"; data: Entitlement }
-  | { phase: "error"; message: string };
+  { phase: "loading" } | { phase: "ok"; data: Entitlement } | { phase: "error"; message: string };
 
 // ---------------------------------------------------------------------------
 // Hook

@@ -4,9 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Project } from "./types";
 
 type FetchState =
-  | { phase: "loading" }
-  | { phase: "ok"; data: Project[] }
-  | { phase: "error"; message: string };
+  { phase: "loading" } | { phase: "ok"; data: Project[] } | { phase: "error"; message: string };
 
 export interface UseProjectsResult {
   items: Project[];

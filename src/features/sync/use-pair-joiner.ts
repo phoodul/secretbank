@@ -16,13 +16,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type PairJoinerStatus =
-  | "idle"
-  | "joining"
-  | "waiting_for_payload"
-  | "applying"
-  | "completed"
-  | "error"
-  | "cancelled";
+  "idle" | "joining" | "waiting_for_payload" | "applying" | "completed" | "error" | "cancelled";
 
 interface JoinerJoinResult {
   initiator_pub_b64: string;

@@ -246,7 +246,7 @@ const ALLOWED_EXTS = [
 
 ### Sub-task 2: `site/index.html` 다운로드 로직 정정
 
-**변경 위치**: `site/index.html` 라인 1942~1953 (`fetchReleases` 함수) + 라인 1929~1940 (`classify` 함수)
+**변경 위치**: `site/index.html` 라인 1942~~1953 (`fetchReleases` 함수) + 라인 1929~~1940 (`classify` 함수)
 
 **현재 코드 (변경 전)**:
 

@@ -13,8 +13,8 @@
 
 ## 1. Audit 목적
 
-M24-E (브라우저 확장) 전체 Phase (A~G) 의 보안 정확성을 외부 third-party 가 독립 검증한다.
-Phase F 스토어 제출 (F-1~F-7) 직전에 종합 audit 1회로 모든 Phase 를 커버한다.
+M24-E (브라우저 확장) 전체 Phase (A~~G) 의 보안 정확성을 외부 third-party 가 독립 검증한다.
+Phase F 스토어 제출 (F-1~~F-7) 직전에 종합 audit 1회로 모든 Phase 를 커버한다.
 
 본 문서는 **F-8 sub-task 의 사전 계획 (placeholder)** 이다.
 실제 audit 결과 수령 후 발견 사항 별로 sub-task 가 분해되어 별도 commit 으로 패치된다.

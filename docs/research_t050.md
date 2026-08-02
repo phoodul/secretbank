@@ -273,30 +273,30 @@ fn extract_next_url(link_header: &str) -> Option<String> {
 
 ### 4-1. 최상위 필드
 
-| 필드                      | 타입     | Nullable | 설명                                               |
+| 필드 | 타입 | Nullable | 설명 |
 | :------------------------ | :------- | :------- | :------------------------------------------------- | ------------------------ |
-| `ghsa_id`                 | string   | No       | GHSA 고유 식별자 (예: `GHSA-xxxx-xxxx-xxxx`)       |
-| `cve_id`                  | string   | **Yes**  | CVE 미할당 GHSA 존재 (null 가능)                   |
-| `url`                     | string   | No       | API URL                                            |
-| `html_url`                | string   | No       | 웹 URL                                             |
-| `repository_advisory_url` | string   | **Yes**  | 저장소별 advisory URL                              |
-| `summary`                 | string   | No       | 요약 (최대 1024자)                                 |
-| `description`             | string   | **Yes**  | 상세 설명 (최대 65535자)                           |
-| `type`                    | enum     | No       | `reviewed` / `unreviewed` / `malware` (read-only)  |
-| `severity`                | enum     | No       | `critical` / `high` / `medium` / `low` / `unknown` |
-| `source_code_location`    | string   | **Yes**  | 소스 코드 위치 URL                                 |
-| `identifiers`             | array    | **Yes**  | `[{type: "CVE"                                     | "GHSA", value: string}]` |
-| `references`              | array    | **Yes**  | URL 문자열 배열                                    |
-| `published_at`            | datetime | No       | 발행 시각 (ISO 8601, UTC)                          |
-| `updated_at`              | datetime | No       | 최종 업데이트 시각                                 |
-| `github_reviewed_at`      | datetime | **Yes**  | GitHub 검토 시각 (미검토 시 null)                  |
-| `nvd_published_at`        | datetime | **Yes**  | NVD 발행 시각 (null 가능)                          |
-| `withdrawn_at`            | datetime | **Yes**  | 철회 시각 (null 가능)                              |
-| `vulnerabilities`         | array    | **Yes**  | 취약점 패키지 정보 배열                            |
-| `cvss_severities`         | object   | **Yes**  | CVSS v3 / v4 점수 (신규 필드, 2025 이후)           |
-| `epss`                    | object   | **Yes**  | EPSS 점수 및 백분위                                |
-| `cwes`                    | array    | **Yes**  | CWE 배열                                           |
-| `credits`                 | array    | **Yes**  | 기여자 배열                                        |
+| `ghsa_id` | string | No | GHSA 고유 식별자 (예: `GHSA-xxxx-xxxx-xxxx`) |
+| `cve_id` | string | **Yes** | CVE 미할당 GHSA 존재 (null 가능) |
+| `url` | string | No | API URL |
+| `html_url` | string | No | 웹 URL |
+| `repository_advisory_url` | string | **Yes** | 저장소별 advisory URL |
+| `summary` | string | No | 요약 (최대 1024자) |
+| `description` | string | **Yes** | 상세 설명 (최대 65535자) |
+| `type` | enum | No | `reviewed` / `unreviewed` / `malware` (read-only) |
+| `severity` | enum | No | `critical` / `high` / `medium` / `low` / `unknown` |
+| `source_code_location` | string | **Yes** | 소스 코드 위치 URL |
+| `identifiers` | array | **Yes** | `[{type: "CVE"                                     | "GHSA", value: string}]` |
+| `references` | array | **Yes** | URL 문자열 배열 |
+| `published_at` | datetime | No | 발행 시각 (ISO 8601, UTC) |
+| `updated_at` | datetime | No | 최종 업데이트 시각 |
+| `github_reviewed_at` | datetime | **Yes** | GitHub 검토 시각 (미검토 시 null) |
+| `nvd_published_at` | datetime | **Yes** | NVD 발행 시각 (null 가능) |
+| `withdrawn_at` | datetime | **Yes** | 철회 시각 (null 가능) |
+| `vulnerabilities` | array | **Yes** | 취약점 패키지 정보 배열 |
+| `cvss_severities` | object | **Yes** | CVSS v3 / v4 점수 (신규 필드, 2025 이후) |
+| `epss` | object | **Yes** | EPSS 점수 및 백분위 |
+| `cwes` | array | **Yes** | CWE 배열 |
+| `credits` | array | **Yes** | 기여자 배열 |
 
 > **중요 변경 (2025-04-01 REST API 적용)**: 기존 `cvss` 필드(단일 객체)가 **제거**되었고
 > `cvss_severities` 객체로 교체됨. 2025-04-01부터 REST API에서 `cvss` 필드 조회 불가.

@@ -497,7 +497,7 @@ v1.0 ~ 1000 paid:
 | **Q3** | 페어링 UX      | **자동 페어링 + 승인 다이얼로그** (1P 스타일) — 확장 첫 설치 시 데스크톱 앱이 dialog 표시, 사용자 한 번 승인 후 device-bound key 생성 |
 | **Q4** | session 만료   | **기본 4시간 + 사용자 설정** (30분 / 1시간 / 4시간 / 8시간 / 사용자 잠금까지). 1P / Bitwarden 와 동등                                 |
 | **Q5** | 외부 보안 감사 | **Phase B 완료 후 페어링 흐름만 audit** ([2026-05-07] B.4 외부 감사 일정과 합산). Phase F 전체 audit 은 출시 직전                     |
-| **Q6** | commit 단위    | **sub-task 분할 (1~2일 단위)** — Night mode 운용 호환성. Phase A~F 각각 5~10 sub-task                                                 |
+| **Q6** | commit 단위    | **sub-task 분할 (1~2일 단위)** — Night mode 운용 호환성. Phase A~~F 각각 5~~10 sub-task                                               |
 
 ### Blocker / High Risk (계속 추적)
 
@@ -1064,7 +1064,7 @@ dogfooding (Worker deploy + tag push + installer 검증)
 - VS Code extension publisher (`secretbank`)
 - 이메일 / 로고 / 카피 / docs 전반
 
-**예상 작업량**: Phase A ~3 commits / Phase B ~10~20 commits. broad rename 자동화 도구 (sed-style) 사용 + 수동 검토 병행.
+**예상 작업량**: Phase A ~3 commits / Phase B ~~10~~20 commits. broad rename 자동화 도구 (sed-style) 사용 + 수동 검토 병행.
 
 ---
 
@@ -1306,7 +1306,7 @@ Integrator 보고서 (`docs/integrator_report_phase2_2b.md` §4) 권고 7항목 
    - 약한 비밀번호 검출 (zxcvbn 또는 동등 라이브러리, score ≤ 2)
    - 2FA 가능 계정인데 TOTP 미설정 경고
    - UI: Watchtower 페이지 (또는 IncidentsPage 통합) + BentoCard 배지
-3. **예상 작업량**: 7~8 commits (researcher → implementator 2~3회 → ux-designer 검증)
+3. **예상 작업량**: 7~~8 commits (researcher → implementator 2~~3회 → ux-designer 검증)
 
 ### B. 보안 우선 적용 ([2026-05-07] B.1 Security Spec 모두)
 
@@ -1372,7 +1372,7 @@ Integrator 보고서 (`docs/integrator_report_phase2_2b.md` §4) 권고 7항목 
 
 #### B.3 incident response plan (출시 전 작성 의무)
 
-문서 위치: `docs/SECURITY_INCIDENT_RESPONSE.md` — 0~1h detection / 1~4h 사용자 알림 / 4~24h 임시 조치 / 24~72h RCA + fix / 72h+ post-mortem 공개 + 영향 받은 사용자 무료 회복.
+문서 위치: `docs/SECURITY_INCIDENT_RESPONSE.md` — 0~~1h detection / 1~~4h 사용자 알림 / 4~~24h 임시 조치 / 24~~72h RCA + fix / 72h+ post-mortem 공개 + 영향 받은 사용자 무료 회복.
 
 #### B.4 LLM 한계 인정
 
@@ -2494,15 +2494,15 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   - **레벨 임계값**: `total ≥ 80` = **safe**, `total ≥ 50` = **warn**, 그 아래 = **danger**. 만점 100 에서 감점 방식.
   - **Revoked / Compromised 단락**: status 가 Revoked 또는 Compromised 일 때는 나머지 factor 평가를 건너뛰고 즉시 `total=0, level=Danger, factors=[해당 코드]` 반환. 다른 factor 와 혼합하지 않음.
   - **FactorCode 7종과 감점**:
-    | FactorCode | 조건 | penalty | severity |
-    |:--|:--|:-:|:--|
-    | `Revoked` | status==Revoked | 100 (단락) | Danger |
-    | `Compromised` | status==Compromised | 100 (단락) | Danger |
-    | `Expired` | expires_at ≤ now | 50 | Danger |
-    | `ExpiringSoon` | 0 < (expires_at − now) ≤ 30d | 20 | Warn |
-    | `RotationOverdue` | last_rotated + policy_days < now | 15 | Warn |
-    | `NoRotationHistory` | last_rotated==None & created_at ≤ now − 90d | 10 | Warn |
-    | `NoScope` | scope==None | 5 | Info |
+    | FactorCode          | 조건                                        |  penalty   | severity |
+    | :------------------ | :------------------------------------------ | :--------: | :------- |
+    | `Revoked`           | status==Revoked                             | 100 (단락) | Danger   |
+    | `Compromised`       | status==Compromised                         | 100 (단락) | Danger   |
+    | `Expired`           | expires_at ≤ now                            |     50     | Danger   |
+    | `ExpiringSoon`      | 0 < (expires_at − now) ≤ 30d                |     20     | Warn     |
+    | `RotationOverdue`   | last_rotated + policy_days < now            |     15     | Warn     |
+    | `NoRotationHistory` | last_rotated==None & created_at ≤ now − 90d |     10     | Warn     |
+    | `NoScope`           | scope==None                                 |     5      | Info     |
   - **Rust authoritative**: 점수 계산 로직은 `secretbank-core/src/security_score.rs` 의 pure 함수 (`score(cred)` / `score_at(cred, now)`). `CredentialSummary` 와 `CredentialFull` 응답에 서버가 계산한 `score: ScoreBreakdown` 필드를 주입. **프런트 TS 에 동일 로직 재구현 금지** — Single source of truth.
   - **FactorCode 직렬화 규약**: `#[serde(rename_all = "snake_case")]` 로 JSON 에서 `"expired"` / `"expiring_soon"` 등 snake_case. 프런트 i18n 키는 `inventory.factor.{code}` / `inventory.factorShort.{code}` 자동 매핑.
 - **향후 factor 추가 규칙:**

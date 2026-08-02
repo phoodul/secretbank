@@ -392,14 +392,14 @@ export function maskCardNumber(last4: string, brand: CardBrand): string;
 
 **BIN prefix 표 (하드코딩, DB 조회 없음)**:
 
-| Brand      | Prefix 규칙                          |
-| :--------- | :----------------------------------- |
-| Visa       | `4` (첫 자리)                        |
-| Mastercard | `51`~`55` 또는 `2221`~`2720`         |
-| Amex       | `34` 또는 `37`                       |
-| Discover   | `6011`, `622126`~`622925`, `64`~`65` |
-| JCB        | `3528`~`3589`                        |
-| Diners     | `36`, `38`, `300`~`305`              |
+| Brand      | Prefix 규칙                            |
+| :--------- | :------------------------------------- |
+| Visa       | `4` (첫 자리)                          |
+| Mastercard | `51`~~`55` 또는 `2221`~~`2720`         |
+| Amex       | `34` 또는 `37`                         |
+| Discover   | `6011`, `622126`~~`622925`, `64`~~`65` |
+| JCB        | `3528`~`3589`                          |
+| Diners     | `36`, `38`, `300`~`305`                |
 
 ⚠️ Implementator 는 Discover BIN 범위 `622126–622925` 를 Wikipedia IIN Ranges 또는 Discover 공식 문서와 1회 교차 확인해야 한다 (R1 참조).
 

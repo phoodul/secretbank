@@ -12,12 +12,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export type KillSwitchPhase =
-  | "idle"
-  | "requesting"
-  | "awaiting_confirm"
-  | "revoking"
-  | "done"
-  | "error";
+  "idle" | "requesting" | "awaiting_confirm" | "revoking" | "done" | "error";
 
 interface KillSwitchState {
   phase: KillSwitchPhase;

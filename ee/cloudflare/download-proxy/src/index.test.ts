@@ -160,8 +160,7 @@ describe("Range 헤더 pass-through (TC-13)", () => {
     expect(res.status).toBe(206);
 
     const upstreamCallHeaders = (fetchSpy.mock.calls[0] as [string, RequestInit])[1]?.headers as
-      | Record<string, string>
-      | undefined;
+      Record<string, string> | undefined;
     expect(upstreamCallHeaders?.["Range"]).toBe("bytes=0-1023");
   });
 });

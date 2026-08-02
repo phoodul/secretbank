@@ -20,9 +20,7 @@ interface UseSettingResult<T> {
 }
 
 type SettingState<T> =
-  | { phase: "loading" }
-  | { phase: "ok"; value: T }
-  | { phase: "error"; value: T };
+  { phase: "loading" } | { phase: "ok"; value: T } | { phase: "error"; value: T };
 
 // ---------------------------------------------------------------------------
 // Generic hook

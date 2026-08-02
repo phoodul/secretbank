@@ -33,12 +33,7 @@ interface ErrorState {
 }
 
 export type RailguardState =
-  | IdleState
-  | PreviewingState
-  | PreviewedState
-  | ApplyingState
-  | AppliedState
-  | ErrorState;
+  IdleState | PreviewingState | PreviewedState | ApplyingState | AppliedState | ErrorState;
 
 export interface UseRailguardResult {
   state: RailguardState;

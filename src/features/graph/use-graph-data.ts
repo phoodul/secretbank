@@ -3,9 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { GraphPayload } from "./types";
 
 type FetchState =
-  | { phase: "loading" }
-  | { phase: "ok"; data: GraphPayload }
-  | { phase: "error"; message: string };
+  { phase: "loading" } | { phase: "ok"; data: GraphPayload } | { phase: "error"; message: string };
 
 export function useGraphData(): { state: FetchState; refresh: () => void } {
   const [state, setState] = useState<FetchState>({ phase: "loading" });

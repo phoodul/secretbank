@@ -10,7 +10,7 @@
 ## 11. M24-E Phase G — Secretbank 차별화 기능 5종 (2026-05-09 신설)
 
 > 본 섹션은 [2026-05-09] **M24-E Phase G 신설** 결정의 아키텍처 반영.
-> 기존 10.1~10.12 (Phase A~F 모노레포 / 통신 / 페어링 / 위협 모델 등) **변경 없음**.
+> 기존 10.1~~10.12 (Phase A~~F 모노레포 / 통신 / 페어링 / 위협 모델 등) **변경 없음**.
 > Phase G 는 기존 자산 (M3 dependency graph + blast radius / M5 incident feed / M18 MCP server / M20 supply chain / RAILGUARD) 을 확장 안에서 inline 발현.
 
 ### 11.0 Phase G 진입 시점 + 5 layer 통신 흐름 영향

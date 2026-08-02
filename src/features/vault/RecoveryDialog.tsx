@@ -38,9 +38,7 @@ type RecoveryMode = "single" | "shamir";
 type NewCharterMode = "single" | "shamir2of3" | "none";
 
 type Phase =
-  | { kind: "input" }
-  | { kind: "recovering" }
-  | { kind: "issued"; issuance: CharterIssuanceDto };
+  { kind: "input" } | { kind: "recovering" } | { kind: "issued"; issuance: CharterIssuanceDto };
 
 interface RecoveryDialogProps {
   open: boolean;

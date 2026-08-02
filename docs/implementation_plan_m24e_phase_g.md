@@ -4,7 +4,7 @@
 > 작성일: 2026-05-09
 > 상태: GATE 2-bis 입력 — 사용자 승인 대기
 > 본 문서: **`docs/implementation_plan_m24e.md` 의 Phase G 부속 문서**.
-> 도구 제약 (기존 plan 본문 직접 편집 어려움) 으로 분리. 기존 1~10절 (Phase A~F 절차) **변경 없음**.
+> 도구 제약 (기존 plan 본문 직접 편집 어려움) 으로 분리. 기존 1~~10절 (Phase A~~F 절차) **변경 없음**.
 > 참조: `docs/architecture_phase_g.md` (11장), `docs/task_m24e_phase_g.md`, `docs/project-decisions.md` [2026-05-09] **M24-E Phase G 신설**
 
 ---
@@ -68,7 +68,7 @@ M24-E 마일스톤 클로즈
 
 ### 2.3 Night mode 운용 (1.3 갱신 ❌)
 
-기존 1.3 그대로. Phase G 도 Q6 (1~2일 sub-task) 적용. Phase G 진입 시점 = Phase E 게이트 후 **GATE 2-bis (본 plan 승인) 1회만**, 이후 G1-1~G5 자동 진행.
+기존 1.3 그대로. Phase G 도 Q6 (1~~2일 sub-task) 적용. Phase G 진입 시점 = Phase E 게이트 후 **GATE 2-bis (본 plan 승인) 1회만**, 이후 G1-1~~G5 자동 진행.
 
 ---
 
@@ -277,7 +277,7 @@ secretbank --register-deep-link    # 데스크톱 앱 CLI 명령 (G1-3 산출물
 
 **예상 비용**: $15K~$50K → $20K~$55K (Phase G 5 기능 추가 — G-4 privacy 검증이 가장 큰 비중).
 
-**기간**: 2~4주 → 3~5주 (Phase G 검증 1주 추가).
+**기간**: 2~~4주 → 3~~5주 (Phase G 검증 1주 추가).
 
 ---
 
@@ -383,8 +383,8 @@ secretbank --register-deep-link    # 데스크톱 앱 CLI 명령 (G1-3 산출물
 
 1. orchestrator → `docs/task.md` 마일스톤 표 (라인 56) 갱신:
    - 분모 변경: `🔄 N/43` → `🔄 N/53`
-   - 제목 변경: "Browser Extension (Phase A~F 풀구현)" → "Browser Extension (Phase A~F 풀구현 + Phase G 차별화)"
-2. orchestrator → `docs/task_m24e.md` 본문 라인 33 / 745 / 796 / 802~828 / 747~795 갱신 (`task_m24e_phase_g.md` §"변경 사실 명시" 따름)
+   - 제목 변경: "Browser Extension (Phase A~~F 풀구현)" → "Browser Extension (Phase A~~F 풀구현 + Phase G 차별화)"
+2. orchestrator → `docs/task_m24e.md` 본문 라인 33 / 745 / 796 / 802~~828 / 747~~795 갱신 (`task_m24e_phase_g.md` §"변경 사실 명시" 따름)
 3. orchestrator → `docs/architecture.md` 본문 끝 (라인 1452) 에 11장 통합 또는 본 부속 문서 참조 한 줄 추가
 4. orchestrator → `docs/implementation_plan_m24e.md` 본문 갱신 (본 plan 의 §2~§9 통합 또는 부속 문서 참조)
 5. orchestrator → implementator 에 T-24-E-G1-1 sub-task 전달 → Phase G 진입

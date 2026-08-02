@@ -10,9 +10,7 @@ export interface UseAuditResult {
 }
 
 type FetchState =
-  | { phase: "loading" }
-  | { phase: "ok"; data: AuditEntry[] }
-  | { phase: "error"; message: string };
+  { phase: "loading" } | { phase: "ok"; data: AuditEntry[] } | { phase: "error"; message: string };
 
 const DEFAULT_LIMIT = 100;
 
