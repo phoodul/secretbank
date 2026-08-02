@@ -26,7 +26,7 @@ rmp-serde = "1"
 tempfile = "3"
 secretbank-crypto = { path = "../secretbank-crypto" }
 secretbank-charter = { path = "../secretbank-charter" }
-x25519-dalek = { version = "2", features = ["static_secrets"] }
+x25519-dalek = { version = "3", features = ["static_secrets"] }
 bech32 = "0.9"
 
 [dev-dependencies]
