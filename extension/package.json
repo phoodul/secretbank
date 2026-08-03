@@ -36,15 +36,15 @@
     "wxt": "^0.21.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/chrome": "^0.2.2",
     "@types/jsdom": "^21.1.7",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.1.6",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "@types/webextension-polyfill": "^0.12.5",
     "@vitejs/plugin-react": "^4.6.0",
     "@wxt-dev/module-react": "^1.2.2",
