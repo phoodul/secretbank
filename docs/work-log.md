@@ -1,5 +1,59 @@
 # Work Log
 
+## 2026-08-03 — Dependabot 완전 자동화 (전날 수동 batch 부채 제거)
+
+### 배경
+사용자: "사람이 수동으로 하지 않고 저절로 해결할 방법은 없는가?"
+전날(08-02) 세션에서 `ee/*` 를 Dependabot 에서 빼고 "월 1회 수동 batch" 로 처리했는데,
+그건 회피였지 해결이 아니었다. 근본 원인을 없앨 수 있는지 재검토.
+
+### 발견 — workspace 루트 경계
+pnpm 은 **가장 가까운 상위** `pnpm-workspace.yaml` 을 workspace 루트로 삼는다.
+따라서 각 ee 프로젝트 안에 `pnpm-workspace.yaml`(`packages: ["."]`) 을 하나 두면
+상위 탐색이 거기서 멈춘다.
+
+실측 검증 (hono 를 4.12.30 으로 내린 뒤 원복):
+- 플래그 없는 `pnpm install` → `ee/secretbank-relay/pnpm-lock.yaml` **갱신됨**
+- 루트 `pnpm-lock.yaml` **무변경**
+- 기존 `--ignore-workspace` 도 그대로 동작 → CI/deploy 워크플로 무영향
+- 양쪽 `--frozen-lockfile`(플래그 유무 모두) + typecheck + test 71 / 14 통과
+
+### 실증 — 구조적으로 불가능하던 일이 실제로 일어남
+`d186b81` 푸시 직후 Dependabot 이 만든 PR:
+- **#127** (download-proxy) — `package.json` + `pnpm-lock.yaml` → **자동 머지** 06:53
+- **#128** (relay) — `package.json` + `pnpm-lock.yaml` → **자동 머지** 06:54
+- **#131** (npm 그룹) → 자동 머지
+
+전날까지 ee PR 은 lockfile 이 없어 `--frozen-lockfile` 로 영구 red 였다.
+**월간 수동 batch 는 불필요해졌다.**
+
+### 재발 방지 2건 (동일 커밋)
+1. **`ee/cloudflare/download-proxy` CI 잡 신설 + 필수 체크 승격**(사용자 승인).
+   이 프로젝트는 **어떤 워크플로도 참조하지 않아 CI 커버리지가 0**이었다. 그래서
+   lockfile 없는 PR 이 게이트 없이 반복 자동 머지됐다(#86/92/99/106/114).
+   main branch protection required checks 4개 → 5개
+   (Rust / Frontend / E2E smoke / EE Relay / **EE Download Proxy**).
+   auto-merge 는 required check 만 기다리므로 이 승격이 있어야 실제 게이트가 된다.
+2. **major 도 생태계별 1개 PR 로 그룹화**. auto-merge 제외(사람 검토)는 유지하되
+   크레이트마다 PR 이 열려 쌓이는 것을 막는다. 효과: 개별 8건 →
+   `#133` cargo-major(4) · `#132` npm-major(7) · `#130` relay-major ·
+   `#129` download-proxy-major · `#126` vscode-major.
+
+### 결과
+- 열린 PR **24 → 6건** (전부 major = 의도된 사람 검토 대기열)
+- 보안 알림 **25 → 1건**
+- main CI 필수 5개 전부 success (신설 EE Download Proxy 포함)
+
+### 교훈
+- **회피(수동 트랙 신설)와 해결(원인 제거)을 구분할 것.** 전날 "Dependabot 이 flag 를
+  못 붙인다"에서 멈추고 수동 batch 를 만들었는데, 한 단계 더 파니 flag 자체가
+  불필요해지는 구조가 있었다. 새 정기 수동 작업을 만들기 전에 "이 제약을 없앨 수
+  있나"를 한 번 더 물을 것.
+- **필수 체크가 없는 경로는 자동화가 깨진 상태로 머지한다.** 새 하위 프로젝트를
+  추가하면 CI 잡 + 필수 체크 등록을 세트로 처리한다.
+- major 를 "자동화 실패"로 오해하지 말 것. 시크릿 매니저에서 크립토 크레이트
+  major 자동 머지는 있어선 안 되며, 남아 있는 것이 정상 동작이다.
+
 ## 2026-08-02 — Dependabot 누적 원인 규명 + 일괄 해소
 
 ### 배경

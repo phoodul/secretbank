@@ -2,6 +2,14 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-08-03 (연속 세션) — **Dependabot 완전 자동화 (전날의 수동 batch 부채 제거)**. origin/main = `39c5faa`, CI 필수 5개 전부 green.
+  - **근본 해결:** pnpm 은 *가장 가까운 상위* `pnpm-workspace.yaml` 을 workspace 루트로 삼는다 → `ee/secretbank-relay` 와 `ee/cloudflare/download-proxy` 각각에 `pnpm-workspace.yaml`(`packages: ["."]`) 을 두면 탐색이 거기서 멈춰 **플래그 없는 `pnpm install` 로도 자기 lockfile 만 갱신**된다(실측: hono 4.12.30 으로 내려 확인 후 원복). 전날 결정("ee/\* dependabot 제외 + 월간 수동 batch")을 철회하고 재등록(`d186b81`).
+  - **실증 완료:** 푸시 직후 Dependabot 이 만든 **#127 / #128 이 `package.json` + `pnpm-lock.yaml` 을 함께 담아 자동 머지됨**(06:53 / 06:54). 어제까지 구조적으로 불가능하던 일. **월간 수동 작업 없음.**
+  - **재발 방지 2건:** ① `ee/cloudflare/download-proxy` CI 잡 신설 + **필수 체크 4 → 5개 승격**(사용자 승인). 이 프로젝트는 어떤 워크플로도 참조하지 않아 커버리지가 0이었고 그래서 stale lockfile PR 이 게이트 없이 자동 머지돼 왔다(#86/92/99/106/114). ② **major 도 생태계별 1개 PR 로 그룹화** — 사람 검토 게이트는 유지하되 크레이트마다 PR 이 열려 쌓이는 것을 방지. 효과: 개별 8건 → `#133` cargo-major(4) · `#132` npm-major(7) · `#130` relay-major · `#129` download-proxy-major · `#126` vscode-major.
+  - **최종 상태:** 열린 PR **24 → 6건(전부 major = 검토 대기열)**, 보안 알림 **25 → 1건**(react-router RSC CSRF, 8.x major 필요·RSC 미사용).
+  - **⭐ 다음 세션 최우선 = `#133` 안의 `age` 0.11.3 → 0.12.1**: sha2 0.11 · hmac 0.13 · hkdf 0.13 · chacha20poly1305 0.11 · bech32 0.12 **+ rand 0.9** 가 전부 age 잠금이라 이 하나로 6건이 동시에 풀린다. 볼트 암호화 핵심이므로 **기존 볼트 파일 복호화 + Charter recovery(Shamir 2-of-3) 호환성 검증 필수**. `#133` 에 계획 코멘트 게시함.
+  - **미결(블로킹 아님):** `.mcp.json` 의 memory 서버 변경(`mcp-memory-service` → `@modelcontextprotocol/server-memory`)은 이번 작업과 무관해 미커밋, `stash@{0}` 에 보관(`git stash pop` 으로 복원). 로컬 `pnpm format:check` 실패는 Windows CRLF 아티팩트 — git `autocrlf=true` 가 커밋 시 정규화하므로 CI 는 통과.
+
 - **Time:** 2026-08-02 (resume) — **Dependabot 누적 원인 규명 + 일괄 해소**. 사용자 "dependabot 문제가 여전히 계속 들어온다" → 구조적 원인 5건 확인·제거. **origin/main = `933cab4`**, 열린 PR **24 → 5**, 열린 보안 알림 **25 → 1**.
   - **RC1 ee/\* lockfile 영구 red** — 루트 `pnpm-workspace.yaml` 탓에 하위 디렉터리 pnpm 이 루트 스코프로 잡혀 Dependabot 이 `ee/*/pnpm-lock.yaml` 을 갱신 불가(`--ignore-workspace` 필요, `.npmrc` 는 pnpm 이 무시). 로컬 재현 완료. package.json 만 바뀐 PR → `--frozen-lockfile` 항상 실패. **relay 는 필수 체크라 영구 차단, download-proxy 는 필수 체크가 없어 stale lock 인 채 자동 머지되고 있었음(잠재 파손)**. → dependabot.yml 에서 ee/\* 제외 + 월간 수동 batch 로 전환(`52a7bbd`), lockfile 직접 동기화(`7dd638b`).
   - **RC2 루트 그룹 PR 타입 에러** — xyflow `OnNodeDrag` 인자 변경 + chrome.storage `ttl` 좁힘. 양 버전 호환으로 main 선제 수정(`1ee1c48`).
