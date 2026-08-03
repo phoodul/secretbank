@@ -2959,7 +2959,9 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - **함께 처리한 재발 방지 2건:**
   1. **`ee/cloudflare/download-proxy` CI 잡 신설** — 이 프로젝트는 어떤 워크플로도
      참조하지 않아 커버리지가 0이었고, 그래서 lockfile 없는 PR 이 게이트 없이
-     자동 머지되어 왔다(#86/92/99/106/114). 잡을 만들었으며, **필수 체크로
-     승격해야 실제 게이트가 된다**(auto-merge 는 required check 만 기다림).
+     자동 머지되어 왔다(#86/92/99/106/114). 잡을 신설하고 **필수 체크로 승격 완료**
+     (사용자 승인, 2026-08-03). main branch protection 의 required status checks
+     4개 → 5개: Rust / Frontend / E2E smoke / EE Relay / **EE Download Proxy**.
+     auto-merge 는 required check 만 기다리므로 이 승격이 있어야 실제 게이트가 된다.
   2. **major 도 생태계별로 1개 PR 로 그룹화** — auto-merge 제외(사람 검토)는
      유지하되, 크레이트마다 PR 이 하나씩 열려 쌓이는 것을 막는다.
