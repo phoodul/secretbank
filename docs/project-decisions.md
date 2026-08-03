@@ -2940,3 +2940,26 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
 - **sqlx 0.9 (#35) 도 동일 구조:** `tauri-plugin-sql` 2.4.0 이 sqlx 0.8 을 요구.
   재검토 트리거는 tauri-plugin-sql 의 sqlx 0.9 지원.
 - **ulid 3.0 (#117) 은 외부 잠금이 없어 이번에 채택** (eacae79).
+
+## 2026-08-03 — `ee/*` 에 자체 `pnpm-workspace.yaml` → Dependabot 자동화 복귀 (전날 결정 대체)
+
+- **결정:** `ee/secretbank-relay` 와 `ee/cloudflare/download-proxy` 각각에
+  `pnpm-workspace.yaml`(`packages: ["."]`)을 두어 **workspace 루트 경계**를 만든다.
+  그 결과 Dependabot 이 lockfile 포함 PR 을 만들 수 있으므로 **2026-08-02 의
+  "ee/\* 를 dependabot 에서 제외 + 월간 수동 batch" 결정을 철회**하고 다시 등록한다.
+- **이유:** 전날 진단한 근본 원인은 "루트 pnpm-workspace.yaml 때문에 하위 디렉터리
+  pnpm 실행 스코프가 루트로 잡힌다" 였다. pnpm 은 **가장 가까운 상위**
+  `pnpm-workspace.yaml` 을 workspace 루트로 삼으므로, 해당 디렉터리에 하나 두면
+  탐색이 거기서 멈춘다. 실측 검증:
+  - 플래그 없는 `pnpm install` → `ee/secretbank-relay/pnpm-lock.yaml` 갱신됨,
+    루트 `pnpm-lock.yaml` 무변경 (hono 를 4.12.30 으로 내려 확인 후 원복).
+  - 기존 `--ignore-workspace` 도 그대로 동작 → CI/deploy 워크플로 무영향.
+  - 양쪽 `--frozen-lockfile` + typecheck + test(71 / 14) 통과.
+- **영향:** 수동 정기 작업이 사라진다. 사람이 안 해도 ee/\* 가 최신으로 유지된다.
+- **함께 처리한 재발 방지 2건:**
+  1. **`ee/cloudflare/download-proxy` CI 잡 신설** — 이 프로젝트는 어떤 워크플로도
+     참조하지 않아 커버리지가 0이었고, 그래서 lockfile 없는 PR 이 게이트 없이
+     자동 머지되어 왔다(#86/92/99/106/114). 잡을 만들었으며, **필수 체크로
+     승격해야 실제 게이트가 된다**(auto-merge 는 required check 만 기다림).
+  2. **major 도 생태계별로 1개 PR 로 그룹화** — auto-merge 제외(사람 검토)는
+     유지하되, 크레이트마다 PR 이 하나씩 열려 쌓이는 것을 막는다.

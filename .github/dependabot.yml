@@ -4,9 +4,10 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 #
 # 운용 정책 (2026-06-14):
-#  - groups: 생태계마다 minor+patch 를 1개 PR 로 묶어 PR 눈덩이 방지.
-#    major 는 그룹 제외 → 개별 PR → 사람이 검토(.github/workflows/dependabot-auto-merge.yml
-#    이 major 는 auto-merge 하지 않음).
+#  - groups: 생태계마다 minor+patch 를 1개 PR 로, major 를 또 1개 PR 로 묶어 PR
+#    눈덩이 방지 (2026-08-03: major 도 그룹화 — 예전엔 크레이트마다 개별 PR 이라
+#    누적됐다). major 는 auto-merge 대상이 아니라 사람이 검토한다
+#    (.github/workflows/dependabot-auto-merge.yml 이 major 를 제외).
 #  - cooldown: 갓 배포된(침해 가능성 있는) 버전을 즉시 채택하지 않도록 지연.
 #    시크릿 매니저 supply-chain 방어. 보안 업데이트(security-updates)는 cooldown 미적용 = 즉시.
 #  - auto-merge: patch/minor 는 CI 4개 필수 체크 통과 + cooldown 경과 후 자동 머지.
@@ -27,6 +28,10 @@ updates:
     groups:
       cargo-minor-patch:
         update-types: ["minor", "patch"]
+      # major 도 하나로 묶는다 — auto-merge 는 여전히 제외되어 사람이 검토하지만,
+      # 크레이트마다 PR 이 하나씩 열려 눈덩이가 되는 것을 막는다.
+      cargo-major:
+        update-types: ["major"]
     ignore:
       # rand/rand_core 0.9 는 chacha20poly1305(aead) 가 rand_core 0.6 을 잠그고
       # 있어 채택 불가 — OsRng 가 aead::rand_core 0.6 의 RngCore/CryptoRng trait 를
@@ -72,25 +77,50 @@ updates:
     groups:
       npm-minor-patch:
         update-types: ["minor", "patch"]
+      npm-major:
+        update-types: ["major"]
 
-  # --- npm: EE 독립 pnpm 프로젝트 (secretbank-relay / cloudflare/download-proxy) ---
+  # --- npm: EE Cloudflare Worker relay (독립 pnpm 프로젝트) ---
   #
-  # ⛔ 의도적으로 등록하지 않는다 (2026-08-02 결정).
-  #
-  # 이유: 루트에 pnpm-workspace.yaml 이 있어서 하위 디렉터리에서 pnpm 을 실행하면
-  # 스코프가 루트 워크스페이스로 잡힌다. 그래서 `ee/*/pnpm-lock.yaml` 을 갱신하려면
-  # `--ignore-workspace` CLI flag 가 필수인데(.npmrc 의 ignore-workspace 는 pnpm 이
-  # 무시한다 — ee/secretbank-relay/.npmrc 주석 참조), Dependabot 은 이 flag 를 붙일
-  # 수 없다. 결과적으로 Dependabot 은 package.json 만 바꾼 PR 을 열고, lockfile 이
-  # 없으니 CI 의 `pnpm install --frozen-lockfile` 이 specifier mismatch 로 항상
-  # 실패한다 → auto-merge 불가 → 매주 머지 불가능한 PR 이 누적됐다
-  # (#25/58/60/62/64 수동 close, 이어서 #93/#101/#105/#115).
-  #
-  # 대신: 월 1회 직접 갱신한다. 각 디렉터리에서
-  #   pnpm update --ignore-workspace && pnpm typecheck && pnpm test
-  # 를 돌리고 lockfile 을 함께 커밋한다. major 는 그때 개별 검토.
-  # 보안 취약점 PR 은 이 파일(version updates)과 무관하게 계속 생성되므로
-  # 보안 커버리지에는 구멍이 없다.
+  # 과거 이 두 항목은 Dependabot 이 `ee/*/pnpm-lock.yaml` 을 만들지 못해 CI 가 항상
+  # red 였고(2026-08-02 에 한 번 제외했었다), 원인은 루트 pnpm-workspace.yaml 때문에
+  # 하위 디렉터리 pnpm 실행 스코프가 루트로 잡히는 것이었다. 각 프로젝트에
+  # **자체 pnpm-workspace.yaml 을 두어 workspace 루트 경계를 만들면** 플래그 없이도
+  # 자기 lockfile 만 갱신되므로(재현 검증 완료) Dependabot 이 lockfile 포함 PR 을
+  # 열 수 있다. → 다시 등록. `--ignore-workspace` 는 여전히 동작하므로 기존
+  # deploy 워크플로는 무영향.
+  - package-ecosystem: "npm"
+    directory: "/ee/secretbank-relay"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
+    groups:
+      relay-minor-patch:
+        update-types: ["minor", "patch"]
+      relay-major:
+        update-types: ["major"]
+
+  # --- npm: EE download-proxy (독립 pnpm 프로젝트) ---
+  - package-ecosystem: "npm"
+    directory: "/ee/cloudflare/download-proxy"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
+    groups:
+      download-proxy-minor-patch:
+        update-types: ["minor", "patch"]
+      download-proxy-major:
+        update-types: ["major"]
 
   # --- npm: VS Code 확장 (자체 package-lock.json) ---
   - package-ecosystem: "npm"
@@ -106,6 +136,8 @@ updates:
     groups:
       vscode-minor-patch:
         update-types: ["minor", "patch"]
+      vscode-major:
+        update-types: ["major"]
 
   # --- GitHub Actions (워크플로우 액션 버전 — CLA @v2 같은 이동 태그 사고 방지) ---
   # NOTE: github-actions 생태계는 cooldown 의 semver-*-days 세분 키를 지원하지
@@ -120,3 +152,5 @@ updates:
     groups:
       actions-minor-patch:
         update-types: ["minor", "patch"]
+      actions-major:
+        update-types: ["major"]

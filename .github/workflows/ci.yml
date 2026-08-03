@@ -157,3 +157,35 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+  # ee/cloudflare/download-proxy 는 오랫동안 어떤 워크플로도 참조하지 않아 CI
+  # 커버리지가 0이었다. 그 결과 Dependabot 이 lockfile 없이 package.json 만 바꾼
+  # PR 들이 게이트 없이 자동 머지되어 lockfile 이 stale 해졌다(#86/92/99/106/114).
+  # 같은 사고가 반복되지 않도록 잡을 추가한다.
+  ee-download-proxy:
+    name: EE Download Proxy (typecheck + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ee/cloudflare/download-proxy
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ee/cloudflare/download-proxy/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-workspace
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
