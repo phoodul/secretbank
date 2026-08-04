@@ -68,7 +68,7 @@
 | T002    | Rust 핵심 의존성 (workspace.dependencies)                   | 2026-04-22 | `855c33c` |
 | T003    | Tauri v2 플러그인 활성화 (9종, Stronghold 제외)             | 2026-04-22 | `da0e5ae` |
 | T004    | LICENSE (AGPL-3.0) + LICENSE_FAQ.md                         | 2026-04-22 | `de3706d` |
-| T005    | CLA 자동화 (CLA Assistant)                                  | 2026-04-22 | `de3706d` |
+| T005    | CLA 자동화 (CLA Assistant)                                  | 2026-04-22 | `de3706d` → **재검증·수정 2026-08-04 `b6e9b4a`+`be24ba1`** (아래 주 참조) |
 | T006    | 커밋 컨벤션 + lint 설정 (rustfmt/clippy/ESLint/Prettier/CI) | 2026-04-22 | `de3706d` |
 | T007    | README.md 초안                                              | 2026-04-22 | `de3706d` |
 | T008    | Tailwind v4 시맨틱 토큰 (vault-danger/warning/success/info) | 2026-04-22 | `77c8c18` |
@@ -410,6 +410,19 @@
   - PR 템플릿 `.github/pull_request_template.md` 에 CLA 안내 문구
 - **Files Touched**: `.github/CLA.md`, `.github/workflows/cla.yml`, `.github/pull_request_template.md`
 - **Tests**: manual — CLA Assistant 봇 설치 (owner action, 사용자가 수동 승인)
+- **⚠️ 2026-08-04 재검증 — 이 태스크는 완료 표시 후 3.5개월간 실제로는 동작하지 않았다.**
+  - **DoD 가 "파일이 존재하는가"만 요구하고 "워크플로가 성공하는가"를 묻지 않은 것이 원인.**
+    `.github/workflows/cla.yml` 은 존재했지만 모든 실행이 실패했고,
+    `signatures/version1/cla.json` 은 끝내 생성되지 않아(404) **서명을 한 건도 수집하지 못했다.**
+  - 실패 3중: ① `permissions:` 블록 부재로 `GITHUB_TOKEN` 이 `contents: read`
+    ② 서명 저장 브랜치가 보호된 `main`(액션은 비보호를 요구) ③ `PERSONAL_ACCESS_TOKEN` 미등록.
+  - 더 나쁜 점: 이 실패가 **모든 PR·코멘트마다 워크플로 실패 알림을 발생**시켜
+    "Dependabot 이 끝없이 메시지를 보낸다"의 실제 발생원이었다(3개 세션 연속 오진).
+  - 수정: 비보호 전용 브랜치 `cla-signatures` + `permissions` 부여 + 봇 job-level `if` 차단 +
+    `allowlist: "phoodul,dependabot[bot],*[bot]"`. **실측 검증 완료** —
+    `issue_comment`=success / `pull_request_target`=skipped / 서명 파일 생성(31 bytes).
+  - **교훈: 워크플로를 만드는 태스크의 DoD 에는 반드시 "첫 실행이 green 임을 확인"을 넣을 것.**
+    파일 생성만 확인하면 상시 red 인 워크플로가 부채로 남는다.
 
 ### T006. 커밋 컨벤션 + lint 설정 (rustfmt, clippy, eslint, prettier)
 
