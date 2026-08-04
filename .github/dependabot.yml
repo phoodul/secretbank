@@ -157,13 +157,10 @@ updates:
       # (2026-08-04 — 그동안 ignore 가 없어 매주 PR 이 재생성됐다: #85/#91/#98 등 5회)
       - dependency-name: "@types/node"
         versions: [">=21.0.0"]
-      # typescript 7 은 이 확장의 tsconfig(`module`/`moduleResolution`: "Node16")를
-      # 해석하지 못한다. 실측(2026-08-04): `import ... from 'node:child_process'` 가
-      # 이름으로 해석돼 TS2591 3건 + `fetch` TS2304 1건. tsconfig 를 node18/nodenext
-      # 로 옮기는 전용 마이그레이션이 필요하다.
-      # 재검토 트리거: vscode-extension tsconfig 를 nodenext 로 이관할 때.
-      - dependency-name: "typescript"
-        versions: [">=7.0.0"]
+      # (typescript 는 ignore 하지 않는다. 한때 major 채택 불가로 보였으나 원인은
+      #  tsconfig 에 `types: ["node","vscode"]` 가 없던 것이었다 — TS6 부터 @types
+      #  자동 포함 동작이 바뀌었다. 그 한 줄을 넣으니 TS 7.0.2 로 컴파일까지 통과.
+      #  2026-08-04, `ignore 로 덮기 전에 실제로 올려볼 것` 규칙의 실증 사례.)
 
   # --- GitHub Actions (워크플로우 액션 버전 — CLA @v2 같은 이동 태그 사고 방지) ---
   # NOTE: github-actions 생태계는 cooldown 의 semver-*-days 세분 키를 지원하지

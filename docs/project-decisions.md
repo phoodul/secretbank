@@ -3028,3 +3028,62 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
   CLA 였다. 알림이 어느 워크플로에서 나오는지 먼저 집계했어야 했다
   (`gh run list` → conclusion × workflow 교차 집계).
 - **거부는 config 에 적어야 영구가 된다.** UI 에서 close 하는 것은 기록이 아니다.
+
+### 보정 (같은 날, 실측으로 발견) — `if` 와 `allowlist` 는 층위가 다르다
+
+위 결정을 적용한 뒤 실측하니 봇 경로는 `skipped` 로 해결됐지만 **사람이 Dependabot PR 에
+코멘트하는 경로가 여전히 실패**했다. 원인:
+
+- **job-level `if`** 는 "**누가 이 이벤트를 일으켰나**"를 본다 (코멘트 작성자 / PR 작성자)
+- **액션 내부 `allowlist`** 는 "**이 PR 의 커미터가 누구냐**"를 본다
+
+사람이 봇 PR 에 코멘트하면 `if` 는 통과하지만 커미터가 `dependabot[bot]` 이라
+액션이 `Committers of pull request N have to sign the CLA` 로 실패한다.
+→ **봇은 양쪽 모두에 있어야 한다**: `allowlist: "phoodul,dependabot[bot],*[bot]"`.
+저작권자 본인(phoodul)도 자신에게 권리를 양도하는 계약의 대상이 아니므로 포함한다.
+
+**최종 검증 (2026-08-04)**: `issue_comment`(사람 경로) = **success**,
+`pull_request_target`(봇 경로) = **skipped**, `signatures/version1/cla.json` 이
+`cla-signatures` 브랜치에 **실제로 생성됨**(3.5개월간 404 였던 파일).
+main CI 필수 체크 5개 green.
+
+**부수 효과 — ignore 가 의도한 입도로 동작함이 실증됐다**:
+
+- `@types/node`: `#134` 가 `20.19.39 → 20.19.43`(20.x 내 patch)로 **자동 머지**됐다.
+  major(≥21)만 차단하고 patch 는 계속 받는다.
+- `typescript`: ≥7 을 막으니 `#135` 가 **6.0.3** 을 제안한다
+  (relay · download-proxy 는 이미 6.0.3 이라 일관성 측면에서 채택 후보).
+- workers-types 채택으로 그룹 PR 이 실제로 줄었다: download-proxy-major 3 → 2건,
+  relay-major 4 → 3건.
+
+### 재보정 (같은 날) — `typescript` ignore 철회, 원인은 tsconfig 한 줄이었다
+
+위 표에서 `typescript` ≥7 을 "채택 불가"로 판정했으나 **틀렸다**. 후속 실측:
+
+- ignore(≥7)를 넣자 Dependabot 이 **TS 6.0.3** 을 제안했고(`#135`), **6 에서도 동일한
+  에러**가 났다 → 임계가 7 이 아니라는 뜻이었다.
+- `module`/`moduleResolution` 을 node18 · nodenext 로 바꿔도 그대로였다 → tsconfig 의
+  모듈 설정이 원인이 아니었다.
+- 진짜 원인: **TypeScript 6 부터 `node_modules/@types` 자동 포함 동작이 바뀌어**,
+  `types` 를 명시하지 않으면 `@types/node` 가 로드되지 않는다. 에러 4건
+  (`node:*` import TS2591 3건 + `fetch` TS2304 1건)이 전부 그 한 가지 결과였다.
+- **`"types": ["node", "vscode"]` 한 줄**을 tsconfig 에 넣으니 **TS 7.0.2 로
+  `npm run compile` 까지 통과**(out/extension.js 생성).
+
+**결정:** `typescript` ignore 를 **철회**하고 TS 7.0.2 를 채택한다. `@types/node` ≥21
+ignore 만 유지한다(VS Code 1.96 번들 런타임 = Node 20, 이건 실제로 의도적 핀).
+
+**교훈 (규칙의 실증):** "ignore 로 덮기 전에 실제로 올려볼 것"을 이 파일 상단에
+적어놓고도, 첫 판정에서 에러 메시지만 보고 ignore 로 넘겼다. 에러 4건이 **하나의
+원인**에서 나온 것인지 확인하지 않은 것이 실수였다. 에러 메시지 자체가
+`add 'node' to the types field in your tsconfig` 라고 답을 말하고 있었다.
+
+### 함께 처리 — `vscode-extension` CI 커버리지 0 (08-03 교훈의 미적용분)
+
+`vscode-extension` 은 `release.yml` 에서만 참조되고 **PR/push CI 가 없었다.**
+2026-08-03 에 `ee/cloudflare/download-proxy` 에서 발견한 것과 **정확히 같은 패턴**이며,
+그때 이 확장은 놓쳤다. 실제로 `#134`(@types/node patch)가 2026-08-04 컴파일 검증
+없이 auto-merge 됐다.
+
+→ `ci.yml` 에 **`VS Code Extension (compile)`** 잡 신설 (`npm ci` + `npm run compile`).
+필수 체크 승격은 branch protection 변경이므로 사용자 승인 후 처리한다.

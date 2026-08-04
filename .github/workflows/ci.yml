@@ -189,3 +189,27 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+  # vscode-extension 도 같은 사각지대였다 — release.yml 에서만 참조되고 PR/push CI 가
+  # 없어 Dependabot PR 이 컴파일 검증 없이 auto-merge 됐다(2026-08-04 #134). 08-03 에
+  # download-proxy 를 고치면서 이 확장은 놓쳤다. 같은 누락을 남기지 않기 위해 추가.
+  vscode-extension:
+    name: VS Code Extension (compile)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vscode-extension
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vscode-extension/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile (tsc)
+        run: npm run compile

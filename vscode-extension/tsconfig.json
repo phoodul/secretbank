@@ -3,6 +3,10 @@
     "module": "Node16",
     "target": "ES2022",
     "lib": ["ES2022"],
+    // TypeScript 6 부터 node_modules/@types 자동 포함 동작이 바뀌어, 명시하지 않으면
+    // @types/node 가 로드되지 않는다 (TS2591 `node:*` import + TS2304 fetch).
+    // 이 한 줄이 없어서 typescript major 가 채택 불가로 보였다 (2026-08-04 실측).
+    "types": ["node", "vscode"],
     "outDir": "out",
     "rootDir": "src",
     "sourceMap": true,
