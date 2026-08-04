@@ -50,8 +50,12 @@ jobs:
           path-to-signatures: "signatures/version1/cla.json"
           path-to-document: "https://github.com/phoodul/secretbank/blob/main/.github/CLA.md"
           branch: "cla-signatures"
-          # 저작권자 본인은 CLA(자신에게 권리를 양도하는 계약)의 대상이 아니다.
-          # 이 allowlist 는 서명 파일을 읽은 뒤 평가되므로, 파일 생성이 가능해진
-          # 지금부터 실제로 동작한다. 봇 제외는 여기가 아니라 job-level `if` 담당.
-          allowlist: "phoodul"
+          # job-level `if` 와 allowlist 는 **층위가 다르다**. 둘 다 필요하다:
+          #  - `if`  : "누가 이 이벤트를 일으켰나" (코멘트 작성자 / PR 작성자)
+          #  - 여기  : "이 PR 의 **커미터**가 누구냐"
+          # 실측(2026-08-04): 사람이 Dependabot PR 에 코멘트하면 `if` 는 통과하지만
+          # 액션 내부는 커미터(dependabot[bot])를 검사해 "have to sign the CLA" 로 실패한다.
+          # 따라서 봇은 양쪽 모두에 있어야 한다.
+          # 저작권자 본인(phoodul)은 자신에게 권리를 양도하는 계약의 대상이 아니다.
+          allowlist: "phoodul,dependabot[bot],*[bot]"
           lock-pullrequest-aftermerge: false
