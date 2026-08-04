@@ -38,7 +38,7 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
-    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/chrome": "^0.2.2",
@@ -46,14 +46,14 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/webextension-polyfill": "^0.12.5",
-    "@vitejs/plugin-react": "^4.6.0",
+    "@vitejs/plugin-react": "^6.0.4",
     "@wxt-dev/module-react": "^1.2.2",
     "fake-indexeddb": "^6.2.5",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.0",
     "postcss": "^8.5.25",
     "postcss-rem-to-responsive-pixel": "^7.0.5",
     "tailwindcss": "^4.3.3",
-    "typescript": "~5.8.3",
+    "typescript": "~7.0.2",
     "vitest": "^4.1.10"
   }
 }
