@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.25"
+    id("org.jetbrains.kotlin.jvm") version "2.4.10"
     id("org.jetbrains.intellij.platform") version "2.18.1"
 }
 
@@ -32,7 +32,7 @@ dependencies {
     }
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.22.1")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -63,6 +63,10 @@ tasks {
         useJUnitPlatform()
     }
     wrapper {
-        gradleVersion = "8.10.2"
+        // IntelliJ Platform Gradle Plugin 2.18+ 는 Gradle 9.0 이상을 요구하고,
+        // Gradle 9 는 Kotlin Gradle Plugin 2.x 를 요구한다. 세 버전은 한 세트로만
+        // 정합하므로 개별로 올리면 반드시 깨진다 (2026-08-04 CI 에서 확인:
+        // "IntelliJ Platform Gradle Plugin requires Gradle 9.0.0 and higher").
+        gradleVersion = "9.6.1"
     }
 }
