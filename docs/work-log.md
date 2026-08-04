@@ -70,9 +70,37 @@ get in touch when **a new version is available**." → **close 는 그 버전 �
 - prettier: 변경 5파일 전부 clean (project-decisions.md 는 추가 63줄, 기존 수정 0)
 - vscode-extension 은 실험 후 완전 원복 (package.json / package-lock.json)
 
+### 후속 — 검증 중 드러난 2건
+
+**① `if` 와 `allowlist` 는 층위가 다르다 (실측으로 발견)**
+1차 수정 후 봇 경로는 `skipped` 가 됐지만 **사람이 봇 PR 에 코멘트하는 경로가 여전히 실패**했다.
+job-level `if` 는 "이벤트를 일으킨 주체"를, 액션 내부 `allowlist` 는 "PR 의 **커미터**"를 본다.
+사람이 Dependabot PR 에 코멘트하면 `if` 는 통과하지만 커미터가 `dependabot[bot]` 이라
+`have to sign the CLA` 로 실패한다. → `allowlist: "phoodul,dependabot[bot],*[bot]"` 로 복원.
+**최종 실측: `issue_comment` = success, `pull_request_target` = skipped,
+`signatures/version1/cla.json` 실제 생성(31 bytes, 3.5개월간 404 였던 파일).**
+
+**② `typescript` ignore 는 오판이었다 — 원인은 tsconfig 한 줄**
+ignore(≥7)를 넣자 Dependabot 이 TS **6.0.3** 을 제안했고(`#135`) **6 에서도 같은 에러**가 났다
+→ 임계가 7 이 아니라는 신호. module/moduleResolution 을 node18·nodenext 로 바꿔도 동일.
+진짜 원인은 **TS 6 부터 `@types` 자동 포함 동작이 바뀐 것**으로, `types` 를 명시하지 않으면
+`@types/node` 가 로드되지 않는다(에러 4건이 전부 이 하나의 결과였다).
+**`"types": ["node","vscode"]` 한 줄로 TS 7.0.2 컴파일까지 통과** → ignore 철회 + TS 7 채택.
+에러 메시지 자체가 `add 'node' to the types field` 라고 답을 말하고 있었다.
+
+**③ `vscode-extension` CI 커버리지 0 — 08-03 교훈의 미적용분**
+`release.yml` 에서만 참조되고 PR/push CI 가 없어 Dependabot PR 이 컴파일 검증 없이
+auto-merge 됐다(`#134`). 08-03 에 download-proxy 를 고치면서 이 확장을 놓쳤다.
+→ `ci.yml` 에 **`VS Code Extension (compile)`** 잡 신설(`npm ci` + `npm run compile`).
+
 ### 교훈
 - **"블로킹 아님"과 "무해함"은 다르다.** CLA 실패는 머지를 막지 않아 세 세션 연속
   "비게이트"로 넘어갔지만, **실패 자체가 알림을 만든다.** 상시 red 인 워크플로는 부채다.
+- **에러 N건이 원인 N개는 아니다.** typescript 판정에서 에러 4건을 보고 "채택 불가"로
+  넘겼는데 실은 하나의 원인이었다. "ignore 로 덮기 전에 실제로 올려볼 것"을 같은 세션에
+  규칙으로 적어놓고도 첫 판정에서 어겼다.
+- **사각지대는 한 번에 다 찾아야 한다.** CI 커버리지 0 인 경로를 08-03 에 하나(download-proxy)
+  고쳤지만 같은 종류(vscode-extension)를 찾지 않았다. 한 사례를 고칠 때 **동종을 전수 조사**할 것.
 - **증상의 이름을 원인으로 착각하지 말 것.** "Dependabot 메시지"라 불렀지만 발생원은
   CLA 였다. 알림이 어느 워크플로에서 나오는지 집계하는 게 첫 수순이었다.
 - **거부는 config 에 적어야 영구가 된다.** UI 에서 close 하는 것은 기록이 아니다.
