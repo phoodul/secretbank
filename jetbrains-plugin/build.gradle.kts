@@ -20,7 +20,11 @@ dependencies {
             providers.gradleProperty("platformType"),
             providers.gradleProperty("platformVersion")
         )
-        bundledPlugin("com.intellij.modules.platform")
+        // NOTE: `com.intellij.modules.platform` 은 플러그인이 아니라 플랫폼 **모듈**이라
+        // bundledPlugin() 으로 해석되지 않는다 (2026-08-04 CI 최초 실행에서 발각:
+        // "Could not find bundled plugin with ID: 'com.intellij.modules.platform'").
+        // 코어 모듈이라 명시할 필요도 없으므로 제거한다. CI 커버리지가 없던 탓에
+        // 이 오류가 드러나지 않은 채로 남아 있었다.
         bundledPlugin("org.jetbrains.plugins.terminal")
         // JCEF (Chromium Embedded Framework) is part of the platform; no extra
         // dependency needed beyond the core. Listed here for clarity.
