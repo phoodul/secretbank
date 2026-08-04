@@ -11,6 +11,17 @@
 #  - cooldown: 갓 배포된(침해 가능성 있는) 버전을 즉시 채택하지 않도록 지연.
 #    시크릿 매니저 supply-chain 방어. 보안 업데이트(security-updates)는 cooldown 미적용 = 즉시.
 #  - auto-merge: patch/minor 는 CI 4개 필수 체크 통과 + cooldown 경과 후 자동 머지.
+#
+# ⚠️ 운용 규칙 (2026-08-04 — PR 132건 중 83건(63%)이 머지 없이 close 된 원인):
+#   **PR 을 그냥 close 하는 것은 일회성이다.** Dependabot 은 close 시 "이 *릴리스*는
+#   다시 알리지 않지만 새 버전이 나오면 다시 연다"고 명시한다. 따라서 close 는
+#   그 버전 하나만 억제하며, 특히 **날짜 기반 버저닝** 패키지(@cloudflare/*)에서는
+#   사실상 매일 새 버전이 나오므로 영구히 무효다(@cloudflare/workers-types 10회 재생성).
+#   → 채택하지 않기로 **판단한 major 는 반드시 이 파일의 `ignore` 에 사유·재검토
+#     트리거와 함께 기록한다.** 기록하지 않은 거부는 매주 되살아난다.
+#   → 단, ignore 는 보안 업데이트까지 함께 막으므로 "채택 불가"가 실측으로
+#     확인된 것만 넣는다. 검토를 안 했을 뿐인 major 를 ignore 로 덮지 않는다
+#     (실제로 workers-types 5 는 채택 불가가 아니라 미검토였고, 검증해보니 그대로 통과했다).
 # (Dependabot 은 YAML 앵커/커스텀 키를 지원하지 않으므로 cooldown 을 항목마다 인라인)
 version: 2
 updates:
@@ -138,6 +149,21 @@ updates:
         update-types: ["minor", "patch"]
       vscode-major:
         update-types: ["major"]
+    ignore:
+      # @types/node 20.x 는 **의도적 핀**이다. engines.vscode 가 ^1.96.0 이고 그
+      # VS Code 가 번들한 Electron 런타임이 Node 20 이다. 타입만 26 으로 올리면
+      # 런타임에 없는 API 가 컴파일을 통과해버린다.
+      # 재검토 트리거: engines.vscode 하한을 Node 22 번들 버전으로 올릴 때.
+      # (2026-08-04 — 그동안 ignore 가 없어 매주 PR 이 재생성됐다: #85/#91/#98 등 5회)
+      - dependency-name: "@types/node"
+        versions: [">=21.0.0"]
+      # typescript 7 은 이 확장의 tsconfig(`module`/`moduleResolution`: "Node16")를
+      # 해석하지 못한다. 실측(2026-08-04): `import ... from 'node:child_process'` 가
+      # 이름으로 해석돼 TS2591 3건 + `fetch` TS2304 1건. tsconfig 를 node18/nodenext
+      # 로 옮기는 전용 마이그레이션이 필요하다.
+      # 재검토 트리거: vscode-extension tsconfig 를 nodenext 로 이관할 때.
+      - dependency-name: "typescript"
+        versions: [">=7.0.0"]
 
   # --- GitHub Actions (워크플로우 액션 버전 — CLA @v2 같은 이동 태그 사고 방지) ---
   # NOTE: github-actions 생태계는 cooldown 의 semver-*-days 세분 키를 지원하지

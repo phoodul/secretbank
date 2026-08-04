@@ -1,5 +1,84 @@
 # Work Log
 
+## 2026-08-04 — "끝없는 Dependabot 메시지"의 진짜 발생원 = CLA Assistant (3.5개월 상시 실패)
+
+### 배경
+사용자: "dependabot이 끝도 없이 메시지를 보내와. 원인을 찾고 근본 대책을 마련해줘."
+08-02 · 08-03 두 세션에 걸쳐 Dependabot 자동화를 고쳤는데도 알림이 멈추지 않았다.
+
+### 진단 — 발생원은 Dependabot 이 아니었다
+알림이 **어느 워크플로에서 나오는지** 부터 집계했다 (`gh run list` → conclusion × workflow).
+최근 200 run 중 dependabot 브랜치의 실패 **19건이 전부 `CLA Assistant`**
+(+ `main` 의 issue_comment 실패 8건). CI 실패는 3건뿐. 워크플로 실패는 GitHub 이
+기본으로 이메일을 보낸다 → **이것이 "끝없는 메시지"의 실체.**
+
+실패 로그가 원인을 그대로 말해준다:
+
+```
+GITHUB_TOKEN Permissions:  Contents: read      ← 쓰기 권한 없음
+PERSONAL_ACCESS_TOKEN:                          ← 비어 있음
+##[error]Error occurred when creating the signed contributors file:
+         Resource not accessible by integration.
+         Make sure the branch where signatures are stored is NOT protected.
+```
+
+원인 3중 (T005, 2026-04-22 이후 **한 번도 성공한 적 없음**):
+
+1. `cla.yml` 에 `permissions:` 블록 없음 → `GITHUB_TOKEN` 이 `contents: read`
+2. 서명 파일 저장 브랜치가 **보호된 `main`** (필수 체크 5개)
+3. `PERSONAL_ACCESS_TOKEN` 미등록 (주석에 TODO 로 남아 있었다)
+
+→ `signatures/version1/cla.json` **404 = 존재조차 안 함**. AGPL open-core 의
+기여 수락 전제인 CLA 가 **서명을 한 건도 수집한 적이 없다.**
+
+**`allowlist: "dependabot[bot]"` 이 있는데도 실패한 이유**: allowlist 판정은 서명
+파일을 읽은 *뒤* 단계인데 그 앞의 파일 생성에서 죽는다. 봇 제외가 통째로 무력화돼
+있었다. → **봇 제외는 allowlist 가 아니라 job-level `if` 로 해야 한다.**
+
+### 2차 발생원 — 거부 결정이 config 에 없어 매주 되살아남
+Dependabot 코멘트 원문: "I won't notify you again about **this release**, but will
+get in touch when **a new version is available**." → **close 는 그 버전 하나만
+억제하는 일회성.** 누적 PR **132건 중 83건(63%)이 머지 없이 close**.
+상위 재생성: `@cloudflare/workers-types` 10회 · `typescript` 6회 · `@types/node` 5회.
+특히 날짜 기반 버저닝(`@cloudflare/*`, latest `5.20260804.1`)은 사실상 매일 새 버전이
+나와 close 가 영구히 무효다.
+
+### 처리
+**CLA 정상화 (`cla.yml`)**
+
+- 서명 저장을 **비보호 전용 브랜치 `cla-signatures`** 로 분리 → PAT 불필요,
+  `GITHUB_TOKEN` + `permissions: contents/pull-requests: write` 로 동작
+- 봇(`*[bot]`) PR·코멘트는 **job-level `if`** 로 진입 차단
+- `closed` 트리거 제거 (`lock-pullrequest-aftermerge: false` 라 할 일 없음) → PR 당 3회 → 1회
+- `issue_comment` 는 **PR 코멘트일 때만** 진입 (일반 이슈에서 도는 낭비 제거)
+
+**거부 결정의 영구화 (`dependabot.yml`)** — 단 "미검토"를 ignore 로 덮지 않기 위해
+**전부 실측 후 판정**:
+
+| 대상 | 판정 | 실측 |
+| :-- | :-- | :-- |
+| `@cloudflare/workers-types` 4 → 5 | **채택** | typecheck 통과 + relay 71/71 · proxy 14/14. 재생성 10회 원인 소멸 |
+| `@types/node` ≥21 (vscode-ext) | ignore | `20.x` 는 의도적 핀 — `engines.vscode ^1.96.0` 번들 런타임이 Node 20 |
+| `typescript` ≥7 (vscode-ext) | ignore | tsconfig `module: "Node16"` 을 TS7 이 해석 못 함 (TS2591 3 + TS2304 1) |
+
+두 ignore 모두 **재검토 트리거를 주석에 명시**했다.
+
+### 검증
+- YAML 파싱 OK (cla.yml / dependabot.yml)
+- relay · download-proxy: `--frozen-lockfile` **및** `--ignore-workspace` 양쪽 통과
+  (기존 CI/deploy 경로 무영향), 루트 `pnpm-lock.yaml` 무변경
+- prettier: 변경 5파일 전부 clean (project-decisions.md 는 추가 63줄, 기존 수정 0)
+- vscode-extension 은 실험 후 완전 원복 (package.json / package-lock.json)
+
+### 교훈
+- **"블로킹 아님"과 "무해함"은 다르다.** CLA 실패는 머지를 막지 않아 세 세션 연속
+  "비게이트"로 넘어갔지만, **실패 자체가 알림을 만든다.** 상시 red 인 워크플로는 부채다.
+- **증상의 이름을 원인으로 착각하지 말 것.** "Dependabot 메시지"라 불렀지만 발생원은
+  CLA 였다. 알림이 어느 워크플로에서 나오는지 집계하는 게 첫 수순이었다.
+- **거부는 config 에 적어야 영구가 된다.** UI 에서 close 하는 것은 기록이 아니다.
+- **ignore 로 덮기 전에 실제로 올려볼 것.** workers-types 5 는 "채택 불가"가 아니라
+  단지 **미검토**였고, 올려보니 그대로 통과했다.
+
 ## 2026-08-03 — Dependabot 완전 자동화 (전날 수동 batch 부채 제거)
 
 ### 배경

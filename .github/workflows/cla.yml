@@ -1,8 +1,18 @@
-# Requires manual setup: install CLA Assistant bot via org admin
+# CLA Assistant — 외부 기여자의 CLA 서명을 수집한다 (.github/CLA.md).
 # https://github.com/contributor-assistant/github-action
-# Also set PERSONAL_ACCESS_TOKEN secret in repository settings:
-#   Settings → Secrets and variables → Actions → New repository secret
-#   Name: PERSONAL_ACCESS_TOKEN  Value: <PAT with repo scope>
+#
+# 2026-08-04 정상화 (그 전까지 3.5개월간 100% 실패 상태였다):
+#  1. `permissions:` 블록이 없어 GITHUB_TOKEN 이 contents:read 였다 → 서명 파일을
+#     커밋하지 못하고 "Resource not accessible by integration" 으로 매번 죽었다.
+#  2. 서명 파일 저장 위치가 보호 브랜치 main 이었다. 이 액션은 저장 브랜치가
+#     **보호되지 않을 것**을 요구한다(main 은 필수 체크 5개로 보호 중).
+#     → 서명 전용 비보호 브랜치 `cla-signatures` 로 분리. PAT 없이 GITHUB_TOKEN 으로 동작한다.
+#  3. 봇 PR 은 job 진입 자체를 막는다. 액션의 `allowlist` 는 서명 파일을 읽은 *뒤*
+#     평가되므로, 파일 접근 단계에서 실패하면 allowlist 가 무력화된다. 실제로
+#     `allowlist: dependabot[bot]` 이 설정돼 있었는데도 모든 Dependabot PR 에서 실패했고,
+#     그 실패 알림이 "Dependabot 이 끝없이 메시지를 보낸다"의 실제 발생원이었다.
+#  4. `closed` 트리거 제거 — lock-pullrequest-aftermerge 가 false 라 닫힘 이벤트에서
+#     할 일이 없는데도 PR 당 실행 횟수만 늘렸다.
 
 name: CLA Assistant
 
@@ -10,21 +20,34 @@ on:
   issue_comment:
     types: [created]
   pull_request_target:
-    types: [opened, closed, synchronize]
+    types: [opened, synchronize]
+
+permissions:
+  contents: write # cla-signatures 브랜치에 서명 파일 커밋
+  pull-requests: write # CLA 안내 코멘트 + 상태 갱신
 
 jobs:
   CLAAssistant:
     runs-on: ubuntu-latest
+    # 봇(dependabot[bot] 등)은 CLA 대상이 아니다. 위 주석 3번 참고 — allowlist 에
+    # 의존하지 않고 job 진입을 막아야 실패 알림이 생기지 않는다.
+    # 이벤트에 따라 한쪽 컨텍스트는 비어 있으며, Actions 표현식에서 없는 필드는
+    # 빈 문자열로 평가되어 endsWith 가 false 를 반환한다.
+    # 마지막 절: issue_comment 는 PR 이 아닌 일반 이슈에서도 발생한다. CLA 와
+    # 무관하므로 PR 코멘트일 때만 진입한다.
+    if: >-
+      !endsWith(github.event.pull_request.user.login, '[bot]') &&
+      !endsWith(github.event.comment.user.login, '[bot]') &&
+      (github.event_name != 'issue_comment' || github.event.issue.pull_request)
     steps:
       - name: CLA Assistant
         uses: contributor-assistant/github-action@v2.6.1
         env:
+          # PERSONAL_ACCESS_TOKEN 은 불필요 — 저장 브랜치가 비보호이므로
+          # GITHUB_TOKEN + 위 permissions 로 충분하다.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # TODO: Create a PAT with repo scope and add it as PERSONAL_ACCESS_TOKEN secret
-          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           path-to-signatures: "signatures/version1/cla.json"
           path-to-document: "https://github.com/phoodul/secretbank/blob/main/.github/CLA.md"
-          branch: "main"
-          allowlist: "dependabot[bot]"
+          branch: "cla-signatures"
           lock-pullrequest-aftermerge: false

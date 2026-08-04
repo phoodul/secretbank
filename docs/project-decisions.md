@@ -2965,3 +2965,66 @@ LiteLLM Python 사이드카 + Sigstore/Rekor + 집단지성 DB + Dynamic Secrets
      auto-merge 는 required check 만 기다리므로 이 승격이 있어야 실제 게이트가 된다.
   2. **major 도 생태계별로 1개 PR 로 그룹화** — auto-merge 제외(사람 검토)는
      유지하되, 크레이트마다 PR 이 하나씩 열려 쌓이는 것을 막는다.
+
+---
+
+## 2026-08-04 — "Dependabot 이 끝없이 메시지를 보낸다"의 실제 발생원 = **CLA Assistant 실패**
+
+- **증상:** 사용자 "dependabot이 끝도 없이 메시지를 보내와". 08-02 · 08-03 두 세션에
+  걸쳐 Dependabot 자동화를 고쳤는데도 알림이 계속됐다.
+- **진단 — 발생원은 Dependabot 이 아니었다.** 최근 200 workflow run 중 dependabot
+  브랜치의 실패 19건이 **전부 `CLA Assistant`** 였다(+ `main` 의 issue_comment 실패 8건).
+  워크플로 실패는 GitHub 이 기본으로 이메일을 보낸다.
+- **CLA Assistant 는 T005(2026-04-22) 이후 3.5개월간 100% 실패해 왔다.** 원인 3중:
+  1. `cla.yml` 에 `permissions:` 블록이 없어 `GITHUB_TOKEN` 이 `contents: read` —
+     서명 파일을 커밋할 수 없다.
+  2. 서명 파일 저장 브랜치가 **보호된 `main`**. 이 액션은 저장 브랜치가 보호되지
+     않을 것을 요구한다(로그: "Make sure the branch where signatures are stored is
+     NOT protected").
+  3. `PERSONAL_ACCESS_TOKEN` secret 미등록(`cla.yml` 주석에 TODO 로 남아 있었다).
+     → `signatures/version1/cla.json` 이 **존재조차 하지 않는다**(404). 즉 **CLA 는
+     서명을 한 건도 수집한 적이 없다** — AGPL open-core 의 기여 수락 전제가 비어 있었다.
+- **`allowlist: "dependabot[bot]"` 이 설정돼 있었는데도 봇 PR 에서 실패한 이유:**
+  allowlist 판정은 서명 파일을 읽은 **뒤** 단계인데, 그 앞의 파일 생성에서 죽는다.
+  → **봇 제외는 allowlist 가 아니라 job-level `if` 로 해야 한다.**
+- **결정 (cla.yml):**
+  1. 서명 저장을 **비보호 전용 브랜치 `cla-signatures`** 로 분리 → PAT 불필요,
+     `GITHUB_TOKEN` + `permissions: contents/pull-requests: write` 로 동작.
+  2. 봇(`*[bot]`) PR·코멘트는 **job-level `if` 로 진입 차단**.
+  3. `pull_request_target` 의 `closed` 트리거 제거 — `lock-pullrequest-aftermerge`
+     가 false 라 할 일이 없는데 PR 당 실행 횟수만 늘렸다(3회 → 1회).
+  4. `issue_comment` 는 **PR 코멘트일 때만** 진입(일반 이슈에서 도는 낭비 제거).
+- **영향:** Dependabot 경로의 실패 알림이 0 이 되고, 동시에 **CLA 가 실제로 작동**한다.
+  세 세션 연속 "CLAAssistant 실패 = 비게이트"로 넘겼던 항목이 실은 알림 폭탄의 주범이었다.
+
+### 함께 확정 — Dependabot 거부 결정은 반드시 `ignore` 에 기록한다
+
+- **근거:** Dependabot 은 PR close 시 "이 **릴리스**는 다시 알리지 않지만 **새 버전이
+  나오면** 다시 연다"고 명시한다. 즉 **close 는 그 버전 하나만 억제하는 일회성**이다.
+  누적 PR 132건 중 **83건(63%)이 머지 없이 close** 됐고, 상위 재생성은 전부 이 구조다:
+  `@cloudflare/workers-types` 10회 · `typescript` 6회 · `@types/node` 5회.
+  특히 **날짜 기반 버저닝**(`@cloudflare/*`, latest = `5.20260804.1`)은 사실상 매일 새
+  버전이 나오므로 close 가 영구히 무효다.
+- **결정:** 채택하지 않기로 판단한 major 는 `dependabot.yml` 의 `ignore` 에 **사유 +
+  재검토 트리거**와 함께 기록한다. 단 `ignore` 는 보안 업데이트도 함께 막으므로
+  **"채택 불가"가 실측으로 확인된 것만** 넣는다. 검토를 안 했을 뿐인 major 를
+  ignore 로 덮지 않는다.
+- **실증:** `@cloudflare/workers-types` 5 는 채택 불가가 아니라 **미검토**였다.
+  실제로 올려보니 그대로 통과 → **ignore 가 아니라 채택**으로 처리(아래).
+
+### 개별 판정 (실측 기반)
+
+| 대상                                                       | 판정              | 근거 (2026-08-04 실측)                                                                                                                                                                                                                     |
+| :--------------------------------------------------------- | :---------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@cloudflare/workers-types` 4 → 5 (relay + download-proxy) | **채택**          | typecheck 통과, relay test 71/71 · download-proxy 14/14 통과. 재생성 10회의 원인이 소멸한다.                                                                                                                                               |
+| `@types/node` 20 → 26 (vscode-extension)                   | **ignore (>=21)** | `20.x` 는 의도적 핀. `engines.vscode ^1.96.0` 이 번들한 Electron 런타임이 Node 20 이다. 타입만 올리면 런타임에 없는 API 가 컴파일을 통과한다. **재검토 트리거: engines.vscode 하한을 Node 22 번들로 올릴 때.**                             |
+| `typescript` 5 → 7 (vscode-extension)                      | **ignore (>=7)**  | tsconfig 의 `module`/`moduleResolution: "Node16"` 을 TS7 이 해석하지 못한다. 실측: `import ... from 'node:child_process'` 가 이름으로 해석돼 TS2591 3건 + `fetch` TS2304 1건. **재검토 트리거: tsconfig 를 node18/nodenext 로 이관할 때.** |
+
+### 교훈
+
+- **"블로킹 아님"과 "무해함"은 다르다.** CLA 실패는 머지를 막지 않아 세 세션 연속
+  넘어갔지만, **실패 자체가 알림을 발생시킨다.** 상시 red 인 워크플로는 그 자체로 부채다.
+- **증상의 이름을 원인으로 착각하지 말 것.** "Dependabot 메시지"라 불렀지만 발생원은
+  CLA 였다. 알림이 어느 워크플로에서 나오는지 먼저 집계했어야 했다
+  (`gh run list` → conclusion × workflow 교차 집계).
+- **거부는 config 에 적어야 영구가 된다.** UI 에서 close 하는 것은 기록이 아니다.

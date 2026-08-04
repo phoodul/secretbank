@@ -2,6 +2,15 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-08-04 (resume) — **"끝없는 Dependabot 메시지"의 발생원 규명 = `CLA Assistant` 상시 실패**. 사용자 "dependabot이 끝도 없이 메시지를 보내와".
+  - **핵심 반전:** 발생원은 Dependabot 이 아니었다. `gh run list` 를 conclusion × workflow 로 교차 집계하니 최근 200 run 중 dependabot 브랜치 실패 **19건이 전부 `CLA Assistant`**(+ `main` issue_comment 8건), CI 실패는 3건뿐. **워크플로 실패 = GitHub 기본 이메일 알림**이 메시지의 실체.
+  - **CLA 는 T005(2026-04-22) 이후 3.5개월간 100% 실패**해 왔다. ① `permissions:` 블록 부재로 `GITHUB_TOKEN` 이 `contents: read` ② 서명 저장 브랜치가 **보호된 main** ③ `PERSONAL_ACCESS_TOKEN` 미등록. → `signatures/version1/cla.json` **404 = 서명을 한 건도 수집한 적 없음**(AGPL open-core 기여 수락 전제가 비어 있었다). `allowlist: dependabot[bot]` 이 있었는데도 실패한 건 allowlist 판정이 파일 읽기 **뒤** 단계이기 때문 — **봇 제외는 job-level `if` 로 해야 한다.**
+  - **처리(cla.yml):** 서명 저장을 비보호 전용 브랜치 **`cla-signatures`** 로 분리(PAT 불필요) + `permissions: contents/pull-requests: write` + 봇 `if` 차단 + `closed` 트리거 제거(PR 당 3회 → 1회) + `issue_comment` 는 PR 코멘트일 때만.
+  - **2차 발생원:** Dependabot 의 close 는 **그 버전 하나만** 억제하는 일회성("will get in touch when a new version is available"). 누적 **PR 132건 중 83건(63%)이 머지 없이 close**, 재생성 상위 = workers-types 10회 · typescript 6회 · @types/node 5회. 날짜 버저닝(`@cloudflare/*`)은 close 가 영구 무효. → **거부 결정은 `dependabot.yml` ignore 에 사유+재검토 트리거와 함께 기록**하는 규칙을 파일 상단에 명문화.
+  - **실측 후 판정(미검토를 ignore 로 덮지 않기 위해):** `@cloudflare/workers-types` 4→5 = **채택**(typecheck + relay 71/71 + proxy 14/14 통과 — 재생성 10회 원인 소멸) / `@types/node` ≥21 = ignore(VS Code 1.96 번들 = Node 20 의도적 핀) / `typescript` ≥7 = ignore(tsconfig `module: "Node16"` 을 TS7 이 해석 못 함, TS2591 3 + TS2304 1).
+  - **검증:** YAML 파싱 OK · ee 양쪽 `--frozen-lockfile` **및** `--ignore-workspace` 통과(기존 CI/deploy 경로 무영향) · 루트 `pnpm-lock.yaml` 무변경 · prettier 5파일 clean · vscode-extension 실험분 완전 원복.
+  - **⚠️ 남은 사용자 액션:** ① **`cla-signatures` 비보호 브랜치 생성 + push** (없으면 CLA 액션이 실패) ② 열린 major PR 6건(#133 age / #132 npm / #130 relay / #129 proxy / #126 vscode / #103 setup-node) 은 여전히 사람 검토 대기 — #129/#130 의 workers-types 항목은 이번 채택으로 선해결됨.
+
 - **Time:** 2026-08-03 (연속 세션) — **Dependabot 완전 자동화 (전날의 수동 batch 부채 제거)**. origin/main = `39c5faa`, CI 필수 5개 전부 green.
   - **근본 해결:** pnpm 은 *가장 가까운 상위* `pnpm-workspace.yaml` 을 workspace 루트로 삼는다 → `ee/secretbank-relay` 와 `ee/cloudflare/download-proxy` 각각에 `pnpm-workspace.yaml`(`packages: ["."]`) 을 두면 탐색이 거기서 멈춰 **플래그 없는 `pnpm install` 로도 자기 lockfile 만 갱신**된다(실측: hono 4.12.30 으로 내려 확인 후 원복). 전날 결정("ee/\* dependabot 제외 + 월간 수동 batch")을 철회하고 재등록(`d186b81`).
   - **실증 완료:** 푸시 직후 Dependabot 이 만든 **#127 / #128 이 `package.json` + `pnpm-lock.yaml` 을 함께 담아 자동 머지됨**(06:53 / 06:54). 어제까지 구조적으로 불가능하던 일. **월간 수동 작업 없음.**
