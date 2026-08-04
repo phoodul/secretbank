@@ -213,3 +213,28 @@ jobs:
 
       - name: Compile (tsc)
         run: npm run compile
+
+  # jetbrains-plugin 은 CI 도 Dependabot 도 없는 완전 사각지대였다 — dependency graph 에
+  # gradle/maven 패키지가 0개라 kotlin·jackson 의 취약점이 탐지되지 않았다(2026-08-04 발견).
+  # gradle wrapper 는 .gitignore 로 제외돼 있어(jetbrains-plugin/gradlew) CI 에서 쓸 수
+  # 없으므로 gradle 을 직접 설치해 실행한다. configuration-cache 는 CI 에서 불안정해 끈다.
+  jetbrains-plugin:
+    name: JetBrains Plugin (compile + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jetbrains-plugin
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Compile + test
+        run: gradle test --no-daemon --no-configuration-cache --stacktrace

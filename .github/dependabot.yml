@@ -162,6 +162,27 @@ updates:
       #  자동 포함 동작이 바뀌었다. 그 한 줄을 넣으니 TS 7.0.2 로 컴파일까지 통과.
       #  2026-08-04, `ignore 로 덮기 전에 실제로 올려볼 것` 규칙의 실증 사례.)
 
+  # --- Gradle: JetBrains 플러그인 (IntelliJ Platform) ---
+  # 2026-08-04 신설. 그 전까지 이 프로젝트는 dependabot.yml 에도 CI 에도 없어
+  # **dependency graph 에 gradle/maven 패키지가 0개**였다 — 즉 kotlin 1.9.25 ·
+  # jackson-module-kotlin 2.18.0 · intellij-platform 2.1.0 의 취약점이 탐지되지
+  # 않는 상태였다. 시크릿 매니저에서 탐지 공백은 그 자체로 위험이라 등록한다.
+  - package-ecosystem: "gradle"
+    directory: "/jetbrains-plugin"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-patch-days: 3
+      semver-minor-days: 5
+      semver-major-days: 7
+    groups:
+      jetbrains-minor-patch:
+        update-types: ["minor", "patch"]
+      jetbrains-major:
+        update-types: ["major"]
+
   # --- GitHub Actions (워크플로우 액션 버전 — CLA @v2 같은 이동 태그 사고 방지) ---
   # NOTE: github-actions 생태계는 cooldown 의 semver-*-days 세분 키를 지원하지
   # 않는다(액션은 semver 를 엄격히 따르지 않음). default-days 만 사용.
