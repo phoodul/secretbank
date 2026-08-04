@@ -50,4 +50,8 @@ jobs:
           path-to-signatures: "signatures/version1/cla.json"
           path-to-document: "https://github.com/phoodul/secretbank/blob/main/.github/CLA.md"
           branch: "cla-signatures"
+          # 저작권자 본인은 CLA(자신에게 권리를 양도하는 계약)의 대상이 아니다.
+          # 이 allowlist 는 서명 파일을 읽은 뒤 평가되므로, 파일 생성이 가능해진
+          # 지금부터 실제로 동작한다. 봇 제외는 여기가 아니라 job-level `if` 담당.
+          allowlist: "phoodul"
           lock-pullrequest-aftermerge: false
