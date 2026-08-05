@@ -6,8 +6,15 @@
 name: Claude Security Review
 
 on:
+  # `synchronize` 를 뺐다 (2026-08-04). 이 워크플로는 job-level `if` 로
+  # `claude-review` 라벨이 붙은 PR 에서만 실행되는데, `synchronize` 때문에
+  # **모든 PR 의 모든 push 마다 run 이 생성되고 즉시 skip** 되고 있었다.
+  # 실행은 안 하지만 run 기록과 알림은 발생한다 — 2026-08-04 하루에만
+  # 이 세 워크플로가 54 run(전체의 절반 이상)을 만들었고 대부분 skipped 였다.
+  # 라벨 부착 시점에만 돌면 목적은 그대로 달성된다. 라벨이 붙은 PR 에 새
+  # 커밋이 온 뒤 재검토가 필요하면 라벨을 뗐다 다시 붙인다.
   pull_request_target:
-    types: [labeled, synchronize]
+    types: [labeled]
 
 permissions:
   contents: read
