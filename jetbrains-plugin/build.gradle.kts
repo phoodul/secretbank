@@ -27,8 +27,11 @@ dependencies {
         // 이 오류가 드러나지 않은 채로 남아 있었다.
         bundledPlugin("org.jetbrains.plugins.terminal")
         // JCEF (Chromium Embedded Framework) is part of the platform; no extra
-        // dependency needed beyond the core. Listed here for clarity.
-        instrumentationTools()
+        // dependency needed beyond the core.
+        //
+        // `instrumentationTools()` 는 IntelliJ Platform Gradle Plugin 2.1 시절 API 로
+        // 2.18 에서 제거됐다(코드 계측이 기본 동작으로 흡수). 2026-08-04 CI 로그:
+        // "Unresolved reference 'instrumentationTools'". 제거만 하면 된다.
     }
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.22.1")
 
