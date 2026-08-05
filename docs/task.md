@@ -2579,3 +2579,44 @@ _문서 끝._
 | Brand-final-logo | **final_logo 일괄 적용 — 라피스+골드 메탈 vault shield+key+lock**. 사용처: 데스크톱 (src-tauri/icons/icon.png 1024×1024 + tauri icon 풀세트 — 32x32 / 128x128 / icon.icns / icon.ico / Square*Logo / StoreLogo / Android mipmap × 5 / iOS AppIcon × 15) + Extension (extension/public/icon/{16,32,48,128}.png) + 사이트 (site/og-image.png 1200×630 + site/favicon-{16,32,64,192,512}.png + site/icon-1024.png + index/guide.html `<head>` meta og:image / twitter:card / icon link rel / apple-touch-icon). logo_image/ 작업 자료 .gitignore 추가 | 2026-05-10 | `6d3837c` |
 | E2E-teardown | Extension E2E worker teardown 60s timeout fix — fixtures.ts context fixture 의 close() 30s race wrap (hang 시 강제 break) + retries 0. 추가 시도 (test timeout 60→180s) 도 GitHub Actions Linux runner 의 Chromium MV3 launch 한계로 fail. 결국 옵션 D 후퇴 (continue-on-error mute, F-2 시점 globalSetup 패턴 리팩토링) | 2026-05-10 | `e4517f5` + `ea23c1c` |
 | Session-cleanup | 세션 정리 — Extension E2E continue-on-error mute (CI red mask 방지) + project-decisions.md brand identity 정식화 + Deploy Site 사용자 액션 명시 + progress/task/work-log 갱신 | 2026-05-10 | pending |
+
+---
+
+## 백로그 — jetbrains-plugin 빌드 복구 (2026-08-05 신설)
+
+**상태: main 의 `jetbrains-plugin` 은 현재 빌드되지 않는다.** M22 클로즈(2026-05) 이후
+CI 커버리지가 0이라 아무도 몰랐고, 2026-08-04 에 CI 잡을 붙이면서 드러났다.
+
+**중요: 이것은 최근 의존성 업데이트 때문이 아니다.** 첫 실패는 업데이트 이전 상태
+(`intellij-platform 2.1.0`)에서 났다. 즉 **원래부터 깨져 있었다.**
+
+CI 4회 실행으로 드러난 문제를 순서대로 (각각 다른 원인, 계단식):
+
+1. `bundledPlugin("com.intellij.modules.platform")` — 플랫폼 **모듈**이라 bundledPlugin()
+   으로 해석 불가 → 제거 (`da9c689`)
+2. `intellij-platform 2.18` 은 **Gradle 9.0+** 를, Gradle 9 는 **Kotlin 2.x** 를 요구 →
+   Gradle 9.6.1 + Kotlin 2.4.10 + JUnit 6.1.2 세트 업그레이드 (`a07ea67`)
+3. `instrumentationTools()` — 2.18 에서 제거된 API → 제거 (`e10e4ce`)
+4. **소스 코드 비호환 (미해결)**:
+   - `GraphPanel.kt:83` — `onLoadEnd` overrides nothing (JCEF 콜백 시그니처 변경)
+   - `Inspections.kt:51` — None of the following candidates is applicable
+
+**남은 작업 = 4번.** IntelliJ Platform API 마이그레이션이며 실제 코드 수정이 필요하다.
+`platformVersion = 2024.1` 기준으로 작성된 코드를 현재 플랫폼 API 에 맞춰야 한다.
+
+### 현재 취해진 조치 (2026-08-05)
+
+- **CI 잡 제거** — 상시 red 인 워크플로는 그 자체로 알림 부채다(같은 날 CLA 에서 배운 것).
+  빌드가 복구되면 `VS Code Extension (compile)` 잡과 같은 형태로 재신설한다.
+- **Dependabot gradle 등록은 유지** — 취약점 탐지가 목적이며 이미 성과가 있었다
+  (`jackson 2.18.0 → 2.22.1`). dependency graph 에 gradle 패키지가 0개였던 상태는 해소.
+- **gradle auto-merge 차단** — CI 게이트가 없는 경로를 자동 머지하지 않는다
+  (`dependabot-auto-merge.yml`). 08-03 download-proxy 사고의 재발 방지.
+
+### 재개 시 체크리스트
+
+- [ ] `GraphPanel.kt` JCEF 콜백을 현행 API 로 이관
+- [ ] `Inspections.kt:51` 호출 시그니처 수정
+- [ ] `gradle test` 로컬 통과 (JDK 17 + Gradle 9.6.1 필요 — 현재 로컬은 JDK 8, wrapper 는 .gitignore 제외)
+- [ ] `ci.yml` 에 잡 재신설 → green 확인 → 필수 체크 승격
+- [ ] `dependabot-auto-merge.yml` 의 gradle 제외 조건 제거

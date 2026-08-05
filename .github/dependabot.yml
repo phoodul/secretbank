@@ -11,6 +11,10 @@
 #  - cooldown: 갓 배포된(침해 가능성 있는) 버전을 즉시 채택하지 않도록 지연.
 #    시크릿 매니저 supply-chain 방어. 보안 업데이트(security-updates)는 cooldown 미적용 = 즉시.
 #  - auto-merge: patch/minor 는 CI 4개 필수 체크 통과 + cooldown 경과 후 자동 머지.
+#  - schedule: **monthly** (2026-08-05 변경). 7개 생태계가 전부 weekly 라 매주 배치가
+#    돌았고, 그 PR 활동 알림이 사용자 메일함에 계속 쌓였다. **보안 업데이트(Dependabot
+#    security updates)는 이 schedule 과 무관하게 즉시 열리므로 안전성 손실은 없다.**
+#    일반 버전업만 최대 4주 늦어진다.
 #
 # ⚠️ 운용 규칙 (2026-08-04 — PR 132건 중 83건(63%)이 머지 없이 close 된 원인):
 #   **PR 을 그냥 close 하는 것은 일회성이다.** Dependabot 은 close 시 "이 *릴리스*는
@@ -29,7 +33,7 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/src-tauri"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 5
@@ -78,7 +82,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 5
@@ -103,7 +107,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/ee/secretbank-relay"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 5
@@ -120,7 +124,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/ee/cloudflare/download-proxy"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 5
@@ -137,7 +141,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/vscode-extension"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 5
@@ -170,7 +174,7 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/jetbrains-plugin"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 5
@@ -189,7 +193,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 5
