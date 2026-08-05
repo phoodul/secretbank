@@ -2,6 +2,16 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-08-05 (연속) — **알림 폭탄 2차 대응: 남은 발생원 3축 제거 + jetbrains 백로그화**. 사용자 재보고 "CLA 고쳤는데도 메일이 계속 쌓인다".
+  - **CLA 는 실제로 해결됨**(당일 CLA 실패 0건). 재집계(`gh run list` conclusion × workflow)로 남은 축 특정.
+  - **① skipped 도 run 이고 알림이다** — Domain Gate / Claude PR Review / Claude Security Review 3종이 `[labeled, synchronize]` 라 **모든 PR 의 모든 push 마다 run 생성 후 즉시 skip**. 하루 **54 run = 전체의 절반 이상**. → `types: [labeled]` 로 축소(`efc7386`). 앞선 "skipped 는 무해" 판단이 틀렸다.
+  - **② repo watching — repo 파일로 못 막는다 (검색 확인)**. GitHub 공식 우선순위: *"Watching" a repository overrides your Actions notification settings.* owner 는 자동 watching 이라 **성공·skipped 까지 전부 메일**(당일 run 98 + PR 10). **계정 설정이라 코드 불가** → 사용자 조치: repo Watch → **Custom** → Pull requests 해제 / `settings/notifications` → System → Actions → "Only notify for failed workflows". (Watch 를 먼저 해야 Actions 설정이 적용됨)
+  - **③ PR 생성량** → `schedule: weekly → monthly` 7개 생태계 전부(사용자 승인). **보안 업데이트는 schedule 무관하게 즉시 열리므로 안전성 손실 없음.**
+  - **jetbrains-plugin — 사각지대를 메우니 원래부터 빌드 불가였음이 드러남.** CI 4회 실행, 매번 다른 원인의 계단식: ①`bundledPlugin` 오용 ②`intellij-platform 2.18`=Gradle 9+ / Gradle 9=Kotlin 2.x → **세트 업그레이드**(9.6.1+2.4.10+JUnit 6.1.2) ③`instrumentationTools()` 삭제된 API ④**소스 비호환(미해결)**: `GraphPanel.kt:83` onLoadEnd / `Inspections.kt:51`. **첫 실패가 업데이트 이전(2.1.0)에서 났으므로 M22 이후 계속 깨져 있었다.** → **CI 잡 제거**(상시 red = 알림 부채) + `docs/task.md` 백로그 + **gradle auto-merge 차단** + Dependabot gradle 등록은 유지(취약점 탐지, `jackson 2.18.0→2.22.1` 성과).
+  - **순서 교훈:** CI 잡 신설 → green 확인 → 필수 체크 승격 → **그 다음** Dependabot 등록. 이 순서를 어겨 `#141` 이 CI red 에서 auto-merge 됐다.
+  - **커밋:** `efc7386`(트리거 축소) · `e10e4ce`(API fix) · `5c8b824`(잡 제거 + monthly + auto-merge 차단). 필수 체크는 6개 유지.
+
+
 - **Time:** 2026-08-04 (resume) — **"끝없는 Dependabot 메시지"의 발생원 규명 = `CLA Assistant` 상시 실패**. 사용자 "dependabot이 끝도 없이 메시지를 보내와".
   - **핵심 반전:** 발생원은 Dependabot 이 아니었다. `gh run list` 를 conclusion × workflow 로 교차 집계하니 최근 200 run 중 dependabot 브랜치 실패 **19건이 전부 `CLA Assistant`**(+ `main` issue_comment 8건), CI 실패는 3건뿐. **워크플로 실패 = GitHub 기본 이메일 알림**이 메시지의 실체.
   - **CLA 는 T005(2026-04-22) 이후 3.5개월간 100% 실패**해 왔다. ① `permissions:` 블록 부재로 `GITHUB_TOKEN` 이 `contents: read` ② 서명 저장 브랜치가 **보호된 main** ③ `PERSONAL_ACCESS_TOKEN` 미등록. → `signatures/version1/cla.json` **404 = 서명을 한 건도 수집한 적 없음**(AGPL open-core 기여 수락 전제가 비어 있었다). `allowlist: dependabot[bot]` 이 있었는데도 실패한 건 allowlist 판정이 파일 읽기 **뒤** 단계이기 때문 — **봇 제외는 job-level `if` 로 해야 한다.**

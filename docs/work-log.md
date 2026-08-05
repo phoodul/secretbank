@@ -93,9 +93,66 @@ ignore(≥7)를 넣자 Dependabot 이 TS **6.0.3** 을 제안했고(`#135`) **6 
 auto-merge 됐다(`#134`). 08-03 에 download-proxy 를 고치면서 이 확장을 놓쳤다.
 → `ci.yml` 에 **`VS Code Extension (compile)`** 잡 신설(`npm ci` + `npm run compile`).
 
+### 2차 보고 — "CLA 고쳤는데도 메일이 계속 쌓인다"
+
+사용자 재보고. **CLA 는 실제로 해결됐다**(당일 CLA 실패 0건). 남은 발생원을 다시
+집계(`gh run list` conclusion × workflow)하니 세 축이 나왔다:
+
+| 워크플로 | 당일 run | 성격 |
+| :-- | --: | :-- |
+| Domain Gate | 18 | `[labeled, synchronize]` → 대부분 skipped |
+| Claude Security Review | 18 | 동일 |
+| Claude PR Review | 18 | 동일 |
+| CodeQL / CI / CLA / auto-merge | 45 | 정상 동작 |
+
+**① skipped 도 run 이고 알림이다.** 세 워크플로는 job-level `if` 로 `claude-review`
+라벨이 붙은 PR 에서만 실행되는데, `synchronize` 때문에 **모든 PR 의 모든 push 마다
+run 이 생성되고 즉시 skip** 됐다. 하루 54 run = 전체의 절반 이상.
+→ `types: [labeled]` 로 축소(`efc7386`). 앞서 "skipped 는 무해"라 본 판단이 틀렸다.
+
+**② 내가 새 알림원을 만들었다.** 신설한 jetbrains CI 잡이 red 로 CI 실패 9건을 생산.
+→ 아래 참조.
+
+**③ repo watching — 이건 repo 파일로 못 막는다 (검색으로 확인).**
+GitHub 공식 우선순위: **"Watching" a repository overrides your Actions notification
+settings.** owner 는 자동 watching 이라 **성공·skipped run 까지 전부 메일**로 온다.
+당일 run 98건 + PR 10건. **계정 설정이라 코드로 해결 불가** → 사용자 조치 안내:
+- repo → Watch → **Custom** → Pull requests 해제
+- `github.com/settings/notifications` → System → Actions → "Only notify for failed workflows"
+- (①을 먼저 해야 ②가 적용된다 — watching 이 덮어쓰므로)
+
+**④ PR 생성량 자체** → `schedule: weekly → monthly` 7개 생태계 전부(사용자 승인).
+보안 업데이트는 schedule 과 무관하게 즉시 열리므로 안전성 손실 없음.
+
+### jetbrains-plugin — 사각지대를 메우자 원래부터 깨져 있었음이 드러남
+
+CI 잡 4회 실행, **매번 다른 원인**의 계단식 진행:
+
+1. `bundledPlugin("com.intellij.modules.platform")` — 플랫폼 **모듈**이라 해석 불가 → 제거
+2. `intellij-platform 2.18` 은 Gradle 9+, Gradle 9 는 Kotlin 2.x 요구 →
+   Gradle 9.6.1 + Kotlin 2.4.10 + JUnit 6.1.2 **세트** 업그레이드
+3. `instrumentationTools()` — 2.18 에서 제거된 API → 제거
+4. **소스 비호환(미해결)**: `GraphPanel.kt:83` onLoadEnd overrides nothing /
+   `Inspections.kt:51` 시그니처 불일치 → 실제 API 마이그레이션 필요
+
+**중요: 최근 업데이트 탓이 아니다.** 첫 실패가 업데이트 이전 상태(`2.1.0`)에서 났다 =
+**M22 클로즈 이후 계속 빌드 불가였고 CI 커버리지 0이라 아무도 몰랐다.**
+
+조치(`5c8b824`): CI 잡 **제거**(상시 red 는 알림 부채 — 같은 날 CLA 에서 배운 것) +
+`docs/task.md` 백로그 신설 + **gradle auto-merge 차단**(CI 게이트 없는 경로 보호) +
+Dependabot gradle 등록은 **유지**(취약점 탐지 목적 달성, `jackson 2.18.0 → 2.22.1` 성과).
+
+**순서 교훈: CI 잡 신설 → green 확인 → 필수 체크 승격 → 그 다음 Dependabot 등록.**
+이 순서를 어겨(등록과 잡 신설이 같은 커밋) `#141` 이 CI red 상태에서 auto-merge 됐고
+`intellij-platform 2.18.1` 이 유입돼 빌드가 더 깨졌다.
+
 ### 교훈
 - **"블로킹 아님"과 "무해함"은 다르다.** CLA 실패는 머지를 막지 않아 세 세션 연속
   "비게이트"로 넘어갔지만, **실패 자체가 알림을 만든다.** 상시 red 인 워크플로는 부채다.
+- **skipped 도 run 이고 알림이다.** 라벨 게이트 워크플로에 `synchronize` 를 걸면
+  전 PR 의 전 push 마다 빈 run 이 쌓인다.
+- **repo 설정으로 못 막는 알림이 있다.** watching 은 Actions 알림 설정을 덮어쓴다.
+  코드로 할 수 있는 일과 계정 설정을 구분해서 안내할 것.
 - **에러 N건이 원인 N개는 아니다.** typescript 판정에서 에러 4건을 보고 "채택 불가"로
   넘겼는데 실은 하나의 원인이었다. "ignore 로 덮기 전에 실제로 올려볼 것"을 같은 세션에
   규칙으로 적어놓고도 첫 판정에서 어겼다.
