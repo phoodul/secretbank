@@ -15,7 +15,7 @@
   "dependencies": {
     "@simplewebauthn/server": "^14.0.2",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.34",
+    "hono": "^4.13.7",
     "jose": "^6.2.12"
   },
   "devDependencies": {
