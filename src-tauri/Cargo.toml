@@ -55,7 +55,7 @@ hmac = "0.12"
 subtle = "2.6"
 
 # Async trait support
-async-trait = "0.1"
+async-trait = "0.1.92"  # 0.1.92 부터 생성 코드의 #[must_use] 제거 — clippy 1.99 double_must_use 회피
 
 # Graph
 petgraph = "0.8"

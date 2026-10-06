@@ -12,10 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
+      - name: Install Rust (rust-toolchain.toml 에 핀된 버전)
+        # stable 을 떠다니게 두면 새 clippy lint 가 모든 PR 을 한꺼번에 red 로 만든다
+        # (2026-09 Rust 1.99 사고). rustup 이 repo 루트의 rust-toolchain.toml 을 읽어
+        # 그 버전과 components 를 설치한다.
+        run: |
+          rustup toolchain install
+          rustup show active-toolchain
 
       # Tauri / wry 가 link 하는 Linux native libraries.
       # 없으면 glib-sys / webkit2gtk-sys 가 pkg-config 단계에서 fail.

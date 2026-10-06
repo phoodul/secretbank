@@ -2,7 +2,7 @@
 //!
 //! # Single-credential flow
 //!
-//! 1. `kill_switch_request_confirm(cred_id)` — validates the credential exists,
+//! 1. `kill.ok_or(KillSwitchError::InvalidToken)?switch_request_confirm(cred_id)` — validates the credential exists,
 //!    issues a 16-byte random hex token with a 5-minute TTL, and returns it.
 //! 2. `kill_switch_revoke(cred_id, token, also_delete_value)` — consumes the
 //!    token, updates credential status to `Revoked`, optionally deletes the
@@ -155,29 +155,29 @@ impl IssuerConfirmTokenStore {
         hex
     }
 
-    /// Returns `Ok(issuer_id)` if token is valid, `Err` otherwise.
+    /// Returns `Some(issuer_id)` if token is valid, `None` otherwise.
     ///
     /// Wrong-issuer-id mismatch does NOT consume the token.
-    pub async fn consume(&self, token: &str, issuer_id: &IssuerId) -> Result<IssuerId, ()> {
+    pub async fn consume(&self, token: &str, issuer_id: &IssuerId) -> Option<IssuerId> {
         let mut guard = self.inner.lock().await;
 
         let entry = match guard.get(token) {
             Some(e) => e.clone(),
-            None => return Err(()),
+            None => return None,
         };
 
         if entry.expires_at <= Instant::now() {
             guard.remove(token);
-            return Err(());
+            return None;
         }
 
         if &entry.issuer_id != issuer_id {
             // Leave entry — wrong issuer id doesn't burn the token.
-            return Err(());
+            return None;
         }
 
         guard.remove(token);
-        Ok(entry.issuer_id)
+        Some(entry.issuer_id)
     }
 }
 
@@ -492,7 +492,7 @@ pub async fn kill_switch_revoke_issuer(
         .issuer_kill_switch_tokens
         .consume(&input.token, &issuer_id)
         .await
-        .map_err(|_| KillSwitchError::InvalidToken)?;
+        .ok_or(KillSwitchError::InvalidToken)?;
 
     // 2. Fetch all *active* credentials for this issuer.
     //
@@ -847,12 +847,12 @@ mod tests {
 
         // First consume: valid
         let result = store.consume(&token, &issuer_id).await;
-        assert!(result.is_ok(), "first consume should succeed");
+        assert!(result.is_some(), "first consume should succeed");
         assert_eq!(result.unwrap(), issuer_id);
 
         // Second consume: one-shot, must fail
         let result2 = store.consume(&token, &issuer_id).await;
-        assert!(result2.is_err(), "second consume should fail (one-shot)");
+        assert!(result2.is_none(), "second consume should fail (one-shot)");
     }
 
     #[tokio::test]
@@ -865,13 +865,13 @@ mod tests {
 
         // Wrong issuer — must not consume
         assert!(
-            store.consume(&token, &issuer_b).await.is_err(),
-            "wrong issuer_id should return Err"
+            store.consume(&token, &issuer_b).await.is_none(),
+            "wrong issuer_id should return None"
         );
 
         // Correct issuer — must still work
         assert!(
-            store.consume(&token, &issuer_a).await.is_ok(),
+            store.consume(&token, &issuer_a).await.is_some(),
             "correct issuer_id should succeed after wrong-id attempt"
         );
     }

@@ -81,10 +81,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - name: Install Rust (rust-toolchain.toml 에 핀된 버전)
+        # CI 와 같은 toolchain 으로 빌드 — 떠다니는 stable 금지 (2026-10-06).
+        run: |
+          rustup toolchain install
+          rustup show active-toolchain
+
+      - name: Add macOS universal targets
+        if: matrix.platform == 'macos-latest'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Install Linux system deps
         if: matrix.platform == 'ubuntu-22.04'

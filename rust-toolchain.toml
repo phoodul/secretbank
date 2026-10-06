@@ -1,0 +1,10 @@
+# Rust toolchain 핀 (2026-10-06).
+# CI 는 그동안 dtolnay/rust-toolchain@stable 로 떠다니는 stable 을 써서, 2026-09 에
+# stable 이 1.99 로 올라가자 clippy 신규 lint(double_must_use, result_unit_err)가
+# -D warnings 와 만나 필수 체크가 PR 내용과 무관하게 전부 red 가 됐고 Dependabot
+# auto-merge 가 한 달간 멈췄다. Cargo.lock --locked 와 같은 이유(재현 가능 빌드)로
+# toolchain 도 핀한다. rustup 1.28.1+ 는 이 파일의 toolchain 을 자동 설치한다.
+# 올릴 때: channel 수정 → 로컬 clippy/test 통과 확인 → 커밋. (월간 감사 항목)
+[toolchain]
+channel = "1.99.0"
+components = ["rustfmt", "clippy"]
