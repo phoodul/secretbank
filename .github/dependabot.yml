@@ -94,6 +94,19 @@ updates:
         update-types: ["minor", "patch"]
       npm-major:
         update-types: ["major"]
+    ignore:
+      # typescript 7 은 typescript-eslint(8.71 현재 peer ">=4.8.4 <6.1.0")가 거부한다 —
+      # `pnpm lint` 가 "typescript-eslint does not support TS 7.0" 으로 즉시 종료.
+      # 재검토 트리거: typescript-eslint 가 TS 7 peer 를 열 때. (2026-10-06 실측)
+      - dependency-name: "typescript"
+        versions: [">=7.0.0"]
+      # eslint 10 은 eslint-plugin-react 7.37.5(최신)가 context.getFilename 을 호출해
+      # "contextOrFilename.getFilename is not a function" 으로 크래시. 플러그인 peer 가
+      # ^9.7 까지. 재검토 트리거: eslint-plugin-react 가 eslint 10 peer 지원. (2026-10-06 실측)
+      - dependency-name: "eslint"
+        versions: [">=10.0.0"]
+      - dependency-name: "@eslint/js"
+        versions: [">=10.0.0"]
 
   # --- npm: EE Cloudflare Worker relay (독립 pnpm 프로젝트) ---
   #
@@ -119,6 +132,12 @@ updates:
         update-types: ["minor", "patch"]
       relay-major:
         update-types: ["major"]
+    ignore:
+      # vitest 5 는 @cloudflare/vitest-pool-workers(0.22 현재 peer vitest ^4.1.0)가 거부.
+      # 재검토 트리거: vitest-pool-workers 가 vitest 5 peer 지원. (2026-10-06 실측 —
+      # vite 8 / typescript 7 / jose 6 / simplewebauthn 14 는 같은 날 채택됨)
+      - dependency-name: "vitest"
+        versions: [">=5.0.0"]
 
   # --- npm: EE download-proxy (독립 pnpm 프로젝트) ---
   - package-ecosystem: "npm"
@@ -136,6 +155,12 @@ updates:
         update-types: ["minor", "patch"]
       download-proxy-major:
         update-types: ["major"]
+    ignore:
+      # vitest 5 는 @cloudflare/vitest-pool-workers(0.22 현재 peer vitest ^4.1.0)가 거부.
+      # 재검토 트리거: vitest-pool-workers 가 vitest 5 peer 지원. (2026-10-06 실측 —
+      # vite 8 / typescript 7 / jose 6 / simplewebauthn 14 는 같은 날 채택됨)
+      - dependency-name: "vitest"
+        versions: [">=5.0.0"]
 
   # --- npm: VS Code 확장 (자체 package-lock.json) ---
   - package-ecosystem: "npm"
