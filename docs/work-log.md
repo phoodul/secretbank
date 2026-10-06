@@ -1,5 +1,45 @@
 # Work Log
 
+## 2026-10-06 — Dependabot 3차 폭증: 원인은 설정이 아니라 환경 drift 2건 (pnpm 11 · Rust 1.99)
+
+### 배경
+사용자: "dependabot 이 다량 발생했어. 앞으로 없게 할 수 없을까? 원인 확인해줘." 8월 5일 이후 push 가
+없었는데 9월부터 auto-merge 가 전부 멈춰 PR 12건이 쌓였고, 10월 1일 월간 배치 + 9월 29일 undici GHSA
+6건 동시 공개(×lock 3 = 알림 18건) + 실패한 Dependabot 보안 잡 12건이 겹쳤다. 열린 보안 알림 43건.
+
+### 진단 — PR 12건 전부에 공통으로 실패하는 필수 체크부터 찾았다
+1. **Rust 1.99 clippy** — CI 가 `dtolnay/rust-toolchain@stable` 이라 9월 stable 승격 때 `double_must_use`
+   (async-trait 0.1.91 생성 코드 8건) 이 `-D warnings` 에 걸려 필수 체크 red. main 은 8/10 이후 run 이 없어
+   겉으로만 green. 로컬 rustc 1.95 라 재현 불가 → 1.99.0 toolchain 을 병행 설치해 확인.
+2. **Dependabot 기본 pnpm = 11(실제 latest 12)** — 잡 로그 `[WARN] The "pnpm" field in package.json is no
+   longer read ... "pnpm.overrides"`. lockfile 의 `overrides:` 헤더를 지운 PR 을 만들어 CI `--frozen-lockfile` 이
+   `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`. 9/10 이후 pnpm 생태계 PR 전부 구조적 red + 보안 override 무력화.
+3. **undici 는 ee 에서 구조적으로 못 고침** — miniflare 4.20260722 가 7.28.0 exact 핀. wrangler 4.147 로 풀림.
+4. major 그룹 5개가 매달 supersede(close + 재오픈) 되며 알림 2배.
+
+### 처리 (main 직접 push 4건 → auto-merge 즉시 복구, PR #162 로 major 정리)
+- `b86507e` overrides → `pnpm-workspace.yaml` 이동(3곳) + `packageManager: pnpm@10.33.0` 핀 + 워크플로
+  `pnpm/action-setup` version 입력 제거 + ee 잡/deploy 의 `--ignore-workspace` 제거(그 플래그는 workspace 파일
+  자체를 건너뛰어 overrides 미적용 — 로컬 재현).
+- `76fa324` ee wrangler 4.118 → 4.147 (relay 71 · proxy 14 통과; deploy-relay 자동 배포 success).
+- `c427e2d` `rust-toolchain.toml` 1.99.0 핀(ci.yml/release.yml 은 rustup 자동 설치) + async-trait 0.1.92 +
+  `IssuerConfirmTokenStore::consume` → `Option`. clippy 0 · test 838.
+- `6e3cba9` transitive override: undici <7.29.1 · js-yaml <4.3.2 · browserslist <4.28.7 ·
+  baseline-browser-mapping <2.11 · nanoid <3.3.18 · (ee) sharp <0.35.4 · undici <7.29.1.
+- push 직후 Dependabot 이 전 PR rebase → **#160/#146/#151/#152/#153 auto-merge 복구 확인**, #159/#150/#154/#155/#157
+  은 "updatable in another way" 로 자동 close. 보안 알림 43 → 12(남은 것은 PR #162 가 닫음).
+- **PR #162 (major 정리)**: ee(vite 8 · TS 7 · jose 6 · simplewebauthn 14) / npm(vite 8 · vitest 5 · jsdom 30 ·
+  jest-dom 7 · motion 13 · simplewebauthn 14 · plugin-react 6 · TS 6) / cargo(age 0.12 · dalek 3 · argon2 0.6 ·
+  base64 0.23 · dirs 7 · rustls 0.23.45). 거부 3건은 ignore 에 사유 기록: TS 7(typescript-eslint peer <6.1),
+  eslint 10(eslint-plugin-react 크래시), ee vitest 5(vitest-pool-workers peer ^4.1).
+  PR CI 에서 extension 테스트 잡만 red — jsdom 30 의 undici 8 이 Node ≥22.10 의 `markAsUncloneable` 을 쓰는데
+  extension 워크플로만 Node 20 이었다 → 22 로 통일(`fa02004`). 로컬(Node 24)에선 재현되지 않던 차이.
+
+### 교훈
+- "Dependabot 이 갑자기 다량" = 설정이 아니라 **환경 drift** 를 먼저 의심. 열린 PR 의 statusCheckRollup 에서
+  모든 PR 에 공통으로 실패하는 필수 체크를 찾고, Dependabot 잡 로그의 WARN 줄을 읽는다.
+- 떠다니는 toolchain(`@stable`, 기본 pnpm) 은 언젠가 모든 PR 을 한꺼번에 red 로 만든다 → 핀.
+- age 0.11 → 0.12: 포맷 변경 없음이나 **기존 볼트 파일 교차 검증은 자동 테스트에 없다** → 다음 dogfooding 항목.
 ## 2026-08-04 — "끝없는 Dependabot 메시지"의 진짜 발생원 = CLA Assistant (3.5개월 상시 실패)
 
 ### 배경

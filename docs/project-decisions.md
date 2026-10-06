@@ -3168,3 +3168,43 @@ auto-merge 됐고 `intellij-platform 2.18.1` 이 유입돼 빌드가 더 깨졌�
 **단서:** 08-06 이후 0건은 구조적 차단(라벨 게이트·CLA)과 **활동 부재**(monthly 전환으로
 다음 배치는 9월, 그 사이 push 없음)가 함께 작용한 결과다. **9월 배치나 다음 push 때
 watching 상태라면 성공 run 알림이 다시 올 수 있으므로 결정 3의 사용자 조치는 여전히 유효하다.**
+
+## 2026-10-06 — Dependabot 3차 폭증의 원인은 설정이 아니라 **환경 drift 2건** (pnpm 11 · Rust 1.99)
+
+사용자 "dependabot 이 다량 발생했어. 원인 확인 + 앞으로 없게". 8월 5일 이후 push 가 없었는데도 9월부터
+Dependabot auto-merge 가 전부 멈춰 PR 12건이 쌓였고, 9월 29일 undici GHSA 6건 동시 공개로 알림 18건이 겹쳤다.
+
+- **결정 1 — `pnpm.overrides` 의 위치는 `pnpm-workspace.yaml` 이다 (package.json#pnpm 금지).**
+  - 이유: Dependabot 기본 pnpm 이 11(실제 latest 12.9)로 올라가 `package.json#pnpm` 필드를 읽지 않는다
+    (잡 로그 `[WARN] The "pnpm" field in package.json is no longer read by pnpm ... "pnpm.overrides"`).
+    그 결과 Dependabot 이 만든 lockfile 에서 `overrides:` 헤더가 사라져 CI `--frozen-lockfile` 이
+    `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH` — **9월 10일 이후 pnpm 생태계 PR 전부가 구조적 red**. 더 나쁜 점은
+    8월에 넣은 esbuild/undici/sharp 보안 override 가 그 lockfile 에서는 조용히 무력화된다는 것.
+  - `pnpm-workspace.yaml` 은 pnpm 10·11·12 가 모두 읽는 유일한 위치.
+- **결정 2 — `packageManager: pnpm@10.33.0` 을 세 package.json 에 핀.** pnpm ≥10 바이너리는 이 필드를 보고
+  자동으로 그 버전으로 전환한다(로컬 재현: `npx pnpm@11` 이 10.33.0 으로 실행됨) → Dependabot·CI·로컬 동일 버전.
+  워크플로의 `pnpm/action-setup` `version:` 입력은 전부 제거(필드와 충돌 시 에러).
+- **결정 3 — ee 잡/deploy 의 `--ignore-workspace` 제거.** 그 플래그는 `pnpm-workspace.yaml` 자체를 건너뛰어
+  overrides 를 못 읽는다(로컬 재현: 플래그 있으면 mismatch, 없으면 통과). ee 는 2026-08-03 부터 자체
+  workspace 루트이므로 플래그 없이 자기 lockfile 만 쓴다. **[[ee_standalone_pnpm]] 의 "`--ignore-workspace` 로만
+  install" 규칙은 폐기** — 디렉터리 진입 후 플래그 없이 `pnpm install`.
+- **결정 4 — Rust toolchain 을 `rust-toolchain.toml` 로 핀 (1.99.0).** CI 가 `dtolnay/rust-toolchain@stable` 로
+  떠다니는 stable 을 쓰다 9월 stable 1.99 승격 때 clippy 신규 lint(`double_must_use` ×8 — async-trait 0.1.91 생성
+  코드, `result_unit_err` ×1)가 `-D warnings` 와 만나 **필수 체크가 PR 내용과 무관하게 전부 red**. main 은 8월 10일
+  이후 run 이 없어 겉으로만 green 이었다. Cargo.lock `--locked` 와 같은 재현 가능 빌드 원칙으로 toolchain 도
+  핀한다. 올릴 때는 channel 수정 → 로컬 clippy/test → 커밋(월간 감사 항목). dtolnay 액션은 `rustup default` 만
+  설정하므로 파일이 우선하나, 혼동을 없애기 위해 ci.yml/release.yml 모두 `rustup toolchain install`(파일 자동
+  설치)로 교체.
+  - 코드 대응: async-trait 0.1.92(생성 코드의 `#[must_use]` 제거) + `IssuerConfirmTokenStore::consume` 을
+    `Result<_, ()>` → `Option<IssuerId>` 로.
+- **결정 5 — ee `wrangler` override 4.118 → 4.147.** miniflare 4.20260722 가 undici 7.28.0 / sharp 0.35.2 를 exact
+  핀해 Dependabot 보안 잡이 12회 "7.28.0 이 최대" 로 실패. wrangler 4.147 → miniflare 5.20261001 → undici 7.29.1 /
+  sharp 0.35.4. 단 `@cloudflare/vitest-pool-workers` 0.19 가 구 miniflare 를 별도로 끌고 오므로 ee 에
+  `undici@<7.29.1`·`sharp@<0.35.4` override 도 함께.
+- **결정 6 — 루트 transitive 알림은 override 로 닫는다**(Dependabot 의 pnpm transitive 보안 업데이트는 "현재 버전이
+  최대" 로 상시 실패): undici <7.29.1 · js-yaml <4.3.2 · browserslist <4.28.7 · baseline-browser-mapping <2.11.0 ·
+  nanoid <3.3.18(런타임, postcss 경유).
+- **진단 규칙(재발 시):** "Dependabot 이 갑자기 다량" → 열린 PR 의 statusCheckRollup 에서 **모든 PR 에 공통으로
+  실패하는 필수 체크**부터 찾는다(PR 내용과 무관한 실패 = 환경 drift). 그 다음 Dependabot 잡 로그의 `WARN` 줄.
+- 영향: patch/minor PR 은 rebase 후 auto-merge 재개. 보안 알림 43건 중 override/wrangler 로 닫히는 것이 대부분.
+  major 그룹 5개(cargo/npm/relay/download-proxy/actions)는 별도 검토(같은 날 후속).

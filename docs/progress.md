@@ -2,6 +2,12 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-10-06 — **Dependabot 3차 폭증 = 환경 drift 2건(pnpm 11 · Rust 1.99) 제거 + major 그룹 정리(PR #162)**. 사용자 "dependabot 이 다량 발생했어. 앞으로 없게 할 수 없을까?".
+  - **원인은 설정이 아니었다.** ① Dependabot 기본 pnpm 11 이 `package.json#pnpm.overrides` 를 무시 → lock `overrides:` 헤더 삭제 → `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`(9/10 이후 pnpm PR 전부). ② stable 1.99 clippy `double_must_use`(async-trait 0.1.91) → 필수 Rust 체크 전부 red. 둘이 합쳐 9월부터 auto-merge 0건, PR 12건 적체 + 9/29 undici GHSA 6건×3 lock.
+  - **처리 (main push 4건):** overrides → `pnpm-workspace.yaml` + `packageManager` 핀 + `--ignore-workspace` 제거(`b86507e`) · wrangler 4.147(`76fa324`) · `rust-toolchain.toml` 1.99.0 + async-trait 0.1.92(`c427e2d`) · transitive override 7종(`6e3cba9`). **push 직후 Dependabot 5건 auto-merge 복구 실측**(#160/#146/#151/#152/#153). 알림 43 → 12.
+  - **major 정리 PR #162:** ee/npm/cargo 세 그룹 실측 채택(age 0.12 · dalek 3 · vite 8 · vitest 5 · TS 6/7 등) + 거부 3건 ignore(TS 7 · eslint 10 · ee vitest 5). 머지 후 열린 major PR 은 #144(setup-node 7, CI 로 검증) · #156(jetbrains, 빌드 불가 백로그) 만 남는다.
+  - **다음 dogfooding 확인 항목:** age 0.11 로 쓴 기존 볼트 파일을 0.12 빌드로 unlock + Charter recovery (자동 테스트 미포함).
+  - 결정 기록: `docs/project-decisions.md` 2026-10-06 항목(6건). 메모리: `dependabot_pnpm11_rust199`, `ee_standalone_pnpm` 갱신.
 - **Time:** 2026-08-05 (연속) — **알림 폭탄 2차 대응: 남은 발생원 3축 제거 + jetbrains 백로그화**. 사용자 재보고 "CLA 고쳤는데도 메일이 계속 쌓인다".
   - **CLA 는 실제로 해결됨**(당일 CLA 실패 0건). 재집계(`gh run list` conclusion × workflow)로 남은 축 특정.
   - **① skipped 도 run 이고 알림이다** — Domain Gate / Claude PR Review / Claude Security Review 3종이 `[labeled, synchronize]` 라 **모든 PR 의 모든 push 마다 run 생성 후 즉시 skip**. 하루 **54 run = 전체의 절반 이상**. → `types: [labeled]` 로 축소(`efc7386`). 앞선 "skipped 는 무해" 판단이 틀렸다.
