@@ -19,6 +19,7 @@
 
 use hkdf::Hkdf;
 use rand::rngs::OsRng;
+use rand::RngCore;
 use secrecy::SecretBox;
 use sha2::Sha256;
 use x25519_dalek::{PublicKey, StaticSecret};
@@ -44,7 +45,12 @@ pub struct PairingKeypair {
 /// ECDH (after waiting for joiner's pubkey) awkward. The "ephemeral" property
 /// is upheld by callers discarding the keypair after one pairing exchange.
 pub fn generate_keypair() -> PairingKeypair {
-    let secret = StaticSecret::random_from_rng(OsRng);
+    // x25519-dalek 3 은 rand_core 0.10 의 CryptoRng 를 요구해 rand 0.8 의 OsRng 를
+    // 직접 넘길 수 없다. 32B 를 OsRng 로 채운 뒤 From<[u8; 32]> (clamping 포함) 로 만든다.
+    let mut seed = [0u8; 32];
+    OsRng.fill_bytes(&mut seed);
+    let secret = StaticSecret::from(seed);
+    seed.zeroize();
     let pubkey = PublicKey::from(&secret);
     let pub_bytes = *pubkey.as_bytes();
     let priv_bytes: [u8; 32] = secret.to_bytes();
@@ -71,10 +77,10 @@ pub fn derive_channel_key(
 ) -> Result<SecretBox<[u8; 32]>, KdfError> {
     use secrecy::ExposeSecret as _;
     let priv_arr: [u8; 32] = *local_priv.expose_secret();
-    let mut secret = StaticSecret::from(priv_arr);
+    let secret = StaticSecret::from(priv_arr);
     let peer = PublicKey::from(*peer_pub);
     let shared = secret.diffie_hellman(&peer);
-    secret.zeroize();
+    drop(secret); // StaticSecret: ZeroizeOnDrop
 
     let mut shared_bytes: [u8; 32] = *shared.as_bytes();
     let hkdf = Hkdf::<Sha256>::new(None, &shared_bytes);

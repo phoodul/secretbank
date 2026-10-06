@@ -18,7 +18,8 @@
 use std::sync::Arc;
 
 use ed25519_dalek::SigningKey;
-use rand_core::OsRng;
+use rand_core::{OsRng, RngCore};
+use secrecy::zeroize::Zeroize;
 use secretbank_core::{DeviceId, DeviceInput, DevicePlatform};
 use secretbank_storage::sqlite::{repositories::device::DeviceRepo, SqlitePool};
 use secretbank_storage::vault::{ExposeSecret, SecretBytes, VaultError, VaultStorage};
@@ -198,7 +199,12 @@ pub async fn ensure_device_keys(
     }
 
     // First-run (or post-wipe) path: generate + persist
-    let signing_key = SigningKey::generate(&mut OsRng);
+    // ed25519-dalek 3 은 rand_core 0.10 의 CryptoRng 를 요구해 rand_core 0.6 의 OsRng 를
+    // 넘길 수 없다. 32B seed 를 OsRng 로 채운 뒤 from_bytes 로 만든다 (generate 와 동일 구성).
+    let mut seed = [0u8; 32];
+    OsRng.fill_bytes(&mut seed);
+    let signing_key = SigningKey::from_bytes(&seed);
+    seed.zeroize();
     let verifying_bytes = signing_key.verifying_key().to_bytes().to_vec();
 
     let repo = DeviceRepo::new(pool);
