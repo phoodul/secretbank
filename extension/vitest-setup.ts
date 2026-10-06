@@ -1,5 +1,5 @@
 // Vitest 테스트 셋업 — extension/ 전용
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // ── chrome / browser API mock (WXT 빌드 없는 Vitest 환경) ───────────────────
 //

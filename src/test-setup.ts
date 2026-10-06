@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Radix UI Pointer Events polyfill for jsdom
 // Radix Select/DropdownMenu 등이 포인터 캡처 API를 사용하는데 jsdom이 미구현

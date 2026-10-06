@@ -13,7 +13,7 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "types": ["vitest/globals", "@testing-library/jest-dom", "chrome"]
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest", "chrome"]
   },
   "include": [
     "entrypoints/**/*.ts",
@@ -30,7 +30,8 @@
     "playwright.config.ts",
     "tests/e2e/**/*.ts",
     "tests/web-ext/**/*.ts",
-    ".wxt/types/imports.d.ts"
+    ".wxt/types/imports.d.ts",
+    "env.d.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }
