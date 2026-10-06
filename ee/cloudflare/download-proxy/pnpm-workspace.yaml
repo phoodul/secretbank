@@ -6,7 +6,7 @@ packages:
 # lockfile 에서 overrides: 헤더가 사라져 CI --frozen-lockfile 이 깨진다(2026-10-06 진단).
 # pnpm 10 과 11 이 모두 읽는 위치는 이 파일뿐이다.
 overrides:
-  wrangler: ^4.118.0
+  wrangler: ^4.147.0
   vite: ^6.4.3
   esbuild: ">=0.28.1"
   "sharp@<0.35.0": ^0.35.0
