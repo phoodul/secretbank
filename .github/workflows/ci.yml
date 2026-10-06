@@ -59,9 +59,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6.0.9
-        with:
-          version: 10
+        uses: pnpm/action-setup@v6.0.9 # 버전은 package.json#packageManager 에서 읽는다
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -92,9 +90,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6.0.9
-        with:
-          version: 10
+        uses: pnpm/action-setup@v6.0.9 # 버전은 package.json#packageManager 에서 읽는다
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -135,9 +131,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6.0.9
-        with:
-          version: 9
+      - uses: pnpm/action-setup@v6.0.9 # 버전은 package.json#packageManager 에서 읽는다
 
       - uses: actions/setup-node@v6
         with:
@@ -146,11 +140,10 @@ jobs:
           cache-dependency-path: ee/secretbank-relay/pnpm-lock.yaml
 
       - name: Install dependencies
-        # ee/secretbank-relay 는 root pnpm-workspace.yaml 멤버가 아니므로
-        # --ignore-workspace 로 자체 pnpm-lock.yaml 만 사용. (workspace install
-        # 시 멤버 미등록으로 ee 자체 dependencies 가 hoist 되지 않아 typecheck
-        # 의 @cloudflare/workers-types 등을 찾지 못한다.)
-        run: pnpm install --frozen-lockfile --ignore-workspace
+        # ee/secretbank-relay 는 자체 pnpm-workspace.yaml 을 가진 독립 workspace 루트다.
+        # --ignore-workspace 를 쓰면 pnpm 이 그 파일(overrides 포함)을 건너뛰어
+        # ERR_PNPM_LOCKFILE_CONFIG_MISMATCH 가 난다(2026-10-06). 플래그 없이 설치한다.
+        run: pnpm install --frozen-lockfile
 
       - name: Type check
         run: pnpm typecheck
@@ -171,9 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6.0.9
-        with:
-          version: 9
+      - uses: pnpm/action-setup@v6.0.9 # 버전은 package.json#packageManager 에서 읽는다
 
       - uses: actions/setup-node@v6
         with:
@@ -182,7 +173,8 @@ jobs:
           cache-dependency-path: ee/cloudflare/download-proxy/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-workspace
+        # 자체 pnpm-workspace.yaml(overrides 포함)을 읽어야 하므로 --ignore-workspace 금지.
+        run: pnpm install --frozen-lockfile
 
       - name: Type check
         run: pnpm typecheck

@@ -22,9 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6.0.9
-        with:
-          version: 9
+      - uses: pnpm/action-setup@v6.0.9 # 버전은 package.json#packageManager 에서 읽는다
 
       - uses: actions/setup-node@v6
         with:
@@ -33,11 +31,10 @@ jobs:
           cache-dependency-path: ee/secretbank-relay/pnpm-lock.yaml
 
       - name: Install dependencies
-        # --ignore-workspace: ee/secretbank-relay 는 root pnpm-workspace.yaml
-        # (., extension, packages/*) 외부. 이 flag 없이 install 하면 pnpm 이
-        # root workspace 만 인식 → ee/secretbank-relay/node_modules 가 빈 채로
-        # typecheck 가 @cloudflare/workers-types 못 찾음.
-        run: pnpm install --frozen-lockfile --ignore-workspace
+        # ee/secretbank-relay 는 자체 pnpm-workspace.yaml 을 가진 독립 workspace 루트다
+        # (root workspace 멤버가 아님). --ignore-workspace 를 쓰면 그 파일의 overrides 를
+        # 건너뛰어 ERR_PNPM_LOCKFILE_CONFIG_MISMATCH 가 나므로 플래그 없이 설치한다.
+        run: pnpm install --frozen-lockfile
 
       - name: Type check
         run: pnpm typecheck
@@ -60,9 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6.0.9
-        with:
-          version: 9
+      - uses: pnpm/action-setup@v6.0.9 # 버전은 package.json#packageManager 에서 읽는다
 
       - uses: actions/setup-node@v6
         with:
@@ -71,11 +66,10 @@ jobs:
           cache-dependency-path: ee/secretbank-relay/pnpm-lock.yaml
 
       - name: Install dependencies
-        # --ignore-workspace: ee/secretbank-relay 는 root pnpm-workspace.yaml
-        # (., extension, packages/*) 외부. 이 flag 없이 install 하면 pnpm 이
-        # root workspace 만 인식 → ee/secretbank-relay/node_modules 가 빈 채로
-        # typecheck 가 @cloudflare/workers-types 못 찾음.
-        run: pnpm install --frozen-lockfile --ignore-workspace
+        # ee/secretbank-relay 는 자체 pnpm-workspace.yaml 을 가진 독립 workspace 루트다
+        # (root workspace 멤버가 아님). --ignore-workspace 를 쓰면 그 파일의 overrides 를
+        # 건너뛰어 ERR_PNPM_LOCKFILE_CONFIG_MISMATCH 가 나므로 플래그 없이 설치한다.
+        run: pnpm install --frozen-lockfile
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v4

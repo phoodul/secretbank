@@ -102,8 +102,8 @@ updates:
   # 하위 디렉터리 pnpm 실행 스코프가 루트로 잡히는 것이었다. 각 프로젝트에
   # **자체 pnpm-workspace.yaml 을 두어 workspace 루트 경계를 만들면** 플래그 없이도
   # 자기 lockfile 만 갱신되므로(재현 검증 완료) Dependabot 이 lockfile 포함 PR 을
-  # 열 수 있다. → 다시 등록. `--ignore-workspace` 는 여전히 동작하므로 기존
-  # deploy 워크플로는 무영향.
+  # 열 수 있다. → 다시 등록. (2026-10-06: overrides 가 pnpm-workspace.yaml 로 이동하면서
+  # `--ignore-workspace` 는 overrides 를 건너뛰므로 CI/deploy 에서 제거됨.)
   - package-ecosystem: "npm"
     directory: "/ee/secretbank-relay"
     schedule:
