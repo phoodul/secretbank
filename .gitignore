@@ -103,3 +103,6 @@ logo_image/
 # dogfooding 용 평문 vault export (절대 커밋 금지 — 실제 비밀번호 포함)
 1PasswordExport-*.csv
 *-export-*.csv
+
+# JetBrains Gradle IntelliJ Platform 캐시 (jetbrains-plugin/.gradle 과 동류)
+jetbrains-plugin/.intellijPlatform/

@@ -7,6 +7,8 @@
   - A `security_update_not_possible`(transitive, 수동 override 로 이미 해결) / B `ERR_PNPM_NO_MATURE_MATCHING_VERSION` — pnpm 10 이 lockfile 의 5일 미만 버전(#162 에서 직접 채택)을 cooldown 게이트로 거부. pnpm ≥ 11.3 만 trustLockfile 을 받는다(dependabot-core 소스 확인).
   - 처리: `packageManager` 3곳 11.28.5 + pnpm 11 `strictDepBuilds` 대응 `allowBuilds`(esbuild/workerd false) 3곳. lockfile 무변경. 결정: `docs/project-decisions.md` 2026-10-11.
   - **실측 대기:** 11월 월간 배치 또는 다음 보안 알림 때 Dependabot Updates 실패 0건 확인. 12 전환은 그 후 재검토.
+  - **push `cad7ad1` CI 실측:** 필수 체크 6개 + CodeQL + Extension CI + Deploy Relay 전부 success. E2E Chromium MV3 failure 는 8/2 이후 상시 실패하는 continue-on-error mute 항목(이번 변경 무관).
+  - **다음 세션 후보:** ① PR #163(cargo-major: age 0.12 계열) 검토·머지 + 기존 볼트(age 0.11) unlock · Charter recovery 수동 검증 ② pre19 installer dogfooding ③ M24 Phase 3-A-6(BentoCard 통합 + i18n 4 로케일).
 - **Time:** 2026-10-06 — **Dependabot 3차 폭증 = 환경 drift 2건(pnpm 11 · Rust 1.99) 제거 + major 그룹 정리(PR #162)**. 사용자 "dependabot 이 다량 발생했어. 앞으로 없게 할 수 없을까?".
   - **원인은 설정이 아니었다.** ① Dependabot 기본 pnpm 11 이 `package.json#pnpm.overrides` 를 무시 → lock `overrides:` 헤더 삭제 → `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`(9/10 이후 pnpm PR 전부). ② stable 1.99 clippy `double_must_use`(async-trait 0.1.91) → 필수 Rust 체크 전부 red. 둘이 합쳐 9월부터 auto-merge 0건, PR 12건 적체 + 9/29 undici GHSA 6건×3 lock.
   - **처리 (main push 4건):** overrides → `pnpm-workspace.yaml` + `packageManager` 핀 + `--ignore-workspace` 제거(`b86507e`) · wrangler 4.147(`76fa324`) · `rust-toolchain.toml` 1.99.0 + async-trait 0.1.92(`c427e2d`) · transitive override 7종(`6e3cba9`). **push 직후 Dependabot 5건 auto-merge 복구 실측**(#160/#146/#151/#152/#153). 알림 43 → 12.
