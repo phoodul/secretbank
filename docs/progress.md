@@ -2,6 +2,11 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-10-11 — **10/6~7 Dependabot 실패 알림 26건 진단 → `packageManager` pnpm 11.28.5 전환**. 사용자 "dependabot 이 10월 6일과 7일에 걸쳐서 나왔어".
+  - 실체는 PR 이 아니라 `Dependabot Updates` 워크플로 실패 알림(52 run 중 26 실패, 10/7 이후 0건). 발생원 = 10/6 main push 4회 × 보안 잡 재실행 + PR #162 recreate.
+  - A `security_update_not_possible`(transitive, 수동 override 로 이미 해결) / B `ERR_PNPM_NO_MATURE_MATCHING_VERSION` — pnpm 10 이 lockfile 의 5일 미만 버전(#162 에서 직접 채택)을 cooldown 게이트로 거부. pnpm ≥ 11.3 만 trustLockfile 을 받는다(dependabot-core 소스 확인).
+  - 처리: `packageManager` 3곳 11.28.5 + pnpm 11 `strictDepBuilds` 대응 `allowBuilds`(esbuild/workerd false) 3곳. lockfile 무변경. 결정: `docs/project-decisions.md` 2026-10-11.
+  - **실측 대기:** 11월 월간 배치 또는 다음 보안 알림 때 Dependabot Updates 실패 0건 확인. 12 전환은 그 후 재검토.
 - **Time:** 2026-10-06 — **Dependabot 3차 폭증 = 환경 drift 2건(pnpm 11 · Rust 1.99) 제거 + major 그룹 정리(PR #162)**. 사용자 "dependabot 이 다량 발생했어. 앞으로 없게 할 수 없을까?".
   - **원인은 설정이 아니었다.** ① Dependabot 기본 pnpm 11 이 `package.json#pnpm.overrides` 를 무시 → lock `overrides:` 헤더 삭제 → `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`(9/10 이후 pnpm PR 전부). ② stable 1.99 clippy `double_must_use`(async-trait 0.1.91) → 필수 Rust 체크 전부 red. 둘이 합쳐 9월부터 auto-merge 0건, PR 12건 적체 + 9/29 undici GHSA 6건×3 lock.
   - **처리 (main push 4건):** overrides → `pnpm-workspace.yaml` + `packageManager` 핀 + `--ignore-workspace` 제거(`b86507e`) · wrangler 4.147(`76fa324`) · `rust-toolchain.toml` 1.99.0 + async-trait 0.1.92(`c427e2d`) · transitive override 7종(`6e3cba9`). **push 직후 Dependabot 5건 auto-merge 복구 실측**(#160/#146/#151/#152/#153). 알림 43 → 12.

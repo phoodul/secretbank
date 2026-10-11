@@ -11,3 +11,10 @@ overrides:
   esbuild: ">=0.28.1"
   "sharp@<0.35.5": ^0.35.5
   "undici@<7.29.1": ^7.29.1
+
+# pnpm 11 부터 strictDepBuilds 가 기본 true 라 승인 안 된 build script 는 경고가 아니라
+# ERR_PNPM_IGNORED_BUILDS 로 install 자체가 실패한다. pnpm 10 에서도 아래 스크립트는
+# 실행되지 않은 채(경고만) 동작했으므로 false = 종전과 동일한 동작이다(2026-10-11).
+allowBuilds:
+  esbuild: false
+  workerd: false

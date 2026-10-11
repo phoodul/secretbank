@@ -3208,3 +3208,29 @@ Dependabot auto-merge 가 전부 멈춰 PR 12건이 쌓였고, 9월 29일 undici
   실패하는 필수 체크**부터 찾는다(PR 내용과 무관한 실패 = 환경 drift). 그 다음 Dependabot 잡 로그의 `WARN` 줄.
 - 영향: patch/minor PR 은 rebase 후 auto-merge 재개. 보안 알림 43건 중 override/wrangler 로 닫히는 것이 대부분.
   major 그룹 5개(cargo/npm/relay/download-proxy/actions)는 별도 검토(같은 날 후속).
+
+## 2026-10-11 — `packageManager` 핀을 pnpm 10.33.0 → **11.28.5** 로 전환 (Dependabot release-age 실패 제거)
+
+10월 6일 18:32 ~ 7일 06:40 KST 에 `Dependabot Updates` 워크플로 52 run 중 26 실패 → 실패 알림 메일.
+PR 은 3건뿐이었고 10월 7일 이후 run 0건. 발생원은 그날의 main push 4회(보안 잡 재실행) + PR #162 머지.
+
+- 결정 1 — **세 package.json 의 `packageManager` 를 `pnpm@11.28.5` 로 핀.** (루트 · ee/secretbank-relay · ee/cloudflare/download-proxy)
+  - 이유: 실패 B(`ERR_PNPM_NO_MATURE_MATCHING_VERSION`, 버전/recreate 잡 6건)는 Dependabot 이 cooldown(5일)을
+    `--config.minimum-release-age=7200` 으로 pnpm 에 넘기는데, pnpm 10 은 **lockfile 에 이미 잠긴 5일 미만 버전**
+    (PR #162 에서 직접 채택한 vite 8.3.3 · magic-string 1.4.3 · postcss 8.5.29)을 거부한다. dependabot-core 소스
+    (`pnpm_lockfile_updater.rb`) 기준 pnpm ≥ 11 에서만 `--config.trust-lockfile=true` +
+    `--config.minimum-release-age-strict=false` 를 함께 넘겨 잠긴 버전을 신뢰한다.
+  - 10월 6일에 10 으로 핀한 이유(Dependabot pnpm 11 이 package.json#pnpm.overrides 무시)는 같은 날 overrides 를
+    `pnpm-workspace.yaml` 로 옮기면서 소멸했다. 11 은 그 파일을 읽는다.
+  - **12 는 채택하지 않는다**: pnpm 12.3+ 의 `--no-save` × strict 충돌(dependabot-core#16375)은 수정 PR #16376 이
+    2026-10-01 머지됐고 Dependabot 번들 pnpm 도 10-09 에 12 로 올라갔지만, 12 는 major 직후라 lockfile 재작성·설정
+    키 변경 위험이 있다. trustLockfile 요건(≥ 11.3)은 11.28.5 로 충족되므로 보수적으로 11 에 머문다.
+    12 전환은 Dependabot 실측 1회(11월 배치) 통과 후 재검토.
+- 결정 2 — 실패 A(`security_update_not_possible`, 보안 잡 ~20건)는 코드 변경 없음. transitive 의존성(sharp ·
+  brace-expansion · @vitest/mocker · source-map-js · rustls)은 Dependabot 이 못 올리므로 override/Cargo.lock 으로
+  수동 해결하는 기존 방식 유지(`6c52440` · `134ac1f`). 열린 알림 0건이라 잡은 더 돌지 않는다.
+- 영향: `pnpm/action-setup` 은 `packageManager` 를 읽으므로 워크플로 변경 없음. lockfileVersion 9.0 은 11 이 그대로 읽는다
+  (로컬 `--frozen-lockfile` 3곳 통과로 확인). `pnpm-workspace.yaml` 에 `minimumReleaseAge` 를 두지 않는다 —
+  두면 Dependabot 이 trustLockfile 을 넘기지 않는다(소스 `compute_trust_existing_lockfile?`).
+- 재발 조건: 갓 나온 버전을 수동 bump 해도 pnpm 11 은 잠긴 버전을 신뢰하므로 실패하지 않아야 한다. 다음 월간 배치(11월)
+  또는 다음 보안 알림 때 `Dependabot Updates` 실패 0건으로 실측 확인.

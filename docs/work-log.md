@@ -1,5 +1,37 @@
 # Work Log
 
+## 2026-10-11 — Dependabot 10/6~7 실패 알림 26건 진단 + packageManager pnpm 11.28.5 전환
+
+### 배경
+사용자: "dependabot 이 10월 6일과 10월 7일에 걸쳐서 나왔어". 10/6 18:32 ~ 10/7 06:40 KST 에 `Dependabot Updates`
+워크플로 52 run 중 26 실패 → 실패 알림 메일. Dependabot PR 은 3건(#160 hono 머지 · #161 → #163 supersede)뿐이고
+10/7 이후 run 0건. 발생원은 10/6 의 main push 4회(push 마다 열린 보안 알림 전부에 보안 잡 재실행) + PR #162 머지(recreate 잡).
+
+### 진단 — 실패 2종
+- **A. 보안 잡 ~20건 `security_update_not_possible`** — sharp / brace-expansion / @vitest/mocker / source-map-js (npm) + rustls (cargo).
+  전부 transitive 라 Dependabot 이 못 올리고 latest-resolvable < lowest-non-vulnerable 로 포기(sharp 0.35.4 vs 0.35.5,
+  rustls 0.23.43 vs 0.23.45). 같은 날 override · Cargo.lock 으로 수동 해결(`6c52440` · `134ac1f`), 열린 알림 0 → 잡 소멸.
+- **B. 버전/recreate 잡 6건 `ERR_PNPM_NO_MATURE_MATCHING_VERSION`** — Dependabot 이 cooldown 5일을
+  `--config.minimum-release-age=7200` 으로 pnpm 에 넘기는데, pnpm 10.33 은 **lockfile 에 이미 잠긴 5일 미만 버전**
+  (PR #162 에서 직접 채택한 vite 8.3.3 · magic-string 1.4.3 · postcss 8.5.29)을 거부. 구조적: 갓 나온 버전을 수동 bump 하면
+  그 디렉터리 Dependabot pnpm 잡이 5일간 전부 실패. dependabot-core `pnpm_lockfile_updater.rb` 소스 확인 결과
+  `PNPM_TRUST_LOCKFILE_VERSION = "11.3"` — pnpm ≥ 11.3 에서만 `--config.trust-lockfile=true` + `minimum-release-age-strict=false`
+  를 넘겨 잠긴 버전을 신뢰한다. 10/6 에 10 으로 핀한 이유(package.json overrides 무시)는 overrides 를 `pnpm-workspace.yaml`
+  로 옮긴 시점에 소멸.
+
+### 처리
+- `packageManager` 3곳(루트 · relay · download-proxy) `pnpm@10.33.0` → **`pnpm@11.28.5`**. 12 는 보류(major 직후, 결정 기록 참조).
+- **pnpm 11 breaking change 1건 동반 처리**: `strictDepBuilds` 기본 true 라 승인 안 된 build script(esbuild · workerd)가
+  경고 대신 `ERR_PNPM_IGNORED_BUILDS` 로 install 실패 → 3곳 `pnpm-workspace.yaml` 에 `allowBuilds: {esbuild: false, workerd: false}`
+  (pnpm 10 에서도 실행 안 되던 스크립트라 종전과 동일 동작).
+- 로컬 재현: pnpm 11 은 pnpm 10 이 만든 `node_modules` 를 TTY 확인 후 purge 한다 → `CI=true pnpm install --frozen-lockfile`.
+  **개발자 각자 첫 install 때 한 번 purge 확인이 뜬다.**
+
+### 검증
+`--frozen-lockfile` 3곳 통과 + **lockfile 3개 무변경** · typecheck 0 · lint 0 error(21 warn 기존) · relay 71/71 · proxy 14/14 ·
+prettier(변경 파일) clean(CRLF 아티팩트만). Dependabot 측 효과는 다음 월간 배치(11월) 또는 다음 보안 알림 때
+`Dependabot Updates` 실패 0건으로 실측.
+
 ## 2026-10-06 — Dependabot 3차 폭증: 원인은 설정이 아니라 환경 drift 2건 (pnpm 11 · Rust 1.99)
 
 ### 배경

@@ -1,7 +1,7 @@
 {
   "name": "secretbank",
   "private": true,
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@11.28.5",
   "version": "0.1.0-pre19",
   "type": "module",
   "scripts": {
