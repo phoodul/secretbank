@@ -3234,3 +3234,20 @@ PR 은 3건뿐이었고 10월 7일 이후 run 0건. 발생원은 그날의 main 
   두면 Dependabot 이 trustLockfile 을 넘기지 않는다(소스 `compute_trust_existing_lockfile?`).
 - 재발 조건: 갓 나온 버전을 수동 bump 해도 pnpm 11 은 잠긴 버전을 신뢰하므로 실패하지 않아야 한다. 다음 월간 배치(11월)
   또는 다음 보안 알림 때 `Dependabot Updates` 실패 0건으로 실측 확인.
+
+## 2026-10-30 — zip 알림 해소 경로 = `tauri-plugin-updater` 2.14.1 + **tauri 2.12 minor 동반 bump** 채택
+
+10/29 공개된 zip 크레이트 advisory 3건(critical 1 — GHSA-m665-v7pm-7grj 파서 differential / high 1 / medium 1).
+zip 4.6.1 은 `tauri-plugin-updater 2.10.1` 이 `zip ^4` 로 잠가 Dependabot 이 못 올린다(`security_update_not_possible`).
+
+- 결정 1 — **updater 2.14.1(zip ^9) 로 올리고, 그것이 요구하는 tauri ^2.12 를 함께 받는다.** `cargo update -p tauri-plugin-updater --precise 2.14.1`
+  한 번으로 tauri 2.11.5 → 2.12.5 · wry · tao · webview2-com 까지 semver 호환 범위에서 동반 상승. Cargo.toml 은 `tauri = "2"` 라 변경 없음.
+  - 이유: 2.12.0/2.13.x/2.14.0 은 여전히 `zip ^4` 라 중간 버전으로는 해소 불가. dismiss 는 critical(RCE 계열 파서 differential) 이라 부적절.
+  - 영향 점검: updater 2.12.0 breaking(`allowDowngrades` 가 `check()` 옵션 → plugin config)은 본 프로젝트가 updater JS API 를 호출하지
+    않고 Rust 는 Builder 등록만이라 무영향. MSRV 1.90 ≤ toolchain 1.99. clippy(CI 명령) 0 · test 838/0.
+  - 부수 효과: 2026-06-14 "tauri 잠금" 사유로 dismiss 한 `phf 0.8`(#18 rand 0.7.3 build-dep) 이 lock 에서 사라짐 → 그 dismiss 사유 소멸.
+- 결정 2 — **transitive override 는 advisory 의 `first_patched_version` 과 함께 올린다.** `undici@<7.29.1` 처럼 이전 advisory 기준으로
+  굳어 있던 override 는 새 advisory 가 나오면 stale 이 되어 Dependabot 이 다시 `security_update_not_possible` 로 실패한다.
+  루트(undici 8.x 라 실효 없음)도 ee 와 같은 값으로 맞춰 세 파일을 동일하게 유지한다.
+- 재발 조건: 같은 패턴(transitive 잠금)은 Dependabot 이 구조적으로 못 고치므로 알림이 오면 수동 override/`cargo update --precise` 가 정답.
+  `Dependabot Updates` 실패 알림은 그 사이에만 발생하며, 열린 알림이 0 이 되면 멈춘다(10/11 결정 2 와 동일).

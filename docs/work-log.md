@@ -1,5 +1,32 @@
 # Work Log
 
+## 2026-10-30 — Dependabot 보안 알림 17건 해소 (undici 7.30.1 · zip 9 · @vitest/mocker 4.1.12)
+
+### 배경
+`/resume-project` 복원 중 확인: 10/25~29 사이 보안 알림 17건 open + `Dependabot Updates` 10/29 run 11건 중 8건 실패.
+실패는 전부 지난 세션의 **A 유형(transitive `security_update_not_possible`)** — pnpm 11 전환으로 잡은 B 유형
+(`ERR_PNPM_NO_MATURE_MATCHING_VERSION`)은 재발 0건(실측 1회 통과).
+
+### 알림 내역과 처리
+- **undici (high 8 · medium 2, ee relay/download-proxy)** — 7.29.1 → 7.30.1 필요. 기존 override `undici@<7.29.1` 가 stale.
+  → 3곳(`pnpm-workspace.yaml` 루트·relay·proxy) `"undici@<7.30.1": ^7.30.1` 로 갱신. 루트 lock 은 undici 8.12.3 이라 헤더 1줄만 변경.
+- **@vitest/mocker (medium 4, ee 양쪽)** — vitest `^4.1.11` → `^4.1.12` (5.x 는 ignore 유지).
+- **zip (critical 1 · high 1 · medium 1, src-tauri)** — zip 4.6.1 은 `tauri-plugin-updater` 가 잠금(`zip ^4`). zip ^9 를 받는 건
+  **2.14.1(2026-10-28)** 부터이고 그 버전은 `tauri ^2.12` 를 요구 → `cargo update -p tauri-plugin-updater --precise 2.14.1` 로
+  tauri 2.11.5 → **2.12.5** · wry 0.55 → 0.57 · tao 0.35 → 0.37 · webview2-com 0.38 → 0.39 동반(semver 호환, Cargo.toml `tauri = "2"`).
+  부수 효과: 2026-06-14 에 "tauri 잠금"으로 dismiss 했던 **phf 0.8 · rand 0.7.3 이 lock 에서 제거**됨.
+- updater changelog 2.10 → 2.14.1 점검: 2.12.0 breaking(`check()` 의 `allowDowngrades` 제거 → plugin config) 은
+  프론트에서 updater JS 를 호출하지 않고 Rust 는 `Builder::new().build()` 등록만이라 영향 없음. 2.13.0 MSRV 1.90(현재 1.99).
+
+### 검증
+relay typecheck + 661/661 · proxy typecheck + 14/14 · prettier(변경 파일) clean · Rust `cargo clippy --workspace --locked -- -D warnings`
+(CI 동일 명령) 0 · `cargo test --workspace --locked` **838 통과 / 0 실패**.
+- 참고: `--all-targets` 로 돌리면 `secretbank-nm-host/tests/protocol_roundtrip.rs:41` 의 `json!(3.14)` 가 `approx_constant` 에
+  걸린다. CI 범위 밖(기존 코드, `3198bf1` 이후)이라 이번엔 손대지 않음.
+
+### 남은 것
+push 후 보안 탭 open 0 + `Dependabot Updates` 실패 0 실측. 다음 후보: PR #163(age 0.12) 머지 + 볼트 호환 dogfooding.
+
 ## 2026-10-11 — Dependabot 10/6~7 실패 알림 26건 진단 + packageManager pnpm 11.28.5 전환
 
 ### 배경

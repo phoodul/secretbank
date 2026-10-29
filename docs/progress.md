@@ -2,6 +2,9 @@
 
 ## Last Checkpoint
 
+- **Time:** 2026-10-30 (resume) — **Dependabot 보안 알림 17건 해소** (undici 7.30.1 override 3곳 · vitest 4.1.12 · zip 9 via tauri-plugin-updater 2.14.1 + tauri 2.12.5). 10/29 `Dependabot Updates` 실패 8건은 전부 A 유형(transitive) — **pnpm 11 전환 효과 실측 1회 통과(B 유형 0건)**.
+  - 검증: relay 661 · proxy 14 · clippy(CI 명령) 0 · Rust test 838/0. 부수 효과: phf 0.8 · rand 0.7.3(6/14 dismiss 건) lock 에서 제거.
+  - **다음:** push(승인) → 보안 탭 0 실측 → PR #163(age 0.12) 머지 + 볼트 호환 dogfooding / pre19 installer dogfooding / M24 3-A-6.
 - **Time:** 2026-10-11 — **10/6~7 Dependabot 실패 알림 26건 진단 → `packageManager` pnpm 11.28.5 전환**. 사용자 "dependabot 이 10월 6일과 7일에 걸쳐서 나왔어".
   - 실체는 PR 이 아니라 `Dependabot Updates` 워크플로 실패 알림(52 run 중 26 실패, 10/7 이후 0건). 발생원 = 10/6 main push 4회 × 보안 잡 재실행 + PR #162 recreate.
   - A `security_update_not_possible`(transitive, 수동 override 로 이미 해결) / B `ERR_PNPM_NO_MATURE_MATCHING_VERSION` — pnpm 10 이 lockfile 의 5일 미만 버전(#162 에서 직접 채택)을 cooldown 게이트로 거부. pnpm ≥ 11.3 만 trustLockfile 을 받는다(dependabot-core 소스 확인).
