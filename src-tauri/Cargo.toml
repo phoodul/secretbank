@@ -67,7 +67,7 @@ governor = "0.10"
 tokio-util = { version = "0.7", features = ["rt"] }
 
 # Feed parsing
-feed-rs = "2"
+feed-rs = "3"
 futures = "0.3"
 chrono = { version = "0.4", default-features = false, features = ["std"] }
 
