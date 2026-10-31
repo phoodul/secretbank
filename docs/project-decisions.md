@@ -3251,3 +3251,15 @@ zip 4.6.1 은 `tauri-plugin-updater 2.10.1` 이 `zip ^4` 로 잠가 Dependabot �
   루트(undici 8.x 라 실효 없음)도 ee 와 같은 값으로 맞춰 세 파일을 동일하게 유지한다.
 - 재발 조건: 같은 패턴(transitive 잠금)은 Dependabot 이 구조적으로 못 고치므로 알림이 오면 수동 override/`cargo update --precise` 가 정답.
   `Dependabot Updates` 실패 알림은 그 사이에만 발생하며, 열린 알림이 0 이 되면 멈춘다(10/11 결정 2 와 동일).
+
+## 2026-10-31 — Dependabot 세 기능(알림 · 보안 업데이트 PR · 월간 버전 업데이트) **전부 유지**
+
+사용자 질문 "dependabot 이 아예 생기지 않도록 할 수는 없는가?" → 끄는 방법과 손실을 비교한 뒤 **"끄지 말자"** 로 확정.
+
+- 결정: repo 설정의 Dependabot alerts · Dependabot security updates 와 `.github/dependabot.yml`(7 생태계 monthly) 을 그대로 둔다.
+  - 이유: 비밀 관리 앱 + 공개 저장소에서 취약점 탐지를 포기하는 비용이 알림 메일보다 크다. 월간 버전 PR 은 auto-merge 로
+    최근 90일 20건이 사람 손 없이 머지됐다(소음 적음). 보안 업데이트 PR 은 transitive 건에서 실패 run 을 남기지만(2026-10-29 8건),
+    직접 의존성 건은 자동으로 고쳐 주므로 유지한다.
+- 운영 규칙(변경 없음): transitive 알림은 Dependabot 이 못 고치므로 `/resume-project` 세션에서 override / `cargo update --precise` 로
+  수동 처리하고, 열린 알림을 0 으로 만들면 실패 run 도 멈춘다(2026-10-11 결정 2 · 2026-10-30 결정 2).
+- 메일 소음은 repo 가 아니라 계정 알림 설정에서 줄인다(2026-08-05 안내: Watch → Custom / Actions "failed only" / Dependabot alerts web only).
