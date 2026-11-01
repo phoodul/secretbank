@@ -14,17 +14,17 @@
   },
   "dependencies": {
     "@simplewebauthn/server": "^14.0.2",
-    "drizzle-orm": "^0.45.2",
-    "hono": "^4.13.7",
-    "jose": "^6.2.12"
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.14",
+    "jose": "^6.2.14"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.19.0",
-    "@cloudflare/workers-types": "^5.20261001.1",
-    "drizzle-kit": "^0.31.10",
+    "@cloudflare/vitest-pool-workers": "^0.23.0",
+    "@cloudflare/workers-types": "^5.20261027.1",
+    "drizzle-kit": "^0.31.11",
     "typescript": "^7.0.2",
-    "vite": "^8.3.1",
+    "vite": "^8.3.5",
     "vitest": "^4.1.12",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.154.0"
   }
 }
