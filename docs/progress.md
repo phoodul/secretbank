@@ -5,6 +5,8 @@
 - **Time:** 2026-10-30 (resume) — **Dependabot 보안 알림 17건 해소** (undici 7.30.1 override 3곳 · vitest 4.1.12 · zip 9 via tauri-plugin-updater 2.14.1 + tauri 2.12.5). 10/29 `Dependabot Updates` 실패 8건은 전부 A 유형(transitive) — **pnpm 11 전환 효과 실측 1회 통과(B 유형 0건)**.
   - 검증: relay 661 · proxy 14 · clippy(CI 명령) 0 · Rust test 838/0. 부수 효과: phf 0.8 · rand 0.7.3(6/14 dismiss 건) lock 에서 제거.
   - **push `33c2087` 실측(사용자 승인):** 보안 알림 **17 → 0**, check-runs 전 잡 success(필수 6 + CodeQL + Extension + Deploy Relay). E2E Chromium MV3 failure 는 8/2 이후 상시 mute 항목. `Dependabot Updates` 는 열린 알림 0 이라 새 run 없음.
+  - **2026-10-31 결정:** 사용자 질문 "dependabot 이 아예 생기지 않도록 할 수 없나" → 세 기능(알림 · 보안 PR · 월간 버전 PR) **전부 유지**로 확정(`4fa7f9f`, decisions 2026-10-31).
+  - **세션 종료 상태:** origin/main 동기화, 미커밋 0, 열린 PR #163(age 0.12, 체크 green) · #156(jetbrains 백로그), 보안 알림 0.
   - **다음 세션 후보:** ① PR #163(age 0.12) 머지 + 기존 볼트 unlock · Charter recovery 수동 검증 ② pre19 installer dogfooding ③ M24 3-A-6.
 - **Time:** 2026-10-11 — **10/6~7 Dependabot 실패 알림 26건 진단 → `packageManager` pnpm 11.28.5 전환**. 사용자 "dependabot 이 10월 6일과 7일에 걸쳐서 나왔어".
   - 실체는 PR 이 아니라 `Dependabot Updates` 워크플로 실패 알림(52 run 중 26 실패, 10/7 이후 0건). 발생원 = 10/6 main push 4회 × 보안 잡 재실행 + PR #162 recreate.

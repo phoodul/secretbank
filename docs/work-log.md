@@ -25,7 +25,11 @@ relay typecheck + 661/661 · proxy typecheck + 14/14 · prettier(변경 파일) 
   걸린다. CI 범위 밖(기존 코드, `3198bf1` 이후)이라 이번엔 손대지 않음.
 
 ### 남은 것
-push 후 보안 탭 open 0 + `Dependabot Updates` 실패 0 실측. 다음 후보: PR #163(age 0.12) 머지 + 볼트 호환 dogfooding.
+push `33c2087` 실측(사용자 승인): 보안 알림 17 → 0, check-runs 전 잡 success(E2E Chromium MV3 는 상시 mute). 다음 후보: PR #163(age 0.12) 머지 + 볼트 호환 dogfooding.
+
+### 2026-10-31 후속 — Dependabot 끌지 여부
+사용자 "dependabot 이 아예 생기지 않도록 할 수는 없는가?" → 세 기능별 끄는 위치와 손실 비교 제시(알림 끄면 취약점 탐지 상실 / 보안 PR 이 실패 run 메일의 발생원 / 월간 버전 PR 은 90일 20건 auto-merge).
+사용자 결정 **"끄지 말자"** → 전부 유지(`4fa7f9f`). 메일은 계정 알림 설정(8/5 안내)으로 줄인다.
 
 ## 2026-10-11 — Dependabot 10/6~7 실패 알림 26건 진단 + packageManager pnpm 11.28.5 전환
 
